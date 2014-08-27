@@ -15,5 +15,24 @@
  */
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.resources.ConsentResource;
+
+/**
+ * CRUD!!
+ */
 public interface ConsentAPI {
+
+    public void create(String id, ConsentResource rec) throws DuplicateIdentifierException;
+    public ConsentResource retrieve( String id ) throws UnknownIdentifierException;
+    public void update(String id, ConsentResource rec) throws UnknownIdentifierException;
+
+    /**
+     * This isn't actually used in the web services at the moment, but i'm including it for
+     * completeness sake.
+     *
+     * @param id the identifier of the consent to delete (or inactivate)
+     * @throws UnknownIdentifierException If the identifier names an inactive or non-existent consent
+     * in the database.
+     */
+    public void delete(String id) throws UnknownIdentifierException;
 }
