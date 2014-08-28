@@ -22,7 +22,7 @@
 	    <manifest>
 	      <addClasspath>true</addClasspath>
 	      <classpathPrefix>lib/</classpathPrefix>
-	      <mainClass>org.genomebridge.consent.autocomplete.AutoCompleteService</mainClass>
+	      <mainClass>org.genomebridge.consent.autocomplete.AutocompleteApplication</mainClass>
 	    </manifest>
 	  </archive>
 	</configuration>
@@ -53,26 +53,6 @@
   </build>
 
   <dependencies>
-    <dependency>
-      <groupId>net.sourceforge.owlapi</groupId>
-      <artifactId>owlapi-distribution</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.ansell.pellet</groupId>
-      <artifactId>pellet-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.ansell.pellet</groupId>
-      <artifactId>pellet-owlapiv3</artifactId>
-    </dependency>
-
-      <dependency>
-          <groupId>org.yaml</groupId>
-          <artifactId>snakeyaml</artifactId>
-      </dependency>
-
       <dependency>
           <groupId>org.elasticsearch</groupId>
           <artifactId>elasticsearch</artifactId>
@@ -82,5 +62,60 @@
           <groupId>org.apache.lucene</groupId>
           <artifactId>lucene-core</artifactId>
       </dependency>
+      <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-core</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-assets</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-testing</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-logging</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-jdbi</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-migrations</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>org.hsqldb</groupId>
+          <artifactId>hsqldb</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>mysql</groupId>
+          <artifactId>mysql-connector-java</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-client</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>com.hubspot.dropwizard</groupId>
+          <artifactId>dropwizard-guice</artifactId>
+      </dependency>
+
   </dependencies>
 </project>
