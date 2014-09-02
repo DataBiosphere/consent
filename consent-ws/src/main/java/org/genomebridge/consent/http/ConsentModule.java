@@ -19,7 +19,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Environment;
+import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.service.ConsentAPI;
+import org.genomebridge.consent.http.service.DatabaseConsentAPI;
 import org.skife.jdbi.v2.DBI;
 
 public class ConsentModule extends AbstractModule {
@@ -30,20 +32,16 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     public ConsentAPI providesAPI(Environment env, ConsentConfiguration config) {
-        /*
         final DBIFactory factory = new DBIFactory();
         try {
             final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
-            final BossDAO dao = jdbi.onDemand(BossDAO.class);
+            final ConsentDAO dao = jdbi.onDemand(ConsentDAO.class);
 
-            return new DatabaseBossAPI(dao, providesObjectStore(env, config));
+            return new DatabaseConsentAPI(dao);
 
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
-
-        */
-        return null;
     }
 
 

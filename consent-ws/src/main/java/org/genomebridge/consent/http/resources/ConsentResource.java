@@ -15,22 +15,60 @@
  */
 package org.genomebridge.consent.http.resources;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import com.google.inject.Inject;
+import com.sun.jersey.api.NotFoundException;
+import org.genomebridge.consent.http.models.UseRestriction;
+import org.genomebridge.consent.http.service.ConsentAPI;
+import org.genomebridge.consent.http.service.UnknownIdentifierException;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 
 @Path("consent/{id}")
 public class ConsentResource {
 
     public Boolean requiresManualReview;
-    public String useRestriction;
-    public String id;
+    public UseRestriction useRestriction;
+
+    private ConsentAPI api;
+
+    public ConsentResource() {}
+
+    @Inject
+    public ConsentResource(ConsentAPI api) {
+        this.api = api;
+    }
 
     @GET
     @Produces("application/json")
     public ConsentResource describe(@PathParam("id") String id) {
-        this.id = id;
-        return this;
+        try {
+            populateFromApi(id);
+            return this;
+        } catch (UnknownIdentifierException e) {
+            throw new NotFoundException(String.format("Could not find consent with id %s", id));
+        }
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response update(@PathParam("id") String id, ConsentResource updated) {
+        try {
+            api.update(id, updated);
+            return Response.ok(updated).build();
+        } catch (UnknownIdentifierException e) {
+            throw new NotFoundException(String.format("Could not find consent with id %s to update", id));
+        }
+    }
+
+    private void populateFromApi(String id) throws UnknownIdentifierException {
+        ConsentResource rec = api.retrieve(id);
+        this.requiresManualReview = rec.requiresManualReview;
+        this.useRestriction = rec.useRestriction;
+    }
+
+    private void saveToApi(String id) throws UnknownIdentifierException {
+        api.update(id, this);
     }
 }

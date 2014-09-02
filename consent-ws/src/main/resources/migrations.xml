@@ -20,4 +20,21 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
+    <changeSet id="1" author="tdanford">
+        <createTable tableName="consents">
+            <column name="consentId" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="requiresManualReview" type="boolean" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="useRestriction" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="boolean" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

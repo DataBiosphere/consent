@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.genomebridge.consent.http;
+package org.genomebridge.consent.autocomplete;
 
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
+import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.genomebridge.consent.http.resources.AllConsentsResource;
-import org.genomebridge.consent.http.resources.ConsentResource;
-import org.skife.jdbi.v2.DBI;
+import org.genomebridge.consent.autocomplete.resources.AllTermsResource;
+import org.genomebridge.consent.autocomplete.resources.TermResource;
 
 /**
  * Top-level entry point to the entire application.
@@ -34,32 +33,24 @@ import org.skife.jdbi.v2.DBI;
  *   https://dropwizard.github.io/dropwizard/manual/core.html
  *
  */
-public class ConsentApplication extends Application<ConsentConfiguration> {
+public class AutocompleteApplication extends Application<AutocompleteConfiguration> {
 
     public static void main(String[] args) throws Exception {
-        new ConsentApplication().run(args);
+        new AutocompleteApplication().run(args);
     }
 
-    public void run(ConsentConfiguration config, Environment env) {
-        env.jersey().register(ConsentResource.class);
-        env.jersey().register(AllConsentsResource.class);
+    public void run(AutocompleteConfiguration config, Environment env) {
+        env.jersey().register(AllTermsResource.class);
     }
 
-    public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
+    public void initialize(Bootstrap<AutocompleteConfiguration> bootstrap) {
 
-        GuiceBundle<ConsentConfiguration> guiceBundle = GuiceBundle.<ConsentConfiguration>newBuilder()
-                .addModule(new ConsentModule())
-                .setConfigClass(ConsentConfiguration.class)
+        GuiceBundle<AutocompleteConfiguration> guiceBundle = GuiceBundle.<AutocompleteConfiguration>newBuilder()
+                .addModule(new AutocompleteModule())
+                .setConfigClass(AutocompleteConfiguration.class)
                 .build();
 
         bootstrap.addBundle(guiceBundle);
-
-        bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
-            @Override
-            public DataSourceFactory getDataSourceFactory(ConsentConfiguration configuration) {
-                return configuration.getDataSourceFactory();
-            }
-        });
 
         bootstrap.addBundle(new AssetsBundle("/assets/", "/site"));
     }
