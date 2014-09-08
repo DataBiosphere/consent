@@ -17,14 +17,16 @@ package org.genomebridge.consent.autocomplete;
 
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
-import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.genomebridge.consent.autocomplete.resources.AllTermsResource;
-import org.genomebridge.consent.autocomplete.resources.TermResource;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import java.util.EnumSet;
+
 
 /**
  * Top-level entry point to the entire application.
@@ -41,6 +43,14 @@ public class AutocompleteApplication extends Application<AutocompleteConfigurati
 
     public void run(AutocompleteConfiguration config, Environment env) {
         env.jersey().register(AllTermsResource.class);
+
+        // support for cross-origin ajax calls to the autocomplete service
+        FilterRegistration.Dynamic corsFilter = env.servlets().addFilter("CORS", CrossOriginFilter.class);
+        corsFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/autocomplete");
+        corsFilter.setInitParameter("allowedOrigins", config.getCorsConfiguration().allowedDomains);
+        corsFilter.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
+        corsFilter.setInitParameter("allowedMethods", "GET");
+
     }
 
     public void initialize(Bootstrap<AutocompleteConfiguration> bootstrap) {
