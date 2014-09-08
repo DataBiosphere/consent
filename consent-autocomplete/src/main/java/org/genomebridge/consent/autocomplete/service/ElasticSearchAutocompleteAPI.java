@@ -3,6 +3,7 @@ package org.genomebridge.consent.autocomplete.service;
 import com.google.inject.Inject;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.genomebridge.consent.autocomplete.resources.TermResource;
@@ -28,7 +29,7 @@ public class ElasticSearchAutocompleteAPI implements AutocompleteAPI {
     }
 
     private QueryBuilder buildQuery(String term) {
-        return QueryBuilders.multiMatchQuery(term, String.format("%s^4", FIELD_ID), String.format("%s^2", FIELD_LABEL), FIELD_SYNONYM);
+        return QueryBuilders.multiMatchQuery(term, String.format("%s^4", FIELD_ID), String.format("%s^2", FIELD_LABEL), FIELD_SYNONYM).type(MultiMatchQueryBuilder.Type.PHRASE_PREFIX);
     }
 
     private List<TermResource> executeSearch(QueryBuilder qb, int limit) {
