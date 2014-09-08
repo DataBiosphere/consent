@@ -11,6 +11,10 @@
   <packaging>jar</packaging>
   <name>Consent Management: Autocomplete Services</name>
 
+  <properties>
+    <jetty.version>9.0.7.v20131107</jetty.version>
+  </properties>
+
   <build>
     <finalName>consent-autocomplete</finalName>
     <plugins>
@@ -90,6 +94,12 @@
   </build>
 
   <dependencies>
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-servlets</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+
       <dependency>
           <groupId>org.elasticsearch</groupId>
           <artifactId>elasticsearch</artifactId>

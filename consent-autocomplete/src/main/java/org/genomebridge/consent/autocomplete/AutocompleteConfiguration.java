@@ -33,4 +33,11 @@ public class AutocompleteConfiguration extends Configuration {
         return elasticSearch;
     }
 
+    @JsonProperty
+    private CorsConfiguration cors = new CorsConfiguration();
+
+    public CorsConfiguration getCorsConfiguration() {
+        return cors;
+    }
+
 }
