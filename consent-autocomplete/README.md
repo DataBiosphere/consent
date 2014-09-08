@@ -11,6 +11,6 @@ server:
     - type: http
       port: 8180
 elasticSearch:
-  servers: [127.0.0.1:9300]
-  indexName: ontology
+  servers: ["127.0.0.1:9300"]
+  index: ontology
 ```
