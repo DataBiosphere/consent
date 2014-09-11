@@ -35,7 +35,7 @@ public class Or extends UseRestriction {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < operands.length; i++) {
-            if(i > 0) { sb.append(" "); }
+            if(i > 0) { sb.append(","); }
             sb.append(operands[i].toString());
         }
         return String.format("{ \"type\": \"or\", \"operands\": [%s] }", sb.toString());
