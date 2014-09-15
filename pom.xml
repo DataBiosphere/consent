@@ -163,6 +163,11 @@
                 <version>0.7.0.2</version>
             </dependency>
 
-        </dependencies>
+            <dependency>
+            	<groupId>io.dropwizard</groupId>
+            	<artifactId>dropwizard-metrics-graphite</artifactId>
+            	<version>${dropwizard.version}</version>
+            </dependency>
+    </dependencies>
   </dependencyManagement>
 </project>
