@@ -155,5 +155,13 @@
             <artifactId>dropwizard-guice</artifactId>
         </dependency>
 
+        <dependency>
+        	<groupId>io.dropwizard</groupId>
+        	<artifactId>dropwizard-metrics</artifactId>
+        </dependency>
+        <dependency>
+        	<groupId>com.codahale.metrics</groupId>
+        	<artifactId>metrics-graphite</artifactId>
+        </dependency>
     </dependencies>
 </project>

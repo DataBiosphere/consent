@@ -163,6 +163,16 @@
                 <version>0.7.0.2</version>
             </dependency>
 
-        </dependencies>
+            <dependency>
+            	<groupId>io.dropwizard</groupId>
+            	<artifactId>dropwizard-metrics</artifactId>
+            	<version>${dropwizard.version}</version>
+            </dependency>
+            <dependency>
+            	<groupId>com.codahale.metrics</groupId>
+            	<artifactId>metrics-graphite</artifactId>
+            	<version>3.0.2</version>
+            </dependency>
+    </dependencies>
   </dependencyManagement>
 </project>
