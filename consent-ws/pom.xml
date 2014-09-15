@@ -158,6 +158,7 @@
         <dependency>
         	<groupId>io.dropwizard</groupId>
         	<artifactId>dropwizard-metrics-graphite</artifactId>
+        	<version>${dropwizard.version}</version>
         </dependency>
     </dependencies>
 </project>
