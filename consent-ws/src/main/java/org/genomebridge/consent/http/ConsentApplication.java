@@ -25,6 +25,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.genomebridge.consent.http.resources.AllConsentsResource;
 import org.genomebridge.consent.http.resources.ConsentResource;
+import org.genomebridge.consent.http.resources.ConsentAssociationResource;
 import org.skife.jdbi.v2.DBI;
 
 /**
@@ -43,6 +44,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     public void run(ConsentConfiguration config, Environment env) {
         env.jersey().register(ConsentResource.class);
         env.jersey().register(AllConsentsResource.class);
+        env.jersey().register(ConsentAssociationResource.class);
     }
 
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
