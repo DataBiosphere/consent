@@ -20,3 +20,5 @@ logging:
   # logger specific levels
   loggers:
     ConsentAssociationResource: ALL
+    ConsentApplication: ALL
+    ConsentModule: ALL

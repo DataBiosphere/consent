@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.genomebridge.consent.http.db;
 
 import org.genomebridge.consent.http.resources.ConsentResource;
@@ -29,6 +30,9 @@ public interface ConsentDAO {
 
     @SqlQuery("select * from consents where consentId = :consentId and active=true")
     public ConsentResource findConsentById(@Bind("consentId") String consentId);
+
+    @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
+    public String checkConsentbyId(@Bind("consentId") String consentId);
 
     @SqlUpdate("insert into consents " +
             "(consentId, requiresManualReview, useRestriction, active) values " +
