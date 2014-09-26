@@ -15,8 +15,6 @@
  */
 package org.genomebridge.consent.http;
 
-// import com.hubspot.dropwizard.guice.GuiceBundle;
-
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
@@ -73,14 +71,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
 
-
-/*        GuiceBundle<ConsentConfiguration> guiceBundle = GuiceBundle.<ConsentConfiguration>newBuilder()
-                .addModule(new ConsentModule())
-                .setConfigClass(ConsentConfiguration.class)
-                .build();
-
-        bootstrap.addBundle(guiceBundle);
-*/
         bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
             @Override
             public DataSourceFactory getDataSourceFactory(ConsentConfiguration configuration) {

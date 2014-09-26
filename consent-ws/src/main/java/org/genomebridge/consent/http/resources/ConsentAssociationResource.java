@@ -53,7 +53,7 @@ public class ConsentAssociationResource extends Resource {
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
+            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         }
     }
 
@@ -72,12 +72,11 @@ public class ConsentAssociationResource extends Resource {
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
+            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         }
     }
 
     @GET
-//    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
         try {
@@ -89,7 +88,7 @@ public class ConsentAssociationResource extends Resource {
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
+            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         }
     }
 
@@ -105,7 +104,7 @@ public class ConsentAssociationResource extends Resource {
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
+            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         }
     }
 

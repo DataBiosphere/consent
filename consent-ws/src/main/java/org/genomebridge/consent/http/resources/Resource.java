@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
  */
 abstract public class Resource {
 
-    protected abstract Logger logger();
-
+    protected Logger logger() {
+        return Logger.getLogger("consent-ws");
+    }
 }

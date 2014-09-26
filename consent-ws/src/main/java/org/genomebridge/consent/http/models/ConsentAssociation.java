@@ -70,13 +70,17 @@ public class ConsentAssociation {
         elementSet = new HashSet<String>(ids);
     }
 
-    public boolean isAssociationType(String atype) { return associationType.equals(atype); }
+    public boolean isAssociationType(String atype) {
+        return (associationType!=null) ? associationType.equals(atype) : false;
+    }
 
     @Override
     public boolean equals(Object o) {
         if(!(o instanceof ConsentAssociation)) { return false; }
+        // o cannot be null
         ConsentAssociation ca = (ConsentAssociation)o;
-        return (associationType.equals(ca.associationType) && elementSet.equals(ca.elementSet));
+        return (((associationType!=null) ? associationType.equals(ca.associationType) : ca.associationType==null)
+                 && (elementSet!= null) ? elementSet.equals(ca.elementSet) : ca.elementSet==null);
     }
 
     @Override

@@ -50,7 +50,7 @@ public class AllAssociationsResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getConsentsForAssociation(@PathParam("associationType") String atype, @PathParam("id") String objectId) {
         try {
-            String msg = String.format("GETing all associations of type='%s' for object '%s'.", (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
+            String msg = String.format("GETing all consents with associations of type='%s' for object '%s'.", (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
             logger().debug(msg);
             if (atype == null || objectId == null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
@@ -63,12 +63,12 @@ public class AllAssociationsResource extends Resource {
                 return Response.ok(result).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             logger().debug(String.format("GETconsentsForAssociation:  Caught exception '%s' in getConsentsForAssociation", e.getMessage()));
-            throw new NotFoundException("Could not find consent to update");
+            throw new NotFoundException("Could not find associations for object");
         }
     }
 
     @Override
     protected Logger logger() {
-        return Logger.getLogger("ConsentAssociationResource");
+        return Logger.getLogger("AllAssociationsResource");
     }
 }

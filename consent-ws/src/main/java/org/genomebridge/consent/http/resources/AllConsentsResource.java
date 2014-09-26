@@ -15,7 +15,6 @@
  */
 package org.genomebridge.consent.http.resources;
 
-// import com.google.inject.Inject;
 import com.sun.jersey.spi.container.WebApplication;
 import javassist.tools.web.BadHttpRequest;
 import org.genomebridge.consent.http.service.ConsentAPI;
@@ -33,18 +32,12 @@ import java.net.URI;
 import java.util.UUID;
 
 @Path("consent")
-public class AllConsentsResource {
+public class AllConsentsResource extends Resource {
 
     private ConsentAPI api;
 
     public AllConsentsResource() { this.api = ConsentAPIProvider.getApi(); }
 
-/*
-    @Inject
-    public AllConsentsResource(ConsentAPI api) {
-        this.api = api;
-    }
- */
     @PUT
     @Consumes("application/json")
     public Response createConsent(@Context UriInfo info, ConsentResource rec) {
