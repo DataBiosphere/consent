@@ -15,9 +15,10 @@
  */
 package org.genomebridge.consent.http.service;
 
-import org.genomebridge.consent.http.resources.ConsentResource;
 import org.genomebridge.consent.http.models.ConsentAssociation;
+import org.genomebridge.consent.http.resources.ConsentResource;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 /**
@@ -45,4 +46,5 @@ public interface ConsentAPI {
     public List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations);
     public List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
     public List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId);
+    public List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
 }

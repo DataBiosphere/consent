@@ -19,6 +19,8 @@ package org.genomebridge.consent.http.service;
 
 /**
  * Created by egolin on 9/23/14.
+ * Wrapper Class to manage ConsentAPI object.
+ *
  * Explicit code to manage a singleton ConsentAPI object, to get around a GUICE/Dropwizard issue.
  * We manage this singleton ourselves, instead of relying on dependency injection, due to problems
  * with Dropwizard + Guice lifecycle. See https://github.com/HubSpot/dropwizard-guice/issues/19 for discussion
@@ -26,16 +28,8 @@ package org.genomebridge.consent.http.service;
  */
 public class ConsentAPIProvider {
 
-    // singleton management code
+    // This class should not be instantiated
     private ConsentAPIProvider() {}
-
-    private static class ConsentAPIProviderHolder {
-        public static ConsentAPIProvider INSTANCE = new ConsentAPIProvider();
-    }
-
-    public static ConsentAPIProvider getInstance() {
-        return ConsentAPIProviderHolder.INSTANCE;
-    }
 
     // Manage the ConsentAPI object
     private static ConsentAPI _api;

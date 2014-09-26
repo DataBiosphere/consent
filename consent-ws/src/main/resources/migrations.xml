@@ -38,4 +38,49 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="2" author="egolin">
+        <createTable tableName="consentassociations">
+            <column name="associationId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="consentId" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="associationType" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="objectId" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="3" author="egolin">
+        <createIndex indexName="idx_ca_consentid" tableName="consentassociations">
+            <column name="consentId"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="4" author="egolin">
+        <createIndex indexName="idx_ca_consentid_associationtype" tableName="consentassociations">
+            <column name="consentId"/>
+            <column name="associationType"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="5" author="egolin">
+        <createIndex indexName="idx_ca_consentid_associationtype_objectid" tableName="consentassociations">
+            <column name="consentId"/>
+            <column name="associationType"/>
+            <column name="objectId"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="6" author="egolin">
+        <createIndex indexName="idx_ca_associationtype_objectid" tableName="consentassociations">
+            <column name="associationType"/>
+            <column name="objectId"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

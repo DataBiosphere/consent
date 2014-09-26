@@ -15,7 +15,7 @@ database:
 # Logging settings
 logging:
   # default logging level
-  # level: DEBUG
+  # level: TRACE
 
   # logger specific levels
   loggers:

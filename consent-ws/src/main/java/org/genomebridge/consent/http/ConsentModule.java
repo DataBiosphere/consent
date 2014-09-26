@@ -17,14 +17,13 @@
 package org.genomebridge.consent.http;
 
 import com.google.inject.AbstractModule;
-// import com.google.inject.Provides;
-import org.genomebridge.consent.http.service.ConsentAPIProvider;
-import org.genomebridge.consent.http.service.ConsentAPI;
 import org.apache.log4j.Logger;
 
-// import java.util.logging.Logger;
-
-
+/**
+ * This class was used to do DI with GUICE, but we have removed that code due to some
+ * issues with Guice+dropwizard and initializing singletons.  This class is left for
+ * the skeleton, but can probably be removed (and removed from ConsentApplication).
+ */
 public class ConsentModule extends AbstractModule {
 
     private static Logger _logger;
@@ -38,16 +37,4 @@ public class ConsentModule extends AbstractModule {
     @Override
     protected void configure() {
     }
-
-    // We are continuing to use Guice DI to inject the API object where required, but we are
-    // managing the singleton object ourselves, through the ConsentAPIProvider class, to work
-    // around a problem with Guice+dropwizard (see ConsentAPIProvider).
-/*    @Provides
-    public ConsentAPI providesAPI() {
-        ConsentAPI api = ConsentAPIProvider.getApi();
-        logger().info(String.format("*** providesAPI() called, api='%s'", (api==null?"null":api.toString())));
-//        return ConsentAPIProvider.getApi();
-        return api;
-    }
- */
 }

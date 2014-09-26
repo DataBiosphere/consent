@@ -16,6 +16,7 @@
 package org.genomebridge.consent.http;
 
 // import com.hubspot.dropwizard.guice.GuiceBundle;
+
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
@@ -23,15 +24,16 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.resources.AllAssociationsResource;
 import org.genomebridge.consent.http.resources.AllConsentsResource;
 import org.genomebridge.consent.http.resources.ConsentAssociationResource;
 import org.genomebridge.consent.http.resources.ConsentResource;
-import org.genomebridge.consent.http.service.ConsentAPIProvider;
 import org.genomebridge.consent.http.service.ConsentAPI;
+import org.genomebridge.consent.http.service.ConsentAPIProvider;
 import org.genomebridge.consent.http.service.DatabaseConsentAPI;
 import org.skife.jdbi.v2.DBI;
-import org.apache.log4j.Logger;
 
 /**
  * Top-level entry point to the entire application.
@@ -66,6 +68,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ConsentResource.class);
         env.jersey().register(AllConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
+        env.jersey().register(AllAssociationsResource.class);
     }
 
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,15 +17,20 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.jackson.Jackson;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 /**
+ * ConsentAssociation Representation object.
+ *
+ * <P>Represents a set of associations to a single "type" of objects.  For example, the "samples" associated
+ * with an individual consent.
+ *
  * Created by egolin on 9/15/14.
  */
 public class ConsentAssociation {
@@ -41,7 +46,7 @@ public class ConsentAssociation {
         // Jackson deserialization
     }
 
-    public ConsentAssociation(String atype, ArrayList<String> ids) {
+    public ConsentAssociation(String atype, List<String> ids) {
         this.associationType = atype;
         this.elementSet = new HashSet<String>(ids);
     }
@@ -61,7 +66,7 @@ public class ConsentAssociation {
     }
 
     @JsonProperty
-    public void setElements(ArrayList<String> ids) {
+    public void setElements(List<String> ids) {
         elementSet = new HashSet<String>(ids);
     }
 
@@ -78,9 +83,9 @@ public class ConsentAssociation {
     public int hashCode() {
         int hash = 31;
         if (associationType != null)
-            hash = hash * associationType.hashCode();
+            hash = hash + associationType.hashCode();
         if (elementSet != null)
-            hash = hash + elementSet.hashCode();
+            hash = hash*31 + elementSet.hashCode();
         return hash;
     }
 

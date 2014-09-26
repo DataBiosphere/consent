@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 
 /**
+ * Unit Tests for ConsentAssociation object.
+ *
  * Created by egolin on 9/16/14.
  */
 public class ConsentAssociationTest {

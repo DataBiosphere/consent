@@ -25,6 +25,8 @@ import org.genomebridge.consent.http.service.ConsentAPIProvider;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,22 +42,23 @@ public class ConsentAssociationResource extends Resource {
         this.api = ConsentAPIProvider.getApi();
     }
 
-    /*
-        @Inject
-        public ConsentAssociationResource(ConsentAPI api) { this.api = api; }
-     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAssociation(@PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
-            logger().info(msg);
+            logger().debug(msg);
             List<ConsentAssociation> result = api.createAssociation(consentId, body);
-            return Response.ok(result).build();
+            URI assocURI = buildConsentAssociationURI(consentId);
+            return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
         }
+    }
+
+    private URI buildConsentAssociationURI(String id) {
+        return UriBuilder.fromResource(ConsentAssociationResource.class).build(id);
     }
 
     @PUT
@@ -64,9 +67,10 @@ public class ConsentAssociationResource extends Resource {
     public Response updateAssociation(@PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
-            logger().info(msg);
+            logger().debug(msg);
             List<ConsentAssociation> result = api.updateAssociation(consentId, body);
-            return Response.ok(result).build();
+            URI assocURI = buildConsentAssociationURI(consentId);
+            return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
         }
@@ -78,11 +82,12 @@ public class ConsentAssociationResource extends Resource {
     public Response getAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
         try {
             String msg = String.format("GETing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
-            logger().info(msg);
+            logger().debug(msg);
             if (atype == null && objectId != null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<ConsentAssociation> result = api.getAssociation(consentId, atype, objectId);
-            return Response.ok(result).build();
+            URI assocURI = buildConsentAssociationURI(consentId);
+            return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
         }
@@ -93,11 +98,12 @@ public class ConsentAssociationResource extends Resource {
     public Response deleteAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
         try {
             String msg = String.format("DELETEing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
-            logger().info(msg);
+            logger().debug(msg);
             if (atype == null && objectId != null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<ConsentAssociation> result = api.deleteAssociation(consentId, atype, objectId);
-            return Response.ok(result).build();
+            URI assocURI = buildConsentAssociationURI(consentId);
+            return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", consentId));
         }
