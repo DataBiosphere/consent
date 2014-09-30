@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Broad Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.genomebridge.consent.http;
 
-import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
@@ -23,8 +22,15 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.apache.log4j.Logger;
+import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.resources.AllAssociationsResource;
 import org.genomebridge.consent.http.resources.AllConsentsResource;
+import org.genomebridge.consent.http.resources.ConsentAssociationResource;
 import org.genomebridge.consent.http.resources.ConsentResource;
+import org.genomebridge.consent.http.service.ConsentAPI;
+import org.genomebridge.consent.http.service.ConsentAPIProvider;
+import org.genomebridge.consent.http.service.DatabaseConsentAPI;
 import org.skife.jdbi.v2.DBI;
 
 /**
@@ -41,18 +47,29 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     }
 
     public void run(ConsentConfiguration config, Environment env) {
+
+        Logger.getLogger("ConsentApplication").debug("ConsentApplication.run called.");
+        // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
+        // with singletons and JDBI (see ConsentAPIProvider).
+        try {
+            final DBIFactory factory = new DBIFactory();
+            final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
+            final ConsentDAO dao = jdbi.onDemand(ConsentDAO.class);
+            final ConsentAPI api = new DatabaseConsentAPI(dao);
+            ConsentAPIProvider.setApi(api);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+
+        // How register our resources.
+
         env.jersey().register(ConsentResource.class);
         env.jersey().register(AllConsentsResource.class);
+        env.jersey().register(ConsentAssociationResource.class);
+        env.jersey().register(AllAssociationsResource.class);
     }
 
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
-
-        GuiceBundle<ConsentConfiguration> guiceBundle = GuiceBundle.<ConsentConfiguration>newBuilder()
-                .addModule(new ConsentModule())
-                .setConfigClass(ConsentConfiguration.class)
-                .build();
-
-        bootstrap.addBundle(guiceBundle);
 
         bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
             @Override
