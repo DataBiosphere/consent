@@ -4,6 +4,7 @@
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
 
 ## Directory-based project format
+*.iml
 .idea/
 /*.iml
 # if you remove the above rule, at least ignore user-specific stuff:
