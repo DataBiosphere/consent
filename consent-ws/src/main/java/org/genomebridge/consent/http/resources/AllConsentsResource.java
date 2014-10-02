@@ -17,8 +17,8 @@ package org.genomebridge.consent.http.resources;
 
 import com.sun.jersey.spi.container.WebApplication;
 import javassist.tools.web.BadHttpRequest;
+import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
-import org.genomebridge.consent.http.service.ConsentAPIProvider;
 import org.genomebridge.consent.http.service.DuplicateIdentifierException;
 
 import javax.ws.rs.Consumes;
@@ -36,7 +36,7 @@ public class AllConsentsResource extends Resource {
 
     private ConsentAPI api;
 
-    public AllConsentsResource() { this.api = ConsentAPIProvider.getApi(); }
+    public AllConsentsResource() { this.api = AbstractConsentAPI.getInstance(); }
 
     @PUT
     @Consumes("application/json")
