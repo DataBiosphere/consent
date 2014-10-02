@@ -18,8 +18,8 @@ package org.genomebridge.consent.http.resources;
 
 import com.sun.jersey.api.NotFoundException;
 import org.apache.log4j.Logger;
+import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
-import org.genomebridge.consent.http.service.ConsentAPIProvider;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,7 +43,7 @@ public class AllAssociationsResource extends Resource {
     UriInfo uriInfo;
 
     public AllAssociationsResource() {
-        this.api = ConsentAPIProvider.getApi();
+        this.api = AbstractConsentAPI.getInstance();
     }
 
     @GET

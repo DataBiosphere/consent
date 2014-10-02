@@ -18,9 +18,9 @@ package org.genomebridge.consent.http.resources;
 import com.sun.jersey.api.NotFoundException;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.UseRestriction;
+import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.UnknownIdentifierException;
-import org.genomebridge.consent.http.service.ConsentAPIProvider;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -33,7 +33,7 @@ public class ConsentResource extends Resource {
 
     private ConsentAPI api;
 
-    public ConsentResource() { this.api = ConsentAPIProvider.getApi(); }
+    public ConsentResource() { this.api = AbstractConsentAPI.getInstance(); }
 
     @GET
     @Produces("application/json")

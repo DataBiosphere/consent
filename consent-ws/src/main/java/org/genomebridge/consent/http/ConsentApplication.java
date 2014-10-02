@@ -22,16 +22,18 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.apache.log4j.Logger;
+import org.eclipse.jetty.util.component.LifeCycle;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.resources.AllAssociationsResource;
 import org.genomebridge.consent.http.resources.AllConsentsResource;
 import org.genomebridge.consent.http.resources.ConsentAssociationResource;
 import org.genomebridge.consent.http.resources.ConsentResource;
-import org.genomebridge.consent.http.service.ConsentAPI;
-import org.genomebridge.consent.http.service.ConsentAPIProvider;
+import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.DatabaseConsentAPI;
 import org.skife.jdbi.v2.DBI;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Top-level entry point to the entire application.
@@ -41,22 +43,21 @@ import org.skife.jdbi.v2.DBI;
  *
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
-
+    public static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
     public static void main(String[] args) throws Exception {
         new ConsentApplication().run(args);
     }
 
     public void run(ConsentConfiguration config, Environment env) {
 
-        Logger.getLogger("ConsentApplication").debug("ConsentApplication.run called.");
+        LOGGER.debug("ConsentApplication.run called.");
         // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
-        // with singletons and JDBI (see ConsentAPIProvider).
+        // with singletons and JDBI (see AbstractConsentAPI).
         try {
             final DBIFactory factory = new DBIFactory();
             final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
             final ConsentDAO dao = jdbi.onDemand(ConsentDAO.class);
-            final ConsentAPI api = new DatabaseConsentAPI(dao);
-            ConsentAPIProvider.setApi(api);
+            DatabaseConsentAPI.initInstance(dao);
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
@@ -67,6 +68,18 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(AllConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
         env.jersey().register(AllAssociationsResource.class);
+
+        // Register a listener to catch an application stop and clear out the API instance created above.
+        // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
+        // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
+        // called multiple times.
+        env.lifecycle().addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+            @Override
+            public void lifeCycleStopped(LifeCycle event) {
+                LOGGER.debug("**** ConsentAppliction Server Stopped ****");
+                AbstractConsentAPI.clearInstance();
+            }
+        });
     }
 
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
