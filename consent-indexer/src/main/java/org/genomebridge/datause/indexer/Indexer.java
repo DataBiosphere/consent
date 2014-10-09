@@ -93,7 +93,9 @@ public class Indexer {
                 }
 
                 bulk.add(client.prepareIndex(configuration.getIndexName(), "ontology_term")
-                        .setSource(term.document()));
+                        .setSource(term.document())
+                        .setId(owlClass.toStringID())
+                );
                 if (count++ > 1000) {
                     bulk.execute().actionGet();
                     bulk = client.prepareBulk();
