@@ -98,9 +98,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         for (ConsentAssociation association : new_associations) {
             logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
                     association.getAssociationType(), association.getElements().size()));
-            // The following two operations should really be done in a transaction.
+            consentDAO.begin();
             consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
             consentDAO.insertAssociations(consentId, association.getAssociationType(), association.getElements());
+            consentDAO.commit();
         }
         return getAllAssociationsForConsent(consentId);
     }
