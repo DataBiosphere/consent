@@ -22,11 +22,12 @@ import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
+import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.List;
 
 @RegisterMapper({ ConsentResourceMapper.class })
-public interface ConsentDAO {
+public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where consentId = :consentId and active=true")
     public ConsentResource findConsentById(@Bind("consentId") String consentId);
