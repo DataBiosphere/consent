@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.genomebridge.consent.http.db;
 
 import org.genomebridge.consent.http.resources.ConsentResource;
@@ -21,14 +22,18 @@ import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
+import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.List;
 
 @RegisterMapper({ ConsentResourceMapper.class })
-public interface ConsentDAO {
+public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where consentId = :consentId and active=true")
     public ConsentResource findConsentById(@Bind("consentId") String consentId);
+
+    @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
+    public String checkConsentbyId(@Bind("consentId") String consentId);
 
     @SqlUpdate("insert into consents " +
             "(consentId, requiresManualReview, useRestriction, active) values " +
@@ -45,5 +50,45 @@ public interface ConsentDAO {
     public void updateConsent(@Bind("consentId") String consentId,
                               @Bind("requiresManualReview") Boolean requiresManualReview,
                               @Bind("useRestriction") String useRestriction);
+
+    // Consent Association Access Methods
+    @SqlQuery("select objectId from consentassociations where consentId = :consentId and associationType = :associationType")
+    public List<String> findAssociationsByType(@Bind("consentId") String consentId,
+                                               @Bind("associationType") String associationType);
+
+    @SqlQuery("select objectId from consentassociations where consentId = :consentId and associationType = :associationType and objectId = :objectId")
+    public String findAssociationByTypeAndId(@Bind("consentId") String consentId,
+                                             @Bind("associationType") String associationType,
+                                             @Bind("objectId") String objectId);
+
+    @SqlBatch("insert into consentassociations (consentId, associationType, objectId) values (:consentId, :associationType, :objectId)")
+    public void insertAssociations(@Bind("consentId") String consentId,
+                                   @Bind("associationType") String associationType,
+                                   @Bind("objectId") List<String> ids);
+
+    @SqlBatch("delete from consentassociations where consentId = :consentId and associationType = :associationType and objectId =: objectId")
+    public void deleteAssociations(@Bind("consentId") String consentId,
+                                   @Bind("associationType") String associationType,
+                                   @Bind("objectId") List<String> ids);
+
+    @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType and objectId = :objectId")
+    public void deleteOneAssociation(@Bind("consentId") String consentId,
+                                   @Bind("associationType") String associationType,
+                                   @Bind("objectId") String objectId);
+
+    @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType")
+    public void deleteAllAssociationsForType(@Bind("consentId") String consentId,
+                                             @Bind("associationType") String associationType);
+
+    @SqlUpdate("delete from consentassociations where consentId = :consentId")
+    public void deleteAllAssociationsForConsent(@Bind("consentId") String consentId);
+
+
+    @SqlQuery("select distinct(associationType) from consentassociations where consentId = :consentId")
+    public List<String> findAssociationTypesForConsent(@Bind("consentId") String consentId);
+
+    @SqlQuery("select distinct(consentId) from consentassociations where associationType = :associationType and objectId= :objectId")
+    public List<String> findConsentsForAssociation(@Bind("associationType") String associationType,
+                                                   @Bind("objectId") String objectId);
 
 }

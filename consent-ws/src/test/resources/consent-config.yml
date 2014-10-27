@@ -11,3 +11,15 @@ database:
   password: sa
   url: jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
+
+# Logging settings
+logging:
+  # default logging level
+  # level: TRACE
+
+  # logger specific levels
+  loggers:
+    ConsentAssociationResource: ALL
+    AllAssociationsResource: ALL
+    ConsentApplication: ALL
+    ConsentModule: ALL
