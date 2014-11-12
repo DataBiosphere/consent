@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Broad Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,10 @@
  */
 package org.genomebridge.consent.http.resources;
 
-import com.google.inject.Inject;
 import com.sun.jersey.api.NotFoundException;
+import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.UseRestriction;
+import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.UnknownIdentifierException;
 
@@ -25,19 +26,14 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 @Path("consent/{id}")
-public class ConsentResource {
+public class ConsentResource extends Resource {
 
     public Boolean requiresManualReview;
     public UseRestriction useRestriction;
 
     private ConsentAPI api;
 
-    public ConsentResource() {}
-
-    @Inject
-    public ConsentResource(ConsentAPI api) {
-        this.api = api;
-    }
+    public ConsentResource() { this.api = AbstractConsentAPI.getInstance(); }
 
     @GET
     @Produces("application/json")

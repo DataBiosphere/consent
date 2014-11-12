@@ -33,8 +33,10 @@ public class Indexer {
         BulkRequestBuilder bulk = client.prepareBulk();
         int count = 0;
 
+        String ontologyType = "disease";
+
         for (int arg = 0; arg + 1 < args.length; arg += 2) {
-            String ontologyType = args[arg];
+            String idPrefix = args[arg]; // ontology to load, based on a prefix of its ID
             InputStream stream = new FileInputStream(args[arg + 1]);
             OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
             OWLOntology ontology = manager.loadOntologyFromOntologyDocument(stream);
@@ -86,6 +88,14 @@ public class Indexer {
                     term.addLabel(labels.iterator().next().getValue().accept(visitor));
                 }
 
+                // Only index those terms whose IDs begin with the specified prefix
+                Set<OWLAnnotation> ids = owlClass.getAnnotations(ontology, annotationProperties.get("id"));
+                if (ids.size() != 1 ||
+                		!ids.iterator().next().getValue().accept(visitor).startsWith(idPrefix))
+                {
+                	continue;
+                }
+
                 Set<OWLAnnotation> defs = owlClass.getAnnotations(ontology, def);
                 assert defs.size() <= 1 : "Exactly 0 or 1 definitions allowed per class";
                 if (defs.size() == 1) {
@@ -93,7 +103,9 @@ public class Indexer {
                 }
 
                 bulk.add(client.prepareIndex(configuration.getIndexName(), "ontology_term")
-                        .setSource(term.document()));
+                        .setSource(term.document())
+                        .setId(owlClass.toStringID())
+                );
                 if (count++ > 1000) {
                     bulk.execute().actionGet();
                     bulk = client.prepareBulk();
@@ -105,5 +117,7 @@ public class Indexer {
         if (count > 0) {
             bulk.execute().actionGet();
         }
+
+        client.close();
     }
 }
