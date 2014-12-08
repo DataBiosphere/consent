@@ -16,29 +16,15 @@
 package org.genomebridge.consent.autocomplete;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-
-import java.io.File;
-
 import javax.ws.rs.core.MediaType;
-
-import com.google.common.io.Resources;
 import com.sun.jersey.api.client.ClientResponse;
-
 import io.dropwizard.testing.junit.ResourceTestRule;
 import io.dropwizard.testing.junit.ResourceTestRule.Builder;
-
 import org.genomebridge.consent.autocomplete.resources.TranslateResource;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 public class TranslateTest {
-    public static String resourceFilePath(final String filename) {
-        try {
-            return new File(Resources.getResource(filename).toURI()).getAbsolutePath();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @ClassRule
     public static final ResourceTestRule gRule =
