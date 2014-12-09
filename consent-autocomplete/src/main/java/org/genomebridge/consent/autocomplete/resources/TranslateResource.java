@@ -16,7 +16,7 @@ public class TranslateResource {
             String restriction ) {
         if ( "purpose".equals(forParam) )
             return Response.ok().entity(TranslationHelper.translatePurpose(restriction)).build();
-        if ( "sample".equals(forParam) )
+        if ( "sampleset".equals(forParam) )
             return Response.ok().entity(TranslationHelper.translateSample(restriction)).build();
         return Response.status(Response.Status.BAD_REQUEST).build();
     }

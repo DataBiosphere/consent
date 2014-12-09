@@ -32,7 +32,7 @@ public class TranslateTest {
 
     @Test
     public void testPediatricCancerSample() {
-        translate("sample",
+        translate("sampleset",
 "{\"type\":\"and\",\"operands\":[{\"type\":\"named\",\"name\":\"http://purl.obolibrary.org/obo/DOID_162\"},"+
 "{\"type\":\"named\",\"name\":\"http://www.genomebridge.org/ontologies/DURPO/children\"},"+
 "{\"type\":\"named\",\"name\":\"http://www.genomebridge.org/ontologies/DURPO/Non_profit\"}]}",
