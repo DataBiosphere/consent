@@ -16,15 +16,19 @@
 package org.genomebridge.consent.autocomplete;
 
 import com.hubspot.dropwizard.guice.GuiceBundle;
+
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.genomebridge.consent.autocomplete.resources.AllTermsResource;
+import org.genomebridge.consent.autocomplete.resources.TranslateResource;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+
 import java.util.EnumSet;
 
 
@@ -43,6 +47,7 @@ public class AutocompleteApplication extends Application<AutocompleteConfigurati
 
     public void run(AutocompleteConfiguration config, Environment env) {
         env.jersey().register(AllTermsResource.class);
+        env.jersey().register(TranslateResource.class);
 
         // support for cross-origin ajax calls to the autocomplete service
         FilterRegistration.Dynamic corsFilter = env.servlets().addFilter("CORS", CrossOriginFilter.class);
