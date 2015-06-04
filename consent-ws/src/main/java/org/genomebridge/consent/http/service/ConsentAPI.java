@@ -15,8 +15,8 @@
  */
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
-import org.genomebridge.consent.http.resources.ConsentResource;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
@@ -26,9 +26,9 @@ import java.util.List;
  */
 public interface ConsentAPI {
 
-    public void create(String id, ConsentResource rec) throws DuplicateIdentifierException;
-    public ConsentResource retrieve( String id ) throws UnknownIdentifierException;
-    public void update(String id, ConsentResource rec) throws UnknownIdentifierException;
+    public void create(String id, Consent rec) throws DuplicateIdentifierException;
+    public Consent retrieve( String id ) throws UnknownIdentifierException;
+    public void update(String id, Consent rec) throws UnknownIdentifierException;
 
     /**
      * This isn't actually used in the web services at the moment, but i'm including it for

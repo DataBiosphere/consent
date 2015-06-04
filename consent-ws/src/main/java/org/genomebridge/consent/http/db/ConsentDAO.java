@@ -16,7 +16,7 @@
 
 package org.genomebridge.consent.http.db;
 
-import org.genomebridge.consent.http.resources.ConsentResource;
+import org.genomebridge.consent.http.models.Consent;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -26,11 +26,11 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.List;
 
-@RegisterMapper({ ConsentResourceMapper.class })
+@RegisterMapper({ ConsentMapper.class })
 public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where consentId = :consentId and active=true")
-    public ConsentResource findConsentById(@Bind("consentId") String consentId);
+    public Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     public String checkConsentbyId(@Bind("consentId") String consentId);

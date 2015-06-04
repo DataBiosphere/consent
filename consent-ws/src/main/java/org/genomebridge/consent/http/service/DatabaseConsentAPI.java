@@ -18,8 +18,8 @@ package org.genomebridge.consent.http.service;
 import com.sun.jersey.api.NotFoundException;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
-import org.genomebridge.consent.http.resources.ConsentResource;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -64,17 +64,17 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     // Consent Methods
 
     @Override
-    public void create(String id, ConsentResource rec) throws DuplicateIdentifierException {
+    public void create(String id, Consent rec) throws DuplicateIdentifierException {
         consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
     }
 
     @Override
-    public ConsentResource retrieve(String id) throws UnknownIdentifierException {
+    public Consent retrieve(String id) throws UnknownIdentifierException {
         return consentDAO.findConsentById(id);
     }
 
     @Override
-    public void update(String id, ConsentResource rec) throws UnknownIdentifierException {
+    public void update(String id, Consent rec) throws UnknownIdentifierException {
         consentDAO.updateConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
     }
 
