@@ -15,9 +15,14 @@
  */
 package org.genomebridge.consent.http.models;
 
+import com.google.common.base.Objects;
+
 import java.util.Arrays;
 
 public class Or extends UseRestriction {
+
+    private String type = "or";
+
     private UseRestriction[] operands;
 
     public Or() {}
@@ -29,25 +34,20 @@ public class Or extends UseRestriction {
         }
     }
 
+    public String getType() { return type; }
+
     public void setOperands(UseRestriction[] ops) { this.operands = ops.clone(); }
     public UseRestriction[] getOperands() { return operands; }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < operands.length; i++) {
-            if(i > 0) { sb.append(","); }
-            sb.append(operands[i].toString());
-        }
-        return String.format("{ \"type\": \"or\", \"operands\": [%s] }", sb.toString());
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(type, operands);
     }
 
-
-    public int hashCode() { return Arrays.hashCode(operands); }
-
+    @Override
     public boolean equals(Object o) {
-        if(!(o instanceof Or)) { return false; }
-        Or r = (Or)o;
-        return Arrays.deepEquals(operands, r.operands);
+        return o instanceof Or &&
+                Arrays.deepEquals(this.operands, ((Or) o).operands);
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.google.gson.Gson;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -53,11 +54,6 @@ public abstract class UseRestriction {
         }
     }
 
-    public static String serialize(UseRestriction restriction) throws IOException {
-        return mapper.writer().writeValueAsString(restriction);
-    }
-
-
     public boolean visit(UseRestrictionVisitor visitor) {
         boolean shouldContinue = true;
         if((shouldContinue = visitor.visit(this))) {
@@ -67,6 +63,10 @@ public abstract class UseRestriction {
         }
 
         return shouldContinue;
+    }
+
+    public String toString() {
+        return new Gson().toJson(this);
     }
 
     public abstract boolean visitAndContinue(UseRestrictionVisitor visitor);
