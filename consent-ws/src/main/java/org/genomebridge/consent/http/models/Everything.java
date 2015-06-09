@@ -15,19 +15,24 @@
  */
 package org.genomebridge.consent.http.models;
 
+import com.google.common.base.Objects;
+
 public class Everything extends UseRestriction {
+
+    private String type = "everything";
 
     public Everything() {}
 
-    public String toString() {
-        return String.format("{ \"type\": \"everything\" }");
+    public String getType() { return type; }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(type);
     }
 
-    public int hashCode() { return "everything".hashCode(); }
-
+    @Override
     public boolean equals(Object o) {
-        if(!(o instanceof Everything)) { return false; }
-        return true;
+        return o instanceof Everything;
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {

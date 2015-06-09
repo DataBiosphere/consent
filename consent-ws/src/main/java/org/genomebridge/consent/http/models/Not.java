@@ -15,7 +15,11 @@
  */
 package org.genomebridge.consent.http.models;
 
+import com.google.common.base.Objects;
+
 public class Not extends UseRestriction {
+
+    private String type = "not";
 
     private UseRestriction operand;
 
@@ -25,17 +29,20 @@ public class Not extends UseRestriction {
         this.operand = operand;
     }
 
+    public String getType() { return type; }
+
     public UseRestriction getOperand() { return operand; }
     public void setOperand(UseRestriction op) { operand = op; }
 
-    public String toString() {
-        return String.format("{ \"type\": \"not\", \"operand\": %s }", operand.toString());
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(type, operand);
     }
 
-    public int hashCode() { return 37 * (operand.hashCode() + 1); }
-
+    @Override
     public boolean equals(Object o) {
-        return (o instanceof Not) && ((Not)o).operand.equals(operand);
+        return o instanceof Not &&
+                Objects.equal(this.operand, ((Not) o).operand);
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {

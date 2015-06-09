@@ -15,34 +15,34 @@
  */
 package org.genomebridge.consent.http.models;
 
+import com.google.common.base.Objects;
+
 import java.util.Arrays;
 
 public class And extends UseRestriction {
+
+    private String type = "and";
+
     private UseRestriction[] operands;
 
     public And() {}
-    public And(UseRestriction... operands) {
-        this.operands = operands;
-    }
+
+    public And(UseRestriction... operands) { this.operands = operands; }
+
+    public String getType() { return type; }
 
     public void setOperands(UseRestriction[] ops) { this.operands = ops.clone(); }
     public UseRestriction[] getOperands() { return operands; }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < operands.length; i++) {
-            if(i > 0) { sb.append(","); }
-            sb.append(operands[i].toString());
-        }
-        return String.format("{ \"type\": \"and\", \"operands\": [%s] }", sb.toString());
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(type, operands);
     }
 
-    public int hashCode() { return Arrays.hashCode(operands); }
-
+    @Override
     public boolean equals(Object o) {
-        if(!(o instanceof And)) { return false; }
-        And r = (And)o;
-        return Arrays.deepEquals(operands, r.operands);
+        return o instanceof And &&
+                Arrays.deepEquals(this.operands, ((And) o).operands);
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {

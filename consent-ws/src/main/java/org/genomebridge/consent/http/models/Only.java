@@ -15,39 +15,42 @@
  */
 package org.genomebridge.consent.http.models;
 
+import com.google.common.base.Objects;
+
 public class Only extends UseRestriction {
+
+    private String type = "only";
     private String property;
-    private UseRestriction object;
+    private UseRestriction target;
 
     public Only() {}
 
     public Only(String prop, UseRestriction obj) {
         this.property = prop;
-        this.object = obj;
+        this.target = obj;
     }
+
+    public String getType() { return type; }
 
     public String getProperty() { return property; }
-    public UseRestriction getTarget() { return object; }
+    public UseRestriction getTarget() { return target; }
 
     public void setProperty(String p) { property = p; }
-    public void setTarget(UseRestriction r) { object = r; }
+    public void setTarget(UseRestriction r) { target = r; }
 
-    public String toString() {
-        return String.format("{ \"type\": \"only\", \"property\": \"%s\", \"target\": %s }",
-                property, object.toString());
-    }
-
+    @Override
     public int hashCode() {
-        return 37 * property.hashCode() + object.hashCode();
+        return Objects.hashCode(type, property, target);
     }
 
+    @Override
     public boolean equals(Object o) {
-        if(!(o instanceof Only)) return false;
-        Only r = (Only)o;
-        return property.equals(r.property) && object.equals(r.object);
+        return o instanceof Only &&
+                Objects.equal(this.property, ((Only) o).property) &&
+                Objects.equal(this.target, ((Only) o).target);
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {
-        return object.visit(visitor);
+        return target.visit(visitor);
     }
 }
