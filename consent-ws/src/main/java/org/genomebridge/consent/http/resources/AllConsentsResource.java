@@ -15,8 +15,7 @@
  */
 package org.genomebridge.consent.http.resources;
 
-import com.sun.jersey.spi.container.WebApplication;
-import javassist.tools.web.BadHttpRequest;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.DuplicateIdentifierException;
@@ -24,7 +23,6 @@ import org.genomebridge.consent.http.service.DuplicateIdentifierException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -40,7 +38,7 @@ public class AllConsentsResource extends Resource {
 
     @PUT
     @Consumes("application/json")
-    public Response createConsent(@Context UriInfo info, ConsentResource rec) {
+    public Response createConsent(@Context UriInfo info, Consent rec) {
         URI uri = null;
         do {
             String newId = UUID.randomUUID().toString();

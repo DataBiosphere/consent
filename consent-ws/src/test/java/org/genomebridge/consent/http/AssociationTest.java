@@ -23,6 +23,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.Everything;
 import org.genomebridge.consent.http.resources.ConsentResource;
@@ -368,10 +369,7 @@ public class AssociationTest extends ConsentServiceTest {
     private String setupConsent() {
         Client client = new Client();
 
-        ConsentResource rec = new ConsentResource();
-        rec.requiresManualReview = false;
-        rec.useRestriction = new Everything();
-
+        Consent rec = new Consent(false, new Everything());
         ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/")+1);

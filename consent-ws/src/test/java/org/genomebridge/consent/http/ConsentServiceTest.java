@@ -16,8 +16,7 @@
 package org.genomebridge.consent.http;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import org.genomebridge.consent.http.resources.ConsentResource;
+import org.genomebridge.consent.http.models.Consent;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -35,16 +34,8 @@ public abstract class ConsentServiceTest extends AbstractTest {
         }
     }
 
-    public ConsentResource retrieveConsent(Client client, String url) {
-        return get(client, url).getEntity(ConsentResource.class);
+    public Consent retrieveConsent(Client client, String url) {
+        return get(client, url).getEntity(Consent.class);
     }
 
-    public String createConsent( Client client, ConsentResource toCreate ) {
-        ClientResponse response = put(client, consentPath(), toCreate);
-        return response.getHeaders().getFirst("Location");
-    }
-
-    public void updateConsent( Client client, String url, ConsentResource resource ) {
-        post(client, url, resource);
-    }
 }

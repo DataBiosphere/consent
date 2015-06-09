@@ -16,8 +16,7 @@
 package org.genomebridge.consent.http.resources;
 
 import com.sun.jersey.api.NotFoundException;
-import org.apache.log4j.Logger;
-import org.genomebridge.consent.http.models.UseRestriction;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.UnknownIdentifierException;
@@ -28,19 +27,15 @@ import javax.ws.rs.core.Response;
 @Path("consent/{id}")
 public class ConsentResource extends Resource {
 
-    public Boolean requiresManualReview;
-    public UseRestriction useRestriction;
-
     private ConsentAPI api;
 
     public ConsentResource() { this.api = AbstractConsentAPI.getInstance(); }
 
     @GET
     @Produces("application/json")
-    public ConsentResource describe(@PathParam("id") String id) {
+    public Consent describe(@PathParam("id") String id) {
         try {
-            populateFromApi(id);
-            return this;
+            return populateFromApi(id);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", id));
         }
@@ -49,7 +44,7 @@ public class ConsentResource extends Resource {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response update(@PathParam("id") String id, ConsentResource updated) {
+    public Response update(@PathParam("id") String id, Consent updated) {
         try {
             api.update(id, updated);
             return Response.ok(updated).build();
@@ -58,13 +53,8 @@ public class ConsentResource extends Resource {
         }
     }
 
-    private void populateFromApi(String id) throws UnknownIdentifierException {
-        ConsentResource rec = api.retrieve(id);
-        this.requiresManualReview = rec.requiresManualReview;
-        this.useRestriction = rec.useRestriction;
+    private Consent populateFromApi(String id) throws UnknownIdentifierException {
+        return api.retrieve(id);
     }
 
-    private void saveToApi(String id) throws UnknownIdentifierException {
-        api.update(id, this);
-    }
 }
