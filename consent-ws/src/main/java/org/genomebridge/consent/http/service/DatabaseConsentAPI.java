@@ -128,12 +128,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (associationType == null)
             result = getAllAssociationsForConsent(consentId);
         else {
-            result = new ArrayList<ConsentAssociation>();
+            result = new ArrayList<>();
             List<String> id_list;
             if (objectId == null)
                 id_list = consentDAO.findAssociationsByType(consentId, associationType);
             else { // both associationType and objectId specified
-                id_list = new ArrayList<String>();
+                id_list = new ArrayList<>();
                 if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) != null)
                     id_list.add(objectId);
             }
@@ -167,7 +167,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         // We get a list of consentId's (UUID's) from the database, and turn them into URIs
         // <base-service-url>/consent/{id}
         List<String> consent_ids = consentDAO.findConsentsForAssociation(associationType, objectId);
-        List<String> consent_uris = new ArrayList<String>(consent_ids.size());
+        List<String> consent_uris = new ArrayList<>(consent_ids.size());
         for (String consentId : consent_ids) {
             UriBuilder ub = uriInfo.getBaseUriBuilder();
             URI consentUri = ub.path("consent").path(consentId).build();
@@ -183,7 +183,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     // if not.  The only error checked for is duplicate associationType.
     private void validateAssociations(List<ConsentAssociation> assoc_list) {
         if (assoc_list.size() > 1) {
-            Set<String> atype_list = new HashSet<String>();
+            Set<String> atype_list = new HashSet<>();
             for (ConsentAssociation assoc : assoc_list) {
                 if (atype_list.contains(assoc.getAssociationType()))
                     throw new WebApplicationException(Response.Status.BAD_REQUEST);
@@ -202,7 +202,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     // Get the updated list of all the associations for a Consent Resource, to return as a result.
     private List<ConsentAssociation> getAllAssociationsForConsent(String consentId) {
-        List<ConsentAssociation> assoc_list = new ArrayList<ConsentAssociation>();
+        List<ConsentAssociation> assoc_list = new ArrayList<>();
         List<String> type_list = consentDAO.findAssociationTypesForConsent(consentId);
         logger.debug(String.format("getAllAssociationsForConsent consentId='%s', types='%s'", consentId, type_list.toString()));
         for (String atype : type_list) {

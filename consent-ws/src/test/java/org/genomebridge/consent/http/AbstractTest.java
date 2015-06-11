@@ -3,15 +3,9 @@ package org.genomebridge.consent.http;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.genomebridge.consent.http.resources.ConsentResource;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.TreeSet;
-import java.util.UUID;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -79,10 +73,6 @@ abstract public class AbstractTest extends ResourcedTest {
         MultivaluedMap<String,String> map = response.getHeaders();
         assertThat(map).describedAs(String.format("header \"%s\"", header)).containsKey(header);
         return map.getFirst(header);
-    }
-
-    public String randomID() {
-        return UUID.randomUUID().toString();
     }
 
     public String path2Url(String path) {
