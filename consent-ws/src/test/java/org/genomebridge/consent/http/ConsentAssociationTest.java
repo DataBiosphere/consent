@@ -18,13 +18,10 @@ public class ConsentAssociationTest {
     private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
 
     private static ConsentAssociation buildConsentAssociation(String atype, String... elements) {
-        final ArrayList<String> elem_list = new ArrayList<String>();
-        for (String elem : elements)
-            elem_list.add(elem);
+        final ArrayList<String> elem_list = new ArrayList<>();
+        Collections.addAll(elem_list, elements);
         return new ConsentAssociation(atype, elem_list);
     }
-
-
 
     @Test
     public void serializesToJSON() throws Exception {

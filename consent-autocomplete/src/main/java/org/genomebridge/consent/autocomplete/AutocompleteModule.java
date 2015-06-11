@@ -2,7 +2,6 @@ package org.genomebridge.consent.autocomplete;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Environment;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -11,9 +10,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.genomebridge.consent.autocomplete.service.AutocompleteAPI;
 import org.genomebridge.consent.autocomplete.service.ElasticSearchAutocompleteAPI;
 import org.genomebridge.consent.autocomplete.service.ElasticSearchHealthCheck;
-import org.skife.jdbi.v2.DBI;
-
-import java.net.InetSocketAddress;
 
 public class AutocompleteModule extends AbstractModule {
 
