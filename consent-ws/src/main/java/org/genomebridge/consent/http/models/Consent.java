@@ -10,6 +10,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Consent {
 
     @JsonProperty
+    public String consentId;
+
+    @JsonProperty
     public Boolean requiresManualReview;
 
     @JsonProperty

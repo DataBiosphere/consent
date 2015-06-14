@@ -1,20 +1,24 @@
 package org.genomebridge.consent.http.service;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.sun.jersey.api.NotFoundException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.db.ConsentMapper;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
+import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.Handle;
+import org.skife.jdbi.v2.Query;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Implementation class for ConsentAPI on top of ConsentDAO database support.
@@ -22,6 +26,7 @@ import java.util.Set;
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     private ConsentDAO consentDAO;
+    private DBI jdbi;
     private Logger logger;
 
     /**
@@ -32,8 +37,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao
      * The Data Access Object instance that the API should use to read/write data.
      */
-    public static void initInstance(ConsentDAO dao) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao));
+    public static void initInstance(DBI jdbi, ConsentDAO dao) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao));
     }
 
     /**
@@ -41,7 +46,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao
      * The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao) {
+    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao) {
+        this.jdbi = jdbi;
         this.consentDAO = dao;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
     }
@@ -56,6 +62,24 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
         return consentDAO.findConsentById(id);
+    }
+
+    @Override
+    public Collection<Consent> retrieve(List<String> ids) {
+        Handle h = jdbi.open();
+        List<Consent> consents = h.createQuery("select * from consents where consentId in (" + getInClauseStrings(ids) + ") and active=true").
+                map(new ConsentMapper()).
+                list();
+        h.close();
+        return consents;
+    }
+
+    private String getInClauseStrings(Collection<String> strings) {
+        Collection<String> quotedIds = Collections2.transform(strings, new Function<String, String>() {
+            @Override
+            public String apply(String input) { return "'" + input + "'"; }
+        });
+        return StringUtils.join(quotedIds, ",");
     }
 
     @Override

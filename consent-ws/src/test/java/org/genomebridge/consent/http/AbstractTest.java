@@ -16,6 +16,11 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 abstract public class AbstractTest extends ResourcedTest {
 
+    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
+    public static final int OK = ClientResponse.Status.OK.getStatusCode();
+    public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
+    public static final int BAD_REQUEST = ClientResponse.Status.BAD_REQUEST.getStatusCode();
+
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
 
     /*

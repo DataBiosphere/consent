@@ -9,10 +9,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.genomebridge.consent.http.db.ConsentDAO;
-import org.genomebridge.consent.http.resources.AllAssociationsResource;
-import org.genomebridge.consent.http.resources.AllConsentsResource;
-import org.genomebridge.consent.http.resources.ConsentAssociationResource;
-import org.genomebridge.consent.http.resources.ConsentResource;
+import org.genomebridge.consent.http.resources.*;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.DatabaseConsentAPI;
 import org.skife.jdbi.v2.DBI;
@@ -42,7 +39,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             final DBIFactory factory = new DBIFactory();
             final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
             final ConsentDAO dao = jdbi.onDemand(ConsentDAO.class);
-            DatabaseConsentAPI.initInstance(dao);
+            DatabaseConsentAPI.initInstance(jdbi, dao);
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
@@ -50,6 +47,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // How register our resources.
 
         env.jersey().register(ConsentResource.class);
+        env.jersey().register(ConsentsResource.class);
         env.jersey().register(AllConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
         env.jersey().register(AllAssociationsResource.class);
