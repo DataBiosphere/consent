@@ -11,7 +11,6 @@ import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
-import org.skife.jdbi.v2.Query;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -62,6 +61,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
         return consentDAO.findConsentById(id);
+    }
+
+    @Override
+    public Collection<Consent> findConsentsByAssociationType(String associationType) {
+        return consentDAO.findConsentsByAssociationType(associationType);
     }
 
     @Override

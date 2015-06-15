@@ -8,14 +8,11 @@ import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import java.util.*;
 
 /**
- * This service will find all consents for the provided ids.
+ * This service will find all consents for a comma-separated list of ids or for an association type.
  */
 @Path("/consents")
 public class ConsentsResource extends Resource {
@@ -26,7 +23,7 @@ public class ConsentsResource extends Resource {
 
     @GET
     @Produces("application/json")
-    public Collection<Consent> retrieve(@QueryParam("ids") Optional<String> ids) {
+    public Collection<Consent> findByIds(@QueryParam("ids") Optional<String> ids) {
         if (ids.isPresent()) {
             List<String> splitIds = new ArrayList<>();
             for (String id : Arrays.asList(ids.get().split(","))) {
@@ -58,6 +55,25 @@ public class ConsentsResource extends Resource {
         }
         else {
             throw new NotFoundException("Cannot find any consents without ids");
+        }
+    }
+
+    /*
+     * Prefer to use Optional<String> but jersey complains with "SEVERE: Missing dependency for method..."
+     * when used in combination with PathParam
+     */
+    @GET
+    @Produces("application/json")
+    @Path("{associationType}")
+    public Collection<Consent> findByAssociationType(@PathParam("associationType") String associationType) {
+        if (associationType != null) {
+            Collection<Consent> consents = api.findConsentsByAssociationType(associationType);
+            if (consents == null || consents.isEmpty()) {
+                throw new NotFoundException("Unable to find consents for the association type: " + associationType);
+            }
+            return consents;
+        } else {
+            throw new NotFoundException("Unable to find consents without an association type");
         }
     }
 

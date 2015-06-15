@@ -11,6 +11,7 @@ public interface ConsentAPI {
 
     void create(String id, Consent rec) throws DuplicateIdentifierException;
     Consent retrieve( String id ) throws UnknownIdentifierException;
+    Collection<Consent> findConsentsByAssociationType( String associationType );
     Collection<Consent> retrieve( List<String> ids );
     void update(String id, Consent rec) throws UnknownIdentifierException;
 
