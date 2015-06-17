@@ -11,8 +11,6 @@ import static org.fest.assertions.api.Assertions.assertThat;
 
 public class ConsentAcceptanceTest extends ConsentServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
-
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
             new DropwizardAppRule<>(ConsentApplication.class,

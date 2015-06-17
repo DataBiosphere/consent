@@ -10,14 +10,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ConsentMapper implements ResultSetMapper<Consent> {
+
     public Consent map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-        Consent rec = new Consent();
-        rec.requiresManualReview = r.getBoolean("requiresManualReview");
+        Consent consent = new Consent();
+        consent.consentId = r.getString("consentId");
+        consent.requiresManualReview = r.getBoolean("requiresManualReview");
         try {
-            rec.useRestriction = UseRestriction.parse(r.getString("useRestriction"));
+            consent.useRestriction = UseRestriction.parse(r.getString("useRestriction"));
         } catch (IOException e) {
             throw new SQLException(e);
         }
-        return rec;
+        return consent;
     }
+
 }

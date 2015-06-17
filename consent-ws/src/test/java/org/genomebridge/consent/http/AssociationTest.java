@@ -27,9 +27,6 @@ import static org.fest.assertions.api.Assertions.fail;
  * Created by egolin on 9/15/14.
  */
 public class AssociationTest extends ConsentServiceTest {
-    public static final int OK = ClientResponse.Status.OK.getStatusCode();
-    public static final int BAD_REQUEST = ClientResponse.Status.BAD_REQUEST.getStatusCode();
-    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =

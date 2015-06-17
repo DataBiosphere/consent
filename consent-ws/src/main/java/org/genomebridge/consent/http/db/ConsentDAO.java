@@ -8,6 +8,7 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 @RegisterMapper({ ConsentMapper.class })
@@ -18,6 +19,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     String checkConsentbyId(@Bind("consentId") String consentId);
+
+    @SqlQuery("select c.* from consents c inner join consentassociations a on c.consentId = a.consentId where c.active=true and a.associationType = :associationType ")
+    Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
             "(consentId, requiresManualReview, useRestriction, active) values " +
