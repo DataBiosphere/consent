@@ -7,32 +7,18 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
-import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.cloudstore.GCSStore;
+import org.genomebridge.consent.http.db.*;
 import org.genomebridge.consent.http.resources.*;
-import org.genomebridge.consent.http.db.DACUserDAO;
-import org.genomebridge.consent.http.db.DataRequestDAO;
-import org.genomebridge.consent.http.db.ElectionDAO;
-import org.genomebridge.consent.http.db.VoteDAO;
-import org.genomebridge.consent.http.resources.AllAssociationsResource;
-import org.genomebridge.consent.http.resources.AllConsentsResource;
-import org.genomebridge.consent.http.resources.ConsentAssociationResource;
-import org.genomebridge.consent.http.resources.ConsentResource;
-import org.genomebridge.consent.http.resources.ConsentElectionResource;
-import org.genomebridge.consent.http.resources.DataRequestElectionResource;
-import org.genomebridge.consent.http.resources.ConsentVoteResource;
-import org.genomebridge.consent.http.resources.DataRequestVoteResource;
-import org.genomebridge.consent.http.service.AbstractConsentAPI;
-import org.genomebridge.consent.http.service.AbstractElectionAPI;
-import org.genomebridge.consent.http.service.AbstractVoteAPI;
-import org.genomebridge.consent.http.service.DatabaseConsentAPI;
-import org.genomebridge.consent.http.service.DatabaseElectionAPI;
-import org.genomebridge.consent.http.service.DatabaseVoteAPI;
+import org.genomebridge.consent.http.service.*;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 /**
  * Top-level entry point to the entire application.
@@ -70,12 +56,22 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             throw new IllegalStateException(e);
         }
 
-        // How register our resources.
+        GCSStore googleStore = null;
+        try {
+            googleStore = new GCSStore(config.getCloudStoreConfiguration());
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            LOGGER.debug("Couldn't read Google Cloud configuration from yml file.");
+            e.printStackTrace();
+        }
 
+        // How register our resources.
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(AllConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
+        env.jersey().register(new DataUseLetterResource(googleStore));
         env.jersey().register(AllAssociationsResource.class);
         env.jersey().register(ConsentElectionResource.class);
         env.jersey().register(DataRequestElectionResource.class);

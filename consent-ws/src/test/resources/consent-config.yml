@@ -11,7 +11,12 @@ database:
   password: sa
   url: jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
-
+googleStore:
+  username: Hidden
+  password: Hidden
+  bucket: consent-ci
+  endpoint: https://storage.googleapis.com
+  type: GCS
 # Logging settings
 logging:
   # default logging level

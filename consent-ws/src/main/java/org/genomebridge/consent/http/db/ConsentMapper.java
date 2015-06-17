@@ -15,6 +15,7 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         Consent consent = new Consent();
         consent.consentId = r.getString("consentId");
         consent.requiresManualReview = r.getBoolean("requiresManualReview");
+        consent.dataUseLetter = r.getString("dataUseLetter");
         try {
             consent.useRestriction = UseRestriction.parse(r.getString("useRestriction"));
         } catch (IOException e) {

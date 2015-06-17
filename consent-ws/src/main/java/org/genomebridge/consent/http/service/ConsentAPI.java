@@ -32,4 +32,11 @@ public interface ConsentAPI {
     List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
     List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId);
     List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
+
+    // Data Use Letter methods.
+    void updateCreateDUL(String consentId, String dataUseLetter) throws UnknownIdentifierException;
+    String getFileURL(String consentId) throws UnknownIdentifierException;
+    void deleteDUL(String consentId) throws UnknownIdentifierException;
+
+
 }

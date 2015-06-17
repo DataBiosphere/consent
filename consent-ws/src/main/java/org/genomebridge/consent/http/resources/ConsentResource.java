@@ -39,7 +39,8 @@ public class ConsentResource extends Resource {
     }
 
     private Consent populateFromApi(String id) throws UnknownIdentifierException {
-        return api.retrieve(id);
+        Consent ct = api.retrieve(id);
+        return ct;
     }
 
 }
