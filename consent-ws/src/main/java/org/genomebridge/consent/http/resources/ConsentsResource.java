@@ -26,7 +26,7 @@ public class ConsentsResource extends Resource {
     public Collection<Consent> findByIds(@QueryParam("ids") Optional<String> ids) {
         if (ids.isPresent()) {
             List<String> splitIds = new ArrayList<>();
-            for (String id : Arrays.asList(ids.get().split(","))) {
+            for (String id : ids.get().split(",")) {
                 try {
                     //noinspection ResultOfMethodCallIgnored
                     UUID.fromString(id);
