@@ -36,6 +36,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao
      * The Data Access Object instance that the API should use to read/write data.
      */
+
     public static void initInstance(DBI jdbi, ConsentDAO dao) {
         ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao));
     }
