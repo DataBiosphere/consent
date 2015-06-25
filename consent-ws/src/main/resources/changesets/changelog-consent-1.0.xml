@@ -1,0 +1,176 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="7" author="vvicario">
+        <createTable tableName="dacuser">
+            <column name="dacUserId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="displayName" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="memberStatus" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="8" author="vvicario">
+        <createTable tableName="electiontype">
+            <column name="typeId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="9" author="vvicario">
+        <createTable tableName="election">
+            <column name="electionId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="electionType" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="finalRationale" type="varchar(255)"/>
+            <column name="finalVote" type="boolean" defaultValue="null"/>
+            <column name="createDate" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="referenceId" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="10" author="vvicario">
+        <createTable tableName="vote">
+            <column name="voteId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="vote" type="boolean" defaultValue="null"/>
+            <column name="dacUserId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="createDate" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updateDate" type="DATETIME"/>
+            <column name="electionId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rationale" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="11" author="vvicario">
+        <createTable tableName="dataset">
+            <column name="dataSetId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="consentId" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="12" author="vvicario">
+        <createTable tableName="researchpurpose">
+            <column name="purposeId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="purpose" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="13" author="vvicario">
+        <createTable tableName="datarequest">
+            <column name="requestId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="dataSetId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purposeId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(255)"/>
+            <column name="researcher" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="associationId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- foreign key -->
+    <changeSet author="vvicario" id="14">
+        <addForeignKeyConstraint baseColumnNames="dacUserId" baseTableName="vote" constraintName="fkVoteDacUser"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacUserId" referencedTableName="dacuser"
+                                 referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="15">
+        <addForeignKeyConstraint baseColumnNames="electionType" baseTableName="election"
+                                 constraintName="fkElectionElectionType" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="typeId"
+                                 referencedTableName="electiontype" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="16">
+        <addForeignKeyConstraint baseColumnNames="electionId" baseTableName="vote" constraintName="fkVoteElection"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="electionId" referencedTableName="election"
+                                 referencesUniqueColumn="false"/>
+    </changeSet>
+
+
+    <changeSet author="vvicario" id="17">
+        <addForeignKeyConstraint baseColumnNames="purposeId" baseTableName="datarequest"
+                                 constraintName="fkDataRequestPurpose" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="purposeId"
+                                 referencedTableName="researchpurpose" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="18">
+        <addForeignKeyConstraint baseColumnNames="consentId" baseTableName="dataset" constraintName="fkDataSetConsent"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="consentId" referencedTableName="consents"
+                                 referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="19">
+        <addForeignKeyConstraint baseColumnNames="associationId" baseTableName="datarequest"
+                                 constraintName="fkDataRequestAssociation" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="associationId"
+                                 referencedTableName="consentassociations" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <!--insert electionType-->
+    <changeSet author="vvicario" id="20">
+        <insert tableName="electiontype">
+            <column name="typeId" value="1"/>
+            <column name="type" value="DataAccess"/>
+        </insert>
+        <insert tableName="electiontype">
+            <column name="typeId" value="2"/>
+            <column name="type" value="TranslateDUL"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
