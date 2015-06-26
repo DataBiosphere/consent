@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ConsentAPI {
 
-    void create(String id, Consent rec) throws DuplicateIdentifierException;
+    Consent create(Consent rec);
     Consent retrieve( String id ) throws UnknownIdentifierException;
     Collection<Consent> findConsentsByAssociationType( String associationType );
     Collection<Consent> retrieve( List<String> ids );

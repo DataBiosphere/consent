@@ -54,8 +54,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     // Consent Methods
 
     @Override
-    public void create(String id, Consent rec) throws DuplicateIdentifierException {
+    public Consent create(Consent rec) {
+        String id = UUID.randomUUID().toString();
         consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
+        return consentDAO.findConsentById(id);
     }
 
     @Override
