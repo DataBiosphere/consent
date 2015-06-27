@@ -25,62 +25,61 @@ import com.sun.jersey.api.NotFoundException;
 @Path("consent/{consentId}/election")
 public class ConsentElectionResource extends Resource {
 
-	private ElectionAPI api;
+    private ElectionAPI api;
 
-	public ConsentElectionResource() {
-		this.api = AbstractElectionAPI.getInstance();
-	}
+    public ConsentElectionResource() {
+        this.api = AbstractElectionAPI.getInstance();
+    }
 
-	@POST
-	@Consumes("application/json")
-	public Response createConsentElection(@Context UriInfo info, Election rec,
-			@PathParam("consentId") String consentId) {
-		URI uri = null;
-		try {
-			api.createElection(rec, consentId,true);
-			uri = info.getRequestUriBuilder().build();
-		} catch (IllegalArgumentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-		}
-		return Response.created(uri).build();
-	}
+    @POST
+    @Consumes("application/json")
+    public Response createConsentElection(@Context UriInfo info, Election rec,
+                                          @PathParam("consentId") String consentId) {
+        URI uri;
+        try {
+            api.createElection(rec, consentId, true);
+            uri = info.getRequestUriBuilder().build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+        return Response.created(uri).build();
+    }
 
-	@PUT
-	@Consumes("application/json")
-	@Produces("application/json")
-	@Path("/{id}")
-	public Response updateConsentElection(@Context UriInfo info, Election rec,
-			@PathParam("consentId") String consentId,@PathParam("id") Integer id) {
-		try {
-			Election election = api.updateElectionById(rec, id);
-			URI uri = info.getRequestUriBuilder().build(ConsentElectionResource.class);
-	        return Response.ok(election).location(uri).build();
-		}catch (IllegalArgumentException e) {
-			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-		}
-	}
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/{id}")
+    public Response updateConsentElection(@Context UriInfo info, Election rec,
+                                          @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
+        try {
+            Election election = api.updateElectionById(rec, id);
+            URI uri = info.getRequestUriBuilder().build(ConsentElectionResource.class);
+            return Response.ok(election).location(uri).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
 
-	@GET
-	@Produces("application/json")
-	public Election describe(@PathParam("consentId") String consentId) {
-		try {
-			return api.describeConsentElection(consentId);
-		} catch (Exception e) {
-			throw new NotFoundException("Invalid id:"+consentId);
-		}
-	}
+    @GET
+    @Produces("application/json")
+    public Election describe(@PathParam("consentId") String consentId) {
+        try {
+            return api.describeConsentElection(consentId);
+        } catch (Exception e) {
+            throw new NotFoundException("Invalid id:" + consentId);
+        }
+    }
 
-	@DELETE
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteElection(@PathParam("consentId") String consentId,@Context UriInfo info) {
-		try {
-			api.deleteElection(consentId);
-			return  Response.status(Response.Status.OK).entity("Election was deleted").build();
-		} catch (Exception e) { 
-			throw new NotFoundException(e.getMessage());
-		}
-	}
-	
-	
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info) {
+        try {
+            api.deleteElection(consentId);
+            return Response.status(Response.Status.OK).entity("Election was deleted").build();
+        } catch (Exception e) {
+            throw new NotFoundException(e.getMessage());
+        }
+    }
+
 
 }

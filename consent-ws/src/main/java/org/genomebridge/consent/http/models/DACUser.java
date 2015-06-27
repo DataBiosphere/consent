@@ -4,60 +4,60 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DACUser {
 
-	@JsonProperty
-	private Integer dacUserId;
+    @JsonProperty
+    private Integer dacUserId;
 
-	@JsonProperty
-	private String email;
-	
-	@JsonProperty
-	private String displayName;
-	
-	@JsonProperty
-	private String memberStatus;
+    @JsonProperty
+    private String email;
 
-	
-	public DACUser() {
-	}
+    @JsonProperty
+    private String displayName;
 
-	public DACUser(Integer dacUserId, String email, String displayName,
-			String memberStatus) {
-		this.dacUserId = dacUserId;
-		this.email = email;
-		this.displayName = displayName;
-		this.memberStatus = memberStatus;
-	}
+    @JsonProperty
+    private String memberStatus;
 
-	public Integer getDacUserId() {
-		return dacUserId;
-	}
 
-	public void setDacUserId(Integer dacUserId) {
-		this.dacUserId = dacUserId;
-	}
+    public DACUser() {
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public DACUser(Integer dacUserId, String email, String displayName,
+                   String memberStatus) {
+        this.dacUserId = dacUserId;
+        this.email = email;
+        this.displayName = displayName;
+        this.memberStatus = memberStatus;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public Integer getDacUserId() {
+        return dacUserId;
+    }
 
-	public String getDisplayName() {
-		return displayName;
-	}
+    public void setDacUserId(Integer dacUserId) {
+        this.dacUserId = dacUserId;
+    }
 
-	public void setDisplayName(String displayName) {
-		this.displayName = displayName;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public String getMemberStatus() {
-		return memberStatus;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setMemberStatus(String memberStatus) {
-		this.memberStatus = memberStatus;
-	}
-	
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getMemberStatus() {
+        return memberStatus;
+    }
+
+    public void setMemberStatus(String memberStatus) {
+        this.memberStatus = memberStatus;
+    }
+
 }

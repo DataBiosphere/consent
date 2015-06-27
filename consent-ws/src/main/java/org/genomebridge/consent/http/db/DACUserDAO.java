@@ -8,5 +8,5 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlQuery("select * from dacuser where dacUserId = :dacUserId")
     String findDACUserById(@Bind("dacUserId") Integer dacUserId);
-    
+
 }

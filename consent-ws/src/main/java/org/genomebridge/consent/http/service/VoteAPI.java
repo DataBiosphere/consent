@@ -8,16 +8,16 @@ import com.sun.jersey.api.NotFoundException;
 
 public interface VoteAPI {
 
-   public Vote createVote(Vote rec, String referenceId) throws  IllegalArgumentException;
-   
-   public Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
-   
-   public List<Vote> describeVotes(String referenceId);
-   
-   public Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
-   
-   public void deleteVote(Integer voteId,String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
-   
-   public void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
-   
+    Vote createVote(Vote rec, String referenceId) throws IllegalArgumentException;
+
+    Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
+
+    List<Vote> describeVotes(String referenceId);
+
+    Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
+
+    void deleteVote(Integer voteId, String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
+
+    void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
+
 }

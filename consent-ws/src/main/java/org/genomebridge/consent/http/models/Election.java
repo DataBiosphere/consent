@@ -6,97 +6,97 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Election {
 
-	@JsonProperty
-	private Integer electionId;
+    @JsonProperty
+    private Integer electionId;
 
-	@JsonProperty
-	private String electionType;
+    @JsonProperty
+    private String electionType;
 
-	@JsonProperty
-	private Boolean finalVote;
-	
-	@JsonProperty
-	private String status;
-	
-	@JsonProperty
-	private Date createDate;
-	
-	@JsonProperty
-	private String referenceId;
-	
-	@JsonProperty
-	private String finalRationale;
-	
-	public Election() {
-	}
+    @JsonProperty
+    private Boolean finalVote;
 
-	public Election(Integer electionId, String electionType,
-			Boolean finalVote, String finalRationale,String status, Date createDate,
-			String referenceId) {
-		this.electionId = electionId;
-		this.electionType = electionType;
-		this.finalVote = finalVote;
-		this.status = status;
-		this.createDate = createDate;
-		this.referenceId = referenceId;
-		this.finalRationale = finalRationale;
-	}
+    @JsonProperty
+    private String status;
 
-	public Integer getElectionId() {
-		return electionId;
-	}
+    @JsonProperty
+    private Date createDate;
 
-	public void setElectionId(Integer electionId) {
-		this.electionId = electionId;
-	}
+    @JsonProperty
+    private String referenceId;
 
-	public String getElectionType() {
-		return electionType;
-	}
+    @JsonProperty
+    private String finalRationale;
 
-	public void setElectionType(String electionType) {
-		this.electionType = electionType;
-	}
+    public Election() {
+    }
 
-	public Boolean getFinalVote() {
-		return finalVote;
-	}
+    public Election(Integer electionId, String electionType,
+                    Boolean finalVote, String finalRationale, String status, Date createDate,
+                    String referenceId) {
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.finalVote = finalVote;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.finalRationale = finalRationale;
+    }
 
-	public void setFinalVote(Boolean finalVote) {
-		this.finalVote = finalVote;
-	}
+    public Integer getElectionId() {
+        return electionId;
+    }
 
-	public String getStatus() {
-		return status;
-	}
+    public void setElectionId(Integer electionId) {
+        this.electionId = electionId;
+    }
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    public String getElectionType() {
+        return electionType;
+    }
 
-	public Date getCreateDate() {
-		return createDate;
-	}
+    public void setElectionType(String electionType) {
+        this.electionType = electionType;
+    }
 
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
-	}
+    public Boolean getFinalVote() {
+        return finalVote;
+    }
 
-	public String getReferenceId() {
-		return referenceId;
-	}
+    public void setFinalVote(Boolean finalVote) {
+        this.finalVote = finalVote;
+    }
 
-	public void setReferenceId(String referenceId) {
-		this.referenceId = referenceId;
-	}
+    public String getStatus() {
+        return status;
+    }
 
-	public String getFinalRationale() {
-		return finalRationale;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	public void setFinalRationale(String finalRationale) {
-		this.finalRationale = finalRationale;
-	}
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public String getFinalRationale() {
+        return finalRationale;
+    }
+
+    public void setFinalRationale(String finalRationale) {
+        this.finalRationale = finalRationale;
+    }
 
 
 }

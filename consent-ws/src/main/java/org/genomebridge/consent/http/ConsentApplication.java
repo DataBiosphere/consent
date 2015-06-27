@@ -36,14 +36,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Top-level entry point to the entire application.
- *
+ * <p/>
  * See the Dropwizard docs here:
- *   https://dropwizard.github.io/dropwizard/manual/core.html
- *
+ * https://dropwizard.github.io/dropwizard/manual/core.html
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
     public static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
-    
+
     public static void main(String[] args) throws Exception {
         new ConsentApplication().run(args);
     }
@@ -63,9 +62,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             final ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
             final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
             final DataRequestDAO requestDAO = jdbi.onDemand(DataRequestDAO.class);
- 
-            DatabaseElectionAPI.initInstance(electionDAO,consentDAO,requestDAO);
-            DatabaseVoteAPI.initInstance(voteDAO,dacUserDAO,electionDAO);
+
+            DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO);
+            DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
 
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);

@@ -8,17 +8,17 @@ import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 
 public class VoteMapper implements ResultSetMapper<Vote> {
-	
-    public Vote map(int index, ResultSet r, StatementContext ctx) throws SQLException  {
-       	 return new Vote(
-                 r.getInt("voteId"),
-                 (r.getString("vote")==null) ? null : r.getBoolean("vote"),
-                 r.getInt("dacUserId"),
-                 r.getDate("createDate"),
-                 r.getDate("updateDate"),
-                 r.getInt("electionId"),
-                 r.getString("rationale")
-         );
-       
+
+    public Vote map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+        return new Vote(
+                r.getInt("voteId"),
+                (r.getString("vote") == null) ? null : r.getBoolean("vote"),
+                r.getInt("dacUserId"),
+                r.getDate("createDate"),
+                r.getDate("updateDate"),
+                r.getInt("electionId"),
+                r.getString("rationale")
+        );
+
     }
 }
