@@ -56,14 +56,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             throw new IllegalStateException(e);
         }
 
-        GCSStore googleStore = null;
+        GCSStore googleStore;
         try {
             googleStore = new GCSStore(config.getCloudStoreConfiguration());
-        } catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException | IOException e) {
+            LOGGER.error("Couldn't connect to to Google Cloud Storage.");
             e.printStackTrace();
-        } catch (IOException e) {
-            LOGGER.debug("Couldn't read Google Cloud configuration from yml file.");
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
 
         // How register our resources.

@@ -1,14 +1,15 @@
 package org.genomebridge.consent.http.resources;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.sun.jersey.api.NotFoundException;
-import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.genomebridge.consent.http.cloudstore.FileType;
 import org.genomebridge.consent.http.cloudstore.GCSStore;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.UnknownIdentifierException;
@@ -32,26 +33,27 @@ public class DataUseLetterResource extends Resource{
         this.store = store;
     }
 
-    public FileType validFileType(String name){
-        if(name.equalsIgnoreCase("pdf")){
-            return FileType.PDF;
-        } else {
-            if(name.equalsIgnoreCase("doc")){
-                return FileType.DOC;
-            }
+    private String getFileExtension(String fileName){
+        return FilenameUtils.getExtension(fileName);
+    }
+
+    private void deletePreviousStorageFile(String consentId) throws IOException, GeneralSecurityException, UnknownIdentifierException {
+        String prevFile = api.getConsentDulUrl(consentId);
+        if(StringUtils.isNotBlank(prevFile)){
+            store.deleteStorageDocument(prevFile);
         }
-        return null;
     }
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public String  createDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataContentDisposition contentDispositionHeader, @PathParam("id")String consentId){
+    @Produces(MediaType.APPLICATION_JSON)
+    public Consent  createDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id")String consentId){
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
-        FileType type = validFileType(contentDispositionHeader.getFileName().split("\\.")[1]);
         try {
-            String dulUrl = store.postStorageDocument(consentId, uploadedDUL, type);
-            api.updateCreateDUL(consentId, dulUrl);
+            deletePreviousStorageFile(consentId);
+            String dulUrl = store.postStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(),  getFileExtension(part.getContentDisposition().getFileName()));
+            return api.updateConsentDul(consentId, dulUrl);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e){
@@ -59,18 +61,19 @@ public class DataUseLetterResource extends Resource{
         } catch (GeneralSecurityException e){
             logger().error("Security error: "+ e.getMessage());
         }
-        return "Success";
+        return null;
     };
 
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public String updateDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataContentDisposition contentDispositionHeader, @PathParam("id")String consentId) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Consent updateDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id")String consentId) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
-        FileType type = validFileType(contentDispositionHeader.getFileName().split("\\.")[1]);
         try {
-            String dulUrl = store.putStorageDocument(consentId, uploadedDUL, type);
-            api.updateCreateDUL(consentId, dulUrl);
+            deletePreviousStorageFile(consentId);
+            String dulUrl = store.putStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(), getFileExtension(part.getContentDisposition().getFileName()));
+            return api.updateConsentDul(consentId, dulUrl);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e){
@@ -78,27 +81,21 @@ public class DataUseLetterResource extends Resource{
         } catch (GeneralSecurityException e){
             logger().error("Security error: "+ e.getMessage());
         }
-        return "Success";
+        return null;
     }
 
     @GET
-    @Produces({"application/pdf","application/msword"})
     public Response getDUL(@PathParam("id")String consentId){
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         try {
-            HttpResponse  r = store.getStorageDocument(new GenericUrl(api.getFileURL(consentId)));
-            File targetFile = null;
-            if(r.getContentType().equals(FileType.PDF.toString())){
-                targetFile = new File("dataUseLetter-"+consentId+".pdf");
-            }if(r.getContentType().equals(FileType.DOC.toString())){
-                targetFile = new File("dataUseLetter-"+consentId+".doc");
-            }
+            String prevFile = api.getConsentDulUrl(consentId);
+            HttpResponse  r = store.getStorageDocument(prevFile);
+            File targetFile = new File("dataUseLetter-"+consentId+"."+getFileExtension(prevFile.toString()));
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
-            Response.ResponseBuilder response = Response.ok((Object) targetFile);
-            response.header("Content-Disposition",
-                    "attachment; filename="+targetFile.getName());
-            return response.build();
+            return Response.ok(targetFile)
+                    .header("Content-Disposition", "attachment; filename="+targetFile.getName())
+                    .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e){
@@ -110,12 +107,13 @@ public class DataUseLetterResource extends Resource{
     };
 
     @DELETE
-    public String deleteDUL(@PathParam("id")String consentId){
+    @Produces(MediaType.APPLICATION_JSON)
+    public Consent deleteDUL(@PathParam("id")String consentId){
         String msg = String.format("DELETEing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         try {
-            store.deleteStorageDocument(consentId);
-            api.deleteDUL(consentId);
+            deletePreviousStorageFile(consentId);
+            return api.deleteConsentDul(consentId);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e){
@@ -123,7 +121,7 @@ public class DataUseLetterResource extends Resource{
         } catch (GeneralSecurityException e){
             logger().error("Security error: "+ e.getMessage());
         }
-        return "Success";
+        return null;
     };
 
     @Override

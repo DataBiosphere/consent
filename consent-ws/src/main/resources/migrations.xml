@@ -32,9 +32,6 @@
             <column name="useRestriction" type="text">
                 <constraints nullable="false"/>
             </column>
-            <column name="dataUseLetter" type="text">
-                <constraints nullable="true"/>
-            </column>
             <column name="active" type="boolean" defaultValue="true">
                 <constraints nullable="false"/>
             </column>

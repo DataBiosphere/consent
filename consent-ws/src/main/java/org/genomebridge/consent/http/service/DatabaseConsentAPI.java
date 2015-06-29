@@ -211,23 +211,25 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public void updateCreateDUL(String consentId, String dataUseLetter) throws UnknownIdentifierException {
+    public Consent updateConsentDul(String consentId, String dataUseLetter) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         consent.setDataUseLetter(dataUseLetter);
         update(consentId, consent);
+        return retrieve(consentId);
     }
 
     @Override
-    public String getFileURL(String consentId) throws UnknownIdentifierException {
+    public String getConsentDulUrl(String consentId) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         return consent.getDataUseLetter();
     }
 
     @Override
-    public void deleteDUL(String consentId) throws UnknownIdentifierException {
+    public Consent deleteConsentDul(String consentId) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         consent.setDataUseLetter("");
         update(consentId, consent);
+        return retrieve(consentId);
     }
 
     // Helper methods for Consent Associations
