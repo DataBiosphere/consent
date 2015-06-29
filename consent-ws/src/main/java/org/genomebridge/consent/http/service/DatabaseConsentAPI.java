@@ -33,17 +33,18 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * during application initialization (from the run() method).  If called a second time it will throw an
      * IllegalStateException.
      * Note that this method is not synchronized, as it is not intended to be called more than once.
-     * @param dao
-     * The Data Access Object instance that the API should use to read/write data.
+     *
+     * @param dao The Data Access Object instance that the API should use to read/write data.
      */
+
     public static void initInstance(DBI jdbi, ConsentDAO dao) {
         ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao));
     }
 
     /**
      * The constructor is private to force use of the factory methods and enforce the singleton pattern.
-     * @param dao
-     * The Data Access Object used to read/write data.
+     *
+     * @param dao The Data Access Object used to read/write data.
      */
     private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao) {
         this.jdbi = jdbi;
@@ -83,7 +84,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private String getInClauseStrings(Collection<String> strings) {
         Collection<String> quotedIds = Collections2.transform(strings, new Function<String, String>() {
             @Override
-            public String apply(String input) { return "'" + input + "'"; }
+            public String apply(String input) {
+                return "'" + input + "'";
+            }
         });
         return StringUtils.join(quotedIds, ",");
     }
