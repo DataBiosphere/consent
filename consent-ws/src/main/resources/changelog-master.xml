@@ -7,5 +7,7 @@
     <include file="migrations.xml"/>
 
     <include file="changesets/changelog-consent-1.0.xml"/>
+    
+     <include file="changesets/changelog-consent-3.0.xml"/>
 
 </databaseChangeLog>
