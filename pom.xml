@@ -25,6 +25,7 @@
     <module>consent-indexer</module>
     <module>consent-ws</module>
     <module>consent-autocomplete</module>
+    <module>consent-ui</module>
   </modules>
 
   <build>
