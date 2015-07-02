@@ -15,18 +15,18 @@ $(function() {
     });
 });
 
-function votePositiveFunction(){
-    $('#inputVoteNegative').removeAttr('checked');
-    $('#inputRationale').val('');
-    $('#inputRationale').prop("disabled", true);
-    clearMessages();
-}
+//function votePositiveFunction(){
+//    $('#inputVoteNegative').removeAttr('checked');
+//    $('#inputRationale').val('');
+//    $('#inputRationale').prop("disabled", true);
+//    clearMessages();
+//}
 
-function voteNegativeFunction(){
-    $('#inputVotePositive').removeAttr('checked');
-    $('#inputRationale').removeAttr('disabled').focus();
-    clearMessages();
-}
+//function voteNegativeFunction(){
+//    $('#inputVotePositive').removeAttr('checked');
+//    $('#inputRationale').removeAttr('disabled').focus();
+//    clearMessages();
+//}
 
 function validateInput() {
     return $("#voteForm input:checked").length;

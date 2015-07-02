@@ -18,9 +18,12 @@ public class ConsentResource extends Resource {
 
     @GET
     @Produces("application/json")
-    public Consent describe(@PathParam("id") String id) {
+    public Response describe(@PathParam("id") String id) {
         try {
-            return populateFromApi(id);
+            return Response.ok(populateFromApi(id))
+                    .header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT")
+                    .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", id));
         }

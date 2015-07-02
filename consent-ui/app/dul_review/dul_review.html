@@ -33,11 +33,11 @@
                     <label class="col-lg-2 col-md-2 col-sm-2 col-xs-3 control-label vote-label dul-color">Vote</label>
                     <div class="col-lg-10 col-md-10 col-sm-10 col-xs-9">
                         <div class="button-holder">
-                            <div class="radio-inline group-regular-radio">
-                                <input type="radio" class="regular-radio" name="inputVotePositive" id="inputVotePositive" onclick="votePositiveFunction()"><label for="inputVotePositive"><div class ="radio-button-text">Yes</div></label>
+                            <div class="radio-inline group-regular-radio" >
+                                <input type="radio" ng-model="vote" value="YES" class="regular-radio" name="inputVotePositive" id="inputVotePositive" onclick="votePositiveFunction()"><label for="inputVotePositive"><div class ="radio-button-text">Yes</div></label>
                             </div>
                             <div class="radio-inline">
-                                <input type="radio" class="regular-radio" name="inputVoteNegative" id="inputVoteNegative" onclick="voteNegativeFunction()"><label for="inputVoteNegative"><div class ="radio-button-text">No</div></label>
+                                <input type="radio" ng-model="vote" value="NO" class="regular-radio" name="inputVoteNegative" id="inputVoteNegative" onclick="voteNegativeFunction()"><label for="inputVoteNegative"><div class ="radio-button-text">No</div></label>
                             </div>
                         </div>
                     </div>
@@ -45,22 +45,26 @@
                 <div class="form-group">
                     <label class="col-lg-2 col-md-2 col-sm-2 col-xs-3 control-label vote-label dul-color">Rationale</label>
                     <div class="col-lg-10 col-md-10 col-sm-10 col-xs-9">
-                        <input type="text" name="inputRationale" id="inputRationale" class="form-control col-lg-10 col-md-8 col-sm-6 col-xs-6 vote-input" placeholder="Describe your rationale here (be as specific as possible)." disabled>
+                        <input type="text" ng-model="inputRationale" ng-disabled="vote=='YES'" name="inputRationale" id="inputRationale" 
+							class="form-control col-lg-10 col-md-8 col-sm-6 col-xs-6 vote-input" 
+								placeholder="Describe your rationale here (be as specific as possible)." disabled>
                     </div>
                 </div>
                 <div class="form-group form-group-bottom">
-                    <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
-                        <div id="successMsg" class="alert alert-success validation-message hidden">
-                            <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                    <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12"  ng-switch="DULVoteStatus">
+                        <div ng-switch-when="OK" id="successMsg" class="alert alert-success validation-message" >
+                            <span class="glyphicon glyphicon-ok-circle" ></span>
                             Vote successfully logged.
                         </div>
-                        <div id="errorMsg" class="alert alert-danger validation-message hidden">
-                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+
+                        <div ng-switch-when="Check" id="errorMsg" class="alert alert-danger validation-message" >
+                            <span class="glyphicon glyphicon-exclamation-sign" ></span>
                             Please check your vote.
                         </div>
                     </div>
                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
-                       <button id="voteBtn" type="submit" class="btn btn-primary col-lg-12 col-md-12 col-sm-12 col-xs-12 vote-button dul-background">Vote</button>
+                       <button  ng-click="DULVote()" id="voteBtn" 
+							class="btn btn-primary col-lg-12 col-md-12 col-sm-12 col-xs-12 vote-button dul-background">Vote</button>
                    </div>
                 </div>
             </form>
