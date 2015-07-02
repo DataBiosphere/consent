@@ -70,8 +70,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
             DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO);
             DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
-            DatabaseDataRequestAPI.initInstance(requestDAO,dataSetDAO,purposeDAO);
-            
+            DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
+
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }

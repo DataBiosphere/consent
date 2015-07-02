@@ -10,6 +10,5 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("select dataSetId from dataset where dataSetId = :dataSetId")
     Integer checkDataSetbyId(@Bind("dataSetId") Integer dataSetId);
-    
-   
+
 }

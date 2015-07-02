@@ -36,11 +36,11 @@ public class DataRequestResource extends Resource {
         URI uri;
         DataRequest dataRequest;
         try {
-        	dataRequest = api.createDataRequest(rec);
+            dataRequest = api.createDataRequest(rec);
             uri = info.getRequestUriBuilder().path("{id}").build(dataRequest.getRequestId());
             return Response.created(uri).entity(dataRequest).build();
         } catch (IllegalArgumentException e) {
-        	return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
 
@@ -49,21 +49,21 @@ public class DataRequestResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     public Response updateDataRequest(@Context UriInfo info, DataRequest rec, @PathParam("id") Integer id) {
-    	try{
-    		DataRequest dataRequest = api.updateDataRequestById(rec, id);
+        try {
+            DataRequest dataRequest = api.updateDataRequestById(rec, id);
             URI assocURI = buildDataRequestURI(id);
             return Response.ok(dataRequest).location(assocURI).build();
-    	}catch(IllegalArgumentException e){
-    		return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-    	}
-        
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+
     }
 
     @GET
     @Produces("application/json")
     @Path("/{id}")
     public DataRequest describe(@PathParam("id") Integer requestId) {
-    	return api.describeDataRequest(requestId);	
+        return api.describeDataRequest(requestId);
     }
 
     @DELETE

@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
 import org.genomebridge.consent.http.models.DataRequest;
@@ -23,7 +24,7 @@ public class DataRequestTest extends DataRequestServiceTest {
     private static final String DESCRIPTION = "TestDescription";
     private static final String RESEARCHER = "ResearcherTest";
     private static final Integer INVALID_DATA_REQUEST_ID = 584264;
-  
+
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -58,11 +59,11 @@ public class DataRequestTest extends DataRequestServiceTest {
     public void testUpdateDataRequest(DataRequest created) {
         Client client = new Client();
         created.setDataSetId(ID_2);
-        created.setDescription(DESCRIPTION+"DR");
+        created.setDescription(DESCRIPTION + "DR");
         checkStatus(OK, put(client, dataRequestPathById(created.getRequestId()), created));
         created = retrieveDataRequest(client, dataRequestPathById(created.getRequestId()));
         assertThat(created.getDataSetId()).isEqualTo(ID_2);
-        assertThat(created.getDescription()).isEqualTo(DESCRIPTION+"DR");
+        assertThat(created.getDescription()).isEqualTo(DESCRIPTION + "DR");
         assertThat(created.getPurposeId()).isEqualTo(ID);
         assertThat(created.getResearcher()).isEqualTo(RESEARCHER);
         assertThat(created.getRequestId()).isNotNull();
@@ -103,6 +104,5 @@ public class DataRequestTest extends DataRequestServiceTest {
                 put(client, dataRequestPathById(INVALID_DATA_REQUEST_ID), dataRequest));
     }
 
-   
 
 }

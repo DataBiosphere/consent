@@ -10,6 +10,5 @@ public interface ResearchPurposeDAO extends Transactional<ResearchPurposeDAO> {
 
     @SqlQuery("select purposeId from researchpurpose where purposeId = :purposeId")
     Integer checkResearchPurposebyId(@Bind("purposeId") Integer purposeId);
-    
-   
+
 }

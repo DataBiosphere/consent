@@ -15,7 +15,7 @@ public class DataRequest {
 
     @JsonProperty
     private String researcher;
-    
+
     @JsonProperty
     private Integer dataSetId;
 
@@ -39,14 +39,14 @@ public class DataRequest {
     }
 
     public Integer getPurposeId() {
-		return purposeId;
-	}
+        return purposeId;
+    }
 
-	public void setPurposeId(Integer purposeId) {
-		this.purposeId = purposeId;
-	}
+    public void setPurposeId(Integer purposeId) {
+        this.purposeId = purposeId;
+    }
 
-	public String getDescription() {
+    public String getDescription() {
         return description;
     }
 
@@ -62,13 +62,13 @@ public class DataRequest {
         this.researcher = researcher;
     }
 
-	public Integer getDataSetId() {
-		return dataSetId;
-	}
+    public Integer getDataSetId() {
+        return dataSetId;
+    }
 
-	public void setDataSetId(Integer dataSetId) {
-		this.dataSetId = dataSetId;
-	}
+    public void setDataSetId(Integer dataSetId) {
+        this.dataSetId = dataSetId;
+    }
 
-    
+
 }
