@@ -14,12 +14,6 @@
                 ['Yes', 4],
                 ['No', 1],
                 ['Pending', 1]
-            ],
-            'dul': [
-                ['Results', 'Votes'],
-                ['Yes', 3],
-                ['No', 2],
-                ['Pending', 1]
             ]
         };
 
@@ -128,8 +122,7 @@
 
 
         function sendReminder() {
-            vm.reminder.text = 'Reminder sent';
-            vm.reminder.sent = true;
+            alert("Reminder to be implemented.");
         }
     }
 

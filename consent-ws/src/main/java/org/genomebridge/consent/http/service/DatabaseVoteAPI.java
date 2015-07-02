@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
+import org.genomebridge.consent.http.enumeration.VoteStatus;
 import org.genomebridge.consent.http.models.Vote;
 
 import com.sun.jersey.api.NotFoundException;
@@ -49,11 +50,9 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public Vote createVote(Vote rec, String referenceId) throws IllegalArgumentException {
-        rec.setCreateDate(new Date());
         validateDACUser(rec.getDacUserId(), referenceId);
-        Integer electionId = getElectionId(referenceId);
-        rec.setElectionId(electionId);
-        Integer id = voteDAO.insertVote(rec.getVote(), rec.getDacUserId(), rec.getCreateDate(), rec.getUpdateDate(), electionId, rec.getRationale());
+        Integer electionId = setGeneralFields(rec, referenceId);
+        Integer id = voteDAO.insertVote(rec.getVote(), rec.getDacUserId(), rec.getCreateDate(), rec.getUpdateDate(), electionId, rec.getRationale(), rec.getIsChairPersonVote(), rec.getStatus());
         return voteDAO.findVoteById(id);
     }
 
@@ -63,7 +62,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         if (voteDAO.checkVoteById(referenceId, voteId) == null) {
             throw new NotFoundException("Could not find vote for specified vote id. Vote id: " + voteId);
         }
-        voteDAO.updateVote(rec.getVote(), rec.getRationale(), new Date(), voteId, getElectionId(referenceId));
+        rec.setStatus(rec.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+        voteDAO.updateVote(rec.getVote(), rec.getRationale(), new Date(), voteId, getElectionId(referenceId), rec.getStatus());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -104,6 +104,29 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         voteDAO.deleteVotes(referenceId);
 
     }
+    
+    @Override
+    public Vote createRequestVote(Vote rec, String requestId) {
+        Vote dacVote = createVote(rec, requestId);
+        // if is a chairperson should create 2 votes one for vote like 
+        // DACUser and other for vote like chairperson.
+        if(isChairPerson(rec.getDacUserId())){
+            Vote chairPersonVote = new Vote();
+            chairPersonVote.setIsChairPersonVote(true);
+            chairPersonVote.setDacUserId(rec.getDacUserId());
+            Integer electionId = setGeneralFields(chairPersonVote, requestId);
+            voteDAO.insertVote(chairPersonVote.getVote(), chairPersonVote.getDacUserId(), chairPersonVote.getCreateDate(), chairPersonVote.getUpdateDate(), electionId, chairPersonVote.getRationale(), chairPersonVote.getIsChairPersonVote(), VoteStatus.PENDING.getValue());
+         }
+        return dacVote;
+    }
+
+    private boolean isChairPerson(Integer dacUserId) {
+       boolean isCherperson = false; 
+       if(dacUserDAO.checkChairpersonUser(dacUserId) != null){
+           isCherperson = true;
+       }
+       return isCherperson; 
+    }
 
     private void validateDACUser(Integer dacUserId, String referenceId) {
         if (dacUserDAO.findDACUserById(dacUserId) == null) {
@@ -123,5 +146,14 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         return electionId;
     }
-
+    
+    private Integer setGeneralFields(Vote rec, String referenceId) {
+        rec.setCreateDate(new Date());
+        Integer electionId = getElectionId(referenceId);
+        rec.setElectionId(electionId);
+        rec.setIsChairPersonVote(rec.getIsChairPersonVote() == null ? false : rec.getIsChairPersonVote());
+        rec.setStatus(rec.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+        return electionId;
+    }
+      
 }

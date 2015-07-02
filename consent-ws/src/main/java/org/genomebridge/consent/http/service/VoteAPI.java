@@ -20,4 +20,5 @@ public interface VoteAPI {
 
     void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
 
+    Vote createRequestVote(Vote rec, String requestId);
 }

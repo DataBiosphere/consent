@@ -5,7 +5,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
 import org.genomebridge.consent.http.enumeration.ElectionType;
-import org.genomebridge.consent.http.enumeration.Status;
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -40,13 +40,13 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testCreateDataRequestElection() {
         Client client = new Client();
         Election election = new Election();
-        election.setStatus(Status.OPEN.getValue());
+        election.setStatus(ElectionStatus.OPEN.getValue());
         ClientResponse response = checkStatus(CREATED,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         String createdLocation = checkHeader(response, "Location");
         Election created = retrieveElection(client, createdLocation);
         assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
-        assertThat(created.getStatus()).isEqualTo(Status.OPEN.getValue());
+        assertThat(created.getStatus()).isEqualTo(ElectionStatus.OPEN.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
@@ -62,12 +62,12 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Client client = new Client();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
-        created.setStatus(Status.CLOSED.getValue());
+        created.setStatus(ElectionStatus.CLOSED.getValue());
         checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId().toString()), created));
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.DATA_ACCESS.getValue());
-        assertThat(created.getStatus()).isEqualTo(Status.CLOSED.getValue());
+        assertThat(created.getStatus()).isEqualTo(ElectionStatus.CLOSED.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
@@ -93,7 +93,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testDataRequestElectionWithInvalidDataRequest() {
         Client client = new Client();
         Election election = new Election();
-        election.setStatus(Status.OPEN.getValue());
+        election.setStatus(ElectionStatus.OPEN.getValue());
         // should return 400 bad request because the data request id does not exist
         checkStatus(NOT_FOUND,
                 post(client, electionDataRequestPath(INVALID_DATA_REQUEST_ID), election));

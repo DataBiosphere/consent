@@ -1,13 +1,9 @@
 (function () {
     'use strict';
 
-    angular.module('cmChairConsole', ['ui.router', 'cmPaginator']);
 
-    angular.module('cmChairConsole')
-            .constant('USER_ROLES', {
+    angular
+        .module('cmChairConsole', ['ui.router', 'cmPaginator', 'cmPendingCase','cmUserRoles']);
 
-             admin: 'admin',
-             chairperson: 'chairperson',
-             dacmember: 'dacmember'
-           });
-    })();
+
+})();

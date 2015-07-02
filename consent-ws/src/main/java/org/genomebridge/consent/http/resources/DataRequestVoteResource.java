@@ -38,7 +38,7 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId) {
         URI uri;
         try {
-            Vote vote = api.createVote(rec, requestId);
+            Vote vote = api.createRequestVote(rec, requestId);
             uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)

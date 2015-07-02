@@ -37,4 +37,4 @@ public interface DataRequestDAO extends Transactional<DataRequestDAO> {
     @SqlUpdate("delete  from datarequest where requestId = :requestId")
     void deleteDataRequestById(@Bind("requestId") Integer requestId);
 
-}
+}       

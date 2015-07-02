@@ -12,25 +12,22 @@
         return {
             restrict: 'A',
             scope: {
-                cmChartData: '=',
-                cmChartOptions: '='
+               cmChartData:'=',
+               cmChartOptions: '='
             },
-            link: cmChartLink
-        };
+            link:  function cmChartLink(scope, element) {
+                //google.setOnLoadCallback(drawChart);
+                function drawChart() {
+                    var chart = new google.visualization.PieChart(element[0]);
+                    chart.draw(google.visualization.arrayToDataTable(scope.cmChartData), scope.cmChartOptions);
+                }
 
-        function cmChartLink(scope, element, attrs) {
-
-            drawChart();
-
-            //google.setOnLoadCallback(drawChart);
-            function drawChart() {
-
-                var chart = new google.visualization.PieChart(element[0]);
-                chart.draw(google.visualization.arrayToDataTable(scope.cmChartData), scope.cmChartOptions);
-            }
-
-
+                scope.$watch('cmChartData', function(){
+                                    if(undefined !== scope.cmChartData && undefined !== scope.cmChartOptions){
+                                        drawChart();
+                                    }
+            });
         }
     }
-
+    }
 })();

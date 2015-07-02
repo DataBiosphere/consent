@@ -1,19 +1,22 @@
 package org.genomebridge.consent.http;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
-import org.genomebridge.consent.http.enumeration.Status;
+import java.util.List;
+
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
 
-public class VoteConsentTest extends ElectionVoteServiceTest {
+public class VoteConsentTest extends ElectionVoteServiceTest  {
 
     public static final int CREATED = ClientResponse.Status.CREATED
             .getStatusCode();
@@ -33,7 +36,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
     public DropwizardAppRule<ConsentConfiguration> rule() {
         return RULE;
     }
-
+    
     @Test
     public void testCreateConsentVote() {
         // should exist an election for specified consent
@@ -54,6 +57,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
         assertThat(created.getUpdateDate()).isNull();
         assertThat(created.getVote()).isFalse();
         assertThat(created.getVoteId()).isNotNull();
+        testConsentPendingCase(DAC_USER_ID);
         updateVote(created);
         deleteVote(created.getVoteId());
         delete(client, electionConsentPath(CONSENT_ID));
@@ -107,12 +111,31 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
     private Integer createElection() {
         Client client = new Client();
         Election election = new Election();
-        election.setStatus(Status.OPEN.getValue());
+        election.setStatus(ElectionStatus.OPEN.getValue());
         post(client, electionConsentPath(CONSENT_ID), election);
         election = get(client, electionConsentPath(CONSENT_ID))
                 .getEntity(Election.class);
         return election.getElectionId();
     }
 
+    public void testConsentPendingCase(Integer dacUserId) {
+        Client client = new Client();
+        List<PendingCase> pendingCases = get(client, consentPendingCasesPath(dacUserId)).getEntity(new GenericType<List<PendingCase>>() {});
+        assertThat(pendingCases).isNotNull();
+        assertThat(pendingCases.size()).isEqualTo(1);
+        assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(true);
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/1");
+        assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(CONSENT_ID);
+        
+
+    }
+
+    @Test
+    public void testConsentPendingCaseWithInvalidUser() {
+        Client client = new Client();
+        List<PendingCase> pendingCases = get(client, consentPendingCasesPath(789)).getEntity(new GenericType<List<PendingCase>>() {});
+        assertThat(pendingCases).isEmpty();
+
+    }
 
 }

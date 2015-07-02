@@ -1,28 +1,18 @@
 package org.genomebridge.consent.http.resources;
 
-import java.net.URI;
-import java.util.List;
+import com.sun.jersey.api.NotFoundException;
+import org.genomebridge.consent.http.models.Vote;
+import org.genomebridge.consent.http.service.AbstractVoteAPI;
+import org.genomebridge.consent.http.service.VoteAPI;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-
-import org.genomebridge.consent.http.models.Vote;
-import org.genomebridge.consent.http.service.AbstractVoteAPI;
-import org.genomebridge.consent.http.service.VoteAPI;
-
-import com.sun.jersey.api.NotFoundException;
-import javax.ws.rs.OPTIONS;
+import java.net.URI;
+import java.util.List;
 
 @Path("consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
@@ -45,10 +35,6 @@ public class ConsentVoteResource extends Resource {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
         return Response.created(uri)
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Content-Type, Accept")
-                .header("Access-Control-Max-Age", "1728000")
                 .build();
     }
 
@@ -113,10 +99,6 @@ public class ConsentVoteResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response options(@PathParam("consentId") String consentId) {
         return Response.ok()
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Content-Type")
-                .header("Access-Control-Max-Age", "1728000")
                 .build();
     }
 

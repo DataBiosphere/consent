@@ -1,15 +1,15 @@
 package org.genomebridge.consent.http.resources;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
 import org.genomebridge.consent.http.models.DACUser;
-import org.genomebridge.consent.http.models.Vote;
 import org.genomebridge.consent.http.service.AbstractDACUserAPI;
 import org.genomebridge.consent.http.service.DACUserAPI;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 
 @Path("dacuser")
 public class DACUserResource extends Resource {

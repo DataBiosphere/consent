@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.db;
 
-import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
@@ -14,8 +13,12 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 public interface DACUserDAO extends Transactional<DACUserDAO> {
 
 
+
     @SqlQuery("select * from dacuser where dacUserId = :dacUserId")
     String findDACUserById(@Bind("dacUserId") Integer dacUserId);
+    
+    @SqlQuery("select * from dacuser where dacUserId = :dacUserId and memberStatus = 'CHAIRPERSON'")
+    Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select * from dacuser where email = :email")
     DACUser findDACUserByEmail(@Bind("email") String email);
