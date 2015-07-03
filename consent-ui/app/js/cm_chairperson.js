@@ -27,7 +27,7 @@ listItemsTemplate += '<% if(election.status == "disabled"){ %>---<% } %>';
 listItemsTemplate += '</div>';
 listItemsTemplate += '</a>';
 
-listItemsTemplate += '<div class="percentageCompleted col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list"><%= election.percentage %>%</div>';
+listItemsTemplate += '<div class="loggedCompleted col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list"><%= election.logged %>%</div>';
 
 listItemsTemplate += '<a href="<%= election.collectLink %>" class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">';
 listItemsTemplate += '<div class="collectButton <%= election.collect %>">';
