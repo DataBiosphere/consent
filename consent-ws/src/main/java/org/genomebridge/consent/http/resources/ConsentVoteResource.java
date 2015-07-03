@@ -22,6 +22,7 @@ import org.genomebridge.consent.http.service.AbstractVoteAPI;
 import org.genomebridge.consent.http.service.VoteAPI;
 
 import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.OPTIONS;
 
 @Path("consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
@@ -35,7 +36,7 @@ public class ConsentVoteResource extends Resource {
     @POST
     @Consumes("application/json")
     public Response createConsentVote(@Context UriInfo info, Vote rec,
-                                      @PathParam("consentId") String consentId) {
+            @PathParam("consentId") String consentId) {
         URI uri;
         try {
             Vote vote = api.createVote(rec, consentId);
@@ -43,7 +44,12 @@ public class ConsentVoteResource extends Resource {
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
-        return Response.created(uri).build();
+        return Response.created(uri)
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS")
+                .header("Access-Control-Allow-Headers", "Content-Type, Accept")
+                .header("Access-Control-Max-Age", "1728000")
+                .build();
     }
 
     @PUT
@@ -51,7 +57,7 @@ public class ConsentVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     public Response updateConsentVote(@Context UriInfo info, Vote rec,
-                                      @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
+            @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.updateVote(rec, id, consentId);
             return Response.ok(vote).build();
@@ -64,7 +70,7 @@ public class ConsentVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     public Vote describe(@PathParam("consentId") String consentId,
-                         @PathParam("id") Integer id) {
+            @PathParam("id") Integer id) {
         return api.describeVoteById(id, consentId);
 
     }
@@ -92,14 +98,26 @@ public class ConsentVoteResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteVotes(@PathParam("consentId") String consentId) {
         try {
-            if (consentId == null)
+            if (consentId == null) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
+            }
             api.deleteVotes(consentId);
             return Response.ok().entity("Votes for specified consent have been deleted").build();
         } catch (Exception e) {
             throw new NotFoundException(String.format(
                     "Could not find votes for specified consent id %s", consentId));
         }
+    }
+
+    @OPTIONS
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response options(@PathParam("consentId") String consentId) {
+        return Response.ok()
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS")
+                .header("Access-Control-Allow-Headers", "Content-Type")
+                .header("Access-Control-Max-Age", "1728000")
+                .build();
     }
 
 }
