@@ -3,7 +3,7 @@
 
 body{
     height: 100%;
-    min-height:100%;
+    min-height: 100%;
     font-family: 'Roboto', sans-serif;
 }
 
@@ -50,6 +50,14 @@ small{
 
 .access-background{
     background: #603B9B !important;
+}
+
+.request-color{
+    color: #8E307A !important;
+}
+
+.request-background{
+    background: #8E307A !important;
 }
 /*********************************************NAV*/
 
@@ -131,12 +139,19 @@ small{
 .cm-title, .cm-subtitle, .cm-subtitle-ultimate, .cm-user-name, .cm-results-subtitle, .cm-box-title{
     color: #777777;
 }
-    .cm-title-description{
+    .cm-title-description, .cm-title-description-request{
         color: #777777;
         font-style: italic;
         font-size: 19px;
         margin: 0 0 20px 55px;
+        line-height: 25px;
     }
+        .cm-title-description{
+            margin: 0 0 20px 55px;
+        }
+        .cm-title-description-request{
+            margin: 0 0 20px 65px;
+        }
 
     .cm-main-title{
         margin-top: 15px;
@@ -145,6 +160,11 @@ small{
     .cm-subtitle{
         padding: 15px 0 10px 0!important;
     }
+
+        .cm-subtitle li h4{
+            display: inline;
+            text-decoration: none;
+         }
 
     .cm-subtitle-ultimate{
         padding: 15px 0 0 0;
@@ -285,7 +305,7 @@ small{
     margin-bottom: 0 !important;
 }
 
-/********************************BUTTONS AND RADIO BUTTONS*/
+/********************************BUTTONS, RADIO BUTTONS and CHECKBOXES*/
 
 .button-holder {
     float: left;
@@ -294,6 +314,10 @@ small{
 
 .group-regular-radio{
     padding: 0 15px 0 0;
+}
+.radio-choices{
+    margin: 0 10px 0 0;
+    padding: 0 25px 0 0 !important;
 }
 
 .regular-radio {
@@ -330,6 +354,38 @@ small{
                 height: 10px;
             }
 
+.regular-checkbox {
+    cursor: pointer;
+    position: relative;
+    padding-left: 25px !important;
+    margin-right: 15px;
+    font-size: 13px;
+}
+    .regular-checkbox:before {
+        content: "";
+        width: 18px;
+        height: 18px;
+        margin-right: 10px;
+        position: absolute;
+        left: 0;
+        background-color: #ffffff;
+        border: 1px solid #999999;
+        border-radius: 3px;
+    }
+
+input[type=checkbox] {
+    display: none;
+}
+    input[type=checkbox]:checked + label:before {
+        content: "\2713";
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, .2);
+        color: #ffffff;
+        background: #2FA4E7;
+        border: 1px solid #2FA4E7;
+        text-align: center;
+        line-height: 15px;
+    }
+
 .vote-button, .vote-reminder{
     border: 0!important;
     transition: background 0.3s ease;
@@ -361,14 +417,20 @@ small{
     cursor: pointer !important;
 }
 
-.radio-button-text{
+.radio-button-text, .radio-choices-text{
     font-size: 14px !important;
     font-weight: 500;
     color: #777777;
-    padding: 0 0 0 5px!important;
-    margin: 0 10px 0 20px!important;
     display: inline;
 }
+    .radio-button-text{
+        padding: 0 0 0 5px!important;
+        margin: 0 10px 0 20px!important;
+    }
+    .radio-choices-text{
+        padding: 0!important;
+        margin: 0 5px 0 22px!important;
+    }
 
 .validation-message{
     padding: 5px 15px !important;
@@ -565,4 +627,137 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover{
     .active-case:hover{
         color: #ffffff !important;
     }
+
+/***************************RP APPLICATION*/
+
+/*MULTISTEP*/
+
+
+.multi-step-title{
+    position: relative;
+    height: auto;
+    display: inline-block;
+    margin: 0!important;
+}
+    .multi-step-title a {
+        font-size: 18px;
+        background: #eeeeee !important;
+        transition: background 0.3s ease;
+        width: 100%;
+        height: 100%;
+        padding: 10px 20px 10px 20px !important;
+        margin-bottom: 10px !important;
+    }
+        .multi-step-title a:hover {
+            color: #ffffff;
+            background: #2FA4E7 !important;
+        }
+            .multi-step-title a small{
+                display: block;
+                color: #777777 !important;
+                line-height: 25px;
+            }
+                .multi-step-title a:hover small{
+                    color: #cccccc !important;
+                }
+
+        .multi-step-title a span{
+            float: right;
+        }
+
+    .multi-step-buttons .active a {
+        background: #8E307A !important;
+        color: #ffffff !important;
+    }
+        .multi-step-buttons .active a small{
+            color: #cccccc !important;
+        }
+
+.multi-step-pager{
+    margin: 0 5px 0 5px;
+}
+    .multi-step-pager li a{
+        border-radius: 5px !important;
+        /*background: #00609f !important;*/
+        background: #8E307A !important;
+        box-shadow: 3px 3px 0 #cccccc;
+        color: #ffffff;
+        border: none;
+        height: 40px;
+        padding: 10px 15px 7px 15px !important;
+        width: auto;
+        transition: background 0.3s ease;
+    }
+        .multi-step-pager li a:hover{
+            background: #2FA4E7 !important;
+            color: #ffffff !important;
+        }
+
+    .multi-step-pager .disabled{
+        padding: 0!important;
+        margin-top: 0 !important;
+    }
+        .multi-step-pager .disabled a, .multi-step-pager .disabled a:hover{
+            background: #eeeeee !important;
+            color: #cccccc !important;
+            border: none !important;
+            padding: 10px 15px 7px 15px !important;
+        }
+
+.multi-step-prev, .multi-step-next{
+    color: #777777;
+    font-size: 15px;
+}
+    .multi-step-prev{
+        float: left;
+        text-align: left;
+    }
+        .multi-step-prev span{
+            padding: 2px 5px 0 0;
+        }
+    .multi-step-next{
+        float: right;
+        text-align: right;
+    }
+        .multi-step-next span{
+            padding: 2px 0 0 5px;
+        }
+
+.rp-group{
+    margin-bottom: 10px !important;
+}
+
+.rp-title-question, .rp-choice-questions{
+    float: left !important;
+    text-align: left !important;
+    display: block;
+    margin-bottom: 15px;
+}
+    .rp-title-question{
+        font-size: 16px;
+        line-height: 23px;
+        font-weight: 500 !important;
+        color: #8E307A;
+    }
+    .rp-choice-questions{
+        font-weight: normal !important;
+        font-size: 15px;
+        color: #777777;
+    }
+        .rp-title-question span, .rp-choice-questions span{
+            font-weight: normal;
+            font-size: 15px;
+        }
+        .rp-choice-questions span{
+            display: inline;
+            color: #8E307A;
+        }
+        .rp-title-question span{
+            display: block;
+            color: #777777;
+        }
+        .rp-title-question span a, .rp-choice-questions span a{
+            color: #2FA4E7;
+        }
+
 

@@ -15,18 +15,18 @@ $(function() {
     });
 });
 
-//function votePositiveFunction(){
-//    $('#inputVoteNegative').removeAttr('checked');
-//    $('#inputRationale').val('');
-//    $('#inputRationale').prop("disabled", true);
-//    clearMessages();
-//}
+function votePositiveFunction(){
+    $('#inputVoteNegative').removeAttr('checked');
+    $('#inputRationale').val('');
+    $('#inputRationale').prop("disabled", true);
+    clearMessages();
+}
 
-//function voteNegativeFunction(){
-//    $('#inputVotePositive').removeAttr('checked');
-//    $('#inputRationale').removeAttr('disabled').focus();
-//    clearMessages();
-//}
+function voteNegativeFunction(){
+    $('#inputVotePositive').removeAttr('checked');
+    $('#inputRationale').removeAttr('disabled').focus();
+    clearMessages();
+}
 
 function validateInput() {
     return $("#voteForm input:checked").length;
@@ -44,14 +44,46 @@ $(function sendAReminder() {
     });
 });
 
+function getAmountCases(){
+    $("#dulPendingCases").html("hidden");
+    $("#successMsg").addClass("hidden");
+}
+
+//RP APPLICATION
+
+function enableInputOtherFunction(){
+    $('#inputOther').removeAttr("disabled").focus();
+    clearMessages();
+}
+
+function enableInputIllegalFunction(){
+    $('#inputIllegalBehave').removeAttr("disabled").focus();
+    clearMessages();
+}
+
+$(function voteYesFunction() {
+    $('.inputYes').click(function() {
+        //this.value = 'Reminder sent';
+        this.addClass('checked');
+        $('.inputNo').removeAttr("checked");
+    });
+});
+
+function voteYesFunction(){
+    $('.inputNo').removeAttr("checked");
+}
+
+function voteNoFunction(){
+    $('.inputYes').removeAttr("checked");
+}
 
 //DAC USER PENDING CASES
 
 var jsonData = {};
 $.get("json/cm_json.json", function(data){
 	jsonData = data;
-	generateWhatever("dul_review", 0);
-	generateWhatever("access_review", 0);
+	generatePagination("dul_review", 0);
+	generatePagination("access_review", 0);
 });
 
 var pages = {
@@ -72,7 +104,7 @@ listItemsTemplate += '<% if(election.status == "pending"){ %>Pending<% } %>';
 listItemsTemplate += '<% if(election.status == "editable"){ %>Editable<% } %>';
 listItemsTemplate += '</div>';
 
-listItemsTemplate += '<div class="percentageCompleted col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list"><%= election.percentage %>%</div>';
+listItemsTemplate += '<div class="loggedCompleted col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list"><%= election.logged %>%</div>';
 
 listItemsTemplate += '<a href="<%= election.link %>" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">';
 listItemsTemplate += '<div class="voteButton <%= election.status %>">';
@@ -85,13 +117,13 @@ listItemsTemplate += '</a>';
 listItemsTemplate += '</div>';
 listItemsTemplate += '<% }); %>';
 
-var paginatorTemplate = '<li><a href="#" onclick="generateWhatever(\'<%= id %>\', <%= currentPage - 1 %>)">&laquo;</a></li>';
+var paginatorTemplate = '<li><a href="#" onclick="generatePagination(\'<%= id %>\', <%= currentPage - 1 %>)">&laquo;</a></li>';
 paginatorTemplate += '<% _.forEach(pages, function(page) { %>';
-paginatorTemplate += '<li><a href="#" <% if(currentPage == page){ %> class="active-case" <% } %> onclick="generateWhatever(\'<%= id %>\', <%= page %>)"><%= page + 1 %></a></li>';
+paginatorTemplate += '<li><a href="#" <% if(currentPage == page){ %> class="active-case" <% } %> onclick="generatePagination(\'<%= id %>\', <%= page %>)"><%= page + 1 %></a></li>';
 paginatorTemplate += '<% }); %>';
-paginatorTemplate += '<li><a href="#" onclick="generateWhatever(\'<%= id %>\', <%= currentPage + 1 %>)">&raquo;</a></li>';
+paginatorTemplate += '<li><a href="#" onclick="generatePagination(\'<%= id %>\', <%= currentPage + 1 %>)">&raquo;</a></li>';
 
-function generateWhatever(id, page){
+function generatePagination(id, page){
 
 	var amountOfElements = jsonData[id].length;
 	var isValidPage = ((amountOfElements / LIST_ITEMS_MAX_ITEMS) > page) && (page >= 0);
@@ -109,11 +141,6 @@ function generateWhatever(id, page){
 	$("#" + paginatorId).html(paginatorHtml);
 	$("#" + listItemsId).html(listItemsHtml);
 }
-
-/**
-	Data structure for json
-	[{"sampleId": "val", "percentage": "", "status": "", "link": ""}]
-*/
 
 function generatePaginator(id, page){
 
@@ -148,3 +175,11 @@ function generateListItemsHtml(data, page){
 	
 	return compiled({"elections": reducedJsonData});
 }
+
+
+//MULTI STEPS FORM
+
+$(document).ready(function() {
+    $('#rootwizard').bootstrapWizard({'tabClass': 'nav nav-pills'});
+    window.prettyPrint && prettyPrint()
+});
