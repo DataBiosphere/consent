@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="app.css">
   <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
   <script src="bower_components/angular-resource/angular-resource.js"></script>
+  <script src="bower_components/angular-animate/angular-animate.js"></script>
+  <script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>  
 
   <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -37,6 +39,7 @@
     <li><a href="#/access_review_results">Access Review Results</a></li>
     <li><a href="#/dul_review">DUL Review</a></li>
     <li><a href="#/dul_review_results">DUL Review Results</a></li>
+    <li><a href="#/rp_application">RP Application</a></li>    
   </ul>
 
 <nav class="navbar top-navigator-bar">
@@ -76,7 +79,7 @@
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
   <![endif]-->
 
-  <div ng-view></div>
+  <div ng-view> </div>
 
   <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -84,6 +87,8 @@
   <script src="bower_components/angular/angular.js"></script>
   <script src="bower_components/angular-route/angular-route.js"></script>
   <script src="bower_components/angular-resource/angular-resource.js"></script>
+  <script src="bower_components/angular-animate/angular-animate.js"></script> 
+  <script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>  
   <script src="app.js"></script>
 
   <script src="chair_console/chair_console.js"></script>
@@ -92,7 +97,8 @@
   <script src="access_review_results/access_review_results.js"></script>
   <script src="dul_review/dul_review.js"></script>
   <script src="dul_review_results/dul_review_results.js"></script>
-
+  <script src="rp_application/rp_application.js"></script>
+  
   <script src="components/version/version.js"></script>
   <script src="components/version/version-directive.js"></script>
   <script src="components/version/interpolate-filter.js"></script>

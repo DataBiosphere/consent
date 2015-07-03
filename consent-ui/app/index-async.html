@@ -16,6 +16,10 @@
   </style>
   <script src="bower_components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script>
   <script src="bower_components/angular-resource/angular-resource.js"></script>
+  <script src="bower_components/angular-animate/angular-animate.js"></script>  
+  <script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>  
+  
+  
   <script>
     // include angular loader, which allows the files to load in any order
     //@@NG_LOADER_START@@
@@ -37,6 +41,8 @@
       'bower_components/angular/angular.js',
       'bower_components/angular-route/angular-route.js',
       'bower_componentsangular-resource/angular-resource.js',
+      'bower_components/angular-animate/angular-animate.js',
+      'bower_components/angular-ui-router/release/angular-ui-router.js',
       'app.js',
       'chair_console/chair_console.js,
       'dac_console/dac_console.js',
@@ -44,6 +50,7 @@
       'access_review_results/access_review_results.js',
       'dul_review/dul_review.js',
       'dul_review_results/dul_review_results.js',
+      'rp_application/rp_application.js',      
       'components/version/version.js',
       'components/version/version-directive.js',
       'components/version/interpolate-filter.js'
@@ -63,6 +70,7 @@
     <li><a href="#/dul_review_results">DUL Review Results</a></li>
     <li><a href="#/access_review">Access Review</a></li>
     <li><a href="#/access_review_results">Access Review Results</a></li>
+    <li><a href="#/rp_application">RP Application</a></li>      
   </ul>
 
   <div ng-view></div>

@@ -180,6 +180,6 @@ function generateListItemsHtml(data, page){
 //MULTI STEPS FORM
 
 $(document).ready(function() {
-    $('#rootwizard').bootstrapWizard({'tabClass': 'nav nav-pills'});
-    window.prettyPrint && prettyPrint()
+//    $('#rootwizard').bootstrapWizard({'tabClass': 'nav nav-pills'});
+//    window.prettyPrint && prettyPrint()
 });

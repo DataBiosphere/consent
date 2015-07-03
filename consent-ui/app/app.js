@@ -4,12 +4,15 @@
 angular.module('myApp', [
   'ngResource',
   'ngRoute',
+  'ngAnimate',
+  'ui.router',
   'myApp.chair_console',
   'myApp.dac_console',
   'myApp.dul_review',
   'myApp.dul_review_results',
   'myApp.access_review',
   'myApp.access_review_results',
+  'myApp.rp_application',  
   'myApp.version'
 ]).
 config(['$routeProvider', function($routeProvider) {

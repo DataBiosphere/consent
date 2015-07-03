@@ -15,7 +15,7 @@ angular.module('myApp.dul_review', ['ngResource', 'ngRoute' ])
 
 	$scope.dacUserId = 1;
     $scope.DULVoteStatus = "Pending";
-    $scope.vote = undefined;
+    $scope.vote = false;
 
     $scope.DULVote = function( ) {
 	    $scope.DULVoteStatus = "Check"; 
@@ -25,8 +25,8 @@ angular.module('myApp.dul_review', ['ngResource', 'ngRoute' ])
 	    vote.dacUserId = $scope.dacUserId;
 	    vote.rationale = $scope.inputRationale;
    	
-	    vote.$save({consentId:'94af0714-ae4a-493c-83f9-534b76412f46'}, function(response) {
-	    		alert(JSON.stringify(response));
+	    vote.$save({consentId:'94af0714-ae4a-493c-83f9-534b76412f46'}, function() {
+	    		alert("volvi");
 	    });
 };
 
