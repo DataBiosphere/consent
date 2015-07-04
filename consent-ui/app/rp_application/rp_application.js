@@ -1,55 +1,6 @@
 'use strict';
 
-angular.module('myApp.rp_application', ['ngResource', 'ui.router' ])
-
-.config(['$routeProvider', function($routeProvider) {
-  $routeProvider.when('/rp_application', {
-    templateUrl: 'rp_application/rp_application.html',
-    controller: 'rp_applicationCtrl'
-  });
-}])
-
-.config(function($stateProvider, $urlRouterProvider) {
-    
-	$urlRouterProvider.otherwise("/dac_consent");
-	
-    $stateProvider
-    
-        // route to show our basic form (/form)
-        .state('rp_application', {
-        	name: 'rp_application',
-            url: '/rp_application',
-            templateUrl: 'rp_application.html',
-            controller: 'rp_applicationCtrl'
-        })
-        
-        // nested states 
-        // each of these sections will have their own view
-        // url will be nested (/form/profile)
-        .state('rp_application-step1', {
-            url: '/rp_application/step1',
-            templateUrl: 'rp_application_f1.html'
-        })
-        
-        // url will be /form/interests
-        .state('rp_application-step2', {
-            url: '/rp_application/step2',
-            templateUrl: 'rp_application/rp_application_f2.html'
-        })
-        
-        // url will be /form/interests
-        .state('rp_application-step3', {
-            url: '/rp_application/step3',
-            templateUrl: 'rp_application_f3.html'
-        })
-        
-        // url will be /form/payment
-        .state('rp_application.step4', {
-            url: '/rp_application/step4',
-            templateUrl: 'rp_application_f4.html'
-        });
-       
-})
+angular.module('myApp.rp_application', ['ngResource', 'ngAnimate','ui.router'])
 
 .controller('rp_applicationCtrl', ['$scope', '$resource', function($scope, $resource) {
 

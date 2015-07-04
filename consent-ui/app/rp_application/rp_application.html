@@ -1,17 +1,44 @@
+<div class="container">
 <div id="form-container">
-  
-<div class="page-header text-center">
-          <h2>Let's Be Friends</h2>
-          
-          <!-- the links to our nested states using relative paths -->
-          <!-- add the active class if the state matches our ui-sref -->
-          <div id="status-buttons" class="text-center row multi-step-buttons">
-              <a ui-sref-active="active" ui-sref="rp_application-step1"><span>1</span> Reseacher Information</a>
-              <a ui-sref-active="active" ui-sref="rp_application-step2"><span>2</span> Data Access Request</a>
-              <a ui-sref-active="active" ui-sref="rp_application-step3"><span>3</span> Research Purpose Statement</a>
-              <a ui-sref-active="active" ui-sref="rp_application-step4"><span>4</span> Attestation Statement</a>
-          </div>
+   <h2 class="cm-title request-color">
+        <img src="images/icon_request.png" alt="access icon" class="cm-icons">Research Purpose Application</br>
+        <div class="cm-title-description-request">The section below includes a series of questions intended to allow our Data Access Committee to evaluate a newly developed semi-automated process of data access control.</div>
+    </h2>
+    <hr class="section-separator">
+    <div class="row no-margin">
+        <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+                <div id="rootwizard">
+                    <ul class="row multi-step-buttons">
+                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
+                            <a ui-sref-active="active" ui-sref=".step1" class="jumbotron box-vote">
+                                <small>Step 1</small>Reseacher Information
+                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                            </a>
+                        </li>
+                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
+                            <a ui-sref-active="active" ui-sref=".step2" class="jumbotron box-vote">
+                                <small>Step 2</small>Data Access Request
+                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                            </a>
+                        </li>
+                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
+                            <a ui-sref-active="active" ui-sref=".step3" class="jumbotron box-vote">
+                                <small>Step 3</small>Research Purpose Statement
+                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                            </a>
+                        </li>
+                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
+                            <a ui-sref-active="active" ui-sref=".step4" class="jumbotron box-vote">
+                                <small>Step 4</small>Attestation Statement
+                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                            </a>
+                        </li>
+                    </ul>
+                    </div>
 </div>
+</div>
+
+
         
 <form id="signup-form" ng-submit="processForm()">
           <!-- our nested state views will be injected here -->
@@ -24,4 +51,4 @@
   <pre>
     {{ formData }}
   </pre>
-  
+</div>
