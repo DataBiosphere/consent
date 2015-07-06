@@ -1,4 +1,14 @@
 {
+  "strict": true,
+  "bitwise": true,
+  "curly": true,
+  "eqeqeq": true,
+  "latedef": false,
+  "noarg": true,
+  "undef": true,
+  "unused": true,
+  "validthis": true,
+  "jasmine": true,
   "globalstrict": true,
   "globals": {
     "angular": false,

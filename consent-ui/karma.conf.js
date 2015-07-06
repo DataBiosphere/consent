@@ -1,34 +1,74 @@
-module.exports = function(config){
-  config.set({
+'use strict';
 
-    basePath : './',
+var path = require('path');
+var conf = require('./gulp/conf');
 
-    files : [
-      'app/bower_components/angular/angular.js',
-      'app/bower_components/angular-route/angular-route.js',
-      'app/bower_components/angular-resource/angular-resource.js',
-      'app/bower_components/angular-mocks/angular-mocks.js',
-      'app/components/**/*.js',
-      'app/view*/**/*.js'
-    ],
+var _ = require('lodash');
+var wiredep = require('wiredep');
 
-    autoWatch : true,
+function listFiles() {
+  var wiredepOptions = _.extend({}, conf.wiredep, {
+    dependencies: true,
+    devDependencies: true
+  });
 
-    frameworks: ['jasmine'],
+  return wiredep(wiredepOptions).js
+    .concat([
+      path.join(conf.paths.src, '/app/**/*.module.js'),
+      path.join(conf.paths.src, '/app/**/*.js'),
+      path.join(conf.paths.src, '/**/*.spec.js'),
+      path.join(conf.paths.src, '/**/*.mock.js'),
+      path.join(conf.paths.src, '/**/*.html')
+    ]);
+}
 
-    browsers : ['Chrome'],
+module.exports = function(config) {
+
+  var configuration = {
+    files: listFiles(),
+
+    singleRun: true,
+
+    autoWatch: false,
+
+    frameworks: ['jasmine', 'angular-filesort'],
+
+    angularFilesort: {
+      whitelist: [path.join(conf.paths.src, '/**/!(*.html|*.spec|*.mock).js')]
+    },
+
+    ngHtml2JsPreprocessor: {
+      stripPrefix: 'src/',
+      moduleName: 'consentUiNew'
+    },
+
+    browsers : ['PhantomJS'],
 
     plugins : [
-            'karma-chrome-launcher',
-            'karma-firefox-launcher',
-            'karma-jasmine',
-            'karma-junit-reporter'
-            ],
+      'karma-phantomjs-launcher',
+      'karma-angular-filesort',
+      'karma-jasmine',
+      'karma-ng-html2js-preprocessor'
+    ],
 
-    junitReporter : {
-      outputFile: 'test_out/unit.xml',
-      suite: 'unit'
+    preprocessors: {
+      'src/**/*.html': ['ng-html2js']
     }
+  };
 
-  });
+  // This block is needed to execute Chrome on Travis
+  // If you ever plan to use Chrome and Travis, you can keep it
+  // If not, you can safely remove it
+  // https://github.com/karma-runner/karma/issues/1144#issuecomment-53633076
+  if(configuration.browsers[0] === 'Chrome' && process.env.TRAVIS) {
+    configuration.customLaunchers = {
+      'chrome-travis-ci': {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    };
+    configuration.browsers = ['chrome-travis-ci'];
+  }
+
+  config.set(configuration);
 };

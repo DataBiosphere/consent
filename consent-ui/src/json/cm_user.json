@@ -1,0 +1,312 @@
+{
+    "dul_review": [
+        {
+            "sampleId": "Consent id 01",
+            "logged": "4/5",
+            "status": "urgent",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 02",
+            "logged": "4/5",
+            "status": "urgent",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 03",
+            "logged": "4/5",
+            "status": "pending",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 04",
+            "logged": "3/5",
+            "status": "pending",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 05",
+            "logged": "3/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 06",
+            "logged": "2/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 07",
+            "logged": "2/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 08",
+            "logged": "3/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 09",
+            "logged": "1/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 10",
+            "logged": "1/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 11",
+            "logged": "3/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 12",
+            "logged": "2/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 13",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 09",
+            "logged": "1/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 10",
+            "logged": "1/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 11",
+            "logged": "3/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 12",
+            "logged": "2/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 13",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 14",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 15",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 16",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 17",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 18",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 19",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 1/5",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 21",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 22",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        },
+        {
+            "sampleId": "Consent id 23",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "dul_review.html"
+        }
+    ],
+    "access_review": [
+        {
+            "sampleId": "Sample Collection id 01",
+            "logged": "4/5",
+            "status": "urgent",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 02",
+            "logged": "4/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 03",
+            "logged": "4/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 04",
+            "logged": "3/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 05",
+            "logged": "3/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 06",
+            "logged": "3/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 07",
+            "logged": "2/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 08",
+            "logged": "3/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 09",
+            "logged": "1/5",
+            "status": "pending",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 10",
+            "logged": "1/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 11",
+            "logged": "3/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 12",
+            "logged": "2/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 13",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 14",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 15",
+            "logged": "4/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 16",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 17",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 18",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 19",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 1/5",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 21",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 22",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        },
+        {
+            "sampleId": "Sample Collection id 23",
+            "logged": "5/5",
+            "status": "editable",
+            "link": "access_review.html"
+        }
+    ]
+}

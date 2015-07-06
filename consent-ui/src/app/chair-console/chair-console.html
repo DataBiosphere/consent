@@ -1,0 +1,164 @@
+<div class="container">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+        <h2 class="cm-title">Welcome DAC Chairperson!</br>
+            <small>These are your pending cases for review</small>
+        </h2>
+        <hr class="section-separator">
+    </div>
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+        <h2 class="pvotes-box-title dul-color">
+            <img src="assets/images/icon_dul.png" alt="Translation icon" class="pvotes-icons">Data Use Letter Review
+            <div id="totalDulPendingCases" class="pcases-tag">18</div>
+            </br><!--change to dynamic content-->
+            <div class="pvotes-box-title-description">Were the consent limitations accurately converted into a
+                machine-readable format?
+            </div>
+        </h2>
+        <div class="jumbotron box-vote-singleresults">
+            <div class="row">
+                <div class="pvotes-box-head">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-box-subtitle dul-color">Consent id</div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 center-text pvotes-box-subtitle dul-color">Vote
+                        <div id="dulPendingVoteCases" class="pcases-small-tag">15</div>
+                    </div>
+                    <!--change to dynamic content-->
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">%
+                        Logged
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">Collect
+                        <div id="dulPendingCollectCases" class="pcases-small-tag">3</div>
+                    </div>
+                    <!--change to dynamic content-->
+                    <hr class="pvotes-main-separator">
+                </div>
+                <div class="pvotes-box-body">
+
+
+                    <div ng-repeat="election in ChairConsole.electionsList.dul">
+                        <hr class="pvotes-separator">
+                        <div class="row pvotes-main-list">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{election.sampleId}}</div>
+                            <a ng-href="{{election.link}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                <div class="voteButton {{election.status}}">
+                                    <span ng-if="election.status == 'pending'">Vote</span>
+                                    <span ng-if="election.status == 'editable'">Edit</span>
+                                    <span ng-if="election.status == 'disabled'">---</span>
+                                </div>
+                            </a>
+
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{election.logged}}</div>
+                            <a ng-href="{{election.collectLink}}"
+                               class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
+                                <div class="collectButton {{election.collect}}">
+                                    <span ng-if="election.status == 'pending'">---</span>
+                                    <span ng-if="election.status == 'editable'">Collect Votes</span>
+                                    <span ng-if="election.status == 'disabled'">FINAL VOTE</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div>
+                <!-- DYNAMIC CONTENT COMES HERE-->
+                <hr class="pvotes-separator">
+                <div class="pvotes-pagination">
+                    <ul class="pagination">
+
+                        <li><a ng-click="ChairConsole.changePage('dul', ChairConsole.activePage.dul - 1)">&laquo;</a>
+                        </li>
+                        <li ng-repeat="page in ChairConsole.currentPages.dul">
+                            <a ng-click="ChairConsole.changePage('dul', page)"
+                               ng-class="{ 'active-case': ChairConsole.activePage.dul == page}">{{page + 1}}</a>
+                        </li>
+                        <li><a ng-click="ChairConsole.changePage('dul', ChairConsole.activePage.dul + 1)">&raquo;</a>
+                        </li>
+
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+        <h2 class="pvotes-box-title access-color">
+            <img src="assets/images/icon_access.png" alt="Access icon" class="pvotes-icons">Data Access Request
+            <div id="totalAccessPendingCases" class="pcases-tag">9</div>
+            </br><!--change to dynamic content-->
+            <div class="pvotes-box-title-description">Should the researcher be allowed to access this research
+                studies?
+            </div>
+        </h2>
+        <div class="jumbotron box-vote-singleresults">
+            <div class="row">
+                <div class="pvotes-box-head">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-box-subtitle access-color">Sample collection
+                        id
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 center-text pvotes-box-subtitle access-color">Vote
+                        <div id="accessPendingVoteCases" class="pcases-small-tag">6</div>
+                    </div>
+                    <!--change to dynamic content-->
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle access-color">%
+                        Logged
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle access-color">
+                        Collect
+                        <div id="accessPendingCollectCases" class="pcases-small-tag">3</div>
+                    </div>
+                    <!--change to dynamic content-->
+                    <hr class="pvotes-main-separator">
+                </div>
+                <div class="pvotes-box-body">
+
+
+                    <div ng-repeat="election in ChairConsole.electionsList.access">
+                        <hr class="pvotes-separator">
+                        <div class="row pvotes-main-list">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{election.sampleId}}</div>
+                            <a ng-href="{{election.link}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                <div class="voteButton {{election.status}}">
+                                    <span ng-if="election.status == 'pending'">Vote</span>
+                                    <span ng-if="election.status == 'editable'">Edit</span>
+                                    <span ng-if="election.status == 'disabled'">---</span>
+                                </div>
+                            </a>
+
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{election.logged}}</div>
+                            <a ng-href="{{election.collectLink}}"
+                               class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
+                                <div class="collectButton {{election.collect}}">
+                                    <span ng-if="election.status == 'pending'">---</span>
+                                    <span ng-if="election.status == 'editable'">Collect Votes</span>
+                                    <span ng-if="election.status == 'disabled'">FINAL VOTE</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div>
+                <!-- DYNAMIC CONTENT COMES HERE-->
+                <hr class="pvotes-separator">
+                <div class="pvotes-pagination">
+                    <ul class="pagination">
+
+
+                        <li><a
+                            ng-click="ChairConsole.changePage('access', ChairConsole.activePage.access - 1)">&laquo;</a>
+                        </li>
+                        <li ng-repeat="page in ChairConsole.currentPages.access">
+                            <a ng-click="ChairConsole.changePage('access', page)"
+                               ng-class="{ 'active-case': ChairConsole.activePage.access == page}">{{page + 1}}</a>
+                        </li>
+                        <li><a
+                            ng-click="ChairConsole.changePage('access', ChairConsole.activePage.access + 1)">&raquo;</a>
+                        </li>
+
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
