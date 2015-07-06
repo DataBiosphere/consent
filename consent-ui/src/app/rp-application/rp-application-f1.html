@@ -1,0 +1,70 @@
+<h3 class="cm-subtitle request-color">1. Researcher Information</h3>
+<div class="form-group">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+        <label class="control-label rp-title-question">1.1 Principal Investigator<span>By typing in the name of the principal investigator, I certify that he or she is aware of this research study.</span></label>
+    </div>
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+        <input ng-model="formData.investigator" type="text" name="inputInvestigator" id="inputInvestigator"
+               class="form-control" required="required" placeholder="Principal Investigator">
+    </div>
+</div>
+<div class="form-group">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+        <label class="control-label rp-title-question">1.2 Applicant Organization</label>
+    </div>
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <label class="control-label">Institution Name</label>
+        <input ng-model="formData.institution" type="text" name="inputInstitution" id="inputInstitution"
+               class="form-control" required="required" placeholder="">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+        <label class="control-label">Department</label>
+        <input ng-model="formData.department" type="text" name="inputDepartment" id="inputDepartment"
+               class="form-control" required="required" placeholder="">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+        <label class="control-label">Division</label>
+        <input ng-model="formData.division" type="text" name="inputDivision" id="inputDivision" class="form-control"
+               required="required" placeholder="">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+        <label class="control-label">Street Address 1</label>
+        <input ng-model="formData.address1" type="text" name="inputAddress1" id="inputAddress1" class="form-control"
+               required="required" placeholder="">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+        <label class="control-label">Street Address 2</label>
+        <input ng-model="formData.address2" type="text" name="inputAddress2" id="inputAddress2" class="form-control"
+               required="required" placeholder="">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+        <label class="control-label">City</label>
+        <input ng-model="formData.city" type="text" name="inputCity" id="inputCity" class="form-control"
+               required="required" placeholder="">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+        <label class="control-label">State</label>
+        <input ng-model="formData.state" type="text" name="inputState" id="inputState" class="form-control"
+               required="required" placeholder="">
+    </div>
+    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
+        <label class="control-label">Zip/Postal Code</label>
+        <input ng-model="formData.zipcode" type="text" name="inputZipCode" id="inputZipCode" class="form-control"
+               required="required" placeholder="">
+    </div>
+    <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8">
+        <label class="control-label">Country</label>
+        <input ng-model="formData.country" type="text" name="inputCountry" id="inputCountry" class="form-control"
+               required="required" placeholder="">
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+        <label class="control-label rp-title-question">1.3 Descriptive Title of Project<span>Please note that coordinated requests by collaborating institutions should each use the same title.</span></label>
+    </div>
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+        <input ng-model="formData.projectTitle" type="text" name="inputTitle" id="inputTitle" class="form-control"
+               required="required" placeholder="Title of the project">
+    </div>
+</div>
