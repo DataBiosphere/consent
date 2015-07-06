@@ -17,10 +17,46 @@
                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">Collect <div id="dulPendingCollectCases" class="pcases-small-tag">3</div></div><!--change to dynamic content-->
                     <hr class="pvotes-main-separator">
                 </div>
-                <div class="pvotes-box-body" id="dul_review_list"></div> <!-- DYNAMIC CONTENT COMES HERE-->
+                <div class="pvotes-box-body">
+
+
+                    <div ng-repeat="election in ChairConsole.electionsList.dul">
+                        <hr class="pvotes-separator">
+                        <div class="row pvotes-main-list">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{election.sampleId}}</div>
+                            <a ng-href="{{election.link}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                <div class="voteButton {{election.status}}">
+                                    <span ng-if="election.status == 'pending'">Vote</span>
+                                    <span ng-if="election.status == 'editable'">Edit</span>
+                                    <span ng-if="election.status == 'disabled'">---</span>
+                                </div>
+                            </a>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{election.logged}}</div>
+                            <a ng-href="{{election.collectLink}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
+                                <div class="collectButton {{election.collect}}">
+                                    <span ng-if="election.status == 'pending'">---</span>
+                                    <span ng-if="election.status == 'editable'">Collect Votes</span>
+                                    <span ng-if="election.status == 'disabled'">FINAL VOTE</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div> <!-- DYNAMIC CONTENT COMES HERE-->
                 <hr class="pvotes-separator">
                 <div class="pvotes-pagination">
-                    <ul class="pagination" id="dul_review_paginator"></ul>
+                    <ul class="pagination">
+
+                        <li><a ng-click="ChairConsole.changePage('dul', ChairConsole.activePage.dul - 1)">&laquo;</a></li>
+                        <li ng-repeat="page in ChairConsole.currentPages.dul">
+                            <a ng-click="ChairConsole.changePage('dul', page)"
+                               ng-class="{ 'active-case': ChairConsole.activePage.dul == page}">{{page + 1}}</a>
+                        </li>
+                        <li><a ng-click="ChairConsole.changePage('dul', ChairConsole.activePage.dul + 1)">&raquo;</a></li>
+
+
+                    </ul>
                 </div>
             </div>
         </div>
@@ -39,10 +75,47 @@
                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle access-color">Collect <div id="accessPendingCollectCases" class="pcases-small-tag">3</div></div><!--change to dynamic content-->
                     <hr class="pvotes-main-separator">
                 </div>
-                <div class="pvotes-box-body" id="access_review_list"></div> <!-- DYNAMIC CONTENT COMES HERE-->
+                <div class="pvotes-box-body">
+
+
+                    <div ng-repeat="election in ChairConsole.electionsList.access">
+                        <hr class="pvotes-separator">
+                        <div class="row pvotes-main-list">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{election.sampleId}}</div>
+                            <a ng-href="{{election.link}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                <div class="voteButton {{election.status}}">
+                                    <span ng-if="election.status == 'pending'">Vote</span>
+                                    <span ng-if="election.status == 'editable'">Edit</span>
+                                    <span ng-if="election.status == 'disabled'">---</span>
+                                </div>
+                            </a>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{election.logged}}</div>
+                            <a ng-href="{{election.collectLink}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
+                                <div class="collectButton {{election.collect}}">
+                                    <span ng-if="election.status == 'pending'">---</span>
+                                    <span ng-if="election.status == 'editable'">Collect Votes</span>
+                                    <span ng-if="election.status == 'disabled'">FINAL VOTE</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div> <!-- DYNAMIC CONTENT COMES HERE-->
                 <hr class="pvotes-separator">
                 <div class="pvotes-pagination">
-                    <ul class="pagination" id="access_review_paginator"></ul>
+                    <ul class="pagination">
+
+
+                        <li><a ng-click="ChairConsole.changePage('access', ChairConsole.activePage.access - 1)">&laquo;</a></li>
+                        <li ng-repeat="page in ChairConsole.currentPages.access">
+                            <a ng-click="ChairConsole.changePage('access', page)"
+                               ng-class="{ 'active-case': ChairConsole.activePage.access == page}">{{page + 1}}</a>
+                        </li>
+                        <li><a ng-click="ChairConsole.changePage('access', ChairConsole.activePage.access + 1)">&raquo;</a></li>
+
+
+                    </ul>
                 </div>
             </div>
         </div>

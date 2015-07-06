@@ -80,7 +80,7 @@ function voteNoFunction(){
 //DAC USER PENDING CASES
 
 var jsonData = {};
-$.get("json/cm_json.json", function(data){
+$.get("json/cm_user.json", function(data){
 	jsonData = data;
 	generatePagination("dul_review", 0);
 	generatePagination("access_review", 0);

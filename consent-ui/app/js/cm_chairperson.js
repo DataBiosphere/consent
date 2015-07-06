@@ -1,7 +1,7 @@
 //DAC CHAIRPERSON PENDING CASES
 
 var jsonData = {};
-$.get("json/cm_chairperson_json.json", function(data){
+$.get("json/cm_chair.json", function(data){
 	jsonData = data;
 	generatePagination("dul_review", 0);
 	generatePagination("access_review", 0);
