@@ -613,23 +613,22 @@ a .urgent, a .pending, a .editable, a .enabled {
     background: rgba(204, 204, 204, 0.2) !important;
     box-shadow: 2px 2px rgba(204, 204, 204, 0.5) !important;
 }
+    a .urgent {
+        color: #D13B07 !important;
+    }
 
-a .urgent {
-    color: #D13B07 !important;
-}
+    a .pending, a .enabled {
+        color: #D13B07 !important;
+    }
 
-a .pending, a .enabled {
-    color: #D13B07 !important;
-}
+    a .editable {
+        color: #777777 !important;
+    }
 
-a .editable {
-    color: #777777 !important;
-}
-
-a .disabled {
-    color: #cccccc !important;
-    cursor: default !important;
-}
+    a .disabled {
+        color: #cccccc !important;
+        cursor: default !important;
+    }
 
 a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background: #2FA4E7 !important;
