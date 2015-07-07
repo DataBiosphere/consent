@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('ConsentManagement', ['cmChairConsole', 'cmReview', 'cmReviewResults', 'cmRPApplication', 'cmUserConsole']);
+        .module('ConsentManagement', ['cmChairConsole', 'cmReview', 'cmReviewResults', 'cmRPApplication', 'cmUserConsole', 'ngResource']);
 
 })();
