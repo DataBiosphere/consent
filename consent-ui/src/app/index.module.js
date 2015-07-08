@@ -4,4 +4,5 @@
     angular
         .module('ConsentManagement', ['cmChairConsole', 'cmReview', 'cmReviewResults', 'cmRPApplication', 'cmUserConsole', 'cmSummaryVotes', 'cmHeader']);
 
+
 })();

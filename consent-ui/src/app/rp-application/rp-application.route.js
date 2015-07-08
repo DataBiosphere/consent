@@ -6,14 +6,17 @@
         .config(routeConfig);
 
     /* ngInject */
-    function routeConfig($stateProvider) {
+    function routeConfig($stateProvider,USER_ROLES) {
         $stateProvider
             // route to show our basic form (/form)
             .state('rp_application', {
                 url: '/rp_application',
                 templateUrl: 'app/rp-application/rp-application.html',
                 controller: 'RPApplication',
-                controllerAs: 'RPApplication'
+                controllerAs: 'RPApplication',
+                data: {
+                                         authorizedRoles: [USER_ROLES.dacmember]
+                                   }
             })
 
             // nested states

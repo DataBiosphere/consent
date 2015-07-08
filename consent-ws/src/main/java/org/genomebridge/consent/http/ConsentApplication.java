@@ -7,6 +7,7 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.genomebridge.consent.http.cloudstore.GCSStore;
@@ -34,12 +35,17 @@ import org.genomebridge.consent.http.service.DatabaseConsentAPI;
 import org.genomebridge.consent.http.service.DatabaseDataRequestAPI;
 import org.genomebridge.consent.http.service.DatabaseElectionAPI;
 import org.genomebridge.consent.http.service.DatabaseVoteAPI;
+import org.genomebridge.consent.http.service.*;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import java.util.EnumSet;
+
 
 /**
  * Top-level entry point to the entire application.
@@ -74,7 +80,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO);
             DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
             DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
-
+            DatabaseDACUserAPI.initInstance(jdbi ,dacUserDAO);
+            final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
+            cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
@@ -88,7 +96,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             throw new IllegalStateException(e);
         }
 
+
         // How register our resources.
+        env.jersey().register(DACUserResource.class);
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(AllConsentsResource.class);
@@ -110,6 +120,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 LOGGER.debug("**** ConsentAppliction Server Stopped ****");
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
+                AbstractDACUserAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();
                 AbstractDataRequestAPI.clearInstance();
             }

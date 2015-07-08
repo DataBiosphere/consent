@@ -67,7 +67,7 @@ public class DataRequestVoteResource extends Resource {
     public Vote describe(@PathParam("requestId") String requestId,
                          @PathParam("id") Integer id) {
         return api.describeVoteById(id, requestId);
-    }
+}
 
     @GET
     @Produces("application/json")

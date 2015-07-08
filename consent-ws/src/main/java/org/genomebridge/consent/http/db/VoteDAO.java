@@ -76,6 +76,4 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                     @Bind("updateDate") Date updateDate,
                     @Bind("voteId") Integer voteId,
                     @Bind("electionId") Integer electionId);
-
-
 }

@@ -5,7 +5,8 @@
         .module('ConsentManagement')
         .config(logConfig)
         .config(routeConfig)
-        .config(httpConfig);
+        .config(httpConfig)
+        .constant("apiUrl", "http://localhost:8180/");
 
     /* ngInject */
     function logConfig($logProvider) {
@@ -14,7 +15,7 @@
 
     /* ngInject */
     function routeConfig($urlRouterProvider) {
-        $urlRouterProvider.otherwise("/user_console");
+        $urlRouterProvider.otherwise("/login");
     }
 
     /* ngInject */

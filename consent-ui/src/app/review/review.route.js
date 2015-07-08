@@ -6,7 +6,7 @@
         .config(routeConfig);
 
     /* ngInject */
-    function routeConfig($stateProvider) {
+    function routeConfig($stateProvider,USER_ROLES) {
         $stateProvider
             // route to show our basic form (/form)
             .state('dul_review', {
@@ -14,7 +14,10 @@
                 url: '/dul_review',
                 templateUrl: 'app/review/dul-review.html',
                 controller: 'Review',
-                controllerAs: 'Review'
+                controllerAs: 'Review',
+                  data: {
+                              authorizedRoles: [USER_ROLES.dacmember]
+                        }
             })
             // route to show our basic form (/form)
             .state('access_review', {
@@ -22,7 +25,10 @@
                 url: '/access_review',
                 templateUrl: 'app/review/access-review.html',
                 controller: 'Review',
-                controllerAs: 'Review'
+                controllerAs: 'Review',
+                    data: {
+                               authorizedRoles: [USER_ROLES.dacmember]
+                          }
             });
     }
 

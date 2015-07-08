@@ -6,7 +6,8 @@
         .controller('UserConsole', UserConsole);
 
     /* ngInject */
-    function UserConsole($http, cmPaginatorService) {
+    function UserConsole($http, cmPaginatorService,$scope) {
+
 
         var lists = {'dul': [], 'access': []};
 
