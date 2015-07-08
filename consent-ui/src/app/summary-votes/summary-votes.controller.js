@@ -189,6 +189,9 @@
                 }
             }
         };
+        var vm = this;
+        vm.chartData = data;
+        vm.chartOptions = options;
     }
 
 })();

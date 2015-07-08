@@ -143,17 +143,28 @@ small {
 
 }
 
-.user-dropdown a li {
-    float: right;
-    color: #00609f;
-    padding: 10px 10px 5px 10px !important;
-    font-weight: normal;
-    font-size: 15px;
+.user-dropdown li {
+    padding: 5px 10px 0 10px !important;
+    margin: 2px 0 0 0 !important;
 }
+
+.user-dropdown li a {
+    float: right !important;
+    text-align: right !important;
+    color: #00609f !important;
+    font-weight: normal !important;
+    font-size: 15px;
+    cursor: pointer;
+}
+    .user-dropdown li:hover a {
+        color: #2FA4E7 !important;
+        cursor: pointer;
+    }
 
 .user-dropdown hr {
     float: right;
-    margin: 2px !important;
+    margin: 0 2px 0 2px !important;
+    width: 100%;
 }
 
 .box-search {
@@ -179,11 +190,11 @@ small {
     color: #777777;
 }
 
-.cm-title-description, .cm-title-description-request {
+.cm-title-description, .cm-title-description-request{
     color: #777777;
     font-style: italic;
     font-size: 19px;
-    margin: 0 0 20px 55px;
+    margin: -5px 0 20px 55px !important;
     line-height: 25px;
 }
 
@@ -199,8 +210,8 @@ small {
     margin-top: 15px;
 }
 
-.cm-subtitle {
-    padding: 15px 0 10px 0 !important;
+.cm-subtitle{
+    padding: 15px 0 0 0!important;
 }
 
 .cm-subtitle li h4 {
@@ -218,10 +229,11 @@ small {
     display: inline;
 }
 
-.cm-inside-box-title {
+
+.cm-inside-box-title{
     font-size: 17px;
     font-style: italic;
-    padding: 5px 0 5px 15px;
+    padding: 5px 0 5px 0;
     display: inline;
     color: #777777;
 }
@@ -229,6 +241,10 @@ small {
 .cm-inside-box-title span {
     font-weight: 700 !important;
     font-style: italic;
+}
+
+.cm-inside-box-title-margin{
+    margin-top: 45px;
 }
 
 .cm-box-title {
@@ -273,8 +289,8 @@ small {
     margin: 10px 0;
 }
 
-.box-separator {
-    border-color: #BCBCBC;
+.box-separator{
+    border-color: #d5d5d5 !important;
     margin: 5px 0 5px 0;
 }
 
@@ -443,25 +459,23 @@ input[type=checkbox]:checked + label:before {
     line-height: 15px;
 }
 
-.vote-button, .vote-reminder {
-    border: 0 !important;
+.vote-button, .vote-reminder{
+    border: 0!important;
     transition: background 0.3s ease;
     font-size: 14px;
     font-weight: 500;
 }
-
-.vote-button {
+.vote-button{
     background: #00609f;
     float: right !important;
 }
-
-.vote-reminder {
-    float: right;
+.vote-reminder{
+    /*float: right;*/
     height: 28px;
     line-height: 13px;
     margin-bottom: 4px;
-    background: rgba(204, 204, 204, 0.2) !important;
-    box-shadow: 2px 2px rgba(204, 204, 204, 0.5) !important;
+    background: rgba(204, 204, 204, 0.5)!important;
+    box-shadow: 2px 2px rgb(204, 204, 204)!important;
 }
 
 .vote-button:hover, .vote-reminder:hover {
@@ -636,6 +650,10 @@ a .urgent, a .pending, a .editable, a .enabled {
 a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background: #2FA4E7 !important;
     color: #ffffff !important;
+}
+
+.caret-margin{
+    margin: 0 0 0 5px;
 }
 
 .pvotes-box-title-description {
