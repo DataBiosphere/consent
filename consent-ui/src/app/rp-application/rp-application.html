@@ -10,37 +10,35 @@
         <hr class="section-separator">
         <div class="row no-margin">
             <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-                <div id="rootwizard">
-                    <ul class="row multi-step-buttons">
-                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
-                            <a ui-sref-active="active" ui-sref=".step1" class="jumbotron box-vote">
-                                <small>Step 1</small>
-                                Reseacher Information
-                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-                            </a>
-                        </li>
-                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
-                            <a ui-sref-active="active" ui-sref=".step2" class="jumbotron box-vote">
-                                <small>Step 2</small>
-                                Data Access Request
-                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-                            </a>
-                        </li>
-                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
-                            <a ui-sref-active="active" ui-sref=".step3" class="jumbotron box-vote">
-                                <small>Step 3</small>
-                                Research Purpose Statement
-                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-                            </a>
-                        </li>
-                        <li class="col-lg-3 col-md-3 col-sm-3 col-xs-6 multi-step-title request-color">
-                            <a ui-sref-active="active" ui-sref=".step4" class="jumbotron box-vote">
-                                <small>Step 4</small>
-                                Attestation Statement
-                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-                            </a>
-                        </li>
-                    </ul>
+                <div class="row multi-step-buttons no-margin">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step1')}" ui-sref=".step1" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 1</small>
+                            Reseacher Information
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step2')}" ui-sref=".step2" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 2</small>
+                            Data Access Request
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step3')}" ui-sref=".step3" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 3</small>
+                            Research Purpose Statement
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step4')}" ui-sref=".step4" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 4</small>
+                            Attestation Statement
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -54,7 +52,7 @@
 
     </div>
 
-  <pre>
-    {{ formData }}
-  </pre>
+  <!--<pre>-->
+    <!--{{ formData }}-->
+  <!--</pre>-->
 </div>

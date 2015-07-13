@@ -21,6 +21,7 @@
 
 .menu > li:before {
     content: "|";
+    content: "|";
     padding-right: 0.3em;
 }
 
@@ -142,17 +143,28 @@ small {
 
 }
 
-.user-dropdown a li {
-    float: right;
-    color: #00609f;
-    padding: 10px 10px 5px 10px !important;
-    font-weight: normal;
-    font-size: 15px;
+.user-dropdown li {
+    padding: 5px 10px 0 10px !important;
+    margin: 2px 0 0 0 !important;
 }
+
+.user-dropdown li a {
+    float: right !important;
+    text-align: right !important;
+    color: #00609f !important;
+    font-weight: normal !important;
+    font-size: 15px;
+    cursor: pointer;
+}
+    .user-dropdown li:hover a {
+        color: #2FA4E7 !important;
+        cursor: pointer;
+    }
 
 .user-dropdown hr {
     float: right;
-    margin: 2px !important;
+    margin: 0 2px 0 2px !important;
+    width: 100%;
 }
 
 .box-search {
@@ -178,11 +190,11 @@ small {
     color: #777777;
 }
 
-.cm-title-description, .cm-title-description-request {
+.cm-title-description, .cm-title-description-request{
     color: #777777;
     font-style: italic;
     font-size: 19px;
-    margin: 0 0 20px 55px;
+    margin: -5px 0 20px 55px !important;
     line-height: 25px;
 }
 
@@ -198,8 +210,12 @@ small {
     margin-top: 15px;
 }
 
-.cm-subtitle {
-    padding: 15px 0 10px 0 !important;
+.cm-subtitle{
+     padding: 15px 0 0 0!important;
+ }
+
+.cm-subtitle h3{
+    margin-left: 10px;
 }
 
 .cm-subtitle li h4 {
@@ -217,10 +233,11 @@ small {
     display: inline;
 }
 
-.cm-inside-box-title {
+
+.cm-inside-box-title{
     font-size: 17px;
     font-style: italic;
-    padding: 5px 0 5px 15px;
+    padding: 5px 0 5px 0;
     display: inline;
     color: #777777;
 }
@@ -228,6 +245,10 @@ small {
 .cm-inside-box-title span {
     font-weight: 700 !important;
     font-style: italic;
+}
+
+.cm-inside-box-title-margin{
+    margin-top: 45px;
 }
 
 .cm-box-title {
@@ -272,8 +293,8 @@ small {
     margin: 10px 0;
 }
 
-.box-separator {
-    border-color: #BCBCBC;
+.box-separator{
+    border-color: #d5d5d5 !important;
     margin: 5px 0 5px 0;
 }
 
@@ -294,7 +315,7 @@ small {
 
 /****************************************BOXES*/
 
-.box-vote, .box-vote-results, .box-vote-singleresults, .pvotes-box {
+.box-vote-results, .box-vote-singleresults, .pvotes-box {
     padding: 15px 25px !important;
     margin: 10px 0 20px 0;
     box-shadow: 3px 3px 0 #cccccc;
@@ -310,7 +331,9 @@ small {
 }
 
 .box-vote {
-    padding: 15px 30px !important;
+    padding: 15px 30px;
+    margin: 10px 0 20px 0;
+    box-shadow: 3px 3px 0 #cccccc;
 }
 
 .box-vote-results {
@@ -440,25 +463,23 @@ input[type=checkbox]:checked + label:before {
     line-height: 15px;
 }
 
-.vote-button, .vote-reminder {
-    border: 0 !important;
+.vote-button, .vote-reminder{
+    border: 0!important;
     transition: background 0.3s ease;
     font-size: 14px;
     font-weight: 500;
 }
-
-.vote-button {
+.vote-button{
     background: #00609f;
     float: right !important;
 }
-
-.vote-reminder {
-    float: right;
+.vote-reminder{
+    /*float: right;*/
     height: 28px;
     line-height: 13px;
     margin-bottom: 4px;
-    background: rgba(204, 204, 204, 0.2) !important;
-    box-shadow: 2px 2px rgba(204, 204, 204, 0.5) !important;
+    background: rgba(204, 204, 204, 0.5)!important;
+    box-shadow: 2px 2px rgb(204, 204, 204)!important;
 }
 
 .vote-button:hover, .vote-reminder:hover {
@@ -635,6 +656,10 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #ffffff !important;
 }
 
+.caret-margin{
+    margin: 0 0 0 5px;
+}
+
 .pvotes-box-title-description {
     color: #777777;
     font-style: italic;
@@ -655,6 +680,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     border: 0;
     color: #777777;
     transition: background 0.3s ease;
+    cursor: pointer !important;
 }
 
 .pvotes-pagination li a:hover {
@@ -707,61 +733,71 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 
 /***************************RP APPLICATION*/
 
+.attest-button{
+    margin-bottom: 30px;
+}
 /*MULTISTEP*/
 
-.multi-step-title {
-    position: relative;
-    height: auto;
-    display: inline-block;
-    margin: 0 !important;
+.multi-step-buttons{
+    margin: 25px 10px 10px 10px;
 }
-
-.multi-step-title a {
-    font-size: 18px;
-    background: #eeeeee !important;
-    transition: background 0.3s ease;
-    width: 100%;
-    height: 100%;
-    padding: 10px 20px 10px 20px !important;
-    margin-bottom: 10px !important;
-}
-
-.multi-step-title a:hover {
-    color: #ffffff;
-    background: #2FA4E7 !important;
-}
-
-.multi-step-title a small {
-    display: block;
-    color: #777777 !important;
-    line-height: 25px;
-}
-
-.multi-step-title a:hover small {
-    color: #cccccc !important;
-}
-
-.multi-step-title a span {
-    float: right;
-}
-
-.multi-step-buttons .active a {
+.multi-step-buttons .active {
     background: #8E307A !important;
     color: #ffffff !important;
 }
+    .multi-step-buttons .active small {
+        color: #cccccc !important;
+    }
 
-.multi-step-buttons .active a small {
-    color: #cccccc !important;
+.multi-step-title {
+    font-size: 18px;
+    position: relative;
+    height: auto;
+    display: inline-block !important;
+    background: #eeeeee !important;
+    padding: 10px 20px 10px 20px !important;
+    transition: background 0.3s ease !important;
 }
+    .multi-step-title a {
+        font-size: 18px;
+        width: 100%;
+        height: 100%;
+        margin-bottom: 10px !important;
+    }
+
+    .multi-step-title small {
+        display: block !important;
+        color: #777777;
+        line-height: 25px;
+    }
+
+    .multi-step-title span {
+        float: right;
+        position: absolute;
+        top: 15px;
+        right: 20px;
+    }
+
+    .multi-step-title:hover {
+        background: #2FA4E7 !important;
+        cursor: pointer;
+        color: #ffffff !important;
+    }
+        .multi-step-title:hover small {
+            color: #cccccc !important;
+        }
+
+
+
+/* PAGINATOR*/
 
 .multi-step-pager {
-    margin: 0 5px 0 5px;
+    margin: 20px 5px 0 5px;
 }
 
-.multi-step-pager li a {
+.multi-step-pager li a, .download-button {
     border-radius: 5px !important;
-    /*background: #00609f !important;*/
-    background: #8E307A !important;
+    /*background: #8E307A !important;*/
     box-shadow: 3px 3px 0 #cccccc;
     color: #ffffff;
     border: none;
@@ -771,10 +807,13 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     transition: background 0.3s ease;
 }
 
-.multi-step-pager li a:hover {
+.multi-step-pager li a:hover,.download-button:hover {
     background: #2FA4E7 !important;
     color: #ffffff !important;
 }
+    .download-button span, .download-button span:hover{
+        color: #ffffff !important;
+    }
 
 .multi-step-pager .disabled {
     padding: 0 !important;
@@ -811,11 +850,17 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     padding: 2px 0 0 5px;
 }
 
+.download-button{
+    float: right;
+    font-size: 15px;
+    margin: 35px 15px 0 0;
+}
+
 .rp-group {
     margin-bottom: 10px !important;
 }
 
-.rp-title-question, .rp-choice-questions {
+.rp-title-question, .rp-choice-questions, .rp-accept-statement {
     float: left !important;
     text-align: left !important;
     display: block;
@@ -827,12 +872,16 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     line-height: 23px;
     font-weight: 500 !important;
     color: #8E307A;
+    margin-left: 10px;
 }
 
-.rp-choice-questions {
+.rp-choice-questions, .rp-accept-statement {
     font-weight: normal !important;
     font-size: 15px;
     color: #777777;
+}
+.rp-accept-statement{
+    line-height: 25px;
 }
 
 .rp-title-question span, .rp-choice-questions span {
@@ -854,4 +903,23 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #2FA4E7;
 }
 
+/***************************SUMMARY STATISTICS*/
 
+.cm-icon-button{
+    padding: 2px 0 0 10px;
+}
+
+/***************************FINAL ACCESS VOTE*/
+
+.button-margin{
+    margin: -3px 15px 3px -15px;
+    padding: 0 10px 0 10px;
+}
+
+.row-margin{
+    margin: 0 5px 0 5px;
+}
+
+.vault-box-height{
+    height: 168px;
+}

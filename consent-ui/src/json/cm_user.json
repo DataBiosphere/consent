@@ -4,13 +4,13 @@
             "sampleId": "Consent id 01",
             "logged": "4/5",
             "status": "urgent",
-            "link": "dul_review.html"
+            "link": "#/dul_review"
         },
         {
             "sampleId": "Consent id 02",
             "logged": "4/5",
             "status": "urgent",
-            "link": "dul_review.html"
+            "link": "#/dul_review"
         },
         {
             "sampleId": "Consent id 03",

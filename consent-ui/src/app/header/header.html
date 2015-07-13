@@ -1,0 +1,36 @@
+<nav class="navbar top-navigator-bar" ng-controller="Header as Header">
+    <div class="row top-navigator">
+        <div class="navbar col-lg-6 col-md-6 col-sm-8 col-xs-12 no-padding no-margin">
+            <ul class="navbar-left no-margin">
+                <li class="brand"><img src="assets/images/broad_logo_allwhite.png" alt="Broad Institute Logo"></li>
+                <li><a href="#/user_console">My Console</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </div>
+        <div class="navbar col-lg-3 col-md-3 col-sm-4 col-xs-6 no-margin">
+            <form class="input-group box-search" id="adv-search" role="search">
+                <input type="text" class="form-control" placeholder="Enter search term..."/>
+
+                <div class="input-group-btn">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-search"><span
+                            class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="navbar navbar-right col-lg-3 col-md-3 col-sm-4 col-sm-offset-8 col-xs-6 no-margin" ng-controller="Header">
+            <li class="dropdown navbar-right user-li" dropdown is-open="status.isopen">
+                <a role="button" class="dropdown-toggle" data-toggle="dropdown" href="#" dropdown-toggle ng-disabled="disabled">
+                    <div id="dacUser">DAC User <span class="caret caret-margin"></span></div>
+                    <small id="dacUserMail">dacuser@broadinstitute.org</small>
+                </a>
+                <ul class="dropdown-menu user-dropdown" role="menu">
+                    <li><a href="#">Something</a></li>
+                    <hr>
+                    <li><a href="#">Something else</a></li>
+                </ul>
+            </li>
+        </div>
+    </div>
+</nav>

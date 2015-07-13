@@ -1,107 +1,109 @@
-<h3 class="cm-subtitle request-color">2. Data Access Request</h3>
-<div class="form-group">
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <label class="control-label rp-title-question">2.1 Dataset ID<span>Please type the ID of the datasets you would like to request access to for this study. <a
-            href="#">Link to the catalog?</a></span></label>
+<div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+    <div class="cm-subtitle request-color"><h3>2. Data Access Request</h3></div>
+    <div class="form-group">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <label class="control-label rp-title-question">2.1 Dataset ID<span>Please type the ID of the datasets you would like to request access to for this study. <a
+                href="#">Link to the catalog?</a></span></label>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <input ng-model="formData.datasetId" type="text" name="inputDatasetID" id="inputDatasetID" class="form-control"
+                   required="required" placeholder="Dataset ID">
+        </div>
     </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <input ng-model="formData.datasetId" type="text" name="inputDatasetID" id="inputDatasetID" class="form-control"
-               required="required" placeholder="Dataset ID">
+    <div class="form-group">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <label class="control-label rp-title-question">2.2 Research use statement (RUS)<span>A RUS  is a brief description of the applicant’s proposed use of the dataset(s). The RUS will be reviewed by all parties responsible for data covered by this Data Access Request. Please note that if access is approved, you agree that the RUS, along with your name and institution, will be included on this website to describe your research project to the public.</br>
+                Please enter your RUS in the area below. The RUS should be one or two paragraphs in length and include research objectives, the study design, and an analysis plan (including the phenotypic characteristics that will be tested for association with genetic variants). If you are requesting multiple datasets, please describe how you will use them. Examples of RUS can be found at <a
+                    href="#">GWAS website</a>.</span></label>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <textarea ng-model="formData.rus" name="inputRUS" id="inputRUS" class="form-control" maxlength="2200" rows="6"
+                      required="required" placeholder="Please limit your RUS to 2200 characters."></textarea>
+        </div>
     </div>
-</div>
-<div class="form-group">
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <label class="control-label rp-title-question">2.2 Research use statement (RUS)<span>A RUS  is a brief description of the applicant’s proposed use of the dataset(s). The RUS will be reviewed by all parties responsible for data covered by this Data Access Request. Please note that if access is approved, you agree that the RUS, along with your name and institution, will be included on this website to describe your research project to the public.</br>
-            Please enter your RUS in the area below. The RUS should be one or two paragraphs in length and include research objectives, the study design, and an analysis plan (including the phenotypic characteristics that will be tested for association with genetic variants). If you are requesting multiple datasets, please describe how you will use them. Examples of RUS can be found at <a
-                href="#">GWAS website</a>.</span></label>
-    </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <textarea ng-model="formData.rus" name="inputRUS" id="inputRUS" class="form-control" maxlength="2200" rows="6"
-                  required="required" placeholder="Please limit your RUS to 2200 characters."></textarea>
-    </div>
-</div>
 
-<div class="form-group">
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <label class="control-label rp-title-question">2.3 Non-Technical summary<span>Please enter below a non-technical summary of your RUS suitable for understanding by the general public (written at a high school reading level or below).</span></label>
+    <div class="form-group">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <label class="control-label rp-title-question">2.3 Non-Technical summary<span>Please enter below a non-technical summary of your RUS suitable for understanding by the general public (written at a high school reading level or below).</span></label>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <textarea ng-model="formData.non_tech_rus" name="inputNonTechRUS" id="inputNonTechRUS" class="form-control"
+                      maxlength="1100" rows="3" required="required"
+                      placeholder="Please limit your non-technical summary to 1100 characters."></textarea>
+        </div>
     </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <textarea ng-model="formData.non_tech_rus" name="inputNonTechRUS" id="inputNonTechRUS" class="form-control"
-                  maxlength="1100" rows="3" required="required"
-                  placeholder="Please limit your non-technical summary to 1100 characters."></textarea>
-    </div>
-</div>
 
-<div class="form-group">
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <label class="control-label rp-title-question">2.4 Type of Research <span>Select all applicable options.</span></label>
-    </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <div class="checkbox">
-            <input ng-model="formData.diseases" id="checkDiseases" type="checkbox" class="checkbox-inline rp-checkbox"
-                   name="checkDiseases">
-            <label class="regular-checkbox rp-choice-questions"
-                   for="checkDiseases"><span>2.4.1 Disease-related studies: </span>The primary purpose of the research
-                is to learn more about a particular disease or disorder (e.g., type 2 diabetes), a trait (e.g., blood
-                pressure), or a set of related conditions (e.g., autoimmune diseases, psychiatric disorders).</label>
+    <div class="form-group">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <label class="control-label rp-title-question">2.4 Type of Research <span>Select all applicable options.</span></label>
         </div>
-    </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <div class="checkbox">
-            <input ng-model="formData.methods" id="checkMethods" type="checkbox" class="checkbox-inline rp-checkbox"
-                   name="checkMethods">
-            <label class="regular-checkbox rp-choice-questions" for="checkMethods"><span>2.4.2  Methods development and validation studies: </span>The
-                primary purpose of the research is to develop and/or validate new methods for analyzing or interpreting
-                data (e.g., developing more powerful methods to detect epistatic, gene-environment, or other types of
-                complex interactions in genome-wide association studies). Data will be used for developing and/or
-                validating new methods.</label>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <div class="checkbox">
+                <input ng-model="formData.diseases" id="checkDiseases" type="checkbox" class="checkbox-inline rp-checkbox"
+                       name="checkDiseases">
+                <label class="regular-checkbox rp-choice-questions"
+                       for="checkDiseases"><span>2.4.1 Disease-related studies: </span>The primary purpose of the research
+                    is to learn more about a particular disease or disorder (e.g., type 2 diabetes), a trait (e.g., blood
+                    pressure), or a set of related conditions (e.g., autoimmune diseases, psychiatric disorders).</label>
+            </div>
         </div>
-    </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <div class="checkbox">
-            <input ng-model="formData.controls" id="checkControls" type="checkbox" class="checkbox-inline rp-checkbox"
-                   name="checkControls">
-            <label class="regular-checkbox rp-choice-questions" for="checkControls"><span>2.4.3 Controls: </span>The
-                reason for this request is to increase the number of controls available for a comparison group (e.g., a
-                case-control study).</label>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <div class="checkbox">
+                <input ng-model="formData.methods" id="checkMethods" type="checkbox" class="checkbox-inline rp-checkbox"
+                       name="checkMethods">
+                <label class="regular-checkbox rp-choice-questions" for="checkMethods"><span>2.4.2  Methods development and validation studies: </span>The
+                    primary purpose of the research is to develop and/or validate new methods for analyzing or interpreting
+                    data (e.g., developing more powerful methods to detect epistatic, gene-environment, or other types of
+                    complex interactions in genome-wide association studies). Data will be used for developing and/or
+                    validating new methods.</label>
+            </div>
         </div>
-    </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <div class="checkbox">
-            <input ng-model="formData.population" id="checkPopulation" type="checkbox"
-                   class="checkbox-inline rp-checkbox" name="checkPopulation">
-            <label class="regular-checkbox rp-choice-questions" for="checkPopulation"><span>2.4.4 Population structure or normal variation studies: </span>The
-                primary purpose of the research is to learn more about a particular disease or disorder (e.g., type 2
-                diabetes), a trait (e.g., blood pressure), or a set of related conditions (e.g., autoimmune diseases,
-                psychiatric disorders).</label>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <div class="checkbox">
+                <input ng-model="formData.controls" id="checkControls" type="checkbox" class="checkbox-inline rp-checkbox"
+                       name="checkControls">
+                <label class="regular-checkbox rp-choice-questions" for="checkControls"><span>2.4.3 Controls: </span>The
+                    reason for this request is to increase the number of controls available for a comparison group (e.g., a
+                    case-control study).</label>
+            </div>
         </div>
-    </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <div class="checkbox">
-            <input ng-model="formData.other" id="checkOther" type="checkbox" class="checkbox-inline rp-checkbox"
-                   name="checkOther" onclick="enableInputOtherFunction()">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <div class="checkbox">
+                <input ng-model="formData.population" id="checkPopulation" type="checkbox"
+                       class="checkbox-inline rp-checkbox" name="checkPopulation">
+                <label class="regular-checkbox rp-choice-questions" for="checkPopulation"><span>2.4.4 Population structure or normal variation studies: </span>The
+                    primary purpose of the research is to learn more about a particular disease or disorder (e.g., type 2
+                    diabetes), a trait (e.g., blood pressure), or a set of related conditions (e.g., autoimmune diseases,
+                    psychiatric disorders).</label>
+            </div>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <div class="checkbox">
+                <input ng-model="formData.other" id="checkOther" type="checkbox" class="checkbox-inline rp-checkbox"
+                       name="checkOther" onclick="enableInputOtherFunction()">
 
-            <label class="regular-checkbox rp-choice-questions" for="checkOther"><span>2.4.5 Other:</span></label>
+                <label class="regular-checkbox rp-choice-questions" for="checkOther"><span>2.4.5 Other:</span></label>
+            </div>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <input ng-model="formData.othertext" type="text" name="inputOther" id="inputOther" class="form-control"
+                   placeholder="Please specify if selected" disabled>
         </div>
     </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <input ng-model="formData.othertext" type="text" name="inputOther" id="inputOther" class="form-control"
-               placeholder="Please specify if selected" disabled>
-    </div>
-</div>
 
-<div class="form-group">
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <label class="control-label rp-title-question">2.5 Please state the disease area(s) this study focus on <span>Choose any number of Disease Ontology ; or None.</span></label>
+    <div class="form-group">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <label class="control-label rp-title-question">2.5 Please state the disease area(s) this study focus on <span>Choose any number of Disease Ontology ; or None.</span></label>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
+            <input ng-model="formData.ontologies" type="text" name="inputOntologies" id="inputOntologies"
+                   class="form-control" required="required" placeholder="Input all Disease Ontologies">
+        </div>
     </div>
-    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 rp-group">
-        <input ng-model="formData.ontologies" type="text" name="inputOntologies" id="inputOntologies"
-               class="form-control" required="required" placeholder="Input all Disease Ontologies">
-    </div>
+    <ul class="pager wizard">
+        <div class="row multi-step-pager">
+            <li class="previous f-left multi-step-prev"><a href="#/rp_application/step1" class="request-background"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous Step</a></li>
+            <li class="next f-right multi-step-next"><a href="#/rp_application/step3" class="request-background">Next Step<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a></li>
+        </div>
+    </ul>
 </div>
-<ul class="pager wizard">
-    <div class="row multi-step-pager">
-        <li class="previous f-left multi-step-prev"><a href="#/rp_application/step1"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous Step</a></li>
-        <li class="next f-right multi-step-next"><a href="#/rp_application/step3">Next Step<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a></li>
-    </div>
-</ul>
