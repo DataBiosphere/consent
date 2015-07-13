@@ -5,10 +5,11 @@
         .controller('RPApplication', RPApplication);
 
     /* ngInject */
-    function RPApplication($scope, $resource) {
+    function RPApplication($scope, $resource, $state) {
 
         var vm = this;
 
+        vm.$state = $state;
         // we will store all of our form data in this object
         vm.formData = {};
 

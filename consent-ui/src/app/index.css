@@ -21,6 +21,7 @@
 
 .menu > li:before {
     content: "|";
+    content: "|";
     padding-right: 0.3em;
 }
 
@@ -294,7 +295,7 @@ small {
 
 /****************************************BOXES*/
 
-.box-vote, .box-vote-results, .box-vote-singleresults, .pvotes-box {
+.box-vote-results, .box-vote-singleresults, .pvotes-box {
     padding: 15px 25px !important;
     margin: 10px 0 20px 0;
     box-shadow: 3px 3px 0 #cccccc;
@@ -310,7 +311,9 @@ small {
 }
 
 .box-vote {
-    padding: 15px 30px !important;
+    padding: 15px 30px;
+    margin: 10px 0 20px 0;
+    box-shadow: 3px 3px 0 #cccccc;
 }
 
 .box-vote-results {
@@ -655,6 +658,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     border: 0;
     color: #777777;
     transition: background 0.3s ease;
+    cursor: pointer !important;
 }
 
 .pvotes-pagination li a:hover {
@@ -707,61 +711,71 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 
 /***************************RP APPLICATION*/
 
+.attest-button{
+    margin-bottom: 30px;
+}
 /*MULTISTEP*/
 
-.multi-step-title {
-    position: relative;
-    height: auto;
-    display: inline-block;
-    margin: 0 !important;
+.multi-step-buttons{
+    margin: 25px 10px 10px 10px;
 }
-
-.multi-step-title a {
-    font-size: 18px;
-    background: #eeeeee !important;
-    transition: background 0.3s ease;
-    width: 100%;
-    height: 100%;
-    padding: 10px 20px 10px 20px !important;
-    margin-bottom: 10px !important;
-}
-
-.multi-step-title a:hover {
-    color: #ffffff;
-    background: #2FA4E7 !important;
-}
-
-.multi-step-title a small {
-    display: block;
-    color: #777777 !important;
-    line-height: 25px;
-}
-
-.multi-step-title a:hover small {
-    color: #cccccc !important;
-}
-
-.multi-step-title a span {
-    float: right;
-}
-
-.multi-step-buttons .active a {
+.multi-step-buttons .active {
     background: #8E307A !important;
     color: #ffffff !important;
 }
+    .multi-step-buttons .active small {
+        color: #cccccc !important;
+    }
 
-.multi-step-buttons .active a small {
-    color: #cccccc !important;
+.multi-step-title {
+    font-size: 18px;
+    position: relative;
+    height: auto;
+    display: inline-block !important;
+    background: #eeeeee !important;
+    padding: 10px 55px 10px 25px !important;
+    transition: background 0.3s ease !important;
 }
+    .multi-step-title a {
+        font-size: 18px;
+        width: 100%;
+        height: 100%;
+        margin-bottom: 10px !important;
+    }
+
+    .multi-step-title small {
+        display: block !important;
+        color: #777777;
+        line-height: 25px;
+    }
+
+    .multi-step-title span {
+        float: right;
+        position: absolute;
+        top: 15px;
+        right: 20px;
+    }
+
+    .multi-step-title:hover {
+        background: #2FA4E7 !important;
+        cursor: pointer;
+        color: #ffffff !important;
+    }
+        .multi-step-title:hover small {
+            color: #cccccc !important;
+        }
+
+
+
+/* PAGINATOR*/
 
 .multi-step-pager {
-    margin: 0 5px 0 5px;
+    margin: 20px 5px 0 5px;
 }
 
-.multi-step-pager li a {
+.multi-step-pager li a, .download-button {
     border-radius: 5px !important;
-    /*background: #00609f !important;*/
-    background: #8E307A !important;
+    /*background: #8E307A !important;*/
     box-shadow: 3px 3px 0 #cccccc;
     color: #ffffff;
     border: none;
@@ -771,10 +785,13 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     transition: background 0.3s ease;
 }
 
-.multi-step-pager li a:hover {
+.multi-step-pager li a:hover,.download-button:hover {
     background: #2FA4E7 !important;
     color: #ffffff !important;
 }
+    .download-button span, .download-button span:hover{
+        color: #ffffff !important;
+    }
 
 .multi-step-pager .disabled {
     padding: 0 !important;
@@ -811,11 +828,17 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     padding: 2px 0 0 5px;
 }
 
+.download-button{
+    float: right;
+    font-size: 15px;
+    margin: 35px 15px 0 0;
+}
+
 .rp-group {
     margin-bottom: 10px !important;
 }
 
-.rp-title-question, .rp-choice-questions {
+.rp-title-question, .rp-choice-questions, .rp-accept-statement {
     float: left !important;
     text-align: left !important;
     display: block;
@@ -829,10 +852,13 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #8E307A;
 }
 
-.rp-choice-questions {
+.rp-choice-questions, .rp-accept-statement {
     font-weight: normal !important;
     font-size: 15px;
     color: #777777;
+}
+.rp-accept-statement{
+    line-height: 25px;
 }
 
 .rp-title-question span, .rp-choice-questions span {
