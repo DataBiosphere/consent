@@ -211,7 +211,11 @@ small {
 }
 
 .cm-subtitle{
-    padding: 15px 0 0 0!important;
+     padding: 15px 0 0 0!important;
+ }
+
+.cm-subtitle h3{
+    margin-left: 10px;
 }
 
 .cm-subtitle li h4 {
@@ -751,7 +755,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     height: auto;
     display: inline-block !important;
     background: #eeeeee !important;
-    padding: 10px 55px 10px 25px !important;
+    padding: 10px 20px 10px 20px !important;
     transition: background 0.3s ease !important;
 }
     .multi-step-title a {
@@ -868,6 +872,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     line-height: 23px;
     font-weight: 500 !important;
     color: #8E307A;
+    margin-left: 10px;
 }
 
 .rp-choice-questions, .rp-accept-statement {
@@ -898,4 +903,23 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #2FA4E7;
 }
 
+/***************************SUMMARY STATISTICS*/
 
+.cm-icon-button{
+    padding: 2px 0 0 10px;
+}
+
+/***************************FINAL ACCESS VOTE*/
+
+.button-margin{
+    margin: -3px 15px 3px -15px;
+    padding: 0 10px 0 10px;
+}
+
+.row-margin{
+    margin: 0 5px 0 5px;
+}
+
+.vault-box-height{
+    height: 168px;
+}
