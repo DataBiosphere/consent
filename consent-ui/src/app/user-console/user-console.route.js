@@ -15,7 +15,7 @@
                 controller: 'UserConsole',
                 controllerAs: 'UserConsole',
                       data: {
-                                authorizedRoles: [USER_ROLES.chairperson,USER_ROLES.admin,USER_ROLES.dacmember]
+                                authorizedRoles: [USER_ROLES.dacmember]
                             }
             })
     }

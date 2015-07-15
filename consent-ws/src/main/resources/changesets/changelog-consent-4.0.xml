@@ -6,9 +6,14 @@
 
     <changeSet author="vvicario" id="29">
         <addColumn tableName="vote">
-            <column name="status" type="varchar(255)"/>
-            <column name="isChairPersonVote" type="boolean" defaultValueBoolean= "false"/>
+           <column name="isChairPersonVote" type="boolean" defaultValueBoolean= "false"/>
         </addColumn>
+        
+        <dropNotNullConstraint tableName="vote"
+            columnDataType="DATETIME"
+            columnName="createDate"/>
     </changeSet>
+    
+     
 
 </databaseChangeLog>

@@ -1,29 +1,30 @@
 package org.genomebridge.consent.http.service;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.enumeration.VoteStatus;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.models.Vote;
 
 import com.sun.jersey.api.NotFoundException;
 
-public class DatabasePendingCaseAPI extends AbstractPendingCaseAPI {
+public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
 
     public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO) {
-        PendingCaseAPIHolder.setInstance(new DatabasePendingCaseAPI(electionDAO, voteDAO));
+        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO));
 
     }
 
-    private DatabasePendingCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
     }
@@ -31,7 +32,7 @@ public class DatabasePendingCaseAPI extends AbstractPendingCaseAPI {
     @Override
     public List<PendingCase> describeConsentPendingCases(Integer dacUserId) throws NotFoundException {
     	String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
-        List<Election> elections = electionDAO.findOpenElectionsByType(type);
+        List<Election> elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<PendingCase>();
         if (elections != null) {
             for (Election election : elections) {
@@ -50,7 +51,7 @@ public class DatabasePendingCaseAPI extends AbstractPendingCaseAPI {
     @Override
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
         String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        List<Election> elections = electionDAO.findOpenElectionsByType(type);
+        List<Election> elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<PendingCase>();
         if (elections != null) {
             for (Election election : elections) {
@@ -69,7 +70,8 @@ public class DatabasePendingCaseAPI extends AbstractPendingCaseAPI {
         }
         return pendingCases;
     }
-
+    
+   
 	private void setFinalVote(Integer dacUserId, Election election,	PendingCase pendingCase) {
 		if (pendingCase.getAlreadyVoted()) {
 		    Vote chairPersonVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(
@@ -87,7 +89,7 @@ public class DatabasePendingCaseAPI extends AbstractPendingCaseAPI {
         pendingCase.setReferenceId(election.getReferenceId());
         pendingCase.setLogged(setLogged(election));
         pendingCase.setAlreadyVoted(vote.getVote() == null ? false : true);
-        pendingCase.setStatus(vote.getStatus());
+        pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
         pendingCase.setVoteId(vote.getVoteId());
         return pendingCase;
     }
@@ -108,5 +110,8 @@ public class DatabasePendingCaseAPI extends AbstractPendingCaseAPI {
         }
         return logged.toString();
     }
+
+	
+    
 
 }

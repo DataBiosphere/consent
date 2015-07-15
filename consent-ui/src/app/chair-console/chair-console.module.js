@@ -6,4 +6,4 @@
         .module('cmChairConsole', ['ui.router', 'cmPaginator', 'cmPendingCase','cmUserRoles']);
 
 
-})();
+    })();

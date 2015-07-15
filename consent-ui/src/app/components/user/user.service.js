@@ -5,23 +5,33 @@
         .service('cmLoginUserService', cmLoginUserService);
 
     /* ngInject */
-    function cmLoginUserService($rootScope,$location,UserResource,USER_ROLES) {
+    function cmLoginUserService($rootScope,$location,UserResource,USER_ROLES,$state) {
 
 
         function loginUser(email) {
                     UserResource.get({email: email},function(data){
                                    $rootScope.setCurrentUser(data);
-                                    if(data.memberStatus === USER_ROLES.chairperson) {
-                                                $location.path("/chair_console" );
-                                     }
-
-                                     if(data.memberStatus === USER_ROLES.dacmember) {
-                                                $location.path("/user_console" );
-                                     }
+                                     var i=0;
+                                     angular.forEach(USER_ROLES, function(value, key) {
+                                         if(data.memberStatus.toUpperCase()===value)
+                                            {
+                                                           if(data.memberStatus.toUpperCase() === USER_ROLES.chairperson) {
+                                                                       $state.go('chair_console');
+                                                            }else if(data.memberStatus.toUpperCase() === USER_ROLES.dacmember) {
+                                                                       $state.go('user_console');
+                                                            }else if(data.memberStatus.toUpperCase() === USER_ROLES.admin) {
+                                                                       $state.go('admin_console');
+                                                               }
+                                               i=1;
+                                            }
+                                     });
+                                   if(i===0){
+                                    alert(data.memberStatus.toUpperCase()+" is not a valid Role");
+                                    logoutUser();
+                                   }
                     }, function(error){
                      if(error.status === 404) {
-
-                        // Logout when LogIn with non valid Credentials ??
+                        alert(email+" is not a DacMember");
                         logoutUser()
                       }
                   });
@@ -32,13 +42,10 @@
            var auth2 = gapi.auth2.getAuthInstance();
            auth2.signOut().then(function () {
            $rootScope.logoutUser();
-           $location.path("/login" );
+           $state.go("login");
            window.location.reload();
-               });
+          });
         }
-
-
-
       return{
                 loginUser: function(email) {
                     return loginUser(email);

@@ -16,6 +16,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select electionId from election  where referenceId = :referenceId")
     Integer getElectionByReferenceId(@Bind("referenceId") String referenceId);
+    
+    @SqlQuery("select electionId from election  where referenceId = :referenceId and status = 'Open'")
+    Integer getOpenElectionByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlUpdate("insert into election (electionType, finalVote, finalRationale, status, createDate,referenceId) values ( :electionType, :finalVote, :finalRationale, :status, :createDate,:referenceId)")
     @GetGeneratedKeys
@@ -25,8 +28,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("status") String status, 
                            @Bind("createDate") Date createDate,
                            @Bind("referenceId") String referenceId);
-    @SqlUpdate("delete  from election where referenceId = :referenceId")
-    void deleteElectionByReferenceId(@Bind("referenceId") String referenceId);
+    
+    @SqlUpdate("delete  from election where electionId = :electionId")
+    void deleteElectionById(@Bind("electionId") Integer electionId);
 
     @SqlUpdate("update election set finalVote = :finalVote, finalRationale = :finalRationale, status = :status where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
@@ -46,8 +50,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + " inner join electiontype et on e.electionType = et.typeId"
             + " and  e.electionId = :electionId")
     Election findElectionById(@Bind("electionId") Integer electionId);
-  
-    @SqlQuery("select * from election e where e.electionType = :type and e.status = 'Open' ")
-    List<Election> findOpenElectionsByType(@Bind("type") String type);
+    
+    @SqlQuery("select * from election e where e.electionType = :type and e.status = :status ")
+    List<Election> findElectionsByTypeAndStatus(@Bind("type") String type,@Bind("status")  String status);
+    
+    @SqlQuery("select count(*) from election e where e.electionType = :type and e.status = :status and e.finalVote = :finalVote ")
+    Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
 
 }

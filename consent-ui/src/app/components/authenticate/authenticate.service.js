@@ -7,12 +7,12 @@
     /* ngInject */
     function cmAuthenticateService() {
 
-
           function isAuthorized(authorizedRoles,userRole) {
+
                          if (!angular.isArray(authorizedRoles)) {
                                         authorizedRoles = [authorizedRoles];
-                                      }
-                      return authorizedRoles.indexOf(userRole) !== -1;
+                                       }
+                      return authorizedRoles.indexOf(userRole.toUpperCase()) !== -1;
                 }
                 return {
                 isAuthorized: function(authorizedRoles,userRole) {

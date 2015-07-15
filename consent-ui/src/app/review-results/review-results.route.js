@@ -19,9 +19,9 @@
 
                 controller: 'DulReviewResults',
                 controllerAs: 'DulReviewResults',
-                data: {
-                    authorizedRoles: [USER_ROLES.chairperson]
-                },
+                 data: {
+                           authorizedRoles: [USER_ROLES.chairperson]
+                       },
                 resolve: {
                     election: function($stateParams, cmElectionService){
                         console.log($stateParams.consentId);
@@ -36,9 +36,9 @@
                 templateUrl: 'app/review-results/access-review-results.html',
                 controller: 'ReviewResults',
                 controllerAs: 'ReviewResults',
-                data: {
-                    authorizedRoles: [USER_ROLES.chairperson]
-                }
+                   data: {
+                             authorizedRoles: [USER_ROLES.chairperson]
+                         }
             });
 
     }

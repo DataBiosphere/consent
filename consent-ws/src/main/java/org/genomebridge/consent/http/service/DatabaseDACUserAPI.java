@@ -1,16 +1,9 @@
 package org.genomebridge.consent.http.service;
 
 import com.sun.jersey.api.NotFoundException;
-import org.apache.commons.lang.StringUtils;
 import org.genomebridge.consent.http.db.DACUserDAO;
-import org.genomebridge.consent.http.db.ElectionDAO;
-import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.models.DACUser;
-import org.genomebridge.consent.http.models.Vote;
 import org.skife.jdbi.v2.DBI;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -45,12 +38,11 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         this.dacUserDAO = dao;
     }
 
-
-
     @Override
-    public Integer createDACUser(DACUser dacUser) throws IllegalArgumentException {
+    public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
+        validateRequieredFields(dacUser);
         Integer dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(),dacUser.getDisplayName(),dacUser.getMemberStatus());
-        return dacUserID;
+        return dacUserDAO.findDACUserById(dacUserID);
     }
 
     @Override
@@ -60,6 +52,35 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new NotFoundException("Could not find dacUser for specified email : " + email);
         }
         return dacUser;
+    }
+
+    @Override
+    public DACUser updateDACUserByEmail(DACUser rec) throws IllegalArgumentException, NotFoundException {
+        validateExistentUser(rec.getEmail());
+        validateRequieredFields(rec);
+        dacUserDAO.updateDACUser(rec.getEmail(), rec.getDisplayName(), rec.getMemberStatus());
+        return describeDACUserByEmail(rec.getEmail());
+    }
+
+    @Override
+    public void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException {
+        validateExistentUser(email);
+        dacUserDAO.deleteDACUserByEmail(email);
+    }
+
+    private void validateExistentUser(String email) {
+        if (dacUserDAO.findDACUserByEmail(email) == null) {
+            throw new NotFoundException("The user for the specified E-Mail address does not exist");
+        }
+    }
+
+    private void validateRequieredFields(DACUser newDac) {
+        if (newDac.getDisplayName() == null) {
+            throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
+        }
+        if (newDac.getEmail() == null) {
+            throw new IllegalArgumentException("The user needs a valid email to be able to login.");
+        }
     }
 }
 

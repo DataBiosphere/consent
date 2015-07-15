@@ -1,7 +1,5 @@
 package org.genomebridge.consent.http.service;
 
-import org.genomebridge.consent.http.models.DACUser;
-
 /**
  * Implement a skeleton for ConsentAPI interface that implements the singleton
  * object management.

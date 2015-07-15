@@ -12,12 +12,30 @@
             .state('dul_review', {
                 name: 'dul_review',
                 url: '/dul_review',
+                params: {
+                    consentId: null,
+                    voteId: null,
+                },
                 templateUrl: 'app/review/dul-review.html',
-                controller: 'Review',
-                controllerAs: 'Review',
-                  data: {
-                              authorizedRoles: [USER_ROLES.dacmember]
-                        }
+
+                controller: 'DulReview',
+                controllerAs: 'DulReview',
+                data: {
+                    authorizedRoles: [USER_ROLES.dacmember, USER_ROLES.chairperson]
+                },
+                resolve: {
+                    vote: function($stateParams, cmVoteService){
+                        return cmVoteService.getVote($stateParams.consentId, $stateParams.voteId);
+                    },
+                    consent: function($stateParams, cmConsentService){
+                        return cmConsentService.findConsent($stateParams.consentId);
+                    },
+                    election: function($stateParams, cmElectionService){
+                        return cmElectionService.findElection($stateParams.consentId);
+                    }
+
+                }
+
             })
             // route to show our basic form (/form)
             .state('access_review', {
@@ -26,9 +44,15 @@
                 templateUrl: 'app/review/access-review.html',
                 controller: 'Review',
                 controllerAs: 'Review',
+<<<<<<< HEAD
+                data: {
+                    authorizedRoles: [USER_ROLES.dacmember, USER_ROLES.chairperson]
+                }
+=======
                     data: {
-                               authorizedRoles: [USER_ROLES.dacmember]
-                          }
+                                                          authorizedRoles: [USER_ROLES.dacmember]
+                                                     }
+>>>>>>> bf602a3... Non hardcoded consoles and minor html changes
             });
     }
 

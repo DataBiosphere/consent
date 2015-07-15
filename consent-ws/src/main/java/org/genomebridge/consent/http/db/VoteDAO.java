@@ -16,7 +16,7 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 public interface VoteDAO extends Transactional<VoteDAO> {
 
 
-    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId ")
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and election.status = 'Open'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
 
@@ -48,7 +48,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select vote.voteId from vote  inner join election on election.electionId = vote.electionId  "
             + "where election.referenceId = :referenceId "
             + "and vote.voteId = :voteId")
-    String checkVoteById(@Bind("referenceId") String referenceId, 
+    Integer checkVoteById(@Bind("referenceId") String referenceId, 
                          @Bind("voteId") Integer voteId);
 
 
@@ -61,17 +61,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                                           @Bind("voteId") String voteId);
 
 
-    @SqlUpdate("insert into vote (vote, dacUserId, createDate, updateDate,electionId, rationale, isChairPersonVote, status) values " +
-            "(:vote, :dacUserId, :createDate, :updateDate,:electionId, :rationale, :isChairPersonVote, :status)")
+    @SqlUpdate("insert into vote (dacUserId, electionId, isChairPersonVote) values " +
+            "(:dacUserId,:electionId, :isChairPersonVote)")
     @GetGeneratedKeys
-    Integer insertVote(@Bind("vote") Boolean vote,
-                       @Bind("dacUserId") Integer dacUserId,
-                       @Bind("createDate") Date createDate,
-                       @Bind("updateDate") Date updateDate,
+    Integer insertVote(@Bind("dacUserId") Integer dacUserId,
                        @Bind("electionId") Integer electionId,
-                       @Bind("rationale") String rationale,
-                       @Bind("isChairPersonVote") Boolean isChairPersonVote,
-                       @Bind("status") String status);
+                       @Bind("isChairPersonVote") Boolean isChairPersonVote);
     
     @SqlUpdate("delete from vote where  voteId = :voteId")
     void deleteVoteById(@Bind("voteId") Integer voteId);
@@ -83,12 +78,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlBatch("delete from vote where electionId = :electionId ")
     void deleteVotesByElection(@Bind("electionId") String electionId);
 
-    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, status = :status where voteId = :voteId")
+    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, createDate = :createDate where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
                     @Bind("rationale") String rationale,
                     @Bind("updateDate") Date updateDate,
                     @Bind("voteId") Integer voteId,
                     @Bind("electionId") Integer electionId,
-                    @Bind("status") String status);
+                    @Bind("createDate") Date createDate);
 
 }

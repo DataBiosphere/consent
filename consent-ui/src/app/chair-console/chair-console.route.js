@@ -15,8 +15,8 @@
                 controller: 'ChairConsole',
                 controllerAs: 'ChairConsole',
                 data: {
-                   authorizedRoles: [USER_ROLES.chairperson]
-                      }
+                    authorizedRoles: [USER_ROLES.chairperson]
+                }
             });
     }
 

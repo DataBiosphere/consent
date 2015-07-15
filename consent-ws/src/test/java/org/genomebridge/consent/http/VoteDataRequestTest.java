@@ -25,8 +25,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     public static final int BADREQUEST = ClientResponse.Status.BAD_REQUEST
             .getStatusCode();
     private static final String DATA_REQUEST_ID = "1";
-    private static final Integer INVALID_ID = 0;
-    private static final Integer DAC_USER_ID = 1;
+    private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
 
     @ClassRule
@@ -43,66 +42,43 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         // should exist an election for specified data request
         Integer electionId = createElection();
         Client client = new Client();
+        List<Vote> votes =  get(client, voteDataRequestPath(DATA_REQUEST_ID)).getEntity(new GenericType<List<Vote>>() {});
         Vote vote = new Vote();
-        vote.setDacUserId(DAC_USER_ID);
         vote.setVote(false);
         vote.setRationale(RATIONALE);
-        ClientResponse response = checkStatus(CREATED,
-                post(client, voteDataRequestPath(DATA_REQUEST_ID), vote));
-        String createdLocation = checkHeader(response, "Location");
+        checkStatus(OK,
+                post(client, voteDataRequestIdPath(DATA_REQUEST_ID,votes.get(0).getVoteId()), vote));
         //describe vote
-        Vote created = retrieveVote(client, createdLocation);
-        assertThat(created.getDacUserId()).isEqualTo(DAC_USER_ID);
+        Vote created = retrieveVote(client, voteDataRequestIdPath(DATA_REQUEST_ID, votes.get(0).getVoteId()));
         assertThat(created.getElectionId()).isEqualTo(electionId);
         assertThat(created.getRationale()).isEqualTo(RATIONALE);
         assertThat(created.getUpdateDate()).isNull();
         assertThat(created.getVote()).isFalse();
         assertThat(created.getVoteId()).isNotNull();
         testDataRequestPendingCase(DAC_USER_ID);
-        updateVote(created.getVoteId().toString(), created);
-        deleteVote(created.getVoteId().toString());
-        delete(client, electionDataRequestPath(DATA_REQUEST_ID));
+        updateVote(created.getVoteId(), created);
+        deleteVotes(votes);
+        delete(client, electionDataRequestPathById(DATA_REQUEST_ID, electionId));
+     
     }
 
-    @Test
-    public void testCreateDataRequestVoteWithInvalidDacUser() {
-        // should exist an election for specified data request
-        createElection();
+   
+    public void deleteVotes(List<Vote> votes) {
         Client client = new Client();
-        Vote vote = new Vote();
-        vote.setDacUserId(INVALID_ID);
-        vote.setVote(false);
-        vote.setRationale(RATIONALE);
-        checkStatus(BADREQUEST,
-                post(client, voteDataRequestPath(DATA_REQUEST_ID), vote));
-        delete(client, electionDataRequestPath(DATA_REQUEST_ID));
+        for(Vote vote : votes){
+        	checkStatus(OK,
+                    delete(client, voteDataRequestIdPath(DATA_REQUEST_ID, vote.getVoteId())));	
+        }
+        
     }
 
-    @Test
-    public void testCreateDataRequestVoteWithoutElection() {
-        Client client = new Client();
-        Vote vote = new Vote();
-        vote.setDacUserId(INVALID_ID);
-        vote.setVote(false);
-        vote.setRationale(RATIONALE);
-        checkStatus(BADREQUEST,
-                post(client, voteDataRequestPath(DATA_REQUEST_ID), vote));
-    }
-
-    public void deleteVote(String id) {
-        Client client = new Client();
-        checkStatus(OK,
-                delete(client, voteDataRequestIdPath(DATA_REQUEST_ID, id)));
-    }
-
-    public void updateVote(String id, Vote vote) {
+    public void updateVote(Integer id, Vote vote) {
         Client client = new Client();
         vote.setVote(true);
         vote.setRationale(null);
         checkStatus(OK,
                 put(client, voteDataRequestIdPath(DATA_REQUEST_ID, id), vote));
         vote = retrieveVote(client, voteDataRequestIdPath(DATA_REQUEST_ID, id));
-        assertThat(vote.getDacUserId()).isEqualTo(DAC_USER_ID);
         assertThat(vote.getRationale()).isNull();
         assertThat(vote.getUpdateDate()).isNotNull();
         assertThat(vote.getVote()).isTrue();
@@ -125,8 +101,8 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         List<PendingCase> pendingCases = get(client, dataRequestPendingCasesPath(dacUserId)).getEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
-        assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(true);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/1");
+        assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(false);
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/6");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         
 

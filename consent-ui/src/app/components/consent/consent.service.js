@@ -12,7 +12,7 @@
          * @param consentId
          */
         function findConsentById(id){
-            return ConsentResource.get({consentId: id});
+            return ConsentResource.get({consentId: id}).$promise;
         }
 
         /**
@@ -20,7 +20,7 @@
          * @param consentId
          */
         function findDulForConsent(id){
-            return ConsentDulResource.get({consentId: id});
+            return ConsentDulResource.get({consentId: id}).$promise;
         }
 
         return{

@@ -6,9 +6,7 @@
         .controller('UserConsole', UserConsole);
 
     /* ngInject */
-
-    function UserConsole(apiUrl, $http, cmPaginatorService, cmPendingCaseService) {
-
+    function UserConsole(cmPaginatorService, cmPendingCaseService,$rootScope) {
 
         var lists = {'dul': [], 'access': []};
 
@@ -33,10 +31,8 @@
         init();
 
         function init() {
-            $http.get('json/cm_user.json').then(function (response) {
-                cmPendingCaseService.findConsentPendingCasesByChairPerson($http,lists,2,vm, apiUrl);
-                cmPendingCaseService.findDataRequestPendingCasesByChairPerson($http, lists, 2, vm, apiUrl);
-            });
+              cmPendingCaseService.findConsentPendingCasesByUser(lists,$rootScope.currentUser.dacUserId,vm);
+              cmPendingCaseService.findDataRequestPendingCasesByUser(lists,$rootScope.currentUser.dacUserId, vm);
         }
     }
 

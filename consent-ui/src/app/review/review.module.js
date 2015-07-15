@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmReview', ['ui.router', 'cmFocus', 'ui.bootstrap']);
+        .module('cmReview', ['ui.router', 'cmFocus', 'ui.bootstrap','cmUserRoles','cmVote']);
 
 })();

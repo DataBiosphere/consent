@@ -11,7 +11,7 @@
         $stateProvider
             .state('login', {
                 name: 'login',
-                url: 'login',
+                url: '/login',
                 templateUrl: 'app/login/login.html',
                 controller: 'Login',
                 controllerAs:'Login',

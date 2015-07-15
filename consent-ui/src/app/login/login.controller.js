@@ -1,24 +1,26 @@
 (function () {
-    'use strict';
+        'use strict';
 
-    angular.module('cmLogin')
-        .controller('Login', Login);
+        angular.module('cmLogin')
+            .controller('Login', Login);
 
-    /* ngInject */
-    function Login(cmLoginUserService) {
+        /* ngInject */
+        function Login(cmLoginUserService,$rootScope) {
 
-           function onSignIn(googleUser) {
+            $rootScope.loadScript('https://apis.google.com/js/platform.js', 'text/javascript', 'utf-8');
 
-           var profile = googleUser.getBasicProfile();
-           cmLoginUserService.loginUser(profile.getEmail());
-          };
+            function onSignIn(googleUser) {
+                var profile = googleUser.getBasicProfile();
+                cmLoginUserService.loginUser(profile.getEmail());
 
-           function signOut() {
-           cmLoginUserService.logoutUser();
+            };
 
-         };
-         window.signOut = signOut;
-         window.onSignIn = onSignIn;
-       }
+            function signOut() {
+                cmLoginUserService.logoutUser();
+
+            };
+            window.signOut = signOut;
+            window.onSignIn = onSignIn;
+        }
     }
 )();

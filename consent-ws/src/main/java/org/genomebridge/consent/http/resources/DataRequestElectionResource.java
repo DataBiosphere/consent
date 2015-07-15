@@ -19,7 +19,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.service.AbstractElectionAPI;
+import org.genomebridge.consent.http.service.AbstractVoteAPI;
 import org.genomebridge.consent.http.service.ElectionAPI;
+import org.genomebridge.consent.http.service.VoteAPI;
 
 import com.sun.jersey.api.NotFoundException;
 
@@ -27,9 +29,11 @@ import com.sun.jersey.api.NotFoundException;
 public class DataRequestElectionResource extends Resource {
 
     private ElectionAPI api;
+    private VoteAPI voteAPI;
 
     public DataRequestElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
+        this.voteAPI = AbstractVoteAPI.getInstance();
     }
 
     @POST
@@ -40,6 +44,7 @@ public class DataRequestElectionResource extends Resource {
         Election election;
         try {
             election = api.createElection(rec, requestId.toString(), false);
+            voteAPI.createVotes(election.getElectionId(),false);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -75,9 +80,10 @@ public class DataRequestElectionResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteElection(@PathParam("requestId") Integer requestId, @Context UriInfo info) {
+    @Path("/{id}")
+    public Response deleteElection(@PathParam("requestId") Integer requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
-            api.deleteElection(requestId.toString());
+            api.deleteElection(requestId.toString(), id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             throw new NotFoundException(e.getMessage());

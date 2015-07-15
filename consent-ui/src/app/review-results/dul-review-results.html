@@ -1,7 +1,5 @@
-
+<div ng-include src="'app/header/header.html'"></div>
 <div class="container">
-    <div ng-include src="'app/header/header.html'"></div>
-
     <h2 class="cm-title dul-color">
         <img src="assets/images/icon_dul.png" alt="translation icon" class="cm-icons">DAC voting for Data Use Letter
         Review</br>
@@ -18,9 +16,7 @@
                 <div class="panel-heading cm-boxhead dul-color">
                     <h4>Data Use Letter</h4>
                 </div>
-                <div id="dul" class="panel-body cm-boxbody">To be used for research on the causes and development of
-                    cancer.
-
+                <div id="dul" class="panel-body cm-boxbody">
                     URL: {{consent.consentId}} (To be added when DUL changes are merged to consent-ws)
                 </div>
             </div>
@@ -43,16 +39,16 @@
         <div id="voteResultsList" class="col-lg-6 col-md-6 col-sm-6 col-xs-12 fill" ng-repeat="vote in row">
             <div class="jumbotron box-vote-singleresults">
                 <div class="row">
-                    <div class="userName col-lg-6 col-md-6 col-sm-12 col-xs-12 cm-user-name">{{vote.dacUserId}} Vote (UserID, replace with name)</div>
-                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <div ng-show="vote.updateDate != null"
-                            class="updatedVote col-lg-5 col-lg-offset-7 col-md-5 col-md-offset-6 col-sm-6 col-xs-6 vote-update">
+                    <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12 cm-user-name">User Id: {{vote.dacUserId}}</div>
+                    <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                        <div ng-show="vote.updateDate != null" class="vote-update f-right">
                             Updated vote!
                         </div>
-                        <div ng-show="vote.vote == null" class="col-lg-6 col-lg-offset-6 col-md-6 col-md-offset-6 col-sm-6 col-xs-6 no-padding">
+                        <div ng-show="vote.vote == null" class="no-padding f-right">
                             <input type="button" class="sendReminder btn btn-primary vote-reminder dul-color"
-                                   value="Send a reminder"/>
+                                   value="Send a reminder" ng-click="sendReminder()"/>
                         </div>
+
                     </div>
                 </div>
                 <hr class="box-separator">
@@ -66,7 +62,11 @@
 
                     <label class="col-lg-2 col-md-2 col-sm-3 col-xs-3 control-label vote-label dul-color">Date:</label>
 
-                    <div class="voteDate col-lg-4 col-md-4 col-sm-9 col-xs-9 vote-label">{{vote.createDate}}</div>
+                    <div class="voteDate col-lg-4 col-md-4 col-sm-9 col-xs-9 vote-label">
+                        <span ng-if="vote.createDate == null">---</span>
+                        <span ng-if="vote.createDate != null && vote.updateDate == null">{{vote.createDate}}</span>
+                        <span ng-if="vote.createDate != null && vote.updateDate != null">{{vote.updateDate}}</span>
+                    </div>
                 </div>
                 <div class="row">
                     <label
@@ -95,62 +95,63 @@
             </div>
         </div>
         <div class="col-lg-8 col-md-8 col-sm-7 col-xs-12">
-            <div class="jumbotron box-vote-results">
+            <div class="jumbotron box-vote-results" ng-class="{'box-vote-disabled' : isFormDisabled}">
                 <h3 class="cm-results-subtitle dul-color">Final decision</h3>
                 <hr class="box-separator-white">
-                <form class="form-horizontal" id="voteForm">
-                    <div class="form-group first-form-group">
-                        <label class="col-lg-2 col-md-2 col-sm-2 col-xs-4 control-label vote-label">Vote</label>
-
-                        <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
-                            <div class="button-holder">
-                                <div class="radio-inline group-regular-radio">
-                                    <input type="radio" ng-model="finalVote"
-                                           ng-click="positiveVote()"
-                                           ng-value="true" class="regular-radio" id="inputVotePositive"
-                                           name="inputVote"><label
-                                    for="inputVotePositive"><span class="radio-button-text">Yes</span></label>
+                <fieldset ng-disabled="isFormDisabled">
+                    <form class="form-horizontal" id="voteForm">
+                        <div class="form-group first-form-group">
+                            <label class="col-lg-2 col-md-2 col-sm-2 col-xs-4 control-label vote-label">Vote</label>
+                            <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                <div class="button-holder">
+                                    <div class="radio-inline group-regular-radio">
+                                        <input type="radio" ng-model="finalVote"
+                                               ng-click="positiveVote()"
+                                               ng-value="true" class="regular-radio" id="inputVotePositive"
+                                               name="inputVote"><label
+                                        for="inputVotePositive"><span class="radio-button-text">Yes</span></label>
+                                    </div>
+                                    <div class="radio-inline">
+                                        <input type="radio" ng-model="finalVote"
+                                               ng-value="false" class="regular-radio" id="inputVoteNegative"
+                                               name="inputVote"><label for="inputVoteNegative"><span
+                                        class="radio-button-text">No</span></label>
+                                    </div>
                                 </div>
-                                <div class="radio-inline">
-                                    <input type="radio" ng-model="finalVote"
-                                           ng-value="false" class="regular-radio" id="inputVoteNegative"
-                                           name="inputVote"><label for="inputVoteNegative"><span
-                                    class="radio-button-text">No</span></label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-lg-2 col-md-2 col-sm-2 col-xs-4 control-label vote-label">Rationale</label>
+
+                            <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                <input type="text" ng-model="finalRationale"
+                                       ng-disabled="finalVote == true"
+                                       cm-focus="{{!finalVote || finalVote == true ? false : true}}"
+                                       name="inputRationale"
+                                       class="form-control col-lg-10 col-md-8 col-sm-6 col-xs-6 vote-input"
+                                       placeholder={{finalRationale}}>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-bottom">
+                            <div class="col-lg-9 col-md-9 col-sm-8 col-xs-12">
+                                <div id="successMsg" class="alert alert-success validation-message hidden">
+                                    <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                                    Vote successfully logged.
+                                </div>
+                                <div id="errorMsg" class="alert alert-danger validation-message hidden">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    Please check your vote.
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-lg-2 col-md-2 col-sm-2 col-xs-4 control-label vote-label">Rationale</label>
-
-                        <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
-                            <input type="text" ng-model="finalRationale"
-                                   ng-disabled="finalVote == true"
-                                   cm-focus="{{!finalVote || finalVote == true ? false : true}}"
-                                   name="inputRationale"
-                                   class="form-control col-lg-10 col-md-8 col-sm-6 col-xs-6 vote-input"
-                                   placeholder={{finalRationale}}>
-                        </div>
-                    </div>
-                    <div class="form-group form-group-bottom">
-                        <div class="col-lg-9 col-md-9 col-sm-8 col-xs-12">
-                            <div id="successMsg" class="alert alert-success validation-message hidden">
-                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                                Vote successfully logged.
-                            </div>
-                            <div id="errorMsg" class="alert alert-danger validation-message hidden">
-                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                                Please check your vote.
+                            <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
+                                <button ng-click="logVote()" ng-disabled="status == 'Closed'"
+                                        class="btn btn-primary col-lg-12 col-md-12 col-sm-12 col-xs-12 vote-button dul-background">
+                                    Vote
+                                </button>
                             </div>
                         </div>
-                        <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
-                            <button ng-click="logVote()" ng-disabled="status == 'Closed'"
-                                    class="btn btn-primary col-lg-12 col-md-12 col-sm-12 col-xs-12 vote-button dul-background">
-                                Vote
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </fieldset>
             </div>
         </div>
     </div>

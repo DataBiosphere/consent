@@ -34,17 +34,21 @@ public class DataRequestVoteResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    @Path("/{id}")
     public Response createDataRequestVote(@Context UriInfo info, Vote rec,
-                                          @PathParam("requestId") String requestId) {
-        URI uri;
+                                          @PathParam("requestId") String requestId,
+                                          @PathParam("id") String voteId) {
         try {
-            Vote vote = api.createRequestVote(rec, requestId);
-            uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
+            Vote vote = api.firstVoteUpdate(rec, requestId, voteId);
+            URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
+            return Response.ok(uri).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity(e.getMessage()).build();
+        } catch (Exception e) {
+            throw new NotFoundException(String.format(
+                    "Could not find vote with id %s", voteId));
         }
-        return Response.created(uri).build();
     }
 
     @PUT

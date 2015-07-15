@@ -5,7 +5,7 @@
         .controller('ChairConsole', ChairConsole);
 
     /* ngInject */
-    function ChairConsole(apiUrl, $http, cmPaginatorService, cmPendingCaseService) {
+    function ChairConsole(cmPaginatorService, cmPendingCaseService,$rootScope) {
 
         var lists = {'dul': [], 'access': []};
 
@@ -31,9 +31,8 @@
         init();
 
         function init() {
-            cmPendingCaseService.findConsentPendingCasesByChairPerson($http,lists,2,vm, apiUrl);
-            cmPendingCaseService.findDataRequestPendingCasesByChairPerson($http, lists, 2, vm, apiUrl);
-
+            cmPendingCaseService.findConsentPendingCasesByUser(lists,$rootScope.currentUser.dacUserId,vm);
+            cmPendingCaseService.findDataRequestPendingCasesByUser(lists,$rootScope.currentUser.dacUserId,vm);
         }
 
     }

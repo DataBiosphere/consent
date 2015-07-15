@@ -2,16 +2,20 @@ package org.genomebridge.consent.http;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
+import java.util.List;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
 
 public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
@@ -55,19 +59,17 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         checkStatus(BADREQUEST,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         testUpdateDataRequestElection(created);
-        deleteElection();
+        deleteElection(created.getElectionId());
     }
 
     public void testUpdateDataRequestElection(Election created) {
         Client client = new Client();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
-        created.setStatus(ElectionStatus.CLOSED.getValue());
-        checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId().toString()), created));
+        checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId()), created));
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.DATA_ACCESS.getValue());
-        assertThat(created.getStatus()).isEqualTo(ElectionStatus.CLOSED.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
@@ -76,10 +78,15 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     }
 
-    public void deleteElection() {
+    public void deleteElection(Integer electionId) {
         Client client = new Client();
+        List<Vote> votes =  get(client, voteDataRequestPath(DATA_REQUEST_ID)).getEntity(new GenericType<List<Vote>>() {});
+        for(Vote vote : votes){
+        	checkStatus(OK,
+                    delete(client, voteConsentIdPath(DATA_REQUEST_ID, vote.getVoteId())));	
+        }
         checkStatus(OK,
-                delete(client, electionDataRequestPath(DATA_REQUEST_ID)));
+                delete(client, electionDataRequestPathById(DATA_REQUEST_ID, electionId)));
     }
 
     @Test
@@ -105,7 +112,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Election election = new Election();
         // should return 400 bad request because the data request id does not exist
         checkStatus(NOT_FOUND,
-                put(client, electionDataRequestPathById(INVALID_DATA_REQUEST_ID, "TEST"), election));
+                put(client, electionDataRequestPathById(INVALID_DATA_REQUEST_ID, 1010), election));
     }
 
     @Test

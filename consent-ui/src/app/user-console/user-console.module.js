@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmUserConsole', ['ui.router', 'cmPaginator', 'cmPendingCase']);
+        .module('cmUserConsole', ['ui.router', 'cmPaginator', 'cmPendingCase','cmUserRoles']);
 
 })();

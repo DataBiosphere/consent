@@ -14,6 +14,6 @@ public interface ElectionAPI {
 
     Election describeDataRequestElection(Integer requestId) throws NotFoundException;
 
-    void deleteElection(String referenceId) throws IllegalArgumentException, NotFoundException;
+    void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
 }

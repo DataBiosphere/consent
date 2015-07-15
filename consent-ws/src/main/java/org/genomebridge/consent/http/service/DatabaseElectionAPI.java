@@ -88,11 +88,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public void deleteElection(String referenceId) {
+    public void deleteElection(String referenceId, Integer id) {
         if (electionDAO.getElectionByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
-        electionDAO.deleteElectionByReferenceId(referenceId);
+        electionDAO.deleteElectionById(id);
 
     }
 
@@ -105,8 +105,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         return election;
     }
-
-
+    
     private void setGeneralFields(Election election, String referenceId, Boolean isConsent) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
@@ -138,10 +137,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void validateExistentElection(String referenceId) {
-        Integer electionId = electionDAO.getElectionByReferenceId(referenceId);
+        Integer electionId = electionDAO.getOpenElectionByReferenceId(referenceId);
         if (electionId != null) {
             throw new IllegalArgumentException(
-                    "An election already exists for the specified id. Election id: "
+                    "An open election already exists for the specified id. Election id: "
                             + electionId);
         }
     }

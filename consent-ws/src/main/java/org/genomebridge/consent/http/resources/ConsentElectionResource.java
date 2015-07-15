@@ -18,7 +18,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.service.AbstractElectionAPI;
+import org.genomebridge.consent.http.service.AbstractVoteAPI;
 import org.genomebridge.consent.http.service.ElectionAPI;
+import org.genomebridge.consent.http.service.VoteAPI;
 
 import com.sun.jersey.api.NotFoundException;
 
@@ -26,9 +28,11 @@ import com.sun.jersey.api.NotFoundException;
 public class ConsentElectionResource extends Resource {
 
     private ElectionAPI api;
-
+    private VoteAPI voteAPI;
+    
     public ConsentElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
+        this.voteAPI = AbstractVoteAPI.getInstance();
     }
 
     @POST
@@ -37,7 +41,8 @@ public class ConsentElectionResource extends Resource {
                                           @PathParam("consentId") String consentId) {
         URI uri;
         try {
-            api.createElection(rec, consentId, true);
+            Election election = api.createElection(rec, consentId, true);
+            voteAPI.createVotes(election.getElectionId(),true);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -72,9 +77,10 @@ public class ConsentElectionResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info) {
+    @Path("/{id}")
+    public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info, @PathParam("id") Integer id) {
         try {
-            api.deleteElection(consentId);
+            api.deleteElection(consentId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             throw new NotFoundException(e.getMessage());

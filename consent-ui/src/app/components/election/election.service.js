@@ -32,7 +32,6 @@
             findElection: function(id) {
                 return findElectionByConsentId(id);
             },
-
             postElection: function(election){
                 return postElection(election);
             }
