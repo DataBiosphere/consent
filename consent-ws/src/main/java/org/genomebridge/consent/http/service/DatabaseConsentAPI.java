@@ -57,7 +57,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent create(Consent rec) {
         String id = UUID.randomUUID().toString();
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
+        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter());
         return consentDAO.findConsentById(id);
     }
 
@@ -93,7 +93,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public void update(String id, Consent rec) throws UnknownIdentifierException {
-        consentDAO.updateConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
+        consentDAO.updateConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter());
     }
 
     @Override
@@ -208,6 +208,28 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }
         logger.debug(String.format("getConsentsForAssociation(%s,%s) returning '%s'", associationType, objectId, consent_uris.toString()));
         return consent_uris;
+    }
+
+    @Override
+    public Consent updateConsentDul(String consentId, String dataUseLetter) throws UnknownIdentifierException {
+        Consent consent = retrieve(consentId);
+        consent.setDataUseLetter(dataUseLetter);
+        update(consentId, consent);
+        return retrieve(consentId);
+    }
+
+    @Override
+    public String getConsentDulUrl(String consentId) throws UnknownIdentifierException {
+        Consent consent = retrieve(consentId);
+        return consent.getDataUseLetter();
+    }
+
+    @Override
+    public Consent deleteConsentDul(String consentId) throws UnknownIdentifierException {
+        Consent consent = retrieve(consentId);
+        consent.setDataUseLetter("");
+        update(consentId, consent);
+        return retrieve(consentId);
     }
 
     // Helper methods for Consent Associations

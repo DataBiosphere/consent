@@ -24,20 +24,23 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, active) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, true)")
+            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true)")
     void insertConsent(@Bind("consentId") String consentId,
                             @Bind("requiresManualReview") Boolean requiresManualReview,
-                            @Bind("useRestriction") String useRestriction);
+                            @Bind("useRestriction") String useRestriction,
+                            @Bind("dataUseLetter") String dataUseLetter);
 
     @SqlUpdate("update consents set active=false where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
-            "useRestriction = :useRestriction where consentId = :consentId and active = true")
+            "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter " +
+            "where consentId = :consentId and active = true")
     void updateConsent(@Bind("consentId") String consentId,
                               @Bind("requiresManualReview") Boolean requiresManualReview,
-                              @Bind("useRestriction") String useRestriction);
+                              @Bind("useRestriction") String useRestriction,
+                              @Bind("dataUseLetter") String dataUseLetter);
 
     // Consent Association Access Methods
     @SqlQuery("select objectId from consentassociations where consentId = :consentId and associationType = :associationType")

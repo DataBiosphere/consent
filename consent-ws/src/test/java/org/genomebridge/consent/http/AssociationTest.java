@@ -350,7 +350,6 @@ public class AssociationTest extends ConsentServiceTest {
 
     private String setupConsent() {
         Client client = new Client();
-
         Consent rec = new Consent(false, new Everything());
         ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
         String createdLocation = checkHeader(response, "Location");

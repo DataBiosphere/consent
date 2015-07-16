@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * Created by grushton on 6/3/15.
  */
+
 public class Consent {
 
     @JsonProperty
@@ -14,6 +15,9 @@ public class Consent {
 
     @JsonProperty
     public Boolean requiresManualReview;
+
+    @JsonProperty
+    public String dataUseLetter;
 
     @JsonProperty
     public UseRestriction useRestriction;
@@ -24,6 +28,22 @@ public class Consent {
     public Consent(Boolean requiresManualReview, UseRestriction useRestriction) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
+    }
+
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter) {
+        this.requiresManualReview = requiresManualReview;
+        this.useRestriction = useRestriction;
+        this.dataUseLetter = dataUseLetter;
+    }
+
+    @JsonProperty
+    public String getDataUseLetter() {
+        return dataUseLetter;
+    }
+
+    @JsonProperty
+    public void setDataUseLetter(String dataUseLetter) {
+        this.dataUseLetter = dataUseLetter;
     }
 
     @JsonProperty
