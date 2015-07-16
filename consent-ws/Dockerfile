@@ -7,8 +7,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* 
 
 #Configs
-COPY consent-ws/target/consent.jar /opt/
-COPY consent-autocomplete/target/autocomplete.jar /opt/consent-autocomplete.jar
+COPY target/consent.jar /opt/
+#COPY consent-autocomplete/target/autocomplete.jar /opt/consent-autocomplete.jar
 
 #Supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
