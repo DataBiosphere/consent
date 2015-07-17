@@ -9,4 +9,4 @@ RUN apt-get update \
 #Configs
 COPY target/autocomplete.jar /opt/consent-autocomplete.jar
 
-CMD ["/usr/bin/java -jar /opt/consent-autocomplete.jar server /opt/consent-autocomplete.yml"]
+CMD ["java -jar /opt/consent-autocomplete.jar server /opt/consent-autocomplete.yml"]
