@@ -8,5 +8,6 @@ RUN apt-get update \
 
 #Configs
 COPY target/autocomplete.jar /opt/consent-autocomplete.jar
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-CMD ["java -jar /opt/consent-autocomplete.jar server /opt/consent-autocomplete.yml"]
+CMD ["/usr/bin/supervisord"]
