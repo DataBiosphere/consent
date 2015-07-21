@@ -53,7 +53,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     public Vote firstVoteUpdate(Vote rec, String referenceId, String voteId) throws IllegalArgumentException {
         Integer electionId = setGeneralFields(rec, referenceId);
         Integer voteID = Integer.parseInt(voteId);
-        voteDAO.updateVote(rec.getVote(), rec.getRationale(), null, voteID, electionId, new Date());
+        String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
+        voteDAO.updateVote(rec.getVote(), rationale, null, voteID, electionId, new Date());
         return voteDAO.findVoteById(voteID);
     }
 

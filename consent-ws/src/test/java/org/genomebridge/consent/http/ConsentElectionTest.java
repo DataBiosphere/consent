@@ -2,16 +2,20 @@ package org.genomebridge.consent.http;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
+import java.util.List;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
 
 public class ConsentElectionTest extends ElectionVoteServiceTest {
 
@@ -55,19 +59,17 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         checkStatus(BADREQUEST,
                 post(client, electionConsentPath(CONSENT_ID), election));
         testUpdateConsentElection(created);
-        deleteElection();
+        deleteElection(created.getElectionId());
     }
 
     public void testUpdateConsentElection(Election created) {
         Client client = new Client();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
-        created.setStatus(ElectionStatus.CLOSED.getValue());
         checkStatus(OK, put(client, electionConsentPathById(CONSENT_ID, created.getElectionId()), created));
         created = retrieveElection(client, electionConsentPath(CONSENT_ID));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
-        assertThat(created.getStatus()).isEqualTo(ElectionStatus.CLOSED.getValue());
         assertThat(created.getReferenceId()).isEqualTo(CONSENT_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
@@ -76,10 +78,16 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
 
     }
 
-    public void deleteElection() {
+    public void deleteElection(Integer electionId) {
         Client client = new Client();
+        List<Vote> votes =  get(client, voteConsentPath(CONSENT_ID)).getEntity(new GenericType<List<Vote>>() {});
+        for(Vote vote : votes){
+        	checkStatus(OK,
+                    delete(client, voteConsentIdPath(CONSENT_ID, vote.getVoteId())));	
+        }
         checkStatus(OK,
-                delete(client, electionConsentPath(CONSENT_ID)));
+                delete(client, electionConsentPathById(CONSENT_ID, electionId)));
+    
     }
 
     @Test

@@ -9,6 +9,7 @@ import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.models.Vote;
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -36,6 +37,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest  {
         return RULE;
     }
     
+  
     @Test
     public void testCreateConsentVote() {
         // should exist an election for specified consent
@@ -99,7 +101,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest  {
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
         assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(true);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/6");
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/2");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(CONSENT_ID);
         
 

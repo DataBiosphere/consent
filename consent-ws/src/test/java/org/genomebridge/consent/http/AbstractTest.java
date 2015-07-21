@@ -56,10 +56,19 @@ abstract public class AbstractTest extends ResourcedTest {
     }
 
     public ClientResponse get(Client client, String path) { return get(client, path, "testuser"); }
+    
+    public ClientResponse getFile(Client client, String path) { return getFile(client, path, "testuser"); }
 
     public ClientResponse get(Client client, String path, String user) {
         return client.resource(path)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
+                .header("REMOTE_USER", user)
+                .get(ClientResponse.class);
+    }
+    
+    public ClientResponse getFile(Client client, String path, String user) {
+        return client.resource(path)
+                .accept(MediaType.TEXT_PLAIN)
                 .header("REMOTE_USER", user)
                 .get(ClientResponse.class);
     }

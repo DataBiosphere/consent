@@ -102,7 +102,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
         assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(false);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/6");
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/2");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         
 

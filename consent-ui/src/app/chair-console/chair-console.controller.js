@@ -15,7 +15,6 @@
         vm.activePage = {'dul': 0, 'access': 0};
         vm.currentPages = {'dul': [], 'access': []};
         vm.electionsList = {'dul': [], 'access': []};
-        vm.dacUserId = "1";
         // changePage function from the service with the first 2 parameters locked
         vm.changePage = _.partial(cmPaginatorService.changePage,
             // first parameter to lock from changePage

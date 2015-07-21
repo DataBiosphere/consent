@@ -44,15 +44,9 @@
                 templateUrl: 'app/review/access-review.html',
                 controller: 'Review',
                 controllerAs: 'Review',
-<<<<<<< HEAD
                 data: {
                     authorizedRoles: [USER_ROLES.dacmember, USER_ROLES.chairperson]
                 }
-=======
-                    data: {
-                                                          authorizedRoles: [USER_ROLES.dacmember]
-                                                     }
->>>>>>> bf602a3... Non hardcoded consoles and minor html changes
             });
     }
 
