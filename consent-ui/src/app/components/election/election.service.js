@@ -5,7 +5,7 @@
         .service('cmElectionService', cmElectionService);
 
     /* ngInject */
-    function cmElectionService(ElectionResource, ElectionUpdateResource) {
+    function cmElectionService(ElectionResource, ElectionUpdateResource, ElectionReviewConsent) {
 
         /**
          * Find data for the election related to the consentId sent as a parameter
@@ -13,6 +13,14 @@
          */
         function findElectionByConsentId(id){
             return ElectionResource.get({consentId: id});
+        }
+
+        /**
+         * Find all data needed to display an election Review for a consent
+         * @param consentId
+         */
+        function findElectionReviewByConsentId(id){
+            return ElectionReviewConsent.get({consentId: id});
         }
 
         /**
@@ -31,6 +39,9 @@
         return{
             findElection: function(id) {
                 return findElectionByConsentId(id);
+            },
+            findElectionReview: function(id) {
+                return findElectionReviewByConsentId(id);
             },
             postElection: function(election){
                 return postElection(election);

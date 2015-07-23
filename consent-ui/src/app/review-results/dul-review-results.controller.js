@@ -4,7 +4,7 @@
     angular.module('cmReviewResults')
         .controller('DulReviewResults', DulReviewResults);
 
-    function DulReviewResults($scope, $state, cmVoteService, cmConsentService, cmElectionService, election){
+    function DulReviewResults($scope, $state, cmElectionService, electionReview){
 
         $scope.chartData = {
             'dul': [
@@ -57,17 +57,25 @@
                 }
             }
         };
+        $scope.election = electionReview.election;
 
-        console.log(election.referenceId);
-        $scope.consent = cmConsentService.findConsent(election.referenceId);
+        if(electionReview.election.finalRationale === 'null'){
+            $scope.election.finalRationale = '';
+        }
+
+        $scope.dul = electionReview.dataUseLetter;
         $scope.positiveVote = positiveVote;
         $scope.logVote = logVote;
         $scope.sendReminder = sendReminder;
         // Final vote variables
         $scope.isFormDisabled = $scope.chartData.dul[3][1] > 0 || $scope.status != 'Open';
-        $scope.finalRationale = election.finalRationale;
-        $scope.status = election.status;
-        $scope.finalVote = election.finalVote;
+        $scope.finalRationale = electionReview.election.finalRationale;
+        $scope.status = electionReview.election.status;
+        $scope.finalVote = electionReview.election.finalVote;
+        $scope.voteList = chunk(electionReview.reviewVote, 2);
+        $scope.chartData = getGraphData(electionReview.reviewVote);
+
+
 
         $scope.$watch('chartData.dul', function(){
             if($scope.chartData.dul != 'undefined') {
@@ -77,37 +85,36 @@
             }
         });
 
-        cmVoteService.getAllVotes(election.referenceId).then(function(data){
-            $scope.voteList = chunk(data, 2);
-            $scope.chartData = getGraphData(data);
-
-        });
-
         function positiveVote() {
-            election.finalRationale = '---';
+            $scope.election.finalRationale = null;
         }
 
         function logVote() {
-            election.status = 'Closed';
-            election.finalRationale = $scope.finalRationale;
-            election.finalVote = $scope.finalVote;
-            cmElectionService.postElection(election).$promise.then(
+            $scope.election.status = 'Closed';
+            cmElectionService.postElection($scope.election).$promise.then(
                 //success
                 function(){
-                    alert("Election updated.");
+                    alert("Final Vote updated")
                     $state.go('chair_console');
                 },
                 //error
-                function(){alert("Error updating election.")});
+                function(){ alert("Error while updating final vote.");});
         }
 
-        function sendReminder() {
-            alert("Reminder sent.");
-            $scope.reminder.text = 'Reminder sent';
-            $scope.reminder.sent = true;
+        function sendReminder(voteId) {
+            alert("Reminder sent to: " + getEmailFromVoteList(voteId, electionReview.reviewVote));
         }
+
+        function getEmailFromVoteList(voteId, reviewVote){
+            for (var i=0; i<reviewVote.length; i++) {
+                if (reviewVote[i].vote.voteId === voteId){
+                    return reviewVote[i].email;
+                }
+            }
+        }
+
+
     };
-
 
     function chunk(arr, size) {
         var newArr = [];
@@ -117,10 +124,10 @@
         return newArr;
     }
 
-    function getGraphData(data){
+    function getGraphData(reviewVote){
         var yes = 0, no = 0, empty = 0;
-        for (var i=0; i<data.length; i++) {
-            switch(data[i].vote) {
+        for (var i=0; i<reviewVote.length; i++) {
+            switch(reviewVote[i].vote.vote) {
                 case true:
                     yes++;
                     break;

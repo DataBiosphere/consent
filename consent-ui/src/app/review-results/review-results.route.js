@@ -7,6 +7,7 @@
 
     /* ngInject */
     function routeConfig($stateProvider,USER_ROLES) {
+
         $stateProvider
             // route to show our basic form (/form)
             .state('dul_review_results', {
@@ -19,13 +20,12 @@
 
                 controller: 'DulReviewResults',
                 controllerAs: 'DulReviewResults',
-                 data: {
-                           authorizedRoles: [USER_ROLES.chairperson]
-                       },
+                data: {
+                    authorizedRoles: [USER_ROLES.chairperson]
+                },
                 resolve: {
-                    election: function($stateParams, cmElectionService){
-                        console.log($stateParams.consentId);
-                        return cmElectionService.findElection($stateParams.consentId).$promise;
+                    electionReview: function($stateParams, cmElectionService){
+                        return cmElectionService.findElectionReview($stateParams.consentId).$promise;
                     }
                 }
             })
@@ -36,9 +36,9 @@
                 templateUrl: 'app/review-results/access-review-results.html',
                 controller: 'ReviewResults',
                 controllerAs: 'ReviewResults',
-                   data: {
-                             authorizedRoles: [USER_ROLES.chairperson]
-                         }
+                data: {
+                    authorizedRoles: [USER_ROLES.chairperson]
+                }
             });
 
     }

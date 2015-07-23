@@ -79,11 +79,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
             DatabaseSummaryAPI.initInstance(voteDAO, electionDAO);
             DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO);
-
             final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
             DatabaseDACUserAPI.initInstance(jdbi, dacUserDAO);
             DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
-
+            DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
             final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
             cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "*");
             cors.setInitParameter("allowedMethods", "GET,PUT,POST,DELETE,OPTIONS,HEAD");
@@ -116,6 +115,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestCasesResource.class);
         env.jersey().register(DataRequestResource.class);
         env.jersey().register(DACUserResource.class);
+        env.jersey().register(ElectionReviewResource.class);
 
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
@@ -132,6 +132,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractDataRequestAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();
+                AbstractReviewResultsAPI.clearInstance();
             }
         });
     }
