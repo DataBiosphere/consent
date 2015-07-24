@@ -7,7 +7,7 @@ import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.DataRequestDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.enumeration.ElectionType;
-import org.genomebridge.consent.http.enumeration.Status;
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
 
 import com.sun.jersey.api.NotFoundException;
@@ -66,7 +66,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public Election updateElectionById(Election rec, Integer electionId) {
         validateStatus(rec.getStatus());
         if (rec.getStatus() == null) {
-            rec.setStatus(Status.OPEN.getValue());
+            rec.setStatus(ElectionStatus.OPEN.getValue());
         }
         if (electionDAO.findElectionById(electionId) == null) {
             throw new NotFoundException("Election for specified id does not exist");
@@ -88,11 +88,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public void deleteElection(String referenceId) {
+    public void deleteElection(String referenceId, Integer id) {
         if (electionDAO.getElectionByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
-        electionDAO.deleteElectionByReferenceId(referenceId);
+        electionDAO.deleteElectionById(id);
 
     }
 
@@ -105,8 +105,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         return election;
     }
-
-
+    
     private void setGeneralFields(Election election, String referenceId, Boolean isConsent) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
@@ -119,7 +118,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
 
         if (StringUtils.isEmpty(election.getStatus())) {
-            election.setStatus(Status.OPEN.getValue());
+            election.setStatus(ElectionStatus.OPEN.getValue());
         }
     }
 
@@ -138,10 +137,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void validateExistentElection(String referenceId) {
-        Integer electionId = electionDAO.getElectionByReferenceId(referenceId);
+        Integer electionId = electionDAO.getOpenElectionByReferenceId(referenceId);
         if (electionId != null) {
             throw new IllegalArgumentException(
-                    "An election already exists for the specified id. Election id: "
+                    "An open election already exists for the specified id. Election id: "
                             + electionId);
         }
     }
@@ -154,9 +153,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private void validateStatus(String status) {
         if (StringUtils.isNotEmpty(status)) {
-            if (Status.getValue(status) == null) {
+            if (ElectionStatus.getValue(status) == null) {
                 throw new IllegalArgumentException(
-                        "Invalid value. Valid status are: " + Status.getValues());
+                        "Invalid value. Valid status are: " + ElectionStatus.getValues());
             }
         }
     }

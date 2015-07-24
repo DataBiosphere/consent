@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -7,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
+import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Vote;
 
 import com.sun.jersey.api.NotFoundException;
@@ -48,22 +50,23 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
-    public Vote createVote(Vote rec, String referenceId) throws IllegalArgumentException {
-        rec.setCreateDate(new Date());
-        validateDACUser(rec.getDacUserId(), referenceId);
-        Integer electionId = getElectionId(referenceId);
-        rec.setElectionId(electionId);
-        Integer id = voteDAO.insertVote(rec.getVote(), rec.getDacUserId(), rec.getCreateDate(), rec.getUpdateDate(), electionId, rec.getRationale());
-        return voteDAO.findVoteById(id);
+    public Vote firstVoteUpdate(Vote rec, String referenceId, String voteId) throws IllegalArgumentException {
+        Integer electionId = setGeneralFields(rec, referenceId);
+        Integer voteID = Integer.parseInt(voteId);
+        String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
+        voteDAO.updateVote(rec.getVote(), rationale, null, voteID, electionId, new Date());
+        return voteDAO.findVoteById(voteID);
     }
-
 
     @Override
     public Vote updateVote(Vote rec, Integer voteId, String referenceId) {
         if (voteDAO.checkVoteById(referenceId, voteId) == null) {
             throw new NotFoundException("Could not find vote for specified vote id. Vote id: " + voteId);
         }
-        voteDAO.updateVote(rec.getVote(), rec.getRationale(), new Date(), voteId, getElectionId(referenceId));
+        Vote vote = voteDAO.findVoteById(voteId);
+        Date updateDate = rec.getVote() == null ? null : new Date();
+        String rationale = StringUtils.isNotEmpty(rec.getRationale()) ?  rec.getRationale() : null;
+        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, getElectionId(referenceId), vote.getCreateDate());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -104,18 +107,37 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         voteDAO.deleteVotes(referenceId);
 
     }
+    
+     
+    @Override
+	public List<Vote> createVotes(Integer electionId, Boolean isConsent){
+		List<DACUser> dacUserList = dacUserDAO.findDACUsers();
+		List<Vote> votes = new ArrayList<Vote>();
+		if(dacUserList != null){
+			for(DACUser user : dacUserList){
+			  Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false);
+			  votes.add(voteDAO.findVoteById(id));
+			  if(!isConsent && isChairPerson(user.getDacUserId())){
+				  id = voteDAO.insertVote(user.getDacUserId(), electionId, true);
+				  votes.add(voteDAO.findVoteById(id)); 
+			  }
+			 
+			}
+		}
+		return votes;
+	}
 
-    private void validateDACUser(Integer dacUserId, String referenceId) {
-        if (dacUserDAO.findDACUserById(dacUserId) == null) {
-            throw new IllegalArgumentException("Invalid dacUserId: " + dacUserId);
-        }
-        String voteId = voteDAO.findVoteByReferenceIdAndDacUserId(referenceId, dacUserId);
-        if (StringUtils.isNotEmpty(voteId)) {
-            throw new IllegalArgumentException("A vote has already been posted for the specified Object and Dac User. Vote id: " + voteId);
-        }
+  
 
+    private boolean isChairPerson(Integer dacUserId) {
+       boolean isCherperson = false; 
+       if(dacUserDAO.checkChairpersonUser(dacUserId) != null){
+           isCherperson = true;
+       }
+       return isCherperson; 
     }
 
+   
     private Integer getElectionId(String referenceId) {
         Integer electionId = electionDAO.getElectionByReferenceId(referenceId);
         if (electionId == null) {
@@ -123,5 +145,14 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         return electionId;
     }
+    
+    private Integer setGeneralFields(Vote rec, String referenceId) {
+        rec.setCreateDate(new Date());
+        Integer electionId = getElectionId(referenceId);
+        rec.setElectionId(electionId);
+        rec.setIsChairPersonVote(rec.getIsChairPersonVote() == null ? false : rec.getIsChairPersonVote());
+        return electionId;
+    }
 
+	      
 }

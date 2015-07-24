@@ -7,8 +7,10 @@ import org.genomebridge.consent.http.models.Vote;
 import com.sun.jersey.api.NotFoundException;
 
 public interface VoteAPI {
+ 
+    List<Vote> createVotes(Integer electionId, Boolean isConsent) throws IllegalArgumentException;
 
-    Vote createVote(Vote rec, String referenceId) throws IllegalArgumentException;
+    Vote firstVoteUpdate(Vote rec, String referenceId, String voteId) throws IllegalArgumentException;
 
     Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
 

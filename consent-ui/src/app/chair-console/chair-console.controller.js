@@ -5,11 +5,13 @@
         .controller('ChairConsole', ChairConsole);
 
     /* ngInject */
-    function ChairConsole($http, cmPaginatorService) {
+    function ChairConsole(cmPaginatorService, cmPendingCaseService,$rootScope) {
 
         var lists = {'dul': [], 'access': []};
 
         var vm = this;
+        vm.totalDulPendingVotes = 0;
+        vm.totalAccessPendingVotes = 0;
         vm.activePage = {'dul': 0, 'access': 0};
         vm.currentPages = {'dul': [], 'access': []};
         vm.electionsList = {'dul': [], 'access': []};
@@ -28,12 +30,8 @@
         init();
 
         function init() {
-            $http.get('json/cm_chair.json').then(function (response) {
-                lists['dul'] = response.data['dul_review'];
-                lists['access'] = response.data['access_review'];
-                vm.changePage('dul', 0);
-                vm.changePage('access', 0);
-            });
+            cmPendingCaseService.findConsentPendingCasesByUser(lists,$rootScope.currentUser.dacUserId,vm);
+            cmPendingCaseService.findDataRequestPendingCasesByUser(lists,$rootScope.currentUser.dacUserId,vm);
         }
 
     }

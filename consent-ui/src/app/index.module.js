@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('ConsentManagement', ['cmChairConsole', 'cmReview', 'cmReviewResults', 'cmRPApplication', 'cmUserConsole', 'cmSummaryVotes', 'cmHeader']);
-
+        .module('ConsentManagement', ['cmChairConsole', 'cmReview', 'cmReviewResults','cmRPApplication',
+        'cmUserConsole','cmLogin','cmAuthenticate','cmSummaryVotes','cmAdminConsole', 'cmAdminManage','cmHeader']);
 })();

@@ -107,7 +107,11 @@
                 <artifactId>sql-maven-plugin</artifactId>
                 <version>1.5</version>
                 <dependencies>
-
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>5.1.36</version>
+                    </dependency>
                     <dependency>
                         <groupId>org.hsqldb</groupId>
                         <artifactId>hsqldb</artifactId>

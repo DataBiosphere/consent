@@ -16,66 +16,74 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 public interface VoteDAO extends Transactional<VoteDAO> {
 
 
-    @SqlQuery("select v.* from vote v "
-            + "inner join election on election.electionId = v.electionId  "
-            + "where election.referenceId = :referenceId ")
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and election.status = 'Open'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
 
     @SqlQuery("select  *  from vote v where  v.voteId = :voteId")
     Vote findVoteById(@Bind("voteId") Integer voteId);
+    
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.isChairPersonVote = false")
+    List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
+    
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.isChairPersonVote = false")
+    List<Vote> findPendingDACVotesByElectionId(@Bind("electionId") Integer electionId);
+    
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.isChairPersonVote = false")
+    Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId, 
+                                          @Bind("dacUserId")  Integer dacUserId);
+    
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.isChairPersonVote = true")
+    Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId, 
+                                                     @Bind("dacUserId")  Integer dacUserId);
 
     @SqlQuery("select  v.voteId from vote v "
             + "inner join election on election.electionId = v.electionId  "
+            		+ "inner join dacuser du on du.dacUserId = v.dacUserId "
             + "and election.referenceId = :referenceId and v.dacUserId = :dacUserId")
-    String findVoteByReferenceIdAndDacUserId(@Bind("referenceId") String referenceId, @Bind("dacUserId") Integer dacUserId);
+    String findVoteByReferenceIdAndDacUserId(@Bind("referenceId") String referenceId, 
+                                             @Bind("dacUserId") Integer dacUserId);
 
 
-    @SqlQuery("select vote.voteId from vote  "
-            + "inner join election on election.electionId = vote.electionId  "
+    @SqlQuery("select vote.voteId from vote  inner join election on election.electionId = vote.electionId  "
             + "where election.referenceId = :referenceId "
             + "and vote.voteId = :voteId")
-    String checkVoteById(@Bind("referenceId") String referenceId, @Bind("voteId") Integer voteId);
+    Integer checkVoteById(@Bind("referenceId") String referenceId, 
+                         @Bind("voteId") Integer voteId);
 
 
     @SqlQuery("select  v.*  from vote v "
             + "inner join election on election.electionId = v.electionId  "
             + "inner join datarequest on datarequest.requestId = election.referenceId "
             + "where election.referenceId = :requestId and datarequest.requestId = :requestId "
-            + "and v.voteId = :voteId")
-    Vote findVoteByDataRequestIdAndVoteId(@Bind("requestId") String requestId, @Bind("voteId") String voteId);
+            + "and v.voteId = :voteId ")
+    Vote findVoteByDataRequestIdAndVoteId(@Bind("requestId") String requestId, 
+                                          @Bind("voteId") String voteId);
 
 
-    @SqlUpdate("insert into vote " +
-            "(vote, dacUserId, createDate, updateDate,electionId, rationale) values " +
-            "(:vote, :dacUserId, :createDate, :updateDate,:electionId, :rationale)")
+    @SqlUpdate("insert into vote (dacUserId, electionId, isChairPersonVote) values " +
+            "(:dacUserId,:electionId, :isChairPersonVote)")
     @GetGeneratedKeys
-    Integer insertVote(@Bind("vote") Boolean vote,
-                       @Bind("dacUserId") Integer dacUserId,
-                       @Bind("createDate") Date createDate,
-                       @Bind("updateDate") Date updateDate,
+    Integer insertVote(@Bind("dacUserId") Integer dacUserId,
                        @Bind("electionId") Integer electionId,
-                       @Bind("rationale") String rationale);
-
+                       @Bind("isChairPersonVote") Boolean isChairPersonVote);
+    
     @SqlUpdate("delete from vote where  voteId = :voteId")
     void deleteVoteById(@Bind("voteId") Integer voteId);
 
-    @SqlUpdate("delete v from vote v "
-            + "inner join election on election.electionId = v.electionId  "
-            + "where election.referenceId = :referenceId ")
+    @SqlUpdate("delete v from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId ")
     void deleteVotes(@Bind("referenceId") String referenceId);
 
 
     @SqlBatch("delete from vote where electionId = :electionId ")
     void deleteVotesByElection(@Bind("electionId") String electionId);
 
-    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale " +
-            " where voteId = :voteId")
+    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, createDate = :createDate where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
                     @Bind("rationale") String rationale,
                     @Bind("updateDate") Date updateDate,
                     @Bind("voteId") Integer voteId,
-                    @Bind("electionId") Integer electionId);
-
+                    @Bind("electionId") Integer electionId,
+                    @Bind("createDate") Date createDate);
 
 }

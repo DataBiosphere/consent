@@ -1,6 +1,8 @@
+<div ng-include src="'app/header/header.html'"></div>
 <div class="container">
     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-        <h2 class="cm-title">Welcome DAC Chairperson!</br>
+        <h2 class="cm-title">
+            <div id="dacUser">Welcome {{currentUser.displayName}}!</div>
             <small>These are your pending cases for review</small>
         </h2>
         <hr class="section-separator">
@@ -8,7 +10,6 @@
     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
         <h2 class="pvotes-box-title dul-color">
             <img src="assets/images/icon_dul.png" alt="Translation icon" class="pvotes-icons">Data Use Letter Review
-            <div id="totalDulPendingCases" class="pcases-tag">18</div>
             </br><!--change to dynamic content-->
             <div class="pvotes-box-title-description">Were the consent limitations accurately converted into a
                 machine-readable format?
@@ -19,40 +20,34 @@
                 <div class="pvotes-box-head">
                     <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-box-subtitle dul-color">Consent id</div>
                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 center-text pvotes-box-subtitle dul-color">Vote
-                        <div id="dulPendingVoteCases" class="pcases-small-tag">15</div>
+                        <div ng-show="ChairConsole.totalDulPendingVotes > 0" id="dulPendingVoteCases" class="pcases-small-tag">{{ChairConsole.totalDulPendingVotes}}</div>
                     </div>
                     <!--change to dynamic content-->
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">%
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">
                         Logged
                     </div>
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">Collect
-                        <div id="dulPendingCollectCases" class="pcases-small-tag">3</div>
-                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle dul-color">Actions </div>
                     <!--change to dynamic content-->
                     <hr class="pvotes-main-separator">
                 </div>
                 <div class="pvotes-box-body">
-
-
-                    <div ng-repeat="election in ChairConsole.electionsList.dul">
+                    <div ng-repeat="pendingCase in ChairConsole.electionsList.dul">
                         <hr class="pvotes-separator">
                         <div class="row pvotes-main-list">
-                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{election.sampleId}}</div>
-                            <a ng-href="{{election.link}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                <div class="voteButton {{election.status}}">
-                                    <span ng-if="election.status == 'pending'">Vote</span>
-                                    <span ng-if="election.status == 'editable'">Edit</span>
-                                    <span ng-if="election.status == 'disabled'">---</span>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{pendingCase.referenceId}}</div>
+                            <a ui-sref="dul_review({consentId: '{{pendingCase.referenceId}}', voteId: '{{pendingCase.voteId}}'})" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                <div class="voteButton {{pendingCase.alreadyVoted ? 'editable' : 'enabled'}}">
+                                    <span ng-if="pendingCase.alreadyVoted == false">Vote</span>
+                                    <span ng-if="pendingCase.alreadyVoted == true">Edit</span>
                                 </div>
                             </a>
 
-                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{election.logged}}</div>
-                            <a ng-href="{{election.collectLink}}"
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{pendingCase.logged}}</div>
+                            <a ui-sref="dul_review_results({consentId: '{{pendingCase.referenceId}}'})"
                                class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
-                                <div class="collectButton {{election.collect}}">
-                                    <span ng-if="election.status == 'pending'">---</span>
-                                    <span ng-if="election.status == 'editable'">Collect Votes</span>
-                                    <span ng-if="election.status == 'disabled'">FINAL VOTE</span>
+                                <div class="collectButton {{pendingCase.alreadyVoted ? 'enabled' : 'disabled'}} ">
+                                    <span ng-if="pendingCase.alreadyVoted == false">---</span>
+                                    <span ng-if="pendingCase.alreadyVoted == true">Collect Votes</span>
                                 </div>
                             </a>
                         </div>
@@ -81,8 +76,7 @@
     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
         <h2 class="pvotes-box-title access-color">
             <img src="assets/images/icon_access.png" alt="Access icon" class="pvotes-icons">Data Access Request
-            <div id="totalAccessPendingCases" class="pcases-tag">9</div>
-            </br><!--change to dynamic content-->
+             </br><!--change to dynamic content-->
             <div class="pvotes-box-title-description">Should the researcher be allowed to access this research
                 studies?
             </div>
@@ -90,58 +84,54 @@
         <div class="jumbotron box-vote-singleresults">
             <div class="row">
                 <div class="pvotes-box-head">
-                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-box-subtitle access-color">Sample collection
-                        id
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-box-subtitle access-color">Data Request Id
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 center-text pvotes-box-subtitle access-color">Vote
-                        <div id="accessPendingVoteCases" class="pcases-small-tag">6</div>
+                        <div ng-show="ChairConsole.totalAccessPendingVotes > 0" id="accessPendingVoteCases" class="pcases-small-tag">{{ChairConsole.totalAccessPendingVotes}}</div>
                     </div>
                     <!--change to dynamic content-->
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle access-color">%
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle access-color">
                         Logged
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 center-text pvotes-box-subtitle access-color">
-                        Collect
-                        <div id="accessPendingCollectCases" class="pcases-small-tag">3</div>
+                        Actions
                     </div>
                     <!--change to dynamic content-->
                     <hr class="pvotes-main-separator">
                 </div>
                 <div class="pvotes-box-body">
-
-
-                    <div ng-repeat="election in ChairConsole.electionsList.access">
+                    <div ng-repeat="pendingCase in ChairConsole.electionsList.access">
                         <hr class="pvotes-separator">
                         <div class="row pvotes-main-list">
-                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{election.sampleId}}</div>
-                            <a ng-href="{{election.link}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                <div class="voteButton {{election.status}}">
-                                    <span ng-if="election.status == 'pending'">Vote</span>
-                                    <span ng-if="election.status == 'editable'">Edit</span>
-                                    <span ng-if="election.status == 'disabled'">---</span>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 pvotes-list-id">{{pendingCase.referenceId}}</div>
+                            <a ng-href="#/access_review/{{pendingCase.referenceId}}/{{pendingCase.voteId}}" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                <div ng-if="pendingCase.isFinalVote" class="voteButton  disabled">
+                                     <span>---</span>
+                                </div>
+                                <div ng-if="pendingCase.alreadyVoted == true && pendingCase.isFinalVote == false" class="voteButton  editable">
+                                   <span>Edit</span>
+                                </div>
+                                <div ng-if="pendingCase.alreadyVoted == false" class="voteButton  enabled">
+                                    <span>Vote</span>
                                 </div>
                             </a>
 
-                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{election.logged}}</div>
-                            <a ng-href="{{election.collectLink}}"
-                               class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
-                                <div class="collectButton {{election.collect}}">
-                                    <span ng-if="election.status == 'pending'">---</span>
-                                    <span ng-if="election.status == 'editable'">Collect Votes</span>
-                                    <span ng-if="election.status == 'disabled'">FINAL VOTE</span>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-3 pvotes-list">{{pendingCase.logged}}</div>
+                            <a href="({{pendingCase.isFinalVote}} || {{!pendingCase.alreadyVoted}}) ? '' : '#/access_review_results/{{pendingCase.referenceId}}'"
+                              class="col-lg-2 col-md-2 col-sm-2 col-xs-3 no-padding">
+                                <div class="collectButton {{pendingCase.alreadyVoted ? 'enabled' : 'disabled'}}">
+                                    <span ng-if="pendingCase.alreadyVoted == false">---</span>
+                                    <span ng-if="pendingCase.alreadyVoted == true && pendingCase.isFinalVote == false">Collect Votes</span>
+                                    <span ng-if="pendingCase.isFinalVote">FINAL VOTE</span>
                                 </div>
                             </a>
                         </div>
                     </div>
-
-
                 </div>
                 <!-- DYNAMIC CONTENT COMES HERE-->
                 <hr class="pvotes-separator">
                 <div class="pvotes-pagination">
                     <ul class="pagination">
-
-
                         <li><a
                             ng-click="ChairConsole.changePage('access', ChairConsole.activePage.access - 1)">&laquo;</a>
                         </li>
@@ -152,8 +142,6 @@
                         <li><a
                             ng-click="ChairConsole.changePage('access', ChairConsole.activePage.access + 1)">&raquo;</a>
                         </li>
-
-
                     </ul>
                 </div>
             </div>

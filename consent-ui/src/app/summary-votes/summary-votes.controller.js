@@ -2,32 +2,32 @@
     'use strict';
 
     angular.module('cmSummaryVotes')
-
         .controller('SummaryVotes', SummaryVotes);
 
     /* ngInject */
-    function SummaryVotes() {
-
+    function SummaryVotes(apiUrl, cmPendingCaseService) {
+        var vm = this;
+        vm.downloadUrl = apiUrl + "consent/cases/summary/file";
         var data = {
             'accessTotal': [
                 ['Results', 'Votes'],
-                ['Reviewed cases', 40],
-                ['Pending cases', 90]
+                ['Reviewed cases', 0],
+                ['Pending cases', 0]
             ],
             'accessReviewed': [
                 ['Results', 'Votes'],
-                ['Positive', 25],
-                ['Negative', 15]
+                ['Positive', 0],
+                ['Negative', 0]
             ],
             'dulTotal': [
                 ['Results', 'Votes'],
-                ['Reviewed cases', 60],
-                ['Pending cases', 70]
+                ['Reviewed cases', 0],
+                ['Pending cases',0]
             ],
             'dulReviewed': [
                 ['Results', 'Votes'],
-                ['Positive', 55],
-                ['Negative', 5]
+                ['Positive', 0],
+                ['Negative', 0]
             ]
         };
 
@@ -189,9 +189,10 @@
                 }
             }
         };
-        var vm = this;
-        vm.chartData = data;
+        cmPendingCaseService.findSummary(data, vm);
         vm.chartOptions = options;
     }
+
+
 
 })();

@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmHeader', ['ui.bootstrap']);
+        .module('cmHeader', ['ui.bootstrap','cmUserRoles']);
 
 })();

@@ -1,55 +1,40 @@
 package org.genomebridge.consent.http.resources;
 
-import java.net.URI;
-import java.util.List;
+import com.sun.jersey.api.NotFoundException;
+import org.genomebridge.consent.http.models.Vote;
+import org.genomebridge.consent.http.service.AbstractVoteAPI;
+import org.genomebridge.consent.http.service.VoteAPI;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-
-import org.genomebridge.consent.http.models.Vote;
-import org.genomebridge.consent.http.service.AbstractVoteAPI;
-import org.genomebridge.consent.http.service.VoteAPI;
-
-import com.sun.jersey.api.NotFoundException;
-import javax.ws.rs.OPTIONS;
+import java.util.List;
 
 @Path("consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
     private VoteAPI api;
-
     public ConsentVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
     }
 
     @POST
     @Consumes("application/json")
-    public Response createConsentVote(@Context UriInfo info, Vote rec,
-            @PathParam("consentId") String consentId) {
-        URI uri;
+    @Path("/{id}")
+    public Response firstVoteUpdate(@Context UriInfo info, Vote rec,
+            @PathParam("consentId") String consentId, @PathParam("id") String voteId) {
         try {
-            Vote vote = api.createVote(rec, consentId);
-            uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
+            Vote vote = api.firstVoteUpdate(rec, consentId, voteId);
+            return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            throw new NotFoundException(String.format(
+                    "Could not find vote with id %s", voteId));
         }
-        return Response.created(uri)
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Content-Type, Accept")
-                .header("Access-Control-Max-Age", "1728000")
-                .build();
     }
 
     @PUT
@@ -113,10 +98,6 @@ public class ConsentVoteResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response options(@PathParam("consentId") String consentId) {
         return Response.ok()
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Content-Type")
-                .header("Access-Control-Max-Age", "1728000")
                 .build();
     }
 

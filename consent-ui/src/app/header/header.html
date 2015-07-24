@@ -1,10 +1,26 @@
+<ul class="menu">
+    <li><a href="#/user_console">DAC Console</a></li>
+    <li><a href="#/chair_console">Chairman Console</a></li>
+    <li><a href="#/rp_application/step1">RP Application</a></li>
+    <li><a href="#/admin_console">Admin Console</a></li>
+    <li><a href="#/admin_manage_dul">Admin Manage DUL</a></li>
+</ul>
 <nav class="navbar top-navigator-bar" ng-controller="Header as Header">
     <div class="row top-navigator">
         <div class="navbar col-lg-6 col-md-6 col-sm-8 col-xs-12 no-padding no-margin">
             <ul class="navbar-left no-margin">
-                <li class="brand"><img src="assets/images/broad_logo_allwhite.png" alt="Broad Institute Logo"></li>
-                <li><a href="#/user_console">My Console</a></li>
+                <li class="brand"><img src="../assets/images/broad_logo_allwhite.png" alt="Broad Institute Logo"></li>
+                <li ng-show="$root.currentUser.memberStatus === 'CHAIRPERSON'">
+                    <a href="#/chair_console">My Console</a>
+                </li>
+                <li ng-show="$root.currentUser.memberStatus === 'DACMEMBER'">
+                    <a href="#/user_console">My Console</a>
+                </li>
+                <li ng-show="$root.currentUser.memberStatus === 'ADMIN'">
+                    <a href="#/admin_console">My Console</a>
+                 </li>
                 <li><a href="#">About</a></li>
+                <li><a href="#/summary_votes">Statistics</a></li>
             </ul>
         </div>
         <div class="navbar col-lg-3 col-md-3 col-sm-4 col-xs-6 no-margin">
@@ -22,13 +38,11 @@
         <div class="navbar navbar-right col-lg-3 col-md-3 col-sm-4 col-sm-offset-8 col-xs-6 no-margin" ng-controller="Header">
             <li class="dropdown navbar-right user-li" dropdown is-open="status.isopen">
                 <a role="button" class="dropdown-toggle" data-toggle="dropdown" href="#" dropdown-toggle ng-disabled="disabled">
-                    <div id="dacUser">DAC User <span class="caret caret-margin"></span></div>
-                    <small id="dacUserMail">dacuser@broadinstitute.org</small>
+                    <div id="dacUser">{{$root.currentUser.displayName}} <span class="caret caret-margin"></span></div>
+                    <small id="dacUserMail"> {{$root.currentUser.email}}</small>
                 </a>
                 <ul class="dropdown-menu user-dropdown" role="menu">
-                    <li><a href="#">Something</a></li>
-                    <hr>
-                    <li><a href="#">Something else</a></li>
+                    <li><a href="/#/login" onclick="signOut();">Sign out</a></li>
                 </ul>
             </li>
         </div>

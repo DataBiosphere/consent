@@ -7,11 +7,13 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
-import org.genomebridge.consent.http.cloudstore.GCSStore;
 import org.genomebridge.consent.http.db.*;
 import org.genomebridge.consent.http.resources.*;
+import org.genomebridge.consent.http.service.*;
+import org.genomebridge.consent.http.cloudstore.GCSStore;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.DataRequestDAO;
 import org.genomebridge.consent.http.db.DataSetDAO;
@@ -37,9 +39,12 @@ import org.genomebridge.consent.http.service.DatabaseVoteAPI;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import java.util.EnumSet;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+
 
 /**
  * Top-level entry point to the entire application.
@@ -65,15 +70,22 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
 
             DatabaseConsentAPI.initInstance(jdbi, consentDAO);
-            final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
             final ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
             final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
             final DataRequestDAO requestDAO = jdbi.onDemand(DataRequestDAO.class);
             final DataSetDAO dataSetDAO = jdbi.onDemand(DataSetDAO.class);
             final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
             DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO);
-            DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
             DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
+            DatabaseSummaryAPI.initInstance(voteDAO, electionDAO);
+            DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO);
+            final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
+            DatabaseDACUserAPI.initInstance(jdbi, dacUserDAO);
+            DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
+            DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
+            final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
+            cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "*");
+            cors.setInitParameter("allowedMethods", "GET,PUT,POST,DELETE,OPTIONS,HEAD");
 
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
@@ -99,7 +111,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestElectionResource.class);
         env.jersey().register(ConsentVoteResource.class);
         env.jersey().register(DataRequestVoteResource.class);
+        env.jersey().register(ConsentCasesResource.class);
+        env.jersey().register(DataRequestCasesResource.class);
         env.jersey().register(DataRequestResource.class);
+        env.jersey().register(DACUserResource.class);
+        env.jersey().register(ElectionReviewResource.class);
+
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
@@ -111,7 +128,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();
+                AbstractPendingCaseAPI.clearInstance();
                 AbstractDataRequestAPI.clearInstance();
+                AbstractDACUserAPI.clearInstance();
+                AbstractSummaryAPI.clearInstance();
+                AbstractReviewResultsAPI.clearInstance();
             }
         });
     }

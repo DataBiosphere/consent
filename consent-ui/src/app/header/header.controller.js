@@ -5,7 +5,7 @@
         .controller('Header', Header);
 
     /* ngInject */
-    function Header($scope, $log) {
+    function Header($scope) {
 
         $scope.status = {
             isopen: false

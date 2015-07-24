@@ -32,9 +32,9 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
         }
     }
 
-    public String electionDataRequestPathById(String referenceId, String electionId) {
+    public String electionDataRequestPathById(String referenceId, Integer electionId) {
         try {
-            return path2Url(String.format("/dataRequest/%s/election/%s", URLEncoder.encode(referenceId, "UTF-8"), URLEncoder.encode(electionId, "UTF-8")));
+            return path2Url(String.format("/dataRequest/%s/election/%s", URLEncoder.encode(referenceId, "UTF-8"), electionId));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace(System.err);
             return String.format("/dataRequest/%s/election/%s", referenceId, electionId);
@@ -51,12 +51,12 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
     }
 
 
-    public String voteConsentPath(String id) {
+    public String voteConsentPath(String consentId) {
         try {
-            return path2Url(String.format("/consent/%s/vote", URLEncoder.encode(id, "UTF-8")));
+            return path2Url(String.format("/consent/%s/vote", URLEncoder.encode(consentId, "UTF-8")));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace(System.err);
-            return String.format("/consent/%s/vote", id);
+            return String.format("/consent/%s/vote", consentId);
         }
     }
 
@@ -73,9 +73,9 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
         }
     }
 
-    public String voteDataRequestIdPath(String dataRequestId, String voteId) {
+    public String voteDataRequestIdPath(String dataRequestId, Integer voteId) {
         try {
-            return path2Url(String.format("/dataRequest/%s/vote/%s", URLEncoder.encode(dataRequestId, "UTF-8"), URLEncoder.encode(voteId, "UTF-8")));
+            return path2Url(String.format("/dataRequest/%s/vote/%s", URLEncoder.encode(dataRequestId, "UTF-8"), voteId));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace(System.err);
             return String.format("/dataRequest/%s/vote/%s", dataRequestId, voteId);
@@ -89,6 +89,18 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
             e.printStackTrace(System.err);
             return String.format("/consent/%s/vote/%s", consentId, voteId);
         }
+    }
+    
+    public String consentPendingCasesPath(Integer userId) {
+         return path2Url(String.format("/consent/cases/pending/%s", userId));
+    }
+
+    public String dataRequestPendingCasesPath(Integer userId) {
+        return path2Url(String.format("/dataRequest/cases/pending/%s", userId));
+    }
+    
+    public String consentSummaryPath() {
+        return path2Url(String.format("consent/cases/summary/file"));
     }
 
 

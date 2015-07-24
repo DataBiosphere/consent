@@ -27,11 +27,14 @@ public class Vote {
     @JsonProperty
     private String rationale;
 
+    @JsonProperty
+    private Boolean isChairPersonVote; 
+
     public Vote() {
     }
 
-    public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate,
-                Date updateDate, Integer electionId, String rationale) {
+    public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
+            Integer electionId, String rationale,Boolean isChairPersonVote) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;
@@ -39,6 +42,7 @@ public class Vote {
         this.updateDate = updateDate;
         this.electionId = electionId;
         this.rationale = rationale;
+        this.isChairPersonVote = isChairPersonVote;
     }
 
     public Integer getVoteId() {
@@ -97,5 +101,11 @@ public class Vote {
         this.rationale = rationale;
     }
 
+    public Boolean getIsChairPersonVote() {
+        return isChairPersonVote;
+    }
 
+    public void setIsChairPersonVote(Boolean isChairPersonVote) {
+        this.isChairPersonVote = isChairPersonVote;
+    }
 }

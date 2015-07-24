@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmRPApplication', ['ngAnimate', 'ngResource', 'ui.router']);
+        .module('cmRPApplication', ['ngAnimate', 'ngResource', 'ui.router','cmUserRoles']);
 
 })();

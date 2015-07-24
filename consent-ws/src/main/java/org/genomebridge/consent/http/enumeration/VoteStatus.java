@@ -1,12 +1,12 @@
 package org.genomebridge.consent.http.enumeration;
 
-public enum Status {
+public enum VoteStatus {
 
-    OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled");
+    PENDING("pending"), EDITABLE("editable"), URGENT("urgent"), CLOSED("closed");
 
     private String value;
 
-    Status(String value) {
+    VoteStatus(String value) {
         this.value = value;
     }
 
@@ -15,7 +15,7 @@ public enum Status {
     }
 
     public static String getValue(String value) {
-        for (Status e : Status.values()) {
+        for (VoteStatus e : VoteStatus.values()) {
             if (e.getValue().equalsIgnoreCase(value)) {
                 return e.getValue();
             }
@@ -25,7 +25,7 @@ public enum Status {
 
     public static String getValues() {
         StringBuilder values = new StringBuilder();
-        for (Status e : Status.values()) {
+        for (VoteStatus e : VoteStatus.values()) {
             values.append(e.getValue());
             values.append(",");
         }
