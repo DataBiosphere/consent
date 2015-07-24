@@ -18,7 +18,7 @@
                 </li>
                 <li ng-show="$root.currentUser.memberStatus === 'ADMIN'">
                     <a href="#/admin_console">My Console</a>
-                 </li>
+                </li>
                 <li><a href="#">About</a></li>
                 <li><a href="#/summary_votes">Statistics</a></li>
             </ul>
@@ -35,9 +35,11 @@
                 </div>
             </form>
         </div>
-        <div class="navbar navbar-right col-lg-3 col-md-3 col-sm-4 col-sm-offset-8 col-xs-6 no-margin" ng-controller="Header">
+        <div class="navbar navbar-right col-lg-3 col-md-3 col-sm-4 col-sm-offset-8 col-xs-6 no-margin"
+             ng-controller="Header">
             <li class="dropdown navbar-right user-li" dropdown is-open="status.isopen">
-                <a role="button" class="dropdown-toggle" data-toggle="dropdown" href="#" dropdown-toggle ng-disabled="disabled">
+                <a role="button" class="dropdown-toggle" data-toggle="dropdown" href="#" dropdown-toggle
+                   ng-disabled="disabled">
                     <div id="dacUser">{{$root.currentUser.displayName}} <span class="caret caret-margin"></span></div>
                     <small id="dacUserMail"> {{$root.currentUser.email}}</small>
                 </a>
@@ -48,3 +50,4 @@
         </div>
     </div>
 </nav>
+

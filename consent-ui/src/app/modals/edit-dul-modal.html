@@ -1,0 +1,59 @@
+<div class="modal-dialog modal-add-dul">
+        <div class="modal-content">
+            <div class="modal-header admin-modal-header">
+                <button type="button" class=" modal-close-btn close" ng-click="Modal.cancel()"><span aria-hidden="true">&times;</span></button>
+                <h2 class="cm-title-admin dul-color">
+                    <img src="../assets/images/icon_add_dul.png" alt="Add DUL icon" class="cm-icons">
+                    <span>Edit Data Use Letter</span>
+                    <div class="cm-title-description">Edit a Data Use Limitation Record</div>
+                </h2>
+            </div>
+            <div class="modal-footer">
+                <form class="form-horizontal" id="voteForm">
+                    <fieldset>
+                        <div class="form-group admin-form-group first-form-group">
+                            <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label dul-color">Consent Id</label>
+                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
+                                <input type="text"
+                                       name="inputConsentId"
+                                       class="form-control col-lg-12 vote-input"
+                                       placeholder="Consent Id">
+                            </div>
+                        </div>
+                        <div class="form-group admin-form-group ">
+                            <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label dul-color">Name</label>
+                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
+                                <input type="text"
+                                       name="inputName"
+                                       class="form-control col-lg-12 vote-input"
+                                       placeholder="Name for the Data Use Letter">
+                            </div>
+                        </div>
+                        <div class="form-group admin-form-group ">
+                            <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label dul-color">Data Use Letter File</label>
+                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 bold">
+                                <div class="fileUpload col-lg-3 col-md-3 col-sm-4 col-xs-12 upload-button">
+                                    <span>Upload file</span>
+                                    <span class="cm-icon-button glyphicon glyphicon-upload caret-margin" aria-hidden="true"></span>
+                                    <input type="file" class="upload" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group admin-form-group ">
+                            <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label dul-color">Structured limitations</label>
+                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
+                                <input type="text"
+                                       name="inputSDUL"
+                                       class="form-control col-lg-12 vote-input"
+                                       placeholder="Structured string of the Data Use Letter">
+                            </div>
+                        </div>
+                        <div class="admin-modal-footer">
+                            <button type="button" class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn dul-background" ng-click="Modal.ok()">Add</button>
+                            <button type="button" class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn dismiss-background" ng-click="Modal.cancel()">Cancel</button>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>

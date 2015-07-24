@@ -1,63 +1,70 @@
 <div ng-include src="'app/header/header.html'"></div>
-<div class="container">
-    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-        <div class="row no-margin">
-            <h2 class="col-lg-9 col-md-9 col-sm-8 col-xs-8 cm-title dul-color no-padding">
-                <img src="../assets/images/icon_manage_dul.png" alt="Manage DUL icon" class="cm-icons">Manage Data Use Letter
-                <div class="cm-title-admin-description">Select and manage Data Use Letters for DAC review</div>
-            </h2>
-            <a href="#" class="col-lg-3 col-md-3 col-sm-4 col-xs-4 admin-add-button dul-background">
+<div class="container" ng-controller="AdminManage">
+    <div class="row no-margin">
+        <h2 class="col-lg-9 col-md-9 col-sm-8 col-xs-8 cm-title dul-color no-padding">
+            <img src="../assets/images/icon_manage_dul.png" alt="Manage DUL icon" class="cm-icons">Manage Data Use Letters
+            <div class="cm-title-admin-description">Select and manage Data Use Letters for DAC review</div>
+        </h2>
+        <div>
+            <a class="col-lg-3 col-md-3 col-sm-4 col-xs-4 admin-add-button dul-background" ng-click="AdminManage.addDul()">
                 <div class="all-icons add-dul_white"></div>
                 <span>Add Data Use Letter</span>
             </a>
         </div>
-        <div class="jumbotron box-vote-singleresults">
-            <div class="row">
-                <div class="pvotes-box-head">
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle dul-color">Consent id</div>
-                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-box-subtitle dul-color">Consent name</div>
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle f-center dul-color">Edit Record</div>
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle f-center dul-color">Election status</div>
-                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle f-center dul-color">Election actions</div>
-                    <hr class="pvotes-main-separator">
-                </div>
-                <div class="admin-box-body">
-                    <div ng-repeat="election in AdminManage.electionsList.dul">
-                        <hr class="pvotes-separator">
-                        <div class="row pvotes-main-list">
-                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-list-id">{{election.consentId}}</div>
-                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.consentName}}</div>
-                            <a href="#" class="admin-manage-buttons col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                <div class="{{election.editRecord}} hover-color">Edit</div>
+    </div>
+    <div class="jumbotron box-vote-singleresults">
+        <div class="row">
+            <div class="pvotes-box-head">
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle dul-color">Consent id</div>
+                <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-box-subtitle dul-color">Consent name</div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle f-center dul-color">Edit Record</div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle f-center dul-color">Election status</div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-box-subtitle f-center dul-color">Election actions</div>
+            </div>
+            <div class="admin-box-body">
+                <hr class="pvotes-main-separator">
+                <div ng-repeat="election in AdminManage.electionsList.dul">
+                    <div class="row pvotes-main-list">
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-list-id">{{election.consentId}}</div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.consentName}}</div>
+                        <a href="#" class="admin-manage-buttons col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                            <!--<div class="{{election.editRecord}} hover-color">Edit</div>-->
+                            <div class="{{election.editRecord}} hover-color">
+                                <span ng-if="election.editRecord == 'enabled'" ng-click="AdminManage.editDul()">Edit</span>
+                                <span ng-if="election.editRecord == 'disabled'">Edit</span>
+                            </div>
+                        </a>
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-list bold">
+                            <span ng-if="election.electionStatus == 'unreviewed'">Un-reviewed</span>
+                            <span ng-if="election.electionStatus == 'opened'">Open</span>
+                            <span ng-if="election.electionStatus == 'canceled'">Canceled</span>
+                            <span ng-if="election.electionStatus == 'reviewed'">Reviewed</span>
+                        </div>
+                        <div>
+                            <a class="col-lg-2 col-md-2 col-sm-2 col-xs-2 admin-manage-buttons">
+                                <div class="{{election.electionActions}} hover-color">
+                                    <span ng-if="election.electionActions == 'create'" ng-click="AdminManage.openCreate()">
+                                        <span>Create</span>
+                                    </span>
+                                    <span ng-if="election.electionActions == 'cancel'" ng-click="AdminManage.openCancel()">
+                                        <span>Cancel</span>
+                                    </span>
+                                </div>
                             </a>
-                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-list bold">
-                                <span ng-if="election.electionStatus == 'unreviewed'">Un-reviewed</span>
-                                <span ng-if="election.electionStatus == 'opened'">Open</span>
-                                <span ng-if="election.electionStatus == 'canceled'">Canceled</span>
-                                <span ng-if="election.electionStatus == 'reviewed'">Reviewed</span>
-                            </div>
-                            <div ng-controller="AdminManage">
-                                <a class="col-lg-2 col-md-2 col-sm-2 col-xs-2 admin-manage-buttons">
-                                    <div class="{{election.electionActions}} hover-color">
-                                        <span ng-if="election.electionActions == 'create'" ng-click="AdminManage.openCreate()">Create</span>
-                                        <span ng-if="election.electionActions == 'cancel'" ng-click="AdminManage.openCancel()">Cancel</span>
-                                    </div>
-                                </a>
-                            </div>
                         </div>
                     </div>
+                    <hr class="pvotes-separator">
                 </div>
-                <hr class="pvotes-separator">
-                <div class="pvotes-pagination">
-                    <ul class="pagination">
-                        <li><a ng-click="AdminManage.changePage('dul', AdminManage.activePage.dul - 1)">&laquo;</a></li>
-                        <li ng-repeat="page in AdminManage.currentPages.dul">
-                            <a ng-click="AdminManage.changePage('dul', page)"
-                               ng-class="{ 'active-case': AdminManage.activePage.dul == page}">{{page + 1}}</a>
-                        </li>
-                        <li><a ng-click="AdminManage.changePage('dul', AdminManage.activePage.dul + 1)">&raquo;</a></li>
-                    </ul>
-                </div>
+            </div>
+            <div class="pvotes-pagination">
+                <ul class="pagination">
+                    <li><a ng-click="AdminManage.changePage('dul', AdminManage.activePage.dul - 1)">&laquo;</a></li>
+                    <li ng-repeat="page in AdminManage.currentPages.dul">
+                        <a ng-click="AdminManage.changePage('dul', page)"
+                           ng-class="{ 'active-case': AdminManage.activePage.dul == page}">{{page + 1}}</a>
+                    </li>
+                    <li><a ng-click="AdminManage.changePage('dul', AdminManage.activePage.dul + 1)">&raquo;</a></li>
+                </ul>
             </div>
         </div>
     </div>

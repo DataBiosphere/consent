@@ -168,21 +168,27 @@ small {
     margin: 0 20px 4px 0;
 }
 
-.user-li {
-    padding: 10px 5px 5px 5px !important;
-    float: right !important;
-    text-align: right;
-    margin: 0 40px 0 20px !important;
+.user-li{
+     padding: 10px 5px 5px 5px !important;
+     float: right !important;
+     text-align: right;
+     margin: 0 40px 0 20px !important;
+ }
+.drop-li{
+    padding: 20px 5px 5px 5px !important;
 }
-
+.drop-li .user-dropdown{
+    margin-top: 12px;
+}
 .user-dropdown li {
-    padding: 5px 10px 0 10px !important;
-    margin: 2px 0 0 0 !important;
+    padding: 5px 0 0 0 !important;
+    margin: 2px 0 2px 0 !important;
+    float: right !important;
+    text-align: right !important;
+    width: 100%;
 }
 
 .user-dropdown li a {
-    float: right !important;
-    text-align: right !important;
     color: #00609f !important;
     font-weight: normal !important;
     font-size: 15px;
@@ -192,7 +198,6 @@ small {
         color: #2FA4E7 !important;
         cursor: pointer;
     }
-
 .user-dropdown hr {
     float: right;
     margin: 0 2px 0 2px !important;
@@ -217,8 +222,23 @@ small {
 }
 /*********************************TITLES & SUBTITLES*/
 
-.cm-title, .cm-subtitle, .cm-subtitle-ultimate, .cm-user-name, .cm-results-subtitle, .cm-box-title {
+.cm-title, .cm-title-admin, .cm-subtitle, .cm-subtitle-ultimate, .cm-user-name, .cm-results-subtitle, .cm-box-title {
     color: #777777;
+}
+.cm-title-admin{
+    margin-top: 10px !important;
+}
+.cm-title-admin span{
+    margin-bottom: 20px!important;
+    font-size: 24px;
+}
+.cm-title-admin img{
+    height: 45px!important;
+    padding-right: 5px!important;
+}
+.cm-title-admin div{
+    margin-left: 50px!important;
+    font-size: 17px !important;
 }
 
 .cm-title-description, .cm-title-other-description, .cm-title-admin-description{
@@ -337,7 +357,7 @@ small {
 }
 
 .pvotes-main-separator {
-    border-width: 2px;
+    border-width: 2px !important;
 }
 
 .separator-margin{
@@ -373,14 +393,32 @@ small {
     margin-top: 15px;
 }
 
+.admin-form-group{
+    margin-right: 0 !important;
+}
+
+.admin-form-group-bottom {
+    margin: 20px 0 10px 0 !important;
+}
+
 .vote-label, .vote-update, .control-label {
     color: #777777;
     padding: 10px 0 0 0;
 }
-
-.vote-label {
+.vote-label, .admin-label {
     font-weight: normal;
     padding-left: 10px
+}
+.admin-label{
+    padding: 15px 0 0 0!important;
+}
+.admin-input{
+    padding-right: 0px!important;
+}
+.control-label {
+    text-align: right;
+    font-weight: 500;
+    margin-bottom: 0;
 }
 
 .vote-update, .vote-ultimate-update {
@@ -390,15 +428,8 @@ small {
     color: #2FA4E7 !important;
     float: right;
 }
-
 .vote-ultimate-update {
     text-align: center;
-}
-
-.control-label {
-    text-align: right;
-    font-weight: 500;
-    margin-bottom: 0;
 }
 
 .form-group-bottom {
@@ -593,7 +624,7 @@ input[type=checkbox]:checked + label:before {
     color: #777777;
 }
 .pvotes-box-body{
-    max-height: 190px;
+    max-height: 100%;
 }
 .admin-box-body{
     max-height: 380px;
@@ -816,8 +847,9 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     padding: 10px 15px 7px 15px !important;
     width: auto;
     transition: background 0.3s ease;
+    cursor: pointer!important;
 }
-.multi-step-pager li a:hover, .download-button:hover, .admin-add-button:hover{
+.multi-step-pager li a:hover, .download-button:hover, .admin-add-button:hover, .upload-button:hover{
     background: #2FA4E7 !important;
     color: #ffffff !important;
 }
@@ -831,13 +863,28 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 .admin-add-button{
     margin: 35px 0 0 0;
 }
-.download-button span, .download-button span:hover{
+.upload-button{
+    height: 34px !important;
+    border-radius: 5px !important;
+    box-shadow: 3px 3px 0 #cccccc;
+    background: rgba(204, 204, 204, 0.3) !important;
+    color: #C16B0C;
+    border: none;
+    padding: 6px 15px 0 15px !important;
+    width: auto;
+    transition: background 0.3s ease;
+}
+.upload-button .cm-icon-button{
+    padding-left: 0!important;
+}
+.download-button span, .download-button span:hover, .upload-button span:hover{
     color: #ffffff !important;
 }
 .admin-add-button span{
     color: #ffffff;
     font-size: 15px;
-    vertical-align: 55%;
+    vertical-align: 65%;
+    margin-left: -8px!important;
 }
 .multi-step-pager .disabled {
     padding: 0 !important;
@@ -945,24 +992,36 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 }
 
 .admin-icon-subtitles{
-    color: #777777;
+    font-size: 22px;
     font-weight: 500;
-    font-size: 18px;
     display: inline-block;
-    vertical-align: 45%;
+    vertical-align: 40%;
 }
-.admin-icons:hover .admin-icon-subtitles {
-    color: #2FA4E7!important;
+.admin-icons .cm-title-description{
+    font-size: 16px!important;
+    line-height: 20px !important;
+    margin: -7px 0 0 42px!important;
+}
+.admin-icons:hover .admin-icon-subtitles{
+    color: #ffffff !important;
 }
 .admin-icons {
     display: block;
     margin-top: 3px;
+    transition: background 0.3s ease !important;
+ }
+.admin-icons:hover .cm-title-description{
+    color: #cccccc!important;
 }
+.admin-icons:hover{
+    background: #2FA4E7!important;
+}
+
 .all-icons {
     display: inline-block;
-    width: 30px;
-    height: 35px;
-    background: url('../assets/images/admin_icons_.png') no-repeat 0 0;
+    width: 35px;
+    height: 40px;
+    background: url('../assets/images/admin_icons_new.png') no-repeat 0 0;
     overflow: hidden;
     text-indent: -15000px;
     margin: 7px 3px 0 0;
@@ -972,29 +1031,29 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background-position: 0 0;
 }
 .admin-icons:hover .manage-dul{
-    background-position: 0 -35px !important;
+    background-position: 0 -40px !important;
 }
 .add-dul {
-    background-position: -30px 0;
+    background-position: -35px 0;
 }
 .admin-icons:hover .add-dul {
-    background-position: -30px -35px !important;
+    background-position: -35px -40px !important;
 }
 .manage-user {
-    background-position: -60px 0;
+    background-position: -70px 0;
 }
 .admin-icons:hover .manage-user {
-    background-position: -60px -35px !important;
+    background-position: -70px -40px !important;
 }
 .add-user{
-    background-position: -90px 0;
+    background-position: -105px 0;
 }
 .admin-icons:hover .add-user {
-    background-position: -90px -35px !important;
+    background-position: -105px -40px !important;
 }
 .add-dul_white {
-    background-position: -120px 0;
-    margin: -7px 0 0 0;
+    background-position: -140px 0;
+    margin: -10px 0 0 0;
 }
 .admin-manage-buttons .enabled, .admin-manage-buttons .disabled, .admin-manage-buttons .create, .admin-manage-buttons .cancel {
     width: 70px !important;
@@ -1017,6 +1076,62 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background: #D13B07 !important;
     color: #ffffff !important;
 }
+
+
+/************************************MODALS*/
+
+.modal.fade .modal-dialog, .modal.in .modal-dialog {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+}
+.modal-dialog{
+    width: 100%;
+}
+
+.modal-content {
+     position: absolute;
+     top: 50%;
+     -ms-transform: translate(0,-50%);
+     -moz-transform: translate(0,-50%);
+     -webkit-transform: translate(0,-50%);
+     transform: translate(0,-50%);
+     width: 100%;
+    border: 0;
+ }
+
+.modal-close-btn{
+    position: absolute;
+    top: 15px;
+    right: 20px;
+}
+.modal-alerts{
+    width: 600px!important;
+}
+.modal-add-dul{
+    width: 750px !important;
+}
+.modal-add-dul .admin-modal-header{
+    padding: 20px!important;
+}
+
+.modal-add-dul .modal-footer{
+    padding: 0 30px 20px 30px!important;
+}
+.modal-add-dul .admin-modal-footer button{
+    float: right;
+    margin: 10px;
+}
+.modal-add-dul .admin-modal-footer button:last-child{
+     color: #777777;
+ }
+.modal-add-dul .admin-modal-footer button:first-child{
+    color: #ffffff !important;
+    margin-right: 0!important;
+}
+
 .admin-modals{
     width: 500px !important;
     margin-top: 250px !important;
@@ -1059,26 +1174,19 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #ffffff !important;
 }
 
-.modal.fade .modal-dialog, .modal.in .modal-dialog {
+/* INPUT FILE BUTTON*/
+
+.fileUpload {
+    position: relative;
+    overflow: hidden;
+}
+.fileUpload input.upload {
     position: absolute;
     top: 0;
     right: 0;
-    left: 0;
-    bottom: 0;
+    cursor: pointer;
+    opacity: 0;
+    filter: alpha(opacity=0);
 }
 
-.modal-content {
-    position: absolute;
-    top:50%;
-    -ms-transform: translate(0,-50%);
-    -moz-transform: translate(0,-50%);
-    -webkit-transform: translate(0,-50%);
-    transform: translate(0,-50%);
-    width:100%;
-}
 
-.modal-close-btn{
-    position: absolute;
-    top: 15px;
-    right: 20px;
-}
