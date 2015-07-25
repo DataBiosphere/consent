@@ -6,7 +6,7 @@
         .config(routeConfig);
 
     /* ngInject */
-    function routeConfig($stateProvider,USER_ROLES) {
+    function routeConfig($stateProvider, USER_ROLES) {
         $stateProvider
             .state('admin_console', {
                 name: 'admin_console',
@@ -15,8 +15,9 @@
                 controller: 'AdminConsole',
                 controllerAs: 'AdminConsole',
                 data: {
-                           authorizedRoles: [USER_ROLES.admin]
-                      }
+                    authorizedRoles: [USER_ROLES.admin]
+                }
+
             });
     }
 

@@ -5,24 +5,28 @@
         <hr class="section-separator">
     </div>
     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 no-margin no-padding">
-            <a href="#/admin_manage_dul" class="admin-icons">
+        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12" ng-controller="AdminConsole" >
+            <a href="#/admin_manage_dul" class="jumbotron box-vote admin-icons">
                 <div class="all-icons manage-dul"></div>
-                <div class="admin-icon-subtitles dul-color">Manage Data Use Letter</div>
+                <span class="admin-icon-subtitles dul-color">Manage Data Use Letter</span>
+                <div class="cm-title-description">Select and manage Data Use Limitation Record for DAC review</div>
             </a>
-            <a href="#" class="admin-icons">
+            <a href="#" class="jumbotron box-vote admin-icons" ng-click="AdminConsole.addDul()">
                 <div class="all-icons add-dul"></div>
-                <div class="admin-icon-subtitles dul-color">Add Data Use Letter</div>
+                <span class="admin-icon-subtitles dul-color">Add Data Use Letter</span>
+                <div class="cm-title-description">Catalog a Data Use Limitation Record in the system</div>
             </a>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 no-margin no-padding">
-            <a href="#" class="admin-icons">
+        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+            <a href="#" class="jumbotron box-vote admin-icons">
                 <div class="all-icons manage-user"></div>
-                <div class="admin-icon-subtitles common-color">Manage Users</div>
+                <span class="admin-icon-subtitles common-color">Manage Users</span>
+                <div class="cm-title-description">Select and manage DAC Users and their roles</div>
             </a>
-            <a href="#" class="admin-icons">
+            <a href="#" class="jumbotron box-vote admin-icons">
                 <div class="all-icons add-user"></div>
-                <div class="admin-icon-subtitles common-color">Add User</div>
+                <span class="admin-icon-subtitles common-color">Add User</span>
+                <div class="cm-title-description">Catalog a new DAC User in the system</div>
             </a>
         </div>
     </div>

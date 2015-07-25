@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmAdminConsole', ['ui.router','cmUserRoles']);
+        .module('cmAdminConsole', ['ui.router', 'ui.bootstrap', 'cmModal', 'cmUserRoles']);
 
 })();
