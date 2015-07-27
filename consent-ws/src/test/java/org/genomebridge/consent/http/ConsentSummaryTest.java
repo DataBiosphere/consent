@@ -47,6 +47,7 @@ public class ConsentSummaryTest extends ElectionVoteServiceTest {
 	private String getSummaryHeader() {
 		StringBuilder summary = new StringBuilder();
 		summary.append(HeaderSummary.CASEID.getValue() + SEPARATOR);
+		summary.append(HeaderSummary.USER.getValue() + SEPARATOR);
 		summary.append(HeaderSummary.VOTE.getValue() + SEPARATOR);
 		summary.append(HeaderSummary.RATIONALE.getValue() + SEPARATOR);
 		summary.append(HeaderSummary.FINAL_VOTE.getValue() + SEPARATOR);

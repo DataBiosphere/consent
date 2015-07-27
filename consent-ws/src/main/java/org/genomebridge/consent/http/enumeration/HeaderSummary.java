@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.enumeration;
 public enum HeaderSummary {
 
     CASEID("Case ID"), 
+    USER("User"), 
     SDUL("sDUL"), 
     VOTE("Vote"), 
     RATIONALE("Rationale"), 
