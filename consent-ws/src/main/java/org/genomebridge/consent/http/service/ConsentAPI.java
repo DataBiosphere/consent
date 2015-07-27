@@ -43,7 +43,7 @@ public interface ConsentAPI {
     List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
 
     // Data Use Letter methods.
-    Consent updateConsentDul(String consentId, String dataUseLetter) throws UnknownIdentifierException;
+    Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;
 
     String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
 

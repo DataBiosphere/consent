@@ -33,7 +33,7 @@
                                 <span>Edit</span>
                             </div>
                             <div ng-if="election.electionStatus == 'Open'" class="disabled hover-color">
-                                <span ng-if="election.editRecord == 'disabled'">Edit</span>
+                                <span>Edit</span>
                             </div>
                         </a>
                         <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 pvotes-list bold">
@@ -45,7 +45,7 @@
                         <div>
                             <a class="col-lg-2 col-md-2 col-sm-2 col-xs-2 admin-manage-buttons">
                                 <div ng-if="election.electionStatus != 'Open'" class="create hover-color" ng-click="AdminManage.openCreate(election.consentId)">
-                                   <span>Create</span>
+                                    <span>Create</span>
                                 </div>
                                 <div ng-if="election.electionStatus == 'Open'" class="cancel hover-color" ng-click="AdminManage.openCancel(election)">
                                     <span>Cancel</span>

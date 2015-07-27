@@ -50,10 +50,11 @@ public class DataUseLetterResource extends Resource {
     public Consent createDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id") String consentId) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
+
         try {
             deletePreviousStorageFile(consentId);
             String dulUrl = store.postStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(), getFileExtension(part.getContentDisposition().getFileName()));
-            return api.updateConsentDul(consentId, dulUrl);
+            return api.updateConsentDul(consentId, dulUrl, part.getContentDisposition().getFileName());
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {
@@ -73,7 +74,7 @@ public class DataUseLetterResource extends Resource {
         try {
             deletePreviousStorageFile(consentId);
             String dulUrl = store.putStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(), getFileExtension(part.getContentDisposition().getFileName()));
-            return api.updateConsentDul(consentId, dulUrl);
+            return api.updateConsentDul(consentId,dulUrl,part.getContentDisposition().getFileName());
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {

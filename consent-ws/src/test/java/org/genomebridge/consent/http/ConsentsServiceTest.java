@@ -21,6 +21,7 @@ public class ConsentsServiceTest extends AbstractTest {
 
     private static final int N = 5;
 
+
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
             new DropwizardAppRule<>(ConsentApplication.class,

@@ -24,7 +24,7 @@
 
     <changeSet author="ssaucedo" id="32">
         <addUniqueConstraint columnNames="name" tableName="consents"
-           deferrable="false" initiallyDeferred="false"/>
+                             deferrable="false" initiallyDeferred="false"/>
     </changeSet>
 
 

@@ -29,7 +29,7 @@ public class AllConsentsResource extends Resource {
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             return Response.created(uri).build();
         } catch (Exception e) {
-            return Response.serverError().build();
+            return Response.serverError().entity(e).build();
         }
     }
 }

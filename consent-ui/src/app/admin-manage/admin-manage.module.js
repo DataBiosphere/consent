@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmAdminManage', ['ui.router', 'cmPaginator', 'ui.bootstrap', 'cmModal', 'cmUserRoles','cmConsent']);
+        .module('cmAdminManage', ['ui.router', 'cmPaginator', 'ui.bootstrap', 'cmDULModal','cmModal', 'cmUserRoles','cmConsent']);
 
 })();
