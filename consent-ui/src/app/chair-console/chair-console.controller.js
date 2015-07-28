@@ -8,6 +8,7 @@
     function ChairConsole(cmPaginatorService, cmPendingCaseService,$rootScope) {
 
         var lists = {'dul': [], 'access': []};
+        var list_max_items = 5;
 
         var vm = this;
         vm.totalDulPendingVotes = 0;
@@ -18,7 +19,7 @@
         // changePage function from the service with the first 2 parameters locked
         vm.changePage = _.partial(cmPaginatorService.changePage,
             // first parameter to lock from changePage
-            lists,
+            lists, list_max_items,
             // second parameter to lock from changePage
             {
                 activePage: vm.activePage,

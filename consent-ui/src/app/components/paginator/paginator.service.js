@@ -8,7 +8,6 @@
     function cmPaginatorService() {
 
         var PAGINATOR_MAX_ITEMS = 9;
-        var LIST_ITEMS_MAX_ITEMS = 5;
 
         var cmPaginatorService = this;
         cmPaginatorService.changePage = changePage;
@@ -22,25 +21,25 @@
          * @param page
          * @param options: should have activePage, currentPages and electionsList attributes
          */
-        function changePage(lists, options, id, page) {
+        function changePage(lists, list_max_items, options, id, page) {
 
             var amountOfElements = lists[id].length;
-            var isValidPage = ((amountOfElements / LIST_ITEMS_MAX_ITEMS) > page) && (page >= 0);
+            var isValidPage = ((amountOfElements / list_max_items) > page) && (page >= 0);
 
             if (!isValidPage) return;
 
             options.activePage[id] = page;
 
-            generatePaginator(lists, options, id, page);
-            generateListItemsHtml(lists, options, id, page);
+            generatePaginator(lists, list_max_items, options, id, page);
+            generateListItemsHtml(lists, list_max_items, options, id, page);
 
         }
 
-        function generatePaginator(lists, options, id, page) {
+        function generatePaginator(lists, list_max_items, options, id, page) {
 
             var delta = Math.floor(PAGINATOR_MAX_ITEMS / 2);
             var numberOfElements = lists[id].length;
-            var numberOfRanges = Math.ceil(numberOfElements / LIST_ITEMS_MAX_ITEMS);
+            var numberOfRanges = Math.ceil(numberOfElements / list_max_items);
             var floorPosition = page - delta > 0 ? page - delta : 0;
             var roofPosition;
 
@@ -55,10 +54,10 @@
             options.currentPages[id] = _.range(floorPosition, roofPosition);
         }
 
-        function generateListItemsHtml(lists, options, id, page) {
+        function generateListItemsHtml(lists, list_max_items, options, id, page) {
 
-            var floorPosition = page * LIST_ITEMS_MAX_ITEMS;
-            var roofPosition = floorPosition + LIST_ITEMS_MAX_ITEMS;
+            var floorPosition = page * list_max_items;
+            var roofPosition = floorPosition + list_max_items;
             options.electionsList[id] = _.filter(lists[id], function (election, electionPosition) {
                 return _.inRange(electionPosition, floorPosition, roofPosition);
             });
