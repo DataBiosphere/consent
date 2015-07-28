@@ -13,7 +13,7 @@
         $scope.rationale = vote.rationale;
 
         $scope.positiveVote = function(){
-            $scope.rationale = '';
+            $scope.rationale = null;
         }
 
         $scope.alerts = [

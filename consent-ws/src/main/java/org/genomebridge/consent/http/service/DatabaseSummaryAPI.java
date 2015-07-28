@@ -5,11 +5,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
+import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.HeaderSummary;
+import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Summary;
 import org.genomebridge.consent.http.models.Vote;
@@ -21,6 +23,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
+    private DACUserDAO dacUserDAO;
     private static final String SEPARATOR = "\t";
     private final String END_OF_LINE = System.lineSeparator();
 
@@ -34,8 +37,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO) {
-        SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dao, electionDAO));
+    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO userDAO) {
+        SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dao, electionDAO, userDAO));
 
     }
 
@@ -45,9 +48,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO) {
+    private DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO) {
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
+        this.dacUserDAO = dacUserDAO;
     }
 
     @Override
@@ -86,16 +90,16 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 		try{
 			file = File.createTempFile("summary", ".txt"); 
 			FileWriter summaryWriter = new FileWriter(file); 
-			
 			List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
 			setSummaryHeader(summaryWriter);
 			if(reviewedElections != null && reviewedElections.size() > 0){
 				for(Election election : reviewedElections){
 					List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
-					
 					if(votes != null && votes.size() > 0){
 						for(Vote vote : votes){
+							DACUser user = dacUserDAO.findDACUserById(vote.getDacUserId());
 							summaryWriter.write(election.getReferenceId() + SEPARATOR);
+							summaryWriter.write(user.getDisplayName() + SEPARATOR);
 							summaryWriter.write(vote.getVote() + SEPARATOR);
 							summaryWriter.write(vote.getRationale() + SEPARATOR);
 							summaryWriter.write(election.getFinalVote() + SEPARATOR);
@@ -121,6 +125,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 	private void setSummaryHeader(FileWriter summaryWriter) throws IOException {
 		summaryWriter.write(
 		HeaderSummary.CASEID.getValue() + SEPARATOR +
+		HeaderSummary.USER.getValue() + SEPARATOR +
 		HeaderSummary.VOTE.getValue() + SEPARATOR +
 		HeaderSummary.RATIONALE.getValue() + SEPARATOR +
 	    HeaderSummary.FINAL_VOTE.getValue() + SEPARATOR + 
