@@ -16,8 +16,8 @@
             ],
             'accessReviewed': [
                 ['Results', 'Votes'],
-                ['Positive', 0],
-                ['Negative', 0]
+                ['Yes', 0],
+                ['No', 0]
             ],
             'dulTotal': [
                 ['Results', 'Votes'],
@@ -26,8 +26,8 @@
             ],
             'dulReviewed': [
                 ['Results', 'Votes'],
-                ['Positive', 0],
-                ['Negative', 0]
+                ['Yes', 0],
+                ['No', 0]
             ]
         };
 
