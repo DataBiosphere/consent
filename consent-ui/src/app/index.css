@@ -623,13 +623,9 @@ input[type=checkbox]:checked + label:before {
     overflow-x: hidden;
     color: #777777;
 }
-.pvotes-box-body{
+.pvotes-box-body, .admin-box-body {
     max-height: 100%;
 }
-.admin-box-body{
-    max-height: 380px;
-}
-
 .pvotes-box-title {
     font-size: 22px;
     padding: 10px 10px 0 10px;
@@ -676,6 +672,9 @@ input[type=checkbox]:checked + label:before {
 
 .pvotes-list-id {
     padding: 10px 5px 7px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pvotes-list-links {

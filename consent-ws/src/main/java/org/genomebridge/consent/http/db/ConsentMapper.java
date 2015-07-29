@@ -21,6 +21,8 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         } catch (IOException e) {
             throw new SQLException(e);
         }
+        consent.name = r.getString("name");
+        consent.structuredDataUseLetter = r.getString("structuredDataUseLetter");
         return consent;
     }
 

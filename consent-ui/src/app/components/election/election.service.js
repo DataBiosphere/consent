@@ -24,16 +24,27 @@
         }
 
         /**
-         * Post the election with the id sent as a parameter
+         * Update the election with the id sent as a parameter
          * @param consentId
          * @param electionId
          */
-        function postElection(election){
+        function updateElection(election){
             var postObject = new Object();
             postObject.finalVote = election.finalVote;
             postObject.status = election.status;
             postObject.finalRationale = election.finalRationale;
             return ElectionUpdateResource.update({consentId: election.referenceId, electionId: election.electionId}, postObject);
+        }
+
+        /**
+         * Create election for the specified consent id
+         * @param consentId
+         * @param electionId
+         */
+        function createElection(consentId){
+            var postElection = new Object();
+            postElection.status = 'Open';
+            return ElectionResource.post({consentId: consentId}, postElection);
         }
 
         return{
@@ -43,8 +54,12 @@
             findElectionReview: function(id) {
                 return findElectionReviewByConsentId(id);
             },
-            postElection: function(election){
-                return postElection(election);
+            updateElection: function(election){
+                return updateElection(election);
+            },
+
+            createElection: function(consentId){
+                return createElection(consentId);
             }
         }
     }

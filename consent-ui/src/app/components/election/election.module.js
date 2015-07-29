@@ -4,7 +4,8 @@
     angular.module('cmElection', ['ngResource'])
         .factory('ElectionResource', function($resource, apiUrl){
             return $resource(apiUrl+"consent/:consentId/election", {}, {
-                get:{method: 'GET', params: {consentId: '@consentId', electionId: '@electionId'}}});
+                get:{method: 'GET', params: {consentId: '@consentId', electionId: '@electionId'}},
+                post: {method: 'POST', params: {consentId: '@consentId'}}});
         })
         .factory('ElectionUpdateResource', function($resource, apiUrl){
             return $resource(apiUrl+"consent/:consentId/election/:electionId", {}, {
@@ -14,4 +15,5 @@
             return $resource(apiUrl+"electionReview/consent/:consentId", {}, {
                 get:{method: 'GET', params: {consentId: '@consentId'}}});
         })
+
 })();

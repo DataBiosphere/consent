@@ -20,7 +20,7 @@ public class ElectionReviewResource {
     @GET
     @Path("/consent/{consentId}")
     @Produces("application/json")
-    public ElectionReview getConsentPendingCases(@PathParam("consentId") String consentId) {
+    public ElectionReview getElectionReview(@PathParam("consentId") String consentId) {
         return api.describeElectionReview(consentId);
     }
 }

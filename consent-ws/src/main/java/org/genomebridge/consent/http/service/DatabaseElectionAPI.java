@@ -6,8 +6,8 @@ import org.apache.commons.lang.StringUtils;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.DataRequestDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
-import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 
 import com.sun.jersey.api.NotFoundException;
@@ -80,7 +80,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (consentDAO.checkConsentbyId(consentId) == null) {
             throw new NotFoundException("Invalid ConsentId");
         }
-        Election election = electionDAO.findElectionByReferenceId(consentId);
+        Election election = electionDAO.getOpenElectionByReferenceId(consentId);
         if (election == null) {
             throw new NotFoundException("Election was not found");
         }
@@ -89,7 +89,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public void deleteElection(String referenceId, Integer id) {
-        if (electionDAO.getElectionByReferenceId(referenceId) == null) {
+        if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
         electionDAO.deleteElectionById(id);
@@ -99,7 +99,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public Election describeDataRequestElection(Integer requestId) {
         validateDataRequestId(requestId);
-        Election election = electionDAO.findElectionByReferenceId(requestId.toString());
+        Election election = electionDAO.getOpenElectionByReferenceId(requestId.toString());
         if (election == null) {
             throw new NotFoundException("Election was not found");
         }
@@ -137,11 +137,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void validateExistentElection(String referenceId) {
-        Integer electionId = electionDAO.getOpenElectionByReferenceId(referenceId);
-        if (electionId != null) {
+        Election election = electionDAO.getOpenElectionByReferenceId(referenceId);
+        if (election != null) {
             throw new IllegalArgumentException(
                     "An open election already exists for the specified id. Election id: "
-                            + electionId);
+                            + election.getElectionId());
         }
     }
 

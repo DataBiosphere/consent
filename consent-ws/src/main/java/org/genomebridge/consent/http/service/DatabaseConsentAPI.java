@@ -7,8 +7,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.ConsentMapper;
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
+import org.genomebridge.consent.http.models.ConsentManage;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
@@ -27,7 +29,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private ConsentDAO consentDAO;
     private DBI jdbi;
     private Logger logger;
-
+    private final String UN_REVIEWED = "un-reviewed";
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
      * during application initialization (from the run() method).  If called a second time it will throw an
@@ -57,7 +59,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent create(Consent rec) {
         String id = UUID.randomUUID().toString();
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter());
+        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter());
         return consentDAO.findConsentById(id);
     }
 
@@ -93,7 +95,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public void update(String id, Consent rec) throws UnknownIdentifierException {
-        consentDAO.updateConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter());
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter());
     }
 
     @Override
@@ -268,6 +270,28 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }
         logger.debug(String.format("getAllAssociationsForConsent - returning '%s'", assoc_list.toString()));
         return assoc_list;
+    }
+
+    @Override
+    public List<ConsentManage> describeConsentManage() {
+        List<ConsentManage> consentManageList = new ArrayList<>();
+        addUnreviewedConsents(consentDAO.findUnreviewedConsents(), UN_REVIEWED, consentManageList);
+        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
+        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
+        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
+        return consentManageList;
+    }
+
+    private void addUnreviewedConsents(List<Consent> consents, String status, List<ConsentManage> consentManageList) {
+        if (consents != null) {
+            for (Consent consent : consents) {
+                ConsentManage consentManage = new ConsentManage();
+                consentManage.setConsentId(consent.getConsentId());
+                consentManage.setConsentName(consent.getName());
+                consentManage.setElectionStatus(status);
+                consentManageList.add(consentManage);
+            }
+        }
     }
 
 

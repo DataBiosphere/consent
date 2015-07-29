@@ -31,7 +31,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     @Override
     public ElectionReview describeElectionReview(String referenceId) {
         ElectionReview review = new ElectionReview();
-        review.setElection(electionDAO.findElectionByReferenceId(referenceId));
+        review.setElection(electionDAO.getOpenElectionByReferenceId(referenceId));
         Consent consent = consentDAO.findConsentById(referenceId);
         review.setDataUseLetter(consent.getDataUseLetter());
         review.setReferenceId(consent.consentId);
