@@ -523,10 +523,10 @@ small {
     border-radius: 3px;
 }
 
-input[type=checkbox] {
+input[type=checkbox], input[type=radio] {
     display: none;
 }
-input[type=checkbox]:checked + label:before {
+input[type=checkbox]:checked + label:before, input[type=radio]:checked + label:before {
     content: "\2713";
     text-shadow: 1px 1px 1px rgba(0, 0, 0, .2);
     color: #ffffff;
@@ -626,6 +626,7 @@ input[type=checkbox]:checked + label:before {
 .pvotes-box-body, .admin-box-body {
     max-height: 100%;
 }
+
 .pvotes-box-title {
     font-size: 22px;
     padding: 10px 10px 0 10px;
@@ -742,7 +743,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     border: 0;
     color: #777777;
     transition: background 0.3s ease;
-    /*cursor: pointer !important; CHECK THIS*/
 }
 .pvotes-pagination li a:hover {
     background: #2FA4E7 !important;
@@ -778,7 +778,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 .active-case:hover {
     color: #ffffff !important;
 }
-
 /***************************RP APPLICATION*/
 
 .attest-button{
@@ -1045,13 +1044,23 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background-position: -70px -40px !important;
 }
 .add-user{
-    background-position: -105px 0;
-}
+     background-position: -105px 0;
+ }
 .admin-icons:hover .add-user {
     background-position: -105px -40px !important;
 }
+.edit-dul{
+    background-position: -175px 0;
+}
+.edit-user{
+    background-position: -175px -40px;
+}
 .add-dul_white {
     background-position: -140px 0;
+    margin: -10px 0 0 0;
+}
+.add-user_white {
+    background-position: -140px -40px;
     margin: -10px 0 0 0;
 }
 .admin-manage-buttons .enabled, .admin-manage-buttons .disabled, .admin-manage-buttons .create, .admin-manage-buttons .cancel {
@@ -1075,7 +1084,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background: #D13B07 !important;
     color: #ffffff !important;
 }
-
 
 /************************************MODALS*/
 
@@ -1113,7 +1121,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     width: 750px !important;
 }
 .modal-add-dul .admin-modal-header{
-    padding: 20px!important;
+    padding: 20px 20px 0 20px!important;
 }
 
 .modal-add-dul .modal-footer{
@@ -1173,7 +1181,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #ffffff !important;
 }
 
-/********CONFIRMATION MODALS************/
+/* CONFIRMATION MODALS*/
 
 .modal-confirmation-alerts{
     width: 450px!important;
@@ -1198,4 +1206,193 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     filter: alpha(opacity=0);
 }
 
+/***************************ADMIN USERS*/
 
+.admin-users-list .disabled, .admin-users-list .enabled{
+    text-align: left !important;
+    vertical-align: 10%;
+    padding: 10px 20px 7px 0 !important;
+    display: inline;
+}
+.admin-users-list .disabled{
+    cursor: default !important;
+    color: #cccccc !important;
+}
+.admin-users-list .enabled{
+    cursor: default !important;
+    color: #2FA4E7 !important;
+}
+
+.admin-users-list .regular-checkbox{
+    margin: 0!important;
+}
+.admin-users-list .regular-checkbox div{
+    margin-left: 25px;
+    display: inline !important;
+}
+
+.admin-users-list .btn-edit{
+    margin-top: 8px;
+    text-align: center;
+}
+.admin-users-list .btn-edit a{
+    text-align: center;
+    height: 28px;
+    padding: 5px 20px 5px 20px !important;
+    border: 0!important;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    transition: background 0.3s ease !important;
+    background: rgba(204, 204, 204, 0.2) !important;
+    box-shadow: 2px 2px rgba(204, 204, 204, 0.5) !important;
+    color: #2FA4E7;
+    cursor: pointer;
+}
+.btn-edit a:hover{
+    background: #2FA4E7 !important;
+    color: #ffffff;
+}
+
+
+/***************************ALERTS*/
+
+
+.admin-alerts{
+    margin: 20px;
+}
+.admin-alerts .alert-title{
+    padding: 25px 30px 25px 30px;
+}
+.admin-alerts .alert-title h4{
+    display: block;
+    font-weight: 500;
+    font-size: 17px !important;
+    margin-bottom: 5px !important;
+    line-height: 25px;
+}
+.admin-alerts .alert-title span{
+    font-size: 14px !important;
+    font-weight: normal !important;
+}
+
+.admin-alerts .warning{
+    font-weight: 500 !important;
+    line-height: 25px;
+}
+
+.alert-table-head{
+    padding: 20px 0 10px 0;
+}
+.alert-table-head .alert-table-subtitle{
+    font-style: italic;
+    font-size: 15px;
+    padding: 5px 0 5px 20px;
+    color: #777777;
+}
+
+.alert-table-body{
+    padding: 10px;
+}
+.alert-table-body hr.alert-table-separator{
+    border-width: 2px;
+    padding: 0!important;
+    margin-top: 15px !important;
+    margin-bottom: 0 !important;
+}
+.alert-table-body .alert-table-items{
+    padding: 10px 0 7px 25px;
+    color: #777777 !important;
+    font-size: 14px !important;
+}
+.alert-table-body .alert-table-items a{
+    color: #2FA4E7 !important;
+    padding-left: 0 !important;
+    font-weight: 500;
+}
+
+.alert-table-items .alert-select{
+    margin: 0 !important;
+    position: relative;
+}
+
+.alert-select, .alert-table-select{
+    color: #777777;
+    font-weight: 500;
+    border: none!important;
+    line-height: 25px;
+    outline: 0;
+    width: 180px;
+}
+.alert-select{
+    font-size: 15px;
+    padding: 7px 10px 7px 10px;
+}
+
+.alert-table-select option{
+    background: #ffffff !important;
+}
+.alert-select option:hover, .alert-table-select option:hover{
+    background: #2FA4E7 !important;
+    color: #ffffff!important;
+}
+
+.alert-danger{
+    background-color: rgba(209, 59, 7, 0.1);
+    border: none;
+}
+.alert-danger hr{
+    border-color: #cccccc !important;
+}
+
+.alert-dismissible .close {
+    color: #777777 !important;
+    opacity: .4;
+    right: 0!important;
+}
+
+.alert-form-group{
+    text-align: left !important;
+}
+
+
+/*SELECT ARROW*/
+
+.alertSelect select, .alertSingleSelect select {
+    background: transparent !important;
+    width: 208px;
+    -webkit-appearance: none;
+    border: none;
+    outline: 0;
+}
+
+.alertSelect {
+    width: 180px;
+    overflow: hidden;
+    background: url("../assets/images/downArrow.png") no-repeat right transparent;
+    padding-left: 15px !important;
+}
+.alertSingleSelect {
+    margin-top: 10px;
+    width: 180px;
+    overflow: hidden;
+    background: url("../assets/images/downArrow.png") no-repeat right #ffffff !important;
+}
+
+/*SAME HEIGHT COLS*/
+
+.row-eq-height {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.console-boxes{
+    background: #eeeeee;
+    margin: 10px;
+    box-shadow: 3px 3px 3px #cccccc;
+    border-radius: 6px;
+    padding: 15px 20px;
+}
