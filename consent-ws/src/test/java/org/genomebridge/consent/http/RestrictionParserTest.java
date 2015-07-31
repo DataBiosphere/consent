@@ -1,6 +1,6 @@
 package org.genomebridge.consent.http;
 
-import org.genomebridge.consent.http.models.*;
+import org.genomebridge.consent.http.models.grammar.*;
 import org.junit.Assert;
 import org.junit.Test;
 

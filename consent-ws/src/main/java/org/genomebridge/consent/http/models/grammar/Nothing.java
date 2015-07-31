@@ -1,12 +1,12 @@
-package org.genomebridge.consent.http.models;
+package org.genomebridge.consent.http.models.grammar;
 
 import com.google.common.base.Objects;
 
-public class Everything extends UseRestriction {
+public class Nothing extends UseRestriction {
 
-    private String type = "everything";
+    private String type = "nothing";
 
-    public Everything() {
+    public Nothing() {
     }
 
     public String getType() {
@@ -20,7 +20,7 @@ public class Everything extends UseRestriction {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof Everything;
+        return o instanceof Nothing;
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {
