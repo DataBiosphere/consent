@@ -1174,6 +1174,16 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #ffffff !important;
 }
 
+/********CONFIRMATION MODALS************/
+
+.modal-confirmation-alerts{
+    width: 450px!important;
+}
+
+.modal-confirmation-alerts button{
+    color: #ffffff!important;
+}
+
 /* INPUT FILE BUTTON*/
 
 .fileUpload {
