@@ -19,37 +19,35 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and election.status = 'Open'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
-
     @SqlQuery("select  *  from vote v where  v.voteId = :voteId")
     Vote findVoteById(@Bind("voteId") Integer voteId);
-    
+
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.isChairPersonVote = false")
     List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
-    
+
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.isChairPersonVote = false")
     List<Vote> findPendingDACVotesByElectionId(@Bind("electionId") Integer electionId);
-    
+
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.isChairPersonVote = false")
-    Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId, 
-                                          @Bind("dacUserId")  Integer dacUserId);
-    
+    Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
+                                          @Bind("dacUserId") Integer dacUserId);
+
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.isChairPersonVote = true")
-    Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId, 
-                                                     @Bind("dacUserId")  Integer dacUserId);
+    Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
+                                                     @Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select  v.voteId from vote v "
             + "inner join election on election.electionId = v.electionId  "
-            		+ "inner join dacuser du on du.dacUserId = v.dacUserId "
+            + "inner join dacuser du on du.dacUserId = v.dacUserId "
             + "and election.referenceId = :referenceId and v.dacUserId = :dacUserId")
-    String findVoteByReferenceIdAndDacUserId(@Bind("referenceId") String referenceId, 
+    String findVoteByReferenceIdAndDacUserId(@Bind("referenceId") String referenceId,
                                              @Bind("dacUserId") Integer dacUserId);
-
 
     @SqlQuery("select vote.voteId from vote  inner join election on election.electionId = vote.electionId  "
             + "where election.referenceId = :referenceId "
             + "and vote.voteId = :voteId")
-    Integer checkVoteById(@Bind("referenceId") String referenceId, 
-                         @Bind("voteId") Integer voteId);
+    Integer checkVoteById(@Bind("referenceId") String referenceId,
+                          @Bind("voteId") Integer voteId);
 
 
     @SqlQuery("select  v.*  from vote v "
@@ -57,7 +55,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
             + "inner join datarequest on datarequest.requestId = election.referenceId "
             + "where election.referenceId = :requestId and datarequest.requestId = :requestId "
             + "and v.voteId = :voteId ")
-    Vote findVoteByDataRequestIdAndVoteId(@Bind("requestId") String requestId, 
+    Vote findVoteByDataRequestIdAndVoteId(@Bind("requestId") String requestId,
                                           @Bind("voteId") String voteId);
 
 
@@ -67,7 +65,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Integer insertVote(@Bind("dacUserId") Integer dacUserId,
                        @Bind("electionId") Integer electionId,
                        @Bind("isChairPersonVote") Boolean isChairPersonVote);
-    
+
     @SqlUpdate("delete from vote where  voteId = :voteId")
     void deleteVoteById(@Bind("voteId") Integer voteId);
 

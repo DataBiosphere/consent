@@ -9,18 +9,18 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-@JsonTypeInfo(use= JsonTypeInfo.Id.NAME,
-        include=JsonTypeInfo.As.PROPERTY,
-        property="type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value=Everything.class, name="everything"),
-        @JsonSubTypes.Type(value=Nothing.class, name="nothing"),
-        @JsonSubTypes.Type(value=Named.class, name="named"),
-        @JsonSubTypes.Type(value=Some.class, name="some"),
-        @JsonSubTypes.Type(value=Only.class, name="only"),
-        @JsonSubTypes.Type(value=And.class, name="and"),
-        @JsonSubTypes.Type(value=Or.class, name="or"),
-        @JsonSubTypes.Type(value=Not.class, name="not")
+        @JsonSubTypes.Type(value = Everything.class, name = "everything"),
+        @JsonSubTypes.Type(value = Nothing.class, name = "nothing"),
+        @JsonSubTypes.Type(value = Named.class, name = "named"),
+        @JsonSubTypes.Type(value = Some.class, name = "some"),
+        @JsonSubTypes.Type(value = Only.class, name = "only"),
+        @JsonSubTypes.Type(value = And.class, name = "and"),
+        @JsonSubTypes.Type(value = Or.class, name = "or"),
+        @JsonSubTypes.Type(value = Not.class, name = "not")
 })
 public abstract class UseRestriction {
 
@@ -33,7 +33,7 @@ public abstract class UseRestriction {
             ObjectReader reader = mapper.reader(UseRestriction.class);
             return reader.readValue(str);
 
-        } catch(IOException e) {
+        } catch (IOException e) {
             LOG.error(String.format("Parse exception on \"%s\"", str));
             throw e;
         }
@@ -41,7 +41,7 @@ public abstract class UseRestriction {
 
     public boolean visit(UseRestrictionVisitor visitor) {
         boolean shouldContinue = true;
-        if((shouldContinue = visitor.visit(this))) {
+        if ((shouldContinue = visitor.visit(this))) {
             visitor.startChildren();
             shouldContinue = visitAndContinue(visitor);
             visitor.endChildren();

@@ -33,12 +33,14 @@ public class GCSStore implements CloudStore {
         requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
     }
 
-    private GenericUrl generateURLForDocument(String ext){
-       return new GenericUrl(sConfig.getEndpoint() + sConfig.getBucket() + "/" + UUID.randomUUID() + "." + ext);
+    private GenericUrl generateURLForDocument(String ext) {
+        return new GenericUrl(sConfig.getEndpoint() + sConfig.getBucket() + "/" + UUID.randomUUID() + "." + ext);
     }
 
-    /** Authorizes the installed application to access user's protected data. */
-    private GoogleCredential authorize(){
+    /**
+     * Authorizes the installed application to access user's protected data.
+     */
+    private GoogleCredential authorize() {
         GoogleCredential credential = new GoogleCredential();
         File file = new File(sConfig.getPassword());
         try {
@@ -120,7 +122,7 @@ public class GCSStore implements CloudStore {
     }
 
     @Override
-    public String putStorageDocument(String documentID, InputStream stream, String type, String ext) throws IOException, GeneralSecurityException{
+    public String putStorageDocument(String documentID, InputStream stream, String type, String ext) throws IOException, GeneralSecurityException {
         GenericUrl url = generateURLForDocument(ext);
         HttpResponse response = null;
         try {

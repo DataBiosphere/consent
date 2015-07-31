@@ -65,7 +65,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         Vote vote = voteDAO.findVoteById(voteId);
         Date updateDate = rec.getVote() == null ? null : new Date();
-        String rationale = StringUtils.isNotEmpty(rec.getRationale()) ?  rec.getRationale() : null;
+        String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
         voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, getElectionId(referenceId), vote.getCreateDate());
         return voteDAO.findVoteById(voteId);
     }
@@ -107,37 +107,36 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         voteDAO.deleteVotes(referenceId);
 
     }
-    
-     
+
+
     @Override
-	public List<Vote> createVotes(Integer electionId, Boolean isConsent){
-		List<DACUser> dacUserList = dacUserDAO.findDACUsers();
-		List<Vote> votes = new ArrayList<Vote>();
-		if(dacUserList != null){
-			for(DACUser user : dacUserList){
-			  Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false);
-			  votes.add(voteDAO.findVoteById(id));
-			  if(!isConsent && isChairPerson(user.getDacUserId())){
-				  id = voteDAO.insertVote(user.getDacUserId(), electionId, true);
-				  votes.add(voteDAO.findVoteById(id)); 
-			  }
-			 
-			}
-		}
-		return votes;
-	}
+    public List<Vote> createVotes(Integer electionId, Boolean isConsent) {
+        List<DACUser> dacUserList = dacUserDAO.findDACUsers();
+        List<Vote> votes = new ArrayList<>();
+        if (dacUserList != null) {
+            for (DACUser user : dacUserList) {
+                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false);
+                votes.add(voteDAO.findVoteById(id));
+                if (!isConsent && isChairPerson(user.getDacUserId())) {
+                    id = voteDAO.insertVote(user.getDacUserId(), electionId, true);
+                    votes.add(voteDAO.findVoteById(id));
+                }
 
-  
-
-    private boolean isChairPerson(Integer dacUserId) {
-       boolean isCherperson = false; 
-       if(dacUserDAO.checkChairpersonUser(dacUserId) != null){
-           isCherperson = true;
-       }
-       return isCherperson; 
+            }
+        }
+        return votes;
     }
 
-   
+
+    private boolean isChairPerson(Integer dacUserId) {
+        boolean isCherperson = false;
+        if (dacUserDAO.checkChairpersonUser(dacUserId) != null) {
+            isCherperson = true;
+        }
+        return isCherperson;
+    }
+
+
     private Integer getElectionId(String referenceId) {
         Integer electionId = electionDAO.getElectionByReferenceId(referenceId);
         if (electionId == null) {
@@ -145,7 +144,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         return electionId;
     }
-    
+
     private Integer setGeneralFields(Vote rec, String referenceId) {
         rec.setCreateDate(new Date());
         Integer electionId = getElectionId(referenceId);
@@ -154,5 +153,5 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return electionId;
     }
 
-	      
+
 }

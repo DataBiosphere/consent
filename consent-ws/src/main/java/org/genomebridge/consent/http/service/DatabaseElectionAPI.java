@@ -105,7 +105,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         return election;
     }
-    
+
     private void setGeneralFields(Election election, String referenceId, Boolean isConsent) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);

@@ -3,7 +3,7 @@ package org.genomebridge.consent.http;
 import com.sun.jersey.api.client.Client;
 import org.genomebridge.consent.http.models.DACUser;
 
-public abstract class DACUserServiceTest extends AbstractTest{
+public abstract class DACUserServiceTest extends AbstractTest {
 
     public String dacUserPath() {
         return path2Url("/dacuser");
@@ -16,6 +16,5 @@ public abstract class DACUserServiceTest extends AbstractTest{
     public String dacUserPathByEmail(String email) {
         return path2Url(String.format("/dacuser/%s", email));
     }
-
 
 }

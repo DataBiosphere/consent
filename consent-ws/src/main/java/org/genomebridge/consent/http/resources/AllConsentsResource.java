@@ -17,7 +17,9 @@ public class AllConsentsResource extends Resource {
 
     private ConsentAPI api;
 
-    public AllConsentsResource() { this.api = AbstractConsentAPI.getInstance(); }
+    public AllConsentsResource() {
+        this.api = AbstractConsentAPI.getInstance();
+    }
 
     @PUT
     @Consumes("application/json")

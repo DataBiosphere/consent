@@ -10,19 +10,27 @@ public class Or extends UseRestriction {
 
     private UseRestriction[] operands;
 
-    public Or() {}
+    public Or() {
+    }
 
     public Or(UseRestriction... operands) {
         this.operands = operands;
-        if(operands.length < 2) {
+        if (operands.length < 2) {
             throw new IllegalArgumentException("Disjunction must have at least two operands");
         }
     }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
-    public void setOperands(UseRestriction[] ops) { this.operands = ops.clone(); }
-    public UseRestriction[] getOperands() { return operands; }
+    public void setOperands(UseRestriction[] ops) {
+        this.operands = ops.clone();
+    }
+
+    public UseRestriction[] getOperands() {
+        return operands;
+    }
 
     @Override
     public int hashCode() {
@@ -36,8 +44,8 @@ public class Or extends UseRestriction {
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {
-        for(UseRestriction child : operands) {
-            if(!child.visit(visitor)) {
+        for (UseRestriction child : operands) {
+            if (!child.visit(visitor)) {
                 return false;
             }
         }

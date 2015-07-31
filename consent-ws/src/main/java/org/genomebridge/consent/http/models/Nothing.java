@@ -6,9 +6,12 @@ public class Nothing extends UseRestriction {
 
     private String type = "nothing";
 
-    public Nothing() {}
+    public Nothing() {
+    }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
     @Override
     public int hashCode() {

@@ -6,9 +6,12 @@ public class Everything extends UseRestriction {
 
     private String type = "everything";
 
-    public Everything() {}
+    public Everything() {
+    }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
     @Override
     public int hashCode() {

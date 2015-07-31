@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
 import org.genomebridge.consent.http.models.DACUser;
@@ -12,7 +13,7 @@ import org.junit.Test;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 
-public class DACUserTest extends DACUserServiceTest{
+public class DACUserTest extends DACUserServiceTest {
 
     public static final int CREATED = ClientResponse.Status.CREATED
             .getStatusCode();
@@ -23,14 +24,9 @@ public class DACUserTest extends DACUserServiceTest{
     private static final String DAC_USER_EMAIL = "dacmember@broad.com";
     private static final String CHAIR_USER_EMAIL = "chairperson@broad.com";
     private static final String CHAIR_2_USER_EMAIL = "chairperson2@broad.com";
-    
     private static final String CHAIRPERSON = "CHAIRPERSON";
     private static final String DACMEMBER = "DACMEMBER";
     private static String DACMEMBERMAIL;
-    private static String CHAIRPERSONMAIL;
-
-    private DACUser chairperson;
-    private DACUser dacmember;
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -41,7 +37,7 @@ public class DACUserTest extends DACUserServiceTest{
         return RULE;
     }
 
-    private DACUser createDacUser(String name, String email, String status){
+    private DACUser createDacUser(String name, String email, String status) {
         DACUser user = new DACUser();
         user.setDisplayName(name);
         user.setEmail(email);
@@ -50,27 +46,27 @@ public class DACUserTest extends DACUserServiceTest{
     }
 
     @Before
-    public void initialize(){
-        chairperson = testCreate(createDacUser("Chair Person", CHAIR_USER_EMAIL, CHAIRPERSON.toString()));
-        dacmember = testCreate(createDacUser("DAC Member", DAC_USER_EMAIL, DACMEMBER.toString()));
+    public void initialize() {
+        DACUser chairperson = testCreate(createDacUser("Chair Person", CHAIR_USER_EMAIL, CHAIRPERSON));
+        DACUser dacmember = testCreate(createDacUser("DAC Member", DAC_USER_EMAIL, DACMEMBER));
 
         assertThat(dacmember.getDisplayName()).isEqualTo("DAC Member");
         assertThat(dacmember.getEmail()).isEqualTo(DAC_USER_EMAIL);
-        assertThat(dacmember.getMemberStatus()).isEqualTo(DACMEMBER.toString());
+        assertThat(dacmember.getMemberStatus()).isEqualTo(DACMEMBER);
         DACMEMBERMAIL = dacmember.getEmail();
 
         assertThat(chairperson.getDisplayName()).isEqualTo("Chair Person");
         assertThat(chairperson.getEmail()).isEqualTo(CHAIR_USER_EMAIL);
-        assertThat(chairperson.getMemberStatus()).isEqualTo(CHAIRPERSON.toString());
-        CHAIRPERSONMAIL = chairperson.getEmail();
+        assertThat(chairperson.getMemberStatus()).isEqualTo(CHAIRPERSON);
+        assertThat(chairperson.getEmail()).isEqualTo(CHAIR_USER_EMAIL);
     }
-    
+
     @After
-    public void removeTestData(){
-    	Client client = new Client();
-    	delete(client, dacUserPathByEmail(CHAIR_USER_EMAIL));
-    	delete(client, dacUserPathByEmail(DAC_USER_EMAIL));
-    	delete(client, dacUserPathByEmail(CHAIR_2_USER_EMAIL));
+    public void removeTestData() {
+        Client client = new Client();
+        delete(client, dacUserPathByEmail(CHAIR_USER_EMAIL));
+        delete(client, dacUserPathByEmail(DAC_USER_EMAIL));
+        delete(client, dacUserPathByEmail(CHAIR_2_USER_EMAIL));
     }
 
     public DACUser testCreate(DACUser dacuser) {
@@ -99,7 +95,7 @@ public class DACUserTest extends DACUserServiceTest{
     @Test
     public void testUpdateDACUser() {
         Client client = new Client();
-        DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON.toString()));
+        DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
         checkStatus(OK, put(client, dacUserPath(), user));
         user = get(client, dacUserPathByEmail(user.getEmail())).getEntity(DACUser.class);
         assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");

@@ -16,7 +16,9 @@ public class DACUserResource extends Resource {
 
     private DACUserAPI api;
 
-    public DACUserResource() { this.api = AbstractDACUserAPI.getInstance(); }
+    public DACUserResource() {
+        this.api = AbstractDACUserAPI.getInstance();
+    }
 
     @POST
     @Consumes("application/json")
@@ -36,14 +38,14 @@ public class DACUserResource extends Resource {
     @Path("/{email}")
     @Produces("application/json")
     public DACUser describe(@PathParam("email") String email) {
-        return  api.describeDACUserByEmail(email);
+        return api.describeDACUserByEmail(email);
     }
 
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
     public DACUser update(DACUser dac) {
-        return  api.updateDACUserByEmail(dac);
+        return api.updateDACUserByEmail(dac);
     }
 
     @DELETE

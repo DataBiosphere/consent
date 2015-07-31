@@ -5,4 +5,5 @@ import org.genomebridge.consent.http.models.ElectionReview;
 public interface ReviewResultsAPI {
 
     ElectionReview describeElectionReview(String referenceId);
+
 }

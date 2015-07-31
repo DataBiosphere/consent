@@ -1,8 +1,10 @@
 package org.genomebridge.consent.http;
 
 import java.util.*;
+
 import static io.dropwizard.testing.FixtureHelpers.*;
 import static org.fest.assertions.api.Assertions.assertThat;
+
 import io.dropwizard.jackson.Jackson;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +13,7 @@ import org.genomebridge.consent.http.models.ConsentAssociation;
 
 /**
  * Unit Tests for ConsentAssociation object.
- *
+ * <p/>
  * Created by egolin on 9/16/14.
  */
 public class ConsentAssociationTest {

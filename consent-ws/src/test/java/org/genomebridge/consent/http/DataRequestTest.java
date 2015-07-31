@@ -13,8 +13,7 @@ import com.sun.jersey.api.client.ClientResponse;
 
 public class DataRequestTest extends DataRequestServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED
-            .getStatusCode();
+    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
     public static final int OK = ClientResponse.Status.OK.getStatusCode();
     public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
     private static final Integer ID = 1;

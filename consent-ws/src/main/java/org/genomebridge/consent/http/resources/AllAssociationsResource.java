@@ -43,8 +43,7 @@ public class AllAssociationsResource extends Resource {
                 URI uri = URI.create(result.get(0));
                 return Response.ok(result).location(uri).build();
             }
-            else
-                return Response.ok(result).build();
+            return Response.ok(result).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             logger().debug(String.format("GETconsentsForAssociation:  Caught exception '%s' in getConsentsForAssociation", e.getMessage()));
             throw new NotFoundException("Could not find associations for object");

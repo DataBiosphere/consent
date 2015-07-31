@@ -37,7 +37,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         review.setReferenceId(consent.consentId);
         List<Vote> votes = voteDAO.findVotesByReferenceId(referenceId);
         List<ElectionReviewVote> rVotes = new ArrayList<>();
-        for(Vote v: votes){
+        for (Vote v : votes) {
             ElectionReviewVote rVote = new ElectionReviewVote();
             rVote.setVote(v);
             DACUser user = userDAO.findDACUserById(v.getDacUserId());

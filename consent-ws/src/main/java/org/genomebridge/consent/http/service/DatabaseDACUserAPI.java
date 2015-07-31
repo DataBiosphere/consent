@@ -3,7 +3,6 @@ package org.genomebridge.consent.http.service;
 import com.sun.jersey.api.NotFoundException;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.models.DACUser;
-import org.skife.jdbi.v2.DBI;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -11,7 +10,6 @@ import org.skife.jdbi.v2.DBI;
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     private DACUserDAO dacUserDAO;
-    private DBI jdbi;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -23,8 +21,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(DBI jdbi,DACUserDAO dao) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(jdbi,dao));
+    public static void initInstance(DACUserDAO dao) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(dao));
     }
 
     /**
@@ -33,15 +31,14 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseDACUserAPI(DBI jdbi,DACUserDAO dao) {
-        this.jdbi = jdbi;
+    private DatabaseDACUserAPI(DACUserDAO dao) {
         this.dacUserDAO = dao;
     }
 
     @Override
     public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
         validateRequieredFields(dacUser);
-        Integer dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(),dacUser.getDisplayName(),dacUser.getMemberStatus());
+        Integer dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), dacUser.getMemberStatus());
         return dacUserDAO.findDACUserById(dacUserID);
     }
 

@@ -15,5 +15,5 @@ public class DACUserMapper implements ResultSetMapper<DACUser> {
                 r.getString("email"),
                 r.getString("displayName"),
                 r.getString("memberStatus"));
-     }
-   }
+    }
+}

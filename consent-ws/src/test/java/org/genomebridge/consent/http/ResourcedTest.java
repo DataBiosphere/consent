@@ -10,7 +10,9 @@ abstract public class ResourcedTest {
     public static String resourceFilePath(String name) {
         ClassLoader loader = ClassLoader.getSystemClassLoader();
         URL resource = loader.getResource(name);
-        if(resource == null) { throw new IllegalStateException("Couldn't find resource " + name); }
+        if (resource == null) {
+            throw new IllegalStateException("Couldn't find resource " + name);
+        }
         return resource.getFile();
     }
 }

@@ -10,9 +10,13 @@ import java.util.List;
 public interface ConsentAPI {
 
     Consent create(Consent rec);
-    Consent retrieve( String id ) throws UnknownIdentifierException;
-    Collection<Consent> findConsentsByAssociationType( String associationType );
-    Collection<Consent> retrieve( List<String> ids );
+
+    Consent retrieve(String id) throws UnknownIdentifierException;
+
+    Collection<Consent> findConsentsByAssociationType(String associationType);
+
+    Collection<Consent> retrieve(List<String> ids);
+
     void update(String id, Consent rec) throws UnknownIdentifierException;
 
     /**
@@ -21,22 +25,27 @@ public interface ConsentAPI {
      *
      * @param id the identifier of the consent to delete (or inactivate)
      * @throws UnknownIdentifierException If the identifier names an inactive or non-existent consent
-     * in the database.
+     *                                    in the database.
      */
     void delete(String id) throws UnknownIdentifierException;
 
     // ConsentAssociation methods
 
     List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations);
+
     List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations);
+
     List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
+
     List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId);
+
     List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
 
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter) throws UnknownIdentifierException;
-    String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
-    Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
 
+    String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
+
+    Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
 
 }

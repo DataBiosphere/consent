@@ -41,7 +41,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
         rec.requiresManualReview = true;
         rec.useRestriction = new Everything();
 
-        ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
+        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
 
         String createdLocation = checkHeader(response, "Location");
 
@@ -125,7 +125,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
 
     private void assertValidConsentResource(Client client, Consent rec) {
-        ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
+        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
 
         String createdLocation = checkHeader(response, "Location");
         Consent created = retrieveConsent(client, createdLocation);

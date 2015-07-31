@@ -10,20 +10,33 @@ public class Some extends UseRestriction {
 
     private UseRestriction target;
 
-    public Some() {}
+    public Some() {
+    }
 
     public Some(String prop, UseRestriction obj) {
         this.property = prop;
         this.target = obj;
     }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
-    public void setProperty(String p) { property = p; }
-    public String getProperty() { return property; }
+    public void setProperty(String p) {
+        property = p;
+    }
 
-    public UseRestriction getTarget() { return target; }
-    public void setTarget(UseRestriction r) { target = r; }
+    public String getProperty() {
+        return property;
+    }
+
+    public UseRestriction getTarget() {
+        return target;
+    }
+
+    public void setTarget(UseRestriction r) {
+        target = r;
+    }
 
     @Override
     public int hashCode() {

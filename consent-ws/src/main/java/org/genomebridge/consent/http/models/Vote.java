@@ -28,13 +28,13 @@ public class Vote {
     private String rationale;
 
     @JsonProperty
-    private Boolean isChairPersonVote; 
+    private Boolean isChairPersonVote;
 
     public Vote() {
     }
 
     public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
-            Integer electionId, String rationale,Boolean isChairPersonVote) {
+                Integer electionId, String rationale, Boolean isChairPersonVote) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;

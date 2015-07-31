@@ -55,85 +55,83 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     @Override
-   	public Summary describeConsentSummaryCases() {
-       	String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
+    public Summary describeConsentSummaryCases() {
+        String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
         return getSummaryCases(type);
-   	}
+    }
 
-   	@Override
-   	public Summary describeDataRequestSummaryCases() {
-   		String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
+    @Override
+    public Summary describeDataRequestSummaryCases() {
+        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         return getSummaryCases(type);
-   	}
+    }
 
-   	private Summary getSummaryCases(String type) {
-   		List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
-   		Integer totalPendingCases = openElections == null ? 0 : openElections.size(); 
+    private Summary getSummaryCases(String type) {
+        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), true);
         Integer totalNegativeCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), false);
-        Summary summary = createSummary(totalPendingCases, totalPositiveCases, totalNegativeCases);
-   		return summary;
-   	}
-   	
-   	private Summary createSummary(Integer totalPendingCases,
-   			Integer totalPositiveCases, Integer totalNegativeCases) {
-   		Summary summary = new Summary();
+        return createSummary(totalPendingCases, totalPositiveCases, totalNegativeCases);
+    }
+
+    private Summary createSummary(Integer totalPendingCases,
+                                  Integer totalPositiveCases, Integer totalNegativeCases) {
+        Summary summary = new Summary();
         summary.setPendingCases(totalPendingCases);
         summary.setReviewedNegativeCases(totalNegativeCases);
         summary.setReviewedPositiveCases(totalPositiveCases);
-   		return summary;
-   	}
+        return summary;
+    }
 
-	@Override
-	public File describeConsentSummaryDetail() {
-		File file =  null;
-		try{
-			file = File.createTempFile("summary", ".txt"); 
-			FileWriter summaryWriter = new FileWriter(file); 
-			List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
-			setSummaryHeader(summaryWriter);
-			if(reviewedElections != null && reviewedElections.size() > 0){
-				for(Election election : reviewedElections){
-					List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
-					if(votes != null && votes.size() > 0){
-						for(Vote vote : votes){
-							DACUser user = dacUserDAO.findDACUserById(vote.getDacUserId());
-							summaryWriter.write(election.getReferenceId() + SEPARATOR);
-							summaryWriter.write(user.getDisplayName() + SEPARATOR);
-							summaryWriter.write(vote.getVote() + SEPARATOR);
-							summaryWriter.write(vote.getRationale() + SEPARATOR);
-							summaryWriter.write(election.getFinalVote() + SEPARATOR);
-							summaryWriter.write(election.getFinalRationale() + SEPARATOR);
-							//sdul is pending
-							summaryWriter.write("sDUL" + SEPARATOR);
-						    summaryWriter.write(END_OF_LINE);
-						}
-					}
-					
-				}
-			}
-			summaryWriter.flush();
-			summaryWriter.close();
-			return file;
-		}catch(Exception e){
-			
-		}
-		return file;
-	}
+    @Override
+    public File describeConsentSummaryDetail() {
+        File file = null;
+        try {
+            file = File.createTempFile("summary", ".txt");
+            FileWriter summaryWriter = new FileWriter(file);
+            List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
+            setSummaryHeader(summaryWriter);
+            if (reviewedElections != null && reviewedElections.size() > 0) {
+                for (Election election : reviewedElections) {
+                    List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
+                    if (votes != null && votes.size() > 0) {
+                        for (Vote vote : votes) {
+                            DACUser user = dacUserDAO.findDACUserById(vote.getDacUserId());
+                            summaryWriter.write(election.getReferenceId() + SEPARATOR);
+                            summaryWriter.write(user.getDisplayName() + SEPARATOR);
+                            summaryWriter.write(vote.getVote() + SEPARATOR);
+                            summaryWriter.write(vote.getRationale() + SEPARATOR);
+                            summaryWriter.write(election.getFinalVote() + SEPARATOR);
+                            summaryWriter.write(election.getFinalRationale() + SEPARATOR);
+                            //sdul is pending
+                            summaryWriter.write("sDUL" + SEPARATOR);
+                            summaryWriter.write(END_OF_LINE);
+                        }
+                    }
+
+                }
+            }
+            summaryWriter.flush();
+            summaryWriter.close();
+            return file;
+        } catch (Exception ignored) {
+
+        }
+        return file;
+    }
 
 
-	private void setSummaryHeader(FileWriter summaryWriter) throws IOException {
-		summaryWriter.write(
-		HeaderSummary.CASEID.getValue() + SEPARATOR +
-		HeaderSummary.USER.getValue() + SEPARATOR +
-		HeaderSummary.VOTE.getValue() + SEPARATOR +
-		HeaderSummary.RATIONALE.getValue() + SEPARATOR +
-	    HeaderSummary.FINAL_VOTE.getValue() + SEPARATOR + 
-		HeaderSummary.FINAL_RATIONALE.getValue() + SEPARATOR +
-		HeaderSummary.SDUL.getValue() + END_OF_LINE);
-		
-	}
-	
-	
-	      
+    private void setSummaryHeader(FileWriter summaryWriter) throws IOException {
+        summaryWriter.write(
+                HeaderSummary.CASEID.getValue() + SEPARATOR +
+                        HeaderSummary.USER.getValue() + SEPARATOR +
+                        HeaderSummary.VOTE.getValue() + SEPARATOR +
+                        HeaderSummary.RATIONALE.getValue() + SEPARATOR +
+                        HeaderSummary.FINAL_VOTE.getValue() + SEPARATOR +
+                        HeaderSummary.FINAL_RATIONALE.getValue() + SEPARATOR +
+                        HeaderSummary.SDUL.getValue() + END_OF_LINE);
+
+    }
+
+
 }

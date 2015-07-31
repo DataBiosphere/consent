@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Consent Representation object.
- *
+ * <p/>
  * Created by grushton on 6/3/15.
  */
 

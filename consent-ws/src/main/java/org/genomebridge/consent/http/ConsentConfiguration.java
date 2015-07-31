@@ -29,4 +29,5 @@ public class ConsentConfiguration extends Configuration {
     public StoreConfiguration getCloudStoreConfiguration() {
         return googleStore;
     }
+
 }

@@ -23,7 +23,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 
 @Path("/consent/{id}/dul")
-public class DataUseLetterResource extends Resource{
+public class DataUseLetterResource extends Resource {
 
     private ConsentAPI api;
     private GCSStore store;
@@ -33,13 +33,13 @@ public class DataUseLetterResource extends Resource{
         this.store = store;
     }
 
-    private String getFileExtension(String fileName){
+    private String getFileExtension(String fileName) {
         return FilenameUtils.getExtension(fileName);
     }
 
     private void deletePreviousStorageFile(String consentId) throws IOException, GeneralSecurityException, UnknownIdentifierException {
         String prevFile = api.getConsentDulUrl(consentId);
-        if(StringUtils.isNotBlank(prevFile)){
+        if (StringUtils.isNotBlank(prevFile)) {
             store.deleteStorageDocument(prevFile);
         }
     }
@@ -47,27 +47,27 @@ public class DataUseLetterResource extends Resource{
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Consent  createDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id")String consentId){
+    public Consent createDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id") String consentId) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
             deletePreviousStorageFile(consentId);
-            String dulUrl = store.postStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(),  getFileExtension(part.getContentDisposition().getFileName()));
+            String dulUrl = store.postStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(), getFileExtension(part.getContentDisposition().getFileName()));
             return api.updateConsentDul(consentId, dulUrl);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
-        } catch (IOException e){
-            logger().error("Error when trying to read/write the uploaded file "+ e.getMessage());
-        } catch (GeneralSecurityException e){
-            logger().error("Security error: "+ e.getMessage());
+        } catch (IOException e) {
+            logger().error("Error when trying to read/write the uploaded file " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            logger().error("Security error: " + e.getMessage());
         }
         return null;
-    };
+    }
 
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Consent updateDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id")String consentId) {
+    public Consent updateDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id") String consentId) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -76,39 +76,39 @@ public class DataUseLetterResource extends Resource{
             return api.updateConsentDul(consentId, dulUrl);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
-        } catch (IOException e){
-            logger().error("Error when trying to read/write the uploaded file "+ e.getMessage());
-        } catch (GeneralSecurityException e){
-            logger().error("Security error: "+ e.getMessage());
+        } catch (IOException e) {
+            logger().error("Error when trying to read/write the uploaded file " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            logger().error("Security error: " + e.getMessage());
         }
         return null;
     }
 
     @GET
-    public Response getDUL(@PathParam("id")String consentId){
+    public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         try {
             String prevFile = api.getConsentDulUrl(consentId);
-            HttpResponse  r = store.getStorageDocument(prevFile);
-            File targetFile = new File("dataUseLetter-"+consentId+"."+getFileExtension(prevFile.toString()));
+            HttpResponse r = store.getStorageDocument(prevFile);
+            File targetFile = new File("dataUseLetter-" + consentId + "." + getFileExtension(prevFile));
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
             return Response.ok(targetFile)
-                    .header("Content-Disposition", "attachment; filename="+targetFile.getName())
+                    .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
                     .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
-        } catch (IOException e){
-            logger().error("Error when trying to read/write the file "+ e.getMessage());
-        } catch (GeneralSecurityException e){
-            logger().error("Security error: "+ e.getMessage());
+        } catch (IOException e) {
+            logger().error("Error when trying to read/write the file " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            logger().error("Security error: " + e.getMessage());
         }
         return null;
-    };
+    }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    public Consent deleteDUL(@PathParam("id")String consentId){
+    public Consent deleteDUL(@PathParam("id") String consentId) {
         String msg = String.format("DELETEing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -116,13 +116,13 @@ public class DataUseLetterResource extends Resource{
             return api.deleteConsentDul(consentId);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
-        } catch (IOException e){
-            logger().error("Error when trying to read/write the file "+ e.getMessage());
-        } catch (GeneralSecurityException e){
-            logger().error("Security error: "+ e.getMessage());
+        } catch (IOException e) {
+            logger().error("Error when trying to read/write the file " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            logger().error("Security error: " + e.getMessage());
         }
         return null;
-    };
+    }
 
     @Override
     protected Logger logger() {
