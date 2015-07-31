@@ -23,5 +23,74 @@
         {"consentId": "SC15021", "consentName": "Dr. Jones Breast Cancer set 12", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
         {"consentId": "SC15022", "consentName": "Dr. Jones Breast Cancer set 13", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
         {"consentId": "SC15023", "consentName": "Dr. Jones Breast Cancer set 14", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" }
+        ],
+
+    "manage_users": [
+        {
+            "name": "Walter Lo Forte",
+            "googleId": "wloforte@broadinstitute.org",
+            "roles": {
+                "admin": "enabled",
+                "member": "disabled",
+                "chairperson": "enabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Veronica Vicario",
+            "googleId": "vvicario@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Anabella Racciopi",
+            "googleId": "aracciopi@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Santiago Saucedo",
+            "googleId": "ssaucedo@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Nadya Lopez Zalba",
+            "googleId": "nlopez@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Diego Gil",
+            "googleId": "dgil@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "disabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "enabled"
+            }
+        }
     ]
 }
