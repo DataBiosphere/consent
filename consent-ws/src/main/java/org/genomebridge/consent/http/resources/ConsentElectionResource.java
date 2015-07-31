@@ -29,7 +29,7 @@ public class ConsentElectionResource extends Resource {
 
     private ElectionAPI api;
     private VoteAPI voteAPI;
-    
+
     public ConsentElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
@@ -42,7 +42,7 @@ public class ConsentElectionResource extends Resource {
         URI uri;
         try {
             Election election = api.createElection(rec, consentId, true);
-            voteAPI.createVotes(election.getElectionId(),true);
+            voteAPI.createVotes(election.getElectionId(), true);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();

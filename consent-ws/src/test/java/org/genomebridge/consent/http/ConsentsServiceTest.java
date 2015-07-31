@@ -127,7 +127,7 @@ public class ConsentsServiceTest extends AbstractTest {
     private Collection<String> populateConsentAssociations() {
         Collection<String> ids = populateConsents();
         Client client = new Client();
-        for (String id: ids) {
+        for (String id : ids) {
             ConsentAssociation ca = new ConsentAssociation();
             ca.setAssociationType("sample");
             ca.setElements(Arrays.asList("SM-1", "SM-2", "SM-3"));
@@ -139,7 +139,7 @@ public class ConsentsServiceTest extends AbstractTest {
     private Collection<String> populateConsents() {
         Collection<String> ids = new ArrayList<>();
         Client client = new Client();
-        for (int i = 1; i <= N; i++ ) {
+        for (int i = 1; i <= N; i++) {
             ids.add(postConsent(client));
         }
         return ids;
@@ -150,9 +150,9 @@ public class ConsentsServiceTest extends AbstractTest {
         Consent consent = new Consent();
         consent.requiresManualReview = true;
         consent.useRestriction = new Everything();
-        ClientResponse response = checkStatus( CREATED, put(client, consentPath, consent) );
+        ClientResponse response = checkStatus(CREATED, put(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");
-        return createdLocation.substring(createdLocation.lastIndexOf("/")+1);
+        return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
     }
 
 }

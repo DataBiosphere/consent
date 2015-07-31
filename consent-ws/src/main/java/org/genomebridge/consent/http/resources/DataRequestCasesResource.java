@@ -15,7 +15,7 @@ import org.genomebridge.consent.http.service.SummaryAPI;
 
 @Path("/dataRequest/cases")
 public class DataRequestCasesResource extends Resource {
-	
+
     private PendingCaseAPI api;
     private SummaryAPI summaryApi;
 
@@ -33,8 +33,8 @@ public class DataRequestCasesResource extends Resource {
     @GET
     @Path("/summary")
     public Response getConsentSummaryCases() {
-        return Response.ok(summaryApi.describeDataRequestSummaryCases())       
-                       .build();
-     }
+        return Response.ok(summaryApi.describeDataRequestSummaryCases())
+                .build();
+    }
 
 }

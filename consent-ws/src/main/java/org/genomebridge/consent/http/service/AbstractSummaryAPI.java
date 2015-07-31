@@ -72,7 +72,7 @@ public abstract class AbstractSummaryAPI implements SummaryAPI {
      * IllegalStateException is thrown.
      */
     public static void clearInstance() {
-    	SummaryAPIHolder.clearInstance();
+        SummaryAPIHolder.clearInstance();
     }
 
 }

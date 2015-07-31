@@ -28,26 +28,25 @@ public class ConsentCasesResource extends Resource {
     @GET
     @Path("/pending/{dacUserId}")
     public Response getConsentPendingCases(@PathParam("dacUserId") Integer dacUserId) {
-        return Response.ok(api.describeConsentPendingCases(dacUserId))               
-                       .build();
-     }
-    
+        return Response.ok(api.describeConsentPendingCases(dacUserId))
+                .build();
+    }
+
     @GET
     @Path("/summary")
     public Response getConsentSummaryCases() {
-        return Response.ok(summaryApi.describeConsentSummaryCases())       
-                       .build();
-     }
-    
+        return Response.ok(summaryApi.describeConsentSummaryCases())
+                .build();
+    }
+
     @GET
     @Path("/summary/file")
     @Produces("text/plain")
     public Response getConsentSummaryDetailFile() {
-    	File fileToSend = summaryApi.describeConsentSummaryDetail();
-    	ResponseBuilder response =  Response.ok(fileToSend);
-    	response.header("Content-Disposition", "attachment; filename=\"summary.txt\"");
+        File fileToSend = summaryApi.describeConsentSummaryDetail();
+        ResponseBuilder response = Response.ok(fileToSend);
+        response.header("Content-Disposition", "attachment; filename=\"summary.txt\"");
         return response.build();
-     }
-  
+    }
 
 }

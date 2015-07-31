@@ -10,10 +10,10 @@ import java.util.List;
 
 /**
  * ConsentAssociation Representation object.
- *
+ * <p/>
  * <P>Represents a set of associations to a single "type" of objects.  For example, the "samples" associated
  * with an individual consent.
- *
+ * <p/>
  * Created by egolin on 9/15/14.
  */
 public class ConsentAssociation {

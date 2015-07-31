@@ -24,9 +24,8 @@ public class DatabaseDataRequestAPI extends AbstractDataRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      *
-     * @param dataRequestDAO
-     *        dataSetDAO
-     *        purposeDAO
+     * @param dataRequestDAO dataSetDAO
+     *                       purposeDAO
      */
     public static void initInstance(DataRequestDAO dataRequestDAO, DataSetDAO dataSetDAO, ResearchPurposeDAO purposeDAO) {
         DataRequestAPIHolder.setInstance(new DatabaseDataRequestAPI(
@@ -38,9 +37,8 @@ public class DatabaseDataRequestAPI extends AbstractDataRequestAPI {
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      *
-     * @param dataRequestDAO
-     *        dataSetDAO
-     *        purposeDAO
+     * @param dataRequestDAO dataSetDAO
+     *                       purposeDAO
      */
     private DatabaseDataRequestAPI(DataRequestDAO dataRequestDAO, DataSetDAO dataSetDAO, ResearchPurposeDAO purposeDAO) {
         this.dataRequestDAO = dataRequestDAO;

@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.apache.commons.lang.StringUtils;
 import org.genomebridge.consent.http.enumeration.HeaderSummary;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -16,43 +17,32 @@ import com.sun.jersey.api.client.ClientResponse;
 
 public class ConsentSummaryTest extends ElectionVoteServiceTest {
 
-	private static final String SEPARATOR = "\t";
-		
-	@ClassRule
-	public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
-			ConsentApplication.class, resourceFilePath("consent-config.yml"));
+    private static final String SEPARATOR = "\t";
 
-	@Override
-	public DropwizardAppRule<ConsentConfiguration> rule() {
-		return RULE;
-	}
+    @ClassRule
+    public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
+            ConsentApplication.class, resourceFilePath("consent-config.yml"));
 
-	@Test
-	public void testConsentSummaryFile() throws IOException {
-		Client client = new Client();
-		ClientResponse response = getFile(client, consentSummaryPath());
-		BufferedReader br = new BufferedReader(new InputStreamReader(
-				response.getEntityInputStream()));
-		String output;
-		String summary = getSummaryHeader();
-		boolean isFirst = true;
-		while ((output = br.readLine()) != null) {
-			if(isFirst){
-				Assert.assertTrue(summary.equals(output));
-				isFirst = false;
-			}
-		}
-	}
+    @Override
+    public DropwizardAppRule<ConsentConfiguration> rule() {
+        return RULE;
+    }
 
-	private String getSummaryHeader() {
-		StringBuilder summary = new StringBuilder();
-		summary.append(HeaderSummary.CASEID.getValue() + SEPARATOR);
-		summary.append(HeaderSummary.USER.getValue() + SEPARATOR);
-		summary.append(HeaderSummary.VOTE.getValue() + SEPARATOR);
-		summary.append(HeaderSummary.RATIONALE.getValue() + SEPARATOR);
-		summary.append(HeaderSummary.FINAL_VOTE.getValue() + SEPARATOR);
-		summary.append(HeaderSummary.FINAL_RATIONALE.getValue() + SEPARATOR);
-		summary.append(HeaderSummary.SDUL.getValue());
-	    return summary.toString();
-	}
+    @Test
+    public void testConsentSummaryFile() throws IOException {
+        Client client = new Client();
+        ClientResponse response = getFile(client, consentSummaryPath());
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                response.getEntityInputStream()));
+        String output;
+        String summary = StringUtils.join(HeaderSummary.getValues(), SEPARATOR);
+        boolean isFirst = true;
+        while ((output = br.readLine()) != null) {
+            if (isFirst) {
+                Assert.assertTrue(summary.equals(output));
+                isFirst = false;
+            }
+        }
+    }
+
 }

@@ -19,7 +19,9 @@ public class ConsentsResource extends Resource {
 
     private ConsentAPI api;
 
-    public ConsentsResource() { this.api = AbstractConsentAPI.getInstance(); }
+    public ConsentsResource() {
+        this.api = AbstractConsentAPI.getInstance();
+    }
 
     @GET
     @Produces("application/json")
@@ -41,7 +43,7 @@ public class ConsentsResource extends Resource {
             }
             Collection<Consent> consents = api.retrieve(splitIds);
             List<String> foundIds = new ArrayList<>();
-            for (Consent consent: consents) {
+            for (Consent consent : consents) {
                 foundIds.add(consent.consentId);
             }
             if (splitIds.containsAll(foundIds)) {
@@ -52,8 +54,7 @@ public class ConsentsResource extends Resource {
                 diffIds.removeAll(foundIds);
                 throw new NotFoundException("Cannot find some consents ids: " + StringUtils.join(diffIds, ","));
             }
-        }
-        else {
+        } else {
             throw new NotFoundException("Cannot find any consents without ids");
         }
     }

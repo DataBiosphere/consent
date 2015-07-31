@@ -2,7 +2,7 @@ package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class PendingCase  {
+public class PendingCase {
 
     @JsonProperty
     private String referenceId;
@@ -15,10 +15,10 @@ public class PendingCase  {
 
     @JsonProperty
     private Boolean isFinalVote;
-    
+
     @JsonProperty
     private String status;
-    
+
     @JsonProperty
     private Integer voteId;
 
@@ -55,22 +55,21 @@ public class PendingCase  {
         this.isFinalVote = isFinalVote;
     }
 
-	public String getStatus() {
-		return status;
-	}
+    public String getStatus() {
+        return status;
+    }
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	public Integer getVoteId() {
-		return voteId;
-	}
+    public Integer getVoteId() {
+        return voteId;
+    }
 
-	public void setVoteId(Integer voteId) {
-		this.voteId = voteId;
-	}
-	
-	  
-     
+    public void setVoteId(Integer voteId) {
+        this.voteId = voteId;
+    }
+
+
 }

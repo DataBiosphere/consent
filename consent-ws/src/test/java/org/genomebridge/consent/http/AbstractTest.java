@@ -27,7 +27,9 @@ abstract public class AbstractTest extends ResourcedTest {
      * Some utility methods for interacting with HTTP-services.
      */
 
-    public <T> ClientResponse post(Client client, String path, T value) { return post(client, path, "testuser", value); }
+    public <T> ClientResponse post(Client client, String path, T value) {
+        return post(client, path, "testuser", value);
+    }
 
     public <T> ClientResponse post(Client client, String path, String user, T value) {
         return client.resource(path)
@@ -37,7 +39,9 @@ abstract public class AbstractTest extends ResourcedTest {
                 .post(ClientResponse.class, value);
     }
 
-    public <T> ClientResponse put(Client client, String path, T value) { return put(client, path, "testuser", value); }
+    public <T> ClientResponse put(Client client, String path, T value) {
+        return put(client, path, "testuser", value);
+    }
 
     public <T> ClientResponse put(Client client, String path, String user, T value) {
         return client.resource(path)
@@ -47,7 +51,9 @@ abstract public class AbstractTest extends ResourcedTest {
                 .put(ClientResponse.class, value);
     }
 
-    public ClientResponse delete(Client client, String path) { return delete(client, path, "testuser"); }
+    public ClientResponse delete(Client client, String path) {
+        return delete(client, path, "testuser");
+    }
 
     public ClientResponse delete(Client client, String path, String user) {
         return client.resource(path)
@@ -55,9 +61,13 @@ abstract public class AbstractTest extends ResourcedTest {
                 .delete(ClientResponse.class);
     }
 
-    public ClientResponse get(Client client, String path) { return get(client, path, "testuser"); }
-    
-    public ClientResponse getFile(Client client, String path) { return getFile(client, path, "testuser"); }
+    public ClientResponse get(Client client, String path) {
+        return get(client, path, "testuser");
+    }
+
+    public ClientResponse getFile(Client client, String path) {
+        return getFile(client, path, "testuser");
+    }
 
     public ClientResponse get(Client client, String path, String user) {
         return client.resource(path)
@@ -65,7 +75,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .header("REMOTE_USER", user)
                 .get(ClientResponse.class);
     }
-    
+
     public ClientResponse getFile(Client client, String path, String user) {
         return client.resource(path)
                 .accept(MediaType.TEXT_PLAIN)
@@ -74,23 +84,25 @@ abstract public class AbstractTest extends ResourcedTest {
     }
 
 
-    public ClientResponse check200( ClientResponse response ) {
+    public ClientResponse check200(ClientResponse response) {
         return checkStatus(200, response);
     }
 
-    public ClientResponse checkStatus( int status, ClientResponse response ) {
+    public ClientResponse checkStatus(int status, ClientResponse response) {
         assertThat(response.getStatus()).isEqualTo(status);
         return response;
     }
 
-    public String checkHeader( ClientResponse response, String header ) {
-        MultivaluedMap<String,String> map = response.getHeaders();
+    public String checkHeader(ClientResponse response, String header) {
+        MultivaluedMap<String, String> map = response.getHeaders();
         assertThat(map).describedAs(String.format("header \"%s\"", header)).containsKey(header);
         return map.getFirst(header);
     }
 
     public String path2Url(String path) {
-        if(path.startsWith("/")) { path = path.substring(1, path.length()); }
+        if (path.startsWith("/")) {
+            path = path.substring(1, path.length());
+        }
         return String.format("http://localhost:%d/%s", rule().getLocalPort(), path);
     }
 

@@ -8,16 +8,24 @@ public class Not extends UseRestriction {
 
     private UseRestriction operand;
 
-    public Not() {}
+    public Not() {
+    }
 
     public Not(UseRestriction operand) {
         this.operand = operand;
     }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
-    public UseRestriction getOperand() { return operand; }
-    public void setOperand(UseRestriction op) { operand = op; }
+    public UseRestriction getOperand() {
+        return operand;
+    }
+
+    public void setOperand(UseRestriction op) {
+        operand = op;
+    }
 
     @Override
     public int hashCode() {

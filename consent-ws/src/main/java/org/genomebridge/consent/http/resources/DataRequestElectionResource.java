@@ -44,7 +44,7 @@ public class DataRequestElectionResource extends Resource {
         Election election;
         try {
             election = api.createElection(rec, requestId.toString(), false);
-            voteAPI.createVotes(election.getElectionId(),false);
+            voteAPI.createVotes(election.getElectionId(), false);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();

@@ -14,7 +14,9 @@ public class ConsentResource extends Resource {
 
     private ConsentAPI api;
 
-    public ConsentResource() { this.api = AbstractConsentAPI.getInstance(); }
+    public ConsentResource() {
+        this.api = AbstractConsentAPI.getInstance();
+    }
 
     @GET
     @Produces("application/json")

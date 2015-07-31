@@ -5,7 +5,6 @@ import org.genomebridge.consent.http.models.DACUser;
 
 public interface DACUserAPI {
 
-
     DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException;
 
     DACUser describeDACUserByEmail(String email) throws NotFoundException;

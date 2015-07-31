@@ -8,20 +8,33 @@ public class Only extends UseRestriction {
     private String property;
     private UseRestriction target;
 
-    public Only() {}
+    public Only() {
+    }
 
     public Only(String prop, UseRestriction obj) {
         this.property = prop;
         this.target = obj;
     }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
-    public String getProperty() { return property; }
-    public UseRestriction getTarget() { return target; }
+    public String getProperty() {
+        return property;
+    }
 
-    public void setProperty(String p) { property = p; }
-    public void setTarget(UseRestriction r) { target = r; }
+    public UseRestriction getTarget() {
+        return target;
+    }
+
+    public void setProperty(String p) {
+        property = p;
+    }
+
+    public void setTarget(UseRestriction r) {
+        target = r;
+    }
 
     @Override
     public int hashCode() {

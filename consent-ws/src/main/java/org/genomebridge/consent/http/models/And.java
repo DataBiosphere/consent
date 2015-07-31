@@ -10,14 +10,24 @@ public class And extends UseRestriction {
 
     private UseRestriction[] operands;
 
-    public And() {}
+    public And() {
+    }
 
-    public And(UseRestriction... operands) { this.operands = operands; }
+    public And(UseRestriction... operands) {
+        this.operands = operands;
+    }
 
-    public String getType() { return type; }
+    public String getType() {
+        return type;
+    }
 
-    public void setOperands(UseRestriction[] ops) { this.operands = ops.clone(); }
-    public UseRestriction[] getOperands() { return operands; }
+    public void setOperands(UseRestriction[] ops) {
+        this.operands = ops.clone();
+    }
+
+    public UseRestriction[] getOperands() {
+        return operands;
+    }
 
     @Override
     public int hashCode() {
@@ -31,8 +41,8 @@ public class And extends UseRestriction {
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {
-        for(UseRestriction child : operands) {
-            if(!child.visit(visitor)) {
+        for (UseRestriction child : operands) {
+            if (!child.visit(visitor)) {
                 return false;
             }
         }

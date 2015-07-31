@@ -80,14 +80,15 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
 
     public void deleteElection(Integer electionId) {
         Client client = new Client();
-        List<Vote> votes =  get(client, voteConsentPath(CONSENT_ID)).getEntity(new GenericType<List<Vote>>() {});
-        for(Vote vote : votes){
-        	checkStatus(OK,
-                    delete(client, voteConsentIdPath(CONSENT_ID, vote.getVoteId())));	
+        List<Vote> votes = get(client, voteConsentPath(CONSENT_ID)).getEntity(new GenericType<List<Vote>>() {
+        });
+        for (Vote vote : votes) {
+            checkStatus(OK,
+                    delete(client, voteConsentIdPath(CONSENT_ID, vote.getVoteId())));
         }
         checkStatus(OK,
                 delete(client, electionConsentPathById(CONSENT_ID, electionId)));
-    
+
     }
 
     @Test

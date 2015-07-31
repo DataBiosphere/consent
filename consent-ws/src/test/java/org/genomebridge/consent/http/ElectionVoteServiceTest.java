@@ -90,17 +90,17 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
             return String.format("/consent/%s/vote/%s", consentId, voteId);
         }
     }
-    
+
     public String consentPendingCasesPath(Integer userId) {
-         return path2Url(String.format("/consent/cases/pending/%s", userId));
+        return path2Url(String.format("/consent/cases/pending/%s", userId));
     }
 
     public String dataRequestPendingCasesPath(Integer userId) {
         return path2Url(String.format("/dataRequest/cases/pending/%s", userId));
     }
-    
+
     public String consentSummaryPath() {
-        return path2Url(String.format("consent/cases/summary/file"));
+        return path2Url("consent/cases/summary/file");
     }
 
 

@@ -17,6 +17,7 @@ import java.util.List;
 public class ConsentVoteResource extends Resource {
 
     private VoteAPI api;
+
     public ConsentVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
     }
@@ -25,7 +26,7 @@ public class ConsentVoteResource extends Resource {
     @Consumes("application/json")
     @Path("/{id}")
     public Response firstVoteUpdate(@Context UriInfo info, Vote rec,
-            @PathParam("consentId") String consentId, @PathParam("id") String voteId) {
+                                    @PathParam("consentId") String consentId, @PathParam("id") String voteId) {
         try {
             Vote vote = api.firstVoteUpdate(rec, consentId, voteId);
             return Response.ok(vote).build();
@@ -42,7 +43,7 @@ public class ConsentVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     public Response updateConsentVote(@Context UriInfo info, Vote rec,
-            @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
+                                      @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.updateVote(rec, id, consentId);
             return Response.ok(vote).build();
@@ -55,7 +56,7 @@ public class ConsentVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     public Vote describe(@PathParam("consentId") String consentId,
-            @PathParam("id") Integer id) {
+                         @PathParam("id") Integer id) {
         return api.describeVoteById(id, consentId);
 
     }

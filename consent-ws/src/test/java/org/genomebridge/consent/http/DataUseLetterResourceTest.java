@@ -29,7 +29,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
-public class DataUseLetterResourceTest extends ConsentServiceTest{
+public class DataUseLetterResourceTest extends ConsentServiceTest {
 
     @Mock
     GCSStore storage;
@@ -60,6 +60,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest{
         File fileToUpload = new File("temp.pdf");
         when(storage.postStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
+        //noinspection ResultOfMethodCallIgnored
         fileToUpload.createNewFile();
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
@@ -77,6 +78,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest{
         File fileToUpload = new File("temp.pdf");
         when(storage.putStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
+        //noinspection ResultOfMethodCallIgnored
         fileToUpload.createNewFile();
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
@@ -103,9 +105,9 @@ public class DataUseLetterResourceTest extends ConsentServiceTest{
     private String setupConsent(String dul) {
         Client client = new Client();
         Consent rec = new Consent(false, new Everything(), dul);
-        ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
+        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
-        String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/")+1);
+        String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
         System.out.println(String.format("setupConsent created consent with id '%s' at location '%s'", createdLocation, consent_id));
         return consent_id;
     }
@@ -114,7 +116,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest{
     //  HELPER METHODS
     //
 
-    private String consentDulPath(String consentId){
+    private String consentDulPath(String consentId) {
         return consentPath(consentId) + "/dul";
     }
 }

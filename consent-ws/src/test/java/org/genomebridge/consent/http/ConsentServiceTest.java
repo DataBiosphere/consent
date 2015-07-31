@@ -8,7 +8,9 @@ import java.net.URLEncoder;
 
 public abstract class ConsentServiceTest extends AbstractTest {
 
-    public String consentPath() { return path2Url("/consent"); }
+    public String consentPath() {
+        return path2Url("/consent");
+    }
 
     public String consentPath(String id) {
         try {

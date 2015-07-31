@@ -19,11 +19,9 @@ import com.sun.jersey.api.client.GenericType;
 
 public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED
-            .getStatusCode();
+    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
     public static final int OK = ClientResponse.Status.OK.getStatusCode();
-    public static final int BADREQUEST = ClientResponse.Status.BAD_REQUEST
-            .getStatusCode();
+    public static final int BADREQUEST = ClientResponse.Status.BAD_REQUEST.getStatusCode();
     public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
     private static final String DATA_REQUEST_ID = "1";
     private static final String DATA_REQUEST_ID_2 = "2";
@@ -68,8 +66,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId()), created));
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
-        assertThat(created.getElectionType()).isEqualTo(
-                ElectionType.DATA_ACCESS.getValue());
+        assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
@@ -80,10 +77,11 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     public void deleteElection(Integer electionId) {
         Client client = new Client();
-        List<Vote> votes =  get(client, voteDataRequestPath(DATA_REQUEST_ID)).getEntity(new GenericType<List<Vote>>() {});
-        for(Vote vote : votes){
-        	checkStatus(OK,
-                    delete(client, voteConsentIdPath(DATA_REQUEST_ID, vote.getVoteId())));	
+        List<Vote> votes = get(client, voteDataRequestPath(DATA_REQUEST_ID)).getEntity(new GenericType<List<Vote>>() {
+        });
+        for (Vote vote : votes) {
+            checkStatus(OK,
+                    delete(client, voteConsentIdPath(DATA_REQUEST_ID, vote.getVoteId())));
         }
         checkStatus(OK,
                 delete(client, electionDataRequestPathById(DATA_REQUEST_ID, electionId)));

@@ -45,7 +45,6 @@ import java.util.EnumSet;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-
 /**
  * Top-level entry point to the entire application.
  * <p/>
@@ -80,7 +79,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
             DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
             DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO);
-            DatabaseDACUserAPI.initInstance(jdbi, dacUserDAO);
+            DatabaseDACUserAPI.initInstance(dacUserDAO);
             DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
             DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
             final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
