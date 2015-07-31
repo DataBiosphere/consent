@@ -1,7 +1,7 @@
 package org.genomebridge.consent.http.db;
 
 import org.genomebridge.consent.http.models.Consent;
-import org.genomebridge.consent.http.models.UseRestriction;
+import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 

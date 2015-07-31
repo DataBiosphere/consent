@@ -7,7 +7,7 @@ import com.sun.jersey.multipart.FormDataBodyPart;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.genomebridge.consent.http.cloudstore.GCSStore;
 import org.genomebridge.consent.http.models.Consent;
-import org.genomebridge.consent.http.models.Everything;
+import org.genomebridge.consent.http.models.grammar.Everything;
 import org.genomebridge.consent.http.resources.DataUseLetterResource;
 import org.junit.Before;
 import org.junit.ClassRule;

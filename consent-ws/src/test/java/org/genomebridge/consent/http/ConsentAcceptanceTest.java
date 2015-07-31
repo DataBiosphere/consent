@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.genomebridge.consent.http.models.*;
+import org.genomebridge.consent.http.models.grammar.*;
 import org.junit.ClassRule;
 import org.junit.Test;
 

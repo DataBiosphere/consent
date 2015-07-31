@@ -1,20 +1,23 @@
-package org.genomebridge.consent.http.models;
+package org.genomebridge.consent.http.models.grammar;
 
 import com.google.common.base.Objects;
 
 import java.util.Arrays;
 
-public class And extends UseRestriction {
+public class Or extends UseRestriction {
 
-    private String type = "and";
+    private String type = "or";
 
     private UseRestriction[] operands;
 
-    public And() {
+    public Or() {
     }
 
-    public And(UseRestriction... operands) {
+    public Or(UseRestriction... operands) {
         this.operands = operands;
+        if (operands.length < 2) {
+            throw new IllegalArgumentException("Disjunction must have at least two operands");
+        }
     }
 
     public String getType() {
@@ -36,8 +39,8 @@ public class And extends UseRestriction {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof And &&
-                Arrays.deepEquals(this.operands, ((And) o).operands);
+        return o instanceof Or &&
+                Arrays.deepEquals(this.operands, ((Or) o).operands);
     }
 
     public boolean visitAndContinue(UseRestrictionVisitor visitor) {

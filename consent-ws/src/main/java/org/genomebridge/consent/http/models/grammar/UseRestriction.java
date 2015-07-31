@@ -1,4 +1,4 @@
-package org.genomebridge.consent.http.models;
+package org.genomebridge.consent.http.models.grammar;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 /**
  * Consent Representation object.

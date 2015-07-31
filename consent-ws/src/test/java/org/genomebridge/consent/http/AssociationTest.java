@@ -9,7 +9,7 @@ import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
-import org.genomebridge.consent.http.models.Everything;
+import org.genomebridge.consent.http.models.grammar.Everything;
 import org.junit.ClassRule;
 import org.junit.Test;
 
