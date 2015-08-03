@@ -13,7 +13,7 @@
     </parent>
 
     <properties>
-        <java.version>1.7</java.version>
+        <java.version>1.8</java.version>
         <dropwizard.version>0.7.0</dropwizard.version>
         <driver>org.hsqldb.jdbc.JDBCDriver</driver>
         <url>jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true</url>
