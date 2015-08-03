@@ -45,7 +45,7 @@ There are two files to configure to run this app in local environment:
 
 ```
     <properties>
-        <java.version>1.7</java.version>
+        <java.version>1.8</java.version>
         <dropwizard.version>0.7.0</dropwizard.version>
         <driver>com.mysql.jdbc.Driver</driver>
         <url>jdbc:mysql://localhost:3306/consent</url>
