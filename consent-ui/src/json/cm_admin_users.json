@@ -1,0 +1,70 @@
+{
+    "manage_users": [
+        {
+            "name": "Walter Lo Forte",
+            "googleId": "wloforte@broadinstitute.org",
+            "roles": {
+                "admin": "enabled",
+                "member": "disabled",
+                "chairperson": "enabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Veronica Vicario",
+            "googleId": "vvicario@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Anabella Racciopi",
+            "googleId": "aracciopi@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Santiago Saucedo",
+            "googleId": "ssaucedo@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Nadya Lopez Zalba",
+            "googleId": "nlopez@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Diego Gil",
+            "googleId": "dgil@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "disabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "enabled"
+            }
+        }
+    ]
+}

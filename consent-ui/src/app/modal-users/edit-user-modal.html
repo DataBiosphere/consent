@@ -1,0 +1,126 @@
+<div class="modal-dialog modal-add-dul">
+    <div class="modal-content">
+        <div class="modal-header admin-modal-header">
+            <button type="button" class=" modal-close-btn close" ng-click="ModalUsers.cancel()"><span aria-hidden="true">&times;</span></button>
+            <h2 class="cm-title-admin common-color">
+                <img src="../assets/images/icon_edit_user.png" alt="Edit User icon" class="cm-icons">
+                <span>Edit User</span>
+                <div class="cm-title-description">Edit a User in the system</div>
+            </h2>
+        </div>
+        <div class="modal-footer">
+            <form class="form-horizontal" id="voteForm">
+                <fieldset>
+                    <div class="form-group admin-form-group first-form-group">
+                        <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label common-color">Name</label>
+                        <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
+                            <input type="text"
+                                   name="inputName"
+                                   class="form-control col-lg-12 vote-input"
+                                   placeholder="User name">
+                        </div>
+                    </div>
+                    <div class="form-group admin-form-group ">
+                        <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label common-color">Google account id</label>
+                        <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
+                            <input type="text"
+                                   name="inputGoogleId"
+                                   class="form-control col-lg-12 vote-input"
+                                   placeholder="e.g. username@broadinstitute.org">
+                        </div>
+                    </div>
+                    <div class="form-group admin-form-group ">
+                        <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label common-color">Roles</label>
+                        <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                                <div class="radio">
+                                    <input type="radio" id="radio_member" class="checkbox-inline rp-checkbox" name="radioRoles" ng-click="replaceChairpersonAlert()">
+                                    <label class="regular-checkbox rp-choice-questions"  ng-model="radioModel" for="radio_member">Member</label>
+                                </div>
+                                <div class="radio">
+                                    <input type="radio" id="radio_chairperson" class="checkbox-inline rp-checkbox" name="radioRoles">
+                                    <label class="regular-checkbox rp-choice-questions" ng-model="radioModel" for="radio_chairperson">Chairperson</label>
+                                </div>
+                                <div class="radio">
+                                    <input type="radio" id="radio_alumni" class="checkbox-inline rp-checkbox" name="radioRoles" ng-click="replaceRoleAlert()">
+                                    <label class="regular-checkbox rp-choice-questions"  ng-model="radioModel" for="radio_alumni">Alumni</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                                <div class="checkbox">
+                                    <input id="checkAdmin" type="checkbox" class="checkbox-inline rp-checkbox" name="checkRoles">
+                                    <label ng-model="checkModel.admin" class="regular-checkbox rp-choice-questions" for="checkAdmin">Admin</label>
+                                </div>
+
+                                <div class="checkbox">
+                                    <input id="checkResearcher" type="checkbox" class="checkbox-inline rp-checkbox" name="checkRoles" ng-click="newUserAlert()">
+                                    <label ng-model="checkModel.researcher" class="regular-checkbox rp-choice-questions" for="checkResearcher">Researcher</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group alert-form-group">
+                        <div class="admin-alerts">
+                            <alert ng-repeat="alert in alerts" type="{{alert.type}}" class="alert-title cancel-color"
+                                   close="closeAlert($index)">
+                                <h4>{{alert.title}}</h4>{{alert.msg}}
+                                <div class="warning">{{alert.warning}}</div>
+                                    <span ng-if="alert.alertType == 1">
+                                        <div class="row">
+                                            <div class="alert-table-head">
+                                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-4 alert-table-subtitle">Consent name</div>
+                                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-subtitle">User to delegate</div>
+                                            </div>
+                                            <div class="alert-table-body">
+                                                <hr class="alert-table-separator">
+                                                <div class="row">
+                                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-items">Dr. Smith Breast Cancer set 5</div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-items alertSelect">
+                                                        <select class="alert-table-select" ng-model="myselect_users" ng-options="o as o for o in options_users" required>
+                                                            <option value="">Select a User </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <hr class="pvotes-separator">
+                                                <div class="row">
+                                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-items">Dr. Smith Breast Cancer set 12</div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-items alertSelect">
+                                                        <select class="alert-table-select" ng-model="myselect_users2" ng-options="o as o for o in options_users2" required>
+                                                            <option value="">Select a User </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <hr class="pvotes-separator">
+                                                <div class="row">
+                                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-items">Dr. Smith Breast Cancer set 13</div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 alert-table-items alertSelect">
+                                                        <select class="alert-table-select" ng-model="myselect_users3" ng-options="o as o for o in options_users3" required>
+                                                            <option value="">Select a User </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <hr class="pvotes-separator">
+                                            </div>
+                                        </div>
+                                    </span>
+                                    <span ng-if="alert.alertType == 3">
+                                        <div class="alertSingleSelect">
+                                            <select class="alert-select" name="select_chairperson" ng-model="myselect" ng-options="o as o for o in options" required>
+                                                <option value="">Select a User </option>
+                                            </select>
+                                        </div>
+                                    </span>
+                            </alert>
+                        </div>
+                    </div>
+
+                    <div class="admin-modal-footer">
+                        <button type="button" class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn common-background" ng-click="ModalUsers.ok()">Edit</button>
+                        <button type="button" class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn dismiss-background" ng-click="ModalUsers.cancel()">Cancel</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
