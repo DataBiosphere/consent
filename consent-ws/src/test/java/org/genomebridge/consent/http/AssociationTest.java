@@ -1,10 +1,7 @@
 package org.genomebridge.consent.http;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.fest.assertions.api.Assertions.fail;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.genomebridge.consent.http.models.Consent;
@@ -12,14 +9,16 @@ import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.grammar.Everything;
 import org.junit.ClassRule;
 import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.fail;
+import java.util.UUID;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 
 /**
  * Consent Association Tests
@@ -353,7 +352,7 @@ public class AssociationTest extends ConsentServiceTest {
 
     private String setupConsent() {
         Client client = new Client();
-        Consent rec = new Consent(false, new Everything());
+        Consent rec = new Consent(false, new Everything(), UUID.randomUUID().toString());
         ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

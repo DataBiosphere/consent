@@ -2,6 +2,7 @@ package org.genomebridge.consent.http.service;
 
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
+import org.genomebridge.consent.http.models.ConsentManage;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
@@ -47,5 +48,7 @@ public interface ConsentAPI {
     String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
 
     Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
+
+    List<ConsentManage> describeConsentManage();
 
 }

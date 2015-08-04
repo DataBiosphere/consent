@@ -14,11 +14,12 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 @RegisterMapper({ElectionMapper.class})
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
-    @SqlQuery("select electionId from election  where referenceId = :referenceId")
-    Integer getElectionByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select electionId from election  where referenceId = :referenceId and status = 'Open'")
-    Integer getOpenElectionByReferenceId(@Bind("referenceId") String referenceId);
+    Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
+    
+    @SqlQuery("select * from election  where referenceId = :referenceId")
+    List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlUpdate("insert into election (electionType, finalVote, finalRationale, status, createDate,referenceId) values ( :electionType, :finalVote, :finalRationale, :status, :createDate,:referenceId)")
     @GetGeneratedKeys
@@ -43,9 +44,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select e.electionId,e.finalVote,e.status,e.createDate,e.referenceId, e.finalRationale,et.type electionType from election e "
             + " inner join electiontype et on e.electionType = et.typeId"
-            + " and  e.referenceId = :referenceId")
-    Election findElectionByReferenceId(@Bind("referenceId") String referenceId);
-
+            + " and  e.referenceId = :referenceId and e.status = 'Open'")
+    Election getOpenElectionByReferenceId(@Bind("referenceId") String referenceId);
+    
     @SqlQuery("select e.electionId,e.finalVote,e.status,e.createDate,e.referenceId, e.finalRationale,et.type electionType from election e "
             + " inner join electiontype et on e.electionType = et.typeId"
             + " and  e.electionId = :electionId")

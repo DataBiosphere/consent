@@ -1,10 +1,23 @@
 package org.genomebridge.consent.http;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataBodyPart;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.util.UUID;
+
+import javax.ws.rs.core.MediaType;
+
 import org.genomebridge.consent.http.cloudstore.GCSStore;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.Everything;
@@ -15,19 +28,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.core.MediaType;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.text.ParseException;
-
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.when;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataBodyPart;
 
 public class DataUseLetterResourceTest extends ConsentServiceTest {
 
@@ -104,7 +108,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
 
     private String setupConsent(String dul) {
         Client client = new Client();
-        Consent rec = new Consent(false, new Everything(), dul);
+        Consent rec = new Consent(false, new Everything(), dul, "structuredDataUseLetter", UUID.randomUUID().toString());
         ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

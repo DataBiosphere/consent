@@ -14,5 +14,6 @@
     
     <include file="changesets/changelog-consent-4.0.xml"/>
 
+    <include file="changesets/changelog-consent-5.0.xml"/>
 
 </databaseChangeLog>

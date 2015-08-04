@@ -94,21 +94,22 @@
                 animation: false,
                 templateUrl: 'app/modals/final-vote-modal.html',
                 controller: 'Modal',
-                controllerAs: 'Modal',
+                controllerAs: 'Modal'
             });
 
             modalInstance.result.then(function () {
                 $scope.election.status = 'Closed';
-                cmElectionService.postElection($scope.election).$promise.then(
-                //success
+                cmElectionService.updateElection($scope.election).$promise.then(
+                    //success
                     function() {
                         $state.go('chair_console');
                     },
-                        //error
+                    //error
                     function(){ alert("Error while updating final vote.");}
                 );
             });
         }
+
 
         function sendReminder(voteId) {
             alert("Reminder sent to: " + getEmailFromVoteList(voteId, electionReview.reviewVote));

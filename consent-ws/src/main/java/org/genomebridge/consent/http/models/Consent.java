@@ -23,19 +23,30 @@ public class Consent {
     @JsonProperty
     public UseRestriction useRestriction;
 
+    @JsonProperty
+    public String name;
+
+    @JsonProperty
+    public String structuredDataUseLetter;
+
+
     public Consent() {
     }
 
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction) {
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String name) {
+        this.name = name;
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
     }
 
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter) {
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,String structuredDataUseLetter, String name) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
         this.dataUseLetter = dataUseLetter;
+        this.structuredDataUseLetter = structuredDataUseLetter;
+        this.name = name;
     }
+
 
     @JsonProperty
     public String getDataUseLetter() {
@@ -66,5 +77,37 @@ public class Consent {
     public void setUseRestriction(UseRestriction useRestriction) {
         this.useRestriction = useRestriction;
     }
+
+    @JsonProperty
+    public String getStructuredDataUseLetter() {
+        return structuredDataUseLetter;
+    }
+
+    @JsonProperty
+    public void setStructuredDataUseLetter(String structuredDataUseLetter) {
+        this.structuredDataUseLetter = structuredDataUseLetter;
+    }
+
+    @JsonProperty
+    public String getName() {
+        return name;
+    }
+
+    @JsonProperty
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    @JsonProperty
+	public String getConsentId() {
+		return consentId;
+	}
+    
+    @JsonProperty
+	public void setConsentId(String consentId) {
+		this.consentId = consentId;
+	}
+    
+    
 
 }

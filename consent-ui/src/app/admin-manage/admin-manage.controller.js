@@ -5,7 +5,7 @@
         .controller('AdminManage', AdminManage);
 
     /* ngInject */
-    function AdminManage($http, cmPaginatorService, $modal) {
+    function AdminManage(cmPaginatorService, $modal, cmConsentService, cmElectionService) {
 
         var lists = {'dul': []};
         var list_max_items = 10;
@@ -34,43 +34,54 @@
         init();
 
         function init() {
-            $http.get('json/cm_admin.json').then(function (response) {
-                lists['dul'] = response.data['manage_dul'];
-                vm.changePage('dul', 0);
-            });
+            cmConsentService.findConsentManage(lists, vm);
         }
 
-        function openCreate () {
+        function openCreate (consentId) {
 
             var modalInstance = $modal.open({
                 animation: false,
                 templateUrl: 'app/modals/create-modal.html',
                 controller: 'Modal',
-                controllerAs: 'Modal'
+                controllerAs: 'Modal',
+                resolve: {
+                    consentId : function(){
+                        vm.selectedConsentId = consentId;
+                    }
+                }
             });
 
-            modalInstance.result.then(function (selectedItem) {//selectedItem - params to apply when the fc was successful
-                //what to do if it was accepted
-                }, function () {
-                //what to do if the modal was canceled
-            });
-        }
+            modalInstance.result.then(function () {
+                cmElectionService.createElection(vm.selectedConsentId).$promise.then(function() {
+                        init();
+                    });
+                });
+            }
 
-        function openCancel () {
+        function openCancel (election) {
 
             var modalInstance = $modal.open({
                 animation: false,
                 templateUrl: 'app/modals/cancel-modal.html',
                 controller: 'Modal',
-                controllerAs: 'Modal'
+                controllerAs: 'Modal',
+                resolve: {
+                    election: function(){
+                        vm.selectedElection = election;
+                    }
+                }
             });
 
-            modalInstance.result.then(function (selectedItem) {//selectedItem - params to apply when the fc was successful
-                //what to do if it was accepted
-            }, function () {
-                //what to do if the modal was canceled
+            modalInstance.result.then(function () {
+                var electionToUpdate = new Object();
+                electionToUpdate.status = 'Canceled';
+                electionToUpdate.referenceId = vm.selectedElection.consentId;
+                electionToUpdate.electionId = vm.selectedElection.electionId;
+                cmElectionService.updateElection(electionToUpdate).$promise.then(function() {
+                    init();
+                });
             });
-        }
+          }
 
         function addDul () {
 
@@ -81,14 +92,14 @@
                 controllerAs: 'Modal'
             });
 
-            modalInstance.result.then(function (selectedItem) {//selectedItem - params to apply when the fc was successful
+            modalInstance.result.then(function () {//selectedItem - params to apply when the fc was successful
                 //what to do if it was accepted
             }, function () {
                 //what to do if the modal was canceled
             });
         }
 
-        function editDul () {
+        function editDul (consentId) {
 
             var modalInstance = $modal.open({
                 animation: false,
@@ -97,8 +108,8 @@
                 controllerAs: 'Modal'
             });
 
-            modalInstance.result.then(function (selectedItem) {//selectedItem - params to apply when the fc was successful
-                //what to do if it was accepted
+            modalInstance.result.then(function () {//selectedItem - params to apply when the fc was successful
+
             }, function () {
                 //what to do if the modal was canceled
             });

@@ -101,7 +101,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     @Override
     public void deleteVotes(String referenceId)
             throws IllegalArgumentException, UnknownIdentifierException {
-        if (electionDAO.getElectionByReferenceId(referenceId) == null) {
+        if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException();
         }
         voteDAO.deleteVotes(referenceId);
@@ -138,7 +138,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
 
     private Integer getElectionId(String referenceId) {
-        Integer electionId = electionDAO.getElectionByReferenceId(referenceId);
+        Integer electionId = electionDAO.getOpenElectionIdByReferenceId(referenceId);
         if (electionId == null) {
             throw new IllegalArgumentException("The specified object does not have an election");
         }
