@@ -5,12 +5,13 @@
         .controller('DulReview', DulReview);
 
 
-    function DulReview($scope, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService)
+    function DulReview($scope, $modal, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService)
     {
         $scope.consentDulUrl = consent.dataUseLetter;
         $scope.voteStatus = vote.vote;
         $scope.isFormDisabled = (election.status == 'Closed');
         $scope.rationale = vote.rationale;
+        $scope.isNew = null;
 
         $scope.positiveVote = function(){
             $scope.rationale = null;
@@ -31,26 +32,35 @@
                 vote.rationale = $scope.rationale;
                 var result;
                 if(vote.createDate == null){
+                    $scope.isNew = true;
                     result = cmVoteService.postVote(consent.consentId, vote).$promise
                 } else {
+                    $scope.isNew = false;
                     result = cmVoteService.updateVote(consent.consentId, vote).$promise
                 }
                 result.then(
                     //success
                     function(){
-                        alert("Vote updated.");
-                        if($rootScope.currentUser.memberStatus === USER_ROLES.chairperson){
-                            $state.go('chair_console');
-                        }else {
-                            $state.go('user_console');
-                        }
-
-                        console.log();
+                        var modalInstance = $modal.open({
+                            animation: false,
+                            templateUrl: 'app/modals/confirmation-modal.html',
+                            controller: 'Modal',
+                            controllerAs: 'Modal',
+                            scope: $scope
+                        });
+                        modalInstance.result.then(function () {
+                            if($rootScope.currentUser.memberStatus === USER_ROLES.chairperson){
+                                   $state.go('chair_console');
+                            }else {
+                                   $state.go('user_console');
+                                  }
+                            console.log();
+                        });
                     },
                     //error
                     function(){alert("Error updating vote.")});
             } else  {
-                alert("The vote hasn't changed. It won't be updated")
+                alert("Error: Your vote hasn't been changed.");
             }
         }
     }

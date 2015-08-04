@@ -4,7 +4,7 @@
     angular.module('cmReviewResults')
         .controller('DulReviewResults', DulReviewResults);
 
-    function DulReviewResults($scope, $state, cmElectionService, electionReview){
+    function DulReviewResults($scope, $modal, $state, cmElectionService, electionReview){
 
         $scope.chartData = {
             'dul': [
@@ -90,15 +90,24 @@
         }
 
         function logVote() {
-            $scope.election.status = 'Closed';
-            cmElectionService.postElection($scope.election).$promise.then(
+            var modalInstance = $modal.open({
+                animation: false,
+                templateUrl: 'app/modals/final-vote-modal.html',
+                controller: 'Modal',
+                controllerAs: 'Modal',
+            });
+
+            modalInstance.result.then(function () {
+                $scope.election.status = 'Closed';
+                cmElectionService.postElection($scope.election).$promise.then(
                 //success
-                function(){
-                    alert("Final Vote updated")
-                    $state.go('chair_console');
-                },
-                //error
-                function(){ alert("Error while updating final vote.");});
+                    function() {
+                        $state.go('chair_console');
+                    },
+                        //error
+                    function(){ alert("Error while updating final vote.");}
+                );
+            });
         }
 
         function sendReminder(voteId) {

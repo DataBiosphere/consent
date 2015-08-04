@@ -92,7 +92,7 @@
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
-                                <button ng-click="logVote()" ng-disabled="election.status == 'Closed'"
+                                <button ng-click="logVote()" ng-disabled="election.finalVote == null"
                                         class="btn btn-primary col-lg-12 col-md-12 col-sm-12 col-xs-12 vote-button dul-background">
                                     Vote
                                 </button>
