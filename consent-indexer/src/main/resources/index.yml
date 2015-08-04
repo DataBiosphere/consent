@@ -1,3 +1,3 @@
-clusterName: elasticsearch
-servers:     [10.1.0.186]
+clusterName: elasticsearch_ci
+servers:     [50.17.73.156]
 indexName:   ontology

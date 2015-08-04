@@ -15,6 +15,10 @@
     <properties>
         <java.version>1.7</java.version>
         <dropwizard.version>0.7.0</dropwizard.version>
+        <driver>org.hsqldb.jdbc.JDBCDriver</driver>
+        <url>jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true</url>
+        <username>sa</username>
+        <password>sa</password>
     </properties>
 
     <build>
@@ -39,18 +43,18 @@
             <plugin>
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <phase>process-test-resources</phase>
                         <configuration>
                             <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                             <dropFirst>true</dropFirst>
-                            <changeLogFile>src/main/resources/migrations.xml</changeLogFile>
-                            <driver>org.hsqldb.jdbc.JDBCDriver</driver>
-                            <url>jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true</url>
-                            <username>sa</username>
-                            <password>sa</password>
+                            <changeLogFile>src/main/resources/changelog-master.xml</changeLogFile>
+                            <driver>${driver}</driver>
+                            <url>${url}</url>
+                            <username>${username}</username>
+                            <password>${password}</password>
                         </configuration>
                         <goals>
                             <goal>update</goal>
@@ -87,11 +91,49 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.genomebridge.consent.http.ConsentApplication</mainClass>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>sql-maven-plugin</artifactId>
+                <version>1.5</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>5.1.36</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.hsqldb</groupId>
+                        <artifactId>hsqldb</artifactId>
+                        <version>2.3.2</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>initialize-test-inserts-db</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <driver>${driver}</driver>
+                            <url>${url}</url>
+                            <username>${username}</username>
+                            <password>${password}</password>
+                            <autocommit>true</autocommit>
+                            <srcFiles>
+                                <srcFile>src/test/resources/sql/insert.sql</srcFile>
+                            </srcFiles>
                         </configuration>
                     </execution>
                 </executions>
@@ -104,31 +146,37 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-assets</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-logging</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-jdbi</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-migrations</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
@@ -147,6 +195,42 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>1.20.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-storage</artifactId>
+            <version>v1-rev35-1.20.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-multipart</artifactId>
+            <version>1.18.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jvnet</groupId>
+            <artifactId>mimepull</artifactId>
+            <version>1.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client</artifactId>
+            <version>1.20.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
@@ -157,9 +241,16 @@
         </dependency>
 
         <dependency>
-        	<groupId>io.dropwizard</groupId>
-        	<artifactId>dropwizard-metrics-graphite</artifactId>
-        	<version>${dropwizard.version}</version>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-metrics-graphite</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+
     </dependencies>
 </project>

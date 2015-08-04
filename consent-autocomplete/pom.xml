@@ -11,26 +11,23 @@
   <packaging>jar</packaging>
   <name>Consent Management: Autocomplete Services</name>
 
-  <properties>
-    <jetty.version>9.0.7.v20131107</jetty.version>
-  </properties>
-
   <build>
     <finalName>consent-autocomplete</finalName>
     <plugins>
       <plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-jar-plugin</artifactId>
-	<configuration>
-	  <archive>
-	    <manifest>
-	      <addClasspath>true</addClasspath>
-	      <classpathPrefix>lib/</classpathPrefix>
-	      <mainClass>org.genomebridge.consent.autocomplete.AutocompleteApplication</mainClass>
-	    </manifest>
-	  </archive>
-	</configuration>
-      </plugin>	
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>lib/</classpathPrefix>
+              <mainClass>org.genomebridge.consent.autocomplete.AutocompleteApplication</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -53,116 +50,120 @@
         </executions>
       </plugin>
 
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-shade-plugin</artifactId>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <finalName>autocomplete</finalName>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+                <exclude>META-INF/LICENSE</exclude>
+                <exclude>META-INF/license</exclude>
+              </excludes>
+            </filter>
+          </filters>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
             <configuration>
-                <finalName>autocomplete</finalName>
-                <createDependencyReducedPom>true</createDependencyReducedPom>
-                <filters>
-                    <filter>
-                        <artifact>*:*</artifact>
-                        <excludes>
-                            <exclude>META-INF/*.SF</exclude>
-                            <exclude>META-INF/*.DSA</exclude>
-                            <exclude>META-INF/*.RSA</exclude>
-                            <exclude>META-INF/LICENSE</exclude>
-                            <exclude>META-INF/license</exclude>
-                        </excludes>
-                    </filter>
-                </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.genomebridge.consent.autocomplete.AutocompleteApplication</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
             </configuration>
-            <executions>
-                <execution>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>shade</goal>
-                    </goals>
-                    <configuration>
-                        <transformers>
-                            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                <mainClass>org.genomebridge.consent.autocomplete.AutocompleteApplication</mainClass>
-                            </transformer>
-                            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                        </transformers>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <dependencies>
-      <dependency>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-servlets</artifactId>
-          <version>${jetty.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlets</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>org.elasticsearch</groupId>
-          <artifactId>elasticsearch</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>org.apache.lucene</groupId>
-          <artifactId>lucene-core</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-core</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-assets</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-core</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-testing</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-assets</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-logging</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-testing</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-jdbi</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-logging</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-migrations</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-jdbi</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>org.hsqldb</groupId>
-          <artifactId>hsqldb</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-migrations</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>mysql</groupId>
-          <artifactId>mysql-connector-java</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.hsqldb</groupId>
+      <artifactId>hsqldb</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-client</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-client</artifactId>
+    </dependency>
 
-      <dependency>
-          <groupId>com.hubspot.dropwizard</groupId>
-          <artifactId>dropwizard-guice</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
 
+    <dependency>
+      <groupId>com.hubspot.dropwizard</groupId>
+      <artifactId>dropwizard-guice</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.genomebridge</groupId>
+      <artifactId>genomebridge-ontology_2.10</artifactId>
+    </dependency>
   </dependencies>
 </project>

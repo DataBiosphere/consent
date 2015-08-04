@@ -1,34 +1,19 @@
-/**
- * Copyright 2014 Broad Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
-import org.genomebridge.consent.http.resources.ConsentResource;
 
 import javax.ws.rs.core.UriInfo;
+import java.util.Collection;
 import java.util.List;
 
-/**
- * CRUD!!
- */
 public interface ConsentAPI {
 
-    public void create(String id, ConsentResource rec) throws DuplicateIdentifierException;
-    public ConsentResource retrieve( String id ) throws UnknownIdentifierException;
-    public void update(String id, ConsentResource rec) throws UnknownIdentifierException;
+    Consent create(Consent rec);
+    Consent retrieve( String id ) throws UnknownIdentifierException;
+    Collection<Consent> findConsentsByAssociationType( String associationType );
+    Collection<Consent> retrieve( List<String> ids );
+    void update(String id, Consent rec) throws UnknownIdentifierException;
 
     /**
      * This isn't actually used in the web services at the moment, but i'm including it for
@@ -38,13 +23,20 @@ public interface ConsentAPI {
      * @throws UnknownIdentifierException If the identifier names an inactive or non-existent consent
      * in the database.
      */
-    public void delete(String id) throws UnknownIdentifierException;
+    void delete(String id) throws UnknownIdentifierException;
 
     // ConsentAssociation methods
 
-    public List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations);
-    public List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations);
-    public List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
-    public List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId);
-    public List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
+    List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations);
+    List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations);
+    List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
+    List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId);
+    List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
+
+    // Data Use Letter methods.
+    Consent updateConsentDul(String consentId, String dataUseLetter) throws UnknownIdentifierException;
+    String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
+    Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
+
+
 }
