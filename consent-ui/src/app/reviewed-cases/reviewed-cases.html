@@ -1,0 +1,113 @@
+<div ng-include src="'app/header/header.html'"></div>
+<div class="container" ng-controller="ReviewedCases">
+    <h2 class="cm-title common-color">
+        <img src="assets/images/icon_reviewed.png" alt="Reviewed cases icon" class="cm-icons">Reviewed Cases Record<br>
+        <div class="cm-title-description">List of Reviewed cases and their results</div>
+    </h2>
+    <hr class="section-separator">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+        <div class="row">
+            <h2 class="col-lg-8 col-md-8 col-sm-8 col-xs-12 pvotes-box-title dul-color">
+                <img src="assets/images/icon_dul.png" alt="DUL icon" class="pvotes-icons">Data Use Limitations Reviewed Cases
+                <div class="pvotes-box-title-description">List of Data Use Limitations Reviewed Cases and their results</div>
+            </h2>
+            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 search-reviewed">
+                <div class="search-text">
+                    <i class="glyphicon glyphicon-search dul-color"></i>
+                    <input type="search" class="form-control" placeholder="Enter search term..." ng-model="searchDULcases"/>
+                </div>
+            </div>
+        </div>
+        <div class="jumbotron box-vote-singleresults">
+            <div class="row">
+                <div class="pvotes-box-head">
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-box-subtitle dul-color">Consent id</div>
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-box-subtitle dul-color">Final Result Date</div>
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 center-text pvotes-box-subtitle dul-color">Final Result</div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 center-text pvotes-box-subtitle dul-color">Record</div>
+                    <hr class="pvotes-main-separator">
+                </div>
+                <div class="pvotes-box-body">
+                    <div ng-repeat="election in ReviewedCases.electionsList.dul | filter: searchDULcases">
+                        <hr class="pvotes-separator">
+                        <div class="row pvotes-main-list reviewed-cases-list">
+                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.consentId}}</div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.date}}</div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id center-text bold">
+                                <span ng-if="election.result == 'yes'" class="dul-color">Yes</span>
+                                <span ng-if="election.result == 'no'">No</span>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 btn-record">
+                                <a href="#" class="{{election.record}}">Record</a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="pvotes-separator">
+                    <div class="pvotes-pagination">
+                        <ul class="pagination">
+                            <li><a ng-click="ReviewedCases.changePage('dul', ReviewedCases.activePage.dul - 1)">&laquo;</a></li>
+                            <li ng-repeat="page in ReviewedCases.currentPages.dul">
+                                <a ng-click="ReviewedCases.changePage('dul', page)"
+                                   ng-class="{ 'active-case': ReviewedCases.activePage.dul == page}">{{page + 1}}</a>
+                            </li>
+                            <li><a ng-click="ReviewedCases.changePage('dul', ReviewedCases.activePage.dul + 1)">&raquo;</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+        <div class="row">
+            <h2 class="col-lg-8 col-md-8 col-sm-8 col-xs-12 pvotes-box-title access-color">
+                <img src="assets/images/icon_access.png" alt="Access icon" class="pvotes-icons">Data Access Request Reviewed Cases
+                <div class="pvotes-box-title-description">List of Data Access Request Reviewed Cases and their results</div>
+            </h2>
+            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 search-reviewed">
+                <div class="search-text">
+                    <i class="glyphicon glyphicon-search access-color"></i>
+                    <input type="search" class="form-control" placeholder="Enter search term..." ng-model="searchAccesscases"/>
+                </div>
+            </div>
+        </div>
+        <div class="jumbotron box-vote-singleresults">
+            <div class="row">
+                <div class="pvotes-box-head">
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-box-subtitle access-color">Data Request Id</div>
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-box-subtitle access-color">Final Result Date</div>
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 center-text pvotes-box-subtitle access-color">Final Result</div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 center-text pvotes-box-subtitle access-color">Record
+                    </div>
+                    <hr class="pvotes-main-separator">
+                </div>
+                <div class="pvotes-box-body" id="searchTextResults">
+                    <div ng-repeat="election in ReviewedCases.electionsList.access | filter: searchAccesscases">
+                        <hr class="pvotes-separator">
+                        <div class="row pvotes-main-list admin-users-list">
+                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.dataRequestId}}</div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.date}}</div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id center-text bold">
+                                <span ng-if="election.result == 'yes'" class="access-color">Yes</span>
+                                <span ng-if="election.result == 'no'">No</span>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 btn-edit">
+                                <a href="#" class="{{election.record}}">Record</a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="pvotes-separator">
+                    <div class="pvotes-pagination">
+                        <ul class="pagination">
+                            <li><a ng-click="ReviewedCases.changePage('access', ReviewedCases.activePage.access - 1)">&laquo;</a></li>
+                            <li ng-repeat="page in ReviewedCases.currentPages.access">
+                                <a ng-click="ReviewedCases.changePage('access', page)"
+                                   ng-class="{ 'active-case': ReviewedCases.activePage.access == page}">{{page + 1}}</a>
+                            </li>
+                            <li><a ng-click="ReviewedCases.changePage('access', ReviewedCases.activePage.access + 1)">&raquo;</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

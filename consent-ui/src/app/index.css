@@ -81,6 +81,9 @@ small {
 .center-text {
     text-align: center;
 }
+.default-color{
+    color: #777777 !important;
+}
 
 .common-color{
     color: #00609f !important;
@@ -177,6 +180,11 @@ small {
 .drop-li{
     padding: 20px 5px 5px 5px !important;
 }
+.navbar-right .user-dropdown{
+    left: 0!important;
+    right: auto;
+    text-align: left;
+}
 .drop-li .user-dropdown{
     margin-top: 12px;
 }
@@ -204,8 +212,27 @@ small {
     width: 100%;
 }
 
+/*SEARCH*/
+
 .box-search {
-    margin: 12px 0 9px 0 !important;
+    margin: 12px 0 9px 0;
+}
+.search-reviewed {
+    margin-top: 35px !important;
+}
+
+.search-text{
+    position: relative;
+}
+.search-text input {
+    padding-right: 30px;
+    box-shadow: 2px 2px 0 #cccccc;
+}
+.search-text i {
+    position: absolute;
+    right: 0px;
+    padding: 10px 12px;
+    pointer-events: none;
 }
 
 .btn-search:hover, .btn-search:focus, .btn-search:active {
@@ -213,13 +240,19 @@ small {
     border: 1px solid #2FA4E7;
     color: #ffffff !important;
 }
-
 .btn-search {
     background: #ffffff;
     border: 1px solid #ccc;
     transition: background 0.3s ease;
     color: #00609f;
 }
+
+.users-search{
+    height: 40px;
+    box-shadow: 3px 3px 0 #cccccc;
+}
+
+
 /*********************************TITLES & SUBTITLES*/
 
 .cm-title, .cm-title-admin, .cm-subtitle, .cm-subtitle-ultimate, .cm-user-name, .cm-results-subtitle, .cm-box-title {
@@ -736,7 +769,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     text-align: center;
 }
 .pvotes-pagination ul {
-    margin: 10px 0 -10px 0;
+    margin: 10px 0 -5px 0;
 }
 .pvotes-pagination li a {
     background: #eeeeee;
@@ -1205,6 +1238,13 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     opacity: 0;
     filter: alpha(opacity=0);
 }
+.fileName{
+    float: left;
+    vertical-align: baseline;
+    padding: 8px 0 0 15px;
+    font-weight: 500 !important;
+    color: #777777;
+}
 
 /***************************ADMIN USERS*/
 
@@ -1219,9 +1259,8 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #cccccc !important;
 }
 .admin-users-list .enabled{
-    cursor: default !important;
-    color: #2FA4E7 !important;
-}
+     cursor: default !important;
+ }
 
 .admin-users-list .regular-checkbox{
     margin: 0!important;
@@ -1250,11 +1289,15 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #2FA4E7;
     cursor: pointer;
 }
-.btn-edit a:hover{
+.btn-edit a:hover, .btn-record a:hover{
     background: #2FA4E7 !important;
     color: #ffffff;
+    cursor: pointer !important;
 }
 
+input[type="checkbox"][disabled] + label{
+    cursor: not-allowed !important;
+}
 
 /***************************ALERTS*/
 
@@ -1276,7 +1319,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     font-size: 14px !important;
     font-weight: normal !important;
 }
-
 .admin-alerts .warning{
     font-weight: 500 !important;
     line-height: 25px;
@@ -1291,7 +1333,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     padding: 5px 0 5px 20px;
     color: #777777;
 }
-
 .alert-table-body{
     padding: 10px;
 }
@@ -1306,17 +1347,18 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #777777 !important;
     font-size: 14px !important;
 }
+.alert-table-body .item-name{
+    padding: 14px 0 5px 25px;
+}
 .alert-table-body .alert-table-items a{
     color: #2FA4E7 !important;
     padding-left: 0 !important;
     font-weight: 500;
 }
-
 .alert-table-items .alert-select{
     margin: 0 !important;
     position: relative;
 }
-
 .alert-select, .alert-table-select{
     color: #777777;
     font-weight: 500;
@@ -1329,7 +1371,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     font-size: 15px;
     padding: 7px 10px 7px 10px;
 }
-
 .alert-table-select option{
     background: #ffffff !important;
 }
@@ -1366,7 +1407,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     border: none;
     outline: 0;
 }
-
 .alertSelect {
     width: 180px;
     overflow: hidden;
@@ -1396,3 +1436,38 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     border-radius: 6px;
     padding: 15px 20px;
 }
+
+/***************************REVIEWED CASES*/
+
+.reviewed-cases-list .enabled{
+    text-align: left !important;
+    vertical-align: 10%;
+    padding: 10px 20px 7px 0 !important;
+    display: inline;
+    cursor: default !important;
+    color: #2FA4E7!important;
+}
+.reviewed-cases-list .btn-record{
+    margin-top: 8px;
+    text-align: center;
+}
+.reviewed-cases-list .btn-record a{
+    text-align: center;
+    height: 28px;
+    padding: 5px 20px 5px 20px !important;
+    border: 0!important;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    transition: background 0.3s ease !important;
+    background: rgba(204, 204, 204, 0.2) !important;
+    box-shadow: 2px 2px rgba(204, 204, 204, 0.5) !important;
+    color: #2FA4E7;
+    cursor: pointer;
+}
+.reviewed-cases-list a:hover, .btn-record a:hover{
+    background: #2FA4E7 !important;
+    color: #ffffff !important;
+}
+
