@@ -38,6 +38,8 @@ public class ConsentResource extends Resource {
             return Response.ok(updated).build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", id));
+        } catch (Exception e) {
+            return Response.serverError().entity(e).build();
         }
     }
 

@@ -29,9 +29,12 @@ public class Consent {
     @JsonProperty
     public String structuredDataUseLetter;
 
+    @JsonProperty
+    public String dulName;
 
     public Consent() {
     }
+
 
     public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String name) {
         this.name = name;
@@ -39,7 +42,7 @@ public class Consent {
         this.useRestriction = useRestriction;
     }
 
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,String structuredDataUseLetter, String name) {
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter, String structuredDataUseLetter, String name) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
         this.dataUseLetter = dataUseLetter;
@@ -55,7 +58,7 @@ public class Consent {
 
     @JsonProperty
     public void setDataUseLetter(String dataUseLetter) {
-        this.dataUseLetter = dataUseLetter;
+       this.dataUseLetter = dataUseLetter;
     }
 
     @JsonProperty
@@ -97,17 +100,26 @@ public class Consent {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     @JsonProperty
-	public String getConsentId() {
-		return consentId;
-	}
-    
+    public String getConsentId() {
+        return consentId;
+    }
+
     @JsonProperty
-	public void setConsentId(String consentId) {
-		this.consentId = consentId;
-	}
-    
-    
+    public void setConsentId(String consentId) {
+        this.consentId = consentId;
+    }
+
+    @JsonProperty
+    public String getDulName() {
+        return dulName;
+    }
+
+    @JsonProperty
+    public void setDulName(String dulName) {
+        this.dulName = dulName;
+    }
+
 
 }

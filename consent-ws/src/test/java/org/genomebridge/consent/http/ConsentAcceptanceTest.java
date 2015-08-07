@@ -13,6 +13,7 @@ import com.sun.jersey.api.client.ClientResponse;
 
 public class ConsentAcceptanceTest extends ConsentServiceTest {
 
+
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
             new DropwizardAppRule<>(ConsentApplication.class,
@@ -35,17 +36,13 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     public void testUpdateConsent() {
         Client client = new Client();
         Consent rec = new Consent(true,  new Everything(), null, null, UUID.randomUUID().toString());
-
         ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
-
         Consent created = retrieveConsent(client, createdLocation);
-
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
         Consent update = new Consent(false,  new Nothing(), null, null, UUID.randomUUID().toString());
         check200(post(client, createdLocation, update));
-
         Consent updated = retrieveConsent(client, createdLocation);
 
         assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
@@ -93,7 +90,6 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
     private void assertValidConsentResource(Client client, Consent rec) {
         ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
-
         String createdLocation = checkHeader(response, "Location");
         Consent created = retrieveConsent(client, createdLocation);
 

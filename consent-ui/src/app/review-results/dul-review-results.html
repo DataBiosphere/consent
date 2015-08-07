@@ -14,7 +14,9 @@
                 <div class="panel-heading cm-boxhead dul-color">
                     <h4>Data Use Limitations</h4>
                 </div>
-                <div id="dul" class="panel-body cm-boxbody">{{dul}}</div>
+                <div id="dul" class="panel-body cm-boxbody">
+                     <a href="{{dul}}" target="_blank">{{dulName}}</a>
+                </div>
             </div>
         </div>
         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
@@ -22,8 +24,8 @@
                 <div class="panel-heading cm-boxhead dul-color">
                     <h4>Structured Limitations</h4>
                 </div>
-                <div id="ssdur" class="panel-body cm-boxbody">Samples may only be used for the purpose of studying
-                    cancer.
+                <div id="ssdur" class="panel-body cm-boxbody">
+                    {{structuredDataUseLetter}}
                 </div>
             </div>
         </div>

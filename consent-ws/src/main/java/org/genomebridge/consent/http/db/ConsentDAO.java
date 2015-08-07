@@ -12,7 +12,6 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @RegisterMapper({ConsentMapper.class})
 public interface ConsentDAO extends Transactional<ConsentDAO> {
@@ -27,29 +26,30 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, structuredDataUseLetter) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :structuredDataUseLetter)")
+            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, structuredDataUseLetter, dulName) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :structuredDataUseLetter, :dulName)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
-                       @Bind("structuredDataUseLetter") String structuredDataUseLetter);
-
+                       @Bind("structuredDataUseLetter") String structuredDataUseLetter,
+                       @Bind("dulName") String dulName);
 
     @SqlUpdate("update consents set active=false where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
-            "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, " +
-            "name = :name, structuredDataUseLetter = :structuredDataUseLetter " +
+            "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, name = :name, " +
+            "structuredDataUseLetter = :structuredDataUseLetter, dulName = :dulName " +
             "where consentId = :consentId and active = true")
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
-                       @Bind("structuredDataUseLetter") String structuredDataUseLetter);
+                       @Bind("structuredDataUseLetter") String structuredDataUseLetter,
+                       @Bind("dulName") String dulName);
 
     // Consent Association Access Methods
     @SqlQuery("select objectId from consentassociations where consentId = :consentId and associationType = :associationType")

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 
+
 /**
  * Consent Association Tests
  * <p/>
@@ -353,7 +354,7 @@ public class AssociationTest extends ConsentServiceTest {
     private String setupConsent() {
         Client client = new Client();
         Consent rec = new Consent(false, new Everything(), UUID.randomUUID().toString());
-        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
+        ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
         System.out.println(String.format("setupConsent created consent with id '%s' at location '%s'", createdLocation, consent_id));

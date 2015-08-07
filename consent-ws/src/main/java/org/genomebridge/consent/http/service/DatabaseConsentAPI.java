@@ -58,10 +58,16 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public Consent create(Consent rec) {
-        String id = UUID.randomUUID().toString();
-        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter());
+        String id;
+        if (StringUtils.isNotEmpty(rec.consentId)){
+           id = rec.consentId;
+        }else{
+           id = UUID.randomUUID().toString();
+        }
+        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.structuredDataUseLetter, rec.dulName);
         return consentDAO.findConsentById(id);
     }
+
 
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
@@ -93,9 +99,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return StringUtils.join(quotedIds, ",");
     }
 
+
     @Override
     public void update(String id, Consent rec) throws UnknownIdentifierException {
-        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter());
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter(), rec.getDulName());
     }
 
     @Override
@@ -213,8 +220,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Consent updateConsentDul(String consentId, String dataUseLetter) throws UnknownIdentifierException {
+    public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
+        consent.setDulName(dulName);
         consent.setDataUseLetter(dataUseLetter);
         update(consentId, consent);
         return retrieve(consentId);

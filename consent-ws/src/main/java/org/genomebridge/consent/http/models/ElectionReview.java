@@ -13,6 +13,12 @@ public class ElectionReview {
     private String dataUseLetter;
 
     @JsonProperty
+    private String structuredDataUseLetter;
+
+    @JsonProperty
+    private String dulName;
+
+    @JsonProperty
     private List<ElectionReviewVote> reviewVote;
 
     @JsonProperty
@@ -48,5 +54,21 @@ public class ElectionReview {
 
     public void setReviewVote(List<ElectionReviewVote> reviewVote) {
         this.reviewVote = reviewVote;
+    }
+
+    public String getStructuredDataUseLetter() {
+        return structuredDataUseLetter;
+    }
+
+    public void setStructuredDataUseLetter(String structuredDataUseLetter) {
+        this.structuredDataUseLetter = structuredDataUseLetter;
+    }
+
+    public String getDulName() {
+        return dulName;
+    }
+
+    public void setDulName(String dulName) {
+        this.dulName = dulName;
     }
 }

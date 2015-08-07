@@ -35,6 +35,8 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         Consent consent = consentDAO.findConsentById(referenceId);
         review.setDataUseLetter(consent.getDataUseLetter());
         review.setReferenceId(consent.consentId);
+        review.setDulName(consent.getDulName());
+        review.setStructuredDataUseLetter(consent.getStructuredDataUseLetter());
         List<Vote> votes = voteDAO.findVotesByReferenceId(referenceId);
         List<ElectionReviewVote> rVotes = new ArrayList<>();
         for (Vote v : votes) {

@@ -15,7 +15,8 @@
                 <div class="panel-heading cm-boxhead dul-color">
                     <h4>Data Use Limitations</h4>
                 </div>
-                <div id="dul" class="panel-body cm-boxbody">{{consentDulUrl}}
+                <div id="dul" class="panel-body cm-boxbody">
+                    <a href="{{consentDulUrl}}" target="_blank">{{consentDulName}}</a>
                 </div>
             </div>
         </div>
@@ -24,8 +25,7 @@
                 <div class="panel-heading cm-boxhead dul-color">
                     <h4>Structured Limitations</h4>
                 </div>
-                <div id="ssdur" class="panel-body cm-boxbody">Samples may only be used for the purpose of studying
-                    cancer.
+                <div id="ssdur" class="panel-body cm-boxbody">{{consentSDul}}
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
                         <!--</div>-->
 
                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
-                            <button ng-click="logVote()"
+                            <button ng-disabled="voteStatus === null"  ng-click="logVote()"
                                     class="btn btn-primary col-lg-12 col-md-12 col-sm-12 col-xs-12 vote-button dul-background">
                                 Vote
                             </button>

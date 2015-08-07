@@ -1205,6 +1205,13 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     opacity: 0;
     filter: alpha(opacity=0);
 }
+.fileName{
+    float: left;
+    vertical-align: baseline;
+    padding: 8px 0 0 15px;
+    font-weight: 500 !important;
+    color: #777777;
+}
 
 /***************************ADMIN USERS*/
 
@@ -1257,7 +1264,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 
 
 /***************************ALERTS*/
-
 
 .admin-alerts{
     margin: 20px;
@@ -1355,7 +1361,6 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 .alert-form-group{
     text-align: left !important;
 }
-
 
 /*SELECT ARROW*/
 

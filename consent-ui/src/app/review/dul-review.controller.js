@@ -8,6 +8,8 @@
     function DulReview($scope, $modal, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService)
     {
         $scope.consentDulUrl = consent.dataUseLetter;
+        $scope.consentDulName = consent.dulName;
+        $scope.consentSDul = consent.structuredDataUseLetter;
         $scope.voteStatus = vote.vote;
         $scope.isFormDisabled = (election.status == 'Closed');
         $scope.rationale = vote.rationale;
@@ -50,10 +52,10 @@
                         });
                         modalInstance.result.then(function () {
                             if($rootScope.currentUser.memberStatus === USER_ROLES.chairperson){
-                                   $state.go('chair_console');
+                                $state.go('chair_console');
                             }else {
-                                   $state.go('user_console');
-                                  }
+                                $state.go('user_console');
+                            }
                             console.log();
                         });
                     },
