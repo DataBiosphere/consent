@@ -26,6 +26,11 @@ public class ConsentManage {
 	public ConsentManage() {
 	}
 
+	public ConsentManage(Consent consent) {
+		this.consentId = consent.consentId;
+		this.consentName = consent.name;
+	}
+
 	public String getConsentId() {
 		return consentId;
 	}

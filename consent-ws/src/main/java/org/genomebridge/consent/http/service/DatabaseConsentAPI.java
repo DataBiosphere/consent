@@ -20,6 +20,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implementation class for ConsentAPI on top of ConsentDAO database support.
@@ -283,23 +284,17 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public List<ConsentManage> describeConsentManage() {
         List<ConsentManage> consentManageList = new ArrayList<>();
-        addUnreviewedConsents(consentDAO.findUnreviewedConsents(), UN_REVIEWED, consentManageList);
+        consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents(), UN_REVIEWED));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
         return consentManageList;
     }
 
-    private void addUnreviewedConsents(List<Consent> consents, String status, List<ConsentManage> consentManageList) {
-        if (consents != null) {
-            for (Consent consent : consents) {
-                ConsentManage consentManage = new ConsentManage();
-                consentManage.setConsentId(consent.getConsentId());
-                consentManage.setConsentName(consent.getName());
-                consentManage.setElectionStatus(status);
-                consentManageList.add(consentManage);
-            }
-        }
+    private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents, String status) {
+        List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
+        consentManageList.forEach(c -> c.setElectionStatus(status));
+        return consentManageList;
     }
 
 

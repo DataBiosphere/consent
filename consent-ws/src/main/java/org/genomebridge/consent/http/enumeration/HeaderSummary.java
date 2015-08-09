@@ -24,12 +24,4 @@ public enum HeaderSummary {
         return value;
     }
 
-    public static List<String> getValues() {
-        List<String> values = new ArrayList<>();
-        for (HeaderSummary header : EnumSet.allOf(HeaderSummary.class)) {
-            values.add(header.getValue());
-        }
-        return values;
-    }
-
 }

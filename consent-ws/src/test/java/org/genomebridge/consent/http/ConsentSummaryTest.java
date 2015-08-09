@@ -5,6 +5,9 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.genomebridge.consent.http.enumeration.HeaderSummary;
@@ -35,7 +38,8 @@ public class ConsentSummaryTest extends ElectionVoteServiceTest {
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 response.getEntityInputStream()));
         String output;
-        String summary = StringUtils.join(HeaderSummary.getValues(), SEPARATOR);
+        String summary = EnumSet.allOf(HeaderSummary.class).stream().
+                map(HeaderSummary::getValue).collect(Collectors.joining(SEPARATOR));
         boolean isFirst = true;
         while ((output = br.readLine()) != null) {
             if (isFirst) {
