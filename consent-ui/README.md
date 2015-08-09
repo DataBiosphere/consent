@@ -12,7 +12,7 @@ To run consent-ui app :
  1. git pull over genomebridge-consent folder
     git clone git@github.com:broadinstitute/genomebridge-consent.git
  2. change to genomebridge-consent/consent-ui folder.
- 3. configure javascript environment executing :
+ 3. configure javascript environment executing (sudo access is usually needed for the npm modules):
          npm install -g wrench
          npm install -g gulp
          npm install -g bower

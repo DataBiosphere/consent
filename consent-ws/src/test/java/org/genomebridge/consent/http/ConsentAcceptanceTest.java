@@ -38,13 +38,13 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     public void testUpdateConsent() {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(true,  new Everything(), null, null, UUID.randomUUID().toString());
-        Response response = checkStatus(CREATED, put(client, consentPath(), rec));
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         Consent created = retrieveConsent(client, createdLocation);
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
         Consent update = new Consent(false,  new Nothing(), null, null, UUID.randomUUID().toString());
-        check200(post(client, createdLocation, update));
+        check200(put(client, createdLocation, update));
         Consent updated = retrieveConsent(client, createdLocation);
 
         assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
@@ -91,7 +91,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
 
     private void assertValidConsentResource(Client client, Consent rec) {
-        Response response = checkStatus(CREATED, put(client, consentPath(), rec));
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         Consent created = retrieveConsent(client, createdLocation);
 

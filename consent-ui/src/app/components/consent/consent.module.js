@@ -14,9 +14,9 @@
                     List: {method:'GET',isArray:true}
                 });
         })
-       .factory('AllConsentResource', function($resource, apiUrl){
+       .factory('CreateConsentResource', function($resource, apiUrl){
             return $resource(apiUrl+"consent", {}, {
-                put: {method: 'PUT', params: {}}
+                post: {method: 'POST', params: {}}
         })})
        .factory('CreateDulResource', function($resource, apiUrl){
             return $resource(apiUrl+"consent/:consentId/dul",{}, {
@@ -30,7 +30,7 @@
         })})
        .factory('UpdateConsentResource', function($resource, apiUrl){
                return $resource(apiUrl+"consent/:consentId", {}, {
-                    update: {method: 'POST', params: {consentId: '@consentId'}}
+                    update: {method: 'PUT', params: {consentId: '@consentId'}}
        })})
 })();
 

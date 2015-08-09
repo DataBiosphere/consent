@@ -5,7 +5,7 @@
         .service('cmConsentService', cmConsentService);
 
     /* ngInject */
-    function cmConsentService(ConsentResource, ConsentDulResource, ConsentManageResource, AllConsentResource, CreateDulResource, UpdateConsentResource) {
+    function cmConsentService(ConsentResource, ConsentDulResource, ConsentManageResource, CreateConsentResource, CreateDulResource, UpdateConsentResource) {
 
         /**
          * Find data for the consent related to the consentId sent as a parameter
@@ -35,7 +35,7 @@
              consent.requiresManualReview=true;
              consent.useRestriction= new Object();
              consent.useRestriction.type = "nothing"
-             return AllConsentResource.put({},consent);
+             return CreateConsentResource.post({},consent);
 
         }
 
