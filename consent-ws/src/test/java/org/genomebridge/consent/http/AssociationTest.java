@@ -1,7 +1,8 @@
 package org.genomebridge.consent.http;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.fail;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.genomebridge.consent.http.models.Consent;
@@ -9,16 +10,14 @@ import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.grammar.Everything;
 import org.junit.ClassRule;
 import org.junit.Test;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 
 /**
@@ -47,12 +46,12 @@ public class AssociationTest extends ConsentServiceTest {
     public void testCreateAssociation() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         List<ConsentAssociation> assoc_list = new ArrayList<>();
         assoc_list.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
         checkAssociations(assoc_list, response);
         String location = checkHeader(response, "Location");
         System.out.println(String.format("*** testCreateAssociation - returned location '%s'", location));
@@ -62,13 +61,13 @@ public class AssociationTest extends ConsentServiceTest {
     public void testCreateComplexAssociation() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list = new ArrayList<>();
         assoc_list.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
         assoc_list.add(buildConsentAssociation("sampleSet", "SC-9571"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
         checkAssociations(assoc_list, response);
         String location = checkHeader(response, "Location");
         System.out.println(String.format("*** testCreateComplexAssociation - returned location '%s'", location));
@@ -78,7 +77,7 @@ public class AssociationTest extends ConsentServiceTest {
     public void testUpdateAssociation() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SM-1234"));
@@ -89,7 +88,7 @@ public class AssociationTest extends ConsentServiceTest {
         ArrayList<ConsentAssociation> assoc_list3 = new ArrayList<>();
         assoc_list3.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
 
-        ClientResponse response = checkStatus(OK, put(client, associationPath(consentId), assoc_list1));
+        Response response = checkStatus(OK, put(client, associationPath(consentId), assoc_list1));
         checkAssociations(assoc_list1, response);
         String location = checkHeader(response, "Location");
         System.out.println(String.format("*** testUpdateAssociation - returned location '%s'", location));
@@ -117,30 +116,30 @@ public class AssociationTest extends ConsentServiceTest {
     public void testGetAssociation() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         List<ConsentAssociation> assoc_list = new ArrayList<>();
         assoc_list.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
         checkAssociations(assoc_list, response);
         String location = checkHeader(response, "Location");
         System.out.println(String.format("*** testGetAssociation - returned location '%s'", location));
 
         // test no query parameters
-        response = checkStatus(OK, get(client, associationQueryPath(consentId, null, null)));
+        response = checkStatus(OK, getJson(client, associationQueryPath(consentId, null, null)));
         checkAssociations(assoc_list, response);
         location = checkHeader(response, "Location");
         System.out.println(String.format("*** testGetAssociation - returned location '%s'", location));
 
         // test associationType="sample"
-        response = checkStatus(OK, get(client, associationQueryPath(consentId, "sample", null)));
+        response = checkStatus(OK, getJson(client, associationQueryPath(consentId, "sample", null)));
         checkAssociations(assoc_list, response);
         location = checkHeader(response, "Location");
         System.out.println(String.format("*** testGetAssociation - returned location '%s'", location));
 
         // test associationType="sample"&id="SM-1234"
-        response = checkStatus(OK, get(client, associationQueryPath(consentId, "sample", "SM-1234")));
+        response = checkStatus(OK, getJson(client, associationQueryPath(consentId, "sample", "SM-1234")));
         List<ConsentAssociation> singleSample = new ArrayList<>();
         singleSample.add(buildConsentAssociation("sample", "SM-1234"));
         checkAssociations(singleSample, response);
@@ -148,20 +147,20 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("*** testGetAssociation - returned location '%s'", location));
 
         // test id="SM-1234" (error case)
-        checkStatus(BAD_REQUEST, get(client, associationQueryPath(consentId, null, "SM-1234")));
+        checkStatus(BAD_REQUEST, getJson(client, associationQueryPath(consentId, null, "SM-1234")));
     }
 
     @Test
     public void testDeleteAssociationByTypeAndObject() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
         assoc_list1.add(buildConsentAssociation("sampleSet", "SC-9571"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
         checkAssociations(assoc_list1, response);
 
         response = checkStatus(OK, delete(client, associationQueryPath(consentId, "sample", "SM-1234")));
@@ -178,13 +177,13 @@ public class AssociationTest extends ConsentServiceTest {
     public void testDeleteAssociationByType() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
         assoc_list1.add(buildConsentAssociation("sampleSet", "SC-9571"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
         checkAssociations(assoc_list1, response);
 
         response = checkStatus(OK, delete(client, associationQueryPath(consentId, "sample", null)));
@@ -200,13 +199,13 @@ public class AssociationTest extends ConsentServiceTest {
     public void testDeleteAssociationAll() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
         assoc_list1.add(buildConsentAssociation("sampleSet", "SC-9571"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
         checkAssociations(assoc_list1, response);
 
         response = checkStatus(OK, delete(client, associationQueryPath(consentId, null, null)));
@@ -221,13 +220,13 @@ public class AssociationTest extends ConsentServiceTest {
     public void testDeleteAssociationError() {
         final String consentId = setupConsent();
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
         assoc_list1.add(buildConsentAssociation("sampleSet", "SC-9571"));
 
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
+        Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
         checkAssociations(assoc_list1, response);
 
         checkStatus(BAD_REQUEST, delete(client, associationQueryPath(consentId, null, "SM-1234")));
@@ -244,11 +243,11 @@ public class AssociationTest extends ConsentServiceTest {
         final String s4 = genSampleId();
         System.out.println(String.format("*** testQueryByAssociation, generated ids: '%s', '%s', '%s', '%s'", s1, s2, s3, s4));
 
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
 
         List<ConsentAssociation> assoc_list = new ArrayList<>();
         assoc_list.add(buildConsentAssociation("sample", s1, s2, s3));
-        ClientResponse response = checkStatus(OK, post(client, associationPath(consentId1), assoc_list));
+        Response response = checkStatus(OK, post(client, associationPath(consentId1), assoc_list));
         checkAssociations(assoc_list, response);
         System.out.println(String.format("*** testQueryConsentByAssociation ***:  created consent 1: '%s'", consentId1));
 
@@ -259,7 +258,7 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("*** testQueryConsentByAssociation ***:  created consent 2: '%s'", consentId2));
 
         String qpath = queryAssociationPath("sample", s2);
-        response = checkStatus(OK, get(client, qpath));
+        response = checkStatus(OK, getJson(client, qpath));
 
         // check that we got back both consents
         ArrayList<String> consent_urls = getConsentUrls(response);
@@ -268,19 +267,19 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("*** testQueryByAssociation(1) - returned location '%s'", location));
 
         // check that we got back just consent1
-        response = checkStatus(OK, get(client, queryAssociationPath("sample", s1)));
+        response = checkStatus(OK, getJson(client, queryAssociationPath("sample", s1)));
         consent_urls = getConsentUrls(response);
         assertThat(consent_urls.size()).isEqualTo(1);
         location = checkHeader(response, "Location");
         System.out.println(String.format("*** testQueryByAssociation(2) - returned location '%s'", location));
 
         // check that we got back no consents
-        response = checkStatus(OK, get(client, queryAssociationPath("sample", "TST-$$$$")));
+        response = checkStatus(OK, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
         consent_urls = getConsentUrls(response);
         assertThat(consent_urls.size()).isEqualTo(0);
 
         // check that we got back no consents
-        response = checkStatus(OK, get(client, queryAssociationPath("sampleSet", s2)));
+        response = checkStatus(OK, getJson(client, queryAssociationPath("sampleSet", s2)));
         consent_urls = getConsentUrls(response);
         assertThat(consent_urls.size()).isEqualTo(0);
     }
@@ -314,8 +313,8 @@ public class AssociationTest extends ConsentServiceTest {
         return query_path;
     }
 
-    private void checkAssociations(List<ConsentAssociation> assoc_list, ClientResponse response) {
-        String result_json = response.getEntity(String.class);
+    private void checkAssociations(List<ConsentAssociation> assoc_list, Response response) {
+        String result_json = response.readEntity(String.class);
         try {
             final ObjectMapper MAPPER = Jackson.newObjectMapper();
             assertThat(result_json).isEqualTo(MAPPER.writeValueAsString(assoc_list));
@@ -324,9 +323,9 @@ public class AssociationTest extends ConsentServiceTest {
         }
     }
 
-    private ArrayList<String> getConsentUrls(ClientResponse response) {
+    private ArrayList<String> getConsentUrls(Response response) {
         ArrayList<String> urls = null;
-        String result_json = response.getEntity(String.class);
+        String result_json = response.readEntity(String.class);
         try {
             final ObjectMapper MAPPER = Jackson.newObjectMapper();
             TypeFactory tf = TypeFactory.defaultInstance();
@@ -352,9 +351,9 @@ public class AssociationTest extends ConsentServiceTest {
     }
 
     private String setupConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new Everything(), UUID.randomUUID().toString());
-        ClientResponse response = checkStatus( CREATED, put(client, consentPath(), rec) );
+        Response response = checkStatus( CREATED, put(client, consentPath(), rec) );
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
         System.out.println(String.format("setupConsent created consent with id '%s' at location '%s'", createdLocation, consent_id));

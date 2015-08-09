@@ -1,11 +1,6 @@
 package org.genomebridge.consent.http;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
-import java.util.List;
-
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
@@ -13,14 +8,18 @@ import org.genomebridge.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class VoteConsentTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
-    public static final int OK = ClientResponse.Status.OK.getStatusCode();
+    public static final int CREATED = Response.Status.CREATED.getStatusCode();
+    public static final int OK = Response.Status.OK.getStatusCode();
     private static final String CONSENT_ID = "testId";
     private static final Integer DAC_USER_ID = 1;
     private static final String RATIONALE = "Test";
@@ -39,8 +38,8 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
     public void testCreateConsentVote() {
         // should exist an election for specified consent
         Integer electionId = createElection();
-        Client client = new Client();
-        List<Vote> votes = get(client, voteConsentPath(CONSENT_ID)).getEntity(new GenericType<List<Vote>>() {
+        Client client = ClientBuilder.newClient();
+        List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() {
         });
         Vote vote = new Vote();
         vote.setVote(false);
@@ -61,7 +60,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
 
 
     public void deleteVotes(List<Vote> votes) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         for (Vote vote : votes) {
             checkStatus(OK,
                     delete(client, voteConsentIdPath(CONSENT_ID, vote.getVoteId())));
@@ -70,7 +69,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
 
 
     public void updateVote(Vote vote) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         vote.setVote(true);
         vote.setRationale(null);
         checkStatus(OK,
@@ -82,18 +81,18 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
     }
 
     private Integer createElection() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
         post(client, electionConsentPath(CONSENT_ID), election);
-        election = get(client, electionConsentPath(CONSENT_ID))
-                .getEntity(Election.class);
+        election = getJson(client, electionConsentPath(CONSENT_ID))
+                .readEntity(Election.class);
         return election.getElectionId();
     }
 
     public void testConsentPendingCase(Integer dacUserId) {
-        Client client = new Client();
-        List<PendingCase> pendingCases = get(client, consentPendingCasesPath(dacUserId)).getEntity(new GenericType<List<PendingCase>>() {
+        Client client = ClientBuilder.newClient();
+        List<PendingCase> pendingCases = getJson(client, consentPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {
         });
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
@@ -104,8 +103,8 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
 
     @Test
     public void testConsentPendingCaseWithInvalidUser() {
-        Client client = new Client();
-        List<PendingCase> pendingCases = get(client, consentPendingCasesPath(789)).getEntity(new GenericType<List<PendingCase>>() {
+        Client client = ClientBuilder.newClient();
+        List<PendingCase> pendingCases = getJson(client, consentPendingCasesPath(789)).readEntity(new GenericType<List<PendingCase>>() {
         });
         assertThat(pendingCases).isEmpty();
     }

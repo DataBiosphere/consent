@@ -1,21 +1,21 @@
 package org.genomebridge.consent.http;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
 import org.genomebridge.consent.http.models.DataRequest;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DataRequestTest extends DataRequestServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
-    public static final int OK = ClientResponse.Status.OK.getStatusCode();
-    public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
+    public static final int CREATED = Response.Status.CREATED.getStatusCode();
+    public static final int OK = Response.Status.OK.getStatusCode();
+    public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     private static final Integer ID = 1;
     private static final Integer ID_2 = 2;
     private static final String DESCRIPTION = "TestDescription";
@@ -34,13 +34,13 @@ public class DataRequestTest extends DataRequestServiceTest {
 
     @Test
     public void testCreateDataRequest() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         DataRequest dataRequest = new DataRequest();
         dataRequest.setDataSetId(ID);
         dataRequest.setPurposeId(ID);
         dataRequest.setDescription(DESCRIPTION);
         dataRequest.setResearcher(RESEARCHER);
-        ClientResponse response = checkStatus(CREATED,
+        Response response = checkStatus(CREATED,
                 post(client, dataRequestPath(), dataRequest));
         String createdLocation = checkHeader(response, "Location");
         DataRequest created = retrieveDataRequest(client, createdLocation);
@@ -54,7 +54,7 @@ public class DataRequestTest extends DataRequestServiceTest {
     }
 
     public void testUpdateDataRequest(DataRequest created) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         created.setDataSetId(ID_2);
         created.setDescription(DESCRIPTION + "DR");
         checkStatus(OK, put(client, dataRequestPathById(created.getRequestId()), created));
@@ -68,21 +68,21 @@ public class DataRequestTest extends DataRequestServiceTest {
     }
 
     public void deleteDataRequest(Integer id) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         checkStatus(OK,
                 delete(client, dataRequestPathById(id)));
     }
 
     @Test
     public void retrieveDataRequestWithInvalidId() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND,
-                get(client, dataRequestPathById(INVALID_DATA_REQUEST_ID)));
+                getJson(client, dataRequestPathById(INVALID_DATA_REQUEST_ID)));
     }
 
     @Test
     public void testDataRequestWithNullRequieredFields() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         DataRequest dataRequest = new DataRequest();
         dataRequest.setPurposeId(ID);
         dataRequest.setDescription(DESCRIPTION);
@@ -94,7 +94,7 @@ public class DataRequestTest extends DataRequestServiceTest {
 
     @Test
     public void testUpdateDataRequestWithInvalidId() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         DataRequest dataRequest = new DataRequest();
         // should return 400 bad request because the data request id does not exist
         checkStatus(NOT_FOUND,

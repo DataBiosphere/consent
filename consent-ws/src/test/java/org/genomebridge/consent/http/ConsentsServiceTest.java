@@ -1,21 +1,22 @@
 package org.genomebridge.consent.http;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.grammar.Everything;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.*;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentsServiceTest extends AbstractTest {
 
@@ -37,42 +38,42 @@ public class ConsentsServiceTest extends AbstractTest {
         Collection<String> ids = populateConsents();
         assertThat(ids.size() == N);
 
-        Client client = new Client();
-        WebResource webResource = client.
-                resource(path2Url("/consents")).
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.
+                target(path2Url("/consents")).
                 queryParam("ids", StringUtils.join(ids, ","));
-        ClientResponse response = webResource.
-                accept(MediaType.APPLICATION_JSON_TYPE).
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
                 header("REMOTE_USER", "testuser").
-                get(ClientResponse.class);
+                get(Response.class);
         assertThat(response.getStatus() == OK);
 
-        List<Consent> consents = webResource.get(new GenericType<List<Consent>>() {});
+        List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
         assertThat(consents.size() == N);
     }
 
     @Test
     public void testFindNoConsents() {
-        Client client = new Client();
-        WebResource webResource = client.resource(path2Url("/consents"));
-        ClientResponse response = webResource.
-                accept(MediaType.APPLICATION_JSON_TYPE).
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.target(path2Url("/consents"));
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
                 header("REMOTE_USER", "testuser").
-                get(ClientResponse.class);
+                get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
     @Test
     public void testFindMissingConsents() {
         Collection<String> ids = Arrays.asList("missing-id1", "missing-id2", UUID.randomUUID().toString());
-        Client client = new Client();
-        WebResource webResource = client.
-                resource(path2Url("/consents")).
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.
+                target(path2Url("/consents")).
                 queryParam("ids", StringUtils.join(ids, ","));
-        ClientResponse response = webResource.
-                accept(MediaType.APPLICATION_JSON_TYPE).
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
                 header("REMOTE_USER", "testuser").
-                get(ClientResponse.class);
+                get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
@@ -85,15 +86,15 @@ public class ConsentsServiceTest extends AbstractTest {
         Collection<String> ids = populateConsentAssociations();
         assertThat(ids.size() == N);
 
-        Client client = new Client();
-        WebResource webResource = client.resource(path2Url("/consents/sample"));
-        ClientResponse response = webResource.
-                accept(MediaType.APPLICATION_JSON_TYPE).
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.target(path2Url("/consents/sample"));
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
                 header("REMOTE_USER", "testuser").
-                get(ClientResponse.class);
+                get(Response.class);
         assertThat(response.getStatus() == OK);
 
-        List<Consent> consents = webResource.get(new GenericType<List<Consent>>() {});
+        List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
         assertThat(consents.size() == N);
     }
 
@@ -102,12 +103,12 @@ public class ConsentsServiceTest extends AbstractTest {
         Collection<String> ids = populateConsentAssociations();
         assertThat(ids.size() == N);
 
-        Client client = new Client();
-        WebResource webResource = client.resource(path2Url("/consents/nothing"));
-        ClientResponse response = webResource.
-                accept(MediaType.APPLICATION_JSON_TYPE).
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.target(path2Url("/consents/nothing"));
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
                 header("REMOTE_USER", "testuser").
-                get(ClientResponse.class);
+                get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
@@ -116,18 +117,18 @@ public class ConsentsServiceTest extends AbstractTest {
         Collection<String> ids = populateConsentAssociations();
         assertThat(ids.size() == N);
 
-        Client client = new Client();
-        WebResource webResource = client.resource(path2Url("/consents/"));
-        ClientResponse response = webResource.
-                accept(MediaType.APPLICATION_JSON_TYPE).
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.target(path2Url("/consents/"));
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
                 header("REMOTE_USER", "testuser").
-                get(ClientResponse.class);
+                get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
     private Collection<String> populateConsentAssociations() {
         Collection<String> ids = populateConsents();
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         for (String id : ids) {
             ConsentAssociation ca = new ConsentAssociation();
             ca.setAssociationType("sample");
@@ -139,7 +140,7 @@ public class ConsentsServiceTest extends AbstractTest {
 
     private Collection<String> populateConsents() {
         Collection<String> ids = new ArrayList<>();
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         for (int i = 1; i <= N; i++) {
             ids.add(postConsent(client));
         }
@@ -152,7 +153,7 @@ public class ConsentsServiceTest extends AbstractTest {
         consent.requiresManualReview = true;
         consent.useRestriction = new Everything();
         consent.name = Math.random()+"Name";
-        ClientResponse response = checkStatus(CREATED, put(client, consentPath, consent));
+        Response response = checkStatus(CREATED, put(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");
         return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
     }

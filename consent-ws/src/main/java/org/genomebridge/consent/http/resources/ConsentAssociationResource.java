@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.resources;
 
-import com.sun.jersey.api.NotFoundException;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
@@ -14,9 +13,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by egolin on 9/15/14.
- */
 @Path("consent/{id}/association")
 public class ConsentAssociationResource extends Resource {
 

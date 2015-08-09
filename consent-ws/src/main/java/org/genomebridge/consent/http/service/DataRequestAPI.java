@@ -2,7 +2,7 @@ package org.genomebridge.consent.http.service;
 
 import org.genomebridge.consent.http.models.DataRequest;
 
-import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.NotFoundException;
 
 public interface DataRequestAPI {
 

@@ -1,12 +1,11 @@
 package org.genomebridge.consent.http;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 
-import com.sun.jersey.api.client.Client;
+import javax.ws.rs.client.Client;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 public abstract class ElectionVoteServiceTest extends AbstractTest {
 
@@ -20,7 +19,7 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
     }
 
     public Election retrieveElection(Client client, String url) {
-        return get(client, url).getEntity(Election.class);
+        return getJson(client, url).readEntity(Election.class);
     }
 
     public String electionDataRequestPath(String id) {
@@ -61,7 +60,7 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
     }
 
     public Vote retrieveVote(Client client, String url) {
-        return get(client, url).getEntity(Vote.class);
+        return getJson(client, url).readEntity(Vote.class);
     }
 
     public String voteDataRequestPath(String id) {
@@ -104,8 +103,7 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
     }
     
     public String consentManagePath() {
-        return path2Url(String.format("consent/manage"));
+        return path2Url("consent/manage");
     }
-
 
 }

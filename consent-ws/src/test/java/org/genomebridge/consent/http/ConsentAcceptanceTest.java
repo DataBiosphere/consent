@@ -1,15 +1,17 @@
 package org.genomebridge.consent.http;
 
-import static org.fest.assertions.api.Assertions.assertThat;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.genomebridge.consent.http.models.grammar.*;
-import java.util.UUID;
 import org.genomebridge.consent.http.models.Consent;
+import org.genomebridge.consent.http.models.grammar.*;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentAcceptanceTest extends ConsentServiceTest {
 
@@ -27,16 +29,16 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
     @Test
     public void testCreateConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(true,  new Everything(), null, null, UUID.randomUUID().toString());
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testUpdateConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(true,  new Everything(), null, null, UUID.randomUUID().toString());
-        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
+        Response response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         Consent created = retrieveConsent(client, createdLocation);
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
@@ -51,7 +53,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
     @Test
     public void testOnlyOrNamedConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new Only("http://broadinstitute.org/ontology/consent/research_on", new Or(new Named("DOID:1"), new Named("DOID:2"))),
                                   null, null, UUID.randomUUID().toString());
         assertValidConsentResource(client, rec);
@@ -59,28 +61,28 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
     @Test
     public void testAndConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new And(new Named("DOID:1"), new Named("DOID:2")), null, null, UUID.randomUUID().toString());
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testNotConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new Not(new Named("DOID:1")), null, null, UUID.randomUUID().toString());
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testNothingConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false,  new Nothing(), null, null, UUID.randomUUID().toString());
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testSomeConsent() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false,  new Some(
                 "http://broadinstitute.org/ontology/consent/research_on",
                 new Named("DOID:1")), null, null, UUID.randomUUID().toString());
@@ -89,7 +91,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
 
     private void assertValidConsentResource(Client client, Consent rec) {
-        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
+        Response response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         Consent created = retrieveConsent(client, createdLocation);
 

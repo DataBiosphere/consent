@@ -1,7 +1,8 @@
 package org.genomebridge.consent.http.service;
 
-import com.sun.jersey.api.NotFoundException;
 import org.genomebridge.consent.http.models.DACUser;
+
+import javax.ws.rs.NotFoundException;
 
 public interface DACUserAPI {
 

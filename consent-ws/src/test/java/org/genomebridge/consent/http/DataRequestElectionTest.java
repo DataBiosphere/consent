@@ -1,28 +1,27 @@
 package org.genomebridge.consent.http;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-
-import java.util.List;
-
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
-import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
-    public static final int OK = ClientResponse.Status.OK.getStatusCode();
-    public static final int BADREQUEST = ClientResponse.Status.BAD_REQUEST.getStatusCode();
-    public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
+    public static final int CREATED = Response.Status.CREATED.getStatusCode();
+    public static final int OK = Response.Status.OK.getStatusCode();
+    public static final int BADREQUEST = Response.Status.BAD_REQUEST.getStatusCode();
+    public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     private static final String DATA_REQUEST_ID = "1";
     private static final String DATA_REQUEST_ID_2 = "2";
     private static final String INVALID_DATA_REQUEST_ID = "invalidId";
@@ -40,10 +39,10 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     @Test
     public void testCreateDataRequestElection() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
-        ClientResponse response = checkStatus(CREATED,
+        Response response = checkStatus(CREATED,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         String createdLocation = checkHeader(response, "Location");
         Election created = retrieveElection(client, createdLocation);
@@ -61,7 +60,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     public void testUpdateDataRequestElection(Election created) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId()), created));
@@ -76,8 +75,8 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     public void deleteElection(Integer electionId) {
-        Client client = new Client();
-        List<Vote> votes = get(client, voteDataRequestPath(DATA_REQUEST_ID)).getEntity(new GenericType<List<Vote>>() {
+        Client client = ClientBuilder.newClient();
+        List<Vote> votes = getJson(client, voteDataRequestPath(DATA_REQUEST_ID)).readEntity(new GenericType<List<Vote>>() {
         });
         for (Vote vote : votes) {
             checkStatus(OK,
@@ -89,14 +88,14 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     @Test
     public void retrieveElectionWithInvalidConsentId() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND,
-                get(client, electionDataRequestPath(INVALID_DATA_REQUEST_ID)));
+                getJson(client, electionDataRequestPath(INVALID_DATA_REQUEST_ID)));
     }
 
     @Test
     public void testDataRequestElectionWithInvalidDataRequest() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
         // should return 400 bad request because the data request id does not exist
@@ -106,7 +105,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     @Test
     public void testUpdateDataRequestElectionWithId() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Election election = new Election();
         // should return 400 bad request because the data request id does not exist
         checkStatus(NOT_FOUND,
@@ -115,7 +114,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     @Test
     public void testCreateDataRequestElectionWithInvalidStatus() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(INVALID_STATUS);
         // should return 400 bad request because status is invalid

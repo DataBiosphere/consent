@@ -1,15 +1,15 @@
 package org.genomebridge.consent.http;
 
-import java.util.*;
-
-import static io.dropwizard.testing.FixtureHelpers.*;
-import static org.fest.assertions.api.Assertions.assertThat;
-
-import io.dropwizard.jackson.Jackson;
-import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.dropwizard.jackson.Jackson;
 import org.genomebridge.consent.http.models.ConsentAssociation;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit Tests for ConsentAssociation object.
@@ -34,7 +34,8 @@ public class ConsentAssociationTest {
     @Test
     public void deserializesFromJSON() throws Exception {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        assertThat(MAPPER.readValue(fixture("fixtures/consentassociation.json"), ConsentAssociation.class)).isEqualsToByComparingFields(consent_association);
+        assertThat(MAPPER.readValue(fixture("fixtures/consentassociation.json"), ConsentAssociation.class)).
+                isEqualToComparingFieldByField(consent_association);
     }
 
     @Test

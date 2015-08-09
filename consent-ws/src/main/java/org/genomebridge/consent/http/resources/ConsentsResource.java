@@ -1,8 +1,7 @@
 package org.genomebridge.consent.http.resources;
 
 import com.google.common.base.Optional;
-import com.sun.jersey.api.NotFoundException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;

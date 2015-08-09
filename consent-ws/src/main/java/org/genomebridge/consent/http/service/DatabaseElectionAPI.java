@@ -1,8 +1,6 @@
 package org.genomebridge.consent.http.service;
 
-import java.util.Date;
-
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.DataRequestDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
@@ -10,7 +8,8 @@ import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 
-import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.NotFoundException;
+import java.util.Date;
 
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.

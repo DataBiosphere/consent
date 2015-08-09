@@ -8,10 +8,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <properties>
-        <dropwizard.version>0.8.1</dropwizard.version>
-    </properties>
-
     <artifactId>consent-autocomplete</artifactId>
     <packaging>jar</packaging>
     <name>Consent Management: Autocomplete Services</name>

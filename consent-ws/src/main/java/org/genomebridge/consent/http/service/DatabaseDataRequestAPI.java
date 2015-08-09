@@ -5,7 +5,7 @@ import org.genomebridge.consent.http.db.DataSetDAO;
 import org.genomebridge.consent.http.db.ResearchPurposeDAO;
 import org.genomebridge.consent.http.models.DataRequest;
 
-import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.NotFoundException;
 
 /**
  * Implementation class for DataRequestAPI on top of DataRequestDAO database
