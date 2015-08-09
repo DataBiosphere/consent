@@ -1,32 +1,11 @@
-/*
- * Copyright 2014 Broad Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.genomebridge.consent.http;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.genomebridge.consent.http.resources.ConsentResource;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.TreeSet;
-import java.util.UUID;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -37,13 +16,20 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 abstract public class AbstractTest extends ResourcedTest {
 
+    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
+    public static final int OK = ClientResponse.Status.OK.getStatusCode();
+    public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
+    public static final int BAD_REQUEST = ClientResponse.Status.BAD_REQUEST.getStatusCode();
+
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
 
     /*
      * Some utility methods for interacting with HTTP-services.
      */
 
-    public <T> ClientResponse post(Client client, String path, T value) { return post(client, path, "testuser", value); }
+    public <T> ClientResponse post(Client client, String path, T value) {
+        return post(client, path, "testuser", value);
+    }
 
     public <T> ClientResponse post(Client client, String path, String user, T value) {
         return client.resource(path)
@@ -53,7 +39,9 @@ abstract public class AbstractTest extends ResourcedTest {
                 .post(ClientResponse.class, value);
     }
 
-    public <T> ClientResponse put(Client client, String path, T value) { return put(client, path, "testuser", value); }
+    public <T> ClientResponse put(Client client, String path, T value) {
+        return put(client, path, "testuser", value);
+    }
 
     public <T> ClientResponse put(Client client, String path, String user, T value) {
         return client.resource(path)
@@ -63,7 +51,9 @@ abstract public class AbstractTest extends ResourcedTest {
                 .put(ClientResponse.class, value);
     }
 
-    public ClientResponse delete(Client client, String path) { return delete(client, path, "testuser"); }
+    public ClientResponse delete(Client client, String path) {
+        return delete(client, path, "testuser");
+    }
 
     public ClientResponse delete(Client client, String path, String user) {
         return client.resource(path)
@@ -71,7 +61,13 @@ abstract public class AbstractTest extends ResourcedTest {
                 .delete(ClientResponse.class);
     }
 
-    public ClientResponse get(Client client, String path) { return get(client, path, "testuser"); }
+    public ClientResponse get(Client client, String path) {
+        return get(client, path, "testuser");
+    }
+
+    public ClientResponse getFile(Client client, String path) {
+        return getFile(client, path, "testuser");
+    }
 
     public ClientResponse get(Client client, String path, String user) {
         return client.resource(path)
@@ -80,28 +76,33 @@ abstract public class AbstractTest extends ResourcedTest {
                 .get(ClientResponse.class);
     }
 
+    public ClientResponse getFile(Client client, String path, String user) {
+        return client.resource(path)
+                .accept(MediaType.TEXT_PLAIN)
+                .header("REMOTE_USER", user)
+                .get(ClientResponse.class);
+    }
 
-    public ClientResponse check200( ClientResponse response ) {
+
+    public ClientResponse check200(ClientResponse response) {
         return checkStatus(200, response);
     }
 
-    public ClientResponse checkStatus( int status, ClientResponse response ) {
+    public ClientResponse checkStatus(int status, ClientResponse response) {
         assertThat(response.getStatus()).isEqualTo(status);
         return response;
     }
 
-    public String checkHeader( ClientResponse response, String header ) {
-        MultivaluedMap<String,String> map = response.getHeaders();
+    public String checkHeader(ClientResponse response, String header) {
+        MultivaluedMap<String, String> map = response.getHeaders();
         assertThat(map).describedAs(String.format("header \"%s\"", header)).containsKey(header);
         return map.getFirst(header);
     }
 
-    public String randomID() {
-        return UUID.randomUUID().toString();
-    }
-
     public String path2Url(String path) {
-        if(path.startsWith("/")) { path = path.substring(1, path.length()); }
+        if (path.startsWith("/")) {
+            path = path.substring(1, path.length());
+        }
         return String.format("http://localhost:%d/%s", rule().getLocalPort(), path);
     }
 

@@ -1,0 +1,14 @@
+<div class="modal-dialog modal-confirmation-alerts">
+    <div class="modal-content">
+        <div class="modal-header admin-modal-header">
+            <button type="button" class="modal-close-btn close" ng-click="Modal.cancel()"><span aria-hidden="true">&times;</span></button>
+            <h2 class="pvotes-box-title dul-color">Vote confirmation
+                <small ng-show="isNew == true">Your vote has been successfully completed!</small>
+                <small ng-show="isNew == false">Your vote has been successfully edited!</small>
+            </h2>
+        </div>
+        <div class="modal-footer admin-modal-footer">
+            <button type="button" class="btn dul-background" ng-click="Modal.ok()"> Ok </button>
+        </div>
+    </div>
+</div>

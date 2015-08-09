@@ -1,0 +1,96 @@
+{
+    "manage_dul": [
+        {"consentId": "SC15001", "consentName": "Dr. Smith Breast Cancer set 1", "editRecord": "enabled", "electionStatus": "unreviewed", "electionActions": "create" },
+        {"consentId": "SC15002", "consentName": "Dr. Smith Breast Cancer set 2", "editRecord": "enabled", "electionStatus": "unreviewed", "electionActions": "create" },
+        {"consentId": "SC15003", "consentName": "Dr. Smith Breast Cancer set 3", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15004", "consentName": "Dr. Smith Breast Cancer set 4", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15005", "consentName": "Dr. Smith Breast Cancer set 5", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15006", "consentName": "Dr. Smith Breast Cancer set 6", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15007", "consentName": "Dr. Smith Breast Cancer set 7", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15008", "consentName": "Dr. Smith Breast Cancer set 8", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15009", "consentName": "Dr. Smith Breast Cancer set 9", "editRecord": "disabled", "electionStatus": "opened", "electionActions": "cancel" },
+        {"consentId": "SC15010", "consentName": "Dr. Jones Breast Cancer set 1", "editRecord": "enabled", "electionStatus": "canceled", "electionActions": "create" },
+        {"consentId": "SC15011", "consentName": "Dr. Jones Breast Cancer set 2", "editRecord": "enabled", "electionStatus": "canceled", "electionActions": "create" },
+        {"consentId": "SC15012", "consentName": "Dr. Jones Breast Cancer set 3", "editRecord": "enabled", "electionStatus": "canceled", "electionActions": "create" },
+        {"consentId": "SC15013", "consentName": "Dr. Jones Breast Cancer set 4", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15014", "consentName": "Dr. Jones Breast Cancer set 5", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15015", "consentName": "Dr. Jones Breast Cancer set 6", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15016", "consentName": "Dr. Jones Breast Cancer set 7", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15017", "consentName": "Dr. Jones Breast Cancer set 8", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15018", "consentName": "Dr. Jones Breast Cancer set 9", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15019", "consentName": "Dr. Jones Breast Cancer set 10", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15020", "consentName": "Dr. Jones Breast Cancer set 11", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15021", "consentName": "Dr. Jones Breast Cancer set 12", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15022", "consentName": "Dr. Jones Breast Cancer set 13", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" },
+        {"consentId": "SC15023", "consentName": "Dr. Jones Breast Cancer set 14", "editRecord": "enabled", "electionStatus": "reviewed", "electionActions": "create" }
+        ],
+
+    "manage_users": [
+        {
+            "name": "Walter Lo Forte",
+            "googleId": "wloforte@broadinstitute.org",
+            "roles": {
+                "admin": "enabled",
+                "member": "disabled",
+                "chairperson": "enabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Veronica Vicario",
+            "googleId": "vvicario@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Anabella Racciopi",
+            "googleId": "aracciopi@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Santiago Saucedo",
+            "googleId": "ssaucedo@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Nadya Lopez Zalba",
+            "googleId": "nlopez@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "enabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "disabled"
+            }
+        },
+        {
+            "name": "Diego Gil",
+            "googleId": "dgil@broadinstitute.org",
+            "roles": {
+                "admin": "disabled",
+                "member": "disabled",
+                "chairperson": "disabled",
+                "alumni": "disabled",
+                "researcher": "enabled"
+            }
+        }
+    ]
+}

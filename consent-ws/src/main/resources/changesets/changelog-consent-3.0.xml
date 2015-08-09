@@ -1,0 +1,45 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="vvicario" id="22">
+        <dropForeignKeyConstraint baseTableName="datarequest"
+                                  constraintName="fkDataRequestAssociation"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="23">
+        <dropColumn columnName="associationId" tableName="datarequest"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="24">
+        <dropForeignKeyConstraint baseTableName="dataset"
+                                  constraintName="fkDataSetConsent"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="25">
+        <dropColumn columnName="consentId" tableName="dataset"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="26">
+        <addColumn tableName="dataset">
+            <column name="associationId" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="27">
+        <addForeignKeyConstraint baseColumnNames="associationId" baseTableName="dataset"
+                                 constraintName="fkDataSetAssociation" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="associationId"
+                                 referencedTableName="consentassociations" referencesUniqueColumn="false"/>
+
+    </changeSet>
+
+    <changeSet author="vvicario" id="28">
+        <addForeignKeyConstraint baseColumnNames="dataSetId" baseTableName="datarequest"
+                                 constraintName="fkDataRequestDataSet" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataSetId"
+                                 referencedTableName="dataset" referencesUniqueColumn="false"/>
+    </changeSet>
+
+</databaseChangeLog>
