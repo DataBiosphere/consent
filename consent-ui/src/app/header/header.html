@@ -1,9 +1,11 @@
-<ul class="menu">
-    <li><a href="#/rp_application/step1">RP Application</a></li>
-    <li><a href="#/admin_console">Admin Console</a></li>
-    <li><a href="#/admin_manage_dul">Admin DUL</a></li>
-    <li><a href="#/admin_users">Admin Users</a></li>
-</ul>
+<!--<ul class="menu">-->
+    <!--<li><a href="#/rp_application/step1">RP Application</a></li>-->
+    <!--<li><a href="#/admin_console">Admin Console</a></li>-->
+    <!--<li><a href="#/admin_manage_dul">Admin DUL</a></li>-->
+    <!--<li><a href="#/admin_users">Admin Users</a></li>-->
+    <!--<li><a href="#/reviewed_cases">Reviewed Cases</a></li>-->
+
+<!--</ul>-->
 <nav class="navbar top-navigator-bar" ng-controller="Header as Header">
     <div class="row top-navigator">
         <div class="navbar col-lg-6 col-md-6 col-sm-8 col-xs-12 no-padding no-margin">
@@ -19,20 +21,17 @@
                     <a href="#/admin_console">Admin Console</a>
                 </li>
                 <li><a href="#">About</a></li>
-                <li><a href="#/summary_votes">Statistics</a></li>
+                <li class="dropdown drop-li navbar-right" dropdown on-toggle="toggled(open)">
+                    <a role="button" class="dropdown-toggle" href="#" dropdown-toggle>
+                        <div>Statistics <span class="caret caret-margin"></span></div>
+                    </a>
+                    <ul class="dropdown-menu user-dropdown" role="menu">
+                        <li><a href="#/summary_votes" class="f-left">Votes Statistics</a></li>
+                        <hr>
+                        <li><a href="#/reviewed_cases" class="f-left">Reviewed Cases Record</a></li>
+                    </ul>
+                </li>
             </ul>
-        </div>
-        <div class="navbar col-lg-3 col-md-3 col-sm-4 col-xs-6 no-margin">
-            <form class="input-group box-search" id="adv-search" role="search">
-                <input type="text" class="form-control" placeholder="Enter search term..."/>
-
-                <div class="input-group-btn">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-primary btn-search"><span
-                            class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
-                    </div>
-                </div>
-            </form>
         </div>
         <div class="navbar navbar-right col-lg-3 col-md-3 col-sm-4 col-sm-offset-8 col-xs-6 no-margin"
              ng-controller="Header">

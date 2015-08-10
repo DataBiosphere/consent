@@ -5,7 +5,7 @@
         .service('cmPaginatorService', cmPaginatorService);
 
     /* ngInject */
-    function cmPaginatorService() {
+    function cmPaginatorService($timeout) {
 
         var PAGINATOR_MAX_ITEMS = 9;
 
@@ -55,7 +55,6 @@
         }
 
         function generateListItemsHtml(lists, list_max_items, options, id, page) {
-
             var floorPosition = page * list_max_items;
             var roofPosition = floorPosition + list_max_items;
             options.electionsList[id] = _.filter(lists[id], function (election, electionPosition) {

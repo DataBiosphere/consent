@@ -17,12 +17,6 @@
             $modalInstance.dismiss('cancel');
         };
 
-        vm.singleModel = 0;
-        vm.radioModel = null;
-        vm.checkModel = {
-            admin: false,
-            researcher: false
-        };
 
         /*****ALERTS*****/
 
@@ -56,6 +50,16 @@
                 msg: 'You must replace the Chairperson. ',
                 warning: 'Warning: every open election will be canceled and re-opened with the new Chairperson.',
                 alertType: 3
+            });
+        };
+
+        $scope.changeChairpersonRoleAlert = function(index) {
+            $scope.alerts.splice(index, 1);
+            $scope.alerts.push({
+                type: 'danger',
+                title: 'Warning!',
+                msg: 'If Chairperson is replaced, every open election will be canceled and re-opened with the new Chairperson assigned.',
+                alertType: 4
             });
         };
 

@@ -16,7 +16,6 @@
         vm.activePage = {'dul': 0};
         vm.currentPages = {'dul': []};
         vm.electionsList = {'dul': []};
-        vm.conflictList = {'conflict': []};
 
         // changePage function from the service with the first 2 parameters locked
         vm.changePage = _.partial(cmPaginatorService.changePage,
@@ -26,9 +25,7 @@
             {
                 activePage: vm.activePage,
                 currentPages: vm.currentPages,
-                electionsList: vm.electionsList,
-                conflictList: vm.conflictList
-
+                electionsList: vm.electionsList
             }
         );
         vm.addUser = addUser;
@@ -42,7 +39,6 @@
         function init() {
             $http.get('json/cm_admin_users.json').then(function (response) {
                 lists['dul'] = response.data['manage_users'];
-                lists['conflict'] = response.data['conflict_cases'];
                 vm.changePage('dul', 0);
             });
         }
@@ -53,7 +49,7 @@
 
             var modalInstance = $modal.open({
                 animation: false,
-                templateUrl: 'app/modal-users/add-user-modal.html',
+                templateUrl: 'app/modals/modal-users/add-user-modal.html',
                 controller: 'ModalUsers',
                 controllerAs: 'ModalUsers'
             });
@@ -69,7 +65,7 @@
 
             var modalInstance = $modal.open({
                 animation: false,
-                templateUrl: 'app/modal-users/edit-user-modal.html',
+                templateUrl: 'app/modals/modal-users/edit-user-modal.html',
                 controller: 'ModalUsers',
                 controllerAs: 'ModalUsers'
             });
