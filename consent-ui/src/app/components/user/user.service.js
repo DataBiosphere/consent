@@ -2,57 +2,47 @@
     'use strict';
 
     angular.module('cmUser')
-        .service('cmLoginUserService', cmLoginUserService);
+        .service('cmUserService', cmUserService);
 
     /* ngInject */
-    function cmLoginUserService($rootScope,$location,UserResource,USER_ROLES,$state) {
+    function cmUserService(UserResource, GetUserResource) {
 
 
-        function loginUser(email) {
-                    UserResource.get({email: email},function(data){
-                                   $rootScope.setCurrentUser(data);
-                                     var i=0;
-                                     angular.forEach(USER_ROLES, function(value, key) {
-                                         if(data.memberStatus.toUpperCase()===value)
-                                            {
-                                                           if(data.memberStatus.toUpperCase() === USER_ROLES.chairperson) {
-                                                                       $state.go('chair_console');
-                                                            }else if(data.memberStatus.toUpperCase() === USER_ROLES.dacmember) {
-                                                                       $state.go('user_console');
-                                                            }else if(data.memberStatus.toUpperCase() === USER_ROLES.admin) {
-                                                                       $state.go('admin_console');
-                                                               }
-                                               i=1;
-                                            }
-                                     });
-                                   if(i===0){
-                                    alert(data.memberStatus.toUpperCase()+" is not a valid Role");
-                                    logoutUser();
-                                   }
-                    }, function(error){
-                     if(error.status === 404) {
-                        alert(email+" is not a DacMember");
-                        logoutUser()
-                      }
-                  });
+        function getUserByEmail(email){
+            return GetUserResource.get({email: email}).$promise;
         }
 
-        function logoutUser() {
-
-           var auth2 = gapi.auth2.getAuthInstance();
-           auth2.signOut().then(function () {
-           $rootScope.logoutUser();
-           $state.go("login");
-           window.location.reload();
-          });
+        function getUsers(){
+            return UserResource.List().$promise;
         }
-      return{
-                loginUser: function(email) {
-                    return loginUser(email);
-                },
-              logoutUser: function(){
-                            return logoutUser();
-                        }
+
+        function postUser(user){
+            return UserResource.post(user);
+
+        }
+
+        function updateUser(user){
+             return UserResource.update(user);
+        }
+
+        return{
+            findUser: function(email) {
+                return getUserByEmail(email);
+            },
+
+            findUsers: function() {
+                return getUsers();
+            },
+
+            postUser: function(user){
+                return postUser(user);
+            },
+
+            updateUser: function(user){
+                 return  updateUser(user);
             }
+
+        }
     }
+
 })();

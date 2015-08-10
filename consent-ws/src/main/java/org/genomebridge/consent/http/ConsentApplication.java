@@ -54,11 +54,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DataSetDAO dataSetDAO = jdbi.onDemand(DataSetDAO.class);
         final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
+        final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO);
-        DatabaseDACUserAPI.initInstance(dacUserDAO);
+        DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);

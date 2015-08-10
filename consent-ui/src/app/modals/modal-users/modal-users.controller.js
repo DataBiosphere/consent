@@ -5,13 +5,33 @@
         .controller('ModalUsers', ModalUsers);
 
     /* ngInject */
-    function ModalUsers($modalInstance, $scope) {
+    function ModalUsers($modalInstance,cmUserService, $scope, user) {
 
         var vm = this;
+        $scope.user = new Object();
+        $scope.user.roles=[];
 
-        vm.ok = function () {
+                if (user !== undefined){
+                    console.log(user);
+                    $scope.user=user;
+                    $scope.user.roles=user.roles;
+                    alert("1 "+user.roles);
+                    $scope.user.roles=[];
+                    alert("2 "+user.roles);
+                }
+
+        vm.ok = function (user) {
+            cmUserService.postUser(user).$promise.then(
+                function (value) {
+                    $modalInstance.close();
+                });
+        };
+
+         vm.edit = function (user) {
+            cmUserService.updateUser(user);
             $modalInstance.close();//add params to handle what to do if it succeeds on admin-users.controller
         };
+
 
         vm.cancel = function () {
             $modalInstance.dismiss('cancel');
@@ -58,7 +78,7 @@
             $scope.alerts.push({
                 type: 'danger',
                 title: 'Warning!',
-                msg: 'If Chairperson is replaced, every open election will be canceled and re-opened with the new Chairperson assigned.',
+                msg: 'If Chairperson is replaced, every open election will be canceled and re-opened with the new Chairperson assigned. Besides, the previous Chairperson is going to become an Alumni.',
                 alertType: 4
             });
         };
@@ -72,21 +92,6 @@
         $scope.status = {
             isopen: false
         };
-
-        /*****SELECT*****/
-
-        $scope.options = ['Verónica Vicario', 'Anabella Raccioppi', 'Santiago Saucedo', 'Nadya Lopez Zalba'];
-        $scope.myselect = 'Select a user';
-
-        $scope.options_users = ['Verónica Vicario', 'Santiago Saucedo'];
-        $scope.myselect_users = 'Select a user';
-
-        $scope.options_users2 = ['Anabella Raccioppi', 'Santiago Saucedo'];
-        $scope.myselect_users2 = 'Select a user';
-
-        $scope.options_users3 = ['Verónica Vicario', 'Santiago Saucedo'];
-        $scope.myselect_users3 = 'Select a user';
-
 
 
     }

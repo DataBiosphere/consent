@@ -3,6 +3,8 @@ package org.genomebridge.consent.http.service;
 import org.genomebridge.consent.http.models.DACUser;
 
 import javax.ws.rs.NotFoundException;
+import java.util.Collection;
+import java.util.List;
 
 public interface DACUserAPI {
 
@@ -14,4 +16,7 @@ public interface DACUserAPI {
 
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
 
+    void updateExistentChairPersonToAlumni(Integer dacUserID);
+
+    Collection<DACUser> describeUsers();
 }

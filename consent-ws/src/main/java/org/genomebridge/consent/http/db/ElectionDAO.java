@@ -4,13 +4,14 @@ import java.util.Date;
 import java.util.List;
 
 import org.genomebridge.consent.http.models.Election;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
+import org.skife.jdbi.v2.sqlobject.*;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.skife.jdbi.v2.unstable.BindIn;
 
+
+@UseStringTemplate3StatementLocator
 @RegisterMapper({ElectionMapper.class})
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
@@ -39,6 +40,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                             @Bind("finalRationale") String finalRationale,
                             @Bind("status") String status);
 
+    @SqlUpdate("update election set status = :status where electionId in (<electionsId>) ")
+    void updateElectionStatus(@BindIn("electionsId") List<Integer> electionsId,
+                              @Bind("status") String status);
+
+
     @SqlQuery("select typeId from electiontype where type = :type")
     String findElectionTypeByType(@Bind("type") String type);
 
@@ -55,7 +61,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select * from election e where e.electionType = :type and e.status = :status ")
     List<Election> findElectionsByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
+    @SqlQuery("select e.electionId from election e where e.electionType = :type and e.status = :status ")
+    List<Integer> findElectionsIdByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
+
     @SqlQuery("select count(*) from election e where e.electionType = :type and e.status = :status and e.finalVote = :finalVote ")
     Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
+
 
 }

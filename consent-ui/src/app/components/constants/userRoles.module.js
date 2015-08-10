@@ -9,6 +9,8 @@
 
              admin: 'ADMIN',
              chairperson: 'CHAIRPERSON',
-             dacmember: 'DACMEMBER'
+             member: 'MEMBER',
+             researcher: 'RESEARCHER',
+             alumni: 'ALUMNI'
            });
     })();

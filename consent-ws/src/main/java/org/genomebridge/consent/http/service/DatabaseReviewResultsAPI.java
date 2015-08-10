@@ -4,9 +4,10 @@ import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
-import org.genomebridge.consent.http.models.*;
+import org.genomebridge.consent.http.models.Consent;
+import org.genomebridge.consent.http.models.ElectionReview;
+import org.genomebridge.consent.http.models.ElectionReviewVote;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {

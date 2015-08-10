@@ -9,7 +9,9 @@ import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 
 import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.
@@ -103,6 +105,30 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new NotFoundException("Election was not found");
         }
         return election;
+    }
+
+    @Override
+    public List<Election> cancelOpenElectionAndReopen(){
+        String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
+        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
+        cancelOpenElection(electionTypeId);
+        return openElections(openElections);
+    }
+    private void cancelOpenElection(String electionTypeId){
+        List<Integer> openElectionsIds = electionDAO.findElectionsIdByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
+        if(openElectionsIds != null && openElectionsIds.size() > 0){
+            electionDAO.updateElectionStatus(openElectionsIds, ElectionStatus.CANCELED.getValue());
+        }
+    }
+
+    private List<Election> openElections(List<Election> openElections){
+        List<Election> elections = new ArrayList<>();
+        for(Election existentElection : openElections){
+            Election election = new Election();
+            election.setReferenceId(existentElection.getReferenceId());
+            elections.add(createElection(election, election.getReferenceId(), true));
+        }
+        return elections;
     }
 
     private void setGeneralFields(Election election, String referenceId, Boolean isConsent) {

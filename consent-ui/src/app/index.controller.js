@@ -16,7 +16,6 @@
          $rootScope.setCurrentUser = function (user) {
 
          $rootScope.currentUser = user;
-         $rootScope.currentUser.memberStatus=user.memberStatus.toUpperCase();
 
          };
          $rootScope.logoutUser = function () {
@@ -48,18 +47,17 @@
 angular.module('ConsentManagement').run(function ($location,$rootScope,$state, cmAuthenticateService) {
   $rootScope.$on('$stateChangeStart', function (event,next, toState, toParams, fromState, fromParams) {
     var authorizedRoles = next.data.authorizedRoles;
+
       if($state.current.name==="")
            {
              $location.path("/login" );
            }else if($rootScope.currentUser===null){
                      event.preventDefault();
                      alert("null");
-                     $location.path("/login" );
                     }else if ($state.current.name!=="login"){
-
-                             if (!cmAuthenticateService.isAuthorized(authorizedRoles,$rootScope.currentUser.memberStatus)) {
-                                                      event.preventDefault();
-                                              }
+                             if (!cmAuthenticateService.isAuthorized(authorizedRoles,$rootScope.currentUser.roles)) {
+                                     event.preventDefault();
+                               }
                              }
 
         });
