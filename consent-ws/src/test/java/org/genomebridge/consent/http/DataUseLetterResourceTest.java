@@ -1,37 +1,32 @@
 package org.genomebridge.consent.http;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.text.ParseException;
-import java.util.UUID;
-
-import javax.ws.rs.core.MediaType;
-
 import org.genomebridge.consent.http.cloudstore.GCSStore;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.Everything;
 import org.genomebridge.consent.http.resources.DataUseLetterResource;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataBodyPart;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.when;
 
 public class DataUseLetterResourceTest extends ConsentServiceTest {
 
@@ -53,16 +48,17 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     }
 
     @Before
-    public void setUp() throws IOException, GeneralSecurityException {
+    public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         dulResource = new DataUseLetterResource(storage);
     }
 
     @Test
-    public void testAssociateDUL() throws IOException, GeneralSecurityException, ParseException {
+    public void testAssociateDUL() throws Exception {
         String id = setupConsent(null);
         File fileToUpload = new File("temp.pdf");
-        when(storage.postStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).thenReturn(consentDulPath(id));
+        when(storage.postStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).
+                thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
         //noinspection ResultOfMethodCallIgnored
         fileToUpload.createNewFile();
@@ -77,10 +73,11 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     }
 
     @Test
-    public void testUpdateAssociatedDUL() throws IOException, GeneralSecurityException {
+    public void testUpdateAssociatedDUL() throws Exception {
         String id = setupConsent(null);
         File fileToUpload = new File("temp.pdf");
-        when(storage.putStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).thenReturn(consentDulPath(id));
+        when(storage.putStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).
+                thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
         //noinspection ResultOfMethodCallIgnored
         fileToUpload.createNewFile();
@@ -96,7 +93,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     }
 
     @Test
-    public void testDeleteDUL() throws IOException, GeneralSecurityException {
+    public void testDeleteDUL() throws Exception {
         String id = setupConsent("dataUseLetterToDelete");
         when(storage.deleteStorageDocument(id)).thenReturn(true);
         Consent c = dulResource.deleteDUL(id);
@@ -107,9 +104,9 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     }
 
     private String setupConsent(String dul) {
-        Client client = new Client();
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         Consent rec = new Consent(false, new Everything(), dul, "structuredDataUseLetter", UUID.randomUUID().toString());
-        ClientResponse response = checkStatus(CREATED, put(client, consentPath(), rec));
+        Response response = checkStatus(CREATED, put(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
         System.out.println(String.format("setupConsent created consent with id '%s' at location '%s'", createdLocation, consent_id));

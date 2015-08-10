@@ -1,8 +1,9 @@
 package org.genomebridge.consent.http.service;
 
-import com.sun.jersey.api.NotFoundException;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.models.DACUser;
+
+import javax.ws.rs.NotFoundException;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.

@@ -1,7 +1,8 @@
 package org.genomebridge.consent.http;
 
-import com.sun.jersey.api.client.Client;
 import org.genomebridge.consent.http.models.DACUser;
+
+import javax.ws.rs.client.Client;
 
 public abstract class DACUserServiceTest extends AbstractTest {
 
@@ -10,7 +11,7 @@ public abstract class DACUserServiceTest extends AbstractTest {
     }
 
     public DACUser retrieveDacUser(Client client, String url) {
-        return get(client, url).getEntity(DACUser.class);
+        return getJson(client, url).readEntity(DACUser.class);
     }
 
     public String dacUserPathByEmail(String email) {

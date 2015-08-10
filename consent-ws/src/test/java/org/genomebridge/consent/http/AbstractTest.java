@@ -1,13 +1,14 @@
 package org.genomebridge.consent.http;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * An abstract superclass for Tests that involve the BOSS API, includes helper methods for setting up
@@ -16,10 +17,10 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 abstract public class AbstractTest extends ResourcedTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED.getStatusCode();
-    public static final int OK = ClientResponse.Status.OK.getStatusCode();
-    public static final int NOT_FOUND = ClientResponse.Status.NOT_FOUND.getStatusCode();
-    public static final int BAD_REQUEST = ClientResponse.Status.BAD_REQUEST.getStatusCode();
+    public static final int CREATED = Response.Status.CREATED.getStatusCode();
+    public static final int OK = Response.Status.OK.getStatusCode();
+    public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
+    public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
 
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
 
@@ -27,76 +28,70 @@ abstract public class AbstractTest extends ResourcedTest {
      * Some utility methods for interacting with HTTP-services.
      */
 
-    public <T> ClientResponse post(Client client, String path, T value) {
+    public <T> Response post(Client client, String path, T value) {
         return post(client, path, "testuser", value);
     }
 
-    public <T> ClientResponse post(Client client, String path, String user, T value) {
-        return client.resource(path)
-                .type(MediaType.APPLICATION_JSON_TYPE)
+    public <T> Response post(Client client, String path, String user, T value) {
+        return client.target(path)
+                .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("REMOTE_USER", user)
-                .post(ClientResponse.class, value);
+                .post(Entity.json(value), Response.class);
     }
 
-    public <T> ClientResponse put(Client client, String path, T value) {
+    public <T> Response put(Client client, String path, T value) {
         return put(client, path, "testuser", value);
     }
 
-    public <T> ClientResponse put(Client client, String path, String user, T value) {
-        return client.resource(path)
-                .type(MediaType.APPLICATION_JSON_TYPE)
+    public <T> Response put(Client client, String path, String user, T value) {
+        return client.target(path)
+                .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("REMOTE_USER", user)
-                .put(ClientResponse.class, value);
+                .put(Entity.json(value), Response.class);
     }
 
-    public ClientResponse delete(Client client, String path) {
+    public Response delete(Client client, String path) {
         return delete(client, path, "testuser");
     }
 
-    public ClientResponse delete(Client client, String path, String user) {
-        return client.resource(path)
-                .header("REMOTE_USER", user)
-                .delete(ClientResponse.class);
-    }
-
-    public ClientResponse get(Client client, String path) {
-        return get(client, path, "testuser");
-    }
-
-    public ClientResponse getFile(Client client, String path) {
-        return getFile(client, path, "testuser");
-    }
-
-    public ClientResponse get(Client client, String path, String user) {
-        return client.resource(path)
+    public Response delete(Client client, String path, String user) {
+        return client.target(path)
+                .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("REMOTE_USER", user)
-                .get(ClientResponse.class);
+                .delete(Response.class);
     }
 
-    public ClientResponse getFile(Client client, String path, String user) {
-        return client.resource(path)
-                .accept(MediaType.TEXT_PLAIN)
-                .header("REMOTE_USER", user)
-                .get(ClientResponse.class);
+    public Response getJson(Client client, String path) {
+        return getWithMediaType(client, path, MediaType.APPLICATION_JSON_TYPE);
     }
 
+    public Response getTextPlain(Client client, String path) {
+        return getWithMediaType(client, path, MediaType.TEXT_PLAIN_TYPE);
+    }
 
-    public ClientResponse check200(ClientResponse response) {
+    private Response getWithMediaType(Client client, String path, MediaType mediaType) {
+        return client.target(path)
+                .request(mediaType)
+                .header("REMOTE_USER", "testuser")
+                .get(Response.class);
+    }
+
+    public Response check200(Response response) {
         return checkStatus(200, response);
     }
 
-    public ClientResponse checkStatus(int status, ClientResponse response) {
+    public Response checkStatus(int status, Response response) {
         assertThat(response.getStatus()).isEqualTo(status);
         return response;
     }
 
-    public String checkHeader(ClientResponse response, String header) {
-        MultivaluedMap<String, String> map = response.getHeaders();
+    public String checkHeader(Response response, String header) {
+        MultivaluedMap<String, Object> map = response.getHeaders();
         assertThat(map).describedAs(String.format("header \"%s\"", header)).containsKey(header);
-        return map.getFirst(header);
+        return map.getFirst(header).toString();
     }
 
     public String path2Url(String path) {

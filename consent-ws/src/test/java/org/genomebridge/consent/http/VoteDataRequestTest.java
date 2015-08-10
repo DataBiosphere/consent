@@ -1,11 +1,6 @@
 package org.genomebridge.consent.http;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-
-import java.util.List;
-
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
@@ -13,15 +8,19 @@ import org.genomebridge.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class VoteDataRequestTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = ClientResponse.Status.CREATED
+    public static final int CREATED = Response.Status.CREATED
             .getStatusCode();
-    public static final int OK = ClientResponse.Status.OK.getStatusCode();
+    public static final int OK = Response.Status.OK.getStatusCode();
     private static final String DATA_REQUEST_ID = "1";
     private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
@@ -39,8 +38,8 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     public void testCreateDataRequestVote() {
         // should exist an election for specified data request
         Integer electionId = createElection();
-        Client client = new Client();
-        List<Vote> votes = get(client, voteDataRequestPath(DATA_REQUEST_ID)).getEntity(new GenericType<List<Vote>>() {
+        Client client = ClientBuilder.newClient();
+        List<Vote> votes = getJson(client, voteDataRequestPath(DATA_REQUEST_ID)).readEntity(new GenericType<List<Vote>>() {
         });
         Vote vote = new Vote();
         vote.setVote(false);
@@ -62,7 +61,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
 
 
     public void deleteVotes(List<Vote> votes) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         for (Vote vote : votes) {
             checkStatus(OK,
                     delete(client, voteDataRequestIdPath(DATA_REQUEST_ID, vote.getVoteId())));
@@ -70,7 +69,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
     public void updateVote(Integer id, Vote vote) {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         vote.setVote(true);
         vote.setRationale(null);
         checkStatus(OK,
@@ -82,34 +81,31 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
     private Integer createElection() {
-        Client client = new Client();
+        Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
         post(client, electionDataRequestPath(DATA_REQUEST_ID), election);
-        election = get(client, electionDataRequestPath(DATA_REQUEST_ID))
-                .getEntity(Election.class);
+        election = getJson(client, electionDataRequestPath(DATA_REQUEST_ID))
+                .readEntity(Election.class);
         return election.getElectionId();
     }
 
 
     public void testDataRequestPendingCase(Integer dacUserId) {
-        Client client = new Client();
-        List<PendingCase> pendingCases = get(client, dataRequestPendingCasesPath(dacUserId)).getEntity(new GenericType<List<PendingCase>>() {});
+        Client client = ClientBuilder.newClient();
+        List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
         assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(false);
         assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/2");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(DATA_REQUEST_ID);
-
-
     }
 
     @Test
     public void testDataRequestPendingCaseWithInvalidUser() {
-        Client client = new Client();
-        List<PendingCase> pendingCases = get(client, dataRequestPendingCasesPath(789)).getEntity(new GenericType<List<PendingCase>>() {});
+        Client client = ClientBuilder.newClient();
+        List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(789)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isEmpty();
-
     }
 
 }

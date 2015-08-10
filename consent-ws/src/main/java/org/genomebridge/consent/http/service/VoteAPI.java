@@ -1,10 +1,9 @@
 package org.genomebridge.consent.http.service;
 
-import java.util.List;
-
 import org.genomebridge.consent.http.models.Vote;
 
-import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.NotFoundException;
+import java.util.List;
 
 public interface VoteAPI {
 

@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.resources;
 
-import com.sun.jersey.api.NotFoundException;
 import org.genomebridge.consent.http.models.Vote;
 import org.genomebridge.consent.http.service.AbstractVoteAPI;
 import org.genomebridge.consent.http.service.VoteAPI;

@@ -1,18 +1,17 @@
 package org.genomebridge.consent.http.resources;
 
 import com.google.api.client.http.HttpResponse;
-import com.sun.jersey.api.NotFoundException;
-import com.sun.jersey.multipart.FormDataBodyPart;
-import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.cloudstore.GCSStore;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.UnknownIdentifierException;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -47,7 +46,10 @@ public class DataUseLetterResource extends Resource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Consent createDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id") String consentId) {
+    public Consent createDUL(
+            @FormDataParam("data") InputStream uploadedDUL,
+            @FormDataParam("data") FormDataBodyPart part,
+            @PathParam("id") String consentId) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
 
@@ -68,7 +70,10 @@ public class DataUseLetterResource extends Resource {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Consent updateDUL(@FormDataParam("data") InputStream uploadedDUL, @FormDataParam("data") FormDataBodyPart part, @PathParam("id") String consentId) {
+    public Consent updateDUL(
+            @FormDataParam("data") InputStream uploadedDUL,
+            @FormDataParam("data") FormDataBodyPart part,
+            @PathParam("id") String consentId) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {

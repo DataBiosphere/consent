@@ -1,8 +1,5 @@
 package org.genomebridge.consent.http.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
@@ -12,7 +9,9 @@ import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.models.Vote;
 
-import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 

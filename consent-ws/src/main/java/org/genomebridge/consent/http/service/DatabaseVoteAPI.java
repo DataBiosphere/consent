@@ -1,17 +1,16 @@
 package org.genomebridge.consent.http.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Vote;
 
-import com.sun.jersey.api.NotFoundException;
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.

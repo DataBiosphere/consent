@@ -149,3 +149,4 @@ hs_err_pid*
 
 ### OSX ###
 .DS_STORE
+*.yml

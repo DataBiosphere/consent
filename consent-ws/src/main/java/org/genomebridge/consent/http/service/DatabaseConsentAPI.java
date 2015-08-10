@@ -2,8 +2,7 @@ package org.genomebridge.consent.http.service;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.sun.jersey.api.NotFoundException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.ConsentMapper;
@@ -14,6 +13,7 @@ import org.genomebridge.consent.http.models.ConsentManage;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;

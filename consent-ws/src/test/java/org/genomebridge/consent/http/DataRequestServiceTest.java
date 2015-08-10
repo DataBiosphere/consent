@@ -2,7 +2,7 @@ package org.genomebridge.consent.http;
 
 import org.genomebridge.consent.http.models.DataRequest;
 
-import com.sun.jersey.api.client.Client;
+import javax.ws.rs.client.Client;
 
 public abstract class DataRequestServiceTest extends AbstractTest {
 
@@ -11,7 +11,7 @@ public abstract class DataRequestServiceTest extends AbstractTest {
     }
 
     public DataRequest retrieveDataRequest(Client client, String url) {
-        return get(client, url).getEntity(DataRequest.class);
+        return getJson(client, url).readEntity(DataRequest.class);
     }
 
     public String dataRequestPathById(Integer id) {
