@@ -7,16 +7,7 @@ import java.util.List;
 public class ElectionReview {
 
     @JsonProperty
-    private String referenceId;
-
-    @JsonProperty
-    private String dataUseLetter;
-
-    @JsonProperty
-    private String structuredDataUseLetter;
-
-    @JsonProperty
-    private String dulName;
+    private Consent consent;
 
     @JsonProperty
     private List<ElectionReviewVote> reviewVote;
@@ -24,28 +15,12 @@ public class ElectionReview {
     @JsonProperty
     private Election election;
 
-    public String getReferenceId() {
-        return referenceId;
+    public Consent getConsent() {
+        return consent;
     }
 
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getDataUseLetter() {
-        return dataUseLetter;
-    }
-
-    public void setDataUseLetter(String dataUseLetter) {
-        this.dataUseLetter = dataUseLetter;
-    }
-
-    public Election getElection() {
-        return election;
-    }
-
-    public void setElection(Election election) {
-        this.election = election;
+    public void setConsent(Consent consent) {
+        this.consent = consent;
     }
 
     public List<ElectionReviewVote> getReviewVote() {
@@ -56,19 +31,11 @@ public class ElectionReview {
         this.reviewVote = reviewVote;
     }
 
-    public String getStructuredDataUseLetter() {
-        return structuredDataUseLetter;
+    public Election getElection() {
+        return election;
     }
 
-    public void setStructuredDataUseLetter(String structuredDataUseLetter) {
-        this.structuredDataUseLetter = structuredDataUseLetter;
-    }
-
-    public String getDulName() {
-        return dulName;
-    }
-
-    public void setDulName(String dulName) {
-        this.dulName = dulName;
+    public void setElection(Election election) {
+        this.election = election;
     }
 }

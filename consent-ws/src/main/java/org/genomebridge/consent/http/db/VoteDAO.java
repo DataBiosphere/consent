@@ -3,12 +3,14 @@ package org.genomebridge.consent.http.db;
 import java.util.Date;
 import java.util.List;
 
+import org.genomebridge.consent.http.models.ElectionReviewVote;
 import org.genomebridge.consent.http.models.Vote;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
+import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
@@ -18,6 +20,11 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and election.status = 'Open'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
+
+    @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId " +
+              "where election.referenceId = :referenceId and election.status = 'Open'")
+    @Mapper(ElectionReviewVoteMapper.class)
+    List<ElectionReviewVote> findElectionReviewVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select  *  from vote v where  v.voteId = :voteId")
     Vote findVoteById(@Bind("voteId") Integer voteId);

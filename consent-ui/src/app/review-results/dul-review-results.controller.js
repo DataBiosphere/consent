@@ -63,9 +63,9 @@
             $scope.election.finalRationale = '';
         }
 
-        $scope.dul = electionReview.dataUseLetter;
-        $scope.dulName = electionReview.dulName;
-        $scope.structuredDataUseLetter = electionReview.structuredDataUseLetter;
+        $scope.dul = electionReview.consent.dataUseLetter;
+        $scope.dulName = electionReview.consent.dulName;
+        $scope.structuredDataUseLetter = electionReview.consent.structuredDataUseLetter;
         $scope.positiveVote = positiveVote;
         $scope.logVote = logVote;
         $scope.sendReminder = sendReminder;
