@@ -33,21 +33,9 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         ElectionReview review = new ElectionReview();
         review.setElection(electionDAO.getOpenElectionByReferenceId(referenceId));
         Consent consent = consentDAO.findConsentById(referenceId);
-        review.setDataUseLetter(consent.getDataUseLetter());
-        review.setReferenceId(consent.consentId);
-        review.setDulName(consent.getDulName());
-        review.setStructuredDataUseLetter(consent.getStructuredDataUseLetter());
-        List<Vote> votes = voteDAO.findVotesByReferenceId(referenceId);
-        List<ElectionReviewVote> rVotes = new ArrayList<>();
-        for (Vote v : votes) {
-            ElectionReviewVote rVote = new ElectionReviewVote();
-            rVote.setVote(v);
-            DACUser user = userDAO.findDACUserById(v.getDacUserId());
-            rVote.setEmail(user.getEmail());
-            rVote.setDisplayName(user.getDisplayName());
-            rVotes.add(rVote);
-        }
+        List<ElectionReviewVote> rVotes = voteDAO.findElectionReviewVotesByReferenceId(referenceId);
         review.setReviewVote(rVotes);
+        review.setConsent(consent);
         return review;
     }
 }
