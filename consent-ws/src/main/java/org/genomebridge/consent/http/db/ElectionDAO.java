@@ -33,21 +33,22 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
 
-    @SqlUpdate("update election set finalVote = :finalVote, finalRationale = :finalRationale, status = :status where electionId = :electionId ")
+    @SqlUpdate("update election set finalVote = :finalVote, finalVoteDate = :finalVoteDate, finalRationale = :finalRationale, status = :status where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
                             @Bind("finalVote") Boolean finalVote,
+                            @Bind("finalVoteDate") Date finalVoteDate,
                             @Bind("finalRationale") String finalRationale,
                             @Bind("status") String status);
 
     @SqlQuery("select typeId from electiontype where type = :type")
     String findElectionTypeByType(@Bind("type") String type);
 
-    @SqlQuery("select e.electionId,e.finalVote,e.status,e.createDate,e.referenceId, e.finalRationale,et.type electionType from election e "
+    @SqlQuery("select e.electionId,e.finalVote,e.status,e.createDate,e.referenceId, e.finalRationale, e.finalVoteDate, et.type electionType from election e "
             + " inner join electiontype et on e.electionType = et.typeId"
             + " and  e.referenceId = :referenceId and e.status = 'Open'")
     Election getOpenElectionByReferenceId(@Bind("referenceId") String referenceId);
     
-    @SqlQuery("select e.electionId,e.finalVote,e.status,e.createDate,e.referenceId, e.finalRationale,et.type electionType from election e "
+    @SqlQuery("select e.electionId,e.finalVote,e.status,e.createDate,e.referenceId, e.finalRationale, e.finalVoteDate, et.type electionType from election e "
             + " inner join electiontype et on e.electionType = et.typeId"
             + " and  e.electionId = :electionId")
     Election findElectionById(@Bind("electionId") Integer electionId);

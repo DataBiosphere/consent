@@ -5,9 +5,9 @@
         .controller('ReviewedCases', ReviewedCases);
 
     /* ngInject */
-    function ReviewedCases($http, cmPaginatorService, $scope, $filter, $timeout) {
+    function ReviewedCases(cmPaginatorService, reviewedConsents, reviewedDRs) {
 
-        var lists = {'dul': [], 'access':[]};
+        var lists = {'dul': [], 'access': []};
         var list_max_items = 5;
 
 
@@ -30,16 +30,25 @@
 
         init();
 
-        /*****JSON*****/
-
         function init() {
-            $http.get('json/cm_reviewed_cases.json').then(function (response) {
-                lists['dul'] = response.data['dul'];
-                lists['access'] = response.data['access'];
+                lists['dul'] = transformElectionResultData(reviewedConsents);
+                lists['access'] = transformElectionResultData(reviewedDRs);
                 vm.changePage('dul', 0);
                 vm.changePage('access', 0);
-            });
         }
+    }
+
+    // We need to transform the result data to a string to be able to filter results
+    function transformElectionResultData(collection){
+        var dup_array = collection.slice();
+        for (var i = 0; i < dup_array.length; i++) {
+            if(dup_array[i].finalVote === true){
+                dup_array[i].finalVoteString = 'Yes';
+            }else{
+                dup_array[i].finalVoteString = 'No';
+            }
+        }
+        return dup_array;
     }
 
 })();

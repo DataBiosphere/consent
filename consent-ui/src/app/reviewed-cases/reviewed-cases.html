@@ -1,5 +1,5 @@
 <div ng-include src="'app/header/header.html'"></div>
-<div class="container" ng-controller="ReviewedCases">
+<div class="container">
     <h2 class="cm-title common-color">
         <img src="assets/images/icon_reviewed.png" alt="Reviewed cases icon" class="cm-icons">Reviewed Cases Record<br>
         <div class="cm-title-description">List of Reviewed cases and their results</div>
@@ -31,14 +31,14 @@
                     <div ng-repeat="election in ReviewedCases.electionsList.dul | filter: searchDULcases">
                         <hr class="pvotes-separator">
                         <div class="row pvotes-main-list reviewed-cases-list">
-                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.consentId}}</div>
-                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.date}}</div>
+                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.referenceId}}</div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.finalVoteDate}}</div>
                             <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id center-text bold">
-                                <span ng-if="election.result == 'yes'" class="dul-color">Yes</span>
-                                <span ng-if="election.result == 'no'">No</span>
+                                <span ng-if="election.finalVoteString == 'Yes'" class="dul-color">Yes</span>
+                                <span ng-if="election.finalVoteString == 'No'">No</span>
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 btn-record">
-                                <a href="#" class="{{election.record}}">Record</a>
+                                <a href="#">Record</a>
                             </div>
                         </div>
                     </div>
@@ -66,7 +66,7 @@
             <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 search-reviewed">
                 <div class="search-text">
                     <i class="glyphicon glyphicon-search access-color"></i>
-                    <input type="search" class="form-control" placeholder="Enter search term..." ng-model="searchAccesscases"/>
+                    <input type="search" class="form-control" placeholder="Enter search term..." ng-model="searchAccessCases"/>
                 </div>
             </div>
         </div>
@@ -81,31 +81,31 @@
                     <hr class="pvotes-main-separator">
                 </div>
                 <div class="pvotes-box-body" id="searchTextResults">
-                    <div ng-repeat="election in ReviewedCases.electionsList.access | filter: searchAccesscases">
+                    <div ng-repeat="election in ReviewedCases.electionsList.access | filter: searchAccessCases">
                         <hr class="pvotes-separator">
                         <div class="row pvotes-main-list admin-users-list">
-                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.dataRequestId}}</div>
-                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.date}}</div>
+                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.referenceId}}</div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.finalVoteDate}}</div>
                             <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id center-text bold">
-                                <span ng-if="election.result == 'yes'" class="access-color">Yes</span>
-                                <span ng-if="election.result == 'no'">No</span>
+                                <span ng-if="election.finalVote == true" class="access-color">Yes</span>
+                                <span ng-if="election.finalVote == false">No</span>
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 btn-edit">
-                                <a href="#" class="{{election.record}}">Record</a>
+                                <a href="#" >Record</a>
                             </div>
                         </div>
                     </div>
                     <hr class="pvotes-separator">
                     <div class="pvotes-pagination">
-                        <ul class="pagination">
-                            <li><a ng-click="ReviewedCases.changePage('access', ReviewedCases.activePage.access - 1)">&laquo;</a></li>
-                            <li ng-repeat="page in ReviewedCases.currentPages.access">
-                                <a ng-click="ReviewedCases.changePage('access', page)"
-                                   ng-class="{ 'active-case': ReviewedCases.activePage.access == page}">{{page + 1}}</a>
-                            </li>
-                            <li><a ng-click="ReviewedCases.changePage('access', ReviewedCases.activePage.access + 1)">&raquo;</a></li>
-                        </ul>
-                    </div>
+                    <ul class="pagination">
+                        <li><a ng-click="ReviewedCases.changePage('access', ReviewedCases.activePage.access - 1)">&laquo;</a></li>
+                        <li ng-repeat="page in ReviewedCases.currentPages.access">
+                            <a ng-click="ReviewedCases.changePage('access', page)"
+                               ng-class="{ 'active-case': ReviewedCases.activePage.access == page}">{{page + 1}}</a>
+                        </li>
+                        <li><a ng-click="ReviewedCases.changePage('access', ReviewedCases.activePage.access + 1)">&raquo;</a></li>
+                    </ul>
+                </div>
                 </div>
             </div>
         </div>

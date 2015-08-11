@@ -1,9 +1,9 @@
 <!--<ul class="menu">-->
-    <!--<li><a href="#/rp_application/step1">RP Application</a></li>-->
-    <!--<li><a href="#/admin_console">Admin Console</a></li>-->
-    <!--<li><a href="#/admin_manage_dul">Admin DUL</a></li>-->
-    <!--<li><a href="#/admin_users">Admin Users</a></li>-->
-    <!--<li><a href="#/reviewed_cases">Reviewed Cases</a></li>-->
+<!--<li><a href="#/rp_application/step1">RP Application</a></li>-->
+<!--<li><a href="#/admin_console">Admin Console</a></li>-->
+<!--<li><a href="#/admin_manage_dul">Admin DUL</a></li>-->
+<!--<li><a href="#/admin_users">Admin Users</a></li>-->
+<!--<li><a href="#/reviewed_cases">Reviewed Cases</a></li>-->
 
 <!--</ul>-->
 <nav class="navbar top-navigator-bar" ng-controller="Header as Header">
@@ -28,7 +28,9 @@
                     <ul class="dropdown-menu user-dropdown" role="menu">
                         <li><a href="#/summary_votes" class="f-left">Votes Statistics</a></li>
                         <hr>
-                        <li><a href="#/reviewed_cases" class="f-left">Reviewed Cases Record</a></li>
+                        <li ng-show="$root.currentUser.memberStatus !== 'RESEARCHER'">
+                            <a href="#/reviewed_cases">Reviewed Cases Record</a>
+                        </li>
                     </ul>
                 </li>
             </ul>

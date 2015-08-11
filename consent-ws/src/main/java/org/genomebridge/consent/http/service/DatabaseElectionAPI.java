@@ -10,6 +10,7 @@ import org.genomebridge.consent.http.models.Election;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.
@@ -66,11 +67,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateStatus(rec.getStatus());
         if (rec.getStatus() == null) {
             rec.setStatus(ElectionStatus.OPEN.getValue());
+        } else if(rec.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+            rec.setFinalVoteDate(new Date());
         }
         if (electionDAO.findElectionById(electionId) == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalRationale(), rec.getStatus());
+        electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus());
         return electionDAO.findElectionById(electionId);
     }
 
@@ -87,12 +90,20 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
+    public List<Election> describeClosedElectionsByType(String type) {
+        List<Election> elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
+        if (elections == null) {
+            throw new NotFoundException("Couldn't find any closed elections");
+        }
+        return elections;
+    }
+
+    @Override
     public void deleteElection(String referenceId, Integer id) {
         if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
         electionDAO.deleteElectionById(id);
-
     }
 
     @Override

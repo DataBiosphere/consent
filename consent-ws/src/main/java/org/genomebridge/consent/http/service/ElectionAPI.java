@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.service;
 import org.genomebridge.consent.http.models.Election;
 
 import javax.ws.rs.NotFoundException;
+import java.util.List;
 
 public interface ElectionAPI {
 
@@ -16,4 +17,5 @@ public interface ElectionAPI {
 
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
+    List<Election> describeClosedElectionsByType(String type);
 }
