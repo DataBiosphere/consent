@@ -106,7 +106,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     private String setupConsent(String dul) {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         Consent rec = new Consent(false, new Everything(), dul, "structuredDataUseLetter", UUID.randomUUID().toString());
-        Response response = checkStatus(CREATED, put(client, consentPath(), rec));
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
         System.out.println(String.format("setupConsent created consent with id '%s' at location '%s'", createdLocation, consent_id));

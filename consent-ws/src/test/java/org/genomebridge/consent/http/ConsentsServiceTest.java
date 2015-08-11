@@ -153,7 +153,7 @@ public class ConsentsServiceTest extends AbstractTest {
         consent.requiresManualReview = true;
         consent.useRestriction = new Everything();
         consent.name = Math.random()+"Name";
-        Response response = checkStatus(CREATED, put(client, consentPath, consent));
+        Response response = checkStatus(CREATED, post(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");
         return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
     }
