@@ -32,10 +32,23 @@
 
 /**************************************GENERAL*/
 
-body {
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
     height: 100%;
-    min-height: 100%;
     font-family: 'Roboto', sans-serif;
+}
+
+.wrap {
+    min-height: 100%;
+}
+
+.main {
+    overflow: auto;
+    padding-bottom: 85px;/* must be same height as the footer */
 }
 
 a, input, button {
@@ -1469,3 +1482,122 @@ input[type="checkbox"][disabled] + label{
     color: #ffffff !important;
 }
 
+/*********************************FOOTER*/
+
+.footer {
+    position: relative;
+    margin-top: -85px; /* negative value of footer height */
+    /*height: 30px;*/
+    clear: both;
+    background-color: #f4f4f4;
+}
+
+.main-footer {
+    border-top: 2px solid #e6e6e6;
+    color: #989898 !important;
+    margin: 2em 0 0;
+    padding: 14px 60px 21px 60px;
+    display: block;
+    width: 100%;
+}
+
+.footer-links, .footer-links a {
+    color: #989898 !important;
+    display: inline-block;
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    font-weight: 500 !important;
+    height: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.footer-links__item {
+    display: inline-block;
+    vertical-align: middle;
+}
+.footer-links__item ~ *:before {
+    padding: 0 0.6em 0 0.5em;
+    content: "|";
+    font-size: 1em;
+}
+
+/*********************************LOGIN*/
+
+.landing-box{
+    padding: 40px 30px 30px 30px;
+    background: #eeeeee;
+    margin-top: 100px;
+    box-shadow: 3px 3px 0 #cccccc;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+}
+.landing-box h4{ /*FOR DESCRIPTION, WHICH IS NOT BEING USE FOR THE MOMENT*/
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: normal;
+    color: #777777;
+    text-align: center;
+    margin-top: 0!important;
+    margin-bottom: 30px;
+}
+.landing-box hr{ /*LINE TO SEPARATE DESCRIPTION FROM LOGIN BUTTON, WHICH IS NOT BEING USE FOR THE MOMENT*/
+    border-top-color: #cccccc;
+    margin: 15px 30px;
+}
+.landing-box-brand{
+    margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+.landing-box-title{
+    background: rgba(204, 204, 204, 0.5) !important;
+    margin-bottom: 20px !important;
+}
+.landing-box-title h3{
+    color: #777777;
+    text-align: center;
+    font-size: 26px;
+    padding: 23px 20px 20px 20px;
+    margin-top: 25px!important;
+}
+
+.landing-box-google-signin{
+    color: #777777;
+    text-align: center;
+    font-size: 16px;
+}
+.landing-box-google-signin .new-sign{
+    color: #777777;
+    text-align: center;
+    font-size: 16px;
+    display: block;
+}
+.landing-box-google-signin .new-sign span{
+    font-size: 14px;
+}
+
+.custom-g-signin2{
+    display: inline-block;
+
+    width: auto !important;
+    border-radius: 2px;
+    white-space: nowrap;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 15px!important;
+    font-weight: 500 !important;
+    margin: 15px 0 15px 0;
+}
+.custom-g-signin2:hover {
+    cursor: pointer;
+}
+
+.abcRioButtonIcon{
+    padding-left: 5px;
+}
+.abcRioButtonContents{
+    font-size: 15px!important;
+    font-weight: 500 !important;
+    text-align: center!important;
+}

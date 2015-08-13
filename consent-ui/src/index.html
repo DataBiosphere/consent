@@ -28,9 +28,17 @@
     <!-- endbuild -->
 </head>
 <body ng-controller="ApplicationController">
-<script type="text/javascript"
-        src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1.1','packages':['corechart']}]}"></script>
-<div ui-view></div>
+    <script type="text/javascript"
+                  src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1.1','packages':['corechart']}]}"></script>
+    <div class="wrap">
+        <div class="main">
+            <div ui-view></div>
+        </div>
+    </div>
+    <div class="footer">
+        <div ng-include src="'app/footer/footer.html'"></div>
+    </div>
+
 
 <!--
 ************************************************************************************************************************
