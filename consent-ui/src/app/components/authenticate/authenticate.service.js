@@ -10,7 +10,7 @@
           function isAuthorized(authorizedRoles,userRoles) {
                         var i = userRoles.length;
                         while(i--){
-                                  if( authorizedRoles.indexOf(userRoles[i].name.toUpperCase()) !== -1  ){
+                                  if( authorizedRoles.indexOf(userRoles[i].name) !== -1  ){
                                       return true;
                                   }
                                }

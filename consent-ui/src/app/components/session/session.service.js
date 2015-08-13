@@ -17,7 +17,10 @@
                                                      $state.go('user_console');
                                                 }else if(cmAuthenticateService.isAuthorized(USER_ROLES.admin,data.roles)) {
                                                      $state.go('admin_console');
-                                                }else{
+                                                }else if(cmAuthenticateService.isAuthorized(USER_ROLES.alumni,data.roles) || cmAuthenticateService.isAuthorized(USER_ROLES.researcher,data.roles)) {
+                                                    $state.go('summary_votes');
+                                                }
+                                               else{
                                                 alert("not valid Role");
                                                 logoutUser();
                                               }

@@ -12,6 +12,7 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 
 @RegisterMapper({DACUserMapper.class})
@@ -48,7 +49,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select u.*, r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId order by createDate desc")
-    List<DACUser> findUsers();
+    Set<DACUser> findUsers();
 }
 
 

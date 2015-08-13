@@ -104,25 +104,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public Collection<DACUser> describeUsers() {
-        List<DACUser> dacUsers = dacUserDAO.findUsers();
-        return getUsersWithRoles(dacUsers);
+        return dacUserDAO.findUsers();
     }
 
-    private Collection<DACUser> getUsersWithRoles(List<DACUser> dacUsers) {
-        Map<Integer, DACUser> users = new HashMap<>();
-        if(dacUsers != null){
-            for(DACUser user : dacUsers){
-                if(users.containsKey(user.getDacUserId())){
-                    DACUser existentUser = users.get(user.getDacUserId());
-                    List<DACUserRole> existentRoles = existentUser.getRoles();
-                    existentRoles.addAll(user.getRoles());
-                }else{
-                    users.put(user.getDacUserId(),user);
-                }
-            }
-        }
-        return users.values();
-    }
 
     private void validateExistentUser(String email) {
         if (dacUserDAO.findDACUserByEmail(email) == null) {

@@ -22,10 +22,6 @@ public class DACUser {
     @JsonProperty
     private List<DACUserRole> roles;
 
-    @JsonProperty
-    //will remove this after refactor
-    private String memberStatus = "Admin";
-
     public DACUser() {
     }
 
@@ -35,6 +31,15 @@ public class DACUser {
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
+    }
+
+    public DACUser(Integer dacUserId, String email, String displayName,
+                   Date createDate, List<DACUserRole> roles) {
+        this.dacUserId = dacUserId;
+        this.email = email;
+        this.displayName = displayName;
+        this.createDate = createDate;
+        this.roles = roles;
     }
 
     public Integer getDacUserId() {

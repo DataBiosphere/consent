@@ -36,13 +36,13 @@
                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{user.displayName}}</div>
                         <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{user.email}}</div>
                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">
-                            <div class="admin-users-list" ng-repeat="role in user.roles">
+                            <span class="admin-users-list" ng-repeat="role in user.roles">
                                 <span class="enabled default-color" ng-if="role.name == 'Admin'">Admin</span>
                                 <span class="enabled default-color" ng-if="role.name == 'Member'">Member</span>
                                 <span class="enabled default-color" ng-if="role.name == 'Chairperson'">Chairperson</span>
                                 <span class="enabled default-color" ng-if="role.name == 'Alumni'">Alumni</span>
                                 <span class="enabled default-color" ng-if="role.name == 'Researcher'">Researcher</span>
-                            </div>
+                            </span>
 
                         </div>
                         <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 btn-edit">

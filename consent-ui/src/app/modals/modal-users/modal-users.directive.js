@@ -14,24 +14,30 @@
                         element.bind("change", function () {
 
                             if(element.context.checked){
-                                var rol =
-                                rol = new Object();
+                                var rol =  new Object();
                                 rol.name=element.context.id;
+                                scope.$apply(function () {
                                 scope.user.roles.push(rol);
-                                console.log(scope.user.roles);
+                                  });
+
                         }else{
                              var i = scope.user.roles.length;
                              while(i--){
-                               console.log(scope.user.roles[i].name);
-                               console.log(element.context.id);
-
                                   if( scope.user.roles[i]
                                       && scope.user.roles[i].name===element.context.id){
-                                      scope.user.roles.splice(i,1);
-                                      console.log(scope.user.roles);
+                                       scope.$apply(function () {
+                                                  scope.user.roles.splice(i,1);
+                                      });
                                   }
                                }
                              }
+                          if(element.context.id=== "CHAIRPERSON"  ){
+                               if(element.context.checked){
+                              scope.$emit("chairpersonAlert", { alert : true });
+                               }else{
+                                  scope.$emit("chairpersonAlert", { alert : false });
+                              }
+                              }
                         });
                   }
               }
