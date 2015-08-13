@@ -5,8 +5,9 @@
         .controller('DulReview', DulReview);
 
 
-    function DulReview($scope, $modal, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService)
+    function DulReview($scope, $modal, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService, apiUrl)
     {
+        $scope.downloadUrl = apiUrl + 'consent/' + consent.consentId + '/dul';
         $scope.consentDulUrl = consent.dataUseLetter;
         $scope.consentDulName = consent.dulName;
         $scope.consentSDul = consent.structuredDataUseLetter;
