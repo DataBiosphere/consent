@@ -95,9 +95,11 @@ public class DataUseLetterResource extends Resource {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         try {
-            String prevFile = api.getConsentDulUrl(consentId);
-            HttpResponse r = store.getStorageDocument(prevFile);
-            File targetFile = new File("dataUseLetter-" + consentId + "." + getFileExtension(prevFile));
+            Consent consent = api.retrieve(consentId);
+            String fileUrl  = consent.getDataUseLetter();
+            String fileName = consent.getDulName();
+            HttpResponse r = store.getStorageDocument(fileUrl);
+            File targetFile = new File(fileName);
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
             return Response.ok(targetFile)
                     .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
