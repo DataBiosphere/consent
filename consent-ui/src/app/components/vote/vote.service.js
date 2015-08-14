@@ -29,7 +29,7 @@
          * @param vote, with the voteId included
          */
         function putVote(consentId, vote){
-            var postObject = new Object();
+            var postObject = {}; // new Object();
             postObject.vote = vote.vote;
             postObject.dacUserId = vote.dacUserId;
             postObject.rationale = vote.rationale;
@@ -41,7 +41,7 @@
          * @param vote, with the voteId included
          */
         function postVote(consentId, vote){
-            var postObject = new Object();
+            var postObject = {}; //new Object();
             postObject.vote = vote.vote;
             postObject.dacUserId = vote.dacUserId;
             postObject.rationale = vote.rationale;
@@ -61,7 +61,7 @@
             updateVote: function(consentId, vote){
                 return putVote(consentId, vote);
             }
-        }
+        };
     }
 
 })();

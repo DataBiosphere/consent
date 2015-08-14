@@ -1,7 +1,7 @@
 FROM phusion/baseimage:latest
 FROM google/nodejs
 
-MAINTAINER Vault Team <vault@broadinstitute.org>
+MAINTAINER Belatrix Team <belatrix@broadinstitute.org>
 
 USER root
 
