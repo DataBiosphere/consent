@@ -12,7 +12,6 @@
             function onSignIn(googleUser) {
                 var profile = googleUser.getBasicProfile();
                 cmLoginUserService.loginUser(profile.getEmail());
-
             };
 
             function signOut() {
