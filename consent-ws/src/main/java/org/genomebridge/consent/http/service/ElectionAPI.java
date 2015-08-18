@@ -19,4 +19,5 @@ public interface ElectionAPI {
 
     List<Election> cancelOpenElectionAndReopen();
 
+    List<Election> describeClosedElectionsByType(String type);
 }

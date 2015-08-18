@@ -22,4 +22,6 @@
 
     <include file="changesets/changelog-consent-8.0.xml"/>
 
+    <include file="changesets/changelog-consent-9.0.xml"/>
+
 </databaseChangeLog>
