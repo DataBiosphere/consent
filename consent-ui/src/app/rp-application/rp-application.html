@@ -1,0 +1,59 @@
+<div ng-include src="'app/header/header.html'"></div>
+<div class="container">
+    <div id="form-container">
+        <h2 class="cm-title request-color">
+            <img src="assets/images/icon_request.png" alt="access icon" class="cm-icons">Research Purpose
+            Application<br>
+            <div class="cm-title-other-description">The section below includes a series of questions intended to allow
+                our Data Access Committee to evaluate a newly developed semi-automated process of data access control.
+            </div>
+        </h2>
+        <hr class="section-separator">
+        <div class="row no-margin">
+            <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+                <div class="row multi-step-buttons no-margin">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step1')}" ui-sref=".step1" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 1</small>
+                            Reseacher Information
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step2')}" ui-sref=".step2" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 2</small>
+                            Data Access Request
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step3')}" ui-sref=".step3" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 3</small>
+                            Research Purpose Statement
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                        <a ng-class="{active: RPApplication.$state.includes('rp_application.step4')}" ui-sref=".step4" class="request-color jumbotron box-vote multi-step-title">
+                            <small>Step 4</small>
+                            Attestation Statement
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <form id="signup-form" ng-submit="processForm()">
+            <!-- our nested state views will be injected here -->
+            <div id="form-views" ui-view></div>
+        </form>
+
+
+    </div>
+
+  <!--<pre>-->
+    <!--{{ formData }}-->
+  <!--</pre>-->
+</div>

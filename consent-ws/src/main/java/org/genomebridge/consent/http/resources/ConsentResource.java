@@ -1,46 +1,28 @@
-/*
- * Copyright 2014 Broad Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.genomebridge.consent.http.resources;
 
-import com.sun.jersey.api.NotFoundException;
-import org.apache.log4j.Logger;
-import org.genomebridge.consent.http.models.UseRestriction;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
 import org.genomebridge.consent.http.service.UnknownIdentifierException;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
-@Path("consent/{id}")
+@Path("consent")
 public class ConsentResource extends Resource {
-
-    public Boolean requiresManualReview;
-    public UseRestriction useRestriction;
 
     private ConsentAPI api;
 
-    public ConsentResource() { this.api = AbstractConsentAPI.getInstance(); }
-
+    @Path("{id}")
     @GET
     @Produces("application/json")
-    public ConsentResource describe(@PathParam("id") String id) {
+    public Response describe(@PathParam("id") String id) {
         try {
-            populateFromApi(id);
-            return this;
+            return Response.ok(populateFromApi(id))
+                    .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", id));
         }
@@ -48,23 +30,37 @@ public class ConsentResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    public Response createConsent(@Context UriInfo info, Consent rec) {
+        try {
+            Consent consent = api.create(rec);
+            URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
+            return Response.created(uri).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(e).build();
+        }
+    }
+
+    @Path("{id}")
+    @PUT
+    @Consumes("application/json")
     @Produces("application/json")
-    public Response update(@PathParam("id") String id, ConsentResource updated) {
+    public Response update(@PathParam("id") String id, Consent updated) {
         try {
             api.update(id, updated);
             return Response.ok(updated).build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", id));
+        } catch (Exception e) {
+            return Response.serverError().entity(e).build();
         }
     }
 
-    private void populateFromApi(String id) throws UnknownIdentifierException {
-        ConsentResource rec = api.retrieve(id);
-        this.requiresManualReview = rec.requiresManualReview;
-        this.useRestriction = rec.useRestriction;
+    private Consent populateFromApi(String id) throws UnknownIdentifierException {
+        return api.retrieve(id);
     }
 
-    private void saveToApi(String id) throws UnknownIdentifierException {
-        api.update(id, this);
+    public ConsentResource() {
+        this.api = AbstractConsentAPI.getInstance();
     }
+
 }

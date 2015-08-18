@@ -1,0 +1,44 @@
+
+<nav class="navbar top-navigator-bar top-navigator-bar-admin" ng-controller="Header as Header">
+    <div class="row top-navigator">
+        <div class="navbar col-lg-9 col-md-9 col-sm-8 col-xs-12 no-padding no-margin" ng-controller="Header">
+            <ul class="navbar-left no-margin">
+                <li class="brand"><img src="../assets/images/broad_logo_allwhite.png" alt="Broad Institute Logo"></li>
+                <li><a href="#/admin_console">My Console</a></li>
+                <li class="f-right"><a href="#/summary_votes">Statistics</a></li>
+                <li class="dropdown drop-li navbar-right" dropdown on-toggle="toggled(open)">
+                    <a role="button" class="dropdown-toggle" href="#" dropdown-toggle>
+                        <div>Data Use Letter <span class="caret caret-margin"></span></div>
+                    </a>
+                    <ul class="dropdown-menu user-dropdown admin-dropdown" role="menu">
+                        <li><a href="#/admin_manage_dul">Manage Data Use Letters</a></li>
+                        <hr>
+                        <li><a href="#/admin_add_dul">Add Data Use Letter</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown drop-li navbar-right" dropdown on-toggle="toggled(open)">
+                    <a role="button" class="dropdown-toggle" href="#" dropdown-toggle>
+                        <div>User <span class="caret caret-margin"></span></div>
+                    </a>
+                    <ul class="dropdown-menu user-dropdown" role="menu">
+                        <li><a href="#">Manage Users</a></li>
+                        <hr>
+                        <li><a href="#">Add User</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="navbar navbar-right col-lg-3 col-md-3 col-sm-4 col-sm-offset-8 col-xs-6 no-margin" ng-controller="Header">
+            <li class="dropdown navbar-right user-li" dropdown is-open="status.isopen">
+                <a role="button" class="dropdown-toggle" data-toggle="dropdown" href="#" dropdown-toggle ng-disabled="disabled">
+                    <div>{{$root.currentUser.displayName}} <span class="caret caret-margin"></span></div>
+                    <small>{{$root.currentUser.email}}</small>
+                </a>
+                <ul class="dropdown-menu user-dropdown" role="menu">
+                    <li><a href="/#/login" onclick="signOut();">Sign out</a></li>
+                </ul>
+            </li>
+        </div>
+    </div>
+</nav>
+

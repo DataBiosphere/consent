@@ -1,9 +1,7 @@
 package org.genomebridge.consent.autocomplete.service;
 
-import com.google.inject.Inject;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.*;
-import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.genomebridge.consent.autocomplete.resources.TermResource;
