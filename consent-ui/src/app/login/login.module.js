@@ -2,6 +2,6 @@
     'use strict';
 
     angular
-        .module('cmLogin', ['ui.router','ngResource','cmUser','cmUserRoles']);
+        .module('cmLogin', ['ui.router','ngResource','cmSession','cmUserRoles']);
 
 })();

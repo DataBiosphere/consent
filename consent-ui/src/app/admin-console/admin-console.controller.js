@@ -5,7 +5,7 @@
         .controller('AdminConsole', AdminConsole);
 
     /* ngInject */
-    function AdminConsole($http, $modal, $state, cmConsentService) {
+    function AdminConsole($http, $modal, $state) {
 
         var vm = this;
         vm.addDul = addDul;
@@ -35,13 +35,17 @@
 
             var modalInstance = $modal.open({
                 animation: false,
-                templateUrl: 'app/modal-users/add-user-modal.html',
+                templateUrl: 'app/modals/modal-users/add-user-modal.html',
                 controller: 'ModalUsers',
-                controllerAs: 'ModalUsers'
+                controllerAs: 'ModalUsers',
+                resolve: {
+                             user: new Object()
+                         }
             });
 
             modalInstance.result.then(function (selectedItem) {//selectedItem - params to apply when the fc was successful
                 //what to do if it was accepted
+                $state.go('admin_users');
             }, function () {
                 //what to do if the modal was canceled
             });

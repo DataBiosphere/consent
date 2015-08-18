@@ -16,7 +16,7 @@
                 controller: 'Login',
                 controllerAs:'Login',
                      data: {
-                     authorizedRoles: [USER_ROLES.chairperson,USER_ROLES.dacmember,USER_ROLES.admin]
+                     authorizedRoles: [USER_ROLES.chairperson,USER_ROLES.member,USER_ROLES.admin]
                            }
             });
     }

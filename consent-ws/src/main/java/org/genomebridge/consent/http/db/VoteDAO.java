@@ -43,27 +43,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                                      @Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select  v.voteId from vote v "
-            + "inner join election on election.electionId = v.electionId  "
-            + "inner join dacuser du on du.dacUserId = v.dacUserId "
-            + "and election.referenceId = :referenceId and v.dacUserId = :dacUserId")
-    String findVoteByReferenceIdAndDacUserId(@Bind("referenceId") String referenceId,
-                                             @Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select vote.voteId from vote  inner join election on election.electionId = vote.electionId  "
             + "where election.referenceId = :referenceId "
             + "and vote.voteId = :voteId")
     Integer checkVoteById(@Bind("referenceId") String referenceId,
                           @Bind("voteId") Integer voteId);
-
-
-    @SqlQuery("select  v.*  from vote v "
-            + "inner join election on election.electionId = v.electionId  "
-            + "inner join datarequest on datarequest.requestId = election.referenceId "
-            + "where election.referenceId = :requestId and datarequest.requestId = :requestId "
-            + "and v.voteId = :voteId ")
-    Vote findVoteByDataRequestIdAndVoteId(@Bind("requestId") String requestId,
-                                          @Bind("voteId") String voteId);
 
 
     @SqlUpdate("insert into vote (dacUserId, electionId, isChairPersonVote) values " +
@@ -78,10 +63,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlUpdate("delete v from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId ")
     void deleteVotes(@Bind("referenceId") String referenceId);
-
-
-    @SqlBatch("delete from vote where electionId = :electionId ")
-    void deleteVotesByElection(@Bind("electionId") String electionId);
 
     @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, createDate = :createDate where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,

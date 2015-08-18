@@ -21,7 +21,7 @@
                 controller: 'DulReview',
                 controllerAs: 'DulReview',
                 data: {
-                    authorizedRoles: [USER_ROLES.dacmember, USER_ROLES.chairperson]
+                    authorizedRoles: [USER_ROLES.member, USER_ROLES.chairperson]
                 },
                 resolve: {
                     vote: function($stateParams, cmVoteService){
@@ -45,7 +45,7 @@
                 controller: 'Review',
                 controllerAs: 'Review',
                 data: {
-                    authorizedRoles: [USER_ROLES.dacmember, USER_ROLES.chairperson]
+                    authorizedRoles: [USER_ROLES.member, USER_ROLES.chairperson]
                 }
             });
     }

@@ -4,8 +4,7 @@
     angular.module('cmReview')
         .controller('DulReview', DulReview);
 
-
-    function DulReview($scope, $modal, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService, apiUrl)
+    function DulReview($scope, $modal, $state, $rootScope, USER_ROLES, vote, consent, election, cmVoteService, apiUrl, cmAuthenticateService)
     {
         $scope.downloadUrl = apiUrl + 'consent/' + consent.consentId + '/dul';
         $scope.consentDulUrl = consent.dataUseLetter;
@@ -52,12 +51,12 @@
                             scope: $scope
                         });
                         modalInstance.result.then(function () {
-                            if($rootScope.currentUser.memberStatus === USER_ROLES.chairperson){
+                        cmAuthenticateService.isAuthorized(USER_ROLES.chairperson,$rootScope.currentUser.roles)
+                            if(cmAuthenticateService.isAuthorized(USER_ROLES.chairperson,$rootScope.currentUser.roles)){
                                 $state.go('chair_console');
                             }else {
                                 $state.go('user_console');
                             }
-                            console.log();
                         });
                     },
                     //error

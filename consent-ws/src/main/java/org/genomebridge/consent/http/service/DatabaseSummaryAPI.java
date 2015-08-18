@@ -1,10 +1,5 @@
 package org.genomebridge.consent.http.service;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
-
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
@@ -15,6 +10,11 @@ import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Summary;
 import org.genomebridge.consent.http.models.Vote;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.

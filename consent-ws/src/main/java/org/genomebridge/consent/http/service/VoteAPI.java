@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
@@ -20,5 +21,7 @@ public interface VoteAPI {
     void deleteVote(Integer voteId, String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
 
     void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
+
+    void createVotesForElections(List<Election> elections, Boolean isConsent);
 
 }

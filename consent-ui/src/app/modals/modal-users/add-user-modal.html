@@ -9,24 +9,24 @@
             </h2>
         </div>
         <div class="modal-footer">
-            <form class="form-horizontal" id="voteForm">
+            <form class="form-horizontal" name="userForm" novalidate>
                 <fieldset>
                     <div class="form-group admin-form-group first-form-group">
                         <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label common-color">Name</label>
                         <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
-                            <input type="text"
+                            <input type="text"  ng-model="user.displayName"
                                    name="inputName"
                                    class="form-control col-lg-12 vote-input"
-                                   placeholder="User name">
+                                   placeholder="User name" required>
                         </div>
                     </div>
                     <div class="form-group admin-form-group ">
                         <label class="col-lg-3 col-md-3 col-sm-3 col-xs-4 control-label common-color">Google account id</label>
                         <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8 admin-input">
-                            <input type="text"
+                            <input type="email" ng-model="user.email"
                                    name="inputGoogleId"
                                    class="form-control col-lg-12 vote-input"
-                                   placeholder="e.g. username@broadinstitute.org">
+                                   placeholder="e.g. username@broadinstitute.org " required>
                         </div>
                     </div>
                     <div class="form-group admin-form-group ">
@@ -34,27 +34,27 @@
                         <div class="col-lg-9 col-md-9 col-sm-9 col-xs-8">
                             <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                 <div class="checkbox">
-                                    <input type="checkbox" id="checkMember" class="checkbox-inline user-checkbox" ng-model="checkModel.member" name="checkRoles" value="Member" ng-disabled="checkModel.chairperson || checkModel.alumni || checkModel.researcher">
-                                    <label class="regular-checkbox rp-choice-questions" for="checkMember">Member</label>
+                                    <input type="checkbox" id="MEMBER" class="checkbox-inline user-checkbox" ng-model="checkModel.member" add-role name="checkRoles" value="Member" ng-disabled="checkModel.chairperson || checkModel.alumni || checkModel.researcher">
+                                    <label class="regular-checkbox rp-choice-questions" for="MEMBER">Member</label>
                                 </div>
                                 <div class="checkbox">
-                                    <input type="checkbox" id="checkChairperson" class="checkbox-inline user-checkbox" ng-model="checkModel.chairperson" name="checkRoles" value="Chairperson" ng-disabled="checkModel.member || checkModel.alumni || checkModel.researcher"  ng-click="changeChairpersonRoleAlert()">
-                                    <label class="regular-checkbox rp-choice-questions" for="checkChairperson">Chairperson</label>
+                                    <input type="checkbox" id="CHAIRPERSON" class="checkbox-inline user-checkbox" ng-model="checkModel.chairperson" add-role name="checkRoles" value="Chairperson" ng-disabled="checkModel.member || checkModel.alumni || checkModel.researcher">
+                                    <label class="regular-checkbox rp-choice-questions" for="CHAIRPERSON">Chairperson</label>
                                 </div>
                                 <div class="checkbox">
-                                    <input type="checkbox" id="checkAlumni" class="checkbox-inline user-checkbox" ng-model="checkModel.alumni" name="checkRoles" value="Alumni" ng-disabled="checkModel.member || checkModel.chairperson">
-                                    <label class="regular-checkbox rp-choice-questions" for="checkAlumni">Alumni</label>
+                                    <input type="checkbox" id="ALUMNI" class="checkbox-inline user-checkbox" ng-model="checkModel.alumni" add-role name="checkRoles" value="Alumni" ng-disabled="checkModel.member || checkModel.chairperson">
+                                    <label class="regular-checkbox rp-choice-questions" for="ALUMNI">Alumni</label>
                                 </div>
                             </div>
                             <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                 <div class="checkbox">
-                                    <input id="checkAdmin" type="checkbox" class="checkbox-inline user-checkbox" ng-model="checkModel.admin" name="checkRoles" value="Admin">
-                                    <label class="regular-checkbox rp-choice-questions" for="checkAdmin">Admin</label>
+                                    <input id="ADMIN" type="checkbox" class="checkbox-inline user-checkbox" ng-model="checkModel.admin" add-role name="checkRoles" value="Admin">
+                                    <label class="regular-checkbox rp-choice-questions" for="ADMIN">Admin</label>
                                 </div>
 
                                 <div class="checkbox">
-                                    <input id="checkResearcher" type="checkbox" class="checkbox-inline user-checkbox" ng-model="checkModel.researcher" name="checkRoles" value="Researcher" ng-disabled="checkModel.member || checkModel.chairperson">
-                                    <label class="regular-checkbox rp-choice-questions" for="checkResearcher">Researcher</label>
+                                    <input id="RESEARCHER" type="checkbox" class="checkbox-inline user-checkbox" ng-model="checkModel.researcher" add-role name="checkRoles" value="Researcher" ng-disabled="checkModel.member || checkModel.chairperson">
+                                    <label class="regular-checkbox rp-choice-questions" for="RESEARCHER">Researcher</label>
                                 </div>
                             </div>
                         </div>
@@ -115,10 +115,8 @@
                     </div>
 
                     <div class="admin-modal-footer">
-                        <a href="#/admin_users">
-                            <button type="button" class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn common-background" ng-click="ModalUsers.ok()">Add</button>
-                        </a>
-                        <button type="button" class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn dismiss-background" ng-click="ModalUsers.cancel()">Cancel</button>
+                        <button ng-disabled="userForm.$invalid || user.roles.length === 0 "  class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn common-background" ng-click="ModalUsers.ok(user)">Add</button>
+                        <button class="col-lg-3 col-md-3 col-sm-4 col-xs-6 btn dismiss-background" ng-click="ModalUsers.cancel()">Cancel</button>
                     </div>
                 </fieldset>
             </form>

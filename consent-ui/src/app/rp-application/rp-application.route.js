@@ -15,7 +15,7 @@
                 controller: 'RPApplication',
                 controllerAs: 'RPApplication',
                 data: {
-                                         authorizedRoles: [USER_ROLES.dacmember]
+                                         authorizedRoles: [USER_ROLES.member]
                                    }
             })
 

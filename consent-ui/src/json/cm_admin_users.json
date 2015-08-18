@@ -48,8 +48,8 @@
             "name": "Santiago Saucedo",
             "googleId": "ssaucedo@broadinstitute.org",
             "roles": {
-                "admin": "disabled",
-                "member": "enabled",
+                "admin": "enabled",
+                "member": "disabled",
                 "chairperson": "disabled",
                 "alumni": "disabled",
                 "researcher": "disabled"

@@ -5,13 +5,43 @@
         .controller('ModalUsers', ModalUsers);
 
     /* ngInject */
-    function ModalUsers($modalInstance, $scope) {
+    function ModalUsers($modalInstance, cmUserService, $scope, user) {
 
         var vm = this;
+        $scope.user = new Object();
+        $scope.user.roles = [];
 
-        vm.ok = function () {
-            $modalInstance.close();//add params to handle what to do if it succeeds on admin-users.controller
+        if (user !== undefined) {
+            $scope.user = user;
+            $scope.user.roles = user.roles;
+            $scope.user.roles = [];
+        }
+
+           $scope.$on("chairpersonAlert", function (event, arg) {
+                                                     $scope.$apply(function () {
+                                                     if(arg.alert){
+                                                       $scope.changeChairpersonRoleAlert();
+                                                     }else{
+                                                       $scope.closeAlert();
+                                                     }
+                                                    });
+                                                   });
+
+        vm.ok = function (user) {
+            cmUserService.postUser(user).$promise.then(
+                function (value) {
+                    $modalInstance.close();
+                }, function (value) {
+                    $scope.duplicateNameAlert(0);
+                });
+
         };
+
+        vm.edit = function (user) {
+            cmUserService.updateUser(user);
+            $modalInstance.close();
+        };
+
 
         vm.cancel = function () {
             $modalInstance.dismiss('cancel');
@@ -22,7 +52,7 @@
 
         $scope.alerts = [];
 
-        $scope.replaceRoleAlert = function(index) {
+        $scope.replaceRoleAlert = function (index) {
             $scope.alerts.splice(index, 1);
             $scope.alerts.push({
                 type: 'danger',
@@ -32,7 +62,7 @@
             });
         };
 
-        $scope.newUserAlert = function(index) {
+        $scope.newUserAlert = function (index) {
             $scope.alerts.splice(index, 1);
             $scope.alerts.push({
                 type: 'danger',
@@ -42,7 +72,7 @@
             });
         };
 
-        $scope.replaceChairpersonAlert = function(index) {
+        $scope.replaceChairpersonAlert = function (index) {
             $scope.alerts.splice(index, 1);
             $scope.alerts.push({
                 type: 'danger',
@@ -53,17 +83,27 @@
             });
         };
 
-        $scope.changeChairpersonRoleAlert = function(index) {
+        $scope.changeChairpersonRoleAlert = function (index) {
             $scope.alerts.splice(index, 1);
             $scope.alerts.push({
                 type: 'danger',
                 title: 'Warning!',
-                msg: 'If Chairperson is replaced, every open election will be canceled and re-opened with the new Chairperson assigned.',
+                msg: 'If Chairperson is replaced, every open election will be canceled and re-opened with the new Chairperson assigned. Besides, the previous Chairperson is going to become an Alumni.',
                 alertType: 4
             });
         };
 
-        $scope.closeAlert = function(index) {
+        $scope.duplicateNameAlert = function (index) {
+            $scope.alerts.splice(index, 1);
+            $scope.alerts.push({
+                type: 'danger',
+                title: 'Conflicts to resolve!',
+                msg: 'There is a user already registered with this google account.',
+                alertType: 5
+            });
+        };
+
+        $scope.closeAlert = function (index) {
             $scope.alerts.splice(index, 1);
         };
 
@@ -72,21 +112,6 @@
         $scope.status = {
             isopen: false
         };
-
-        /*****SELECT*****/
-
-        $scope.options = ['Verónica Vicario', 'Anabella Raccioppi', 'Santiago Saucedo', 'Nadya Lopez Zalba'];
-        $scope.myselect = 'Select a user';
-
-        $scope.options_users = ['Verónica Vicario', 'Santiago Saucedo'];
-        $scope.myselect_users = 'Select a user';
-
-        $scope.options_users2 = ['Anabella Raccioppi', 'Santiago Saucedo'];
-        $scope.myselect_users2 = 'Select a user';
-
-        $scope.options_users3 = ['Verónica Vicario', 'Santiago Saucedo'];
-        $scope.myselect_users3 = 'Select a user';
-
 
 
     }

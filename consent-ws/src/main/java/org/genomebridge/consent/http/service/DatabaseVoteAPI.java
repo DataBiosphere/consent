@@ -5,6 +5,7 @@ import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.models.DACUser;
+import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
@@ -110,7 +111,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public List<Vote> createVotes(Integer electionId, Boolean isConsent) {
-        List<DACUser> dacUserList = dacUserDAO.findDACUsers();
+        List<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
         if (dacUserList != null) {
             for (DACUser user : dacUserList) {
@@ -126,6 +127,14 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return votes;
     }
 
+    @Override
+    public void createVotesForElections(List<Election> elections, Boolean isConsent){
+        if(elections != null){
+            for(Election election : elections){
+                createVotes(election.getElectionId(), true);
+            }
+        }
+    }
 
     private boolean isChairPerson(Integer dacUserId) {
         boolean isCherperson = false;

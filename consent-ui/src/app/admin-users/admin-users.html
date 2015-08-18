@@ -31,19 +31,22 @@
             </div>
             <div class="admin-box-body">
                 <hr class="pvotes-main-separator">
-                <div ng-repeat="election in AdminUsers.electionsList.dul | filter: searchUsers">
+                <div ng-repeat="user in AdminUsers.usersList.dul | filter: searchUsers">
                     <div class="row pvotes-main-list admin-users-list">
-                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{election.name}}</div>
-                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{election.googleId}}</div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">{{user.displayName}}</div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 pvotes-list-id">{{user.email}}</div>
                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 pvotes-list-id">
-                            <span class="enabled default-color" ng-if="election.roles.admin == 'enabled'">Admin</span>
-                            <span class="enabled default-color" ng-if="election.roles.member == 'enabled'">Member</span>
-                            <span class="enabled default-color" ng-if="election.roles.chairperson == 'enabled'">Chairperson</span>
-                            <span class="enabled default-color" ng-if="election.roles.alumni == 'enabled'">Alumni</span>
-                            <span class="enabled default-color" ng-if="election.roles.researcher == 'enabled'">Researcher</span>
+                            <span class="admin-users-list" ng-repeat="role in user.roles">
+                                <span class="enabled default-color" ng-if="role.name == 'Admin'">Admin</span>
+                                <span class="enabled default-color" ng-if="role.name == 'Member'">Member</span>
+                                <span class="enabled default-color" ng-if="role.name == 'Chairperson'">Chairperson</span>
+                                <span class="enabled default-color" ng-if="role.name == 'Alumni'">Alumni</span>
+                                <span class="enabled default-color" ng-if="role.name == 'Researcher'">Researcher</span>
+                            </span>
+
                         </div>
                         <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 btn-edit">
-                            <a href="#" ng-click="AdminUsers.editUser()">Edit</a>
+                            <a href="#" ng-click="AdminUsers.editUser(user.email)">Edit</a>
                         </div>
                     </div>
                     <hr class="pvotes-separator">

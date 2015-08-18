@@ -41,7 +41,6 @@ public class DACUserTest extends DACUserServiceTest {
         DACUser user = new DACUser();
         user.setDisplayName(name);
         user.setEmail(email);
-        user.setMemberStatus(status);
         return user;
     }
 
@@ -52,13 +51,16 @@ public class DACUserTest extends DACUserServiceTest {
 
         assertThat(dacmember.getDisplayName()).isEqualTo("DAC Member");
         assertThat(dacmember.getEmail()).isEqualTo(DAC_USER_EMAIL);
-        assertThat(dacmember.getMemberStatus()).isEqualTo(DACMEMBER);
         DACMEMBERMAIL = dacmember.getEmail();
 
         assertThat(chairperson.getDisplayName()).isEqualTo("Chair Person");
         assertThat(chairperson.getEmail()).isEqualTo(CHAIR_USER_EMAIL);
-        assertThat(chairperson.getMemberStatus()).isEqualTo(CHAIRPERSON);
         assertThat(chairperson.getEmail()).isEqualTo(CHAIR_USER_EMAIL);
+    }
+
+    @Override
+    public DACUser retrieveDacUser(Client client, String url) {
+        return super.retrieveDacUser(client, url);
     }
 
     @After

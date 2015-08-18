@@ -153,7 +153,10 @@ small {
 }
 
 .top-navigator {
-    margin: 0 20px;
+    margin: 0 40px;
+}
+.top-navigator .navbar{
+    margin-bottom: 0!important;
 }
 
 .top-navigator-bar li {
@@ -176,20 +179,17 @@ small {
 }
 
 .brand {
-    margin: 0 30px 0 0;
+    margin: 12px 20px 0 0;
     padding: 0 !important;
     vertical-align: middle;
 }
-.brand img {
-    margin: 0 20px 4px 0;
-}
 
 .user-li{
-     padding: 10px 5px 5px 5px !important;
-     float: right !important;
-     text-align: right;
-     margin: 0 40px 0 20px !important;
- }
+    padding: 10px 5px 5px 5px !important;
+    float: right !important;
+    text-align: right;
+    margin: 0 0 0 20px !important;
+}
 .drop-li{
     padding: 20px 5px 5px 5px !important;
 }
@@ -215,10 +215,10 @@ small {
     font-size: 15px;
     cursor: pointer;
 }
-    .user-dropdown li:hover a {
-        color: #2FA4E7 !important;
-        cursor: pointer;
-    }
+.user-dropdown li:hover a {
+    color: #2FA4E7 !important;
+    cursor: pointer;
+}
 .user-dropdown hr {
     float: right;
     margin: 0 2px 0 2px !important;
@@ -309,8 +309,8 @@ small {
 }
 
 .cm-subtitle{
-     padding: 15px 0 0 0!important;
- }
+    padding: 15px 0 0 0!important;
+}
 .cm-subtitle h3{
     margin-left: 10px;
 }
@@ -691,6 +691,7 @@ input[type=checkbox]:checked + label:before, input[type=radio]:checked + label:b
     font-style: italic;
     font-size: 16px;
     padding: 5px 10px 10px 10px;
+    font-weight: 500;
 }
 
 .pvotes-link {
@@ -1053,7 +1054,7 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     display: block;
     margin-top: 3px;
     transition: background 0.3s ease !important;
- }
+}
 .admin-icons:hover .cm-title-description{
     color: #cccccc!important;
 }
@@ -1090,8 +1091,8 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     background-position: -70px -40px !important;
 }
 .add-user{
-     background-position: -105px 0;
- }
+    background-position: -105px 0;
+}
 .admin-icons:hover .add-user {
     background-position: -105px -40px !important;
 }
@@ -1145,15 +1146,15 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
 }
 
 .modal-content {
-     position: absolute;
-     top: 50%;
-     -ms-transform: translate(0,-50%);
-     -moz-transform: translate(0,-50%);
-     -webkit-transform: translate(0,-50%);
-     transform: translate(0,-50%);
-     width: 100%;
+    position: absolute;
+    top: 50%;
+    -ms-transform: translate(0,-50%);
+    -moz-transform: translate(0,-50%);
+    -webkit-transform: translate(0,-50%);
+    transform: translate(0,-50%);
+    width: 100%;
     border: 0;
- }
+}
 
 .modal-close-btn{
     position: absolute;
@@ -1178,8 +1179,8 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     margin: 10px;
 }
 .modal-add-dul .admin-modal-footer button:last-child{
-     color: #777777;
- }
+    color: #777777;
+}
 .modal-add-dul .admin-modal-footer button:first-child{
     color: #ffffff !important;
     margin-right: 0!important;
@@ -1272,8 +1273,8 @@ a .urgent:hover, a .pending:hover, a .editable:hover, a .enabled:hover {
     color: #cccccc !important;
 }
 .admin-users-list .enabled{
-     cursor: default !important;
- }
+    cursor: default !important;
+}
 
 .admin-users-list .regular-checkbox{
     margin: 0!important;
@@ -1430,6 +1431,18 @@ input[type="checkbox"][disabled] + label{
     overflow: hidden;
     background: url("../assets/images/downArrow.png") no-repeat right #ffffff !important;
 }
+
+/*SCROLLBAR*/
+
+::-webkit-scrollbar { width: 3px; height: 10px}
+/*::-webkit-scrollbar-button {  background-color: #8E307A;}*/
+::-webkit-scrollbar-track {  background-color: #777777;}
+::-webkit-scrollbar-track-piece { background-color: #ffffff;}
+::-webkit-scrollbar-thumb { height: 15px; background-color: #cccccc;}
+/*::-webkit-scrollbar-corner { background-color: #999;}*/
+::-webkit-resizer { background-color: #cccccc;}
+
+
 
 /*SAME HEIGHT COLS*/
 
@@ -1601,3 +1614,90 @@ input[type="checkbox"][disabled] + label{
     font-weight: 500 !important;
     text-align: center!important;
 }
+
+
+/*********************************DATASET CATALOG*/
+
+.search-catalog {
+    margin-top: 35px !important;
+    padding: 0!important;
+}
+.table-wrap{
+    background: #eeeeee;
+    height: 100%;
+    min-height: 100%;
+    box-shadow: 3px 3px 0 #cccccc;
+    border-radius: 6px;
+}
+.table-scroll{
+    overflow-x: scroll;
+    margin: 0 25px !important;
+}
+.table-scroll thead{
+     padding: 0 10px 0 10px;
+ }
+
+.table{
+    margin: 15px 0 !important;
+}
+
+.table-titles{
+    font-style: italic;
+    font-weight: 500 !important;
+    font-size: 16px !important;
+    padding: 5px 10px 10px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table-items{
+    font-weight: normal !important;
+    font-size: 14px !important;
+    padding: 5px 10px 10px 10px;
+    color: #777777;
+}
+
+.table-items .yes, .table-items .no{
+    font-weight: 500 !important;
+}
+.table-items .yes{
+    color: #2FA4E7 !important;
+    cursor: pointer;
+}
+.table-items .no{
+    color: #cccccc !important;
+    cursor: default !important;
+}
+
+.small-cell{
+    min-width: 150px !important;
+}
+.medium-cell{
+    min-width: 220px !important;
+}
+.large-cell{
+    min-width: 350px !important;
+}
+
+.catalog-pagination {
+    text-align: center;
+}
+.catalog-pagination ul {
+    margin: 10px 0 15px 0;
+}
+.catalog-pagination li a {
+    background: #eeeeee;
+    border: 0;
+    color: #777777;
+    transition: background 0.3s ease;
+}
+.catalog-pagination li a:hover {
+    background: #2FA4E7 !important;
+    color: #ffffff;
+    font-weight: 500;
+}
+.catalog-pagination li a .pag-active {
+    background: #00609f !important;
+}
+

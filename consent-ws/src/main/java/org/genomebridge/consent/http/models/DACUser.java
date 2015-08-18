@@ -2,6 +2,9 @@ package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Date;
+import java.util.List;
+
 public class DACUser {
 
     @JsonProperty
@@ -14,18 +17,29 @@ public class DACUser {
     private String displayName;
 
     @JsonProperty
-    private String memberStatus;
+    private Date createDate;
 
+    @JsonProperty
+    private List<DACUserRole> roles;
 
     public DACUser() {
     }
 
     public DACUser(Integer dacUserId, String email, String displayName,
-                   String memberStatus) {
+                   Date createDate) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
-        this.memberStatus = memberStatus;
+        this.createDate = createDate;
+    }
+
+    public DACUser(Integer dacUserId, String email, String displayName,
+                   Date createDate, List<DACUserRole> roles) {
+        this.dacUserId = dacUserId;
+        this.email = email;
+        this.displayName = displayName;
+        this.createDate = createDate;
+        this.roles = roles;
     }
 
     public Integer getDacUserId() {
@@ -52,12 +66,19 @@ public class DACUser {
         this.displayName = displayName;
     }
 
-    public String getMemberStatus() {
-        return memberStatus;
+    public List<DACUserRole> getRoles() {
+        return roles;
     }
 
-    public void setMemberStatus(String memberStatus) {
-        this.memberStatus = memberStatus;
+    public void setRoles(List<DACUserRole> roles) {
+        this.roles = roles;
     }
 
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
+    }
 }
