@@ -11,7 +11,7 @@
 
 
 
-//         $rootScope.currentUser = null;
+         $rootScope.currentUser = null;
          $rootScope.userRoles = USER_ROLES;
          $rootScope.setCurrentUser = function (user) {
 
