@@ -39,4 +39,4 @@ EXPOSE 8000
 EXPOSE 3001
 
 WORKDIR /app
-CMD ["gulp", "serve"]
+CMD ["gulp", "serve:dist"]
