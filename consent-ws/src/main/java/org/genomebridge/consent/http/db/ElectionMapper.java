@@ -11,8 +11,6 @@ import java.sql.SQLException;
 
 public class ElectionMapper implements ResultSetMapper<Election> {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("ElectionMapper");
-
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         return new Election(
                 r.getInt("electionId"),
@@ -22,6 +20,8 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 r.getString("status"),
                 r.getDate("createDate"),
                 r.getDate("finalVoteDate"),
-                r.getString("referenceId"));
+                r.getString("referenceId"),
+                (r.getDate("lastUpdate") == null) ? null : r.getDate("lastUpdate")
+        );
     }
 }

@@ -1,5 +1,5 @@
-insert into consents(consentId, requiresManualReview,useRestriction,active,name) values ('testId',true,'{"type":"everything"}',true,'testName');
-insert into consents(consentId, requiresManualReview,useRestriction,active,name) values ('testId2',true,'{"type":"everything"}',true,'testName1');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now());
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now());
 insert into consentassociations(associationId, consentId,associationType,objectId) values (100,'testId','associationType',1);
 insert into researchpurpose (purposeId,purpose) values(1,'General Use');
 insert into dataset (dataSetId,associationId,description) values(1,100,'test');

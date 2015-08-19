@@ -34,18 +34,18 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
         Client client = ClientBuilder.newClient();
         List<ConsentManage> consentManage = getJson(client, consentManagePath()).readEntity(new GenericType<List<ConsentManage>>() { });
         Assert.assertTrue(consentManage.size() > 0);
-        Assert.assertTrue(consentManage.get(consentManage.size() - 1).getConsentId().equals(CONSENT_ID));
-        Assert.assertTrue(consentManage.get(consentManage.size() - 1).getElectionStatus().equals(ElectionStatus.OPEN.getValue()));
-        Assert.assertTrue(consentManage.get(consentManage.size() - 1).getElectionId().equals(electionId));
-        Assert.assertNotNull(consentManage.get(0).getConsentId());
-        Assert.assertTrue(consentManage.get(0).getElectionStatus().equals("un-reviewed"));
+        Assert.assertTrue(consentManage.get(0).getConsentId().equals(CONSENT_ID));
+        Assert.assertTrue(consentManage.get(0).getElectionStatus().equals(ElectionStatus.OPEN.getValue()));
+        Assert.assertTrue(consentManage.get(0).getElectionId().equals(electionId));
+        Assert.assertNotNull(consentManage.get(2).getConsentId());
+        Assert.assertTrue(consentManage.get(2).getElectionStatus().equals("un-reviewed"));
         Integer electionId_2 = createElection(CONSENT_ID_2);
         List<ConsentManage> consentManageUpdated = getJson(client, consentManagePath()).readEntity(new GenericType<List<ConsentManage>>() {
         });
         Assert.assertTrue(consentManageUpdated.size() > 1);
-        Assert.assertTrue(consentManageUpdated.get(consentManage.size() - 2).getElectionStatus()
+        Assert.assertTrue(consentManageUpdated.get(0).getElectionStatus()
                 .equals(ElectionStatus.OPEN.getValue()));
-        Assert.assertTrue(consentManageUpdated.get(consentManage.size() - 2).getElectionStatus()
+        Assert.assertTrue(consentManageUpdated.get(0).getElectionStatus()
                 .equals(ElectionStatus.OPEN.getValue()));
         List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() { });
         deleteVotes(votes, CONSENT_ID);

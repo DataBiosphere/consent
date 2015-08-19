@@ -21,6 +21,8 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -105,7 +107,8 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
 
     private String setupConsent(String dul) {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        Consent rec = new Consent(false, new Everything(), dul, "structuredDataUseLetter", UUID.randomUUID().toString());
+        Timestamp createDate = new Timestamp(new Date().getTime());
+        Consent rec = new Consent(false, new Everything(), dul, "structuredDataUseLetter", UUID.randomUUID().toString(), createDate, createDate, createDate);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

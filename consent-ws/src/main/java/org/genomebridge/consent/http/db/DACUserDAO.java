@@ -43,7 +43,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
                           @Bind("displayName") String displayName,
                           @Bind("id") Integer id);
 
-    @SqlUpdate("delete  from dacuser where email = :email")
+    @SqlUpdate("delete from dacuser where email = :email")
     void deleteDACUserByEmail(@Bind("email") String email);
 
     @SqlQuery("select dr.dacUserId from user_role dr inner join roles r on r.roleId = dr.roleId where dr.dacUserId <> :dacUserId and r.roleId = :roleId")

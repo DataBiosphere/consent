@@ -22,6 +22,9 @@ public class Election {
     private Date createDate;
 
     @JsonProperty
+    private Date lastUpdate;
+
+    @JsonProperty
     private Date finalVoteDate;
 
     @JsonProperty
@@ -35,7 +38,7 @@ public class Election {
 
     public Election(Integer electionId, String electionType,
                     Boolean finalVote, String finalRationale, String status, Date createDate,
-                    Date finalVoteDate, String referenceId) {
+                    Date finalVoteDate, String referenceId, Date lastUpdate) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.finalVote = finalVote;
@@ -44,6 +47,7 @@ public class Election {
         this.referenceId = referenceId;
         this.finalRationale = finalRationale;
         this.finalVoteDate = finalVoteDate;
+        this.lastUpdate = lastUpdate;
     }
 
     public Integer getElectionId() {
@@ -76,6 +80,14 @@ public class Election {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Date getLastUpdateDate() {
+        return lastUpdate;
+    }
+
+    public void setLastUpdateDate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
     }
 
     public Date getCreateDate() {

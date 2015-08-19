@@ -24,6 +24,9 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         }
         consent.name = r.getString("name");
         consent.structuredDataUseLetter = r.getString("structuredDataUseLetter");
+        consent.setCreateDate(r.getTimestamp("createDate"));
+        consent.setSortDate(r.getTimestamp("sortDate"));
+        consent.setLastUpdate((r.getTimestamp("lastUpdate") == null) ? null : r.getTimestamp("lastUpdate"));
         return consent;
     }
 

@@ -114,18 +114,23 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     public List<Vote> createVotes(Integer electionId, Boolean isConsent) {
         Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
-        if(dacUserList != null){
-            for(DACUser user : dacUserList){
-                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false);
+        if (dacUserList != null) {
+            for (DACUser user : dacUserList) {
+                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false, false);
                 votes.add(voteDAO.findVoteById(id));
                 if (!isConsent && isChairPerson(user.getDacUserId())) {
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, true);
+                    id = voteDAO.insertVote(user.getDacUserId(), electionId, true, false);
                     votes.add(voteDAO.findVoteById(id));
                 }
 
             }
         }
         return votes;
+    }
+
+    @Override
+    public void setReminderFlag(Integer voteId){
+
     }
 
     @Override
