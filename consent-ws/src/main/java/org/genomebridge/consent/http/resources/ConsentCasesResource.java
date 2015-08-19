@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http.resources;
 
-import java.io.File;
+import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.service.*;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -8,21 +9,20 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-
-import org.genomebridge.consent.http.service.AbstractPendingCaseAPI;
-import org.genomebridge.consent.http.service.AbstractSummaryAPI;
-import org.genomebridge.consent.http.service.PendingCaseAPI;
-import org.genomebridge.consent.http.service.SummaryAPI;
+import java.io.File;
+import java.util.List;
 
 @Path("/consent/cases")
 public class ConsentCasesResource extends Resource {
 
     private PendingCaseAPI api;
     private SummaryAPI summaryApi;
+    private ElectionAPI electionApi;
 
     public ConsentCasesResource() {
         this.api = AbstractPendingCaseAPI.getInstance();
         this.summaryApi = AbstractSummaryAPI.getInstance();
+        this.electionApi = AbstractElectionAPI.getInstance();
     }
 
     @GET
@@ -47,6 +47,13 @@ public class ConsentCasesResource extends Resource {
         ResponseBuilder response = Response.ok(fileToSend);
         response.header("Content-Disposition", "attachment; filename=\"summary.txt\"");
         return response.build();
+    }
+
+    @GET
+    @Path("/closed")
+    @Produces("application/json")
+    public List<Election> describeClosedElections() {
+        return electionApi.describeClosedElectionsByType("2");
     }
 
 }
