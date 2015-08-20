@@ -18,4 +18,8 @@ public abstract class DACUserServiceTest extends AbstractTest {
         return path2Url(String.format("/dacuser/%s", email));
     }
 
+    public String dacUserPathById(Integer id) {
+        return path2Url(String.format("/dacuser/%s", id));
+    }
+
 }

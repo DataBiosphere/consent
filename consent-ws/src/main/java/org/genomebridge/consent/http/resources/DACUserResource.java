@@ -21,7 +21,8 @@ public class DACUserResource extends Resource {
     private DACUserAPI dacUserAPI;
     private ElectionAPI electionAPI;
     private VoteAPI voteAPI;
-    public DACUserResource() {
+
+    public DACUserResource(){
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
@@ -60,10 +61,18 @@ public class DACUserResource extends Resource {
     }
 
     @PUT
+    @Path("/{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    public DACUser update(DACUser dac) {
-        return dacUserAPI.updateDACUserByEmail(dac);
+    public Response update(@Context UriInfo info, DACUser dac, @PathParam("id") Integer id) {
+        try {
+            URI uri = info.getRequestUriBuilder().path("{id}").build(id);
+            DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
+            return Response.ok(uri).entity(dacUser).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
+        }
+
     }
 
     @DELETE

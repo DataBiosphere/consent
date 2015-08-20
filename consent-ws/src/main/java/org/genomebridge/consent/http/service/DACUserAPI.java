@@ -12,7 +12,7 @@ public interface DACUserAPI {
 
     DACUser describeDACUserByEmail(String email) throws NotFoundException;
 
-    DACUser updateDACUserByEmail(DACUser rec) throws IllegalArgumentException, NotFoundException;
+    DACUser updateDACUserById(DACUser rec, Integer userId) throws IllegalArgumentException, NotFoundException;
 
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
 

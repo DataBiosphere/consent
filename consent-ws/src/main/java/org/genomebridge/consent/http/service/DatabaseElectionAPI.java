@@ -2,16 +2,20 @@ package org.genomebridge.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.DataRequestDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
+import org.genomebridge.consent.http.enumeration.DACUserRoles;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.
@@ -21,6 +25,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private ElectionDAO electionDAO;
     private ConsentDAO consentDAO;
     private DataRequestDAO dataRequestDAO;
+    private DACUserDAO dacUserDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -32,8 +37,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO));
+    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO, dacUserDAO));
 
     }
 
@@ -43,15 +48,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO) {
+    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
         this.dataRequestDAO = dataRequestDAO;
+        this.dacUserDAO = dacUserDAO;
     }
 
     @Override
     public Election createElection(Election election, String referenceId, Boolean isConsent) throws
             IllegalArgumentException {
+        validateAvailableUsers();
         validateReferenceId(referenceId, isConsent);
         validateExistentElection(referenceId);
         validateStatus(election.getStatus());
@@ -61,6 +68,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 election.getCreateDate(), election.getReferenceId());
         return electionDAO.findElectionById(id);
     }
+
 
 
     @Override
@@ -194,6 +202,26 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             }
         }
     }
+
+    private void validateAvailableUsers() {
+        Set<DACUser> dacUsers = dacUserDAO.findDACUsersEnabledToVote();
+        if(dacUsers != null && dacUsers.size() >= 4){
+            boolean existChairperson = false;
+            for(DACUser user : dacUsers) {
+                if(user.getRoles().stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()))){
+                    existChairperson = true;
+                    break;
+                }
+            }
+            if(!existChairperson){
+                throw new IllegalArgumentException("There has to be a Chairperson.");
+            }
+        }else{
+            throw new IllegalArgumentException(
+                    "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
+        }
+    }
+
 
 
 }

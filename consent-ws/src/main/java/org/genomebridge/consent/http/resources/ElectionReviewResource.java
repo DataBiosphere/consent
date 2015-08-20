@@ -23,4 +23,11 @@ public class ElectionReviewResource {
     public ElectionReview getElectionReview(@PathParam("consentId") String consentId) {
         return api.describeElectionReview(consentId);
     }
+
+    @GET
+    @Path("/openElection")
+    @Produces("application/json")
+    public String openElections() {
+        return ("{ \"open\" : "+api.openElections()+" }");
+    }
 }

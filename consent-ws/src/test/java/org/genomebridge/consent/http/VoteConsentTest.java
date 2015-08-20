@@ -96,8 +96,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
         });
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
-        assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(true);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/2");
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/4");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(CONSENT_ID);
     }
 

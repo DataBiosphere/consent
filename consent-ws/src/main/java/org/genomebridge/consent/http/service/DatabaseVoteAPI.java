@@ -12,6 +12,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -111,10 +112,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public List<Vote> createVotes(Integer electionId, Boolean isConsent) {
-        List<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
+        Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
-        if (dacUserList != null) {
-            for (DACUser user : dacUserList) {
+        if(dacUserList != null){
+            for(DACUser user : dacUserList){
                 Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false);
                 votes.add(voteDAO.findVoteById(id));
                 if (!isConsent && isChairPerson(user.getDacUserId())) {

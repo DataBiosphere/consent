@@ -55,7 +55,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO);
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO);

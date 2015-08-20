@@ -39,4 +39,13 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         review.setConsent(consent);
         return review;
     }
+
+    @Override
+    public Boolean openElections() {
+        Boolean openElections = false;
+        if(electionDAO.verifyOpenElections() != null && electionDAO.verifyOpenElections() > 0){
+            openElections = true;
+        }
+        return openElections;
+    }
 }
