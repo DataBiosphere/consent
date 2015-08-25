@@ -67,4 +67,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select count(*) from election e where e.electionType = :type and e.status = :status and e.finalVote = :finalVote ")
     Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
+
+    @SqlQuery("select count(*) from election e where e.status = 'Open' ")
+    Integer verifyOpenElections();
 }

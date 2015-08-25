@@ -77,13 +77,32 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateDACUserByEmail(DACUser rec) throws IllegalArgumentException, NotFoundException {
-        validateExistentUser(rec.getEmail());
+    public DACUser updateDACUserById(DACUser rec,Integer id) throws IllegalArgumentException, NotFoundException {
+        validateExistentUserById(id);
         validateRequieredFields(rec);
-        dacUserDAO.updateDACUser(rec.getEmail(), rec.getDisplayName());
+        if(rec.getRoles() != null && rec.getRoles().size() > 0){
+            validateRoles(rec.getRoles(), id);
+            updateRoles(rec, id);
+        }
+        try{
+            dacUserDAO.updateDACUser(rec.getEmail(), rec.getDisplayName(), id);
+        }catch(UnableToExecuteStatementException e){
+            throw new IllegalArgumentException("Email shoud be unique.");
+        }
         DACUser dacUser = describeDACUserByEmail(rec.getEmail());
         dacUser.setRoles(roleDAO.findRolesByUserId(dacUser.getDacUserId()));
         return dacUser;
+    }
+
+    private void updateRoles(DACUser rec, Integer id) {
+        roleDAO.removeRolesByUser(id);
+        insertUserRoles(rec, id);
+    }
+
+    private void validateExistentUserById(Integer id) {
+        if(dacUserDAO.findDACUserById(id) == null){
+            throw new NotFoundException("The user for the specified id does not exist");
+        }
     }
 
     @Override
@@ -109,24 +128,37 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
 
     private void validateExistentUser(String email) {
-        if (dacUserDAO.findDACUserByEmail(email) == null) {
+        if(dacUserDAO.findDACUserByEmail(email) == null){
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
     }
 
     private void validateRequieredFields(DACUser newDac) {
-        if (StringUtils.isEmpty(newDac.getDisplayName())) {
+        if(StringUtils.isEmpty(newDac.getDisplayName())){
             throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
         }
-        if (StringUtils.isEmpty(newDac.getEmail())) {
+        if(StringUtils.isEmpty(newDac.getEmail())){
             throw new IllegalArgumentException("The user needs a valid email to be able to login.");
         }
     }
 
-    private void insertUserRoles(DACUser dacUser, Integer dacUserId) {
+    private void validateRoles(List<DACUserRole> newRoles, Integer userId){
+        List<DACUserRole> existentRoles = roleDAO.findRolesByUserId(userId);
+        if(existentRoles.stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.ADMIN.getValue()))
+                && !newRoles.stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.ADMIN.getValue()))){
+            if(dacUserDAO.verifyAdminUsers() < 2){
+                throw new IllegalArgumentException("At least one user with Admin roles should exist.");
+            }
+       }
+        if(newRoles.stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()))){
+             updateExistentChairPersonToAlumni(userId);
+        }
+    }
+
+    private void insertUserRoles(DACUser dacUser, Integer dacUserId){
         List<DACUserRole> roles = dacUser.getRoles();
         List<String> rolesName = new ArrayList<>();
-        for(DACUserRole role : roles) {
+        for(DACUserRole role : roles){
             rolesName.add(role.getName());
         }
         List<Integer> rolesId = roleDAO.findRolesIdByName(rolesName);

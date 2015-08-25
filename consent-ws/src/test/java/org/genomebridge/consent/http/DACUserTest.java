@@ -96,7 +96,7 @@ public class DACUserTest extends DACUserServiceTest {
     public void testUpdateDACUser() {
         Client client = ClientBuilder.newClient();
         DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
-        checkStatus(OK, put(client, dacUserPath(), user));
+        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), user));
         user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(DACUser.class);
         assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
     }

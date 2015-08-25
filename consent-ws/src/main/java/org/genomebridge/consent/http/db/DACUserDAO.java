@@ -24,8 +24,9 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select u.dacUserId from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where u.dacUserId = :dacUserId and r.name = 'Chairperson'")
     Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Chairperson' or r.name = 'Member'")
-    List<DACUser> findDACUsersEnabledToVote();
+    @Mapper(DACUserRoleMapper.class)
+    @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Chairperson' or r.name = 'Member'")
+    Set<DACUser>  findDACUsersEnabledToVote();
 
     @SqlQuery("select * from dacuser where email = :email")
     DACUser findDACUserByEmail(@Bind("email") String email);
@@ -36,10 +37,11 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
                           @Bind("displayName") String displayName,
                           @Bind("createDate") Date createDate);
 
-    @SqlUpdate("update dacuser set email=:email, displayName=:displayName where email=:email")
+    @SqlUpdate("update dacuser set email=:email, displayName=:displayName where dacUserId=:id")
     @GetGeneratedKeys
     Integer updateDACUser(@Bind("email") String email,
-                          @Bind("displayName") String displayName);
+                          @Bind("displayName") String displayName,
+                          @Bind("id") Integer id);
 
     @SqlUpdate("delete  from dacuser where email = :email")
     void deleteDACUserByEmail(@Bind("email") String email);
@@ -50,6 +52,9 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select u.*, r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId order by createDate desc")
     Set<DACUser> findUsers();
+
+    @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.roleId where r.name = 'Admin'")
+    Integer verifyAdminUsers();
 }
 
 

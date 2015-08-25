@@ -6,4 +6,5 @@ public interface ReviewResultsAPI {
 
     ElectionReview describeElectionReview(String referenceId);
 
+    Boolean openElections();
 }

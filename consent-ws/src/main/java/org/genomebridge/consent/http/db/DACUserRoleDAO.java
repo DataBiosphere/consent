@@ -18,6 +18,7 @@ import java.util.List;
 @RegisterMapper({RoleMapper.class})
 public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
 
+
     @SqlQuery("select * from roles r inner join user_role du on du.roleId = r.roleId  where du.dacUserId = :userId")
     List<DACUserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
@@ -39,5 +40,9 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
                          @Bind("dacUserId") Integer dacUserId,
                          @Bind("existentRoleId") Integer existentRoleId);
 
+    @SqlUpdate("delete  from user_role where dacUserId = :dacUserId")
+    void removeRolesByUser(@Bind("dacUserId") Integer dacUserId);
 
+    @SqlQuery("select  r.roleId from roles r inner join user_role du on du.roleId = r.roleId  where du.dacUserId = :userId and r.name = :name")
+    Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
 }

@@ -96,8 +96,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isNotNull();
         assertThat(pendingCases.size()).isEqualTo(1);
-        assertThat(pendingCases.get(0).getAlreadyVoted()).isEqualTo(false);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/2");
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/4");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(DATA_REQUEST_ID);
     }
 
