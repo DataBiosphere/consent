@@ -3,6 +3,8 @@ package org.genomebridge.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
+import java.sql.Timestamp;
+
 /**
  * Consent Representation object.
  * <p/>
@@ -32,6 +34,15 @@ public class Consent {
     @JsonProperty
     public String dulName;
 
+    @JsonProperty
+    public Timestamp createDate;
+
+    @JsonProperty
+    public Timestamp lastUpdate;
+
+    @JsonProperty
+    public Timestamp sortDate;
+
     public Consent() {
     }
 
@@ -42,14 +53,47 @@ public class Consent {
         this.useRestriction = useRestriction;
     }
 
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter, String structuredDataUseLetter, String name) {
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
+                   String structuredDataUseLetter, String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
         this.dataUseLetter = dataUseLetter;
         this.structuredDataUseLetter = structuredDataUseLetter;
         this.name = name;
+        this.createDate = createDate;
+        this.sortDate = sortDate;
+        this.lastUpdate = lastUpdate;
     }
 
+    @JsonProperty
+    public Timestamp getCreateDate() {
+        return createDate;
+    }
+
+    @JsonProperty
+    public void setCreateDate(Timestamp createDate) {
+        this.createDate = createDate;
+    }
+
+    @JsonProperty
+    public Timestamp getLastUpdate() {
+        return lastUpdate;
+    }
+
+    @JsonProperty
+    public void setLastUpdate(Timestamp lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
+
+    @JsonProperty
+    public Timestamp getSortDate() {
+        return sortDate;
+    }
+
+    @JsonProperty
+    public void setSortDate(Timestamp sortDate) {
+        this.sortDate = sortDate;
+    }
 
     @JsonProperty
     public String getDataUseLetter() {

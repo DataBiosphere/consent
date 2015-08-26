@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 
 public class DACUserRole {
 
@@ -11,7 +12,6 @@ public class DACUserRole {
     private String name;
 
     public DACUserRole(){
-        
     }
 
     public DACUserRole(Integer roleId, String name){
@@ -33,5 +33,15 @@ public class DACUserRole {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int hashCode() {
+        return Objects.hashCode(this.roleId, this.name);
+    }
+
+    public boolean equals(Object o) {
+        if(!(o instanceof DACUserRole)) { return false; }
+        DACUserRole otherConsent = (DACUserRole) o;
+        return Objects.equal(this.getName(), otherConsent.getName());
     }
 }

@@ -30,11 +30,14 @@ public class Vote {
     @JsonProperty
     private Boolean isChairPersonVote;
 
+    @JsonProperty
+    private Boolean isReminderSent;
+
     public Vote() {
     }
 
     public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
-                Integer electionId, String rationale, Boolean isChairPersonVote) {
+                Integer electionId, String rationale, Boolean isChairPersonVote, Boolean isReminderSent) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;
@@ -43,6 +46,7 @@ public class Vote {
         this.electionId = electionId;
         this.rationale = rationale;
         this.isChairPersonVote = isChairPersonVote;
+        this.isReminderSent = isReminderSent;
     }
 
     public Integer getVoteId() {
@@ -51,6 +55,14 @@ public class Vote {
 
     public void setVoteId(Integer voteId) {
         this.voteId = voteId;
+    }
+
+    public Boolean isReminderSent() {
+        return isReminderSent;
+    }
+
+    public void setReminderSent(Boolean reminderSent) {
+        this.isReminderSent = reminderSent;
     }
 
     public Boolean getVote() {

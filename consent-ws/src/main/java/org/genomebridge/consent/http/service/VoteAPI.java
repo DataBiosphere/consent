@@ -24,4 +24,6 @@ public interface VoteAPI {
 
     void createVotesForElections(List<Election> elections, Boolean isConsent);
 
+    void setReminderFlag(Integer voteId);
+
 }

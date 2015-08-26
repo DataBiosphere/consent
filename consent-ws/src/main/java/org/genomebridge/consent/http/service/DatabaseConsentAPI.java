@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }else{
            id = UUID.randomUUID().toString();
         }
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.structuredDataUseLetter, rec.dulName);
+        Date createDate = new Date();
+        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.structuredDataUseLetter, rec.dulName, createDate, createDate);
         return consentDAO.findConsentById(id);
     }
 
@@ -103,7 +105,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public void update(String id, Consent rec) throws UnknownIdentifierException {
-        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter(), rec.getDulName());
+        rec = updateConsentDates(rec);
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate());
     }
 
     @Override
@@ -202,7 +205,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             consentDAO.deleteOneAssociation(consentId, associationType, objectId);
         }
         return getAllAssociationsForConsent(consentId);
-
     }
 
     @Override
@@ -225,7 +227,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         Consent consent = retrieve(consentId);
         consent.setDulName(dulName);
         consent.setDataUseLetter(dataUseLetter);
-        update(consentId, consent);
+        update(consentId, updateConsentDates(consent));
         return retrieve(consentId);
     }
 
@@ -239,7 +241,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public Consent deleteConsentDul(String consentId) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         consent.setDataUseLetter("");
-        update(consentId, consent);
+        update(consentId, updateConsentDates(consent));
         return retrieve(consentId);
     }
 
@@ -288,6 +290,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
+        consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
         return consentManageList;
     }
 
@@ -297,5 +300,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consentManageList;
     }
 
+    private Consent updateConsentDates(Consent c){
+        Timestamp updateDate = new Timestamp(new Date().getTime());
+        c.setLastUpdate(updateDate);
+        c.setSortDate(updateDate);
+        return c;
+    }
 
 }

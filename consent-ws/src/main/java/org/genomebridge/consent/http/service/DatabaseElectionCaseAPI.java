@@ -1,31 +1,35 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.db.DACUserDAO;
+import org.genomebridge.consent.http.db.DACUserRoleDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.VoteStatus;
-import org.genomebridge.consent.http.models.Election;
-import org.genomebridge.consent.http.models.PendingCase;
-import org.genomebridge.consent.http.models.Vote;
+import org.genomebridge.consent.http.models.*;
 
 import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
+    private DACUserRoleDAO rolesDAO;
+    private DACUserDAO userDAO;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO) {
-        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO));
+    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO) {
+        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO));
 
     }
 
-    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
+        this.userDAO = userDAO;
+        this.rolesDAO = rolesDAO;
     }
 
     @Override
@@ -42,6 +46,14 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 }
                 PendingCase pendingCase = setGeneralFields(election, vote);
                 pendingCases.add(pendingCase);
+            }
+        }
+        if (userDAO.findDACUserById(dacUserId) != null) {
+            List<DACUserRole> roles = rolesDAO.findRolesByUserId(dacUserId);
+            if (roles.contains(new DACUserRole(0, "Chairperson"))) {
+                return orderPendingCasesForChairperson(pendingCases);
+            } else {
+                return orderPendingCasesForMember(pendingCases);
             }
         }
         return pendingCases;
@@ -65,7 +77,6 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 setFinalVote(dacUserId, election, pendingCase);
                 pendingCases.add(pendingCase);
             }
-
         }
         return pendingCases;
     }
@@ -85,30 +96,67 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     private PendingCase setGeneralFields(Election election, Vote vote) {
         PendingCase pendingCase = new PendingCase();
+        List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
+        List<Vote> pendingVotes = voteDAO.findPendingDACVotesByElectionId(election.getElectionId());
+        pendingCase.setTotalVotes(votes.size());
+        pendingCase.setVotesLogged(votes.size() - pendingVotes.size() );
         pendingCase.setReferenceId(election.getReferenceId());
-        pendingCase.setLogged(setLogged(election));
+        pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
         pendingCase.setAlreadyVoted(vote.getVote() != null);
         pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
         pendingCase.setVoteId(vote.getVoteId());
+        pendingCase.setIsReminderSent(vote.isReminderSent());
+        pendingCase.setCreateDate(election.getCreateDate());
         return pendingCase;
     }
 
-    private String setLogged(Election election) {
+    private String setLogged(Integer totalVotes, Integer loggedVotes) {
         StringBuilder logged = new StringBuilder();
-        List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
-        List<Vote> pendingVotes = voteDAO.findPendingDACVotesByElectionId(election.getElectionId());
-        if (votes != null) {
-            if (pendingVotes != null) {
-                logged.append(votes.size() - pendingVotes.size())
-                        .append("/")
-                        .append(votes.size());
-            } else {
-                logged.append("0/")
-                        .append(votes.size());
-            }
-        }
+        logged.append(loggedVotes)
+                .append("/")
+                .append(totalVotes);
         return logged.toString();
     }
 
+    private List<PendingCase> orderPendingCasesForMember(List<PendingCase> cases) {
+        List<PendingCase> memberCaseList = new ArrayList<>();
+        memberCaseList.addAll(cases.stream().filter(p1 -> p1.getIsReminderSent() == true).collect(Collectors.toList()));
+        memberCaseList.addAll(cases.stream().filter(p1 -> (p1.getAlreadyVoted() == false) && (p1.getIsReminderSent() == false)).collect(Collectors.toList()));
+        memberCaseList.addAll(cases.stream().filter(p1 -> p1.getAlreadyVoted() == true).collect(Collectors.toList()));
+        return memberCaseList;
+    }
 
+    private List<PendingCase> orderPendingCasesForChairperson(List<PendingCase> cases) {
+        HashMap<Integer, Queue<PendingCase>> pendingCases = new HashMap<>();
+        List<PendingCase> chairFinalList = cases.stream().filter(p1 -> p1.getTotalVotes() == p1.getVotesLogged()).collect(Collectors.toList());
+        List<PendingCase> remainingList = cases.stream().filter(p1 -> p1.getTotalVotes() != p1.getVotesLogged()).collect(Collectors.toList());
+        for (PendingCase p : remainingList) {
+            Integer key = Integer.parseInt(String.valueOf(p.getVotesLogged()) + String.valueOf(p.getTotalVotes()));
+            if (!pendingCases.containsKey(key)) {
+                pendingCases.put(key, new PriorityQueue<>());
+            }
+            Queue<PendingCase> pq = pendingCases.get(key);
+            pq.add(p);
+        }
+        return generateFinalList(chairFinalList, pendingCases);
+    }
+
+    private List<PendingCase> generateFinalList(List<PendingCase> readyToCollect, HashMap<Integer, Queue<PendingCase>> pendingCases) {
+        List<PendingCase> prevList = orderedVotedCases(orderListDecreased(pendingCases.keySet()), pendingCases);
+        readyToCollect.addAll(prevList.stream().filter(p1 -> p1.getAlreadyVoted()).collect(Collectors.toList()));
+        readyToCollect.addAll(prevList.stream().filter(p1 -> p1.getAlreadyVoted() == false).collect(Collectors.toList()));
+        return readyToCollect;
+    }
+
+    private List<Integer> orderListDecreased(Set<Integer> setOfKeys) {
+        return setOfKeys.stream().sorted((i1, i2) -> i2.compareTo(i1)).collect(Collectors.toList());
+    }
+
+    private List<PendingCase> orderedVotedCases(List<Integer> keys, HashMap<Integer, Queue<PendingCase>> pendingCases){
+        ArrayList<PendingCase> votedCases = new ArrayList<>();
+        for(Integer key: keys){
+            votedCases.addAll(pendingCases.get(key));
+        }
+        return votedCases;
+    }
 }

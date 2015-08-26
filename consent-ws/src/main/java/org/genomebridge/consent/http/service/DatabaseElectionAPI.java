@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.
@@ -63,13 +64,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateExistentElection(referenceId);
         validateStatus(election.getStatus());
         setGeneralFields(election, referenceId, isConsent);
+        Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(),
                 election.getFinalVote(), election.getFinalRationale(), election.getStatus(),
-                election.getCreateDate(), election.getReferenceId());
+                createDate, election.getReferenceId());
+        consentDAO.updateConsentSortDate(referenceId, createDate);
         return electionDAO.findElectionById(id);
     }
-
-
 
     @Override
     public Election updateElectionById(Election rec, Integer electionId) {
@@ -82,7 +83,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (electionDAO.findElectionById(electionId) == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus());
+        Date lastUpdate = new Date();
+        electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus(), lastUpdate);
+        consentDAO.updateConsentSortDate(electionDAO.findElectionById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionById(electionId);
     }
 
@@ -112,6 +115,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
+        consentDAO.updateConsentSortDate(referenceId, new Date());
         electionDAO.deleteElectionById(id);
     }
 
@@ -130,8 +134,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
         List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         cancelOpenElection(electionTypeId);
+        List<Integer> electionIds = openElections.stream().map(election -> election.getElectionId()).collect(Collectors.toList());
+        List<String> consentIds = openElections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
+        Date sortDate = new Date();
+        consentDAO.bulkUpdateConsentSortDate(consentIds, sortDate, sortDate);
+        electionDAO.bulkUpdateElectionLastUpdate(electionIds, sortDate);
         return openElections(openElections);
     }
+
     private void cancelOpenElection(String electionTypeId){
         List<Integer> openElectionsIds = electionDAO.findElectionsIdByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         if(openElectionsIds != null && openElectionsIds.size() > 0){
@@ -159,7 +169,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             election.setElectionType(electionDAO
                     .findElectionTypeByType(ElectionType.DATA_ACCESS.getValue()));
         }
-
         if (StringUtils.isEmpty(election.getStatus())) {
             election.setStatus(ElectionStatus.OPEN.getValue());
         }
@@ -221,7 +230,4 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
         }
     }
-
-
-
 }

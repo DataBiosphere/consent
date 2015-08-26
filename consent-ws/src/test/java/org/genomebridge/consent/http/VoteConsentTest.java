@@ -33,7 +33,6 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
         return RULE;
     }
 
-
     @Test
     public void testCreateConsentVote() {
         // should exist an election for specified consent

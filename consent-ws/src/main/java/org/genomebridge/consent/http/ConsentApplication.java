@@ -58,7 +58,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
-        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO);
+        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);

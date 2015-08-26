@@ -2,7 +2,9 @@ package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class PendingCase {
+import java.util.Date;
+
+public class PendingCase implements Comparable<PendingCase>{
 
     @JsonProperty
     private String referenceId;
@@ -14,6 +16,9 @@ public class PendingCase {
     private Boolean alreadyVoted;
 
     @JsonProperty
+    private Boolean isReminderSent;
+
+    @JsonProperty
     private Boolean isFinalVote;
 
     @JsonProperty
@@ -22,9 +27,49 @@ public class PendingCase {
     @JsonProperty
     private Integer voteId;
 
+    @JsonProperty
+    private Date createDate;
+
+    @JsonProperty
+    private Integer totalVotes;
+
+    @JsonProperty
+    private Integer votesLogged;
+
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
+    }
+
+    public Boolean getIsReminderSent() {
+        return isReminderSent;
+    }
+
+    public void setIsReminderSent(Boolean isReminderSent) {
+        this.isReminderSent = isReminderSent;
+    }
 
     public String getReferenceId() {
         return referenceId;
+    }
+
+    public Integer getTotalVotes() {
+        return totalVotes;
+    }
+
+    public void setTotalVotes(Integer totalVotes) {
+        this.totalVotes = totalVotes;
+    }
+
+    public Integer getVotesLogged() {
+        return votesLogged;
+    }
+
+    public void setVotesLogged(Integer votesLogged) {
+        this.votesLogged = votesLogged;
     }
 
     public void setReferenceId(String referenceId) {
@@ -71,5 +116,8 @@ public class PendingCase {
         this.voteId = voteId;
     }
 
-
+    @Override
+    public int compareTo(PendingCase o) {
+        return this.getCreateDate().compareTo(o.getCreateDate());
+    }
 }

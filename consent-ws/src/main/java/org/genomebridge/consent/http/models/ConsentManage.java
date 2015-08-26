@@ -2,6 +2,9 @@ package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 
 /**
  * ConsentManage will be used to manage which cases should be presented to the DAC for an evaluation.
@@ -23,12 +26,36 @@ public class ConsentManage {
 	@JsonProperty
 	private Integer electionId;
 
+	@JsonProperty
+	private Timestamp createDate;
+
+	@JsonProperty
+	private Timestamp sortDate;
+
 	public ConsentManage() {
 	}
 
 	public ConsentManage(Consent consent) {
-		this.consentId = consent.consentId;
-		this.consentName = consent.name;
+		this.consentId = consent.getConsentId();
+		this.consentName = consent.getName();
+		this.createDate = consent.getCreateDate();
+		this.sortDate = consent.getSortDate();
+	}
+
+	public Timestamp getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Timestamp createDate) {
+		this.createDate = createDate;
+	}
+
+	public Timestamp getSortDate() {
+		return sortDate;
+	}
+
+	public void setSortDate(Timestamp sortDate) {
+		this.sortDate = sortDate;
 	}
 
 	public String getConsentId() {

@@ -14,6 +14,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.sql.Timestamp;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,6 +154,10 @@ public class ConsentsServiceTest extends AbstractTest {
         consent.requiresManualReview = true;
         consent.useRestriction = new Everything();
         consent.name = Math.random()+"Name";
+        Timestamp createDate = new Timestamp(new Date().getTime());
+        consent.setSortDate(createDate);
+        consent.setLastUpdate(createDate);
+        consent.setCreateDate(createDate);
         Response response = checkStatus(CREATED, post(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");
         return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

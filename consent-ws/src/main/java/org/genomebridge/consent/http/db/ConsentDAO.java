@@ -9,8 +9,10 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @RegisterMapper({ConsentMapper.class})
@@ -26,22 +28,25 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, structuredDataUseLetter, dulName) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :structuredDataUseLetter, :dulName)")
+            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, structuredDataUseLetter, dulName, createDate, sortDate) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :structuredDataUseLetter, :dulName, :createDate, :sortDate)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
                        @Bind("structuredDataUseLetter") String structuredDataUseLetter,
-                       @Bind("dulName") String dulName);
+                       @Bind("dulName") String dulName,
+                       @Bind("createDate") Date createDate,
+                       @Bind("sortDate") Date sortDate);
 
     @SqlUpdate("update consents set active=false where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
             "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, name = :name, " +
-            "structuredDataUseLetter = :structuredDataUseLetter, dulName = :dulName " +
+            "structuredDataUseLetter = :structuredDataUseLetter, dulName = :dulName, " +
+            "lastUpdate = :lastUpdate, sortDate = :sortDate " +
             "where consentId = :consentId and active = true")
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
@@ -49,7 +54,18 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
                        @Bind("structuredDataUseLetter") String structuredDataUseLetter,
-                       @Bind("dulName") String dulName);
+                       @Bind("dulName") String dulName,
+                       @Bind("lastUpdate") Date createDate,
+                       @Bind("sortDate") Date sortDate);
+
+    @SqlUpdate("update consents set sortDate = :sortDate " +
+            "where consentId = :consentId and active = true")
+    void updateConsentSortDate(@Bind("consentId") String consentId, @Bind("sortDate") Date sortDate);
+
+    @SqlUpdate("update consents set lastUpdate = :lastUpdate, sortDate = :sortDate where consentId in (<consentId>) ")
+    void bulkUpdateConsentSortDate(@BindIn("consentId") List<String> consentId,
+                                   @Bind("lastUpdate") Date lastUpdate,
+                                   @Bind("sortDate") Date sortDate);
 
     // Consent Association Access Methods
     @SqlQuery("select objectId from consentassociations where consentId = :consentId and associationType = :associationType")
@@ -96,7 +112,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     List<Consent> findUnreviewedConsents();
     
 
-    @SqlQuery("select c.consentId, c.name, e.electionId, e.status from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
+    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, e.electionId, e.status " +
+            "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
             "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
             "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
     @Mapper(ConsentManageMapper.class)

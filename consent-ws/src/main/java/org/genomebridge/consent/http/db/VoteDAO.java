@@ -1,18 +1,17 @@
 package org.genomebridge.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
-
 import org.genomebridge.consent.http.models.ElectionReviewVote;
 import org.genomebridge.consent.http.models.Vote;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+
+import java.util.Date;
+import java.util.List;
 
 @RegisterMapper({VoteMapper.class})
 public interface VoteDAO extends Transactional<VoteDAO> {
@@ -51,12 +50,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                           @Bind("voteId") Integer voteId);
 
 
-    @SqlUpdate("insert into vote (dacUserId, electionId, isChairPersonVote) values " +
-            "(:dacUserId,:electionId, :isChairPersonVote)")
+    @SqlUpdate("insert into vote (dacUserId, electionId, isChairPersonVote, reminderSent) values " +
+            "(:dacUserId,:electionId, :isChairPersonVote, :reminderSent)")
     @GetGeneratedKeys
     Integer insertVote(@Bind("dacUserId") Integer dacUserId,
                        @Bind("electionId") Integer electionId,
-                       @Bind("isChairPersonVote") Boolean isChairPersonVote);
+                       @Bind("isChairPersonVote") Boolean isChairPersonVote,
+                       @Bind("reminderSent") Boolean reminderSent);
 
     @SqlUpdate("delete from vote where  voteId = :voteId")
     void deleteVoteById(@Bind("voteId") Integer voteId);
@@ -71,5 +71,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                     @Bind("voteId") Integer voteId,
                     @Bind("electionId") Integer electionId,
                     @Bind("createDate") Date createDate);
+
+    @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
+    void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
 }
