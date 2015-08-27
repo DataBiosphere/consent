@@ -55,6 +55,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
+
+
+        DatabaseDataSetAPI.initInstance(dataSetDAO);
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
@@ -76,6 +79,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         }
 
         // How register our resources.
+        env.jersey().register(DataSetResource.class);
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
@@ -107,6 +111,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
+                AbstractDataSetAPI.clearInstance();
+
             }
         });
     }

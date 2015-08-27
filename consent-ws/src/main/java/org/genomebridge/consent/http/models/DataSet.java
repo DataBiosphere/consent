@@ -2,24 +2,34 @@ package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Date;
+import java.util.Set;
+
 public class DataSet {
 
     @JsonProperty
     private Integer dataSetId;
 
     @JsonProperty
-    private Integer associationId;
+    private String objectId;
 
     @JsonProperty
-    private String description;
+    private String name;
+
+    @JsonProperty
+    private Date createDate;
+
+    private Set<DataSetProperty> properties;
+
 
     public DataSet() {
     }
 
-    public DataSet(Integer dataSetId, Integer associationId, String description) {
+    public DataSet(Integer dataSetId, String objectId, String name, Date createDate) {
         this.dataSetId = dataSetId;
-        this.associationId = associationId;
-        this.description = description;
+        this.objectId = objectId;
+        this.name = name;
+        this.createDate = createDate;
     }
 
     public Integer getDataSetId() {
@@ -30,21 +40,35 @@ public class DataSet {
         this.dataSetId = dataSetId;
     }
 
-    public String getDescription() {
-        return description;
+    public String getObjectId() {
+        return objectId;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setObjectId(String objectId) {
+        this.objectId = objectId;
     }
 
-    public Integer getAssociationId() {
-        return associationId;
+    public String getName() {
+        return name;
     }
 
-    public void setAssociationId(Integer associationId) {
-        this.associationId = associationId;
+    public void setName(String name) {
+        this.name = name;
     }
 
+    public Date getCreateDate() {
+        return createDate;
+    }
 
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
+    }
+
+    public Set<DataSetProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Set<DataSetProperty> properties) {
+        this.properties = properties;
+    }
 }
