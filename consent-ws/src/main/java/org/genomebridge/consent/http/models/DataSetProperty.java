@@ -1,31 +1,27 @@
 package org.genomebridge.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Date;
 
 public class DataSetProperty {
 
     private Integer propertyId;
     private Integer dataSetId;
-    private String propertyKey;
+    private Integer propertyKey;
     private String propertyValue;
     private Date createDate;
 
-
-    /* only for Hardcoding
-     *
-     *
-     *
-     */
-    public DataSetProperty(Integer propertyId,Integer  dataSetId,String propertyKey, String propertyValue,
-                   Date createDate) {
+    public DataSetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
+                           Date createDate) {
+        this(dataSetId, propertyKey, propertyValue, createDate);
         this.propertyId = propertyId;
+    }
+
+    public DataSetProperty(Integer  dataSetId, Integer propertyKey, String propertyValue,
+                           Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
         this.propertyValue = propertyValue;
         this.createDate = createDate;
-
     }
 
     public Integer getPropertyId() {
@@ -44,11 +40,11 @@ public class DataSetProperty {
         this.dataSetId = dataSetId;
     }
 
-    public String getPropertyKey() {
+    public Integer getPropertyKey() {
         return propertyKey;
     }
 
-    public void setPropertyKey(String propertyKey) {
+    public void setPropertyKey(Integer propertyKey) {
         this.propertyKey = propertyKey;
     }
 

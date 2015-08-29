@@ -116,10 +116,11 @@ public class AssociationTest extends ConsentServiceTest {
     public void testGetAssociation() {
         final String consentId = setupConsent();
 
+        String controlSample = "SM-"+Math.random();
         Client client = ClientBuilder.newClient();
 
         List<ConsentAssociation> assoc_list = new ArrayList<>();
-        assoc_list.add(buildConsentAssociation("sample", "SM-1234", "SM-5678"));
+        assoc_list.add(buildConsentAssociation("sample", controlSample , "SM-"+Math.random() ));
 
         Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list));
         checkAssociations(assoc_list, response);
@@ -139,15 +140,15 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("*** testGetAssociation - returned location '%s'", location));
 
         // test associationType="sample"&id="SM-1234"
-        response = checkStatus(OK, getJson(client, associationQueryPath(consentId, "sample", "SM-1234")));
+        response = checkStatus(OK, getJson(client, associationQueryPath(consentId, "sample", controlSample)));
         List<ConsentAssociation> singleSample = new ArrayList<>();
-        singleSample.add(buildConsentAssociation("sample", "SM-1234"));
+        singleSample.add(buildConsentAssociation("sample", controlSample));
         checkAssociations(singleSample, response);
         location = checkHeader(response, "Location");
         System.out.println(String.format("*** testGetAssociation - returned location '%s'", location));
 
         // test id="SM-1234" (error case)
-        checkStatus(BAD_REQUEST, getJson(client, associationQueryPath(consentId, null, "SM-1234")));
+        checkStatus(BAD_REQUEST, getJson(client, associationQueryPath(consentId, null, controlSample)));
     }
 
     @Test

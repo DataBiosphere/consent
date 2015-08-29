@@ -51,7 +51,7 @@
             <column name="key" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="requiered" type="boolean"/>
+            <column name="required" type="boolean"/>
             <column name="displayOrder" type="int"/>
          </createTable>
     </changeSet>
@@ -73,54 +73,65 @@
     <changeSet author="dictionary" id="39">
         <insert tableName="dictionary">
             <column name="key" value="Dataset Name"/>
-            <column name="requiered" valueBoolean="true"/>
+            <column name="required" valueBoolean="true"/>
             <column name="displayOrder" value="0"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Data Type"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="1"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Species"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="2"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Phenotype/Indication"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="3"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="# of participants"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="4"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Description"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="5"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="dbGAP"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="6"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Data Depositor"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="7"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Principal Investigator(PI)"/>
-            <column name="requiered" valueBoolean="false"/>
+            <column name="required" valueBoolean="false"/>
             <column name="displayOrder" value="8"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Dataset ID"/>
-            <column name="requiered" valueBoolean="true"/>
+            <column name="required" valueBoolean="true"/>
             <column name="displayOrder" value="9"/>
         </insert>
+    </changeSet>
+
+
+    <changeSet author="ssaucedo" id="40">
+        <addUniqueConstraint columnNames="objectId" tableName="dataset"
+          deferrable="false" initiallyDeferred="false"/>
+    </changeSet>
+
+    <changeSet author="ssaucedo" id="41">
+        <addUniqueConstraint columnNames="objectId" tableName="consentassociations"
+                             deferrable="false" initiallyDeferred="false"/>
     </changeSet>
 
 </databaseChangeLog>

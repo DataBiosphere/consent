@@ -21,7 +21,6 @@ public class DataSet {
 
     private Set<DataSetProperty> properties;
 
-
     public DataSet() {
     }
 
