@@ -1,8 +1,11 @@
 package org.genomebridge.consent.http.service;
 
 import org.genomebridge.consent.http.db.DataSetDAO;
+import org.genomebridge.consent.http.models.Association;
 import org.genomebridge.consent.http.models.DataSet;
 import org.genomebridge.consent.http.models.DataSetProperty;
+import org.genomebridge.consent.http.models.Dictionary;
+import org.genomebridge.consent.http.models.dto.DataSetDTO;
 
 import java.io.File;
 import java.util.*;
@@ -19,6 +22,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private DataSetDAO dsDAO;
 
     private String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
+    private String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
+    private String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
@@ -43,23 +48,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         }
         
         if (CollectionUtils.isNotEmpty(dataSets)) {
-            if (validate(dataSets)) {
+            if (completeDBCheck(dataSets)) {
                 dsDAO.insertAll(dataSets);
                 insertProperties(dataSets);
-                List<String> objectIdList = dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList());
-                List<Map<String, Integer>> retrievedValues = dsDAO.searchByObjectIdList(objectIdList);
-                Map<String, Integer> retrievedValuesMap = getOneMap(retrievedValues);
-                List<DataSetProperty> dataSetPropertiesList = new ArrayList<>();
-                for (DataSet dataSet : dataSets) {
-                    Set<DataSetProperty> properties = dataSet.getProperties();
-                    for(DataSetProperty property : properties ){
-                        property.setDataSetId(retrievedValuesMap.get(dataSet.getObjectId()));
-                    }
-                    dataSetPropertiesList.addAll(dataSet.getProperties());
-                }
-                dsDAO.insertDataSetsProperties(dataSetPropertiesList);
             } else {
-                errors.addAll(addDatabaseErrors(dsDAO.missingAssociations(dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList()))));
+                errors.addAll(addMissingAssociationsErrors(dataSets));
+                errors.addAll(addDuplicatedRowsErrors(dataSets));
             }
         }
         return parsedResponse;
@@ -70,32 +64,58 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         Map<String, Object> parsedResponse = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFields());
         List<DataSet> dataSets = (List<DataSet>) parsedResponse.get("datasets");
         List<String> errors = (List<String>) parsedResponse.get("validationsErrors");
-        if (dataSets.size() > 0) {
+        if (CollectionUtils.isNotEmpty(dataSets)) {
             List<String> objectIdList = dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList());
             Map<String, Integer> retrievedValuesMap = getOneMap(dsDAO.searchByObjectIdList(objectIdList));
             Collection<Integer> dataSetsIds = retrievedValuesMap.values();
-            dsDAO.deleteDataSetsProperties(dataSetsIds);
-            dsDAO.deleteDataSets(dataSetsIds);
-            if (validate(dataSets)) {
+            if (validateExistentAssociations(dataSets)) {
+                dsDAO.deleteDataSetsProperties(dataSetsIds);
+                dsDAO.deleteDataSets(dataSetsIds);
                 dsDAO.insertAll(dataSets);
                 insertProperties(dataSets);
+            } else {
+                errors.addAll(addMissingAssociationsErrors(dataSets));
             }
         }
         return parsedResponse;
     }
 
-    private List<String> addDatabaseErrors(List<DataSet> dataSets) {
+    private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList();
-        for(DataSet ds: dataSets){
-            errors.add(String.format(MISSING_ASSOCIATION, ds.getObjectId()));
+        List<Association> presentAssociations = dsDAO.getAssociationsForObjectIdList(dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList()));
+        List<String> associationIdList = presentAssociations.stream().map(a -> a.getObjectId()).collect(Collectors.toList());
+        List<String> dataSetIdList = dataSets.stream().map(a -> a.getObjectId()).collect(Collectors.toList());
+        for(String dsId: dataSetIdList){
+            if(!associationIdList.contains(dsId)){
+                errors.add(String.format(MISSING_ASSOCIATION, dsId));
+            }
         }
         return errors;
     }
 
-    private boolean validate(List<DataSet> dataSets) {
-        if (validateExistentAssociations(dataSets)) {
+    private List<String> addDuplicatedRowsErrors(List<DataSet> dataSets) {
+        List<String> errors = new ArrayList();
+        List<DataSet> failingRows = dsDAO.getDataSetsForObjectIdList(dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList()));
+        for(DataSet ds: failingRows){
+            errors.add(String.format(DUPLICATED_ROW, ds.getObjectId()));
+        }
+        errors.add(OVERWRITE_ON);
+        return errors;
+    }
+
+    private boolean completeDBCheck(List<DataSet> dataSets) {
+        if (validateExistentAssociations(dataSets) && validateNoDuplicates(dataSets)) {
             return true;
         } 
+        return false;
+    }
+
+    private boolean validateNoDuplicates(List<DataSet> dataSets) {
+        if (0 == dsDAO.getDataSetsForObjectIdList(dataSets.stream()
+                .map(d -> d.getObjectId()).collect(Collectors.toList())).size())
+        {
+            return true;
+        }
         return false;
     }
 
@@ -135,9 +155,21 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public Collection<DataSet> describeDataSets() {
+    public Collection<DataSetDTO> describeDataSets() {
         return dsDAO.findDataSets();
     }
+    
+    @Override
+    public Collection<DataSetDTO> describeDataSets(List<String> objectIds) {
+        return dsDAO.findDataSets(objectIds);
+    }
+    
+
+    @Override
+    public Collection<Dictionary> describeDictionary() {
+        return dsDAO.getMappedFields();
+    }
+
 
     private void setDataSetId(Set<DataSetProperty> properties, int dataSetId) {
         for (DataSetProperty property : properties) {

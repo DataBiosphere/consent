@@ -1,8 +1,10 @@
 package org.genomebridge.consent.http.db;
 
+import org.genomebridge.consent.http.models.Association;
 import org.genomebridge.consent.http.models.DataSet;
 import org.genomebridge.consent.http.models.DataSetProperty;
 import org.genomebridge.consent.http.models.Dictionary;
+import org.genomebridge.consent.http.models.dto.DataSetDTO;
 import org.skife.jdbi.v2.sqlobject.*;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
@@ -14,6 +16,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({DataSetMapper.class})
@@ -42,9 +45,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from dataset where dataSetId = :dataSetId")
     void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
-    @SqlQuery("select d.*, p* from dataset d inner join datasetproperty dp on dp.dataSetId = d.dacUserId ")
-    Collection<DataSet> findDataSets();
+    @Mapper(DataSetPropertiesMapper.class)
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId order by d.dataSetId, k.displayOrder")
+    Set<DataSetDTO> findDataSets();
 
+    @Mapper(DataSetPropertiesMapper.class)
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId where d.objectId in (<objectIdList>) order by d.dataSetId, k.displayOrder")
+    Set<DataSetDTO> findDataSets(@BindIn("objectIdList") List<String> objectIdList);
+    
     @Mapper(BatchMapper.class)
     @SqlQuery("select datasetId, objectId  from dataset where objectId in (<objectIdList>)")
     List<Map<String,Integer>> searchByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
@@ -63,6 +71,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)" +
               " AND NOT EXISTS (SELECT * FROM consent.consentassociations c WHERE d.objectId = c.objectId)")
     List<DataSet> missingAssociations(@BindIn("objectIdList") List<String> objectIdList);
+
+    @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
+    List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+
+    @RegisterMapper({AssociationMapper.class})
+    @SqlQuery(" SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
+    List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+
 }
 
 

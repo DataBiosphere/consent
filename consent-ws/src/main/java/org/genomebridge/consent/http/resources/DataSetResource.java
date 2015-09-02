@@ -4,6 +4,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.DataSet;
+import org.genomebridge.consent.http.models.Dictionary;
+import org.genomebridge.consent.http.models.dto.DataSetDTO;
 import org.genomebridge.consent.http.service.AbstractDataSetAPI;
 import org.genomebridge.consent.http.service.DataSetAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -12,9 +14,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,6 +24,7 @@ import java.util.logging.Level;
 @Path("/dataset")
 public class DataSetResource extends Resource {
 
+    private final String END_OF_LINE = System.lineSeparator();
     private DataSetAPI api;
 
     public DataSetResource() {
@@ -31,22 +32,22 @@ public class DataSetResource extends Resource {
     }
 
     @POST
-    @Path("/{overwrite}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces("application/json")
     public Response createDataSet(
             @FormDataParam("data") InputStream uploadedDataSet,
             @FormDataParam("data") FormDataBodyPart part,
-            @DefaultValue("false") @PathParam("overwrite") boolean overwrite) {
+            @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
         
         logger().debug("POSTing Data Set");
-        List<DataSet> dataSets = new ArrayList<DataSet>();
-        List<String> errors = new ArrayList<String>();
+        List<DataSet> dataSets = new ArrayList();
+        List<String> errors = new ArrayList();
         if (part.getMediaType().toString().equals(MediaType.TEXT_PLAIN)) {
             try {
                 File inputFile = new File(part.getContentDisposition().getFileName());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 Map<String, Object> result;
+                
                 if(overwrite) {
                     result = api.overwrite(inputFile);
                 }else{
@@ -71,8 +72,9 @@ public class DataSetResource extends Resource {
 
     @GET
     @Produces("application/json")
-    public Collection<DataSet> describeDataSets(){
-        return api.describeDataSets();
+    public Collection<DataSetDTO> describeDataSets(){
+        Collection<DataSetDTO> datasets = api.describeDataSets();
+        return datasets;
     }
 
     @GET
@@ -101,6 +103,8 @@ public class DataSetResource extends Resource {
 
     @POST
     @Path("/download")
+    @Consumes("application/json")
+    @Produces("application/json")    
     public Response downloadDataSets(List<String> idList) {
         String msg = "GETing DataSets to download";
         logger().debug(msg);
@@ -108,18 +112,29 @@ public class DataSetResource extends Resource {
         String fileName = "DownloadedDataSet.tsv";
 
         File targetFile = new File(fileName);
-
+        
+        Collection<DataSetDTO> dataSets = api.describeDataSets(idList);
 //        try {
 //            FileUtils.copyInputStreamToFile(inputStream, targetFile);
 //
 //        } catch (IOException ex) {
 //            java.util.logging.Logger.getLogger(DataSetResource.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-
-        return Response.ok(targetFile)
-            .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
-                .build();
+        
+        return Response.ok(dataSets, MediaType.APPLICATION_JSON).build();
+                    
+//        return Response.ok(targetFile)
+//            .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+//                .build();
     }
+
+    @GET
+    @Path("/dictionary")
+    @Produces("application/json")
+    public Collection<Dictionary> describeDictionary(){
+        return api.describeDictionary();
+    }
+
 
     @Override
     protected Logger logger() {
