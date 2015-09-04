@@ -274,5 +274,11 @@
             <version>3.2.1</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20141113</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 </project>

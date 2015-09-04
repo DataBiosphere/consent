@@ -16,9 +16,6 @@ public class BatchMapper implements ResultSetMapper< Map<String,Integer>> {
         return map;
     }
 
-    protected Logger logger() {
-        return Logger.getLogger("BatchMapper");
-    }
 }
 
 

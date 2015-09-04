@@ -21,6 +21,7 @@ abstract public class AbstractTest extends ResourcedTest {
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
+    public static final int UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode();
 
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
 

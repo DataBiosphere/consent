@@ -40,15 +40,14 @@ public class DataSetFileParser {
             while ( (record = reader.readNext() ) != null) {
                 // 9 is the index of DataSetId
                 errors.addAll(validateRequiredFields(++row, record, requiredKeys, record[9]));
-                if (errors.isEmpty()) {
-                    DataSet ds = createDataSet(record);
-                    Set<DataSetProperty> properties = new HashSet<>();
-                    for(int i=1; i<allKeys.size() ; i++){
-                        properties.add(new DataSetProperty(ds.getDataSetId(), allFields.get(i).getKeyId(), record[i], ds.getCreateDate()));
-                    }
-                    ds.setProperties(properties);
-                    datasets.add(ds);
+                DataSet ds = createDataSet(record);
+                Set<DataSetProperty> properties = new HashSet<>();
+                for(int i=1; i<allKeys.size() ; i++){
+                   properties.add(new DataSetProperty(ds.getDataSetId(), allFields.get(i).getKeyId(), record[i], ds.getCreateDate()));
                 }
+                ds.setProperties(properties);
+                datasets.add(ds);
+
             }
         } catch (FileNotFoundException e) {
             logger().error("An unexpected error had occurred in DataSetFileParser", e);
@@ -81,7 +80,6 @@ public class DataSetFileParser {
 
     private List<String> validateRequiredFields(int row, String[] record, List<Dictionary> requiredFields, String id){
         List<String> errors = new ArrayList();
-        int line = row;
         for(Dictionary field: requiredFields) {
             if(record[field.getDisplayOrder()].isEmpty()){
                 errors.add(String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row));

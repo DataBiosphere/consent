@@ -6,26 +6,30 @@ import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.DataSet;
 import org.genomebridge.consent.http.models.Dictionary;
 import org.genomebridge.consent.http.models.dto.DataSetDTO;
+import org.genomebridge.consent.http.models.dto.DataSetPropertyDTO;
 import org.genomebridge.consent.http.service.AbstractDataSetAPI;
 import org.genomebridge.consent.http.service.DataSetAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.json.JSONObject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 @Path("/dataset")
 public class DataSetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
-    private DataSetAPI api;
+    private final String TSV_DELIMITER = "\t";
+    private final DataSetAPI api;
 
     public DataSetResource() {
         this.api = AbstractDataSetAPI.getInstance();
@@ -42,7 +46,8 @@ public class DataSetResource extends Resource {
         logger().debug("POSTing Data Set");
         List<DataSet> dataSets = new ArrayList();
         List<String> errors = new ArrayList();
-        if (part.getMediaType().toString().equals(MediaType.TEXT_PLAIN)) {
+        if (part.getMediaType().toString().equals("text/tab-separated-values")
+                || part.getMediaType().toString().equals("text/plain")) {
             try {
                 File inputFile = new File(part.getContentDisposition().getFileName());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
@@ -67,14 +72,14 @@ public class DataSetResource extends Resource {
                 errors.add("A problem has ocurred while uploading datasets - Contact Support");
             }
         }
+        errors.add("The file type is not the expected one. Please download the sample .txt from your console.");
         return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
     }
 
     @GET
     @Produces("application/json")
     public Collection<DataSetDTO> describeDataSets(){
-        Collection<DataSetDTO> datasets = api.describeDataSets();
-        return datasets;
+        return api.describeDataSets();
     }
 
     @GET
@@ -87,45 +92,53 @@ public class DataSetResource extends Resource {
 
         ClassLoader classLoader = this.getClass().getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileName);
-        File targetFile = new File(fileName);
 
-        try {
-            FileUtils.copyInputStreamToFile(inputStream, targetFile);
-
-        } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(DataSetResource.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return Response.ok(targetFile)
-            .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
-                .build();
+        return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + fileName).build();
     }
 
     @POST
     @Path("/download")
-    @Consumes("application/json")
-    @Produces("application/json")    
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response downloadDataSets(List<String> idList) {
         String msg = "GETing DataSets to download";
         logger().debug(msg);
 
-        String fileName = "DownloadedDataSet.tsv";
+        JSONObject json = new JSONObject();
+        
+        Collection<Dictionary> headers  =  api.describeDictionary();
 
-        File targetFile = new File(fileName);
+        StringBuilder sb = new StringBuilder();
+        for(Dictionary header : headers) {
+            if (sb.length() > 0)
+                sb.append(TSV_DELIMITER);
+            sb.append(header.getKey());
+        }
+        sb.append(END_OF_LINE);
+
+        if (CollectionUtils.isEmpty(idList)) {
+            json.put("datasets", sb.toString());
+            return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+        }
         
-        Collection<DataSetDTO> dataSets = api.describeDataSets(idList);
-//        try {
-//            FileUtils.copyInputStreamToFile(inputStream, targetFile);
-//
-//        } catch (IOException ex) {
-//            java.util.logging.Logger.getLogger(DataSetResource.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        Collection<DataSetDTO> rows = api.describeDataSets(idList);
         
-        return Response.ok(dataSets, MediaType.APPLICATION_JSON).build();
-                    
-//        return Response.ok(targetFile)
-//            .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
-//                .build();
+        for (DataSetDTO row : rows) {
+            StringBuilder sbr = new StringBuilder();
+            List<DataSetPropertyDTO> props = row.getProperties();
+            for (DataSetPropertyDTO prop : props) {
+                if (sbr.length() > 0)
+                    sbr.append(TSV_DELIMITER);
+                sbr.append(prop.getPropertyValue());
+            }
+            sbr.append(END_OF_LINE);
+            sb.append(sbr);
+        }
+        String tsv = sb.toString();
+
+            json.put("datasets", tsv);
+        return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+
     }
 
     @GET

@@ -1,12 +1,10 @@
 package org.genomebridge.consent.http.service;
 
 /**
- * Created by egolin on 10/1/14.
- * <p/>
- * Implement a skeleton for ConsentAPI interface that implements the singleton object management.
+ * Implement a skeleton for DataSetAPI interface that implements the singleton object management.
  */
 public abstract class AbstractDataSetAPI implements DataSetAPI {
-    // Implement singleton management for the ConsentAPI.  We need to explicitly implement a singleton pattern,
+    // Implement singleton management for the DataSetAPI.  We need to explicitly implement a singleton pattern,
     // to work around a problem with Dropwizard+GUICE lifecycle management.  Basically using GUICE to create
     // the singleton will cause it to be created too early, so rather than use dependency injection, the
     // factory methods below will create the singleton and give access to it.
