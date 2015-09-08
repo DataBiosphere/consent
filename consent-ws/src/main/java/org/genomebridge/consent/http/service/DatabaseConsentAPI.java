@@ -1,35 +1,27 @@
-/*
- * Copyright 2014 Broad Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.genomebridge.consent.http.service;
 
-import com.sun.jersey.api.NotFoundException;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
+import org.genomebridge.consent.http.db.ConsentMapper;
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
-import org.genomebridge.consent.http.resources.ConsentResource;
+import org.genomebridge.consent.http.models.ConsentManage;
+import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.Handle;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implementation class for ConsentAPI on top of ConsentDAO database support.
@@ -37,26 +29,29 @@ import java.util.Set;
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     private ConsentDAO consentDAO;
+    private DBI jdbi;
     private Logger logger;
-
+    private final String UN_REVIEWED = "un-reviewed";
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
      * during application initialization (from the run() method).  If called a second time it will throw an
      * IllegalStateException.
      * Note that this method is not synchronized, as it is not intended to be called more than once.
-     * @param dao
-     * The Data Access Object instance that the API should use to read/write data.
+     *
+     * @param dao The Data Access Object instance that the API should use to read/write data.
      */
-    public static void initInstance(ConsentDAO dao) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao));
+
+    public static void initInstance(DBI jdbi, ConsentDAO dao) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao));
     }
 
     /**
      * The constructor is private to force use of the factory methods and enforce the singleton pattern.
-     * @param dao
-     * The Data Access Object used to read/write data.
+     *
+     * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao) {
+    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao) {
+        this.jdbi = jdbi;
         this.consentDAO = dao;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
     }
@@ -64,18 +59,54 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     // Consent Methods
 
     @Override
-    public void create(String id, ConsentResource rec) throws DuplicateIdentifierException {
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
+    public Consent create(Consent rec) {
+        String id;
+        if (StringUtils.isNotEmpty(rec.consentId)){
+           id = rec.consentId;
+        }else{
+           id = UUID.randomUUID().toString();
+        }
+        Date createDate = new Date();
+        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.structuredDataUseLetter, rec.dulName, createDate, createDate);
+        return consentDAO.findConsentById(id);
     }
 
+
     @Override
-    public ConsentResource retrieve(String id) throws UnknownIdentifierException {
+    public Consent retrieve(String id) throws UnknownIdentifierException {
         return consentDAO.findConsentById(id);
     }
 
     @Override
-    public void update(String id, ConsentResource rec) throws UnknownIdentifierException {
-        consentDAO.updateConsent(id, rec.requiresManualReview, rec.useRestriction.toString());
+    public Collection<Consent> findConsentsByAssociationType(String associationType) {
+        return consentDAO.findConsentsByAssociationType(associationType);
+    }
+
+    @Override
+    public Collection<Consent> retrieve(List<String> ids) {
+        Handle h = jdbi.open();
+        List<Consent> consents = h.createQuery("select * from consents where consentId in (" + getInClauseStrings(ids) + ") and active=true").
+                map(new ConsentMapper()).
+                list();
+        h.close();
+        return consents;
+    }
+
+    private String getInClauseStrings(Collection<String> strings) {
+        Collection<String> quotedIds = Collections2.transform(strings, new Function<String, String>() {
+            @Override
+            public String apply(String input) {
+                return "'" + input + "'";
+            }
+        });
+        return StringUtils.join(quotedIds, ",");
+    }
+
+
+    @Override
+    public void update(String id, Consent rec) throws UnknownIdentifierException {
+        rec = updateConsentDates(rec);
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate());
     }
 
     @Override
@@ -143,12 +174,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (associationType == null)
             result = getAllAssociationsForConsent(consentId);
         else {
-            result = new ArrayList<ConsentAssociation>();
+            result = new ArrayList<>();
             List<String> id_list;
             if (objectId == null)
                 id_list = consentDAO.findAssociationsByType(consentId, associationType);
             else { // both associationType and objectId specified
-                id_list = new ArrayList<String>();
+                id_list = new ArrayList<>();
                 if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) != null)
                     id_list.add(objectId);
             }
@@ -174,7 +205,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             consentDAO.deleteOneAssociation(consentId, associationType, objectId);
         }
         return getAllAssociationsForConsent(consentId);
-
     }
 
     @Override
@@ -182,7 +212,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         // We get a list of consentId's (UUID's) from the database, and turn them into URIs
         // <base-service-url>/consent/{id}
         List<String> consent_ids = consentDAO.findConsentsForAssociation(associationType, objectId);
-        List<String> consent_uris = new ArrayList<String>(consent_ids.size());
+        List<String> consent_uris = new ArrayList<>(consent_ids.size());
         for (String consentId : consent_ids) {
             UriBuilder ub = uriInfo.getBaseUriBuilder();
             URI consentUri = ub.path("consent").path(consentId).build();
@@ -192,13 +222,36 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consent_uris;
     }
 
+    @Override
+    public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
+        Consent consent = retrieve(consentId);
+        consent.setDulName(dulName);
+        consent.setDataUseLetter(dataUseLetter);
+        update(consentId, updateConsentDates(consent));
+        return retrieve(consentId);
+    }
+
+    @Override
+    public String getConsentDulUrl(String consentId) throws UnknownIdentifierException {
+        Consent consent = retrieve(consentId);
+        return consent.getDataUseLetter();
+    }
+
+    @Override
+    public Consent deleteConsentDul(String consentId) throws UnknownIdentifierException {
+        Consent consent = retrieve(consentId);
+        consent.setDataUseLetter("");
+        update(consentId, updateConsentDates(consent));
+        return retrieve(consentId);
+    }
+
     // Helper methods for Consent Associations
     //
     // Check that the list of ConsentAssociations given as an agrument is valid, and throw BadRequestException
     // if not.  The only error checked for is duplicate associationType.
     private void validateAssociations(List<ConsentAssociation> assoc_list) {
         if (assoc_list.size() > 1) {
-            Set<String> atype_list = new HashSet<String>();
+            Set<String> atype_list = new HashSet<>();
             for (ConsentAssociation assoc : assoc_list) {
                 if (atype_list.contains(assoc.getAssociationType()))
                     throw new WebApplicationException(Response.Status.BAD_REQUEST);
@@ -217,7 +270,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     // Get the updated list of all the associations for a Consent Resource, to return as a result.
     private List<ConsentAssociation> getAllAssociationsForConsent(String consentId) {
-        List<ConsentAssociation> assoc_list = new ArrayList<ConsentAssociation>();
+        List<ConsentAssociation> assoc_list = new ArrayList<>();
         List<String> type_list = consentDAO.findAssociationTypesForConsent(consentId);
         logger.debug(String.format("getAllAssociationsForConsent consentId='%s', types='%s'", consentId, type_list.toString()));
         for (String atype : type_list) {
@@ -230,5 +283,28 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return assoc_list;
     }
 
+    @Override
+    public List<ConsentManage> describeConsentManage() {
+        List<ConsentManage> consentManageList = new ArrayList<>();
+        consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents(), UN_REVIEWED));
+        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
+        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
+        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
+        consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
+        return consentManageList;
+    }
+
+    private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents, String status) {
+        List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
+        consentManageList.forEach(c -> c.setElectionStatus(status));
+        return consentManageList;
+    }
+
+    private Consent updateConsentDates(Consent c){
+        Timestamp updateDate = new Timestamp(new Date().getTime());
+        c.setLastUpdate(updateDate);
+        c.setSortDate(updateDate);
+        return c;
+    }
 
 }

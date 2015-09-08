@@ -1,0 +1,31 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="ssaucedo" id="30">
+        <addColumn tableName="consents">
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="structuredDataUseLetter" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet author="ssaucedo" id="31">
+        <sql dbms="hsql, mysql">
+            update consents t1, consents t2 set t1.name = t2.consentId where t1.consentId = t2.consentId
+        </sql>
+    </changeSet>
+
+    <changeSet author="ssaucedo" id="32">
+        <addUniqueConstraint columnNames="name" tableName="consents"
+                             deferrable="false" initiallyDeferred="false"/>
+    </changeSet>
+
+
+</databaseChangeLog>

@@ -1,24 +1,8 @@
-/*
- * Copyright 2014 Broad Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.genomebridge.consent.http.service;
 
 /**
  * Created by egolin on 10/1/14.
- *
+ * <p/>
  * Implement a skeleton for ConsentAPI interface that implements the singleton object management.
  */
 public abstract class AbstractConsentAPI implements ConsentAPI {
@@ -34,13 +18,14 @@ public abstract class AbstractConsentAPI implements ConsentAPI {
      */
     protected static class ConsentAPIHolder {
         private static ConsentAPI theInstance = null;
+
         /**
          * Initialize the singleton API instance.  This method should only be called once during
          * application initialization (from the run() method).  If called a second time it will throw an
          * IllegalStateException.
          * Note that this method is not synchronized, as it is not intended to be called more than once.
-         * @param api
-         * The instance of an API class that should be used.
+         *
+         * @param api The instance of an API class that should be used.
          */
         public static void setInstance(ConsentAPI api) {
             if (theInstance != null)
@@ -51,8 +36,8 @@ public abstract class AbstractConsentAPI implements ConsentAPI {
         /**
          * Get the singleton instance of the API.  If called before the instance has been initialized, an
          * IllegalStateException is thrown.
-         * @return
-         * The API instance.
+         *
+         * @return The API instance.
          */
         public static ConsentAPI getInstance() {
             if (theInstance == null)
@@ -76,8 +61,8 @@ public abstract class AbstractConsentAPI implements ConsentAPI {
     /**
      * Get the singleton instance of the API.  If called before the instance has been initialized, an
      * IllegalStateException is thrown.
-     * @return
-     * The API instance.
+     *
+     * @return The API instance.
      */
     public static ConsentAPI getInstance() {
         return ConsentAPIHolder.getInstance();
@@ -88,6 +73,8 @@ public abstract class AbstractConsentAPI implements ConsentAPI {
      * is shut down.  This is primarily for testing purposes.  If called before the instance has been initialized,
      * an IllegalStateException is thrown.
      */
-    public static void clearInstance() { ConsentAPIHolder.clearInstance(); }
+    public static void clearInstance() {
+        ConsentAPIHolder.clearInstance();
+    }
 
 }
