@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 public class ResearchPurpose {
 
@@ -8,12 +9,12 @@ public class ResearchPurpose {
     private Integer purposeId;
 
     @JsonProperty
-    private String purpose;
+    private UseRestriction purpose;
 
     public ResearchPurpose() {
     }
 
-    public ResearchPurpose(Integer purposeId, String purpose) {
+    public ResearchPurpose(Integer purposeId, UseRestriction purpose) {
         this.purposeId = purposeId;
         this.purpose = purpose;
     }
@@ -26,11 +27,11 @@ public class ResearchPurpose {
         this.purposeId = purposeId;
     }
 
-    public String getPurpose() {
+    public UseRestriction getPurpose() {
         return purpose;
     }
 
-    public void setPurpose(String purpose) {
+    public void setPurpose(UseRestriction purpose) {
         this.purpose = purpose;
     }
 
