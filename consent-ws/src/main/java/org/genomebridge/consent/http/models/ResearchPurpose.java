@@ -1,12 +1,13 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.bson.Document;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
-public class ResearchPurpose {
+public class ResearchPurpose extends Document {
 
     @JsonProperty
-    private Integer purposeId;
+    private String id;
 
     @JsonProperty
     private UseRestriction purpose;
@@ -14,26 +15,24 @@ public class ResearchPurpose {
     public ResearchPurpose() {
     }
 
-    public ResearchPurpose(Integer purposeId, UseRestriction purpose) {
-        this.purposeId = purposeId;
-        this.purpose = purpose;
+    public ResearchPurpose(String id, UseRestriction purpose) {
+        setId(id);
+        setPurpose(purpose);
     }
 
-    public Integer getPurposeId() {
-        return purposeId;
+    public String getId() {
+        return this.getString("_id");
     }
 
-    public void setPurposeId(Integer purposeId) {
-        this.purposeId = purposeId;
+    public void setId(String id) {
+        this.put("_id", id);
     }
 
     public UseRestriction getPurpose() {
-        return purpose;
+        return this.get("purpose", UseRestriction.class);
     }
 
     public void setPurpose(UseRestriction purpose) {
-        this.purpose = purpose;
+        this.put("purpose", purpose);
     }
-
-
 }

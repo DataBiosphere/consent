@@ -1,5 +1,7 @@
 package org.genomebridge.consent.http;
 
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
@@ -25,6 +27,7 @@ import javax.servlet.FilterRegistration;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
+import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
 
 /**
  * Top-level entry point to the entire application.
@@ -67,6 +70,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
 
+
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("CORS", CrossOriginFilter.class);
         // Configure CORS parameters
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
@@ -74,6 +78,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
         cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
         cors.setInitParameter("allowedHeaders", "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin");
+
+
+        final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
+        final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
+        MongoDataAccessRequestAPI.initInstance(mongoClient);
+        MongoResearchPurposeAPI.initInstance(mongoClient);
+ 
+        env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
 
         GCSStore googleStore;
         try {
@@ -86,6 +98,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // How register our resources.
         env.jersey().register(DataSetResource.class);
+        env.jersey().register(DataAccessRequestResource.class);
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
@@ -101,6 +114,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
+        env.jersey().register(ResearchPurposeResource.class);
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
@@ -108,7 +122,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.lifecycle().addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
-                LOGGER.debug("**** ConsentAppliction Server Stopped ****");
+                LOGGER.debug("**** ConsentApplication Server Stopped ****");
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();
@@ -118,7 +132,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractSummaryAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
                 AbstractDataSetAPI.clearInstance();
-
+                AbstractResearchPurposeAPI.clearInstance();
             }
         });
     }

@@ -21,10 +21,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <driver>org.hsqldb.jdbc.JDBCDriver</driver>
-        <url>jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true</url>
-        <username>sa</username>
-        <password>sa</password>
+        <driver>com.mysql.jdbc.Driver</driver>
+        <url>jdbc:mysql://localhost:3306/consent</url>
+        <username>root</username>
+        <password>root</password>
     </properties>
 
     <build>
@@ -268,11 +268,30 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
         </dependency>
+
         <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
             <version>3.2.1</version>
             <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>net.vz.mongodb.jackson</groupId>
+            <artifactId>mongo-jackson-mapper</artifactId>
+            <version>1.4.2</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.yammer.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>3.0.0-BETA1</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
