@@ -24,7 +24,6 @@
     <module>consent-core</module>
     <module>consent-indexer</module>
     <module>consent-ws</module>
-    <module>consent-autocomplete</module>
   </modules>
 
   <build>
@@ -44,22 +43,6 @@
 
   <dependencyManagement>
     <dependencies>
-
-      <dependency>
-        <groupId>org.genomebridge</groupId>
-        <artifactId>genomebridge-ontology_2.10</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
 
       <dependency>
         <groupId>net.sourceforge.owlapi</groupId>
