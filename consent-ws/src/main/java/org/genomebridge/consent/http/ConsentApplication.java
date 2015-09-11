@@ -5,6 +5,7 @@ import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi.DBIFactory;
+import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -121,6 +122,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 return configuration.getDataSourceFactory();
             }
         });
-
+        bootstrap.addBundle(new DBIExceptionsBundle());
     }
 }
