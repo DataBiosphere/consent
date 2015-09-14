@@ -63,9 +63,19 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
+        
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "*");
-        cors.setInitParameter("allowedMethods", "GET,PUT,POST,DELETE,OPTIONS,HEAD");
+
+        // Configure CORS parameters
+        cors.setInitParameter("allowedOrigins", "*");
+        cors.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
+        cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+        cors.setInitParameter("Access-Control-Allow-Credentials", "true");
+        cors.setInitParameter("Access-Control-Expose-Headers", "true");
+
+        // Add URL mapping
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+
 
         GCSStore googleStore;
         try {
