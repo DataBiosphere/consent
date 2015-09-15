@@ -14,10 +14,11 @@ import java.util.stream.Collectors;
 
 public class DataSetFileParser {
 
-    private String BLANK_REQUIRED_FIELD = "Dataset ID %s - The required field: %s is empty in row %d.";
-    private String MISSING_COLUMNS = "Your file has more/less columns than expected. Expected quantity: %s";
-    private String MISSING_MISPLACED_HEADER = "The uploaded file does not comply with the accepted fields. Field: (%s)%s is not recognized/ordered correctly. It should be '%s'";
-    private String PLEASE_DOWNLOAD = "Please, download the sample file from your console.";
+    private final String BLANK_REQUIRED_FIELD = "Dataset ID %s - The required field: %s is empty in row %d.";
+    private final String MISSING_COLUMNS = "Your file has more/less columns than expected. Expected quantity: %s";
+    private final String MISSING_MISPLACED_HEADER = "The uploaded file does not comply with the accepted fields. Field: (%s)%s is not recognized/ordered correctly. It should be '%s'";
+    private final String PLEASE_DOWNLOAD = "Please, download the sample file from your console.";
+    private int DATASET_ID_INDEX = 9;
 
     public ParseResult parseTSVFile(File file, List<Dictionary> allFields) {
         ParseResult result = new ParseResult();
@@ -37,8 +38,7 @@ public class DataSetFileParser {
             int row = 0;
             String[] record;
             while ( (record = reader.readNext() ) != null) {
-                // 9 is the index of DataSetId
-                errors.addAll(validateRequiredFields(++row, record, requiredKeys, record[9]));
+                errors.addAll(validateRequiredFields(++row, record, requiredKeys, record[DATASET_ID_INDEX]));
                 DataSet ds = createDataSet(record);
                 Set<DataSetProperty> properties = new HashSet<>();
                 for(int i=1; i<allKeys.size() ; i++){
