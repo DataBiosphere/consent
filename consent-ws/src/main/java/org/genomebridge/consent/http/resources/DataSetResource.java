@@ -50,8 +50,9 @@ public class DataSetResource extends Resource {
         List<String> errors = new ArrayList<>();
         if (part.getMediaType().toString().equals("text/tab-separated-values")
                 || part.getMediaType().toString().equals("text/plain")) {
+            File inputFile = null;
             try {
-                File inputFile = new File(UUID.randomUUID().toString());
+                inputFile = new File(UUID.randomUUID().toString());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 ParseResult result;
                 if(overwrite) {
@@ -61,7 +62,7 @@ public class DataSetResource extends Resource {
                 }
                 dataSets = result.getDatasets();
                 errors = result.getErrors();
-                inputFile.delete();
+
                 if (CollectionUtils.isNotEmpty(errors)) {
                     // errors should be download as a file, not implemented yet
                     return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
@@ -72,6 +73,10 @@ public class DataSetResource extends Resource {
             } catch (Exception e) {
                 logger().fatal("POSTing Data Set", e);
                 errors.add("A problem has ocurred while uploading datasets - Contact Support");
+            } finally {
+                if (inputFile != null) {
+                    inputFile.delete();
+                }
             }
         }
 
