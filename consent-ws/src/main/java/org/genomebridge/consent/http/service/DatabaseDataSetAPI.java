@@ -134,13 +134,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         dsDAO.insertDataSetsProperties(dataSetPropertiesList);
     }
 
+    /*
+     * this method takes a List<Map<objectId, datasetId>> and convert it 
+     * to a Map<objectId, datasetIs>.
+     * Due to database constraints, like objectId UNIQUE, each Map in List
+     * has only one element 
+    */
     private Map<String, Integer> getOneMap(List<Map<String, Integer>> retrievedValues) {
         Map<String, Integer> newMap = new HashMap<>();
-        for (Map<String, Integer> map : retrievedValues){
-            Iterator Iterator = map.keySet().iterator();
-            String objectId = Iterator.next().toString();
-            newMap.put(objectId, map.get(objectId));
-        }
+        retrievedValues.stream().forEach((map) -> { map.forEach((key, value) -> { newMap.put(key, value); }); });
         return newMap;
     }
 }
