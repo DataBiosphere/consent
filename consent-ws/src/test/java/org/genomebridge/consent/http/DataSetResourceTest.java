@@ -8,9 +8,6 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -19,7 +16,6 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -40,14 +36,12 @@ public class DataSetResourceTest extends DataSetServiceTest {
 
     @Test
     public void testCreateDataSetWrongType() throws Exception {
-        Client client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(false));
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        WebTarget webTarget = client.target(postDataSetFile(true));
         MultiPart mp = createFormData("wrongExt", "pdf");
 
-        Response response = webTarget.request(MediaType.APPLICATION_JSON)
-                .post(Entity.entity(mp, mp.getMediaType()));
-        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>(){});
+        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
         assertTrue(result.get(0).equals("A problem has ocurred while uploading datasets - Contact Support"));
@@ -57,14 +51,12 @@ public class DataSetResourceTest extends DataSetServiceTest {
     @Test
     public void testCreateMissingHeaders() throws Exception {
         // No matter other errors in the file, if the headers doesn't match, it will not try to parse.
-        Client client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(false));
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        WebTarget webTarget = client.target(postDataSetFile(true));
         MultiPart mp = createFormData("missingHeader", "txt");
 
-        Response response = webTarget.request(MediaType.APPLICATION_JSON)
-                .post(Entity.entity(mp, mp.getMediaType()));
-        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>(){});
+        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
         assertTrue(result.get(0).equals("Your file has more/less columns than expected. Expected quantity: 10"));
@@ -73,13 +65,11 @@ public class DataSetResourceTest extends DataSetServiceTest {
 
     @Test
     public void testCreateCorrectFile() throws Exception {
-        Client client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(false));
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        WebTarget webTarget = client.target(postDataSetFile(true));
         MultiPart mp = createFormData("correctFile", "txt");
-        Response response = webTarget.request(MediaType.APPLICATION_JSON)
-                .post(Entity.entity(mp, mp.getMediaType()));
-        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>(){});
+        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(response.getStatus() == (OK));
     }
 
@@ -91,11 +81,10 @@ public class DataSetResourceTest extends DataSetServiceTest {
     private MultiPart createFormData(String name, String ext) throws URISyntaxException, IOException {
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        URI uri = Resources.getResource(name).toURI();
-        File file = File.createTempFile(name, ext, new File(uri.getPath()));
-        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data",
-                file,
-                MediaType.valueOf("text/plain"));
+        String fileName = "dataset/" + name + "." + ext;
+        URI uri = Resources.getResource(fileName).toURI();
+        File file = new File(uri);
+        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data", file, MediaType.valueOf("text/plain"));
         multiPart.bodyPart(fileDataBodyPart);
         return multiPart;
     }
