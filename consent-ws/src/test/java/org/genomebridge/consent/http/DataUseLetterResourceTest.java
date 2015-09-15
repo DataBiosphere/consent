@@ -58,7 +58,8 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     @Test
     public void testAssociateDUL() throws Exception {
         String id = setupConsent(null);
-        File fileToUpload = new File("temp.pdf");
+        File fileToUpload = File.createTempFile("temp","pdf");
+        fileToUpload.deleteOnExit();
         when(storage.postStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).
                 thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
@@ -77,7 +78,8 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     @Test
     public void testUpdateAssociatedDUL() throws Exception {
         String id = setupConsent(null);
-        File fileToUpload = new File("temp.pdf");
+        File fileToUpload = File.createTempFile("temp","pdf");
+        fileToUpload.deleteOnExit();
         when(storage.putStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).
                 thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
