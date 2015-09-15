@@ -84,21 +84,17 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public Collection<Consent> retrieve(List<String> ids) {
-        Handle h = jdbi.open();
-        List<Consent> consents = h.createQuery("select * from consents where consentId in (" + getInClauseStrings(ids) + ") and active=true").
-                map(new ConsentMapper()).
-                list();
-        h.close();
+        List<Consent> consents;
+        try (Handle h = jdbi.open()) {
+            consents = h.createQuery("select * from consents where consentId in (" + getInClauseStrings(ids) + ") and active=true").
+                    map(new ConsentMapper()).
+                    list();
+        }
         return consents;
     }
 
     private String getInClauseStrings(Collection<String> strings) {
-        Collection<String> quotedIds = Collections2.transform(strings, new Function<String, String>() {
-            @Override
-            public String apply(String input) {
-                return "'" + input + "'";
-            }
-        });
+        Collection<String> quotedIds = Collections2.transform(strings, (String input) -> "'" + input + "'");
         return StringUtils.join(quotedIds, ",");
     }
 
