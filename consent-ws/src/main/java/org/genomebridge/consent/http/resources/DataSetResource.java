@@ -44,7 +44,7 @@ public class DataSetResource extends Resource {
             @FormDataParam("data") InputStream uploadedDataSet,
             @FormDataParam("data") FormDataBodyPart part,
             @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
-        
+
         logger().debug("POSTing Data Set");
         List<DataSet> dataSets;
         List<String> errors = new ArrayList<>();
@@ -115,7 +115,7 @@ public class DataSetResource extends Resource {
         logger().debug(msg);
 
         JSONObject json = new JSONObject();
-        
+
         Collection<Dictionary> headers  =  api.describeDictionary();
 
         StringBuilder sb = new StringBuilder();
@@ -130,9 +130,9 @@ public class DataSetResource extends Resource {
             json.put("datasets", sb.toString());
             return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
         }
-        
+
         Collection<DataSetDTO> rows = api.describeDataSets(idList);
-        
+
         for (DataSetDTO row : rows) {
             StringBuilder sbr = new StringBuilder();
             List<DataSetPropertyDTO> props = row.getProperties();
@@ -146,7 +146,7 @@ public class DataSetResource extends Resource {
         }
         String tsv = sb.toString();
 
-            json.put("datasets", tsv);
+        json.put("datasets", tsv);
         return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
 
     }
