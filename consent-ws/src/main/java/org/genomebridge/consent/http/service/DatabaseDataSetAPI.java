@@ -142,7 +142,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             newMap.put(objectId, map.get(objectId));
         }
         return newMap;
-
     }
 }
 

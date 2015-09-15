@@ -91,7 +91,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
     private MultiPart createFormData(String name, String ext) throws URISyntaxException, IOException {
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        URI uri = Resources.getResource("dataset/" + name).toURI();
+        URI uri = Resources.getResource(name).toURI();
         File file = File.createTempFile(name, ext, new File(uri.getPath()));
         FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data",
                 file,

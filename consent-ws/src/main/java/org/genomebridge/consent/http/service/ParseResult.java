@@ -10,16 +10,16 @@ public class ParseResult {
     List<DataSet> dataSets;
     List<String> errors;
 
-    public ParseResult(List<DataSet> dataSets, List<String> errors) {
+    public ParseResult() {
         this.dataSets = new ArrayList<>();
         this.errors = new ArrayList<>();
     }
 
-    public List<DataSet> getDataSets() {
+    public List<DataSet> getDatasets() {
         return dataSets;
     }
 
-    public void setDataSets(List<DataSet> dataSets) {
+    public void setDatasets(List<DataSet> dataSets) {
         this.dataSets = dataSets;
     }
 
