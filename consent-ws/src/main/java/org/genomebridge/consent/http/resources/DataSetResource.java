@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.resources;
 
+import com.google.common.io.Resources;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -9,6 +10,7 @@ import org.genomebridge.consent.http.models.dto.DataSetDTO;
 import org.genomebridge.consent.http.models.dto.DataSetPropertyDTO;
 import org.genomebridge.consent.http.service.AbstractDataSetAPI;
 import org.genomebridge.consent.http.service.DataSetAPI;
+import org.genomebridge.consent.http.service.ParseResult;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
@@ -22,7 +24,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @Path("/dataset")
 public class DataSetResource extends Resource {
@@ -44,22 +45,22 @@ public class DataSetResource extends Resource {
             @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
         
         logger().debug("POSTing Data Set");
-        List<DataSet> dataSets = new ArrayList();
-        List<String> errors = new ArrayList();
+        List<DataSet> dataSets;
+        List<String> errors = new ArrayList<>();
         if (part.getMediaType().toString().equals("text/tab-separated-values")
                 || part.getMediaType().toString().equals("text/plain")) {
             try {
                 File inputFile = new File(part.getContentDisposition().getFileName());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
-                Map<String, Object> result;
+                ParseResult result;
                 
                 if(overwrite) {
                     result = api.overwrite(inputFile);
                 }else{
                     result = api.create(inputFile);
                 }
-                dataSets = (List<DataSet>) result.get("datasets");
-                errors = (List<String>) result.get("validationsErrors");
+                dataSets = result.getDatasets();
+                errors = result.getErrors();
                 if (CollectionUtils.isNotEmpty(errors)) {
                     // errors should be download as a file, not implemented yet
                     return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
@@ -85,14 +86,16 @@ public class DataSetResource extends Resource {
     @GET
     @Path("/sample")
     public Response getDataSetSample() {
-        String msg = "GETing Data Set Sample";
+        String msg = "GETting Data Set Sample";
         logger().debug(msg);
-
         String fileName = "DataSetSample.tsv";
-
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream(fileName);
-
+        InputStream inputStream = null;
+        try {
+            inputStream = Resources.getResource(fileName).openStream();
+        } catch (IOException e) {
+            Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            e.printStackTrace();
+        }
         return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + fileName).build();
     }
 

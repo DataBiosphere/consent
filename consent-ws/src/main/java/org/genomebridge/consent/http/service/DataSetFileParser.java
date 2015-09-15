@@ -7,7 +7,6 @@ import org.genomebridge.consent.http.models.DataSetProperty;
 import org.genomebridge.consent.http.models.Dictionary;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -20,19 +19,19 @@ public class DataSetFileParser {
     private String MISSING_MISPLACED_HEADER = "The uploaded file does not comply with the accepted fields. Field: (%s)%s is not recognized/ordered correctly. It should be '%s'";
     private String PLEASE_DOWNLOAD = "Please, download the sample file from your console.";
 
-    public Map<String, Object> parseTSVFile(File file, List<Dictionary> allFields) {
-        List<String> errors = new ArrayList();
-        List<DataSet> datasets = new ArrayList();
-        Map<String, Object> result = new HashMap();
-        List<String> allKeys = allFields.stream().map(d -> d.getKey()).collect(Collectors.toList());
-        List<Dictionary> requiredKeys = allFields.stream().filter(d -> d.getRequired() == true).collect(Collectors.toList());
+    public ParseResult parseTSVFile(File file, List<Dictionary> allFields) {
+        ParseResult result = new ParseResult();
+        List<String> errors = new ArrayList<>();
+        List<DataSet> datasets = new ArrayList<>();
+        List<String> allKeys = allFields.stream().map(Dictionary::getKey).collect(Collectors.toList());
+        List<Dictionary> requiredKeys = allFields.stream().filter(d -> d.getRequired()).collect(Collectors.toList());
         try {
             CSVReader reader = new CSVReader(new FileReader(file), '\t');
             // reading headers from TSV
             errors.addAll(validateHeaderFields(reader.readNext(), allKeys));
             if (!errors.isEmpty()) {
-                result.put("datasets", datasets);
-                result.put("validationsErrors", errors);
+                result.setDatasets(datasets);
+                result.setErrors(errors);
                 return result;
             }
             int row = 0;
@@ -49,20 +48,17 @@ public class DataSetFileParser {
                 datasets.add(ds);
 
             }
-        } catch (FileNotFoundException e) {
-            logger().error("An unexpected error had occurred in DataSetFileParser", e);
-            errors.add("An unexpected error had occurred in DataSetFileParser - Contact Support");
         } catch (IOException e) {
             logger().error("An unexpected error had occurred in DataSetFileParser", e);
             errors.add("An unexpected error had occurred in DataSetFileParser - Contact Support");
         }
-        result.put("datasets", datasets);
-        result.put("validationsErrors", errors);
+        result.setDatasets(datasets);
+        result.setErrors(errors);
         return result;
     }
 
     private List<String> validateHeaderFields(String[] record, List<String> keys) {
-        List<String> errors = new ArrayList();
+        List<String> errors = new ArrayList<>();
         if ((record.length < keys.size()) || (record.length > keys.size())){
             errors.add(String.format(MISSING_COLUMNS, keys.size()));
         } else {
@@ -79,13 +75,7 @@ public class DataSetFileParser {
     }
 
     private List<String> validateRequiredFields(int row, String[] record, List<Dictionary> requiredFields, String id){
-        List<String> errors = new ArrayList();
-        for(Dictionary field: requiredFields) {
-            if(record[field.getDisplayOrder()].isEmpty()){
-                errors.add(String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row));
-            }
-        }
-        return errors;
+        return requiredFields.stream().filter(field -> record[field.getDisplayOrder()].isEmpty()).map(field -> String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row)).collect(Collectors.toList());
     }
 
     private DataSet createDataSet(String[] record) {

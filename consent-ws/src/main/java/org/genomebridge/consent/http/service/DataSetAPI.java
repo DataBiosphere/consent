@@ -6,13 +6,12 @@ import org.genomebridge.consent.http.models.dto.DataSetDTO;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface DataSetAPI {
 
-    Map<String, Object> create(File dataSetFile);
+    ParseResult create(File dataSetFile);
 
-    Map<String, Object> overwrite(File dataSetFile);
+    ParseResult overwrite(File dataSetFile);
 
     Collection<DataSetDTO> describeDataSets() ;
 
