@@ -10,6 +10,9 @@ public class DataSetProperty {
     private String propertyValue;
     private Date createDate;
 
+    public DataSetProperty(){
+    }
+
     public DataSetProperty(Integer propertyId, Integer  dataSetId, Integer propertyKey, String propertyValue,
                            Date createDate) {
         this(dataSetId, propertyKey, propertyValue, createDate);

@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Path("/dataset")
 public class DataSetResource extends Resource {
@@ -50,10 +51,9 @@ public class DataSetResource extends Resource {
         if (part.getMediaType().toString().equals("text/tab-separated-values")
                 || part.getMediaType().toString().equals("text/plain")) {
             try {
-                File inputFile = new File(part.getContentDisposition().getFileName());
+                File inputFile = new File(UUID.randomUUID().toString());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 ParseResult result;
-                
                 if(overwrite) {
                     result = api.overwrite(inputFile);
                 }else{
@@ -61,6 +61,7 @@ public class DataSetResource extends Resource {
                 }
                 dataSets = result.getDatasets();
                 errors = result.getErrors();
+                inputFile.delete();
                 if (CollectionUtils.isNotEmpty(errors)) {
                     // errors should be download as a file, not implemented yet
                     return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
@@ -73,6 +74,7 @@ public class DataSetResource extends Resource {
                 errors.add("A problem has ocurred while uploading datasets - Contact Support");
             }
         }
+
         errors.add("The file type is not the expected one. Please download the sample .txt from your console.");
         return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
     }

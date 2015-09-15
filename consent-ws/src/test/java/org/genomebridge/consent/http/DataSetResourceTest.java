@@ -2,12 +2,14 @@ package org.genomebridge.consent.http;
 
 import com.google.common.io.Resources;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.genomebridge.consent.http.models.DataSet;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
+
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -37,7 +39,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
     @Test
     public void testCreateDataSetWrongType() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(true));
+        WebTarget webTarget = client.target(postDataSetFile(false));
         MultiPart mp = createFormData("wrongExt", "pdf");
 
         Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
@@ -52,7 +54,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
     public void testCreateMissingHeaders() throws Exception {
         // No matter other errors in the file, if the headers doesn't match, it will not try to parse.
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(true));
+        WebTarget webTarget = client.target(postDataSetFile(false));
         MultiPart mp = createFormData("missingHeader", "txt");
 
         Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
@@ -65,12 +67,15 @@ public class DataSetResourceTest extends DataSetServiceTest {
 
     @Test
     public void testCreateCorrectFile() throws Exception {
-        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        Client client = ClientBuilder.newBuilder()
+                .register(MultiPartFeature.class).build();
         WebTarget webTarget = client.target(postDataSetFile(true));
         MultiPart mp = createFormData("correctFile", "txt");
-        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
-        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
+        Response response = webTarget.request(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(mp, mp.getMediaType()));
+        ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
         assertTrue(response.getStatus() == (OK));
+        assertTrue(result.size() == 3);
     }
 
     @Ignore
