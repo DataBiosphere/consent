@@ -1,5 +1,7 @@
 package org.genomebridge.consent.http;
 
+import com.google.common.io.Resources;
+
 import java.net.URL;
 
 /**
@@ -8,8 +10,7 @@ import java.net.URL;
 abstract public class ResourcedTest {
 
     public static String resourceFilePath(String name) {
-        ClassLoader loader = ClassLoader.getSystemClassLoader();
-        URL resource = loader.getResource(name);
+        URL resource = Resources.getResource(name);
         if (resource == null) {
             throw new IllegalStateException("Couldn't find resource " + name);
         }
