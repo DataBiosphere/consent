@@ -24,8 +24,8 @@ import java.security.GeneralSecurityException;
 @Path("/consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
-    private ConsentAPI api;
-    private GCSStore store;
+    private final ConsentAPI api;
+    private final GCSStore store;
 
     public DataUseLetterResource(GCSStore store) {
         this.api = AbstractConsentAPI.getInstance();
