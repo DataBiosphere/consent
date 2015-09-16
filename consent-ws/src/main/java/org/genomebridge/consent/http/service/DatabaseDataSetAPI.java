@@ -12,18 +12,17 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 /**
- * Implementation class for DataSetAPI  database support.
+ * Implementation class for DataSetAPI database support.
  */
 public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
-    private DataSetFileParser parser = new DataSetFileParser();
-    private DataSetDAO dsDAO;
+    private final DataSetFileParser parser = new DataSetFileParser();
+    private final DataSetDAO dsDAO;
 
-    private String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
-    private String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
-    private String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
+    private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
+    private final String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
+    private final String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
@@ -38,7 +37,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public ParseResult create(File dataSetFile){
+    public ParseResult create(File dataSetFile) {
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFields());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -54,7 +53,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public ParseResult overwrite(File dataSetFile){
+    public ParseResult overwrite(File dataSetFile) {
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFields());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -81,7 +80,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public Collection<DataSetDTO> describeDataSets(List<String> objectIds) {
         return dsDAO.findDataSets(objectIds);
     }
-
 
     @Override
     public Collection<Dictionary> describeDictionary() {
@@ -124,26 +122,38 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         List<Map<String, Integer>> retrievedValues = dsDAO.searchByObjectIdList(objectIdList);
         Map<String, Integer> retrievedValuesMap = getOneMap(retrievedValues);
         List<DataSetProperty> dataSetPropertiesList = new ArrayList<>();
-        for (DataSet dataSet : dataSets) {
+        dataSets.stream().map((dataSet) -> {
             Set<DataSetProperty> properties = dataSet.getProperties();
-            for (DataSetProperty property : properties) {
+            properties.stream().forEach((property) -> { 
                 property.setDataSetId(retrievedValuesMap.get(dataSet.getObjectId()));
-            }
+            });
+            return dataSet;
+        }).forEach((dataSet) -> {
             dataSetPropertiesList.addAll(dataSet.getProperties());
-        }
+        });
         dsDAO.insertDataSetsProperties(dataSetPropertiesList);
     }
 
-    /*
-     * this method takes a List<Map<objectId, datasetId>> and convert it 
-     * to a Map<objectId, datasetIs>.
-     * Due to database constraints, like objectId UNIQUE, each Map in List
-     * has only one element 
-    */
+    /**
+     * This method takes a List<Map<objectId, datasetId>> and returns a merged
+     * Map<objectId, datasetIs>.
+     * <p>
+     * Due to database constraints, like objectId UNIQUE, each Map in List has
+     * only one element. This method will NOT work properly if Maps in the List
+     * contains duplicated keys.
+     *
+     * @param retrievedValues a List<Map<String, Integer>> produced by
+     * DataSetDAO.
+     * @return a single, merged, Map<String, Integer>
+     * @see Image
+     */
     private Map<String, Integer> getOneMap(List<Map<String, Integer>> retrievedValues) {
         Map<String, Integer> newMap = new HashMap<>();
-        retrievedValues.stream().forEach((map) -> { map.forEach((key, value) -> { newMap.put(key, value); }); });
+        retrievedValues.stream().forEach((map) -> {
+            map.forEach((key, value) -> {
+                newMap.put(key, value);
+            });
+        });
         return newMap;
     }
 }
-
