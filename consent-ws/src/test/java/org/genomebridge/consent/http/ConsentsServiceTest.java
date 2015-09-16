@@ -133,7 +133,10 @@ public class ConsentsServiceTest extends AbstractTest {
         for (String id : ids) {
             ConsentAssociation ca = new ConsentAssociation();
             ca.setAssociationType("sample");
-            ca.setElements(Arrays.asList("SM-1", "SM-2", "SM-3"));
+            String element1 = "SM- "+Math.random();
+            String element2 = "SM- "+Math.random();
+            String element3 = "SM- "+Math.random();
+            ca.setElements(Arrays.asList(element1,element2,element3));
             post(client, path2Url("/consent/") + id + "/association", Collections.singletonList(ca));
         }
         return ids;
