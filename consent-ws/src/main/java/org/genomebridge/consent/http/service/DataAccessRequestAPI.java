@@ -5,6 +5,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.List;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.DataAccessRequest;
+import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 public interface DataAccessRequestAPI {
 
@@ -12,11 +13,11 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
-    DataAccessRequest updateDataAccessRequest(DataAccessRequest rec, String Id) throws IllegalArgumentException, NotFoundException;
-
-    void deleteDataAccessRequest(String id) throws IllegalArgumentException, NotFoundException;
-
     List<Document> describeDataAccessRequests();
 
-    public List<String> findDataSets(String partial);
+    List<String> findDataSets(String partial);
+
+    UseRestriction createStructuredResearchPurpose(Document document);
+
+    void deleteDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException;
 }

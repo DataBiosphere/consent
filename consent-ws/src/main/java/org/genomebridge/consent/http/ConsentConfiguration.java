@@ -9,6 +9,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import org.genomebridge.consent.http.db.mongo.MongoClientFactory;
 import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
+import org.genomebridge.consent.http.service.UseRestrictionConfig;
 
 public class ConsentConfiguration extends Configuration {
 
@@ -19,6 +20,11 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private DataSourceFactory database = new DataSourceFactory();
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private UseRestrictionConfig ontology = new UseRestrictionConfig();
 
     @Valid
     @NotNull
@@ -41,6 +47,8 @@ public class ConsentConfiguration extends Configuration {
     public StoreConfiguration getCloudStoreConfiguration() {
         return googleStore;
     }
+
+    public UseRestrictionConfig getUseRestrictionConfiguration(){ return ontology;}
 
     public MongoConfiguration getMongoConfiguration() {
         return mongo;

@@ -12,12 +12,12 @@ import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.service.*;
 
-@Path("/dataRequest/cases")
+@Path("{api : (api/)?}dataRequest/cases")
 public class DataRequestCasesResource extends Resource {
 
-    private PendingCaseAPI api;
-    private SummaryAPI summaryApi;
-    private ElectionAPI electionApi;
+    private final PendingCaseAPI api;
+    private final SummaryAPI summaryApi;
+    private final ElectionAPI electionApi;
 
     public DataRequestCasesResource() {
         this.api = AbstractPendingCaseAPI.getInstance();

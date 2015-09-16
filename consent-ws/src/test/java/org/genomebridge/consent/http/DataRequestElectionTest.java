@@ -18,10 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = Response.Status.CREATED.getStatusCode();
-    public static final int OK = Response.Status.OK.getStatusCode();
-    public static final int BADREQUEST = Response.Status.BAD_REQUEST.getStatusCode();
-    public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     private static final String DATA_REQUEST_ID = "1";
     private static final String DATA_REQUEST_ID_2 = "2";
     private static final String INVALID_DATA_REQUEST_ID = "invalidId";
@@ -53,7 +49,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getElectionId()).isNotNull();
         assertThat(created.getFinalRationale()).isNull();
         // try to create other election for the same data request
-        checkStatus(BADREQUEST,
+        checkStatus(BAD_REQUEST,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         testUpdateDataRequestElection(created);
         deleteElection(created.getElectionId());
@@ -118,7 +114,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Election election = new Election();
         election.setStatus(INVALID_STATUS);
         // should return 400 bad request because status is invalid
-        checkStatus(BADREQUEST,
+        checkStatus(BAD_REQUEST,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID_2), election));
     }
 

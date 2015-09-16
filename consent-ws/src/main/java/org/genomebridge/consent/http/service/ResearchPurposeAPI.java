@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.service;
 
-import org.bson.Document;
 import org.genomebridge.consent.http.models.ResearchPurpose;
 
 import javax.ws.rs.NotFoundException;
@@ -9,13 +8,13 @@ import java.util.List;
 
 public interface ResearchPurposeAPI {
 
-    Document createResearchPurpose(ResearchPurpose rec) throws IllegalArgumentException;
+    ResearchPurpose createResearchPurpose(ResearchPurpose rec) throws IllegalArgumentException;
 
-    Document updateResearchPurpose(ResearchPurpose rec, String id) throws IllegalArgumentException, NotFoundException;
+    ResearchPurpose updateResearchPurpose(ResearchPurpose rec, String id) throws IllegalArgumentException, NotFoundException, IOException;
 
-    Document describeResearchPurpose(String id) throws NotFoundException, IOException;
+    ResearchPurpose describeResearchPurpose(String id) throws NotFoundException, IOException;
 
-    List<Document> describeResearchPurposes(String[] id) throws NotFoundException;
+    List<ResearchPurpose> describeResearchPurposes(String[] id) throws NotFoundException, IOException;
 
     void deleteResearchPurpose(String id) throws IllegalArgumentException, NotFoundException;
 

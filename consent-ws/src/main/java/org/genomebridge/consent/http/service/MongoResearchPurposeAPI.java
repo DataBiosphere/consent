@@ -2,14 +2,16 @@ package org.genomebridge.consent.http.service;
 
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.util.JSON;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.models.ResearchPurpose;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
-
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +30,6 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
 
     public static void initInstance(MongoClient mongo) {
         ResearchPurposeAPIHolder.setInstance(new MongoResearchPurposeAPI(mongo));
-
     }
 
     private MongoResearchPurposeAPI(MongoClient mongo) {
@@ -36,13 +37,14 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
     }
 
     @Override
-    public Document createResearchPurpose(ResearchPurpose researchPurpose) throws IllegalArgumentException {
-        String restriction = new Gson().toJson(researchPurpose.get("purpose", Map.class));
+    public ResearchPurpose createResearchPurpose(ResearchPurpose researchPurpose) throws IllegalArgumentException {
+        String restriction = new Gson().toJson(researchPurpose.get("restriction", Map.class));
+        DBObject dbObject = (DBObject) JSON.parse(restriction);
         try {
             UseRestriction.parse(restriction);
             Document rp = new Document();
-            getResearchPurposeCollection().insertOne(rp.append("purpose", restriction));
-            return rp;
+            getResearchPurposeCollection().insertOne(rp.append("restriction", dbObject));
+            return getResearchPurpose(rp);
         } catch (IOException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
@@ -50,10 +52,11 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
     }
 
     @Override
-    public Document updateResearchPurpose(ResearchPurpose rec, String id) throws IllegalArgumentException, NotFoundException {
-        String restriction = new Gson().toJson(rec.get("purpose", Map.class));
+    public ResearchPurpose updateResearchPurpose(ResearchPurpose rec, String id) throws IllegalArgumentException, NotFoundException, IOException {
+        String restriction = new Gson().toJson(rec.get("restriction", Map.class));
+        DBObject dbObject = (DBObject) JSON.parse(restriction);
         Document rp = new Document();
-        rp.append("purpose", restriction);
+        rp.append("restriction", dbObject);
         BasicDBObject query = new BasicDBObject("_id", getObjectId(id));
         if (getResearchPurposeCollection().findOneAndReplace(query, rp) == null) {
             notFoundRP();
@@ -63,18 +66,31 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
 
 
     @Override
-    public Document describeResearchPurpose(String id) throws NotFoundException {
+    public ResearchPurpose describeResearchPurpose(String id) throws NotFoundException, IOException {
         BasicDBObject query = new BasicDBObject("_id", getObjectId(id));
         Document document = getResearchPurposeCollection().find(query).first();
         if (document == null) notFoundRP();
-        return document;
+        return getResearchPurpose(document);
     }
 
 
     @Override
-    public List<Document> describeResearchPurposes(String[] ids) throws NotFoundException {
+    public List<ResearchPurpose> describeResearchPurposes(String[] ids) throws NotFoundException, IOException {
+        List<ResearchPurpose> rpResult = new ArrayList<>();
         BasicDBObject orQuery = new BasicDBObject();
         List<BasicDBObject> query = new ArrayList<>();
+        setQueryFilter(ids, query);
+        orQuery.put("$or", query);
+        List<Document> documents = getResearchPurposeCollection().find(orQuery).into(new ArrayList<>());
+        if(CollectionUtils.isNotEmpty(documents)){
+            for(Document rp : documents){
+                rpResult.add(getResearchPurpose(rp));
+            }
+        }
+        return rpResult;
+    }
+
+    private void setQueryFilter(String[] ids, List<BasicDBObject> query) {
         for (String id : ids) {
             try {
                 query.add(new BasicDBObject("_id", new ObjectId(id)));
@@ -83,9 +99,6 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
             }
 
         }
-        orQuery.put("$or", query);
-        return getResearchPurposeCollection().find(orQuery).into(new ArrayList<>());
-
     }
 
     @Override
@@ -111,6 +124,11 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
 
     private void notFoundRP() throws NotFoundException {
         throw new NotFoundException("ResearchPurpose for the specified id does not exist");
+    }
+
+    private ResearchPurpose getResearchPurpose(Document rp) throws IOException{
+       String rest = new Gson().toJson(rp.get("restriction", Map.class));
+       return new ResearchPurpose(rp.get("_id", ObjectId.class).toString(), UseRestriction.parse(rest));
     }
 
 }

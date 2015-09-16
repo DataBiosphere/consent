@@ -60,7 +60,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
 
-
         DatabaseDataSetAPI.initInstance(dataSetDAO);
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
@@ -70,35 +69,41 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
 
-
-        final FilterRegistration.Dynamic cors = env.servlets().addFilter("CORS", CrossOriginFilter.class);
-        // Configure CORS parameters
-        cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,HEAD,OPTIONS");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
-        cors.setInitParameter("allowedHeaders", "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin");
-
-
+        UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
-        MongoDataAccessRequestAPI.initInstance(mongoClient);
+        MongoDataAccessRequestAPI.initInstance(mongoClient, structResearchPurposeConv);
         MongoResearchPurposeAPI.initInstance(mongoClient);
- 
+
         env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
+
+        final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
+
+        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+
+        cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
+
+        // Configure CORS parameters
+        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "X-Requested-With,Content-Type,Accept,Origin,Authorization");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+        // Add URL mapping
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
 
         GCSStore googleStore;
         try {
             googleStore = new GCSStore(config.getCloudStoreConfiguration());
         } catch (GeneralSecurityException | IOException e) {
-            LOGGER.error("Couldn't connect to to Google Cloud Storage.");
-            e.printStackTrace();
+            LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
             throw new IllegalStateException(e);
         }
 
         // How register our resources.
-        env.jersey().register(DataSetResource.class);
         env.jersey().register(DataAccessRequestResource.class);
+        env.jersey().register(DataSetResource.class);
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
@@ -131,12 +136,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
-                AbstractDataSetAPI.clearInstance();
                 AbstractResearchPurposeAPI.clearInstance();
+                AbstractDataSetAPI.clearInstance();
+                AbstractDataAccessRequestAPI.clearInstance();
             }
         });
     }
 
+    @Override
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
 
         bootstrap.addBundle(new MultiPartBundle());

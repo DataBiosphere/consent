@@ -11,12 +11,12 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 
-@Path("purpose")
+
+@Path("{api : (api/)?}purpose")
 public class ResearchPurposeResource extends Resource {
 
-    private ResearchPurposeAPI api;
+    private final ResearchPurposeAPI api;
 
     public ResearchPurposeResource() {
         this.api = AbstractResearchPurposeAPI.getInstance();
@@ -41,10 +41,10 @@ public class ResearchPurposeResource extends Resource {
     @Path("/{id}")
     public Response updatePurpose(@Context UriInfo info, ResearchPurpose rec, @PathParam("id") String id) {
         try {
-            Document purpose = api.updateResearchPurpose(rec, id);
+            ResearchPurpose purpose = api.updateResearchPurpose(rec, id);
             URI assocURI = UriBuilder.fromResource(ResearchPurposeResource.class).build(id);
             return Response.ok(purpose).location(assocURI).build();
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
 
@@ -69,7 +69,7 @@ public class ResearchPurposeResource extends Resource {
                 return Response.status(Status.BAD_REQUEST).entity("Parameter ids is required").build();
             }
             return Response.status(Response.Status.OK).entity(api.describeResearchPurposes(ids.split(","))).build();
-        } catch (NotFoundException e) {
+        } catch (Exception e) {
             return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }

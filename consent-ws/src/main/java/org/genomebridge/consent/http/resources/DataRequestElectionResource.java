@@ -11,11 +11,11 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 
-@Path("dataRequest/{requestId}/election")
+@Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
-    private ElectionAPI api;
-    private VoteAPI voteAPI;
+    private final ElectionAPI api;
+    private final VoteAPI voteAPI;
 
     public DataRequestElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
@@ -77,7 +77,7 @@ public class DataRequestElectionResource extends Resource {
     }
 
     private URI buildElectionURI(Integer id) {
-        return UriBuilder.fromResource(DataRequestElectionResource.class).build(id);
+        return UriBuilder.fromResource(DataRequestElectionResource.class).build("api/",id);
     }
 
 }

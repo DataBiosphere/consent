@@ -18,4 +18,7 @@ public interface DataSetAPI {
     Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
 
     Collection<Dictionary> describeDictionary();
-    }
+    
+    List<String> autoCompleteDataSets(String partial);
+            
+}

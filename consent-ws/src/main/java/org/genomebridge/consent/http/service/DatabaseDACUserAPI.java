@@ -19,8 +19,8 @@ import java.util.*;
  */
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
-    private DACUserDAO dacUserDAO;
-    private DACUserRoleDAO roleDAO;
+    private final DACUserDAO dacUserDAO;
+    private final DACUserRoleDAO roleDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -31,6 +31,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDao The Data Access Object instance that the API should use to
      *            read/write data.
+     * @param roleDAO
      */
     public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO) {
         DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, roleDAO));

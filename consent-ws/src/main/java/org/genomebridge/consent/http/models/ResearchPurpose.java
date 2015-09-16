@@ -1,23 +1,25 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class ResearchPurpose extends Document {
-
-    @JsonProperty
-    private String id;
-
-    @JsonProperty
-    private UseRestriction purpose;
 
     public ResearchPurpose() {
     }
 
-    public ResearchPurpose(String id, UseRestriction purpose) {
-        setId(id);
-        setPurpose(purpose);
+    public ResearchPurpose(UseRestriction restriction) {
+        setRestriction(restriction);
+    }
+
+    public ResearchPurpose(String id, UseRestriction restriction) {
+        this.put("_id", id);
+        this.put("restriction", restriction);
     }
 
     public String getId() {
@@ -28,11 +30,11 @@ public class ResearchPurpose extends Document {
         this.put("_id", id);
     }
 
-    public UseRestriction getPurpose() {
-        return this.get("purpose", UseRestriction.class);
+    public UseRestriction getRestriction() throws IOException{
+        return UseRestriction.parse(new Gson().toJson(this.get("restriction", Map.class)));
     }
 
-    public void setPurpose(UseRestriction purpose) {
-        this.put("purpose", purpose);
+    public void setRestriction(UseRestriction restriction) {
+        this.put("restriction", restriction);
     }
 }

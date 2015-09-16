@@ -1,7 +1,12 @@
 package org.genomebridge.consent.http.resources;
 
+import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import org.genomebridge.consent.http.models.ResearchPurpose;
+import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.genomebridge.consent.http.service.*;
 
 import javax.ws.rs.*;
@@ -9,16 +14,20 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.core.MediaType;
 import org.bson.Document;
 
-@Path("dar")
+@Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
 
-    private DataAccessRequestAPI dataAccessRequestAPI;
+    private final DataAccessRequestAPI dataAccessRequestAPI;
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private final ResearchPurposeAPI researchPurposeAPI;
 
     public DataAccessRequestResource(){
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
+        this.researchPurposeAPI = AbstractResearchPurposeAPI.getInstance();
     }
 
     @POST
@@ -26,19 +35,25 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
         URI uri;
-        Document result;
+        Document result = null;
         try {
             result = dataAccessRequestAPI.createDataAccessRequest(dar);
+            if(!requiresManualReview(dar)){
+                UseRestriction useRestriction  = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
+                researchPurposeAPI.createResearchPurpose(new ResearchPurpose(useRestriction));
+            }
             uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
             return Response.created(uri).entity(result).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+        catch (Exception e){
+            dataAccessRequestAPI.deleteDataAccessRequest(result);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
 
     @GET
     @Produces("application/json")
-    public List<Document> describeAllUsers() {
+    public List<Document> describeDataAccessRequests() {
         return dataAccessRequestAPI.describeDataAccessRequests();
     }
 
@@ -56,17 +71,34 @@ public class DataAccessRequestResource extends Resource {
         List<String> resp = dataAccessRequestAPI.findDataSets(partial);
         return Response.ok(resp, MediaType.APPLICATION_JSON).build();
     }
-    
-    @GET
-    @Path("/ontology/{partial}")
-    @Produces("application/json")
-    public Response autocompleteOntology(@PathParam("partial") String partial) {
-        List<Document> docs = new ArrayList<>();
-        docs.add(new Document("id","OID-1234").append("label", "cancer"));
-        docs.add(new Document("id","OID-1235").append("label", "linfoma"));
-        docs.add(new Document("id","OID-1236").append("label", "tuberculosis"));
-        docs.add(new Document("id","OID-1237").append("label", "alzheimer"));
-        docs.add(new Document("id","OID-1238").append("label", "leucemia"));
-        return Response.ok(docs, MediaType.APPLICATION_JSON).build();
+
+    // Fields that trigger manual review flag.
+    String[] fieldsForManualReview = {
+            "other",
+            "illegalbehave",
+            "addiction",
+            "sexualdiseases",
+            "stigmatizediseases",
+            "vulnerablepop",
+            "popmigration",
+            "psychtraits",
+            "nothealth"
+    };
+
+    private boolean requiresManualReview(Document dar) throws IOException {
+        Map<String, Object> form = parseAsMap(dar.toJson());
+        for(String field: fieldsForManualReview){
+            if(form.containsKey(field)){
+                if((boolean)form.get(field)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Map<String, Object> parseAsMap(String str) throws IOException {
+        ObjectReader reader = mapper.reader(Map.class);
+        return reader.readValue(str);
     }
 }
