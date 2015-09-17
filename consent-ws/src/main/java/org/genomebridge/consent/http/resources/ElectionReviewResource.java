@@ -8,7 +8,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-@Path("electionReview")
+@Path("{api : (api/)?}electionReview")
 public class ElectionReviewResource {
 
     private ReviewResultsAPI api;
