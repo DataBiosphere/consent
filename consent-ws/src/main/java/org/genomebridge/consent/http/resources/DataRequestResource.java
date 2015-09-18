@@ -21,7 +21,7 @@ import org.genomebridge.consent.http.models.DataRequest;
 import org.genomebridge.consent.http.service.AbstractDataRequestAPI;
 import org.genomebridge.consent.http.service.DataRequestAPI;
 
-@Path("dataRequest")
+@Path("{api : (api/)?}dataRequest")
 public class DataRequestResource extends Resource {
 
     private DataRequestAPI api;

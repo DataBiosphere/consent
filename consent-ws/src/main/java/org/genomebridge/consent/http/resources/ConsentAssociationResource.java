@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-@Path("consent/{id}/association")
+@Path("{api : (api/)?}consent/{id}/association")
 public class ConsentAssociationResource extends Resource {
 
     private ConsentAPI api;
