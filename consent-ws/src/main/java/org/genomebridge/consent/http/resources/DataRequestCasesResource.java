@@ -12,7 +12,7 @@ import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.service.*;
 
-@Path("/dataRequest/cases")
+@Path("api/dataRequest/cases")
 public class DataRequestCasesResource extends Resource {
 
     private PendingCaseAPI api;

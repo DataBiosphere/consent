@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-@Path("consent")
+@Path("api/consent")
 public class ConsentResource extends Resource {
 
     private ConsentAPI api;

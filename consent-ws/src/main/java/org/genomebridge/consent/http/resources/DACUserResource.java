@@ -15,7 +15,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
-@Path("dacuser")
+@Path("api/dacuser")
 public class DACUserResource extends Resource {
 
     private DACUserAPI dacUserAPI;

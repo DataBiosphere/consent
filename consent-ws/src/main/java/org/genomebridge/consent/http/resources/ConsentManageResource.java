@@ -6,7 +6,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
-@Path("/consent/manage")
+@Path("api/consent/manage")
 public class ConsentManageResource extends Resource {
 
     private ConsentAPI api;
