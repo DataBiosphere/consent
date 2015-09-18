@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 
-@Path("/consent/{id}/dul")
+@Path("api/consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;

@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-@Path("/dataset")
+@Path("api/dataset")
 public class DataSetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();

@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-@Path("consent/{consentId}/vote")
+@Path("api/consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
     private VoteAPI api;

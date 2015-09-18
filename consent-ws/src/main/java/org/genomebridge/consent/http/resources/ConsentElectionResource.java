@@ -14,7 +14,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-@Path("consent/{consentId}/election")
+@Path("api/consent/{consentId}/election")
 public class ConsentElectionResource extends Resource {
 
     private ElectionAPI api;
