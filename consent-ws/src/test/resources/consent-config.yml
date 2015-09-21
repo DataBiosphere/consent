@@ -1,5 +1,4 @@
 server:
-  #rootPath: /api/*
   adminConnectors:
     - type: http
       port: 8181
@@ -33,6 +32,7 @@ logging:
     AllAssociationsResource: ALL
     ConsentApplication: ALL
     ConsentModule: ALL
+    DatabaseResearchPurposeAPI: ALL
 ontology:
     methods: http://www.broadinstitute.org/ontologies/DURPO/methods_research
     population: http://www.broadinstitute.org/ontologies/DURPO/population
