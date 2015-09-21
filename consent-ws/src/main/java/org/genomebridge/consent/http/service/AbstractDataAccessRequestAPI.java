@@ -1,7 +1,7 @@
 package org.genomebridge.consent.http.service;
 
 /**
- * Implement a skeleton for ConsentAPI interface that implements the singleton
+ * Implement a skeleton for DataAccessRequestAPI interface that implements the singleton
  * object management.
  */
 public abstract class AbstractDataAccessRequestAPI implements DataAccessRequestAPI {

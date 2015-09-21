@@ -93,6 +93,6 @@ public class UseRestrictionConfig {
     }
 
     public String getValueByName(String key){
-        return this.values.getOrDefault(key, "Unexistent Ontology");
+        return this.values.getOrDefault(key, "Nonexistent Ontology");
     }
 }

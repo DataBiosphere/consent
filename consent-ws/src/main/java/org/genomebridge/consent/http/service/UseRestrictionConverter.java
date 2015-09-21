@@ -6,18 +6,19 @@ import org.apache.commons.collections.CollectionUtils;
 import org.genomebridge.consent.http.models.grammar.And;
 import org.genomebridge.consent.http.models.grammar.Named;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UseRestrictionConverter {
-
-    private static ObjectMapper mapper = new ObjectMapper();
-    private UseRestrictionConfig config;
+    public static final Logger LOGGER = LoggerFactory.getLogger("UseRestrictionConverter");
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private final UseRestrictionConfig config;
     // Fields to be parsed. We'll see if we can configure it with an external file.
     String[] typeOfResearch = {
             "methods",
@@ -93,7 +94,7 @@ public class UseRestrictionConverter {
         try {
             return reader.readValue(str);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.debug("While parsing as a Map ...", e);
         }
         return null;
     }
