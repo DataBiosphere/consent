@@ -1,25 +1,22 @@
 package org.genomebridge.consent.http.service;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import javax.ws.rs.NotFoundException;
 import java.util.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 
 /**
- * Implementation class for MongoDataAccessRequestAPI.
+ * Implementation class for DatabaseDataAccessRequestAPI.
  */
-public class MongoDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
+public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private MongoClient mongo;
+    private final MongoConsentDB mongo;
 
-    private UseRestrictionConverter converter;
+    private final UseRestrictionConverter converter;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -30,9 +27,10 @@ public class MongoDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object instance that the API should use to
      *            read/write data.
+     * @param converter
      */
-    public static void initInstance(MongoClient mongo, UseRestrictionConverter converter) {
-        DataAccessRequestAPIHolder.setInstance(new MongoDataAccessRequestAPI(mongo, converter));
+    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter));
     }
 
     /**
@@ -41,40 +39,28 @@ public class MongoDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    private MongoDataAccessRequestAPI(MongoClient mongo, UseRestrictionConverter converter) {
+    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter) {
         this.mongo = mongo;
         this.converter = converter;
     }
 
     @Override
     public Document createDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException {
-        mongo.getDatabase("consent").getCollection("dataAccessRequest").insertOne(dataAccessRequest);
+        mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
         return dataAccessRequest;
     }
 
     @Override
     public Document describeDataAccessRequestById(String id) throws NotFoundException {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
-        return mongo.getDatabase("consent").getCollection("dataAccessRequest").find(query).first();
+        return mongo.getDataAccessRequestCollection().find(query).first();
      }
 
 
     @Override
     public List<Document> describeDataAccessRequests() {
-        List<Document> response = mongo.getDatabase("consent").getCollection("dataAccessRequest").find().into(new ArrayList<Document>());
+        List<Document> response = mongo.getDataAccessRequestCollection().find().into(new ArrayList<Document>());
         return response;
-    }
-
-    @Override
-    public List<String> findDataSets(String partial) {
-        Document query = new Document("objectId", new Document("$regex", partial));
-        MongoDatabase db = mongo.getDatabase("consent");
-        MongoCollection coll = db.getCollection("datasets");
-        DistinctIterable response = coll.distinct("objectId", String.class).filter(query);
-        Collection cor = response.into(new ArrayList<>());
-        List<String> ids = new ArrayList<>();
-        ids.addAll(cor);
-        return ids;
     }
 
     @Override
@@ -85,7 +71,7 @@ public class MongoDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public void deleteDataAccessRequest(Document document){
         BasicDBObject query = new BasicDBObject("_id", document.get("_id"));
-        mongo.getDatabase("consent").getCollection("dataAccessRequest").findOneAndDelete(query);
+        mongo.getDataAccessRequestCollection().findOneAndDelete(query);
     }
 
 }

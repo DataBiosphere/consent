@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
 import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 
 /**
  * Top-level entry point to the entire application.
@@ -70,11 +71,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
+        
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
-        MongoDataAccessRequestAPI.initInstance(mongoClient, structResearchPurposeConv);
-        MongoResearchPurposeAPI.initInstance(mongoClient);
-
+        final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv);
+        DatabaseResearchPurposeAPI.initInstance(mongoInstance);
+        
         env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
 
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);

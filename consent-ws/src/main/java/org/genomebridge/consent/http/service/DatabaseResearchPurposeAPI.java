@@ -3,8 +3,6 @@ package org.genomebridge.consent.http.service;
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.util.JSON;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
@@ -17,22 +15,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 
 
 /**
  * Implementation class for ResearchPurposeAPI
  */
-public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
+public class DatabaseResearchPurposeAPI extends AbstractResearchPurposeAPI {
 
-    private MongoClient mongo;
+    private final MongoConsentDB mongo;
 
-    private Logger logger = Logger.getLogger("MongoResearchPurposeAPI");
+    private final Logger logger = Logger.getLogger("DatabaseResearchPurposeAPI");
 
-    public static void initInstance(MongoClient mongo) {
-        ResearchPurposeAPIHolder.setInstance(new MongoResearchPurposeAPI(mongo));
+    public static void initInstance(MongoConsentDB mongo) {
+        ResearchPurposeAPIHolder.setInstance(new DatabaseResearchPurposeAPI(mongo));
     }
 
-    private MongoResearchPurposeAPI(MongoClient mongo) {
+    private DatabaseResearchPurposeAPI(MongoConsentDB mongo) {
         this.mongo = mongo;
     }
 
@@ -43,7 +42,7 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
         try {
             UseRestriction.parse(restriction);
             Document rp = new Document();
-            getResearchPurposeCollection().insertOne(rp.append("restriction", dbObject));
+            mongo.getResearchPurposeCollection().insertOne(rp.append("restriction", dbObject));
             return getResearchPurpose(rp);
         } catch (IOException e) {
             throw new IllegalArgumentException(e.getMessage());
@@ -58,7 +57,7 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
         Document rp = new Document();
         rp.append("restriction", dbObject);
         BasicDBObject query = new BasicDBObject("_id", getObjectId(id));
-        if (getResearchPurposeCollection().findOneAndReplace(query, rp) == null) {
+        if (mongo.getResearchPurposeCollection().findOneAndReplace(query, rp) == null) {
             notFoundRP();
         }
         return describeResearchPurpose(id);
@@ -68,7 +67,7 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
     @Override
     public ResearchPurpose describeResearchPurpose(String id) throws NotFoundException, IOException {
         BasicDBObject query = new BasicDBObject("_id", getObjectId(id));
-        Document document = getResearchPurposeCollection().find(query).first();
+        Document document = mongo.getResearchPurposeCollection().find(query).first();
         if (document == null) notFoundRP();
         return getResearchPurpose(document);
     }
@@ -81,7 +80,8 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
         List<BasicDBObject> query = new ArrayList<>();
         setQueryFilter(ids, query);
         orQuery.put("$or", query);
-        List<Document> documents = getResearchPurposeCollection().find(orQuery).into(new ArrayList<>());
+        
+        List<Document> documents = mongo.getResearchPurposeCollection().find(orQuery).into(new ArrayList<>());
         if(CollectionUtils.isNotEmpty(documents)){
             for(Document rp : documents){
                 rpResult.add(getResearchPurpose(rp));
@@ -104,7 +104,7 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
     @Override
     public void deleteResearchPurpose(String id) throws IllegalArgumentException, NotFoundException {
         BasicDBObject query = new BasicDBObject("_id", getObjectId(id));
-        if (getResearchPurposeCollection().findOneAndDelete(query) == null) {
+        if (mongo.getResearchPurposeCollection().findOneAndDelete(query) == null) {
             notFoundRP();
         }
     }
@@ -118,15 +118,11 @@ public class MongoResearchPurposeAPI extends AbstractResearchPurposeAPI {
 
     }
 
-    private MongoCollection<Document> getResearchPurposeCollection() {
-        return mongo.getDatabase("consent").getCollection("researchPurpose");
-    }
-
     private void notFoundRP() throws NotFoundException {
         throw new NotFoundException("ResearchPurpose for the specified id does not exist");
     }
 
-    private ResearchPurpose getResearchPurpose(Document rp) throws IOException{
+    private ResearchPurpose getResearchPurpose(Document rp) throws IOException {
        String rest = new Gson().toJson(rp.get("restriction", Map.class));
        return new ResearchPurpose(rp.get("_id", ObjectId.class).toString(), UseRestriction.parse(rest));
     }

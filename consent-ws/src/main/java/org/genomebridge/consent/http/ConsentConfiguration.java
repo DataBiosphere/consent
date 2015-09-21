@@ -7,7 +7,6 @@ import org.genomebridge.consent.http.cloudstore.StoreConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import org.genomebridge.consent.http.db.mongo.MongoClientFactory;
 import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
 import org.genomebridge.consent.http.service.UseRestrictionConfig;
 
@@ -19,27 +18,23 @@ public class ConsentConfiguration extends Configuration {
     @Valid
     @NotNull
     @JsonProperty
-    private DataSourceFactory database = new DataSourceFactory();
+    private final DataSourceFactory database = new DataSourceFactory();
 
     @Valid
     @NotNull
     @JsonProperty
-    private UseRestrictionConfig ontology = new UseRestrictionConfig();
+    private final UseRestrictionConfig ontology = new UseRestrictionConfig();
 
     @Valid
     @NotNull
     @JsonProperty
-    private StoreConfiguration googleStore = new StoreConfiguration();
+    private final StoreConfiguration googleStore = new StoreConfiguration();
 
     @Valid
     @NotNull
     @JsonProperty
-    private MongoConfiguration mongo = new MongoConfiguration();
+    private final MongoConfiguration mongo = new MongoConfiguration();
     
-    @Valid
-    @NotNull
-    private MongoClientFactory mongoFactory = new MongoClientFactory();
-        
     public DataSourceFactory getDataSourceFactory() {
         return database;
     }
@@ -48,14 +43,12 @@ public class ConsentConfiguration extends Configuration {
         return googleStore;
     }
 
-    public UseRestrictionConfig getUseRestrictionConfiguration(){ return ontology;}
+    public UseRestrictionConfig getUseRestrictionConfiguration() {
+        return ontology;
+    }
 
     public MongoConfiguration getMongoConfiguration() {
         return mongo;
-    }
-
-    public MongoClientFactory getMongoFactory() {
-        return mongoFactory;
     }
 
 }
