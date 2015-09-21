@@ -64,14 +64,6 @@ public class DataAccessRequestResource extends Resource {
         return dataAccessRequestAPI.describeDataAccessRequestById(id);
     }
 
-    @GET
-    @Path("/search/{partial}")
-    @Produces("application/json")
-    public Response autocompleteDatasets(@PathParam("partial") String partial) {
-        List<String> resp = dataAccessRequestAPI.findDataSets(partial);
-        return Response.ok(resp, MediaType.APPLICATION_JSON).build();
-    }
-
     // Fields that trigger manual review flag.
     String[] fieldsForManualReview = {
             "other",
