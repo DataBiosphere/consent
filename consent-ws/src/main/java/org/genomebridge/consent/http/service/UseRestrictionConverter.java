@@ -44,8 +44,10 @@ public class UseRestrictionConverter {
         List<UseRestriction> operandsList = new ArrayList<>();
         Map<String, Object> form = parseAsMap(json);
         for(String field: typeOfResearch){
-            if((boolean)form.get(field)){
-                operandsList.add(createNamedRestriction(config.getValueByName(field)));
+            if(form.containsKey(field)){
+                if((boolean)form.get(field)){
+                    operandsList.add(createNamedRestriction(config.getValueByName(field)));
+                }
             }
         }
 
