@@ -10,13 +10,15 @@ public interface VoteAPI {
 
     List<Vote> createVotes(Integer electionId, Boolean isConsent) throws IllegalArgumentException;
 
-    Vote firstVoteUpdate(Vote rec, String referenceId, String voteId) throws IllegalArgumentException;
+    Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
 
     Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
 
     List<Vote> describeVotes(String referenceId);
 
     Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
+
+    Vote describeVoteFinalAccessVoteById(Integer requestId) throws NotFoundException;
 
     void deleteVote(Integer voteId, String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
 

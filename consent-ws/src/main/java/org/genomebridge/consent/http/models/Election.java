@@ -33,12 +33,16 @@ public class Election {
     @JsonProperty
     private String finalRationale;
 
+    @JsonProperty
+    private Boolean finalAccessVote;
+
+
     public Election() {
     }
 
     public Election(Integer electionId, String electionType,
                     Boolean finalVote, String finalRationale, String status, Date createDate,
-                    Date finalVoteDate, String referenceId, Date lastUpdate) {
+                    Date finalVoteDate, String referenceId, Date lastUpdate , Boolean finalAccessVote) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.finalVote = finalVote;
@@ -48,6 +52,7 @@ public class Election {
         this.finalRationale = finalRationale;
         this.finalVoteDate = finalVoteDate;
         this.lastUpdate = lastUpdate;
+        this.finalAccessVote = finalAccessVote;
     }
 
     public Integer getElectionId() {
@@ -122,5 +127,11 @@ public class Election {
         this.finalRationale = finalRationale;
     }
 
+    public Boolean getFinalAccessVote() {
+        return finalAccessVote;
+    }
 
+    public void setFinalAccessVote(Boolean finalAccessVote) {
+        this.finalAccessVote = finalAccessVote;
+    }
 }

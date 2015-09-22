@@ -219,6 +219,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
+    public Consent getConsentFromDatasetID(String datasetId){
+        return consentDAO.findConsentFromDatasetID(datasetId);
+    }
+
+    @Override
     public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         consent.setDulName(dulName);

@@ -1,10 +1,23 @@
 package org.genomebridge.consent.http;
 
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCursor;
+import de.flapdoodle.embedmongo.MongoDBRuntime;
+import de.flapdoodle.embedmongo.MongodExecutable;
+import de.flapdoodle.embedmongo.MongodProcess;
+import de.flapdoodle.embedmongo.config.MongodConfig;
+import de.flapdoodle.embedmongo.distribution.Version;
+import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.bson.Document;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.models.Vote;
+import org.genomebridge.consent.http.service.DatabaseElectionAPI;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -21,9 +34,13 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     public static final int CREATED = Response.Status.CREATED
             .getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
-    private static final String DATA_REQUEST_ID = "1";
+    private static String DATA_REQUEST_ID;
     private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
+    private MongodExecutable mongodExe;
+    private MongodProcess mongod;
+    private MongoClient mongo;
+
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -32,6 +49,37 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     @Override
     public DropwizardAppRule<ConsentConfiguration> rule() {
         return RULE;
+    }
+
+    @Before
+    public void setup() throws Exception {
+
+        // Creating Mongodbruntime instance
+        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
+
+        // Creating MongodbExecutable
+        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, Network.localhostIsIPv6()));
+
+        // Starting Mongodb
+        mongod = mongodExe.start();
+        mongo = new MongoClient("localhost", 37017);
+
+        MongoConsentDB mongoi = new MongoConsentDB(mongo);
+
+        // configuring ResearchPurposeAPI instance to use in memory Mongo
+        DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
+
+        // Create Documents needed in mongo for testing
+        Document doc = new Document().append("testingInfo1", "someValue");
+        mongoi.getDataAccessRequestCollection().insertOne(doc);
+        MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
+        DATA_REQUEST_ID = String.valueOf(dars.next().get("_id"));
+    }
+
+    @After
+    public void teardown() throws Exception {
+        mongod.stop();
+        mongodExe.cleanup();
     }
 
     @Test
@@ -106,5 +154,4 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(789)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isEmpty();
     }
-
 }

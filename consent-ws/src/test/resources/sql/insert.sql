@@ -7,8 +7,6 @@ insert into consentassociations(associationId, consentId, associationType, objec
 insert into researchpurpose (purposeId,purpose) values(1,'General Use');
 insert into dataset (dataSetId,name,createDate) values(1,'test','2015-08-05 13:58:50');
 insert into dataset (dataSetId,name,createDate) values(2,'test','2015-08-05 13:58:50');
-insert into datarequest (requestId, purposeId, dataSetId,description,researcher) values (1,'1','1','test','researcherTest');
-insert into datarequest (requestId, purposeId, dataSetId,description,researcher) values (2,'1','1','test','researcherTest');
 insert into dacuser(dacUserId,email,displayName,createDate) values(1,'test@broad.com','testUser','2015-08-05 13:58:50');
 insert into dacuser(dacUserId,email,displayName,createDate) values(2,'test2@broad.com','testUser','2015-08-05 13:58:50');
 insert into dacuser(dacUserId,email,displayName,createDate) values(3,'test3@broad.com','testUser','2015-08-05 13:58:50');

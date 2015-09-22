@@ -18,7 +18,7 @@ public class VoteMapper implements ResultSetMapper<Vote> {
                 r.getDate("updateDate"),
                 r.getInt("electionId"),
                 r.getString("rationale"),
-                (r.getString("isChairPersonVote") == null ? null : r.getBoolean("isChairPersonVote")),
+                (r.getString("isFinalAccessVote") == null ? null : r.getBoolean("isFinalAccessVote")),
                 (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent")
         );
 

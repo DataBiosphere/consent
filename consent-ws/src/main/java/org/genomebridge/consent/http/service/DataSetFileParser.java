@@ -17,7 +17,7 @@ public class DataSetFileParser {
     private final String BLANK_REQUIRED_FIELD = "Dataset ID %s - The required field: %s is empty in row %d.";
     private final String MISSING_COLUMNS = "Your file has more/less columns than expected. Expected quantity: %s";
     private final String MISSING_MISPLACED_HEADER = "The uploaded file does not comply with the accepted fields. Field: (%s)%s is not recognized/ordered correctly. It should be '%s'";
-    private final String PLEASE_DOWNLOAD = "Please, download the sample file from your console.";
+    private final String PLEASE_DOWNLOAD = "Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.";
     private int DATASET_ID_INDEX = 9;
 
     public ParseResult parseTSVFile(File file, List<Dictionary> allFields) {

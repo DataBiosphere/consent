@@ -1,10 +1,9 @@
 package org.genomebridge.consent.http.resources;
 
-import java.io.IOException;
-import java.net.URI;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import org.bson.Document;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.genomebridge.consent.http.service.*;
 
@@ -12,11 +11,13 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bson.Document;
 
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
@@ -24,10 +25,12 @@ public class DataAccessRequestResource extends Resource {
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ResearchPurposeAPI researchPurposeAPI;
+    private final ConsentAPI consentAPI;
 
     public DataAccessRequestResource() {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.researchPurposeAPI = AbstractResearchPurposeAPI.getInstance();
+        this.consentAPI = AbstractConsentAPI.getInstance();
     }
 
     @POST
@@ -72,6 +75,35 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     public Document describe(@PathParam("id") String id) {
         return dataAccessRequestAPI.describeDataAccessRequestById(id);
+    }
+
+    @GET
+    @Path("/find/{id}")
+    @Produces("application/json")
+    public Document describeSpecificFields(@PathParam("id") String id, @QueryParam("fields") List<String> fields){
+        List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
+        if(!fields.isEmpty()){
+            return dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, fieldValues);
+        } else {
+            return dataAccessRequestAPI.describeDataAccessRequestById(id);
+        }
+    }
+
+    @GET
+    @Path("/find/{id}/consent")
+    @Produces("application/json")
+    public Consent describeConsentForDAR(@PathParam("id") String id){
+        String datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList("datasetId"))).getString("datasetId");
+        Consent c;
+        if(datasetId != null){
+            c = consentAPI.getConsentFromDatasetID(datasetId);
+            if(c == null){
+                throw new NotFoundException("Unable to find the consent related to the datasetId present in the DAR.");
+            }
+        } else {
+            throw new NotFoundException("Unable to find the datasetId related to the DAR.");
+        }
+        return c;
     }
 
     // Fields that trigger manual review flag.
