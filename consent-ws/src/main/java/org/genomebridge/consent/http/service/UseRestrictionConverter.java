@@ -9,11 +9,9 @@ import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +44,6 @@ public class UseRestrictionConverter {
         And srp = new And();
         List<UseRestriction> operandsList = new ArrayList<>();
         Map<String, Object> form = parseAsMap(json);
-        LinkedHashMap darMap = (LinkedHashMap)form.get("_id");
-        srp.setReferenceId((String)darMap.get("$oid"));
         for(String field: typeOfResearch){
             if(form.containsKey(field)){
                 if((boolean)form.get(field)){
