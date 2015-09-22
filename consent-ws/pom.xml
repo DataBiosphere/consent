@@ -316,5 +316,12 @@
             <version>20141113</version>
             <type>jar</type>
         </dependency>
+                
+        <dependency>
+            <groupId>de.flapdoodle.embedmongo</groupId>
+            <artifactId>de.flapdoodle.embedmongo</artifactId>
+            <version>1.18</version>
+        </dependency>
+
     </dependencies>
 </project>
