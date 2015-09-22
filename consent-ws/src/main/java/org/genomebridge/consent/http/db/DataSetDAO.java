@@ -78,6 +78,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @RegisterMapper({AssociationMapper.class})
     @SqlQuery(" SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+    
+    @SqlQuery(" SELECT objectId FROM dataset d WHERE d.objectId like concat('%',:partial,'%')")
+    List<String> getObjectIdsbyPartial(@Bind("partial") String partial);
 
 }
 

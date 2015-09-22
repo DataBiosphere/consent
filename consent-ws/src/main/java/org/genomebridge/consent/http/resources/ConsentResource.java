@@ -11,10 +11,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-@Path("consent")
+@Path("{api : (api/)?}consent")
 public class ConsentResource extends Resource {
 
-    private ConsentAPI api;
+    private final ConsentAPI api;
 
     @Path("{id}")
     @GET

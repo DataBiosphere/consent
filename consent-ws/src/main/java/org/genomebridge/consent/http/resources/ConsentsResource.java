@@ -13,10 +13,10 @@ import java.util.*;
 /**
  * This service will find all consents for a comma-separated list of ids or for an association type.
  */
-@Path("/consents")
+@Path("{api : (api/)?}consents")
 public class ConsentsResource extends Resource {
 
-    private ConsentAPI api;
+    private final ConsentAPI api;
 
     public ConsentsResource() {
         this.api = AbstractConsentAPI.getInstance();

@@ -13,10 +13,10 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("dataRequest/{requestId}/vote")
+@Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private VoteAPI api;
+    private final VoteAPI api;
 
     public DataRequestVoteResource() {
         this.api = AbstractVoteAPI.getInstance();

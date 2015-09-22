@@ -145,7 +145,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
      * @param retrievedValues a List<Map<String, Integer>> produced by
      * DataSetDAO.
      * @return a single, merged, Map<String, Integer>
-     * @see Image
+     * @see
      */
     private Map<String, Integer> getOneMap(List<Map<String, Integer>> retrievedValues) {
         Map<String, Integer> newMap = new HashMap<>();
@@ -155,5 +155,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             });
         });
         return newMap;
+    }
+    
+    @Override
+    public List<String> autoCompleteDataSets(String partial) {
+        List<String> retrievedValues = dsDAO.getObjectIdsbyPartial(partial);
+        return retrievedValues;
     }
 }

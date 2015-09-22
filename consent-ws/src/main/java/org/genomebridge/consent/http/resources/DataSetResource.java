@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-@Path("/dataset")
+@Path("{api : (api/)?}dataset")
 public class DataSetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
@@ -158,6 +158,13 @@ public class DataSetResource extends Resource {
         return api.describeDictionary();
     }
 
+    @GET
+    @Path("/autocomplete/{partial}")
+    @Produces("application/json")
+    public Response datasetAutocomplete(@PathParam("partial") String partial){
+        List<String> objectIds = api.autoCompleteDataSets(partial);
+        return Response.ok(objectIds, MediaType.APPLICATION_JSON).build();
+    }
 
     @Override
     protected Logger logger() {

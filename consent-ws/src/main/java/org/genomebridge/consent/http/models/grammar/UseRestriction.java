@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.models.grammar;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,20 +14,22 @@ import java.io.IOException;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Everything.class, name = "everything"),
-        @JsonSubTypes.Type(value = Nothing.class, name = "nothing"),
-        @JsonSubTypes.Type(value = Named.class, name = "named"),
-        @JsonSubTypes.Type(value = Some.class, name = "some"),
-        @JsonSubTypes.Type(value = Only.class, name = "only"),
-        @JsonSubTypes.Type(value = And.class, name = "and"),
-        @JsonSubTypes.Type(value = Or.class, name = "or"),
-        @JsonSubTypes.Type(value = Not.class, name = "not")
+    @JsonSubTypes.Type(value = Everything.class, name = "everything"),
+    @JsonSubTypes.Type(value = Nothing.class, name = "nothing"),
+    @JsonSubTypes.Type(value = Named.class, name = "named"),
+    @JsonSubTypes.Type(value = Some.class, name = "some"),
+    @JsonSubTypes.Type(value = Only.class, name = "only"),
+    @JsonSubTypes.Type(value = And.class, name = "and"),
+    @JsonSubTypes.Type(value = Or.class, name = "or"),
+    @JsonSubTypes.Type(value = Not.class, name = "not")
 })
 public abstract class UseRestriction {
 
-    private static Logger LOG = Logger.getLogger(UseRestriction.class);
+    private static final Logger LOG = Logger.getLogger(UseRestriction.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
-    private static ObjectMapper mapper = new ObjectMapper();
+    @JsonProperty("referenceId")
+    public String referenceId;
 
     public static UseRestriction parse(String str) throws IOException {
         try {
@@ -50,6 +53,15 @@ public abstract class UseRestriction {
         return shouldContinue;
     }
 
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    @Override
     public String toString() {
         return new Gson().toJson(this);
     }

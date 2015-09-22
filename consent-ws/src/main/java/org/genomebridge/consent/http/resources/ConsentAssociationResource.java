@@ -13,10 +13,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-@Path("consent/{id}/association")
+@Path("{api : (api/)?}consent/{id}/association")
 public class ConsentAssociationResource extends Resource {
 
-    private ConsentAPI api;
+    private final ConsentAPI api;
 
     public ConsentAssociationResource() {
         this.api = AbstractConsentAPI.getInstance();
@@ -38,7 +38,7 @@ public class ConsentAssociationResource extends Resource {
     }
 
     private URI buildConsentAssociationURI(String id) {
-        return UriBuilder.fromResource(ConsentAssociationResource.class).build(id);
+        return UriBuilder.fromResource(ConsentAssociationResource.class).build("api/", id);
     }
 
     @PUT

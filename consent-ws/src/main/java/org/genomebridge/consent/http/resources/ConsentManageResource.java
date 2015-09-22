@@ -6,10 +6,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
-@Path("/consent/manage")
+@Path("{api : (api/)?}consent/manage")
 public class ConsentManageResource extends Resource {
 
-    private ConsentAPI api;
+    private final ConsentAPI api;
 
     public ConsentManageResource() {
         this.api = AbstractConsentAPI.getInstance();
