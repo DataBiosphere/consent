@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http;
 
+import org.genomebridge.consent.http.filter.CORSFilter;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import io.dropwizard.Application;
@@ -26,7 +27,6 @@ import javax.servlet.FilterRegistration;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 
@@ -80,7 +80,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         
         env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
 
-        final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CrossOriginFilter.class);
+        final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
 
