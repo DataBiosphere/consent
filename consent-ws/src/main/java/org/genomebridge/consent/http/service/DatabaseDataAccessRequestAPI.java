@@ -23,8 +23,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final UseRestrictionConverter converter;
 
-    private MatchProcessAPI matchProcessAPI;
-
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -32,8 +30,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      *
-     * @param mongo The Data Access Object instance that the API should use to
-     *            read/write data.
+     * @param mongo     The Data Access Object instance that the API should use to
+     *                  read/write data.
      * @param converter
      */
     public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter) {
@@ -49,8 +47,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter) {
         this.mongo = mongo;
         this.converter = converter;
-        this.matchProcessAPI = DatabaseMatchProcessAPI.getInstance();
-    }
+     }
 
     @Override
     public Document createDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException {
@@ -62,15 +59,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public Document describeDataAccessRequestById(String id) throws NotFoundException {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         return mongo.getDataAccessRequestCollection().find(query).first();
-     }
+    }
 
     // DO NOT USE this method to get the UseRestriction field ("restriction")
     // Use getUseRestriction instead.
     @Override
-    public void deleteDataAccessRequestById(String id){
+    public void deleteDataAccessRequestById(String id) {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         mongo.getDataAccessRequestCollection().findOneAndDelete(query);
-        matchProcessAPI.processMatchesForPurpose(id);
     }
 
     @Override
@@ -78,8 +74,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         Document dar = mongo.getDataAccessRequestCollection().find(query).first();
         Document result = new Document();
-        for(String field: fields){
-            String content = (String) dar.getOrDefault(field.replaceAll("\\s",""), "Not found");
+        for (String field : fields) {
+            String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
             result.append(field, content);
         }
         return result;
@@ -95,17 +91,24 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public List<Document> describeDataAccessRequests() {
-        List<Document> response = mongo.getDataAccessRequestCollection().find().into(new ArrayList<Document>());
+        List<Document> response = mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
         return response;
     }
 
     @Override
-    public UseRestriction createStructuredResearchPurpose(Document document){
-        return  converter.parseJsonFormulary(document.toJson());
+    public List<Document> getDarsForMatching() {
+        BasicDBObject query = new BasicDBObject("restriction", new BasicDBObject("$exists", true));
+        List<Document> response = mongo.getDataAccessRequestCollection().find(query).into(new ArrayList<>());
+        return response;
     }
 
     @Override
-    public void deleteDataAccessRequest(Document document){
+    public UseRestriction createStructuredResearchPurpose(Document document) {
+        return converter.parseJsonFormulary(document.toJson());
+    }
+
+    @Override
+    public void deleteDataAccessRequest(Document document) {
         BasicDBObject query = new BasicDBObject("_id", document.get("_id"));
         mongo.getDataAccessRequestCollection().findOneAndDelete(query);
     }

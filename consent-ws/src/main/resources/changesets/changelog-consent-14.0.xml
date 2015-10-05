@@ -27,7 +27,6 @@
                                  onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="consentId"
                                  referencedTableName="consents" referencesUniqueColumn="false"/>
     </changeSet>
-
     <changeSet author="vvicario" id="59">
         <addUniqueConstraint columnNames="purpose, consent"
                              constraintName="purpose_consent"

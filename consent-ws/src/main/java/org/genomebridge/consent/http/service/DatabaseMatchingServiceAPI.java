@@ -72,7 +72,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
     @Override
     public List<Match> findMatchesForConsent(String consentId) throws IllegalArgumentException, NotFoundException, IOException {
-        List<Document> dars = dataAccessAPI.describeDataAccessRequests();
+        List<Document> dars = dataAccessAPI.getDarsForMatching();
         List<Match> matches = new ArrayList<>();
         try{
             for (Document dar: dars){
@@ -89,7 +89,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
     @Override
     public List<Match> findMatchesForPurpose(String purposeId) throws IOException, UnknownIdentifierException {
-        List<Consent> consents = consentAPI.retrieveAllConsents();
+        List<Consent> consents = consentAPI.findConsentsForMatching();
         List<Match> matches = new ArrayList<>();
         for (Consent consent: consents){
             String consentId = consent.getConsentId();
@@ -107,5 +107,3 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return new RequestMatchingObject(consent.getUseRestriction(), restriction);
     }
 }
-
-

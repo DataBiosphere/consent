@@ -100,6 +100,4 @@ public class ResearchPurposeResource extends Resource {
             return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
-
-
 }

@@ -18,7 +18,6 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
     private ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
 
-
     public static void initInstance(MatchDAO matchDAO,  ConsentDAO consentDAO) {
         MatchAPIHolder.setInstance(new DatabaseMatchAPI(matchDAO, consentDAO));
     }
@@ -27,7 +26,6 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
         this.matchDAO = matchDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentDAO = consentDAO;
-
     }
 
     @Override
@@ -35,10 +33,24 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
         validateConsent(match.getConsent());
         validatePurpose(match.getPurpose());
         try{
-            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch());
+            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch(), match.getFailed());
             return findMatchById(id);
         }catch (Exception e){
             throw new IllegalArgumentException("Already exist a match for the specified consent and purpose");
+        }
+    }
+
+    @Override
+    public void createMatches(List<Match> match){
+        if(CollectionUtils.isNotEmpty(match)){
+            matchDAO.insertAll(match);
+        }
+    }
+
+    @Override
+    public void deleteMatches(List<Integer> ids){
+        if(CollectionUtils.isNotEmpty(ids)){
+            matchDAO.deleteMatchs(ids);
         }
     }
 
@@ -48,7 +60,7 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
         validatePurpose(match.getPurpose());
         if (matchDAO.findMatchById(id) == null)
             throw new NotFoundException("Match for the specified id does not exist");
-        matchDAO.updateMatch(match.getMatch(), match.getConsent(), match.getPurpose());
+        matchDAO.updateMatch(match.getMatch(), match.getConsent(), match.getPurpose(), match.getFailed());
         return findMatchById(id);
     }
 

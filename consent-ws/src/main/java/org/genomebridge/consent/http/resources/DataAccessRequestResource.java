@@ -27,11 +27,13 @@ public class DataAccessRequestResource extends Resource {
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ResearchPurposeAPI researchPurposeAPI;
     private final ConsentAPI consentAPI;
+    private final MatchProcessAPI matchProcessAPI;
 
     public DataAccessRequestResource() {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.researchPurposeAPI = AbstractResearchPurposeAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
+        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
     }
 
     @POST
@@ -50,6 +52,7 @@ public class DataAccessRequestResource extends Resource {
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 rus = Document.parse(useRestriction.toString());
                 dar.append("restriction", rus);
+
             }
         } catch (IOException ex) {
             Logger.getLogger(DataAccessRequestResource.class.getName()).log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
@@ -58,6 +61,7 @@ public class DataAccessRequestResource extends Resource {
         try {
             result = dataAccessRequestAPI.createDataAccessRequest(dar);
             uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
+            matchProcessAPI.processMatchesForPurpose(result.get("_id").toString());
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
@@ -85,6 +89,7 @@ public class DataAccessRequestResource extends Resource {
     public Response delete(@PathParam("id") String id, @Context UriInfo info) {
         try {
             dataAccessRequestAPI.deleteDataAccessRequestById(id);
+            matchProcessAPI.removeMatchesForPurpose(id);
             return Response.status(Response.Status.OK).entity("Research Purpose was deleted").build();
         } catch (NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();

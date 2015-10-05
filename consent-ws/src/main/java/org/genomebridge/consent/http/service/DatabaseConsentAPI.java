@@ -31,7 +31,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private DBI jdbi;
     private Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
-    private MatchProcessAPI matchProcessAPI;
+
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
      * during application initialization (from the run() method).  If called a second time it will throw an
@@ -54,7 +54,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         this.jdbi = jdbi;
         this.consentDAO = dao;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
-        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
+
     }
 
     // Consent Methods
@@ -63,13 +63,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public Consent create(Consent rec) {
         String id;
         if (StringUtils.isNotEmpty(rec.consentId)){
-           id = rec.consentId;
+            id = rec.consentId;
         }else{
-           id = UUID.randomUUID().toString();
+            id = UUID.randomUUID().toString();
         }
         Date createDate = new Date();
         consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.structuredDataUseLetter, rec.dulName, createDate, createDate);
-        matchProcessAPI.processMatchesForConsent(id);
         return consentDAO.findConsentById(id);
     }
 
@@ -80,8 +79,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public List<Consent> retrieveAllConsents(){
-        return consentDAO.findAllConsents();
+    public List<Consent> findConsentsForMatching(){
+        return consentDAO.findConsentsForMatching();
     }
 
     @Override
@@ -110,13 +109,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public void update(String id, Consent rec) throws UnknownIdentifierException {
         rec = updateConsentDates(rec);
         consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate());
-        matchProcessAPI.processMatchesForConsent(id);
     }
 
     @Override
     public void delete(String id) throws UnknownIdentifierException {
         consentDAO.deleteConsent(id);
-        matchProcessAPI.processMatchesForConsent(id);
     }
 
     // ConsentAssociation methods

@@ -18,7 +18,7 @@ public interface ConsentAPI {
 
     Collection<Consent> retrieve(List<String> ids);
 
-    List<Consent> retrieveAllConsents();
+    List<Consent> findConsentsForMatching();
 
     void update(String id, Consent rec) throws UnknownIdentifierException;
 

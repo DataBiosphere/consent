@@ -17,6 +17,9 @@ public class Match {
     @JsonProperty
     private Boolean match;
 
+    @JsonProperty
+    private Boolean failed;
+
     public Match(){
 
     }
@@ -60,4 +63,11 @@ public class Match {
         this.match = match;
     }
 
+    public Boolean getFailed() {
+        return failed;
+    }
+
+    public void setFailed(Boolean failed) {
+        this.failed = failed;
+    }
 }

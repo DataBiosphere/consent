@@ -14,7 +14,8 @@ import java.net.URI;
 public class ConsentResource extends Resource {
 
     private final ConsentAPI api;
-    private final MatchAPI matchAPI;
+    private final MatchProcessAPI matchProcessAPI;
+
 
     @Path("{id}")
     @GET
@@ -34,6 +35,7 @@ public class ConsentResource extends Resource {
         try {
             Consent consent = api.create(rec);
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
+            matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
         } catch (Exception e) {
             return Response.serverError().entity(e).build();
@@ -47,22 +49,12 @@ public class ConsentResource extends Resource {
     public Response update(@PathParam("id") String id, Consent updated) {
         try {
             api.update(id, updated);
+            matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", id));
         } catch (Exception e) {
             return Response.serverError().entity(e).build();
-        }
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}/matches")
-    public Response getMatches(@PathParam("id") String purposeId, @Context UriInfo info) {
-        try {
-            return Response.status(Response.Status.OK).entity(matchAPI.findMatchByConsentId(purposeId)).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 
@@ -72,7 +64,7 @@ public class ConsentResource extends Resource {
 
     public ConsentResource() {
         this.api = AbstractConsentAPI.getInstance();
-        this.matchAPI = AbstractMatchAPI.getInstance();
+        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
     }
 
 }

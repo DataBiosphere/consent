@@ -17,4 +17,8 @@ public interface MatchAPI {
 
     void deleteMatch(Integer id);
 
+    void deleteMatches(List<Integer> ids);
+
+    void createMatches(List<Match> matches);
+
 }

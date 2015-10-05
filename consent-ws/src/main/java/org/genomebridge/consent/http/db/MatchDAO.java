@@ -1,15 +1,16 @@
 package org.genomebridge.consent.http.db;
 
 import org.genomebridge.consent.http.models.Match;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
+import org.skife.jdbi.v2.sqlobject.*;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
+
+import java.util.Collection;
 import java.util.List;
 
+@UseStringTemplate3StatementLocator
 @RegisterMapper({MatchMapper.class})
 public interface MatchDAO extends Transactional<MatchDAO> {
 
@@ -23,24 +24,27 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     Match  findMatchById(@Bind("id") Integer id);
 
     @SqlUpdate("insert into matchEntity " +
-            "(consent, purpose, matchEntity) values " +
-            "(:consentId, :purposeId, :match)")
+            "(consent, purpose, matchEntity, failed) values " +
+            "(:consentId, :purposeId, :match, :failed)")
     @GetGeneratedKeys
     Integer insertMatch(@Bind("consentId") String consentId,
                      @Bind("purposeId") String purposeId,
-                     @Bind("match") Boolean match);
+                     @Bind("match") Boolean match,
+                     @Bind("failed") Boolean failed);
 
+    @SqlBatch("insert into matchEntity (consent, purpose, matchEntity, failed) values (:consent, :purpose, :match, :failed)")
+    void insertAll(@BindBean List<Match> matches);
 
-    @SqlUpdate("update matchEntity set matchEntity = :match, consent = :consentId, purpose = :purposeId where matchId = :id ")
+    @SqlUpdate("update matchEntity set matchEntity = :match, consent = :consentId, purpose = :purposeId, failed = :failed where matchId = :id ")
     void updateMatch(@BindIn("match") Boolean match,
                                       @Bind("consentId") String consent,
-                                      @Bind("purposeId") String purpose);
+                                      @Bind("purposeId") String purpose,
+                                      @Bind("failed") Boolean failed);
+
+    @SqlBatch("delete from matchEntity where matchId = :dataSetId")
+    void deleteMatchs(@Bind("matchId") Collection<Integer> matchId);
 
 
     @SqlUpdate("delete from matchEntity where matchId = :id")
     void deleteMatch(@Bind("id") Integer matchId);
-
-
-
-
 }

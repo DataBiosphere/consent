@@ -53,11 +53,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 .build(getName());
         // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
         // with singletons and JDBI (see AbstractConsentAPI).
+        final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
+        final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
+        final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient);
         final DBIFactory factory = new DBIFactory();
         final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
         final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
-
-        DatabaseConsentAPI.initInstance(jdbi, consentDAO);
         final ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
         final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
         final DataRequestDAO requestDAO = jdbi.onDemand(DataRequestDAO.class);
@@ -67,6 +68,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
 
+        UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv);
+        DatabaseConsentAPI.initInstance(jdbi, consentDAO);
+        DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
+        DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
+        DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseDataSetAPI.initInstance(dataSetDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
@@ -75,23 +82,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
-
-        UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
-
-        final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
-        final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
-        final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient);
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv);
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance);
-        DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
-        DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
-
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
-
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
 
         // Configure CORS parameters
@@ -101,8 +96,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Add URL mapping
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-
-
         GCSStore googleStore;
         try {
             googleStore = new GCSStore(config.getCloudStoreConfiguration());
@@ -129,8 +122,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
-        env.jersey().register(ResearchPurposeResource.class);
-        env.jersey().register(MatchResource.class);
+        env.jersey().register(MatchingResource.class);
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
@@ -152,6 +144,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractDataAccessRequestAPI.clearInstance();
                 AbstractMatchingServiceAPI.clearInstance();
                 AbstractMatchAPI.clearInstance();
+                AbstractMatchProcessAPI.clearInstance();
             }
         });
     }

@@ -39,5 +39,5 @@ public class MongoConsentDB {
     public MongoCollection<Document> getResearchPurposeCollection() {
         return mongo.getDatabase("consent").getCollection("researchPurpose");
     }
-    
+
 }
