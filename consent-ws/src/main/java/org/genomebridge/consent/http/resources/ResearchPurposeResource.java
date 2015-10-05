@@ -3,7 +3,9 @@ package org.genomebridge.consent.http.resources;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.ResearchPurpose;
+import org.genomebridge.consent.http.service.AbstractMatchAPI;
 import org.genomebridge.consent.http.service.AbstractResearchPurposeAPI;
+import org.genomebridge.consent.http.service.MatchAPI;
 import org.genomebridge.consent.http.service.ResearchPurposeAPI;
 
 import javax.ws.rs.*;
@@ -17,9 +19,11 @@ import java.net.URI;
 public class ResearchPurposeResource extends Resource {
 
     private final ResearchPurposeAPI api;
+    private final MatchAPI matchAPI;
 
     public ResearchPurposeResource() {
         this.api = AbstractResearchPurposeAPI.getInstance();
+        this.matchAPI = AbstractMatchAPI.getInstance();
     }
 
     @POST
@@ -53,7 +57,7 @@ public class ResearchPurposeResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/{id}")
-    public Response describePurpose(@PathParam("id") String purposeId) throws IOException{
+    public Response describePurpose(@PathParam("id") String purposeId) throws IOException {
         try {
             return Response.status(Response.Status.OK).entity(api.describeResearchPurpose(purposeId)).build();
         } catch (NotFoundException e) {
@@ -65,7 +69,7 @@ public class ResearchPurposeResource extends Resource {
     @Produces("application/json")
     public Response describePurposes(@QueryParam("ids") String ids) {
         try {
-            if(StringUtils.isEmpty(ids)){
+            if (StringUtils.isEmpty(ids)) {
                 return Response.status(Status.BAD_REQUEST).entity("Parameter ids is required").build();
             }
             return Response.status(Response.Status.OK).entity(api.describeResearchPurposes(ids.split(","))).build();
@@ -86,6 +90,16 @@ public class ResearchPurposeResource extends Resource {
         }
     }
 
+    @GET
+    @Produces("application/json")
+    @Path("/{id}/matches")
+    public Response getMatches(@PathParam("id") String purposeId, @Context UriInfo info) {
+        try {
+            return Response.status(Response.Status.OK).entity(matchAPI.findMatchByPurposeId(purposeId)).build();
+        } catch (Exception e) {
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
 
 
 }

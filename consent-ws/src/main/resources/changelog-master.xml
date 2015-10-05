@@ -32,4 +32,6 @@
 
     <include file="changesets/changelog-consent-13.0.xml"/>
 
+    <include file="changesets/changelog-consent-14.0.xml"/>
+
 </databaseChangeLog>

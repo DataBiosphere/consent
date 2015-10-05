@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -7,8 +8,10 @@ import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -19,6 +22,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final MongoConsentDB mongo;
 
     private final UseRestrictionConverter converter;
+
+    private MatchProcessAPI matchProcessAPI;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -44,6 +49,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter) {
         this.mongo = mongo;
         this.converter = converter;
+        this.matchProcessAPI = DatabaseMatchProcessAPI.getInstance();
     }
 
     @Override
@@ -58,6 +64,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return mongo.getDataAccessRequestCollection().find(query).first();
      }
 
+    // DO NOT USE this method to get the UseRestriction field ("restriction")
+    // Use getUseRestriction instead.
+    @Override
+    public void deleteDataAccessRequestById(String id){
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        mongo.getDataAccessRequestCollection().findOneAndDelete(query);
+        matchProcessAPI.processMatchesForPurpose(id);
+    }
+
     @Override
     public Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
@@ -70,6 +85,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return result;
     }
 
+    @Override
+    public UseRestriction getUseRestriction(String id) throws NotFoundException, IOException {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+        Map<String, String> restriction = (Map<String, String>) dar.get("restriction");
+        return UseRestriction.parse(new Gson().toJson(restriction));
+    }
 
     @Override
     public List<Document> describeDataAccessRequests() {

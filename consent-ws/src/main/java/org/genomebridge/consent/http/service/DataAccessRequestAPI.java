@@ -1,10 +1,11 @@
 package org.genomebridge.consent.http.service;
 
-
-import javax.ws.rs.NotFoundException;
-import java.util.List;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
+
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.util.List;
 
 public interface DataAccessRequestAPI {
 
@@ -19,4 +20,8 @@ public interface DataAccessRequestAPI {
     UseRestriction createStructuredResearchPurpose(Document document);
 
     void deleteDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException;
+
+    UseRestriction getUseRestriction(String id) throws NotFoundException, IOException;
+
+    void deleteDataAccessRequestById(String id) throws IllegalArgumentException;
 }

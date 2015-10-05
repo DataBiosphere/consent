@@ -9,6 +9,7 @@ import org.genomebridge.consent.http.service.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
@@ -75,6 +76,19 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     public Document describe(@PathParam("id") String id) {
         return dataAccessRequestAPI.describeDataAccessRequestById(id);
+    }
+
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    public Response delete(@PathParam("id") String id, @Context UriInfo info) {
+        try {
+            dataAccessRequestAPI.deleteDataAccessRequestById(id);
+            return Response.status(Response.Status.OK).entity("Research Purpose was deleted").build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
     }
 
     @GET
