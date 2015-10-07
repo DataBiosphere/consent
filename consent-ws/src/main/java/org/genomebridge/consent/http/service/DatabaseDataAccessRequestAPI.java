@@ -1,12 +1,14 @@
 package org.genomebridge.consent.http.service;
 
 import com.mongodb.BasicDBObject;
-import javax.ws.rs.NotFoundException;
-import java.util.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
+
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -55,6 +57,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         return mongo.getDataAccessRequestCollection().find(query).first();
      }
+
+    @Override
+    public Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+        Document result = new Document();
+        for(String field: fields){
+            String content = (String) dar.getOrDefault(field.replaceAll("\\s",""), "Not found");
+            result.append(field, content);
+        }
+        return result;
+    }
 
 
     @Override

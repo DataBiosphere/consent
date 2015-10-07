@@ -72,7 +72,7 @@ public class DataSetResource extends Resource {
                 }
             } catch (Exception e) {
                 logger().fatal("POSTing Data Set", e);
-                errors.add("A problem has ocurred while uploading datasets - Contact Support");
+                errors.add("A problem has occurred while uploading datasets - Contact Support");
             } finally {
                 if (inputFile != null) {
                     inputFile.delete();
@@ -80,7 +80,7 @@ public class DataSetResource extends Resource {
             }
         }
 
-        errors.add("The file type is not the expected one. Please download the sample .txt from your console.");
+        errors.add("The file type is not the expected one. Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.");
         return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
     }
 

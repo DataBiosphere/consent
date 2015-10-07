@@ -28,7 +28,7 @@ public class Vote {
     private String rationale;
 
     @JsonProperty
-    private Boolean isChairPersonVote;
+    private Boolean isFinalAccessVote;
 
     @JsonProperty
     private Boolean isReminderSent;
@@ -37,7 +37,7 @@ public class Vote {
     }
 
     public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
-                Integer electionId, String rationale, Boolean isChairPersonVote, Boolean isReminderSent) {
+                Integer electionId, String rationale, Boolean isFinalAccessVote, Boolean isReminderSent) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;
@@ -45,7 +45,7 @@ public class Vote {
         this.updateDate = updateDate;
         this.electionId = electionId;
         this.rationale = rationale;
-        this.isChairPersonVote = isChairPersonVote;
+        this.isFinalAccessVote = isFinalAccessVote;
         this.isReminderSent = isReminderSent;
     }
 
@@ -113,11 +113,11 @@ public class Vote {
         this.rationale = rationale;
     }
 
-    public Boolean getIsChairPersonVote() {
-        return isChairPersonVote;
+    public Boolean getIsFinalAccessVote() {
+        return isFinalAccessVote;
     }
 
-    public void setIsChairPersonVote(Boolean isChairPersonVote) {
-        this.isChairPersonVote = isChairPersonVote;
+    public void setIsFinalAccessVote(Boolean isFinalAccessVote) {
+        this.isFinalAccessVote = isFinalAccessVote;
     }
 }

@@ -36,6 +36,8 @@ public class ConsentElectionResource extends Resource {
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (NotFoundException e){
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
         return Response.created(uri).build();
     }

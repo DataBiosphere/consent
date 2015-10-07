@@ -25,9 +25,9 @@ public class ConsentVoteResource extends Resource {
     @Consumes("application/json")
     @Path("/{id}")
     public Response firstVoteUpdate(@Context UriInfo info, Vote rec,
-                                    @PathParam("consentId") String consentId, @PathParam("id") String voteId) {
+                                    @PathParam("consentId") String consentId, @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, consentId, voteId);
+            Vote vote = api.firstVoteUpdate(rec, voteId);
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();

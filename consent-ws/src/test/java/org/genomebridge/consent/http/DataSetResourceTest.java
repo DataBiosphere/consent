@@ -7,7 +7,6 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -46,8 +45,8 @@ public class DataSetResourceTest extends DataSetServiceTest {
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
-        assertTrue(result.get(0).equals("A problem has ocurred while uploading datasets - Contact Support"));
-        assertTrue(result.get(1).equals("The file type is not the expected one. Please download the sample .txt from your console."));
+        assertTrue(result.get(0).equals("A problem has occurred while uploading datasets - Contact Support"));
+        assertTrue(result.get(1).equals("The file type is not the expected one. Please download the Dataset Spreadsheet Model from the 'Add Datasets' window."));
     }
 
     @Test
@@ -62,7 +61,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
         assertTrue(result.get(0).equals("Your file has more/less columns than expected. Expected quantity: 10"));
-        assertTrue(result.get(1).equals("Please, download the sample file from your console."));
+        assertTrue(result.get(1).equals("Please download the Dataset Spreadsheet Model from the 'Add Datasets' window."));
     }
 
     @Test
@@ -76,11 +75,6 @@ public class DataSetResourceTest extends DataSetServiceTest {
         ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
         assertTrue(response.getStatus() == (OK));
         assertTrue(result.size() == 3);
-    }
-
-    @Ignore
-    public void testDownloadDataSets() throws Exception {
-
     }
 
     private MultiPart createFormData(String name, String ext) throws URISyntaxException, IOException {

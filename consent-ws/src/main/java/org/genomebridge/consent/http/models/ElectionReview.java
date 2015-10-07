@@ -6,14 +6,15 @@ import java.util.List;
 
 public class ElectionReview {
 
-    @JsonProperty
-    private Consent consent;
 
     @JsonProperty
     private List<ElectionReviewVote> reviewVote;
 
     @JsonProperty
     private Election election;
+
+    @JsonProperty
+    private Consent consent;
 
     public Consent getConsent() {
         return consent;

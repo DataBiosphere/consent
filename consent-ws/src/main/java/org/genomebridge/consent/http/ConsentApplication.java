@@ -62,22 +62,22 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
 
         DatabaseDataSetAPI.initInstance(dataSetDAO);
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
-        DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO, dacUserDAO);
+        DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
-        
+
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient);
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv);
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
-        
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance);
+
         env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
 
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);

@@ -12,6 +12,8 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
+    Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
+
     List<Document> describeDataAccessRequests();
 
     UseRestriction createStructuredResearchPurpose(Document document);
