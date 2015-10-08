@@ -15,9 +15,12 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,8 +89,13 @@ public class DataSetResource extends Resource {
 
     @GET
     @Produces("application/json")
-    public Collection<DataSetDTO> describeDataSets(){
-        return api.describeDataSets();
+    public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
+        if (null == request.getParameter("dacUserId")) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }else{
+            Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
+            return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
+        }
     }
 
     @GET
@@ -150,6 +158,16 @@ public class DataSetResource extends Resource {
         return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
 
     }
+
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{datasetObjectId}")
+    public Response delete(@PathParam("datasetObjectId") String datasetObjectId, @Context UriInfo info) {
+        api.deleteDataset(datasetObjectId);
+        return Response.ok().build();
+    }
+
 
     @GET
     @Path("/dictionary")

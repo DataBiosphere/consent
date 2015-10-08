@@ -14,7 +14,7 @@ public interface DataSetAPI {
 
     ParseResult overwrite(File dataSetFile);
 
-    Collection<DataSetDTO> describeDataSets() ;
+    Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
 
     List<DataSet> getDataSetsForConsent(String consentId);
 
@@ -23,5 +23,6 @@ public interface DataSetAPI {
     Collection<Dictionary> describeDictionary();
     
     List<String> autoCompleteDataSets(String partial);
-            
+
+    void deleteDataset(String datasetObjectId);
 }

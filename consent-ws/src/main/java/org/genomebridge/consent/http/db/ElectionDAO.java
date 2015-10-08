@@ -2,6 +2,7 @@ package org.genomebridge.consent.http.db;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.genomebridge.consent.http.models.Election;
 import org.skife.jdbi.v2.sqlobject.*;
@@ -21,6 +22,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select * from election  where referenceId = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
+
+    @SqlQuery("select * from election  where referenceId in (<referenceId>) ")
+    Set<Election> findElectionsByReferenceId(@BindIn("referenceId") List<String> referenceId);
 
     @SqlUpdate("insert into election (electionType, finalVote, finalRationale, status, createDate,referenceId) values " +
             "( :electionType, :finalVote, :finalRationale, :status, :createDate,:referenceId)")

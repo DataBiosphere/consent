@@ -28,9 +28,6 @@ public abstract class UseRestriction {
     private static final Logger LOG = Logger.getLogger(UseRestriction.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    @JsonProperty("referenceId")
-    public String referenceId;
-
     public static UseRestriction parse(String str) throws IOException {
         try {
             ObjectReader reader = mapper.reader(UseRestriction.class);
@@ -51,14 +48,6 @@ public abstract class UseRestriction {
         }
 
         return shouldContinue;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
     }
 
     @Override
