@@ -79,11 +79,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public List<Consent> findConsentsForMatching(){
-        return consentDAO.findConsentsForMatching();
-    }
-
-    @Override
     public Collection<Consent> findConsentsByAssociationType(String associationType) {
         return consentDAO.findConsentsByAssociationType(associationType);
     }
@@ -227,6 +222,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent getConsentFromDatasetID(String datasetId){
         return consentDAO.findConsentFromDatasetID(datasetId);
+    }
+
+    @Override
+    public Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetIds) {
+        return consentDAO.findConsentsFromDatasetIDs(datasetIds);
     }
 
     @Override

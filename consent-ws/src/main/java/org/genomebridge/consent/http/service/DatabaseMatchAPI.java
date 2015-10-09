@@ -76,20 +76,12 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
 
     @Override
     public List<Match> findMatchByConsentId(String consentId) {
-        List<Match> matches = matchDAO.findMatchByConsentId(consentId);
-        if (CollectionUtils.isEmpty(matches)) {
-            throw new NotFoundException("Match for the specified consent id does not exist");
-        }
-        return matches;
+       return matchDAO.findMatchByConsentId(consentId);
     }
 
     @Override
     public List<Match> findMatchByPurposeId(String purposeId) {
-        List<Match> matches = matchDAO.findMatchByPurposeId(purposeId);
-        if (CollectionUtils.isEmpty(matches)) {
-            throw new NotFoundException("Match for the specified consent id does not exist");
-        }
-        return matches;
+       return matchDAO.findMatchByPurposeId(purposeId);
     }
 
     @Override

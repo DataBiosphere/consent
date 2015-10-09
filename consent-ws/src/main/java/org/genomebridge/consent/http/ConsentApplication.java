@@ -72,16 +72,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
+        DatabaseDataSetAPI.initInstance(dataSetDAO);
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
-        DatabaseDataSetAPI.initInstance(dataSetDAO);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance);
         env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
@@ -122,7 +121,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
-        env.jersey().register(MatchingResource.class);
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be

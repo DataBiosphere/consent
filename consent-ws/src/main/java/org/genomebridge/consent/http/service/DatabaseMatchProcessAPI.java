@@ -8,8 +8,6 @@ import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.Match;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +30,7 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     }
 
     @Override
-    public void processMatchesForConsent(String consentId) throws IOException, UnknownIdentifierException {
+    public void processMatchesForConsent(String consentId) {
         removeMatchesForConsent(consentId);
         if (!consentDAO.checkManualReview(consentId)) {
             List<Match> matches = matchingServiceAPI.findMatchesForConsent(consentId);
@@ -41,7 +39,7 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     }
 
     @Override
-    public void processMatchesForPurpose(String purposeId) throws IOException, UnknownIdentifierException {
+    public void processMatchesForPurpose(String purposeId) {
         removeMatchesForPurpose(purposeId);
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(purposeId));
         Document rp = mongo.getDataAccessRequestCollection().find(query).first();

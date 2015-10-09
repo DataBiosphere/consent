@@ -11,11 +11,12 @@ public class MatchMapper implements ResultSetMapper<Match> {
 
     public Match map(int index, ResultSet r, StatementContext ctx) throws SQLException {
 
-       return new Match(
+        return new Match(
                 r.getInt("matchId"),
                 r.getString("consent"),
                 r.getString("purpose"),
-                r.getBoolean("matchEntity")
+                r.getBoolean("matchEntity"),
+                r.getBoolean("failed")
         );
 
 

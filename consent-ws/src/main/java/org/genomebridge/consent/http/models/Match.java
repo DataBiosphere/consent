@@ -20,15 +20,16 @@ public class Match {
     @JsonProperty
     private Boolean failed;
 
-    public Match(){
 
-    }
-
-    public Match(Integer id, String consent, String purpose, Boolean match){
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed){
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
         this.match = match;
+        this.failed = failed;
+    }
+
+    public Match(){
     }
 
     public Integer getId() {

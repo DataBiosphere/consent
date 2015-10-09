@@ -1,17 +1,15 @@
 package org.genomebridge.consent.http.service;
 
-import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
+import static com.mongodb.client.model.Filters.*;
 
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -82,23 +80,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public UseRestriction getUseRestriction(String id) throws NotFoundException, IOException {
-        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
-        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-        Map<String, String> restriction = (Map<String, String>) dar.get("restriction");
-        return UseRestriction.parse(new Gson().toJson(restriction));
+    public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds){
+        List<Document> response = new ArrayList<>();
+        for(String datasetId: dataSetIds){
+            response.addAll(mongo.getDataAccessRequestCollection().find(eq("datasetId", datasetId)).into(new ArrayList<>()));
+        }
+        return response;
     }
 
     @Override
     public List<Document> describeDataAccessRequests() {
         List<Document> response = mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
-        return response;
-    }
-
-    @Override
-    public List<Document> getDarsForMatching() {
-        BasicDBObject query = new BasicDBObject("restriction", new BasicDBObject("$exists", true));
-        List<Document> response = mongo.getDataAccessRequestCollection().find(query).into(new ArrayList<>());
         return response;
     }
 

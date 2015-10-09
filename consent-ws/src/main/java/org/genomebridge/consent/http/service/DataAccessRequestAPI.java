@@ -13,17 +13,15 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
+    List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
+
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
 
     List<Document> describeDataAccessRequests();
 
-    List<Document> getDarsForMatching();
-
     UseRestriction createStructuredResearchPurpose(Document document);
 
     void deleteDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException;
-
-    UseRestriction getUseRestriction(String id) throws NotFoundException, IOException;
 
     void deleteDataAccessRequestById(String id) throws IllegalArgumentException;
 

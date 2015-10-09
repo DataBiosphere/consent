@@ -18,8 +18,6 @@ public interface ConsentAPI {
 
     Collection<Consent> retrieve(List<String> ids);
 
-    List<Consent> findConsentsForMatching();
-
     void update(String id, Consent rec) throws UnknownIdentifierException;
 
     /**
@@ -51,6 +49,8 @@ public interface ConsentAPI {
      * @param datasetId the identifier data set
      */
     Consent getConsentFromDatasetID(String datasetId);
+
+    Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetId);
 
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;

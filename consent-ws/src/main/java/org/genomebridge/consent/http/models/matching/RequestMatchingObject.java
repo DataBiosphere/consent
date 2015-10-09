@@ -11,7 +11,6 @@ public class RequestMatchingObject {
     public UseRestriction purpose;
 
     public RequestMatchingObject(){
-
     }
 
     public RequestMatchingObject(UseRestriction consent, UseRestriction purpose) {

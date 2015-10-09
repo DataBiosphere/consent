@@ -18,6 +18,9 @@
             <column name="matchEntity" type="boolean">
                 <constraints nullable="false"/>
             </column>
+            <column name="failed" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 

@@ -28,23 +28,27 @@ public interface MatchDAO extends Transactional<MatchDAO> {
             "(:consentId, :purposeId, :match, :failed)")
     @GetGeneratedKeys
     Integer insertMatch(@Bind("consentId") String consentId,
-                     @Bind("purposeId") String purposeId,
-                     @Bind("match") Boolean match,
-                     @Bind("failed") Boolean failed);
+                        @Bind("purposeId") String purposeId,
+                        @Bind("match") Boolean match,
+                        @Bind("failed") Boolean failed);
 
     @SqlBatch("insert into matchEntity (consent, purpose, matchEntity, failed) values (:consent, :purpose, :match, :failed)")
     void insertAll(@BindBean List<Match> matches);
 
     @SqlUpdate("update matchEntity set matchEntity = :match, consent = :consentId, purpose = :purposeId, failed = :failed where matchId = :id ")
     void updateMatch(@BindIn("match") Boolean match,
-                                      @Bind("consentId") String consent,
-                                      @Bind("purposeId") String purpose,
-                                      @Bind("failed") Boolean failed);
+                     @Bind("consentId") String consent,
+                     @Bind("purposeId") String purpose,
+                     @Bind("failed") Boolean failed);
 
-    @SqlBatch("delete from matchEntity where matchId = :dataSetId")
+    @SqlBatch("delete from matchEntity where matchId = :matchId")
     void deleteMatchs(@Bind("matchId") Collection<Integer> matchId);
 
 
     @SqlUpdate("delete from matchEntity where matchId = :id")
     void deleteMatch(@Bind("id") Integer matchId);
+
+    @SqlQuery("delete matchEntity where name in (<matchIds>)")
+    List<Integer> matchBulkDeleteByIds(@BindIn("matchIds") List<String> matchIds);
+
 }

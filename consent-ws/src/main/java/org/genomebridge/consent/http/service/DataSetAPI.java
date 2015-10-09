@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.models.DataSet;
 import org.genomebridge.consent.http.models.Dictionary;
 import org.genomebridge.consent.http.models.dto.DataSetDTO;
 
@@ -14,6 +15,8 @@ public interface DataSetAPI {
     ParseResult overwrite(File dataSetFile);
 
     Collection<DataSetDTO> describeDataSets() ;
+
+    List<DataSet> getDataSetsForConsent(String consentId);
 
     Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
 
