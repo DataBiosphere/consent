@@ -2,6 +2,7 @@ package org.genomebridge.consent.http.db;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.genomebridge.consent.http.models.Election;
 import org.skife.jdbi.v2.sqlobject.*;
@@ -22,15 +23,16 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select * from election  where referenceId = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate("insert into election (electionType, finalVote, finalRationale, status, createDate,referenceId) values " +
-            "( :electionType, :finalVote, :finalRationale, :status, :createDate,:referenceId)")
+    @SqlUpdate("insert into election (electionType, finalVote, finalRationale, status, createDate,referenceId, finalAccessVote ) values " +
+            "( :electionType, :finalVote, :finalRationale, :status, :createDate,:referenceId, :finalAccessVote)")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("finalVote") Boolean finalVote,
                            @Bind("finalRationale") String finalRationale,
                            @Bind("status") String status,
                            @Bind("createDate") Date createDate,
-                           @Bind("referenceId") String referenceId);
+                           @Bind("referenceId") String referenceId,
+                           @Bind("finalAccessVote") Boolean finalAccessVote);
 
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
@@ -96,4 +98,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select count(*) from election e where e.status = 'Open' ")
     Integer verifyOpenElections();
+
+    @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e group by referenceId) " +
+              "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+              "AND e.referenceId in (<referenceIds>) ")
+    List<Election> findLastElectionsByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type);
+
 }
