@@ -65,7 +65,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         Client client = ClientBuilder.newClient();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
-        checkStatus(OK, put(client, electionConsentPathById(CONSENT_ID, created.getElectionId()), created));
+        checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
         created = retrieveElection(client, electionConsentPath(CONSENT_ID));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
@@ -108,12 +108,12 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testUpdateConsentElectionWithInvalidConsent() {
+    public void testUpdateConsentElectionWithInvalidId() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
-        // should return 400 bad request because the consent id does not exist
+        // should return 400 bad request because the election id does not exist
         checkStatus(NOT_FOUND,
-                put(client, electionConsentPathById(INVALID_CONSENT_ID, 8555), election));
+                put(client, electionPathById(8555), election));
     }
 
     @Test

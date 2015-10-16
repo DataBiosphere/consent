@@ -112,7 +112,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Client client = ClientBuilder.newClient();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
-        checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId()), created));
+        checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
         assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
@@ -156,9 +156,9 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testUpdateDataRequestElectionWithId() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
-        // should return 400 bad request because the data request id does not exist
+        // should return 400 bad request because the election id does not exist
         checkStatus(NOT_FOUND,
-                put(client, electionDataRequestPathById(INVALID_DATA_REQUEST_ID, 1010), election));
+                put(client, electionPathById(1010), election));
     }
 
     @Test

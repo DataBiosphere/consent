@@ -4,8 +4,10 @@ import org.bson.Document;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.List;
+import org.genomebridge.consent.http.models.DataAccessRequestManage;
+
+
 
 public interface DataAccessRequestAPI {
 
@@ -16,6 +18,8 @@ public interface DataAccessRequestAPI {
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
+
+    List<DataAccessRequestManage> describeDataAccessRequestManage();
 
     List<Document> describeDataAccessRequests();
 

@@ -15,6 +15,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -59,6 +60,7 @@ public class DataAccessRequestResource extends Resource {
         }
 
         try {
+            dar.append("sortDate",new Date());
             result = dataAccessRequestAPI.createDataAccessRequest(dar);
             uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
             matchProcessAPI.processMatchesForPurpose(result.get("_id").toString());
@@ -124,6 +126,15 @@ public class DataAccessRequestResource extends Resource {
         }
         return c;
     }
+
+
+    @GET
+    @Produces("application/json")
+    @Path("/manage")
+    public Response describeManageDataAccessRequests() {
+        return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage()).build();
+    }
+
 
     // Fields that trigger manual review flag.
     String[] fieldsForManualReview = {
