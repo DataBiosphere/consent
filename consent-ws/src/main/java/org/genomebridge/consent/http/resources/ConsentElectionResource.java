@@ -42,20 +42,6 @@ public class ConsentElectionResource extends Resource {
         return Response.created(uri).build();
     }
 
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/{id}")
-    public Response updateConsentElection(@Context UriInfo info, Election rec,
-                                          @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
-        try {
-            Election election = api.updateElectionById(rec, id);
-            URI uri = info.getRequestUriBuilder().build(ConsentElectionResource.class);
-            return Response.ok(election).location(uri).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
 
     @GET
     @Produces("application/json")

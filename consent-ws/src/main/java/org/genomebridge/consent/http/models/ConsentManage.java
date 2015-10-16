@@ -3,7 +3,6 @@ package org.genomebridge.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.sql.Timestamp;
-import java.util.Date;
 
 
 /**

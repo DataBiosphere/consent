@@ -40,20 +40,6 @@ public class DataRequestElectionResource extends Resource {
         return Response.created(uri).entity(election).build();
     }
 
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/{id}")
-    public Response updateDataRequestElection(@Context UriInfo info, Election rec,
-                                              @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
-        try {
-            Election election = api.updateElectionById(rec, id);
-            URI assocURI = buildElectionURI(requestId);
-            return Response.ok(election).location(assocURI).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
 
     @GET
     @Produces("application/json")
@@ -75,10 +61,6 @@ public class DataRequestElectionResource extends Resource {
         } catch (Exception e) {
             throw new NotFoundException(e.getMessage());
         }
-    }
-
-    private URI buildElectionURI(String id) {
-        return UriBuilder.fromResource(DataRequestElectionResource.class).build("api/",id);
     }
 
 }

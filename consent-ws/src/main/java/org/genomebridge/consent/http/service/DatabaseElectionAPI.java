@@ -76,10 +76,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(),
                 election.getFinalVote(), election.getFinalRationale(), election.getStatus(),
-                createDate, election.getReferenceId());
-        consentDAO.updateConsentSortDate(referenceId, createDate);
+                createDate, election.getReferenceId(), election.getFinalAccessVote());
+        updateSortDate(referenceId, createDate);
         return electionDAO.findElectionById(id);
     }
+
 
     @Override
     public Election updateElectionById(Election rec, Integer electionId) {
@@ -94,7 +95,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus(), lastUpdate);
-        consentDAO.updateConsentSortDate(electionDAO.findElectionById(electionId).getReferenceId(), lastUpdate);
+        updateSortDate(electionDAO.findElectionById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionById(electionId);
     }
 
@@ -254,6 +255,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }else{
             throw new IllegalArgumentException(
                     "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
+        }
+    }
+
+    private void updateSortDate(String referenceId, Date createDate){
+        if(consentDAO.checkConsentbyId(referenceId) != null){
+            consentDAO.updateConsentSortDate(referenceId, createDate);
+        }else{
+            BasicDBObject query = new BasicDBObject("_id", new ObjectId(referenceId));
+            Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+            dar.put("sortDate", createDate);
+            mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
         }
     }
 }

@@ -69,7 +69,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO);
@@ -121,6 +121,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
+        env.jersey().register(ResearchPurposeResource.class);
+        env.jersey().register(ElectionResource.class);
+
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
