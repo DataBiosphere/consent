@@ -3,7 +3,9 @@ package org.genomebridge.consent.http.resources;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.service.AbstractConsentAPI;
+import org.genomebridge.consent.http.service.AbstractMatchProcessAPI;
 import org.genomebridge.consent.http.service.ConsentAPI;
+import org.genomebridge.consent.http.service.MatchProcessAPI;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -17,9 +19,11 @@ import java.util.List;
 public class ConsentAssociationResource extends Resource {
 
     private final ConsentAPI api;
+    private final MatchProcessAPI matchProcessAPI;
 
     public ConsentAssociationResource() {
         this.api = AbstractConsentAPI.getInstance();
+        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
     }
 
     @POST
@@ -31,6 +35,7 @@ public class ConsentAssociationResource extends Resource {
             logger().debug(msg);
             List<ConsentAssociation> result = api.createAssociation(consentId, body);
             URI assocURI = buildConsentAssociationURI(consentId);
+            matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -50,6 +55,7 @@ public class ConsentAssociationResource extends Resource {
             logger().debug(msg);
             List<ConsentAssociation> result = api.updateAssociation(consentId, body);
             URI assocURI = buildConsentAssociationURI(consentId);
+            matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -82,6 +88,7 @@ public class ConsentAssociationResource extends Resource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<ConsentAssociation> result = api.deleteAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
+            matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
         } catch (Exception e) { //catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));

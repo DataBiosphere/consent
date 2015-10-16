@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.service;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -32,6 +31,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private DBI jdbi;
     private Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
+
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
      * during application initialization (from the run() method).  If called a second time it will throw an
@@ -54,6 +54,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         this.jdbi = jdbi;
         this.consentDAO = dao;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
+
     }
 
     // Consent Methods
@@ -62,9 +63,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public Consent create(Consent rec) {
         String id;
         if (StringUtils.isNotEmpty(rec.consentId)){
-           id = rec.consentId;
+            id = rec.consentId;
         }else{
-           id = UUID.randomUUID().toString();
+            id = UUID.randomUUID().toString();
         }
         Date createDate = new Date();
         consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.structuredDataUseLetter, rec.dulName, createDate, createDate);
@@ -221,6 +222,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent getConsentFromDatasetID(String datasetId){
         return consentDAO.findConsentFromDatasetID(datasetId);
+    }
+
+    @Override
+    public Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetIds) {
+        return consentDAO.findConsentsFromDatasetIDs(datasetIds);
     }
 
     @Override

@@ -75,6 +75,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
+    @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (Select objectId FROM consentassociations Where consentId = :consentId)")
+    List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
+
     @RegisterMapper({AssociationMapper.class})
     @SqlQuery(" SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);

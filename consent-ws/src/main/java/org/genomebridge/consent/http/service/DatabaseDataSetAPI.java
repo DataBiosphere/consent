@@ -77,6 +77,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
+    public List<DataSet> getDataSetsForConsent(String consentId) {
+        return dsDAO.getDataSetsForConsent(consentId);
+    }
+
+    @Override
     public Collection<DataSetDTO> describeDataSets(List<String> objectIds) {
         return dsDAO.findDataSets(objectIds);
     }

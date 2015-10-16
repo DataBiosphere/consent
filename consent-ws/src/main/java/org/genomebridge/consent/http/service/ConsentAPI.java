@@ -50,6 +50,8 @@ public interface ConsentAPI {
      */
     Consent getConsentFromDatasetID(String datasetId);
 
+    Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetId);
+
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;
 

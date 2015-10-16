@@ -41,3 +41,5 @@ ontology:
     profit: http://www.broadinstitute.org/ontologies/DURPO/For_profit
     nonProfit: http://www.broadinstitute.org/ontologies/DURPO/Non_profit
     pediatric: http://www.broadinstitute.org/ontologies/DURPO/children
+services:
+    matchURL: https://consent-ontology.dsde-dev.broadinstitute.org/match
