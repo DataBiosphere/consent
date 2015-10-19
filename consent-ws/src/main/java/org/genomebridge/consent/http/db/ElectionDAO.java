@@ -23,6 +23,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select * from election  where referenceId = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
+    @SqlQuery("select * from election  where referenceId in (<referenceId>) ")
+    Set<Election> findElectionsByReferenceId(@BindIn("referenceId") List<String> referenceId);
+
     @SqlUpdate("insert into election (electionType, finalVote, finalRationale, status, createDate,referenceId, finalAccessVote ) values " +
             "( :electionType, :finalVote, :finalRationale, :status, :createDate,:referenceId, :finalAccessVote)")
     @GetGeneratedKeys

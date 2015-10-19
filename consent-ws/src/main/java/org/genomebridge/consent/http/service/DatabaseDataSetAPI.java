@@ -1,10 +1,11 @@
 package org.genomebridge.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.genomebridge.consent.http.db.DACUserRoleDAO;
 import org.genomebridge.consent.http.db.DataSetDAO;
-import org.genomebridge.consent.http.models.Association;
-import org.genomebridge.consent.http.models.DataSet;
-import org.genomebridge.consent.http.models.DataSetProperty;
+import org.genomebridge.consent.http.db.ElectionDAO;
+import org.genomebridge.consent.http.enumeration.DACUserRoles;
+import org.genomebridge.consent.http.models.*;
 import org.genomebridge.consent.http.models.Dictionary;
 import org.genomebridge.consent.http.models.dto.DataSetDTO;
 
@@ -19,6 +20,10 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private final DataSetFileParser parser = new DataSetFileParser();
     private final DataSetDAO dsDAO;
+    private final ElectionDAO dsElectionDAO;
+    private final DACUserRoleDAO dsRoleDAO;
+
+
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
     private final String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
@@ -28,13 +33,17 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO));
+    public static void initInstance(DataSetDAO dsDAO ,ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO,dsElectionDAO, dsRoleDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO) {
         this.dsDAO = dsDAO;
+        this.dsElectionDAO = dsElectionDAO;
+        this.dsRoleDAO = dsRoleDAO;
+
     }
+
 
     @Override
     public ParseResult create(File dataSetFile) {
@@ -72,9 +81,28 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public Collection<DataSetDTO> describeDataSets() {
-        return dsDAO.findDataSets();
+    public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
+        if(userIs(DACUserRoles.RESEARCHER.getValue(), dacUserId)){
+            return dsDAO.findDataSetsForResearcher();
+        }else{
+            Collection<DataSetDTO> dataSetDTOList = dsDAO.findDataSets();
+             if(userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0 ){
+                 List<String> attributes = dataSetDTOList.stream().map(sc -> sc.getConsentId()).collect(Collectors.toList());
+                 Set<Election> elections =  dsElectionDAO.findElectionsByReferenceId(attributes);
+                 for(DataSetDTO DTO : dataSetDTOList)  {
+                     if (elections.stream().anyMatch(el -> el.getReferenceId().equals(DTO.getConsentId()))) {
+                         DTO.setDeletable(false);
+                     } else {
+                        DTO.setDeletable(true);
+                     }
+                 }
+
+             }
+            return dataSetDTOList;
+        }
     }
+
+
 
     @Override
     public List<DataSet> getDataSetsForConsent(String consentId) {
@@ -90,6 +118,22 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public Collection<Dictionary> describeDictionary() {
         return dsDAO.getMappedFields();
     }
+
+    @Override
+         public List<String> autoCompleteDataSets(String partial) {
+        List<String> retrievedValues = dsDAO.getObjectIdsbyPartial(partial);
+        return retrievedValues;
+    }
+
+    @Override
+    public void deleteDataset(String datasetObjectId) {
+        DataSet dataset = dsDAO.findDataSetByObjectId(datasetObjectId);
+        Collection<Integer> dataSetId = new ArrayList<>();
+        dataSetId.add(dataset.getDataSetId());
+        dsDAO.deleteDataSetsProperties(dataSetId);
+        dsDAO.deleteDataSets(dataSetId);
+    }
+
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
@@ -162,9 +206,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return newMap;
     }
     
-    @Override
-    public List<String> autoCompleteDataSets(String partial) {
-        List<String> retrievedValues = dsDAO.getObjectIdsbyPartial(partial);
-        return retrievedValues;
-    }
-}
+
+    private boolean userIs(String rol,Integer dacUserId) {
+
+        if(dsRoleDAO.findRoleByNameAndUser(rol,dacUserId)!= null){
+            return true;
+        }
+        return false;
+      }
+     }
