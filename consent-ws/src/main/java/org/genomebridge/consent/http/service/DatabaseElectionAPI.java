@@ -1,10 +1,14 @@
 package org.genomebridge.consent.http.service;
 
+import com.mongodb.BasicDBObject;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.DataRequestDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.DACUserRoles;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
@@ -27,6 +31,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private ConsentDAO consentDAO;
     private DataRequestDAO dataRequestDAO;
     private DACUserDAO dacUserDAO;
+    private MongoConsentDB mongo;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -38,9 +43,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO, dacUserDAO));
-
+    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO, dacUserDAO, mongo));
     }
 
     /**
@@ -49,11 +53,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO) {
+    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
         this.dataRequestDAO = dataRequestDAO;
         this.dacUserDAO = dacUserDAO;
+        this.mongo = mongo;
+    }
+
+    public void setMongoDBInstance(MongoConsentDB mongo){
+        this.mongo = mongo;
     }
 
     @Override
@@ -67,10 +76,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(),
                 election.getFinalVote(), election.getFinalRationale(), election.getStatus(),
-                createDate, election.getReferenceId());
-        consentDAO.updateConsentSortDate(referenceId, createDate);
+                createDate, election.getReferenceId(), election.getFinalAccessVote());
+        updateSortDate(referenceId, createDate);
         return electionDAO.findElectionById(id);
     }
+
 
     @Override
     public Election updateElectionById(Election rec, Integer electionId) {
@@ -85,7 +95,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus(), lastUpdate);
-        consentDAO.updateConsentSortDate(electionDAO.findElectionById(electionId).getReferenceId(), lastUpdate);
+        updateSortDate(electionDAO.findElectionById(electionId).getReferenceId(), lastUpdate);
+        return electionDAO.findElectionById(electionId);
+    }
+
+
+    @Override
+    public Election updateFinalAccessVoteDataRequestElection(Integer electionId){
+        if (electionDAO.findElectionById(electionId) == null) {
+            throw new NotFoundException("Election for specified id does not exist");
+        }
+        electionDAO.updateFinalAccessVote(electionId);
         return electionDAO.findElectionById(electionId);
     }
 
@@ -103,7 +123,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public List<Election> describeClosedElectionsByType(String type) {
-        List<Election> elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
+        List<Election> elections = type.equals("2") ? electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue())
+                                                    : electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue());
         if (elections == null) {
             throw new NotFoundException("Couldn't find any closed elections");
         }
@@ -120,9 +141,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election describeDataRequestElection(Integer requestId) {
-        validateDataRequestId(requestId);
-        Election election = electionDAO.getOpenElectionByReferenceId(requestId.toString());
+    public Election describeDataRequestElection(String requestId) {
+        Election election = electionDAO.getOpenElectionByReferenceId(requestId);
         if (election == null) {
             throw new NotFoundException("Election was not found");
         }
@@ -140,6 +160,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         consentDAO.bulkUpdateConsentSortDate(consentIds, sortDate, sortDate);
         electionDAO.bulkUpdateElectionLastUpdate(electionIds, sortDate);
         return openElections(openElections);
+    }
+
+    @Override
+    public Election describeElectionById(Integer electionId){
+        return electionDAO.findElectionById(electionId);
     }
 
     private void cancelOpenElection(String electionTypeId){
@@ -178,13 +203,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (isConsent) {
             validateConsentId(referenceId);
         } else {
-            validateDataRequestId(Integer.valueOf(referenceId));
+            validateDataRequestId(referenceId);
         }
     }
 
-    private void validateDataRequestId(Integer dataRequest) {
-        if (dataRequest != null && dataRequestDAO.checkDataRequestbyId(dataRequest) == null) {
-            throw new IllegalArgumentException("Invalid id: " + dataRequest);
+    private void validateDataRequestId(String dataRequest) {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(dataRequest));
+        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+        if (dataRequest != null && dar == null ) {
+            throw new NotFoundException("Invalid id: " + dataRequest);
         }
     }
 
@@ -228,6 +255,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }else{
             throw new IllegalArgumentException(
                     "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
+        }
+    }
+
+    private void updateSortDate(String referenceId, Date createDate){
+        if(consentDAO.checkConsentbyId(referenceId) != null){
+            consentDAO.updateConsentSortDate(referenceId, createDate);
+        }else{
+            BasicDBObject query = new BasicDBObject("_id", new ObjectId(referenceId));
+            Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+            dar.put("sortDate", createDate);
+            mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
         }
     }
 }

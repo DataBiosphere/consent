@@ -21,6 +21,16 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select * from consents where consentId = :consentId and active=true")
     Consent findConsentById(@Bind("consentId") String consentId);
 
+    @SqlQuery("SELECT c.* " +
+            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
+            "WHERE cs.objectId = :datasetId")
+    Consent findConsentFromDatasetID(@Bind("datasetId") String datasetId);
+
+    @SqlQuery("SELECT * " +
+            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
+            "WHERE cs.objectId IN (<datasetId>)")
+    Collection<Consent> findConsentsFromDatasetIDs(@BindIn("datasetId") List<String> datasetId);
+
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     String checkConsentbyId(@Bind("consentId") String consentId);
 
@@ -110,7 +120,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where consentId not in (select c.consentId from consents c  inner join election e on e.referenceId = c.consentId )")
     List<Consent> findUnreviewedConsents();
-    
+
+    @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
+    Boolean checkManualReview(@Bind("consentId") String consentId);
 
     @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, e.electionId, e.status " +
             "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+

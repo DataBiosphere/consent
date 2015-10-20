@@ -42,6 +42,16 @@ public interface ConsentAPI {
 
     List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
 
+    /**
+     * This method finds the consent related to the datasetId sent as a parameter, by joining the
+     * consentassociation table with the consent table.
+     *
+     * @param datasetId the identifier data set
+     */
+    Consent getConsentFromDatasetID(String datasetId);
+
+    Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetId);
+
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;
 

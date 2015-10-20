@@ -88,31 +88,31 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         File file = null;
         try {
             file = File.createTempFile("summary", ".txt");
-            FileWriter summaryWriter = new FileWriter(file);
-            List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
-            setSummaryHeader(summaryWriter);
-            if (reviewedElections != null && reviewedElections.size() > 0) {
-                for (Election election : reviewedElections) {
-                    List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
-                    if (votes != null && votes.size() > 0) {
-                        for (Vote vote : votes) {
-                            DACUser user = dacUserDAO.findDACUserById(vote.getDacUserId());
-                            summaryWriter.write(election.getReferenceId() + SEPARATOR);
-                            summaryWriter.write(user.getDisplayName() + SEPARATOR);
-                            summaryWriter.write(vote.getVote() + SEPARATOR);
-                            summaryWriter.write(vote.getRationale() + SEPARATOR);
-                            summaryWriter.write(election.getFinalVote() + SEPARATOR);
-                            summaryWriter.write(election.getFinalRationale() + SEPARATOR);
-                            //sdul is pending
-                            summaryWriter.write("sDUL" + SEPARATOR);
-                            summaryWriter.write(END_OF_LINE);
+            try (FileWriter summaryWriter = new FileWriter(file)) {
+                List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
+                setSummaryHeader(summaryWriter);
+                if (reviewedElections != null && reviewedElections.size() > 0) {
+                    for (Election election : reviewedElections) {
+                        List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
+                        if (votes != null && votes.size() > 0) {
+                            for (Vote vote : votes) {
+                                DACUser user = dacUserDAO.findDACUserById(vote.getDacUserId());
+                                summaryWriter.write(election.getReferenceId() + SEPARATOR);
+                                summaryWriter.write(user.getDisplayName() + SEPARATOR);
+                                summaryWriter.write(vote.getVote() + SEPARATOR);
+                                summaryWriter.write(vote.getRationale() + SEPARATOR);
+                                summaryWriter.write(election.getFinalVote() + SEPARATOR);
+                                summaryWriter.write(election.getFinalRationale() + SEPARATOR);
+                                //sdul is pending
+                                summaryWriter.write("sDUL" + SEPARATOR);
+                                summaryWriter.write(END_OF_LINE);
+                            }
                         }
+                        
                     }
-
                 }
+                summaryWriter.flush();
             }
-            summaryWriter.flush();
-            summaryWriter.close();
             return file;
         } catch (Exception ignored) {
 

@@ -14,10 +14,10 @@ public abstract class ConsentServiceTest extends AbstractTest {
 
     public String consentPath(String id) {
         try {
-            return path2Url(String.format("/consent/%s", URLEncoder.encode(id, "UTF-8")));
+            return path2Url(String.format("consent/%s", URLEncoder.encode(id, "UTF-8")));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace(System.err);
-            return String.format("/consent/%s", id);
+            return String.format("consent/%s", id);
         }
     }
 

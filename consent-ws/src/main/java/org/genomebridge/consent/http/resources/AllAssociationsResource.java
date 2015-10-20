@@ -12,9 +12,9 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("consent/associations/{associationType}/{id}")
+@Path("{api : (api/)?}consent/associations/{associationType}/{id}")
 public class AllAssociationsResource extends Resource {
-    private ConsentAPI api;
+    private final ConsentAPI api;
 
     @Context
     UriInfo uriInfo;

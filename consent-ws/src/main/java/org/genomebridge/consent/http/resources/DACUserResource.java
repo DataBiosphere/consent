@@ -15,12 +15,12 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
-@Path("dacuser")
+@Path("{api : (api/)?}dacuser")
 public class DACUserResource extends Resource {
 
-    private DACUserAPI dacUserAPI;
-    private ElectionAPI electionAPI;
-    private VoteAPI voteAPI;
+    private final DACUserAPI dacUserAPI;
+    private final ElectionAPI electionAPI;
+    private final VoteAPI voteAPI;
 
     public DACUserResource(){
         this.dacUserAPI = AbstractDACUserAPI.getInstance();

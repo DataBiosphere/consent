@@ -14,11 +14,11 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-@Path("consent/{consentId}/election")
+@Path("{api : (api/)?}consent/{consentId}/election")
 public class ConsentElectionResource extends Resource {
 
-    private ElectionAPI api;
-    private VoteAPI voteAPI;
+    private final ElectionAPI api;
+    private final VoteAPI voteAPI;
 
     public ConsentElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
@@ -36,24 +36,12 @@ public class ConsentElectionResource extends Resource {
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (NotFoundException e){
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
         return Response.created(uri).build();
     }
 
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/{id}")
-    public Response updateConsentElection(@Context UriInfo info, Election rec,
-                                          @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
-        try {
-            Election election = api.updateElectionById(rec, id);
-            URI uri = info.getRequestUriBuilder().build(ConsentElectionResource.class);
-            return Response.ok(election).location(uri).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
 
     @GET
     @Produces("application/json")

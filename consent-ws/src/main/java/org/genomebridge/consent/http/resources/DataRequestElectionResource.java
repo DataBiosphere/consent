@@ -11,11 +11,11 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 
-@Path("dataRequest/{requestId}/election")
+@Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
-    private ElectionAPI api;
-    private VoteAPI voteAPI;
+    private final ElectionAPI api;
+    private final VoteAPI voteAPI;
 
     public DataRequestElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
@@ -25,7 +25,7 @@ public class DataRequestElectionResource extends Resource {
     @POST
     @Consumes("application/json")
     public Response createDataRequestElection(@Context UriInfo info, Election rec,
-                                              @PathParam("requestId") Integer requestId) {
+                                              @PathParam("requestId") String requestId) {
         URI uri;
         Election election;
         try {
@@ -34,29 +34,16 @@ public class DataRequestElectionResource extends Resource {
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (NotFoundException e){
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-
         return Response.created(uri).entity(election).build();
     }
 
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/{id}")
-    public Response updateDataRequestElection(@Context UriInfo info, Election rec,
-                                              @PathParam("requestId") Integer requestId, @PathParam("id") Integer id) {
-        try {
-            Election election = api.updateElectionById(rec, id);
-            URI assocURI = buildElectionURI(requestId);
-            return Response.ok(election).location(assocURI).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
 
     @GET
     @Produces("application/json")
-    public Election describe(@PathParam("requestId") Integer requestId) {
+    public Election describe(@PathParam("requestId") String requestId) {
         try {
             return api.describeDataRequestElection(requestId);
         } catch (Exception e) {
@@ -67,17 +54,13 @@ public class DataRequestElectionResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    public Response deleteElection(@PathParam("requestId") Integer requestId, @PathParam("id") Integer id, @Context UriInfo info) {
+    public Response deleteElection(@PathParam("requestId") String requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
-            api.deleteElection(requestId.toString(), id);
+            api.deleteElection(requestId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             throw new NotFoundException(e.getMessage());
         }
-    }
-
-    private URI buildElectionURI(Integer id) {
-        return UriBuilder.fromResource(DataRequestElectionResource.class).build(id);
     }
 
 }

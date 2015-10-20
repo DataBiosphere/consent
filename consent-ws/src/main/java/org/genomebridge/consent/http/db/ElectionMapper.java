@@ -21,7 +21,8 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 r.getDate("createDate"),
                 r.getDate("finalVoteDate"),
                 r.getString("referenceId"),
-                (r.getDate("lastUpdate") == null) ? null : r.getDate("lastUpdate")
-        );
+                (r.getDate("lastUpdate") == null) ? null : r.getDate("lastUpdate"),
+                (r.getString("finalAccessVote") == null) ? null : r.getBoolean("finalAccessVote")
+                );
     }
 }

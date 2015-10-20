@@ -62,7 +62,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     @Override
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
         String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        List<Election> elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<Election> elections;
+        elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(type,false) : electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -107,6 +108,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         pendingCase.setVoteId(vote.getVoteId());
         pendingCase.setIsReminderSent(vote.isReminderSent());
         pendingCase.setCreateDate(election.getCreateDate());
+        pendingCase.setElectionStatus(election.getStatus());
+        pendingCase.setElectionId(election.getElectionId());
         return pendingCase;
     }
 
@@ -159,4 +162,14 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         }
         return votedCases;
     }
+
+    private boolean isChairPerson(Integer dacUserId) {
+        boolean isCherperson = false;
+        if (userDAO.checkChairpersonUser(dacUserId) != null) {
+            isCherperson = true;
+        }
+        return isCherperson;
+    }
+
+
 }

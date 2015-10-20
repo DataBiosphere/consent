@@ -1,7 +1,9 @@
 package org.genomebridge.consent.http.resources;
 
 import org.genomebridge.consent.http.models.Vote;
+import org.genomebridge.consent.http.service.AbstractElectionAPI;
 import org.genomebridge.consent.http.service.AbstractVoteAPI;
+import org.genomebridge.consent.http.service.ElectionAPI;
 import org.genomebridge.consent.http.service.VoteAPI;
 
 import javax.ws.rs.*;
@@ -13,13 +15,16 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("dataRequest/{requestId}/vote")
+@Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private VoteAPI api;
+    private final VoteAPI api;
+    private final ElectionAPI electionAPI;
 
     public DataRequestVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
+        this.electionAPI = AbstractElectionAPI.getInstance();
+
     }
 
     @POST
@@ -27,9 +32,9 @@ public class DataRequestVoteResource extends Resource {
     @Path("/{id}")
     public Response createDataRequestVote(@Context UriInfo info, Vote rec,
                                           @PathParam("requestId") String requestId,
-                                          @PathParam("id") String voteId) {
+                                          @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, requestId, voteId);
+            Vote vote = api.firstVoteUpdate(rec, voteId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
             return Response.ok(uri).build();
         } catch (IllegalArgumentException e) {
@@ -38,6 +43,21 @@ public class DataRequestVoteResource extends Resource {
         } catch (Exception e) {
             throw new NotFoundException(String.format(
                     "Could not find vote with id %s", voteId));
+        }
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/{id}/final")
+    public Response updateFinalAccessConsentVote(@Context UriInfo info, Vote rec,
+                                                 @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
+        try {
+            Vote vote = api.firstVoteUpdate(rec, id);
+            electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
+            return Response.ok(vote).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
 
@@ -55,12 +75,21 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
+
     @GET
     @Produces("application/json")
     @Path("/{id}")
     public Vote describe(@PathParam("requestId") String requestId,
                          @PathParam("id") Integer id) {
         return api.describeVoteById(id, requestId);
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/final")
+    public Vote describeFinalAccessVote(@PathParam("requestId") Integer requestId){
+        return api.describeVoteFinalAccessVoteById(requestId);
+
     }
 
     @GET

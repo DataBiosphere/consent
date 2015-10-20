@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.Election;
 
 import javax.ws.rs.NotFoundException;
@@ -11,13 +12,19 @@ public interface ElectionAPI {
 
     Election updateElectionById(Election rec, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
+    Election updateFinalAccessVoteDataRequestElection(Integer electionId);
+
     Election describeConsentElection(String consentId) throws NotFoundException;
 
-    Election describeDataRequestElection(Integer requestId) throws NotFoundException;
+    Election describeDataRequestElection(String requestId) throws NotFoundException;
+
+    Election describeElectionById(Integer electionId);
 
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
     List<Election> cancelOpenElectionAndReopen();
 
     List<Election> describeClosedElectionsByType(String type);
+
+    void setMongoDBInstance(MongoConsentDB mongo);
 }

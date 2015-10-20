@@ -11,9 +11,6 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 @RegisterMapper({DataRequestMapper.class})
 public interface DataRequestDAO extends Transactional<DataRequestDAO> {
 
-    @SqlQuery("select requestId from datarequest where requestId = :requestId")
-    Integer checkDataRequestbyId(@Bind("requestId") Integer requestId);
-
     @SqlQuery("select * from datarequest where requestId = :requestId")
     DataRequest findDataRequestById(@Bind("requestId") Integer requestId);
 

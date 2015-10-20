@@ -1,0 +1,38 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="57" author="vvicario">
+        <createTable tableName="matchEntity">
+            <column name="matchId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="consent" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purpose" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="matchEntity" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failed" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="vvicario" id="58">
+        <addForeignKeyConstraint baseColumnNames="consent" baseTableName="matchEntity"
+                                 constraintName="fkMatchConsent" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="consentId"
+                                 referencedTableName="consents" referencesUniqueColumn="false"/>
+    </changeSet>
+    <changeSet author="vvicario" id="59">
+        <addUniqueConstraint columnNames="purpose, consent"
+                             constraintName="purpose_consent"
+                             tableName="matchEntity"/>
+    </changeSet>
+</databaseChangeLog>

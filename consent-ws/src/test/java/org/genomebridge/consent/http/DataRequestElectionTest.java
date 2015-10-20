@@ -1,10 +1,25 @@
 package org.genomebridge.consent.http;
 
+import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import de.flapdoodle.embedmongo.MongoDBRuntime;
+import de.flapdoodle.embedmongo.MongodExecutable;
+import de.flapdoodle.embedmongo.MongodProcess;
+import de.flapdoodle.embedmongo.config.MongodConfig;
+import de.flapdoodle.embedmongo.distribution.Version;
+import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.bson.Document;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
+import org.genomebridge.consent.http.service.DatabaseElectionAPI;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -18,15 +33,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = Response.Status.CREATED.getStatusCode();
-    public static final int OK = Response.Status.OK.getStatusCode();
-    public static final int BADREQUEST = Response.Status.BAD_REQUEST.getStatusCode();
-    public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
-    private static final String DATA_REQUEST_ID = "1";
-    private static final String DATA_REQUEST_ID_2 = "2";
-    private static final String INVALID_DATA_REQUEST_ID = "invalidId";
+    private static String DATA_REQUEST_ID;
+    private static String DATA_REQUEST_ID_2;
+    private static final String INVALID_DATA_REQUEST_ID = "55fb15569a434c232c5d50a9";
     private static final String INVALID_STATUS = "testStatus";
     private static final String FINAL_RATIONALE = "Test";
+    private MongodExecutable mongodExe;
+    private MongodProcess mongod;
+    private MongoClient mongo;
+
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -35,6 +50,40 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     @Override
     public DropwizardAppRule<ConsentConfiguration> rule() {
         return RULE;
+    }
+
+    @Before
+    public void setup() throws Exception {
+
+        // Creating Mongodbruntime instance
+        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
+
+        // Creating MongodbExecutable
+        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, Network.localhostIsIPv6()));
+
+        // Starting Mongodb
+        mongod = mongodExe.start();
+        mongo = new MongoClient("localhost", 37017);
+
+        MongoConsentDB mongoi = new MongoConsentDB(mongo);
+
+        // configuring ResearchPurposeAPI instance to use in memory Mongo
+        DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
+
+        // Create Documents needed in mongo for testing
+        Document doc = new Document().append("testingInfo1", "someValue");
+        Document doc2 = new Document().append("testingInfo2", "someValue2");
+        mongoi.getDataAccessRequestCollection().insertOne(doc);
+        mongoi.getDataAccessRequestCollection().insertOne(doc2);
+        MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
+        DATA_REQUEST_ID = String.valueOf(dars.next().get("_id"));
+        DATA_REQUEST_ID_2 = String.valueOf(dars.next().get("_id"));
+    }
+
+    @After
+    public void teardown() throws Exception {
+        mongod.stop();
+        mongodExe.cleanup();
     }
 
     @Test
@@ -53,7 +102,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getElectionId()).isNotNull();
         assertThat(created.getFinalRationale()).isNull();
         // try to create other election for the same data request
-        checkStatus(BADREQUEST,
+        checkStatus(BAD_REQUEST,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         testUpdateDataRequestElection(created);
         deleteElection(created.getElectionId());
@@ -63,7 +112,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Client client = ClientBuilder.newClient();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
-        checkStatus(OK, put(client, electionDataRequestPathById(DATA_REQUEST_ID, created.getElectionId()), created));
+        checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
         assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
@@ -107,9 +156,9 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testUpdateDataRequestElectionWithId() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
-        // should return 400 bad request because the data request id does not exist
+        // should return 400 bad request because the election id does not exist
         checkStatus(NOT_FOUND,
-                put(client, electionDataRequestPathById(INVALID_DATA_REQUEST_ID, 1010), election));
+                put(client, electionPathById(1010), election));
     }
 
     @Test
@@ -118,7 +167,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Election election = new Election();
         election.setStatus(INVALID_STATUS);
         // should return 400 bad request because status is invalid
-        checkStatus(BADREQUEST,
+        checkStatus(BAD_REQUEST,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID_2), election));
     }
 

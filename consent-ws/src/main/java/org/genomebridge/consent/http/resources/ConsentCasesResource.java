@@ -12,12 +12,12 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import java.io.File;
 import java.util.List;
 
-@Path("/consent/cases")
+@Path("{api : (api/)?}consent/cases")
 public class ConsentCasesResource extends Resource {
 
-    private PendingCaseAPI api;
-    private SummaryAPI summaryApi;
-    private ElectionAPI electionApi;
+    private final PendingCaseAPI api;
+    private final SummaryAPI summaryApi;
+    private final ElectionAPI electionApi;
 
     public ConsentCasesResource() {
         this.api = AbstractPendingCaseAPI.getInstance();

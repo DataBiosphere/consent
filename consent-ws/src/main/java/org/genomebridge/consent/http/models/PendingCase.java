@@ -25,6 +25,12 @@ public class PendingCase implements Comparable<PendingCase>{
     private String status;
 
     @JsonProperty
+    private String electionStatus;
+
+    @JsonProperty
+    private Integer electionId;
+
+    @JsonProperty
     private Integer voteId;
 
     @JsonProperty
@@ -116,8 +122,26 @@ public class PendingCase implements Comparable<PendingCase>{
         this.voteId = voteId;
     }
 
+    public String getElectionStatus() {
+        return electionStatus;
+    }
+
+    public void setElectionStatus(String electionStatus) {
+        this.electionStatus = electionStatus;
+    }
+
+    public Integer getElectionId() {
+        return electionId;
+    }
+
+    public void setElectionId(Integer electionId) {
+        this.electionId = electionId;
+    }
+
     @Override
     public int compareTo(PendingCase o) {
         return this.getCreateDate().compareTo(o.getCreateDate());
     }
+
+
 }

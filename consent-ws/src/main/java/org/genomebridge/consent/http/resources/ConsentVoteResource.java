@@ -12,10 +12,10 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-@Path("consent/{consentId}/vote")
+@Path("{api : (api/)?}consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
-    private VoteAPI api;
+    private final VoteAPI api;
 
     public ConsentVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
@@ -25,9 +25,9 @@ public class ConsentVoteResource extends Resource {
     @Consumes("application/json")
     @Path("/{id}")
     public Response firstVoteUpdate(@Context UriInfo info, Vote rec,
-                                    @PathParam("consentId") String consentId, @PathParam("id") String voteId) {
+                                    @PathParam("consentId") String consentId, @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, consentId, voteId);
+            Vote vote = api.firstVoteUpdate(rec, voteId);
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();

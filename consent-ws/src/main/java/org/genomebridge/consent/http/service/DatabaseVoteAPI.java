@@ -51,12 +51,12 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
-    public Vote firstVoteUpdate(Vote rec, String referenceId, String voteId) throws IllegalArgumentException {
-        Integer electionId = setGeneralFields(rec, referenceId);
-        Integer voteID = Integer.parseInt(voteId);
+    public Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException {
+        Vote vote = voteDAO.findVoteById(voteId);
+        Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
-        voteDAO.updateVote(rec.getVote(), rationale, null, voteID, electionId, new Date());
-        return voteDAO.findVoteById(voteID);
+        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, electionId, new Date());
+        return voteDAO.findVoteById(voteId);
     }
 
     @Override
@@ -89,6 +89,18 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         return vote;
     }
+
+
+    @Override
+    public Vote describeVoteFinalAccessVoteById(Integer voteId)
+            throws IllegalArgumentException {
+        Vote vote = voteDAO.findChairPersonVoteByElectionId(voteId);
+        if (vote == null) {
+            throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
+        }
+        return vote;
+    }
+
 
     @Override
     public void deleteVote(Integer voteId, String referenceId) {
@@ -159,11 +171,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return electionId;
     }
 
-    private Integer setGeneralFields(Vote rec, String referenceId) {
+    private Integer setGeneralFields(Vote rec, Integer electionId) {
         rec.setCreateDate(new Date());
-        Integer electionId = getElectionId(referenceId);
         rec.setElectionId(electionId);
-        rec.setIsChairPersonVote(rec.getIsChairPersonVote() == null ? false : rec.getIsChairPersonVote());
+        rec.setIsFinalAccessVote(rec.getIsFinalAccessVote() == null ? false : rec.getIsFinalAccessVote());
         return electionId;
     }
 
