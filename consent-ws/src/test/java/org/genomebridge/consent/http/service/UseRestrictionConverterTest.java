@@ -422,25 +422,6 @@ public class UseRestrictionConverterTest {
     String girls = "http://www.broadinstitute.org/ontologies/DURPO/girls";
     String boys = "http://www.broadinstitute.org/ontologies/DURPO/boys";    
 
-    public UseRestrictionConverterTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     /**
      * Test of parseJsonFormulary method, of class UseRestrictionConverter.
      */

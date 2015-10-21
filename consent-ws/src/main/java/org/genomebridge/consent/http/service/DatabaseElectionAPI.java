@@ -31,9 +31,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private ElectionDAO electionDAO;
     private ConsentDAO consentDAO;
     private DataRequestDAO dataRequestDAO;
+    private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
-    private VoteDAO voteDAO;
+
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -228,7 +229,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-
     private List<Election> openElections(List<Election> openElections) {
         List<Election> elections = new ArrayList<>();
         for (Election existentElection : openElections) {
@@ -381,8 +381,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private void updateSortDate(String referenceId, Date createDate) {
-        if (consentDAO.checkConsentbyId(referenceId) != null) {
+    private void updateSortDate(String referenceId, Date createDate){
+        if(consentDAO.checkConsentbyId(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
             BasicDBObject query = new BasicDBObject("_id", new ObjectId(referenceId));
@@ -411,7 +411,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             vote.setVote(rec.getFinalVote());
             vote.setCreateDate(rec.getFinalVoteDate());
             vote.setRationale(rec.getFinalRationale());
-            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate());
+            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.isReminderSent(), vote.getElectionId(), vote.getCreateDate());
         }
     }
 }

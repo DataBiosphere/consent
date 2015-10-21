@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Path("{api : (api/)?}consent/{consentId}/election")
 public class ConsentElectionResource extends Resource {

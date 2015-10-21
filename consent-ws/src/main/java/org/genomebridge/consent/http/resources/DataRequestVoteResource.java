@@ -1,9 +1,8 @@
 package org.genomebridge.consent.http.resources;
 
 import freemarker.template.TemplateException;
-import org.genomebridge.consent.http.enumeration.ElectionType;
+
 import org.genomebridge.consent.http.enumeration.VoteType;
-import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 import org.genomebridge.consent.http.service.*;
 
