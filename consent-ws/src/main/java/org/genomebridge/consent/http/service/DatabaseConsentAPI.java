@@ -5,10 +5,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.ConsentMapper;
+import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.ConsentManage;
+import org.genomebridge.consent.http.models.Election;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
@@ -18,6 +20,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     private ConsentDAO consentDAO;
+    private ElectionDAO electionDAO;
     private DBI jdbi;
     private Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
@@ -41,8 +45,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao));
+    public static void initInstance(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao , electionDAO));
     }
 
     /**
@@ -50,9 +54,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao) {
+    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO) {
         this.jdbi = jdbi;
         this.consentDAO = dao;
+        this.electionDAO = electionDAO;
+
         this.logger = Logger.getLogger("DatabaseConsentAPI");
 
     }
@@ -107,8 +113,19 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public void delete(String id) throws UnknownIdentifierException {
-        consentDAO.deleteConsent(id);
+    public void delete(String id) throws  IllegalArgumentException {
+
+            List<Election> elections = electionDAO.findElectionsByReferenceId(id);
+            if(elections.isEmpty()){
+                    consentDAO.deleteConsent(id);
+                    consentDAO.deleteAllAssociationsForConsent(id);
+                }else
+                  throw new IllegalArgumentException();
+             }
+
+    @Override
+    public void logicalDelete(String id) throws UnknownIdentifierException {
+        consentDAO.logicalDeleteConsent(id);
     }
 
     // ConsentAssociation methods

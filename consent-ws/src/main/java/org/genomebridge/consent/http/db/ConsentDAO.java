@@ -50,8 +50,13 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("createDate") Date createDate,
                        @Bind("sortDate") Date sortDate);
 
-    @SqlUpdate("update consents set active=false where consentId = :consentId")
+
+    @SqlUpdate("delete from consents where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
+
+
+    @SqlUpdate("update consents set active=false where consentId = :consentId")
+    void logicalDeleteConsent(@Bind("consentId") String consentId);
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
             "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, name = :name, " +

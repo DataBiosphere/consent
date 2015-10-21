@@ -28,7 +28,9 @@ public interface ConsentAPI {
      * @throws UnknownIdentifierException If the identifier names an inactive or non-existent consent
      *                                    in the database.
      */
-    void delete(String id) throws UnknownIdentifierException;
+    void logicalDelete(String id) throws UnknownIdentifierException;
+
+    void delete(String id) throws IllegalArgumentException;
 
     // ConsentAssociation methods
 
