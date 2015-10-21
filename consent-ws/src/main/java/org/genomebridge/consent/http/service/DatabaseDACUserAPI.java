@@ -78,6 +78,22 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
+    public DACUser describeChairpersonUser() throws NotFoundException {
+        DACUser dacUser = dacUserDAO.findChairpersonUser();
+        return dacUser;
+    }
+
+    @Override
+    public DACUser describeDACUserById(Integer id) throws IllegalArgumentException {
+        DACUser dacUser = dacUserDAO.findDACUserById(id);
+        if (dacUser == null) {
+            throw new NotFoundException("Could not find dacUser for specified id : " + id);
+        }
+        dacUser.setRoles(roleDAO.findRolesByUserId(dacUser.getDacUserId()));
+        return dacUser;
+    }
+
+    @Override
     public DACUser updateDACUserById(DACUser rec,Integer id) throws IllegalArgumentException, NotFoundException {
         validateExistentUserById(id);
         validateRequieredFields(rec);

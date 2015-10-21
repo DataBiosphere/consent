@@ -16,10 +16,14 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.genomebridge.consent.http.cloudstore.GCSStore;
+import org.genomebridge.consent.http.configurations.ConsentConfiguration;
+import org.genomebridge.consent.http.configurations.MongoConfiguration;
 import org.genomebridge.consent.http.db.*;
-import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.filter.CORSFilter;
+import org.genomebridge.consent.http.mail.AbstractMailServiceAPI;
+import org.genomebridge.consent.http.mail.MailService;
+import org.genomebridge.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.genomebridge.consent.http.resources.*;
 import org.genomebridge.consent.http.service.*;
 import org.skife.jdbi.v2.DBI;
@@ -80,6 +84,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
+        final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO);
@@ -95,10 +100,19 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance);
-        
+
         //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
-        
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO);
+
+        // Mail Services
+        try {
+            MailService.initInstance(config.getMailConfiguration());
+            EmailNotifierService.initInstance(voteDAO, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
+        } catch (IOException e) {
+            LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
+            e.printStackTrace();
+        }
+
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
@@ -139,11 +153,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ResearchPurposeResource.class);
         env.jersey().register(ElectionResource.class);
         env.jersey().register(MatchResource.class);
+        env.jersey().register(EmailNotifierResource.class);
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
         // called multiple times.
         env.lifecycle().addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
@@ -161,6 +177,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractMatchingServiceAPI.clearInstance();
                 AbstractMatchAPI.clearInstance();
                 AbstractMatchProcessAPI.clearInstance();
+                AbstractMailServiceAPI.clearInstance();
+                AbstractEmailNotifierAPI.clearInstance();
+                super.lifeCycleStopped(event);
             }
         });
     }

@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.collections.CollectionUtils;
+import org.genomebridge.consent.http.configurations.UseRestrictionConfig;
 import org.genomebridge.consent.http.models.grammar.And;
 import org.genomebridge.consent.http.models.grammar.Or;
 import org.genomebridge.consent.http.models.grammar.Named;

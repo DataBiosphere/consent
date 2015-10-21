@@ -73,11 +73,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete v from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId ")
     void deleteVotes(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, createDate = :createDate where voteId = :voteId")
+    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
                     @Bind("rationale") String rationale,
                     @Bind("updateDate") Date updateDate,
                     @Bind("voteId") Integer voteId,
+                    @Bind("reminderSent") boolean reminder,
                     @Bind("electionId") Integer electionId,
                     @Bind("createDate") Date createDate);
 
