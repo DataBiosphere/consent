@@ -24,7 +24,7 @@ public class ElectionReviewVoteMapper implements ResultSetMapper<ElectionReviewV
                 r.getDate("updateDate"),
                 r.getInt("electionId"),
                 r.getString("rationale"),
-                (r.getString("isFinalAccessVote") == null ? null : r.getBoolean("isFinalAccessVote")),
+                r.getString("type"),
                 (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent")
         );
 

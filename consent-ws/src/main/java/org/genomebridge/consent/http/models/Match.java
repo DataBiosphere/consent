@@ -3,6 +3,8 @@ package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Date;
+
 public class Match {
 
     @JsonProperty
@@ -20,13 +22,17 @@ public class Match {
     @JsonProperty
     private Boolean failed;
 
+    @JsonProperty
+    private Date createDate;
 
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed){
+
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
         this.match = match;
         this.failed = failed;
+        this.createDate = createDate;
     }
 
     public Match(){
@@ -70,5 +76,13 @@ public class Match {
 
     public void setFailed(Boolean failed) {
         this.failed = failed;
+    }
+
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
     }
 }

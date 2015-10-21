@@ -67,15 +67,22 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
-                Vote vote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(),
+                Vote accessVote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(),
                         dacUserId);
-                if (vote == null) {
+                if (accessVote == null) {
                     continue;
                 }
-                PendingCase pendingCase = setGeneralFields(election, vote);
-                // if it's already voted, we should collect vote or do the final election vote
+                Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
+                Election rpElection = electionDAO.findElectionById(rpElectionId);
+                Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
+                PendingCase pendingCase = setGeneralFields(election, accessVote);
+                pendingCase.setRpElectionId(rpElectionId);
+                pendingCase.setAlreadyVoted(accessVote.getVote() != null && rpVote.getVote() != null);
+                pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.CLOSED.getValue()) && election.getStatus().equals(ElectionStatus.CLOSED.getValue()) ? ElectionStatus.CLOSED.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
                 // it depends if the chairperson vote was done after collect votes
                 setFinalVote(dacUserId, election, pendingCase);
+                pendingCase.setStatus(accessVote.getVote() == null || rpVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+                pendingCase.setRpVoteId(rpVote.getVoteId());
                 pendingCases.add(pendingCase);
             }
         }
@@ -100,7 +107,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
         List<Vote> pendingVotes = voteDAO.findPendingDACVotesByElectionId(election.getElectionId());
         pendingCase.setTotalVotes(votes.size());
-        pendingCase.setVotesLogged(votes.size() - pendingVotes.size() );
+        pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
         pendingCase.setAlreadyVoted(vote.getVote() != null);

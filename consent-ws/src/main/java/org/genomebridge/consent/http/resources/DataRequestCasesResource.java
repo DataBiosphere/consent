@@ -32,9 +32,9 @@ public class DataRequestCasesResource extends Resource {
     }
 
     @GET
-    @Path("/summary")
-    public Response getConsentSummaryCases() {
-        return Response.ok(summaryApi.describeDataRequestSummaryCases())
+    @Path("/summary/{type}")
+    public Response getDataRequestSummaryCases(@PathParam("type") String type) {
+        return Response.ok(summaryApi.describeDataRequestSummaryCases(type))
                 .build();
     }
 

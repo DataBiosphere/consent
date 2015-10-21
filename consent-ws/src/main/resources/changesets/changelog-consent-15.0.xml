@@ -1,0 +1,67 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="vvicario" id="60">
+        <addColumn tableName="matchEntity">
+            <column name="createDate" type="DATETIME"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="61" author="vvicario">
+        <createTable tableName="accessRp">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="electionAccessId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="electionRPId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="vvicario" id="62">
+        <addForeignKeyConstraint baseColumnNames="electionAccessId" baseTableName="accessRp"
+                                 constraintName="fkElectionAcess" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="electionId"
+                                 referencedTableName="election" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="63">
+        <addForeignKeyConstraint baseColumnNames="electionRPId" baseTableName="accessRp"
+                                 constraintName="fkElectionRP" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="electionId"
+                                 referencedTableName="election" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="64">
+        <insert tableName="electiontype">
+            <column name="typeId" value="3"/>
+            <column name="type" value="RP"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="vvicario" id="65">
+        <addColumn tableName="vote">
+            <column name="type"  type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="66">
+        <sql dbms="hsql, mysql">
+            update vote set type = 'DAC' where isFinalAccessVote = 0;
+            update vote set type = 'FINAL' where isFinalAccessVote = 1;
+        </sql>
+    </changeSet>
+
+    <changeSet author="vvicario" id="67">
+        <dropColumn tableName="vote" columnName="isFinalAccessVote"/>
+    </changeSet>
+
+
+
+</databaseChangeLog>

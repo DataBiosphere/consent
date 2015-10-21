@@ -14,6 +14,7 @@ import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
+import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -66,18 +67,22 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election createElection(Election election, String referenceId, Boolean isConsent) throws
+    public Election createElection(Election election, String referenceId, ElectionType electionType) throws
             IllegalArgumentException {
         validateAvailableUsers();
-        validateReferenceId(referenceId, isConsent);
-        validateExistentElection(referenceId);
+        validateReferenceId(referenceId, electionType);
+        validateExistentElection(referenceId, electionType);
         validateStatus(election.getStatus());
-        setGeneralFields(election, referenceId, isConsent);
+        setGeneralFields(election, referenceId, electionType);
         Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(),
                 election.getFinalVote(), election.getFinalRationale(), election.getStatus(),
                 createDate, election.getReferenceId(), election.getFinalAccessVote());
         updateSortDate(referenceId, createDate);
+        if(electionType.equals(ElectionType.RP)){
+            Election access = describeDataRequestElection(referenceId);
+            electionDAO.insertAccessRP(access.getElectionId(), id);
+        }
         return electionDAO.findElectionById(id);
     }
 
@@ -114,7 +119,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (consentDAO.checkConsentbyId(consentId) == null) {
             throw new NotFoundException("Invalid ConsentId");
         }
-        Election election = electionDAO.getOpenElectionByReferenceId(consentId);
+        Election election = electionDAO.getOpenElectionByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
         if (election == null) {
             throw new NotFoundException("Election was not found");
         }
@@ -136,15 +141,23 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
-        consentDAO.updateConsentSortDate(referenceId, new Date());
+        Election election = electionDAO.findElectionById(id);
+        if(election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())){
+            Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
+            electionDAO.deleteAccessRP(id);
+            electionDAO.deleteElectionById(rpElectionId);
+        }
         electionDAO.deleteElectionById(id);
     }
 
     @Override
     public Election describeDataRequestElection(String requestId) {
-        Election election = electionDAO.getOpenElectionByReferenceId(requestId);
+        Election election = electionDAO.getOpenElectionByReferenceIdAndType(requestId, ElectionType.DATA_ACCESS.getValue());
         if (election == null) {
-            throw new NotFoundException("Election was not found");
+            election = electionDAO.getOpenElectionByReferenceIdAndType(requestId, ElectionType.RP.getValue());
+        }
+        if(election == null){
+            throw new NotFoundException();
         }
         return election;
     }
@@ -174,33 +187,50 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
+    @Override
+    public Integer findRPElectionByElectionAccessId(Integer electionId){
+        return electionDAO.findRPElectionByElectionAccessId(electionId);
+    }
+
+    @Override
+    public void deleteElectionByType(String type) {
+        electionDAO.deleteElectionByType(type);
+    }
+
     private List<Election> openElections(List<Election> openElections){
         List<Election> elections = new ArrayList<>();
         for(Election existentElection : openElections){
             Election election = new Election();
             election.setReferenceId(existentElection.getReferenceId());
-            elections.add(createElection(election, election.getReferenceId(), true));
+            elections.add(createElection(election, election.getReferenceId(), ElectionType.TRANSLATE_DUL));
         }
         return elections;
     }
 
-    private void setGeneralFields(Election election, String referenceId, Boolean isConsent) {
+    private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
-        if (isConsent) {
-            election.setElectionType(electionDAO
+        switch (electionType) {
+            case TRANSLATE_DUL:
+                election.setElectionType(electionDAO
                     .findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue()));
-        } else {
-            election.setElectionType(electionDAO
+                break;
+            case DATA_ACCESS:
+                election.setElectionType(electionDAO
                     .findElectionTypeByType(ElectionType.DATA_ACCESS.getValue()));
+                break;
+            case RP:
+                election.setElectionType(electionDAO
+                        .findElectionTypeByType(ElectionType.RP.getValue()));
+                break;
         }
         if (StringUtils.isEmpty(election.getStatus())) {
             election.setStatus(ElectionStatus.OPEN.getValue());
         }
     }
 
-    private void validateReferenceId(String referenceId, Boolean isConsent) {
-        if (isConsent) {
+    private void validateReferenceId(String referenceId, ElectionType electionType) {
+        if (electionType.equals(ElectionType.TRANSLATE_DUL)) {
             validateConsentId(referenceId);
         } else {
             validateDataRequestId(referenceId);
@@ -215,8 +245,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void validateExistentElection(String referenceId) {
-        Election election = electionDAO.getOpenElectionByReferenceId(referenceId);
+    private void validateExistentElection(String referenceId, ElectionType type) {
+        Election election = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, type.getValue());
         if (election != null) {
             throw new IllegalArgumentException(
                     "An open election already exists for the specified id. Election id: "

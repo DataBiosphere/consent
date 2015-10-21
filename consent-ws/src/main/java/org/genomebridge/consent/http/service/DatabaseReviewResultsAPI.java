@@ -4,11 +4,10 @@ import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
-import org.genomebridge.consent.http.models.Consent;
-import org.genomebridge.consent.http.models.Election;
-import org.genomebridge.consent.http.models.ElectionReview;
-import org.genomebridge.consent.http.models.ElectionReviewVote;
+import org.genomebridge.consent.http.enumeration.VoteType;
+import org.genomebridge.consent.http.models.*;
 
+import javax.ws.rs.NotFoundException;
 import java.util.List;
 
 public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
@@ -29,8 +28,8 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     }
 
     @Override
-    public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId) {
-        Election election = electionDAO.getOpenElectionByReferenceId(referenceId);
+    public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type) {
+        Election election = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, type);
         return getElectionReview(referenceId, election);
     }
 
@@ -48,11 +47,11 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
 
     @Override
-    public ElectionReview describeElectionReviewByElectionId(Integer electionId,Boolean isFinalAccess) {
+    public ElectionReview describeElectionReviewByElectionId(Integer electionId, Boolean isFinalAccess) {
         ElectionReview review = new ElectionReview();
         review.setElection(electionDAO.findElectionById(electionId));
         Consent consent = consentDAO.findConsentById(review.getElection().getReferenceId());
-        List<ElectionReviewVote> rVotes = isFinalAccess == null ? voteDAO.findElectionReviewVotesByElectionId(electionId) :  voteDAO.findElectionReviewVotesByElectionId(electionId,isFinalAccess);
+        List<ElectionReviewVote> rVotes = (isFinalAccess == null || isFinalAccess == false) ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue()) :  voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
         review.setReviewVote(rVotes);
         review.setConsent(consent);
         return review;
@@ -64,6 +63,15 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         return getElectionReview(referenceId, election);
     }
 
+    @Override
+    public Vote describeAgreementVote(Integer electionId) {
+        try{
+            return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue()).get(0);
+        }catch (Exception e){
+            throw new NotFoundException(e.getMessage());
+        }
+    }
+
 
     private ElectionReview getElectionReview(String referenceId, Election election) {
         List<ElectionReviewVote> rVotes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId());
@@ -73,7 +81,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         review.setElection(election);
         review.setReviewVote(rVotes);
         return review;
-
     }
 
 

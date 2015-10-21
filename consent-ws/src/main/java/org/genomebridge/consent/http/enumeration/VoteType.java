@@ -1,14 +1,12 @@
 package org.genomebridge.consent.http.enumeration;
 
-public enum ElectionType {
+public enum VoteType {
 
-    DATA_ACCESS("DataAccess"),
-    TRANSLATE_DUL("TranslateDUL"),
-    RP("RP");
+    DAC("DAC"), FINAL("FINAL"), AGREEMENT("AGREEMENT");
 
     private String value;
 
-    ElectionType(String value) {
+    VoteType(String value) {
         this.value = value;
     }
 
@@ -17,12 +15,13 @@ public enum ElectionType {
     }
 
     public static String getValue(String value) {
-        for (ElectionType e : ElectionType.values()) {
+        for (VoteType e : VoteType.values()) {
             if (e.getValue().equalsIgnoreCase(value)) {
                 return e.getValue();
             }
         }
         return null;
     }
+
 
 }

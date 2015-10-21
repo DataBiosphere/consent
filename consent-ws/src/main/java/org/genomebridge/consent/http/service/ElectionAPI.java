@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http.service;
 
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 
 import javax.ws.rs.NotFoundException;
@@ -8,7 +9,7 @@ import java.util.List;
 
 public interface ElectionAPI {
 
-    Election createElection(Election rec, String referenceId, Boolean isConsent) throws IllegalArgumentException;
+    Election createElection(Election rec, String referenceId, ElectionType electionType) throws IllegalArgumentException;
 
     Election updateElectionById(Election rec, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
@@ -27,4 +28,8 @@ public interface ElectionAPI {
     List<Election> describeClosedElectionsByType(String type);
 
     void setMongoDBInstance(MongoConsentDB mongo);
+
+    Integer findRPElectionByElectionAccessId(Integer accessElectionId);
+
+    void deleteElectionByType(String type);
 }

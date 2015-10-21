@@ -11,6 +11,8 @@ public interface MatchAPI {
 
     Match findMatchById(Integer id);
 
+    Match findMatchByConsentIdAndPurposeId(String consentId, String purposeId);
+
     List<Match> findMatchByConsentId(String consentId);
 
     List<Match> findMatchByPurposeId(String purposeId);

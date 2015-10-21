@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 
@@ -8,7 +9,7 @@ import java.util.List;
 
 public interface VoteAPI {
 
-    List<Vote> createVotes(Integer electionId, Boolean isConsent) throws IllegalArgumentException;
+    List<Vote> createVotes(Integer electionId, ElectionType electionType) throws IllegalArgumentException;
 
     Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
 
@@ -27,5 +28,7 @@ public interface VoteAPI {
     void createVotesForElections(List<Election> elections, Boolean isConsent);
 
     void setReminderFlag(Integer voteId);
+
+    List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 
 }

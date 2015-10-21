@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
@@ -98,6 +99,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             response.addAll(mongo.getDataAccessRequestCollection().find(eq("datasetId", datasetId)).into(new ArrayList<>()));
         }
         return response;
+    }
+
+    @Override
+    public Document describeResearchPurposeById(String id) {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+        Document result = new Document();
+        if(dar != null && dar.get("restriction") != null){
+            result.put("restriction",  dar.get("restriction", Document.class).toJson());
+        }
+        return result;
     }
 
     public List<DataAccessRequestManage> describeDataAccessRequestManage() {

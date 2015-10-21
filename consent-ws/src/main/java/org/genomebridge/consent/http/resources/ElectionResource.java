@@ -42,5 +42,4 @@ public class ElectionResource extends Resource {
     }
 
 
-
 }
