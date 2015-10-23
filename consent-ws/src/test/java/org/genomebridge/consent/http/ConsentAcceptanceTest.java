@@ -55,6 +55,16 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
+    public void testDeleteConsent() {
+        Client client = ClientBuilder.newClient();
+        Consent rec = new Consent(true,  new Everything(), null, null, UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
+        String createdLocation = checkHeader(response, "Location");
+        check200(delete(client, createdLocation));
+    }
+
+
+    @Test
     public void testOnlyOrNamedConsent() {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new Only("http://broadinstitute.org/ontology/consent/research_on", new Or(new Named("DOID:1"), new Named("DOID:2"))),

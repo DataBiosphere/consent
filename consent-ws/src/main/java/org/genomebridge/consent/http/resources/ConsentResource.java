@@ -59,6 +59,22 @@ public class ConsentResource extends Resource {
         }
     }
 
+
+    @DELETE
+    @Produces("application/json")
+    @Path("{id}")
+    public Response delete(@PathParam("id") String consentId) {
+        try {
+            api.delete(consentId);
+            return Response.ok().build();
+        }catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+      }
+    }
+
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}/matches")

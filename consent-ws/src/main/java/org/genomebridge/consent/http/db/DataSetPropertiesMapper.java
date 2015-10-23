@@ -8,6 +8,7 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -29,10 +30,12 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
         if (!dataSets.containsKey(dataSetId)) {
             dataSetDTO = new DataSetDTO( new ArrayList<>());
             dataSetDTO.setConsentId(consentId);
-            try {
-                dataSetDTO.setUseRestriction( UseRestriction.parse(r.getString("useRestriction")));
-            } catch (IOException e) {
-                throw new SQLException(e);
+            if(hasColumn(r,"useRestriction")) {
+                try {
+                    dataSetDTO.setUseRestriction(UseRestriction.parse(r.getString("useRestriction")));
+                } catch (IOException e) {
+                    throw new SQLException(e);
+                }
             }
             DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name",r.getString("name"));
             dataSetDTO.getProperties().add(property);
@@ -46,5 +49,18 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
         }
         return dataSetDTO;
     }
+
+
+    public static boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+        ResultSetMetaData rsmd = rs.getMetaData();
+        int columns = rsmd.getColumnCount();
+        for (int x = 1; x <= columns; x++) {
+            if (columnName.equals(rsmd.getColumnName(x))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 
