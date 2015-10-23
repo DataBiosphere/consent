@@ -8,6 +8,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* 
 
 #Configs
-COPY consent-ws/target/consent.jar /opt/consent.jar
-COPY consent-ws/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-CMD /usr/bin/java -jar /opt/consent.jar server /opt/consent.yml
+COPY target/consent.jar /opt/consent.jar
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+#CMD ["/usr/bin/supervisord"]
+CMD /usr/bin/java -jar /opt/consent.jar server /opt/consent.yml 
