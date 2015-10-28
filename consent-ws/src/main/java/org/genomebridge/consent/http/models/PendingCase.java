@@ -10,6 +10,9 @@ public class PendingCase implements Comparable<PendingCase>{
     private String referenceId;
 
     @JsonProperty
+    private String frontEndId;
+
+    @JsonProperty
     private String logged;
 
     @JsonProperty
@@ -88,6 +91,15 @@ public class PendingCase implements Comparable<PendingCase>{
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
     }
+
+    public String getFrontEndId() {
+        return frontEndId;
+    }
+
+    public void setFrontEndId(String frontEndId) {
+        this.frontEndId = frontEndId;
+    }
+
 
     public String getLogged() {
         return logged;

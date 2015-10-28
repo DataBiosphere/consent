@@ -118,4 +118,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
 
     void deleteElectionByType(String type);
+
+    @SqlQuery("select electionAccessId from accessRp arp where arp.electionRPId = :electionRPId ")
+    Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
+
 }

@@ -1,8 +1,6 @@
 package org.genomebridge.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.bson.Document;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -27,6 +25,9 @@ public class DataAccessRequestManage {
 
     @JsonProperty
     private String projectTitle;
+
+    @JsonProperty
+    private String frontEndId;
 
     @JsonProperty
 	private Integer electionId;
@@ -79,6 +80,14 @@ public class DataAccessRequestManage {
 
     public void setDataRequestId(String dataRequestId) {
         this.dataRequestId = dataRequestId;
+    }
+
+    public String getFrontEndId() {
+        return frontEndId;
+    }
+
+    public void setFrontEndId(String frontEndId) {
+        this.frontEndId = frontEndId;
     }
 
     public String getProjectTitle() {

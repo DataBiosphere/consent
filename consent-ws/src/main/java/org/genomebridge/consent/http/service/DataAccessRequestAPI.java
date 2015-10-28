@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import com.mongodb.MongoException;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
@@ -11,7 +12,7 @@ import org.genomebridge.consent.http.models.DataAccessRequestManage;
 
 public interface DataAccessRequestAPI {
 
-    Document createDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException;
+    Document createDataAccessRequest(Document dataAccessRequest) throws MongoException;
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 

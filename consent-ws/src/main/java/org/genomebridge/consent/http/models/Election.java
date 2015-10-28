@@ -40,6 +40,7 @@ public class Election {
     public Election() {
     }
 
+
     public Election(Integer electionId, String electionType,
                     Boolean finalVote, String finalRationale, String status, Date createDate,
                     Date finalVoteDate, String referenceId, Date lastUpdate , Boolean finalAccessVote) {

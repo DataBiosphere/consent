@@ -3,8 +3,11 @@ package org.genomebridge.consent.http.service;
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
+import com.mongodb.MongoException;
+import com.mongodb.MongoServerException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.log4j.Logger;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.ElectionDAO;
@@ -12,10 +15,16 @@ import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.models.DataAccessRequestManage;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
-import static com.mongodb.client.model.Filters.*;
+
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.mongodb.client.model.Filters.eq;
 
 
 /**
@@ -30,6 +39,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final String UN_REVIEWED = "un-reviewed";
 
     private final ElectionDAO electionDAO;
+
+    private final Logger logger = Logger.getLogger("DatabaseDataAccessRequestAPI");
 
 
     /**
@@ -61,8 +72,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
 
     @Override
-    public Document createDataAccessRequest(Document dataAccessRequest) throws IllegalArgumentException {
-        mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
+    public Document createDataAccessRequest(Document dataAccessRequest) throws MongoException {
+        try {
+            String seq = mongo.getNextSequence("dar_code_counter");
+            dataAccessRequest.append("dar_code", "DAR-"+seq);
+            mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
+        }catch (MongoException e){
+            logger.error(e.getMessage());
+            throw  e;
+       }
         return dataAccessRequest;
     }
 
@@ -148,10 +166,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             ObjectId id = dar.get("_id", ObjectId.class);
             Election election = electionList.get(id.toString());
-            darManage.setCreateDate(new Timestamp((long)id.getTimestamp()*1000));
+            darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
             darManage.setRus(dar.getString("rus"));
             darManage.setProjectTitle(dar.getString("projectTitle"));
             darManage.setDataRequestId(id.toString());
+            darManage.setFrontEndId(dar.get("dar_code").toString());
             darManage.setSortDate(dar.getDate("sortDate"));
             if(election == null){
                 darManage.setElectionStatus(UN_REVIEWED);
