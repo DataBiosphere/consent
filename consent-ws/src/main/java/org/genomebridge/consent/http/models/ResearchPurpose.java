@@ -1,6 +1,6 @@
 package org.genomebridge.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import com.google.gson.Gson;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;

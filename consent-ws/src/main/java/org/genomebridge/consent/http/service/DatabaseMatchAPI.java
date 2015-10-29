@@ -6,6 +6,7 @@ import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.MatchDAO;
 import org.genomebridge.consent.http.models.Match;
 import javax.ws.rs.NotFoundException;
+import java.util.Date;
 import java.util.List;
 
 
@@ -33,7 +34,7 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
         validateConsent(match.getConsent());
         validatePurpose(match.getPurpose());
         try{
-            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch(), match.getFailed());
+            Integer id = matchDAO.insertMatch(match.getConsent(), match.getPurpose(), match.getMatch(), match.getFailed(), new Date());
             return findMatchById(id);
         }catch (Exception e){
             throw new IllegalArgumentException("Already exist a match for the specified consent and purpose");
@@ -72,6 +73,11 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
             throw new NotFoundException("Match for the specified id does not exist");
         }
         return match;
+    }
+
+    @Override
+    public Match findMatchByConsentIdAndPurposeId(String consentId, String purposeId) {
+        return matchDAO.findMatchByPurposeIdAndConsent(purposeId, consentId);
     }
 
     @Override

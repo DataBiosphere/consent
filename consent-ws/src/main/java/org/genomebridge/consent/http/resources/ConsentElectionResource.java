@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.resources;
 
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.service.AbstractElectionAPI;
 import org.genomebridge.consent.http.service.AbstractVoteAPI;
@@ -31,8 +32,8 @@ public class ConsentElectionResource extends Resource {
                                           @PathParam("consentId") String consentId) {
         URI uri;
         try {
-            Election election = api.createElection(rec, consentId, true);
-            voteAPI.createVotes(election.getElectionId(), true);
+            Election election = api.createElection(rec, consentId, ElectionType.TRANSLATE_DUL);
+            voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -45,11 +46,11 @@ public class ConsentElectionResource extends Resource {
 
     @GET
     @Produces("application/json")
-    public Election describe(@PathParam("consentId") String consentId) {
+    public Response describe(@PathParam("consentId") String consentId) {
         try {
-            return api.describeConsentElection(consentId);
+            return Response.status(Status.OK).entity(api.describeConsentElection(consentId)).build();
         } catch (Exception e) {
-            throw new NotFoundException("Invalid id:" + consentId);
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 
@@ -61,7 +62,7 @@ public class ConsentElectionResource extends Resource {
             api.deleteElection(consentId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
-            throw new NotFoundException(e.getMessage());
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 

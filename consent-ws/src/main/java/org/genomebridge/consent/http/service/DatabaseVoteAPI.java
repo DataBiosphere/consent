@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.genomebridge.consent.http.db.DACUserDAO;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.VoteDAO;
+import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.enumeration.VoteType;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
@@ -123,19 +125,20 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
 
     @Override
-    public List<Vote> createVotes(Integer electionId, Boolean isConsent) {
+    public List<Vote> createVotes(Integer electionId, ElectionType electionType) {
         Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
         if (dacUserList != null) {
             for (DACUser user : dacUserList) {
-                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, false, false);
+                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
                 votes.add(voteDAO.findVoteById(id));
-                if (!isConsent && isChairPerson(user.getDacUserId())) {
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, true, false);
+                if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
+                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
+                    votes.add(voteDAO.findVoteById(id));
+                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));
                 }
-
-            }
+             }
         }
         return votes;
     }
@@ -146,10 +149,15 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
+    public List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId) {
+        return voteDAO.findVoteByTypeAndElectionId(electionId, type);
+    }
+
+    @Override
     public void createVotesForElections(List<Election> elections, Boolean isConsent){
         if(elections != null){
             for(Election election : elections){
-                createVotes(election.getElectionId(), true);
+                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL);
             }
         }
     }
@@ -174,7 +182,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     private Integer setGeneralFields(Vote rec, Integer electionId) {
         rec.setCreateDate(new Date());
         rec.setElectionId(electionId);
-        rec.setIsFinalAccessVote(rec.getIsFinalAccessVote() == null ? false : rec.getIsFinalAccessVote());
+        rec.setType(rec.getType());
         return electionId;
     }
 

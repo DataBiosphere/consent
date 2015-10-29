@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.resources;
 
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.ElectionReview;
@@ -26,8 +27,8 @@ public class ElectionReviewResource {
 
     @GET
     @Produces("application/json")
-    public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId) {
-        return api.describeCollectElectionReviewByReferenceId(referenceId);
+    public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId, @QueryParam("type") String type) {
+        return api.describeCollectElectionReviewByReferenceId(referenceId, type);
     }
 
     @GET
@@ -55,10 +56,18 @@ public class ElectionReviewResource {
         String dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList("datasetId")).getString("datasetId");
         Consent consent =  consentAPI.getConsentFromDatasetID(dataSetId);
         ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId,isFinalAccess);
+        accessElectionReview.setVoteAgreement(api.describeAgreementVote(electionId));
         accessElectionReview.setConsent(consent);
         return accessElectionReview;
     }
 
+    @GET
+    @Path("rp/{electionId}")
+    @Produces("application/json")
+    public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
+        Integer rpElectionId = electionAPI.findRPElectionByElectionAccessId(electionId);
+        return api.describeElectionReviewByElectionId(rpElectionId,isFinalAccess);
+    }
 
     @GET
     @Path("last/{referenceId}")

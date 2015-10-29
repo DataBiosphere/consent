@@ -133,10 +133,11 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         }
         checkStatus(OK,
                 delete(client, electionDataRequestPathById(DATA_REQUEST_ID, electionId)));
+
     }
 
     @Test
-    public void retrieveElectionWithInvalidConsentId() {
+    public void retrieveElectionWithInvalidDataRequestId() {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND,
                 getJson(client, electionDataRequestPath(INVALID_DATA_REQUEST_ID)));

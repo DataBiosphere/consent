@@ -26,28 +26,28 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId " +
-            "where election.electionId = :electionId and v.isFinalAccessVote = :isFinalAccess")
+            "where election.electionId = :electionId and v.type = :type")
     @Mapper(ElectionReviewVoteMapper.class)
-    List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId,@Bind("isFinalAccess") Boolean isFinalAccess);
+    List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId,@Bind("type") String type);
 
     @SqlQuery("select  *  from vote v where  v.voteId = :voteId")
     Vote findVoteById(@Bind("voteId") Integer voteId);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.isFinalAccessVote = false")
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = 'DAC'")
     List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.isFinalAccessVote = false")
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.type = 'DAC'")
     List<Vote> findPendingDACVotesByElectionId(@Bind("electionId") Integer electionId);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.isFinalAccessVote = false")
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.type = 'DAC'")
     Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                           @Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.isFinalAccessVote = true")
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = 'FINAL'")
     Vote findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
 
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.isFinalAccessVote = true")
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.type = 'FINAL'")
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                                      @Bind("dacUserId") Integer dacUserId);
 
@@ -59,12 +59,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                           @Bind("voteId") Integer voteId);
 
 
-    @SqlUpdate("insert into vote (dacUserId, electionId, isFinalAccessVote, reminderSent) values " +
-            "(:dacUserId,:electionId, :isFinalAccessVote, :reminderSent)")
+    @SqlUpdate("insert into vote (dacUserId, electionId, type, reminderSent) values " +
+            "(:dacUserId,:electionId, :type, :reminderSent)")
     @GetGeneratedKeys
     Integer insertVote(@Bind("dacUserId") Integer dacUserId,
                        @Bind("electionId") Integer electionId,
-                       @Bind("isFinalAccessVote") Boolean isFinalAccessVote,
+                       @Bind("type") String type,
                        @Bind("reminderSent") Boolean reminderSent);
 
     @SqlUpdate("delete from vote where  voteId = :voteId")
@@ -84,4 +84,14 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
     void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId  and election.electionType = :type and v.dacUserId = :dacUserId and v.type = 'DAC'")
+    Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("type")Integer type, @Bind("dacUserId") Integer dacUserId);
+
+    @SqlQuery("select v.* from vote v where v.electionId = :electionId and v.type = :type")
+    List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
+
+
+    @SqlQuery("select count(*) from vote v inner join election e on v.electionId = e.electionId where e.electionType = :type and e.status = 'Closed' and "
+            + " v.type = 'FINAL' and v.vote = :finalVote ")
+    Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 }

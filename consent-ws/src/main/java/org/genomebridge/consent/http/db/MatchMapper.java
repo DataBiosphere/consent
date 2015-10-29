@@ -16,7 +16,8 @@ public class MatchMapper implements ResultSetMapper<Match> {
                 r.getString("consent"),
                 r.getString("purpose"),
                 r.getBoolean("matchEntity"),
-                r.getBoolean("failed")
+                r.getBoolean("failed"),
+                r.getDate("createDate")
         );
 
 

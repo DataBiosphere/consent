@@ -135,6 +135,13 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage()).build();
     }
 
+    @GET
+    @Path("/restriction/{id}")
+    @Produces("application/json")
+    public Response describeResearchPurposeById(@PathParam("id") String id){
+       return Response.ok().entity(dataAccessRequestAPI.describeResearchPurposeById(id)).build();
+    }
+
 
     // Fields that trigger manual review flag.
     String[] fieldsForManualReview = {

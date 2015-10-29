@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.resources;
 
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.service.AbstractElectionAPI;
 import org.genomebridge.consent.http.service.AbstractVoteAPI;
@@ -27,27 +28,30 @@ public class DataRequestElectionResource extends Resource {
     public Response createDataRequestElection(@Context UriInfo info, Election rec,
                                               @PathParam("requestId") String requestId) {
         URI uri;
-        Election election;
+        Election accessElection;
         try {
-            election = api.createElection(rec, requestId.toString(), false);
-            voteAPI.createVotes(election.getElectionId(), false);
+            accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
+            voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS);
+            //create RP election
+            Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
+            voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (NotFoundException e){
             return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-        return Response.created(uri).entity(election).build();
+        return Response.created(uri).entity(accessElection).build();
     }
 
 
     @GET
     @Produces("application/json")
-    public Election describe(@PathParam("requestId") String requestId) {
+    public Response describe(@PathParam("requestId") String requestId) {
         try {
-            return api.describeDataRequestElection(requestId);
+            return  Response.status(Status.OK).entity(api.describeDataRequestElection(requestId)).build();
         } catch (Exception e) {
-            throw new NotFoundException(e.getMessage());
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 

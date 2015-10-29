@@ -68,9 +68,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select e.electionId, e.finalVote, e.status, e.createDate, e.referenceId, e.finalRationale, e.finalVoteDate,"
             + " e.lastUpdate, e.finalAccessVote, et.type electionType  from election e"
-            + " inner join electiontype et on e.electionType = et.typeId"
+            + " inner join electiontype et on e.electionType = et.typeId and et.type = :type"
             + " and  e.referenceId = :referenceId and e.status = 'Open'")
-    Election getOpenElectionByReferenceId(@Bind("referenceId") String referenceId);
+    Election getOpenElectionByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("select e.electionId,e.finalVote, e.status, e.createDate, e.referenceId, e.finalRationale,"
             + " e.finalVoteDate, e.lastUpdate, e.finalAccessVote, et.type electionType from election e"
@@ -83,7 +83,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.finalRationale, v.createDate finalVoteDate, " +
               "e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 1 "+
-              "and e.finalAccessVote is true  and v.isFinalAccessVote is true  and e.status = :status order by e.createDate asc")
+              "and e.finalAccessVote is true  and v.type = 'FINAL'  and e.status = :status order by e.createDate asc")
     List<Election> findRequestElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
     @SqlQuery("select * from election e where e.referenceId = :referenceId and e.status = :status order by createDate desc limit 1")
@@ -107,4 +107,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
               "AND e.referenceId in (<referenceIds>) ")
     List<Election> findLastElectionsByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type);
 
+    @SqlQuery("select electionRPId from accessRp arp where arp.electionAccessId = :electionAccessId ")
+    Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
+
+    @SqlUpdate("insert into accessRp (electionAccessId, electionRPId ) values ( :electionAccessId, :electionRPId)")
+    void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
+                        @Bind("electionRPId") Integer electionRPId);
+
+    @SqlUpdate("delete  from accessRp where electionAccessId = :electionAccessId")
+    void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
+
+    void deleteElectionByType(String type);
 }

@@ -61,9 +61,15 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     @Override
-    public Summary describeDataRequestSummaryCases() {
-        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        return getSummaryCases(type);
+    public Summary describeDataRequestSummaryCases(String electionType) {
+        String type = electionDAO.findElectionTypeByType(electionType);
+        Summary summary = null;
+        if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
+            summary = getAccessSummaryCases(type);
+        }else{
+            summary = getSummaryCases(type);
+        }
+        return summary;
     }
 
     private Summary getSummaryCases(String type) {
@@ -71,6 +77,14 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), true);
         Integer totalNegativeCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), false);
+        return createSummary(totalPendingCases, totalPositiveCases, totalNegativeCases);
+    }
+
+    private Summary getAccessSummaryCases(String type) {
+        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        Integer totalPendingCases = openElections == null ? 0 : openElections.size();
+        Integer totalPositiveCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, true);
+        Integer totalNegativeCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, false);
         return createSummary(totalPendingCases, totalPositiveCases, totalNegativeCases);
     }
 

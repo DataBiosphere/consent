@@ -10,6 +10,6 @@ public interface SummaryAPI {
 
     File describeConsentSummaryDetail();
 
-    Summary describeDataRequestSummaryCases();
+    Summary describeDataRequestSummaryCases(String electionType);
 
 }

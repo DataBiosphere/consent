@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.resources;
 
+import org.genomebridge.consent.http.enumeration.VoteType;
 import org.genomebridge.consent.http.models.Vote;
 import org.genomebridge.consent.http.service.AbstractElectionAPI;
 import org.genomebridge.consent.http.service.AbstractVoteAPI;
@@ -54,7 +55,10 @@ public class DataRequestVoteResource extends Resource {
                                                  @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.firstVoteUpdate(rec, id);
-            electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
+            List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+            if(vote.getVote() != null && votes.get(0).getVote() != null){
+                electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
+            }
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();

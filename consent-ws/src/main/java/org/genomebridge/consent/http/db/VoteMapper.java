@@ -14,11 +14,11 @@ public class VoteMapper implements ResultSetMapper<Vote> {
                 r.getInt("voteId"),
                 (r.getString("vote") == null) ? null : r.getBoolean("vote"),
                 r.getInt("dacUserId"),
-                r.getDate("createDate"),
+                r.getTimestamp("createDate"),
                 r.getDate("updateDate"),
                 r.getInt("electionId"),
                 r.getString("rationale"),
-                (r.getString("isFinalAccessVote") == null ? null : r.getBoolean("isFinalAccessVote")),
+                r.getString("type"),
                 (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent")
         );
 
