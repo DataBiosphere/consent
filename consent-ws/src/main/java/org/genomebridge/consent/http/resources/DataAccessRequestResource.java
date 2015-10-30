@@ -2,6 +2,7 @@ package org.genomebridge.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.mongodb.MongoServerException;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
@@ -65,7 +66,8 @@ public class DataAccessRequestResource extends Resource {
             uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
             matchProcessAPI.processMatchesForPurpose(result.get("_id").toString());
             return Response.created(uri).entity(result).build();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }

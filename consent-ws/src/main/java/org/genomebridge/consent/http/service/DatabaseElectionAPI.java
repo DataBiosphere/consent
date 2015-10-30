@@ -1,6 +1,10 @@
 package org.genomebridge.consent.http.service;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.Block;
+import com.mongodb.QueryBuilder;
+import com.mongodb.client.FindIterable;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -12,15 +16,14 @@ import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.DACUserRoles;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.security.interfaces.ECKey;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -95,8 +98,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         } else if(rec.getStatus().equals(ElectionStatus.CLOSED.getValue())){
             rec.setFinalVoteDate(new Date());
         }
-        if (electionDAO.findElectionById(electionId) == null) {
+        Election election = electionDAO.findElectionById(electionId);
+        if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
+        }
+        if(rec.getStatus().equals(ElectionStatus.CANCELED.getValue())){
+            updateAccessElection(electionId, election.getElectionType());
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus(), lastUpdate);
@@ -128,8 +135,37 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public List<Election> describeClosedElectionsByType(String type) {
-        List<Election> elections = type.equals("2") ? electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue())
-                                                    : electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue());
+
+        List<Election> elections;
+        if(type.equals("1")) {
+            elections =  electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue());
+            List<String> referenceIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
+            ObjectId[] objarray = new ObjectId[referenceIds.size()];
+            for(int i=0;i<referenceIds.size();i++)
+                objarray[i] = new ObjectId(referenceIds.get(i));
+            BasicDBObject in = new BasicDBObject("$in", objarray);
+            BasicDBObject q = new BasicDBObject("_id", in);
+            FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
+            dataAccessRequests.forEach((Block<Document>) dar -> {
+                 List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(dar.get("_id").toString())).
+                         collect(Collectors.toList());
+                e.get(0).setReferenceId(dar.get("dar_code").toString());
+            });
+        }else {
+
+
+            elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
+            if(!elections.isEmpty()){
+            List<String> consentIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
+            Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
+            consents.forEach(consent -> {
+                List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(consent.getConsentId())).
+                        collect(Collectors.toList());
+                e.get(0).setReferenceId(consent.getName());
+            });
+          }
+        }
+
         if (elections == null) {
             throw new NotFoundException("Couldn't find any closed elections");
         }
@@ -298,4 +334,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
         }
     }
+
+    private void updateAccessElection(Integer electionId, String type){
+        List<Integer> ids = new ArrayList<>();
+        if(type.equals(ElectionType.DATA_ACCESS.getValue())){
+            ids.add(electionDAO.findRPElectionByElectionAccessId(electionId));
+        }else if(type.equals(ElectionType.RP.getValue())){
+            ids.add(electionDAO.findAccessElectionByElectionRPId(electionId));
+        }
+        if(CollectionUtils.isNotEmpty(ids)){
+            electionDAO.updateElectionStatus(ids, ElectionStatus.CANCELED.getValue());
+        }
+    }
+
 }

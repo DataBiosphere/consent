@@ -9,12 +9,14 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+@UseStringTemplate3StatementLocator
 @RegisterMapper({ConsentMapper.class})
 public interface ConsentDAO extends Transactional<ConsentDAO> {
 
@@ -25,6 +27,10 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
             "WHERE cs.objectId = :datasetId")
     Consent findConsentFromDatasetID(@Bind("datasetId") String datasetId);
+
+
+    @SqlQuery("select * from consents  where consentId in (<consentIds>)")
+    Collection<Consent> findConsentsFromConsentsIDs(@BindIn("consentIds") List<String> consentIds);
 
     @SqlQuery("SELECT * " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+

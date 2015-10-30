@@ -1,13 +1,18 @@
 package org.genomebridge.consent.http.service;
 
-import org.genomebridge.consent.http.db.DACUserDAO;
-import org.genomebridge.consent.http.db.DACUserRoleDAO;
-import org.genomebridge.consent.http.db.ElectionDAO;
-import org.genomebridge.consent.http.db.VoteDAO;
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.FindIterable;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.genomebridge.consent.http.db.*;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.enumeration.VoteStatus;
-import org.genomebridge.consent.http.models.*;
+import org.genomebridge.consent.http.models.DACUserRole;
+import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.PendingCase;
+import org.genomebridge.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
 import java.util.*;
@@ -19,17 +24,22 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     private VoteDAO voteDAO;
     private DACUserRoleDAO rolesDAO;
     private DACUserDAO userDAO;
+    private ConsentDAO consentDAO;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO) {
-        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO));
+    private final MongoConsentDB mongo;
+
+    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO ,MongoConsentDB mongoDB) {
+        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO, consentDAO, mongoDB));
 
     }
 
-    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
         this.rolesDAO = rolesDAO;
+        this.consentDAO = consentDAO;
+        this.mongo = mongoDB;
     }
 
     @Override
@@ -58,6 +68,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         }
         return pendingCases;
     }
+
+
 
     @Override
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
@@ -103,22 +115,31 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     }
 
     private PendingCase setGeneralFields(Election election, Vote vote) {
+        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         PendingCase pendingCase = new PendingCase();
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
         List<Vote> pendingVotes = voteDAO.findPendingDACVotesByElectionId(election.getElectionId());
         pendingCase.setTotalVotes(votes.size());
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
-        pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
-        pendingCase.setAlreadyVoted(vote.getVote() != null);
-        pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
-        pendingCase.setVoteId(vote.getVoteId());
-        pendingCase.setIsReminderSent(vote.isReminderSent());
-        pendingCase.setCreateDate(election.getCreateDate());
-        pendingCase.setElectionStatus(election.getStatus());
-        pendingCase.setElectionId(election.getElectionId());
-        return pendingCase;
-    }
+        if (election.getElectionType().equals(type)) {
+            BasicDBObject query = new BasicDBObject().append("_id", new ObjectId(election.getReferenceId()));
+            FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
+            pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get("dar_code").toString() : null);
+        }else{
+             pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
+        }
+            pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
+            pendingCase.setAlreadyVoted(vote.getVote() != null);
+            pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+            pendingCase.setVoteId(vote.getVoteId());
+            pendingCase.setIsReminderSent(vote.isReminderSent());
+            pendingCase.setCreateDate(election.getCreateDate());
+            pendingCase.setElectionStatus(election.getStatus());
+            pendingCase.setElectionId(election.getElectionId());
+            return pendingCase;
+        }
+
 
     private String setLogged(Integer totalVotes, Integer loggedVotes) {
         StringBuilder logged = new StringBuilder();
