@@ -96,7 +96,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     @Override
     public Vote describeVoteFinalAccessVoteById(Integer voteId)
             throws IllegalArgumentException {
-        Vote vote = voteDAO.findChairPersonVoteByElectionId(voteId);
+        Vote vote = voteDAO.findVoteByElectionIdAndType(voteId, VoteType.FINAL.getValue());
         if (vote == null) {
             throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
         }
@@ -132,6 +132,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
             for (DACUser user : dacUserList) {
                 Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
                 votes.add(voteDAO.findVoteById(id));
+                if(isChairPerson(user.getDacUserId())){
+                    Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
+                    votes.add(voteDAO.findVoteById(chairPersonVoteId));
+                }
                 if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
                     id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));

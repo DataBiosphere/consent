@@ -1,0 +1,26 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="vvicario" id="71">
+        <sql dbms="hsql, mysql">
+            INSERT vote(createDate, electionId, rationale, type, vote, dacUserId)
+            SELECT e.finalVoteDate, e.electionId, e.finalRationale, 'CHAIRPERSON', e.finalVote,
+            (select du.dacUserId from dacuser du inner join user_role ur on du.dacUserId = ur.dacUserId and ur.roleId = 2) dacUserId
+            FROM election e
+        </sql>
+    </changeSet>
+
+    <changeSet author="vvicario" id="72">
+        <dropColumn columnName="finalVote"
+                    tableName="election"/>
+        <dropColumn columnName="finalRationale"
+                    tableName="election"/>
+        <dropColumn columnName="finalVoteDate"
+                    tableName="election"/>
+    </changeSet>
+
+
+</databaseChangeLog>
