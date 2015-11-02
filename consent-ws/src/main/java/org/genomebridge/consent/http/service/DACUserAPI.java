@@ -4,7 +4,6 @@ import org.genomebridge.consent.http.models.DACUser;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
-import java.util.List;
 
 public interface DACUserAPI {
 

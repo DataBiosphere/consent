@@ -1,10 +1,8 @@
 package org.genomebridge.consent.http.service;
 
-import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.MongoException;
-import com.mongodb.MongoServerException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
@@ -17,7 +15,6 @@ import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;

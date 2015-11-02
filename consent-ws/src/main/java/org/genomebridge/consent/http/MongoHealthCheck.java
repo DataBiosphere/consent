@@ -1,7 +1,6 @@
 package org.genomebridge.consent.http;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheck.Result;
 import com.mongodb.Mongo;
 
 public class MongoHealthCheck extends HealthCheck {

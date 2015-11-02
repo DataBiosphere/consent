@@ -2,7 +2,6 @@ package org.genomebridge.consent.http.db;
 
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 public interface ResearchPurposeDAO extends Transactional<ResearchPurposeDAO> {

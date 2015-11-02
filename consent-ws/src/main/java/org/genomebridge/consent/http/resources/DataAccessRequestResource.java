@@ -2,7 +2,6 @@ package org.genomebridge.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.mongodb.MongoServerException;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
