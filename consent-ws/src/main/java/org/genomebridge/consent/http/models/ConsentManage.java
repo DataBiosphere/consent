@@ -19,7 +19,10 @@ public class ConsentManage {
 	@JsonProperty
 	private String consentName;
 
-	@JsonProperty
+    @JsonProperty
+    private Boolean editable;
+
+    @JsonProperty
 	private String electionStatus;
 
 	@JsonProperty
@@ -39,7 +42,8 @@ public class ConsentManage {
 		this.consentName = consent.getName();
 		this.createDate = consent.getCreateDate();
 		this.sortDate = consent.getSortDate();
-	}
+	    this.editable = null;
+    }
 
 	public Timestamp getCreateDate() {
 		return createDate;
@@ -72,6 +76,14 @@ public class ConsentManage {
 	public void setConsentName(String consentName) {
 		this.consentName = consentName;
 	}
+
+    public Boolean getEditable() {
+        return editable;
+    }
+
+    public void setEditable(Boolean editable) {
+        this.editable = editable;
+    }
 
 	public String getElectionStatus() {
 		return electionStatus;

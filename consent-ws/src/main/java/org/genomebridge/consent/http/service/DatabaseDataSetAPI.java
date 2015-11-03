@@ -103,7 +103,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 }
             }
         }
-        setConsentNameDTOList(dataSetDTOList);
+        if (!dataSetDTOList.isEmpty())setConsentNameDTOList(dataSetDTOList);
         return dataSetDTOList;
     }
 
