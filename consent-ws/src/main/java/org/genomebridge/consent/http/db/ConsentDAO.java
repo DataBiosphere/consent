@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.db;
 
+import org.genomebridge.consent.http.models.Association;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentManage;
 import org.skife.jdbi.v2.sqlobject.Bind;
@@ -142,5 +143,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @Mapper(ConsentManageMapper.class)
     List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
+    @SqlQuery("select ca.consentId from consentassociations ca  where ca.objectId IN (<objectIdList>) ")
+    List<String> getAssociationsConsentIdfromObjectIds(@BindIn("objectIdList") List<String> objectIdList);
 
 }
