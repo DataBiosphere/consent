@@ -1,16 +1,20 @@
 package org.genomebridge.consent.http.service;
 
 import com.google.common.collect.Collections2;
+import com.mongodb.BasicDBObject;
+import com.mongodb.Block;
+import com.mongodb.client.FindIterable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.ConsentMapper;
 import org.genomebridge.consent.http.db.ElectionDAO;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
-import org.genomebridge.consent.http.models.Consent;
-import org.genomebridge.consent.http.models.ConsentAssociation;
-import org.genomebridge.consent.http.models.ConsentManage;
-import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.*;
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
@@ -34,6 +38,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private DBI jdbi;
     private Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
+    private MongoConsentDB mongo;
 
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
@@ -44,8 +49,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao , electionDAO));
+    public static void initInstance(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO , MongoConsentDB mongo) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao , electionDAO , mongo));
     }
 
     /**
@@ -53,11 +58,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO) {
+    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO, MongoConsentDB mongo) {
         this.jdbi = jdbi;
         this.consentDAO = dao;
         this.electionDAO = electionDAO;
-
+        this.mongo = mongo;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
 
     }
@@ -314,12 +319,36 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
+        String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
+        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
+        if(!openElections.isEmpty()) {
+            List<String> referenceIds = openElections.stream().map(sc -> sc.getReferenceId()).collect(Collectors.toList());
+            ObjectId[] objarray = new ObjectId[referenceIds.size()];
+            for (int i = 0; i < referenceIds.size(); i++)
+                objarray[i] = new ObjectId(referenceIds.get(i));
+            BasicDBObject in = new BasicDBObject("$in", objarray);
+            BasicDBObject q = new BasicDBObject("_id", in);
+            FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
+            List<String> datasetNames = new ArrayList<>();
+            dataAccessRequests.forEach((Block<Document>) dar -> {
+                datasetNames.add(dar.get("datasetId").toString());
+            });
+            List<String> objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
+            for (ConsentManage consentManage : consentManageList) {
+                if (objectIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
+                    consentManage.setEditable(false);
+                } else {
+                    consentManage.setEditable(true);
+                }
+            }
+        }
         return consentManageList;
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents, String status) {
         List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
         consentManageList.forEach(c -> c.setElectionStatus(status));
+        consentManageList.forEach(c -> c.setEditable(true));
         return consentManageList;
     }
 

@@ -2,10 +2,8 @@ package org.genomebridge.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+
 
 public class DataSetDTO {
 

@@ -92,15 +92,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateStatus(rec.getStatus());
         if (rec.getStatus() == null) {
             rec.setStatus(ElectionStatus.OPEN.getValue());
-        } else if(rec.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+        } else if(rec.getStatus().equals(ElectionStatus.CLOSED.getValue()) || rec.getStatus().equals(ElectionStatus.FINAL.getValue())){
             rec.setFinalVoteDate(new Date());
         }
         Election election = electionDAO.findElectionById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        if(rec.getStatus().equals(ElectionStatus.CANCELED.getValue())){
-            updateAccessElection(electionId, election.getElectionType());
+        if(rec.getStatus().equals(ElectionStatus.CANCELED.getValue()) || rec.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+            updateAccessElection(electionId, election.getElectionType(), rec.getStatus());
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus(), lastUpdate);
@@ -332,7 +332,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void updateAccessElection(Integer electionId, String type){
+    private void updateAccessElection(Integer electionId, String type, String status){
         List<Integer> ids = new ArrayList<>();
         if(type.equals(ElectionType.DATA_ACCESS.getValue())){
             ids.add(electionDAO.findRPElectionByElectionAccessId(electionId));
@@ -340,7 +340,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             ids.add(electionDAO.findAccessElectionByElectionRPId(electionId));
         }
         if(CollectionUtils.isNotEmpty(ids)){
-            electionDAO.updateElectionStatus(ids, ElectionStatus.CANCELED.getValue());
+            electionDAO.updateElectionStatus(ids, status);
         }
     }
 

@@ -83,7 +83,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO);
-        DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO);
+        DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, electionDAO, dacUserRoleDAO , consentDAO);
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());

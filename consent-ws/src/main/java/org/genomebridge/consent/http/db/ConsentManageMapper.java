@@ -17,6 +17,7 @@ public class ConsentManageMapper implements ResultSetMapper<ConsentManage> {
         consentManage.setSortDate(r.getTimestamp("sortDate"));
         consentManage.setElectionId(r.getInt("electionId"));
         consentManage.setElectionStatus(r.getString("status"));
+        consentManage.setEditable(true);
         return consentManage;
     }
 

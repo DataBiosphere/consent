@@ -8,6 +8,7 @@ import org.genomebridge.consent.http.enumeration.VoteType;
 import org.genomebridge.consent.http.models.*;
 
 import javax.ws.rs.NotFoundException;
+import java.util.Arrays;
 import java.util.List;
 
 public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
@@ -59,7 +60,8 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
     @Override
     public ElectionReview describeElectionReviewByReferenceId(String referenceId){
-        Election election = electionDAO.findLastElectionByReferenceIdAndStatus(referenceId, ElectionStatus.CLOSED.getValue());
+        List<String> status = Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue());
+        Election election = electionDAO.findLastElectionByReferenceIdAndStatus(referenceId, status);
         return getElectionReview(referenceId, election);
     }
 

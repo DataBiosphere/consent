@@ -103,7 +103,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 }
             }
         }
-        setConsentNameDTOList(dataSetDTOList);
+        if (!dataSetDTOList.isEmpty())setConsentNameDTOList(dataSetDTOList);
         return dataSetDTOList;
     }
 
@@ -222,13 +222,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
 
     private void setConsentNameDTOList( Collection<DataSetDTO> dataSetDTOList){
+        if(CollectionUtils.isNotEmpty(dataSetDTOList)){
+            List<String> consentIds = dataSetDTOList.stream().map(sc -> sc.getConsentId()).collect(Collectors.toList());
+            Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
+            consents.forEach(consent -> {
+                List<DataSetDTO> dto = dataSetDTOList.stream().filter(d -> d.getConsentId().equals(consent.getConsentId())).
+                        collect(Collectors.toList());
+                dto.get(0).setConsentId(consent.getName());
+            });
+        }
 
-        List<String> consentIds = dataSetDTOList.stream().map(sc -> sc.getConsentId()).collect(Collectors.toList());
-        Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-        consents.forEach(consent -> {
-            List<DataSetDTO> dto = dataSetDTOList.stream().filter(d -> d.getConsentId().equals(consent.getConsentId())).
-                    collect(Collectors.toList());
-            dto.get(0).setConsentId(consent.getName());
-        });
     }
 }
