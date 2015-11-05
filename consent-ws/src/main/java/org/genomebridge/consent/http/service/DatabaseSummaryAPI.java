@@ -14,6 +14,8 @@ import org.genomebridge.consent.http.models.Vote;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -63,7 +65,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     @Override
     public Summary describeDataRequestSummaryCases(String electionType) {
         String type = electionDAO.findElectionTypeByType(electionType);
-        Summary summary = null;
+        Summary summary;
         if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
             summary = getAccessSummaryCases(type);
         }else{
@@ -73,7 +75,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     private Summary getSummaryCases(String type) {
-        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
+        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, status);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), true);
         Integer totalNegativeCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), false);
@@ -81,7 +84,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     private Summary getAccessSummaryCases(String type) {
-        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
+        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, status);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, true);
         Integer totalNegativeCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, false);

@@ -11,7 +11,6 @@ import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 

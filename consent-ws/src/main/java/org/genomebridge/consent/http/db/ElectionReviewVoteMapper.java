@@ -1,8 +1,6 @@
 package org.genomebridge.consent.http.db;
 
 
-import org.genomebridge.consent.http.models.Election;
-import org.genomebridge.consent.http.models.ElectionReview;
 import org.genomebridge.consent.http.models.ElectionReviewVote;
 import org.genomebridge.consent.http.models.Vote;
 import org.skife.jdbi.v2.StatementContext;

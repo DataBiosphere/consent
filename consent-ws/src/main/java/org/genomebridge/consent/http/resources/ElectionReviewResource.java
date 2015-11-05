@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.resources;
 
-import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.ElectionReview;
