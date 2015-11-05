@@ -86,8 +86,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
               "and e.finalAccessVote is true  and v.type = 'FINAL'  and e.status = :status order by e.createDate asc")
     List<Election> findRequestElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
-    @SqlQuery("select * from election e where e.referenceId = :referenceId and e.status = :status order by createDate desc limit 1")
-    Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceId, @Bind("status") String status);
+    @SqlQuery("select * from election e where e.referenceId = :referenceId and e.status in (<status>) order by createDate desc limit 1")
+    Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceId, @BindIn("status") List<String> status);
 
     @SqlQuery("select * from election e where e.electionType = :type and e.finalAccessVote = :vote and e.status != 'Canceled' order by createDate asc")
     List<Election> findElectionsByTypeAndFinalAccessVoteChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
@@ -121,5 +121,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select electionAccessId from accessRp arp where arp.electionRPId = :electionRPId ")
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
+
+    @SqlQuery("select * from election e where e.electionType = :type  and e.status in  (<status>) order by createDate asc")
+    List<Election> findElectionsByTypeAndStatus(@Bind("type") String type, @BindIn("status") List<String> status);
 
 }

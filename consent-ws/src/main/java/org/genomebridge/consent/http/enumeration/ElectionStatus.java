@@ -2,7 +2,7 @@ package org.genomebridge.consent.http.enumeration;
 
 public enum ElectionStatus {
 
-    OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled");
+    OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled"), FINAL("Final");
 
     private String value;
 

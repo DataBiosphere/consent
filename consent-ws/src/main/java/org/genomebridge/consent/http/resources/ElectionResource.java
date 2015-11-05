@@ -33,7 +33,7 @@ public class ElectionResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    public Response describeElectionById(@Context UriInfo info, Election rec, @PathParam("id") Integer id) {
+    public Response describeElectionById(@Context UriInfo info, @PathParam("id") Integer id) {
         try {
             return Response.ok().entity(api.describeElectionById(id)).build();
         } catch (IllegalArgumentException e) {

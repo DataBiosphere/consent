@@ -90,7 +90,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 PendingCase pendingCase = setGeneralFields(election, accessVote);
                 pendingCase.setRpElectionId(rpElectionId);
                 pendingCase.setAlreadyVoted(accessVote.getVote() != null && rpVote.getVote() != null);
-                pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.CLOSED.getValue()) && election.getStatus().equals(ElectionStatus.CLOSED.getValue()) ? ElectionStatus.CLOSED.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
+                pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
                 // it depends if the chairperson vote was done after collect votes
                 setFinalVote(dacUserId, election, pendingCase);
                 pendingCase.setStatus(accessVote.getVote() == null || rpVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
