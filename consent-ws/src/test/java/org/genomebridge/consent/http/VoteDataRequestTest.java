@@ -31,8 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class VoteDataRequestTest extends ElectionVoteServiceTest {
 
-    public static final int CREATED = Response.Status.CREATED
-            .getStatusCode();
+    public static final int CREATED = Response.Status.CREATED.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     private static String DATA_REQUEST_ID;
     private static final Integer DAC_USER_ID = 2;
@@ -65,7 +64,11 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         mongo = new MongoClient("localhost", 37017);
 
         MongoConsentDB mongoi = new MongoConsentDB(mongo);
-
+        mongoi.getCountersCollection().drop();
+        mongoi.getDataAccessRequestCollection().drop();
+        mongoi.getResearchPurposeCollection().drop();
+        mongoi.configureMongo();
+        
         // configuring ResearchPurposeAPI instance to use in memory Mongo
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
 
@@ -78,6 +81,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
 
     @After
     public void teardown() throws Exception {
+        mongo.close();
         mongod.stop();
         mongodExe.cleanup();
     }

@@ -28,8 +28,9 @@ public class UseRestrictionConverter {
 
     // Fields to be parsed. We'll see if we can configure it with an external file.
     String[] typeOfResearch = {
-        "methods",
-        "population"
+        "methods"
+        // this is regarding 2.4.4 in form, currently will no map to anything
+        //, "population"
 
     };
 
@@ -70,11 +71,16 @@ public class UseRestrictionConverter {
                 }
             }
         }
+
         if (CollectionUtils.isNotEmpty(methodsList)) {
-            UseRestriction[] methodsOps = new UseRestriction[methodsList.size()];
-            methodsOps = methodsList.toArray(methodsOps);
-            methodsRestriction.setOperands(methodsOps);
-            operandList.add(methodsRestriction);
+            if (methodsList.size() > 1) {
+                UseRestriction[] methodsOps = new UseRestriction[methodsList.size()];
+                methodsOps = methodsList.toArray(methodsOps);
+                methodsRestriction.setOperands(methodsOps);
+                operandList.add(methodsRestriction);
+            } else {
+                operandList.add(methodsList.get(0));
+            }
         }
 
         //
@@ -89,14 +95,18 @@ public class UseRestrictionConverter {
         }
 
         if (CollectionUtils.isNotEmpty(diseasesList)) {
-            UseRestriction[] diseasesOps = new UseRestriction[diseasesList.size()];
-            diseasesOps = diseasesList.toArray(diseasesOps);
-            diseasesRestriction.setOperands(diseasesOps);
-            operandList.add(diseasesRestriction);
+            if (diseasesList.size() > 1) {
+                UseRestriction[] diseasesOps = new UseRestriction[diseasesList.size()];
+                diseasesOps = diseasesList.toArray(diseasesOps);
+                diseasesRestriction.setOperands(diseasesOps);
+                operandList.add(diseasesRestriction);
+            } else {
+                operandList.add(diseasesList.get(0));
+            }
         }
 
         //
-        //    population and commercial status entries
+        //    gender, age and commercial status entries
         //
         String url;
         List<UseRestriction> purposesList = new ArrayList<>();
@@ -106,22 +116,20 @@ public class UseRestrictionConverter {
         url = forProfitOnly == true ? config.getProfit() : config.getNonProfit();
         purposesList.add(createNamedRestriction(url));
 
-        // limited to one gender
+        // limited to one gender + children analysis
         boolean oneGenderOnly = (boolean) form.getOrDefault(researchPurposeStatement[LIMITED_TO_ONE_GENDER], false);
         String selectedGender = (String) form.getOrDefault("gender", "X");
-        if (oneGenderOnly && selectedGender.equalsIgnoreCase("M")) {
-            purposesList.add(createNamedRestriction(config.getMen()));
-        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("F")) {
-            purposesList.add(createNamedRestriction(config.getWomen()));
-        } else {
-            //TODO: how to handle this ????
-            LOGGER.error("Exception: One Gender Limitation without specifying selected Gender....");
-            purposesList.add(createNamedRestriction("X"));
-        }
-
-        // check if restricted to pediatric population
         boolean pediatricsOnly = (boolean) form.getOrDefault(researchPurposeStatement[PEDIATRIC_ONLY], false);
-        if (pediatricsOnly) {
+
+        if (oneGenderOnly && selectedGender.equalsIgnoreCase("M") && pediatricsOnly) {
+            purposesList.add(createNamedRestriction(config.getBoys()));
+        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("M") && !pediatricsOnly) {
+            purposesList.add(createNamedRestriction(config.getMale()));
+        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("F") && pediatricsOnly) {
+            purposesList.add(createNamedRestriction(config.getGirls()));
+        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("F") && !pediatricsOnly) {
+            purposesList.add(createNamedRestriction(config.getFemale()));
+        } else if (pediatricsOnly) {
             purposesList.add(createNamedRestriction(config.getPediatric()));
         }
 
@@ -129,10 +137,14 @@ public class UseRestrictionConverter {
         //    Compose all restrictions into an And one ...
         //
         if (CollectionUtils.isNotEmpty(purposesList)) {
-            UseRestriction[] purposesOps = new UseRestriction[purposesList.size()];
-            purposesOps = purposesList.toArray(purposesOps);
-            purposesRestriction.setOperands(purposesOps);
-            operandList.add(purposesRestriction);
+            if (purposesList.size() > 1) {
+                UseRestriction[] purposesOps = new UseRestriction[purposesList.size()];
+                purposesOps = purposesList.toArray(purposesOps);
+                purposesRestriction.setOperands(purposesOps);
+                operandList.add(purposesRestriction);
+            } else {
+                operandList.add(purposesList.get(0));
+            }
         }
 
         UseRestriction[] operands = new UseRestriction[operandList.size()];

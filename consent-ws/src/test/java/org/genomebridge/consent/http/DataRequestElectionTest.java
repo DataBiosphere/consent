@@ -1,15 +1,12 @@
 package org.genomebridge.consent.http;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import de.flapdoodle.embedmongo.MongoDBRuntime;
 import de.flapdoodle.embedmongo.MongodExecutable;
 import de.flapdoodle.embedmongo.MongodProcess;
 import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
-import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.bson.Document;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
@@ -30,6 +27,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
@@ -59,11 +57,11 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
 
         // Creating MongodbExecutable
-        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, Network.localhostIsIPv6()));
+        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, false, "127.0.0.1"));
 
         // Starting Mongodb
         mongod = mongodExe.start();
-        mongo = new MongoClient("localhost", 37017);
+        mongo = new MongoClient("127.0.0.1", 37017);
 
         MongoConsentDB mongoi = new MongoConsentDB(mongo);
 

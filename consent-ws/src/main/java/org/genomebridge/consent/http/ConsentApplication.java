@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http;
 
+import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import io.dropwizard.Application;
@@ -45,6 +46,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         new ConsentApplication().run(args);
     }
 
+    @Override
     public void run(ConsentConfiguration config, Environment env) {
 
         LOGGER.debug("ConsentApplication.run called.");
@@ -53,9 +55,20 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 .build(getName());
         // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
         // with singletons and JDBI (see AbstractConsentAPI).
+        
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
-        final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
+        final MongoClient mongoClient;
+        
+        if (mongoConfiguration.isTestMode()) {
+            Fongo fongo = new Fongo("TestServer");
+            mongoClient =  fongo.getMongo();
+        } else {
+            mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
+        }
+       
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient);
+        mongoInstance.configureMongo();
+                
         final DBIFactory factory = new DBIFactory();
         final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
         final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
@@ -68,8 +81,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
 
-
-        mongoInstance.configureMongo();
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
@@ -85,7 +96,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance);
-        env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
+        
+        //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
+        
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");

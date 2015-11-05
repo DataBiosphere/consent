@@ -13,16 +13,22 @@ public class UseRestrictionConfig {
     private String population;
 
     @NotNull
-    private String men;
+    private String male;
 
     @NotNull
-    private String women;
+    private String female;
 
     @NotNull
     private String profit;
 
     @NotNull
     private String nonProfit;
+
+    @NotNull
+    private String boys;
+
+    @NotNull
+    private String girls;
 
     @NotNull
     private String pediatric;
@@ -47,22 +53,22 @@ public class UseRestrictionConfig {
         values.put("population", population);
     }
 
-    public String getMen() {
-        return men;
+    public String getMale() {
+        return male;
     }
 
-    public void setMen(String men) {
-        this.men = men;
-        values.put("men", men);
+    public void setMale(String male) {
+        this.male = male;
+        values.put("male", male);
     }
 
-    public String getWomen() {
-        return women;
+    public String getFemale() {
+        return female;
     }
 
-    public void setWomen(String women) {
-        this.women = women;
-        values.put("women", women);
+    public void setFemale(String female) {
+        this.female = female;
+        values.put("female", female);
     }
 
     public String getProfit() {
@@ -85,6 +91,24 @@ public class UseRestrictionConfig {
 
     public String getPediatric() {
         return pediatric;
+    }
+
+    public String getBoys() {
+        return boys;
+    }
+
+    public void setBoys(String boys) {
+        this.boys = boys;
+        values.put("boys", boys);
+    }
+
+    public String getGirls() {
+        return girls;
+    }
+
+    public void setGirls(String girls) {
+        this.girls = girls;
+        values.put("girls", girls);
     }
 
     public void setPediatric(String pediatric) {
