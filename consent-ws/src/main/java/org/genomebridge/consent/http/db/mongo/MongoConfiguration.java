@@ -13,6 +13,8 @@ public class MongoConfiguration {
 
     @NotNull
     public String dbName;
+    
+    public boolean testMode = false;
             
     public String getUsername() {
         return username;
@@ -45,6 +47,17 @@ public class MongoConfiguration {
     public void setDbName(String dbName) {
         this.dbName = dbName;
     }
+    
+    public Boolean isTestMode() {
+        return testMode;
+    }
 
+    public Boolean getTestMode() {
+        return testMode;
+    }
+
+    public void setTestMode(Boolean testMode) {
+        this.testMode = testMode;
+    }
 
 }

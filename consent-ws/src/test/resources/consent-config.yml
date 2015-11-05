@@ -13,7 +13,7 @@ database:
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
 googleStore:
   username:
-  password:
+  password: 
   bucket:
   endpoint:
   type: GCS
@@ -22,6 +22,7 @@ mongo:
   dbName: consent
   username:
   password:
+  testMode: true
 # Logging settings
 logging:
   # default logging level

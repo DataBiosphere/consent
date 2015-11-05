@@ -2,7 +2,6 @@ package org.genomebridge.consent.http.service;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
-import com.mongodb.QueryBuilder;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,10 +18,8 @@ import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 import javax.ws.rs.NotFoundException;
-import java.security.interfaces.ECKey;
 import java.util.*;
 import java.util.stream.Collectors;
 

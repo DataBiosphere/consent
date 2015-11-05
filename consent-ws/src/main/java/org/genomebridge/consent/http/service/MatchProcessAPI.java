@@ -2,6 +2,7 @@ package org.genomebridge.consent.http.service;
 
 
 import java.io.IOException;
+import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 
 public interface MatchProcessAPI {
 
@@ -12,5 +13,6 @@ public interface MatchProcessAPI {
     void removeMatchesForPurpose(String consentId);
 
     void removeMatchesForConsent(String consentId);
-
+    
+    void setMongoDBInstance(MongoConsentDB mongo);
 }
