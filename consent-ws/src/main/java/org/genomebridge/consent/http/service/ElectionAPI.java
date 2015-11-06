@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.service;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
 import java.util.List;
@@ -31,5 +32,7 @@ public interface ElectionAPI {
 
     Integer findRPElectionByElectionAccessId(Integer accessElectionId);
 
-    void deleteElectionByType(String type);
+    boolean validateCollectEmailCondition(Vote vote);
+
+    boolean validateCollectDAREmailCondition(Vote vote);
 }

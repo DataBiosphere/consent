@@ -1,4 +1,4 @@
-package org.genomebridge.consent.http.cloudstore;
+package org.genomebridge.consent.http.configurations;
 
 import javax.validation.constraints.NotNull;
 

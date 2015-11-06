@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.configurations.UseRestrictionConfig;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.junit.After;
 import org.junit.AfterClass;
