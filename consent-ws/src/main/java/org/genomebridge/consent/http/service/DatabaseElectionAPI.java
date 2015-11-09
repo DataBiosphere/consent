@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.service;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
@@ -143,24 +144,30 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             BasicDBObject in = new BasicDBObject("$in", objarray);
             BasicDBObject q = new BasicDBObject("_id", in);
             FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
-            dataAccessRequests.forEach((Block<Document>) dar -> {
-                 List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(dar.get("_id").toString())).
-                         collect(Collectors.toList());
-                e.get(0).setReferenceId(dar.get("dar_code").toString());
+            elections.forEach(election -> {
+                MongoCursor<Document> itr = dataAccessRequests.iterator();
+                try {
+                    while (itr.hasNext()) {
+                        Document next = itr.next();
+                        if (next.get("_id").toString().equals(election.getReferenceId())) {
+                            election.setReferenceId(next.get("dar_code").toString());
+                        }
+                    }
+                } finally {
+                    itr.close();
+                }
             });
         }else {
-
-
             elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
             if(!elections.isEmpty()){
-            List<String> consentIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
-            Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-            consents.forEach(consent -> {
-                List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(consent.getConsentId())).
-                        collect(Collectors.toList());
-                e.get(0).setReferenceId(consent.getName());
-            });
-          }
+                List<String> consentIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
+                Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
+                elections.forEach(election -> {
+                    List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
+                            collect(Collectors.toList());
+                    election.setReferenceId(c.get(0).getName());
+                });
+            }
         }
 
         if (elections == null) {
