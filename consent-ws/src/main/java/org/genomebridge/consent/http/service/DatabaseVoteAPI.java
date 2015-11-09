@@ -57,7 +57,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         Vote vote = voteDAO.findVoteById(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
-        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, electionId, new Date());
+        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, false, electionId, new Date());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -69,7 +69,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         Vote vote = voteDAO.findVoteById(voteId);
         Date updateDate = rec.getVote() == null ? null : new Date();
         String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, getElectionId(referenceId), vote.getCreateDate());
+        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false,  getElectionId(referenceId), vote.getCreateDate());
         return voteDAO.findVoteById(voteId);
     }
 

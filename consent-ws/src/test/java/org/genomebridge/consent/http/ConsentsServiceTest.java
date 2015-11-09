@@ -2,6 +2,7 @@ package org.genomebridge.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.lang3.StringUtils;
+import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.grammar.Everything;

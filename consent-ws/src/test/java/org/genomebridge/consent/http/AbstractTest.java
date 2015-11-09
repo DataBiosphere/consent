@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;

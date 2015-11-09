@@ -1,13 +1,14 @@
-package org.genomebridge.consent.http;
+package org.genomebridge.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-import org.genomebridge.consent.http.cloudstore.StoreConfiguration;
-import org.genomebridge.consent.http.db.mongo.MongoConfiguration;
-import org.genomebridge.consent.http.service.ServicesConfiguration;
-import org.genomebridge.consent.http.service.UseRestrictionConfig;
+import org.genomebridge.consent.http.configurations.MailConfiguration;
+import org.genomebridge.consent.http.configurations.StoreConfiguration;
+import org.genomebridge.consent.http.configurations.MongoConfiguration;
+import org.genomebridge.consent.http.configurations.ServicesConfiguration;
+import org.genomebridge.consent.http.configurations.UseRestrictionConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -46,6 +47,14 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
 
+    @Valid
+    @NotNull
+    private MailConfiguration mailConfiguration = new MailConfiguration();
+
+    @Valid
+    @NotNull
+    private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
+
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
@@ -71,4 +80,11 @@ public class ConsentConfiguration extends Configuration {
         return services;
     }
 
+    public MailConfiguration getMailConfiguration() {
+        return mailConfiguration;
+    }
+
+    public FreeMarkerConfiguration getFreeMarkerConfiguration() {
+        return freeMarkerConfiguration;
+    }
 }

@@ -7,10 +7,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.genomebridge.consent.http.db.ConsentDAO;
-import org.genomebridge.consent.http.db.DACUserDAO;
-import org.genomebridge.consent.http.db.DataRequestDAO;
-import org.genomebridge.consent.http.db.ElectionDAO;
+import org.genomebridge.consent.http.db.*;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.DACUserRoles;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
@@ -18,6 +15,7 @@ import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
 import java.util.*;
@@ -28,9 +26,11 @@ import java.util.stream.Collectors;
  */
 public class DatabaseElectionAPI extends AbstractElectionAPI {
 
+    private MailMessageDAO mailMessageDAO;
     private ElectionDAO electionDAO;
     private ConsentDAO consentDAO;
     private DataRequestDAO dataRequestDAO;
+    private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
 
@@ -44,8 +44,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO, dacUserDAO, mongo));
+    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO));
     }
 
     /**
@@ -54,12 +54,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo) {
+    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
         this.dataRequestDAO = dataRequestDAO;
         this.dacUserDAO = dacUserDAO;
         this.mongo = mongo;
+        this.voteDAO = voteDAO;
+        this.mailMessageDAO = mailMessageDAO;
     }
 
     public void setMongoDBInstance(MongoConsentDB mongo){
@@ -144,8 +146,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             BasicDBObject q = new BasicDBObject("_id", in);
             FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
             dataAccessRequests.forEach((Block<Document>) dar -> {
-                 List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(dar.get("_id").toString())).
-                         collect(Collectors.toList());
+                List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(dar.get("_id").toString())).
+                        collect(Collectors.toList());
                 e.get(0).setReferenceId(dar.get("dar_code").toString());
             });
         }else {
@@ -153,14 +155,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
             elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
             if(!elections.isEmpty()){
-            List<String> consentIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
-            Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-            consents.forEach(consent -> {
-                List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(consent.getConsentId())).
-                        collect(Collectors.toList());
-                e.get(0).setReferenceId(consent.getName());
-            });
-          }
+                List<String> consentIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
+                Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
+                consents.forEach(consent -> {
+                    List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(consent.getConsentId())).
+                            collect(Collectors.toList());
+                    e.get(0).setReferenceId(consent.getName());
+                });
+            }
         }
 
         if (elections == null) {
@@ -225,14 +227,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return electionDAO.findRPElectionByElectionAccessId(electionId);
     }
 
-    @Override
-    public void deleteElectionByType(String type) {
-        electionDAO.deleteElectionByType(type);
-    }
-
     private List<Election> openElections(List<Election> openElections){
         List<Election> elections = new ArrayList<>();
-        for(Election existentElection : openElections){
+        for (Election existentElection : openElections){
             Election election = new Election();
             election.setReferenceId(existentElection.getReferenceId());
             elections.add(createElection(election, election.getReferenceId(), ElectionType.TRANSLATE_DUL));
@@ -246,11 +243,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         switch (electionType) {
             case TRANSLATE_DUL:
                 election.setElectionType(electionDAO
-                    .findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue()));
+                        .findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue()));
                 break;
             case DATA_ACCESS:
                 election.setElectionType(electionDAO
-                    .findElectionTypeByType(ElectionType.DATA_ACCESS.getValue()));
+                        .findElectionTypeByType(ElectionType.DATA_ACCESS.getValue()));
                 break;
             case RP:
                 election.setElectionType(electionDAO
@@ -319,6 +316,66 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new IllegalArgumentException(
                     "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
         }
+    }
+
+    /*
+        This is true if the last remaining vote is the chairperson vote, or everyone has already voted.
+     */
+    @Override
+    public boolean validateCollectEmailCondition(Vote vote){
+        List<Vote> votes = voteDAO.findPendingDACVotesByElectionId(vote.getElectionId());
+        DACUser chairperson = dacUserDAO.findChairpersonUser();
+        if((votes.size() == 0) &&(vote.getDacUserId() != chairperson.getDacUserId())){
+            return true;
+        } else if((votes.size() == 1)) {
+            Vote chairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getDacUserId());
+            if(chairVote.getCreateDate() == null){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean validateCollectDAREmailCondition(Vote vote){
+        Election e = electionDAO.findElectionById(vote.getElectionId());
+        Integer rpElectionId, darElectionId;
+        if(e.getElectionType().equals(ElectionType.RP.getValue())){
+            rpElectionId = e.getElectionId();
+            darElectionId = electionDAO.findAccessElectionByElectionRPId(rpElectionId);
+        } else {
+            darElectionId = e.getElectionId();
+            rpElectionId = electionDAO.findRPElectionByElectionAccessId(darElectionId);
+        }
+        List<Vote> rpElectionVotes = voteDAO.findPendingDACVotesByElectionId(rpElectionId);
+        List<Vote> darVotes = voteDAO.findPendingDACVotesByElectionId(darElectionId);
+        DACUser chairperson = dacUserDAO.findChairpersonUser();
+        if((mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId) == null)){
+            if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (vote.getDacUserId() != chairperson.getDacUserId()))){
+                return true;
+            } else {
+                Vote rpChairVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, chairperson.getDacUserId());
+                Vote darChairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getDacUserId());
+                if ((((rpElectionVotes.size() == 1) && (CollectionUtils.isEmpty(darVotes))))) {
+                    if (rpChairVote.getCreateDate() == null) {
+                        return true;
+                    }
+                } else {
+                    if ((((darVotes.size() == 1) && (CollectionUtils.isEmpty(rpElectionVotes))))) {
+                        if (darChairVote.getCreateDate() == null) {
+                            return true;
+                        }
+                    } else {
+                        if ((((darVotes.size() == 1) && (rpElectionVotes.size() == 1)))) {
+                            if ((darChairVote.getCreateDate() == null) && (rpChairVote.getCreateDate() == null)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void updateSortDate(String referenceId, Date createDate){
