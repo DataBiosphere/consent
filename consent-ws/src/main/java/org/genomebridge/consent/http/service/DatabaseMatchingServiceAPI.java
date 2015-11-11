@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.service;
 import com.google.gson.Gson;
 import org.apache.log4j.Logger;
 import org.bson.Document;
+import org.genomebridge.consent.http.configurations.ServicesConfiguration;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DataSet;
 import org.genomebridge.consent.http.models.Match;

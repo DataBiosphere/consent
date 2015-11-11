@@ -34,9 +34,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         return getElectionReview(referenceId, election);
     }
 
-
-
-
     @Override
     public Boolean openElections() {
         Boolean openElections = false;
@@ -45,7 +42,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
         }
         return openElections;
     }
-
 
     @Override
     public ElectionReview describeElectionReviewByElectionId(Integer electionId, Boolean isFinalAccess) {
@@ -73,7 +69,6 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
             throw new NotFoundException(e.getMessage());
         }
     }
-
 
     private ElectionReview getElectionReview(String referenceId, Election election) {
         List<ElectionReviewVote> rVotes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId());

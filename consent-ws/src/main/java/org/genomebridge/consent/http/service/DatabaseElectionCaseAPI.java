@@ -54,7 +54,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 if (vote == null) {
                     continue;
                 }
-                PendingCase pendingCase = setGeneralFields(election, vote);
+                PendingCase pendingCase = setGeneralFields(election, vote, vote.isReminderSent());
                 pendingCases.add(pendingCase);
             }
         }
@@ -87,7 +87,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
                 Election rpElection = electionDAO.findElectionById(rpElectionId);
                 Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
-                PendingCase pendingCase = setGeneralFields(election, accessVote);
+                Boolean isReminderSent = (accessVote.isReminderSent() || rpVote.isReminderSent()) ? true : false;
+                PendingCase pendingCase = setGeneralFields(election, accessVote, isReminderSent);
                 pendingCase.setRpElectionId(rpElectionId);
                 pendingCase.setAlreadyVoted(accessVote.getVote() != null && rpVote.getVote() != null);
                 pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
@@ -114,7 +115,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         }
     }
 
-    private PendingCase setGeneralFields(Election election, Vote vote) {
+    private PendingCase setGeneralFields(Election election, Vote vote, boolean isReminderSent) {
         String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         PendingCase pendingCase = new PendingCase();
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
@@ -133,7 +134,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
             pendingCase.setAlreadyVoted(vote.getVote() != null);
             pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
             pendingCase.setVoteId(vote.getVoteId());
-            pendingCase.setIsReminderSent(vote.isReminderSent());
+            pendingCase.setIsReminderSent(isReminderSent);
             pendingCase.setCreateDate(election.getCreateDate());
             pendingCase.setElectionStatus(election.getStatus());
             pendingCase.setElectionId(election.getElectionId());

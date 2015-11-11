@@ -1,0 +1,58 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="68" author="aracioppi">
+        <createTable tableName="emailEntity">
+            <column name="emailEntityId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="voteId" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="electionId" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="dacUserId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="emailType" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dateSent" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="emailText" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="69" author="aracioppi">
+        <createTable tableName="emailType">
+            <column name="emailTypeId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="emailType" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="aracioppi" id="70">
+        <insert tableName="emailType">
+            <column name="emailTypeId" value="1"/>
+            <column name="emailType" value="CollectEmail"/>
+        </insert>
+        <insert tableName="emailType">
+            <column name="emailTypeId" value="2"/>
+            <column name="emailType" value="NewCaseEmail"/>
+        </insert>
+        <insert tableName="emailType">
+            <column name="emailTypeId" value="3"/>
+            <column name="emailType" value="ReminderEmail"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
