@@ -1,4 +1,4 @@
-package org.genomebridge.consent.http.db.mongo;
+package org.genomebridge.consent.http.configurations;
 
 import javax.validation.constraints.NotNull;
 

@@ -21,7 +21,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId " +
-            "where election.electionId = :electionId")
+            "where election.electionId = :electionId and v.type != 'CHAIRPERSON'")
     @Mapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
@@ -43,8 +43,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                           @Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = 'FINAL'")
-    Vote findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = :type")
+    Vote findVoteByElectionIdAndType(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
 
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.type = 'FINAL'")
@@ -73,11 +73,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete v from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId ")
     void deleteVotes(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, createDate = :createDate where voteId = :voteId")
+    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
                     @Bind("rationale") String rationale,
                     @Bind("updateDate") Date updateDate,
                     @Bind("voteId") Integer voteId,
+                    @Bind("reminderSent") boolean reminder,
                     @Bind("electionId") Integer electionId,
                     @Bind("createDate") Date createDate);
 

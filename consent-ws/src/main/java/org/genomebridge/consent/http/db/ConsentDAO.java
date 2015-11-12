@@ -1,6 +1,5 @@
 package org.genomebridge.consent.http.db;
 
-import org.genomebridge.consent.http.models.Association;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentManage;
 import org.skife.jdbi.v2.sqlobject.Bind;

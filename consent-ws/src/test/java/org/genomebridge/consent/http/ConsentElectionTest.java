@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
@@ -66,7 +67,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
-        created = retrieveElection(client, electionConsentPath(CONSENT_ID));
+        created = retrieveElection(client, electionPathById(created.getElectionId()));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
         assertThat(created.getReferenceId()).isEqualTo(CONSENT_ID);

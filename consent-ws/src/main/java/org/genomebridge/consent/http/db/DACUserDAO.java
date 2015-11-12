@@ -9,16 +9,23 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.skife.jdbi.v2.unstable.BindIn;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
-
+@UseStringTemplate3StatementLocator
 @RegisterMapper({DACUserMapper.class})
 public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlQuery("select * from dacuser  where dacUserId = :dacUserId")
     DACUser findDACUserById(@Bind("dacUserId") Integer dacUserId);
+
+    @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Chairperson'")
+    DACUser findChairpersonUser();
 
     @SqlQuery("select u.dacUserId from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where u.dacUserId = :dacUserId and r.name = 'Chairperson'")
     Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
@@ -29,6 +36,9 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlQuery("select * from dacuser where email = :email")
     DACUser findDACUserByEmail(@Bind("email") String email);
+
+    @SqlQuery("select du.email from dacuser du where du.dacUserId in (<dacUserIds>)")
+    Collection<String> describeUsersEmails(@BindIn("dacUserIds") List<Integer> dacUserIds);
 
     @SqlUpdate("insert into dacuser (email, displayName, createDate) values (:email, :displayName, :createDate)")
     @GetGeneratedKeys

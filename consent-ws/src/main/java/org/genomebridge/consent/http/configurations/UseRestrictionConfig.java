@@ -1,4 +1,4 @@
-package org.genomebridge.consent.http.service;
+package org.genomebridge.consent.http.configurations;
 
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;

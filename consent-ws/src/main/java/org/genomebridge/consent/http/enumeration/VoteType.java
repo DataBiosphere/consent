@@ -2,7 +2,7 @@ package org.genomebridge.consent.http.enumeration;
 
 public enum VoteType {
 
-    DAC("DAC"), FINAL("FINAL"), AGREEMENT("AGREEMENT");
+    DAC("DAC"), FINAL("FINAL"), AGREEMENT("AGREEMENT"), CHAIRPERSON("CHAIRPERSON");
 
     private String value;
 
