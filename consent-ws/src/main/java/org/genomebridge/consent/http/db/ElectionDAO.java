@@ -1,15 +1,19 @@
 package org.genomebridge.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 import org.genomebridge.consent.http.models.Election;
-import org.skife.jdbi.v2.sqlobject.*;
+import org.skife.jdbi.v2.sqlobject.Bind;
+import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
+import org.skife.jdbi.v2.sqlobject.SqlQuery;
+import org.skife.jdbi.v2.sqlobject.SqlUpdate;
+import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 
 @UseStringTemplate3StatementLocator
@@ -116,6 +120,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "AND e.referenceId in (<referenceIds>) " +
             "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
     List<Election> findLastElectionsByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type);
+
+    @SqlQuery("select count(*) from election e where e.status = 'Open' and e.referenceId = :referenceId")
+    Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId);
+
+    @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where e.status = :status group by referenceId) " +
+            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+            "AND e.referenceId = :referenceId ")
+    @Mapper(DatabaseElectionMapper.class)
+    Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceIds, @Bind("status") String status);
 
     @SqlQuery("select electionRPId from accessRp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);

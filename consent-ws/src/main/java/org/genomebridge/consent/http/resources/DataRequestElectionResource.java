@@ -37,10 +37,11 @@ public class DataRequestElectionResource extends Resource {
         try {
             accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
             List<Vote> votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS);
-            emailApi.sendNewCaseMessageToList(votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList()), accessElection);
+            List<Vote> darVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
             //create RP election
             Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
             voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP);
+            emailApi.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (NotFoundException e){
             return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();

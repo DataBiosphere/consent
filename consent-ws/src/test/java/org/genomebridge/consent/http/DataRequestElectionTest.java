@@ -13,6 +13,7 @@ import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.enumeration.VoteType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 import org.genomebridge.consent.http.service.DatabaseElectionAPI;
@@ -25,6 +26,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,8 +72,8 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
 
         // Create Documents needed in mongo for testing
-        Document doc = new Document().append("testingInfo1", "someValue");
-        Document doc2 = new Document().append("testingInfo2", "someValue2");
+        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", "SC-20660");
+        Document doc2 = new Document().append("testingInfo2", "someValue2").append("datasetId", "SC-20660");
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         mongoi.getDataAccessRequestCollection().insertOne(doc2);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
@@ -89,7 +91,9 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testCreateDataRequestElection() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.DATA_ACCESS.getValue());
         election.setStatus(ElectionStatus.OPEN.getValue());
+        //election.setReferenceId(DATA_REQUEST_ID);
         Response response = checkStatus(CREATED,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         String createdLocation = checkHeader(response, "Location");
@@ -109,17 +113,12 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     public void testUpdateDataRequestElection(Election created) {
         Client client = ClientBuilder.newClient();
-        created.setFinalVote(true);
-        created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
         assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
-        assertThat(created.getFinalRationale()).isEqualTo(FINAL_RATIONALE);
-        assertThat(created.getFinalVote()).isTrue();
-
     }
 
     public void deleteElection(Integer electionId) {
@@ -146,6 +145,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testDataRequestElectionWithInvalidDataRequest() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.DATA_ACCESS.getValue());
         election.setStatus(ElectionStatus.OPEN.getValue());
         // should return 400 bad request because the data request id does not exist
         checkStatus(NOT_FOUND,
@@ -165,6 +165,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void testCreateDataRequestElectionWithInvalidStatus() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.DATA_ACCESS.getValue());
         election.setStatus(INVALID_STATUS);
         // should return 400 bad request because status is invalid
         checkStatus(BAD_REQUEST,
