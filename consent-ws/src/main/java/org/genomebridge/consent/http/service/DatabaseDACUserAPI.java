@@ -7,9 +7,6 @@ import org.genomebridge.consent.http.db.DACUserRoleDAO;
 import org.genomebridge.consent.http.enumeration.DACUserRoles;
 import org.genomebridge.consent.http.models.DACUserRole;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import javax.ws.rs.NotFoundException;
 import java.util.*;
 

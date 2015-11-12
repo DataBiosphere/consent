@@ -38,4 +38,7 @@
 
     <include file="changesets/changelog-consent-16.0.xml"/>
 
+    <include file="changesets/changelog-consent-17.0.xml"/>
+
+
 </databaseChangeLog>

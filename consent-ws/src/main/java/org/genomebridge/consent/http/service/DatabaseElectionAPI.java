@@ -12,6 +12,7 @@ import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.DACUserRoles;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.enumeration.VoteType;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
@@ -33,6 +34,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
+
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -64,7 +66,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.mailMessageDAO = mailMessageDAO;
     }
 
-    public void setMongoDBInstance(MongoConsentDB mongo){
+    public void setMongoDBInstance(MongoConsentDB mongo) {
         this.mongo = mongo;
     }
 
@@ -77,11 +79,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateStatus(election.getStatus());
         setGeneralFields(election, referenceId, electionType);
         Date createDate = new Date();
-        Integer id = electionDAO.insertElection(election.getElectionType(),
-                election.getFinalVote(), election.getFinalRationale(), election.getStatus(),
+        Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
                 createDate, election.getReferenceId(), election.getFinalAccessVote());
         updateSortDate(referenceId, createDate);
-        if(electionType.equals(ElectionType.RP)){
+        if (electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
             electionDAO.insertAccessRP(access.getElectionId(), id);
         }
@@ -94,25 +95,25 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateStatus(rec.getStatus());
         if (rec.getStatus() == null) {
             rec.setStatus(ElectionStatus.OPEN.getValue());
-        } else if(rec.getStatus().equals(ElectionStatus.CLOSED.getValue()) || rec.getStatus().equals(ElectionStatus.FINAL.getValue())){
+        } else if (rec.getStatus().equals(ElectionStatus.CLOSED.getValue()) || rec.getStatus().equals(ElectionStatus.FINAL.getValue())) {
             rec.setFinalVoteDate(new Date());
         }
+        updateFinalVote(rec, electionId);
         Election election = electionDAO.findElectionById(electionId);
         if (election == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
-        if(rec.getStatus().equals(ElectionStatus.CANCELED.getValue()) || rec.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+        if (rec.getStatus().equals(ElectionStatus.CANCELED.getValue()) || rec.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
             updateAccessElection(electionId, election.getElectionType(), rec.getStatus());
         }
         Date lastUpdate = new Date();
-        electionDAO.updateElectionById(electionId, rec.getFinalVote(), rec.getFinalVoteDate(), rec.getFinalRationale(), rec.getStatus(), lastUpdate);
+        electionDAO.updateElectionById(electionId, rec.getStatus(), lastUpdate);
         updateSortDate(electionDAO.findElectionById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionById(electionId);
     }
 
-
     @Override
-    public Election updateFinalAccessVoteDataRequestElection(Integer electionId){
+    public Election updateFinalAccessVoteDataRequestElection(Integer electionId) {
         if (electionDAO.findElectionById(electionId) == null) {
             throw new NotFoundException("Election for specified id does not exist");
         }
@@ -136,21 +137,21 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public List<Election> describeClosedElectionsByType(String type) {
 
         List<Election> elections;
-        if(type.equals("1")) {
-            elections =  electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue());
+        if (type.equals("1")) {
+            elections = electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue());
             List<String> referenceIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
             ObjectId[] objarray = new ObjectId[referenceIds.size()];
-            for(int i=0;i<referenceIds.size();i++)
+            for (int i = 0; i < referenceIds.size(); i++)
                 objarray[i] = new ObjectId(referenceIds.get(i));
             BasicDBObject in = new BasicDBObject("$in", objarray);
             BasicDBObject q = new BasicDBObject("_id", in);
-            FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
+            FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
             dataAccessRequests.forEach((Block<Document>) dar -> {
                 List<Election> e = elections.stream().filter(election -> election.getReferenceId().equals(dar.get("_id").toString())).
                         collect(Collectors.toList());
                 e.get(0).setReferenceId(dar.get("dar_code").toString());
             });
-        }else {
+        } else {
 
 
             elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
@@ -177,7 +178,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
         Election election = electionDAO.findElectionById(id);
-        if(election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())){
+        if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
             Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
             electionDAO.deleteAccessRP(id);
             electionDAO.deleteElectionById(rpElectionId);
@@ -191,14 +192,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (election == null) {
             election = electionDAO.getOpenElectionByReferenceIdAndType(requestId, ElectionType.RP.getValue());
         }
-        if(election == null){
+        if (election == null) {
             throw new NotFoundException();
         }
         return election;
     }
 
     @Override
-    public List<Election> cancelOpenElectionAndReopen(){
+    public List<Election> cancelOpenElectionAndReopen() {
         String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
         List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         cancelOpenElection(electionTypeId);
@@ -211,25 +212,26 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election describeElectionById(Integer electionId){
+    public Election describeElectionById(Integer electionId) {
         return electionDAO.findElectionById(electionId);
     }
 
-    private void cancelOpenElection(String electionTypeId){
+    private void cancelOpenElection(String electionTypeId) {
         List<Integer> openElectionsIds = electionDAO.findElectionsIdByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
-        if(openElectionsIds != null && openElectionsIds.size() > 0){
+        if (openElectionsIds != null && openElectionsIds.size() > 0) {
             electionDAO.updateElectionStatus(openElectionsIds, ElectionStatus.CANCELED.getValue());
         }
     }
 
     @Override
-    public Integer findRPElectionByElectionAccessId(Integer electionId){
+    public Integer findRPElectionByElectionAccessId(Integer electionId) {
         return electionDAO.findRPElectionByElectionAccessId(electionId);
     }
 
-    private List<Election> openElections(List<Election> openElections){
+
+    private List<Election> openElections(List<Election> openElections) {
         List<Election> elections = new ArrayList<>();
-        for (Election existentElection : openElections){
+        for (Election existentElection : openElections) {
             Election election = new Election();
             election.setReferenceId(existentElection.getReferenceId());
             elections.add(createElection(election, election.getReferenceId(), ElectionType.TRANSLATE_DUL));
@@ -270,7 +272,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private void validateDataRequestId(String dataRequest) {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(dataRequest));
         Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-        if (dataRequest != null && dar == null ) {
+        if (dataRequest != null && dar == null) {
             throw new NotFoundException("Invalid id: " + dataRequest);
         }
     }
@@ -301,18 +303,18 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private void validateAvailableUsers() {
         Set<DACUser> dacUsers = dacUserDAO.findDACUsersEnabledToVote();
-        if(dacUsers != null && dacUsers.size() >= 4){
+        if (dacUsers != null && dacUsers.size() >= 4) {
             boolean existChairperson = false;
-            for(DACUser user : dacUsers) {
-                if(user.getRoles().stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()))){
+            for (DACUser user : dacUsers) {
+                if (user.getRoles().stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()))) {
                     existChairperson = true;
                     break;
                 }
             }
-            if(!existChairperson){
+            if (!existChairperson) {
                 throw new IllegalArgumentException("There has to be a Chairperson.");
             }
-        }else{
+        } else {
             throw new IllegalArgumentException(
                     "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
         }
@@ -378,10 +380,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return false;
     }
 
+
     private void updateSortDate(String referenceId, Date createDate){
         if(consentDAO.checkConsentbyId(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
-        }else{
+        } else {
             BasicDBObject query = new BasicDBObject("_id", new ObjectId(referenceId));
             Document dar = mongo.getDataAccessRequestCollection().find(query).first();
             dar.put("sortDate", createDate);
@@ -389,16 +392,26 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void updateAccessElection(Integer electionId, String type, String status){
+    private void updateAccessElection(Integer electionId, String type, String status) {
         List<Integer> ids = new ArrayList<>();
-        if(type.equals(ElectionType.DATA_ACCESS.getValue())){
+        if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
             ids.add(electionDAO.findRPElectionByElectionAccessId(electionId));
-        }else if(type.equals(ElectionType.RP.getValue())){
+        } else if (type.equals(ElectionType.RP.getValue())) {
             ids.add(electionDAO.findAccessElectionByElectionRPId(electionId));
         }
-        if(CollectionUtils.isNotEmpty(ids)){
+        if (CollectionUtils.isNotEmpty(ids)) {
             electionDAO.updateElectionStatus(ids, status);
         }
     }
 
+
+    private void updateFinalVote(Election rec, Integer electionId) {
+        if (rec.getFinalVote() != null) {
+            Vote vote = voteDAO.findVoteByElectionIdAndType(electionId, VoteType.CHAIRPERSON.getValue());
+            vote.setVote(rec.getFinalVote());
+            vote.setCreateDate(rec.getFinalVoteDate());
+            vote.setRationale(rec.getFinalRationale());
+            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.isReminderSent(), vote.getElectionId(), vote.getCreateDate());
+        }
+    }
 }

@@ -5,7 +5,6 @@ import org.genomebridge.consent.http.configurations.MailConfiguration;
 import javax.mail.*;
 import javax.mail.internet.*;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
