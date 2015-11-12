@@ -26,7 +26,7 @@ public class UseRestrictionConverterTest {
             + "   \"rus\":\"SDFG\","
             + "   \"non_tech_rus\":\"SDFG\","
             + "   \"diseases\":true,"
-            + "   \"methods\":true,"
+            + "   \"methods\":false,"
             + "   \"controls\":false,"
             + "   \"population\":false,"
             + "   \"forProfit\":true,"
@@ -471,12 +471,14 @@ public class UseRestrictionConverterTest {
         instance = new UseRestrictionConverter(config);
         result = instance.parseJsonFormulary(girlsData);
         System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/girls"));
+        assertTrue(result.toString().contains("DURPO/children"));
+        assertTrue(result.toString().contains("DURPO/female"));
 
         instance = new UseRestrictionConverter(config);
         result = instance.parseJsonFormulary(boysData);
         System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/boys"));
+        assertTrue(result.toString().contains("DURPO/children"));
+        assertTrue(result.toString().contains("DURPO/male"));
 
         instance = new UseRestrictionConverter(config);
         result = instance.parseJsonFormulary(childrensData);
@@ -487,8 +489,6 @@ public class UseRestrictionConverterTest {
         result = instance.parseJsonFormulary(allData);
         System.out.println(result.toString());
         assertFalse(result.toString().contains("DURPO/children"));
-        assertFalse(result.toString().contains("DURPO/boys"));
-        assertFalse(result.toString().contains("DURPO/girls"));
         assertFalse(result.toString().contains("DURPO/female"));
         assertFalse(result.toString().contains("DURPO/male"));
     

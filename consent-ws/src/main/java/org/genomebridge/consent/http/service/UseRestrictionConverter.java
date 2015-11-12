@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.genomebridge.consent.http.models.grammar.Not;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ public class UseRestrictionConverter {
     String[] typeOfResearch = {
         "methods"
         // this is regarding 2.4.4 in form, currently will no map to anything
+        // population support should be added when an open population ontology is ready
         //, "population"
 
     };
@@ -65,11 +67,11 @@ public class UseRestrictionConverter {
         // 
         List<UseRestriction> methodsList = new ArrayList<>();
         for (String field : typeOfResearch) {
-            if (form.containsKey(field)) {
-                if ((boolean) form.get(field)) {
+                if ((boolean) form.getOrDefault(field, false)) {
                     methodsList.add(createNamedRestriction(config.getValueByName(field)));
+                } else {
+                    methodsList.add(new Not(createNamedRestriction(config.getValueByName(field))));
                 }
-            }
         }
 
         if (CollectionUtils.isNotEmpty(methodsList)) {
@@ -121,15 +123,14 @@ public class UseRestrictionConverter {
         String selectedGender = (String) form.getOrDefault("gender", "X");
         boolean pediatricsOnly = (boolean) form.getOrDefault(researchPurposeStatement[PEDIATRIC_ONLY], false);
 
-        if (oneGenderOnly && selectedGender.equalsIgnoreCase("M") && pediatricsOnly) {
-            purposesList.add(createNamedRestriction(config.getBoys()));
-        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("M") && !pediatricsOnly) {
-            purposesList.add(createNamedRestriction(config.getMale()));
-        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("F") && pediatricsOnly) {
-            purposesList.add(createNamedRestriction(config.getGirls()));
-        } else if (oneGenderOnly && selectedGender.equalsIgnoreCase("F") && !pediatricsOnly) {
-            purposesList.add(createNamedRestriction(config.getFemale()));
-        } else if (pediatricsOnly) {
+        if (oneGenderOnly) {
+            if (selectedGender.equalsIgnoreCase("M")) 
+                purposesList.add(createNamedRestriction(config.getMale()));
+            else if (selectedGender.equalsIgnoreCase("F")) 
+                purposesList.add(createNamedRestriction(config.getFemale()));
+        }
+        
+        if (pediatricsOnly) {
             purposesList.add(createNamedRestriction(config.getPediatric()));
         }
 
