@@ -13,8 +13,11 @@ import org.genomebridge.consent.http.db.ConsentMapper;
 import org.genomebridge.consent.http.db.ElectionDAO;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
-import org.genomebridge.consent.http.models.*;
 import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.models.Consent;
+import org.genomebridge.consent.http.models.ConsentAssociation;
+import org.genomebridge.consent.http.models.ConsentManage;
+import org.genomebridge.consent.http.models.Election;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
@@ -50,7 +53,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      */
 
     public static void initInstance(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO , MongoConsentDB mongo) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao , electionDAO , mongo));
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao, electionDAO, mongo));
     }
 
     /**
@@ -113,7 +116,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public void update(String id, Consent rec) throws UnknownIdentifierException {
         rec = updateConsentDates(rec);
-        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(),rec.getName(),rec.getStructuredDataUseLetter(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate());
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(), rec.getName(), rec.getStructuredDataUseLetter(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate());
     }
 
     @Override

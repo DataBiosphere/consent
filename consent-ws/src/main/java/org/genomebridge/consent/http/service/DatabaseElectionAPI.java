@@ -31,10 +31,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private MailMessageDAO mailMessageDAO;
     private ElectionDAO electionDAO;
     private ConsentDAO consentDAO;
-    private DataRequestDAO dataRequestDAO;
     private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
+    private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
 
 
     /**
@@ -47,8 +47,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dataRequestDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO));
+    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO));
     }
 
     /**
@@ -57,10 +57,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DataRequestDAO dataRequestDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
+    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
-        this.dataRequestDAO = dataRequestDAO;
         this.dacUserDAO = dacUserDAO;
         this.mongo = mongo;
         this.voteDAO = voteDAO;
@@ -74,6 +73,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws
             IllegalArgumentException {
+        validateElectionIsValid(referenceId, electionType);
         validateAvailableUsers();
         validateReferenceId(referenceId, electionType);
         validateExistentElection(referenceId, electionType);
@@ -83,7 +83,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
                 createDate, election.getReferenceId(), election.getFinalAccessVote());
         updateSortDate(referenceId, createDate);
-        if (electionType.equals(ElectionType.RP)) {
+        if(electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
             electionDAO.insertAccessRP(access.getElectionId(), id);
         }
@@ -223,11 +223,36 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return electionDAO.findElectionById(electionId);
     }
 
-    private void cancelOpenElection(String electionTypeId) {
+    private void validateElectionIsValid(String referenceId, ElectionType electionType) {
+        if(electionType.equals(ElectionType.DATA_ACCESS)){
+            Document dar = describeDataAccessRequestById(referenceId);
+            if(dar == null){
+                throw new NotFoundException();
+            }
+            Consent consent = consentDAO.findConsentFromDatasetID(dar.getString("datasetId"));
+            Election consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
+            if((consentElection == null)){
+                throw new IllegalArgumentException(DUL_NOT_APROVED);
+            } else {
+                Integer openElections = electionDAO.verifyOpenElectionsForReferenceId(consent.getConsentId());
+                Vote vote = voteDAO.findVoteByElectionIdAndType(consentElection.getElectionId(), VoteType.CHAIRPERSON.getValue());
+                if((openElections != 0) || (!vote.getVote())) {
+                    throw new IllegalArgumentException(DUL_NOT_APROVED);
+                }
+            }
+        }
+    }
+
+    private void cancelOpenElection(String electionTypeId){
         List<Integer> openElectionsIds = electionDAO.findElectionsIdByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         if (openElectionsIds != null && openElectionsIds.size() > 0) {
             electionDAO.updateElectionStatus(openElectionsIds, ElectionStatus.CANCELED.getValue());
         }
+    }
+
+    private Document describeDataAccessRequestById(String id){
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        return mongo.getDataAccessRequestCollection().find(query).first();
     }
 
     @Override
@@ -277,9 +302,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void validateDataRequestId(String dataRequest) {
-        BasicDBObject query = new BasicDBObject("_id", new ObjectId(dataRequest));
-        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-        if (dataRequest != null && dar == null) {
+        Document dar = describeDataAccessRequestById(dataRequest);
+        if (dataRequest != null && dar == null ) {
             throw new NotFoundException("Invalid id: " + dataRequest);
         }
     }

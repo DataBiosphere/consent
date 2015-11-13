@@ -100,7 +100,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, requestDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO);
+        //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO);
 
         // Mail Services
         try {

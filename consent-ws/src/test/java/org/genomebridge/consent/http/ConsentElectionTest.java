@@ -44,6 +44,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         Response response = checkStatus(CREATED,
                 post(client, electionConsentPath(CONSENT_ID), election));
         String createdLocation = checkHeader(response, "Location");
@@ -73,9 +74,6 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getReferenceId()).isEqualTo(CONSENT_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
-        assertThat(created.getFinalRationale()).isEqualTo(FINAL_RATIONALE);
-        assertThat(created.getFinalVote()).isTrue();
-
     }
 
     public void deleteElection(Integer electionId) {
@@ -102,6 +100,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     public void testCreateConsentElectionWithInvalidConsent() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         election.setStatus(ElectionStatus.OPEN.getValue());
         // should return 400 bad request because the consent id does not exist
         checkStatus(BADREQUEST,
@@ -121,6 +120,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     public void testCreateConsentElectionWithInvalidStatus() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         election.setStatus(INVALID_STATUS);
         // should return 400 bad request because status is invalid
         checkStatus(BAD_REQUEST,
