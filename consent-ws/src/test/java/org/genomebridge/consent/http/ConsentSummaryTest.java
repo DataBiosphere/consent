@@ -29,14 +29,6 @@ public class ConsentSummaryTest extends ElectionVoteServiceTest {
         return RULE;
     }
 
-    @Test
-    public void testConsentSummaryFile() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Response response = getTextPlain(client, consentSummaryPath());
-        String output = new BufferedReader(new StringReader(response.readEntity(String.class))).readLine();
-        String summary = EnumSet.allOf(HeaderSummary.class).stream().
-                map(HeaderSummary::getValue).collect(Collectors.joining(SEPARATOR));
-        Assert.assertTrue(summary.equals(output));
-    }
+
 
 }

@@ -94,7 +94,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
-        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO);
+        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance );
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);

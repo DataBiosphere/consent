@@ -13,11 +13,8 @@ public class DatabaseElectionMapper implements ResultSetMapper<Election> {
         return new Election(
                 r.getInt("electionId"),
                 r.getString("electionType"),
-                null,
-                null,
                 r.getString("status"),
                 r.getDate("createDate"),
-                null,
                 r.getString("referenceId"),
                 (r.getDate("lastUpdate") == null) ? null : r.getDate("lastUpdate"),
                 (r.getString("finalAccessVote") == null) ? null : r.getBoolean("finalAccessVote")
