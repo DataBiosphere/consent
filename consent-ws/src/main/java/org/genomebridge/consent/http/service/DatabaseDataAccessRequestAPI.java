@@ -142,8 +142,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public List<Document> describeDataAccessRequests() {
-        List<Document> response = mongo.getDataAccessRequestCollection().find().into(new ArrayList<Document>());
-        return response;
+        return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
 
     @Override

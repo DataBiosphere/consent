@@ -38,6 +38,15 @@ public class DataRequestCasesResource extends Resource {
                 .build();
     }
 
+
+    @GET
+    @Path("/matchsummary")
+    public Response getMatchSummaryCases() {
+        return Response.ok(summaryApi.describeMatchSummaryCases())
+              .build();
+    }
+
+
     @GET
     @Path("/closed")
     @Produces("application/json")

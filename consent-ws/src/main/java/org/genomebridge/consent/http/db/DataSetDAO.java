@@ -22,6 +22,8 @@ import java.util.Set;
 @RegisterMapper({DataSetMapper.class})
 public interface DataSetDAO extends Transactional<DataSetDAO> {
 
+    final String CHAIRPERSON = "CHAIRPERSON";
+
     @SqlQuery("select dataSetId from dataset where dataSetId = :dataSetId")
     Integer checkDataSetbyId(@Bind("dataSetId") Integer dataSetId);
 
@@ -30,6 +32,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
+
+    @SqlQuery("select ds.objectId from dataset ds")
+    List<String> findAllObjectId();
 
 
     @SqlUpdate("insert into dataset (name, createDate) values ( :name, :createDate)")
@@ -55,7 +60,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.useRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId and e.finalVote = true order by d.dataSetId, k.displayOrder")
+    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.useRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
+            " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  + "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate " +
+            " and ev.referenceId = e.referenceId and v.vote = true order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @Mapper(DataSetPropertiesMapper.class)
@@ -91,13 +98,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery(" SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
-    @SqlQuery(" SELECT d.objectId FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId and e.finalVote = true  and d.objectId like concat('%',:partial,'%') order by d.dataSetId")
+    @SqlQuery(" SELECT d.objectId FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId " +
+              " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
+              " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +
+              "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId and v.vote = true  and d.objectId like concat('%',:partial,'%') order by d.dataSetId")
     List<String> getObjectIdsbyPartial(@Bind("partial") String partial);
 
 }
-
-
-
-
-
-

@@ -46,3 +46,15 @@ ontology:
     girls: http://www.broadinstitute.org/ontologies/DURPO/girls
 services:
     matchURL: https://consent-ontology.dsde-dev.broadinstitute.org/match
+    localURL: http://localhost:8000/
+mailConfiguration:
+  activateEmailNotifications: false
+  smtpPort: 587
+  smtpAuth: true
+  host: smtp.gmail.com
+  smtpStartTlsEnable: true
+  googleAccount:
+  accountPassword: 
+freeMarkerConfiguration:
+  templateDirectory: src/main/resources/freemarker
+  defaultEncoding: UTF-8

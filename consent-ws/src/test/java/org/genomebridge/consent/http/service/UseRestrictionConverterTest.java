@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.service;
 
+import org.genomebridge.consent.http.configurations.UseRestrictionConfig;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -420,25 +421,6 @@ public class UseRestrictionConverterTest {
     String pediatric = "http://www.broadinstitute.org/ontologies/DURPO/children";
     String girls = "http://www.broadinstitute.org/ontologies/DURPO/girls";
     String boys = "http://www.broadinstitute.org/ontologies/DURPO/boys";    
-
-    public UseRestrictionConverterTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     /**
      * Test of parseJsonFormulary method, of class UseRestrictionConverter.
