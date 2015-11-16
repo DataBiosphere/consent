@@ -50,6 +50,16 @@ public class ConsentCasesResource extends Resource {
     }
 
     @GET
+    @Path("/summary/darfile")
+    @Produces("text/plain")
+    public Response getDarSummaryDetailFile() {
+        File fileToSend = summaryApi.describeDataAccessRequestSummaryDetail();
+        ResponseBuilder response = Response.ok(fileToSend);
+        response.header("Content-Disposition", "attachment; filename=\"DAR_summary.txt\"");
+        return response.build();
+    }
+
+    @GET
     @Path("/closed")
     @Produces("application/json")
     public List<Election> describeClosedElections() {
