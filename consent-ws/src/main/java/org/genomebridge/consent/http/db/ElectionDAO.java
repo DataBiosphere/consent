@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.db;
 
+import org.genomebridge.consent.http.models.AccessRP;
 import org.genomebridge.consent.http.models.Election;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
@@ -87,6 +88,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + "' where e.electionType = :type and e.status = :status order by createDate asc")
     List<Election> findElectionsByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
+    @SqlQuery("select e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, "
+            +" e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + CHAIRPERSON
+            +"' inner join (select referenceId, MAX(createDate) maxDate from election e where  e.electionType = :type  group by referenceId) "
+            +" electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId"
+            +" AND e.electionType = :type  order by createDate asc")
+   List<Election> findLastElectionsByType(@Bind("type") String type);
+
     @SqlQuery("select e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, " +
             "e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 1 "+
             "and e.finalAccessVote is true  and v.type = 'FINAL'  and e.status = :status order by e.createDate asc")
@@ -121,6 +129,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
     List<Election> findLastElectionsByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type);
 
+    @SqlQuery("select  e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
+            "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType from election e " +
+            "inner join (select referenceId, MAX(createDate) maxDate from election e where e.status = :status group by referenceId) " +
+            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+            "AND e.referenceId in (<referenceIds>) " +
+            "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
+    List<Election> findLastElectionsByReferenceIdsTypeAndStatus(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type ,@Bind("status") String status);
+
     @SqlQuery("select count(*) from election e where e.status = 'Open' and e.referenceId = :referenceId")
     Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId);
 
@@ -136,6 +152,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("insert into accessRp (electionAccessId, electionRPId ) values ( :electionAccessId, :electionRPId)")
     void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
                         @Bind("electionRPId") Integer electionRPId);
+
+    @RegisterMapper({AccessRPMapper.class})
+    @SqlQuery("select * from accessRp where electionAccessId in (<electionAccessIds>) ")
+    List<AccessRP> findAccessRPbyElectionAccessId(@BindIn("electionAccessIds") List<Integer> electionAccessIds);
 
     @SqlUpdate("delete  from accessRp where electionAccessId = :electionAccessId")
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);

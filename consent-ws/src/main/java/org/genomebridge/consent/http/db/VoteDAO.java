@@ -9,10 +9,13 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Date;
 import java.util.List;
 
+@UseStringTemplate3StatementLocator
 @RegisterMapper({VoteMapper.class})
 public interface VoteDAO extends Transactional<VoteDAO> {
 
@@ -35,6 +38,10 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = 'DAC'")
     List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
+
+    @SqlQuery("select  *  from vote v where  v.electionId IN (<electionIds>)")
+    List<Vote> findVotesByElectionIds(@BindIn("electionIds") List<Integer> electionIds);
+
 
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.type = 'DAC'")
     List<Vote> findPendingDACVotesByElectionId(@Bind("electionId") Integer electionId);
@@ -95,4 +102,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select count(*) from vote v inner join election e on v.electionId = e.electionId where e.electionType = :type and e.status = 'Closed' and "
             + " v.type = 'FINAL' and v.vote = :finalVote ")
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
+
+    @SqlQuery("SELECT MAX(c) FROM  ((SELECT  COUNT(vote) as c FROM vote  WHERE type = 'DAC' and electionId  IN (<electionIds>) GROUP BY electionId  ) as members)")
+    Integer findMaxNumberOfDACMembers(@BindIn("electionIds") List<Integer> electionIds);
+
 }

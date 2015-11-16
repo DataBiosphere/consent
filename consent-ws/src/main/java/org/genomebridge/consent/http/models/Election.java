@@ -39,6 +39,17 @@ public class Election {
 
     public Election() {
     }
+    public Election(Integer electionId, String electionType,
+        String status, Date createDate,
+        String referenceId, Date lastUpdate , Boolean finalAccessVote) {
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.lastUpdate = lastUpdate;
+        this.finalAccessVote = finalAccessVote;
+    }
 
 
     public Election(Integer electionId, String electionType,

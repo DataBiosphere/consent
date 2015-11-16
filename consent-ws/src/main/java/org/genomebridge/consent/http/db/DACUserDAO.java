@@ -24,6 +24,9 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select * from dacuser  where dacUserId = :dacUserId")
     DACUser findDACUserById(@Bind("dacUserId") Integer dacUserId);
 
+    @SqlQuery("select  *  from dacuser where  dacUserId IN (<dacUserIds>)")
+    Collection<DACUser> findUsers(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
+
     @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Chairperson'")
     DACUser findChairpersonUser();
 

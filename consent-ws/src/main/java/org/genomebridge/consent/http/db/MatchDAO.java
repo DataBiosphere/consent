@@ -27,6 +27,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlQuery("select * from matchEntity where matchId = :id ")
     Match  findMatchById(@Bind("id") Integer id);
 
+    @SqlQuery("select * from matchEntity where purpose  IN (<purposeId>)")
+    List<Match>  findMatchesPurposeId(@BindIn("purposeId") List<String> purposeId);
+
     @SqlUpdate("insert into matchEntity " +
             "(consent, purpose, matchEntity, failed, date) values " +
             "(:consentId, :purposeId, :match, :failed, :createDate)")
@@ -55,5 +58,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
 
     @SqlQuery("delete matchEntity where name in (<matchIds>)")
     List<Integer> matchBulkDeleteByIds(@BindIn("matchIds") List<String> matchIds);
+
+    @SqlQuery("SELECT COUNT(*) FROM matchentity where matchEntity = :matchEntity and failed ='FALSE' ")
+    Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
+
 
 }
