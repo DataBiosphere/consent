@@ -14,7 +14,7 @@ public interface EmailNotifierAPI {
 
     void sendReminderMessage(Integer voteId) throws MessagingException, IOException, TemplateException;
 
-    void sendNewCaseMessage(Integer voteId) throws MessagingException, IOException, TemplateException;
-
     void sendNewCaseMessageToList(List<Vote> votes, Election election) throws MessagingException, IOException, TemplateException;
+
+    void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException;
 }

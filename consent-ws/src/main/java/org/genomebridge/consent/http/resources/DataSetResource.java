@@ -109,7 +109,7 @@ public class DataSetResource extends Resource {
             inputStream = Resources.getResource(fileName).openStream();
         } catch (IOException e) {
             Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-            e.printStackTrace();
+            logger().error("Error when GETting dataset sample. Cause: "+e);
         }
         return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + fileName).build();
     }

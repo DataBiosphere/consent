@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class EmailNotifierService extends AbstractEmailNotifierAPI {
@@ -35,6 +36,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private DACUserAPI dacUserAPI;
     private String SERVERURL;
     private boolean isServiceActive;
+    private static final Logger logger = Logger.getLogger(EmailNotifierService.class.getName());
 
     public enum ElectionTypeString {
 
@@ -81,27 +83,45 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     private Map<String, String> retrieveForVote(Integer voteId){
-        Map<String, String> dataMap = new HashMap();
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionById(vote.getElectionId());
         DACUser user = dacUserAPI.describeDACUserById(vote.getDacUserId());
-        dataMap.put("userName", user.getDisplayName());
-        dataMap.put("electionType", retrieveElectionTypeString(election.getElectionType()));
-        dataMap.put("entityId", retrieveReferenceId(election.getElectionType(), election.getReferenceId()));
-        dataMap.put("electionId", election.getElectionId().toString());
-        dataMap.put("dacUserId", vote.getDacUserId().toString());
-        dataMap.put("email", user.getEmail());
-        return dataMap;
+        return createDataMap(user.getDisplayName(),
+                retrieveElectionTypeStringCollect(election.getElectionType()),
+                retrieveReferenceId(election.getElectionType(), election.getReferenceId()),
+                election.getElectionId().toString(),
+                user.getDacUserId().toString(),
+                user.getEmail());
     }
 
     private Map<String, String> retrieveForCollect(Integer electionId){
-        Map<String, String> dataMap = new HashMap();
         Election election = electionDAO.findElectionById(electionId);
         DACUser user = dacUserDAO.findChairpersonUser();
+        return createDataMap(user.getDisplayName(),
+                retrieveElectionTypeStringCollect(election.getElectionType()),
+                retrieveReferenceId(election.getElectionType(), election.getReferenceId()),
+                election.getElectionId().toString(),
+                user.getDacUserId().toString(),
+                user.getEmail());
+    }
+
+    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email){
+        Map<String, String> dataMap = new HashMap();
+        dataMap.put("userName", displayName);
+        dataMap.put("electionType", electionType);
+        dataMap.put("entityId", referenceId);
+        dataMap.put("electionId", electionId);
+        dataMap.put("dacUserId", dacUserId);
+        dataMap.put("email", email);
+        return dataMap;
+    }
+
+    private Map<String, String> retrieveForNewDAR(String dataAccessRequestId){
+        DACUser user = dacUserDAO.findChairpersonUser();
+        Map<String, String> dataMap = new HashMap();
         dataMap.put("userName", user.getDisplayName());
-        dataMap.put("electionType", retrieveElectionTypeStringCollect(election.getElectionType()));
-        dataMap.put("entityId", retrieveReferenceId(election.getElectionType(), election.getReferenceId()));
-        dataMap.put("electionId", election.getElectionId().toString());
+        dataMap.put("electionType", "New Data Access Request Case");
+        dataMap.put("entityId", dataAccessRequestId);
         dataMap.put("dacUserId", user.getDacUserId().toString());
         dataMap.put("email", user.getEmail());
         return dataMap;
@@ -112,7 +132,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             try {
                 return consentAPI.retrieve(referenceId).getName();
             } catch (UnknownIdentifierException e) {
-                e.printStackTrace();
+                logger.severe("Error when trying to retrieve Reference ID to send email. Cause: "+e);
                 return " ";
             }
         }
@@ -138,22 +158,25 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
+    public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive) {
+            List<DACUser> users = (List<DACUser>) dacUserAPI.describeAdminUsers();
+            List<String> addresses = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
+            List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
+            Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
+            Writer template = templateHelper.getNewDARRequestTemplate(SERVERURL);
+            mailService.sendNewDARRequests(addresses, data.get("entityId"), data.get("electionType"), template);
+            emailDAO.insertBulkEmailNoVotes(usersId, dataAccessRequestId, 4, new Date(), template.toString());
+        }
+    }
+
+    @Override
     public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
             Map<String, String> data = retrieveForCollect(electionId);
             Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityId"), SERVERURL);
             mailService.sendCollectMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertEmail(null, Integer.valueOf(data.get("electionId")), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
-        }
-    }
-
-    @Override
-    public void sendNewCaseMessage(Integer voteId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            Map<String, String> data = retrieveForVote(voteId);
-            Writer template = templateHelper.getNewCaseTemplate(data.get("electionType"), data.get("entityId"), SERVERURL);
-            mailService.sendNewCaseMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertEmail(voteId, Integer.valueOf(data.get("electionId")), Integer.valueOf(data.get("dacUserId")), 2, new Date(), template.toString());
+            emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
         }
     }
 
@@ -163,7 +186,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             Map<String, String> data = retrieveForVote(voteId);
             Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityId"), SERVERURL);
             mailService.sendReminderMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertEmail(voteId, Integer.valueOf(data.get("electionId")), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
+            emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
             voteDAO.updateVoteReminderFlag(voteId, true);
         }
     }
@@ -182,7 +205,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             String entityId = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
             Writer template = templateHelper.getNewCaseTemplate(electionType, entityId, SERVERURL);
             sendNewCaseMessages(usersAddress, electionType, entityId, template);
-            emailDAO.insertBulkEmail(votesId, userIds, election.getElectionId(), 2, new Date(), template.toString());
+            emailDAO.insertBulkEmail(votesId, userIds, election.getElectionId().toString(), 2, new Date(), template.toString());
         }
     }
 }

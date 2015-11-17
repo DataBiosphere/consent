@@ -1,6 +1,10 @@
 package org.genomebridge.consent.http.mail;
 
 import org.genomebridge.consent.http.configurations.MailConfiguration;
+import org.genomebridge.consent.http.mail.message.CollectMessage;
+import org.genomebridge.consent.http.mail.message.NewCaseMessage;
+import org.genomebridge.consent.http.mail.message.NewDARRequestMessage;
+import org.genomebridge.consent.http.mail.message.ReminderMessage;
 
 import javax.mail.*;
 import javax.mail.internet.*;
@@ -13,18 +17,13 @@ public class MailService extends AbstractMailServiceAPI {
 
     private Properties mailServerProperties;
     private Session getMailSession;
-    MailMessageAPI mailMessageService;
     MailConfiguration config;
-
-    private final String NEWCASE_DUL = "Log vote on Data Use Limitations case id: %s.";
-    private final String NEWCASE_DAR = "Log votes on Data Access Request case id: %s.";
-    private final String REMINDER_DUL = "Urgent: Log vote on Data Use Limitations case id: %s.";
-    private final String REMINDER_DAR = "Urgent: Log votes on Data Access Request case id: %s.";
-    private final String REMINDER_RP = "Urgent: Log votes on Research Purpose Review case id: %s.";
-    private final String COLLECT_DUL = "Ready for vote collection on Data Use Limitations case id: %s.";
-    private final String COLLECT_DAR = "Ready for votes collection on Data Access Request case id: %s.";
     private String USERNAME;
     private String PASSWORD;
+    private CollectMessage collectMessageCreator = new CollectMessage();
+    private NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
+    private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
+    private ReminderMessage reminderMessageCreator = new ReminderMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -47,7 +46,6 @@ public class MailService extends AbstractMailServiceAPI {
                         return new PasswordAuthentication(USERNAME, PASSWORD);
                     }
                 });
-        mailMessageService = new MailMessage();
     }
 
     private void sendMessage(MimeMessage message, String address) throws MessagingException {
@@ -56,79 +54,31 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     private void sendMessages(MimeMessage message, List<String> address) throws MessagingException {
-        for(String userAddress: address){
+        for (String userAddress : address) {
             message.addRecipients(Message.RecipientType.BCC, userAddress);
         }
         Transport.send(message, message.getRecipients(Message.RecipientType.BCC));
     }
 
     public void sendCollectMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = mailMessageService.createMessage(getMailSession);
-        MimeMultipart multipart = new MimeMultipart();
-        message.setSubject(assignCollectSubject(referenceId, type));
-        BodyPart messageBodyPart = new MimeBodyPart();
-        messageBodyPart.setContent(template.toString(), "text/html");
-        multipart.addBodyPart(messageBodyPart);
-        message.setContent(multipart);
+        MimeMessage message = collectMessageCreator.collectMessage(getMailSession, template, referenceId, type);
         sendMessage(message, address);
     }
 
-    public void sendNewCaseMessages(List<String> usersAddress, String entityId, String electionType, Writer template) throws MessagingException {
-        MimeMessage message = mailMessageService.createMessage(getMailSession);
-        MimeMultipart multipart = new MimeMultipart();
-        message.setSubject(assignNewCaseSubject(entityId, electionType));
-        BodyPart messageBodyPart = new MimeBodyPart();
-        messageBodyPart.setContent(template.toString(), "text/html");
-        multipart.addBodyPart(messageBodyPart);
-        message.setContent(multipart);
+    public void sendNewCaseMessages(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
+        MimeMessage message = newCaseMessageCreator.newCaseMessage(getMailSession, template, referenceId, type);
         sendMessages(message, usersAddress);
     }
 
-    public void sendNewCaseMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = mailMessageService.createMessage(getMailSession);
-        MimeMultipart multipart = new MimeMultipart();
-        message.setSubject(assignNewCaseSubject(referenceId, type));
-        BodyPart messageBodyPart = new MimeBodyPart();
-        messageBodyPart.setContent(template.toString(), "text/html");
-        multipart.addBodyPart(messageBodyPart);
-        message.setContent(multipart);
-        sendMessage(message, address);
-    }
-
     public void sendReminderMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = mailMessageService.createMessage(getMailSession);
-        MimeMultipart multipart = new MimeMultipart();
-        message.setSubject(assignReminderSubject(referenceId, type));
-        BodyPart messageBodyPart = new MimeBodyPart();
-        messageBodyPart.setContent(template.toString(), "text/html");
-        multipart.addBodyPart(messageBodyPart);
-        message.setContent(multipart);
+        MimeMessage message = reminderMessageCreator.reminderMessage(getMailSession, template, referenceId, type);
         sendMessage(message, address);
     }
 
-    private String assignNewCaseSubject(String referenceId, String type) throws MessagingException {
-        if(type.equals("Data Use Limitations"))
-            return String.format(NEWCASE_DUL, referenceId);
-        else {
-            return String.format(NEWCASE_DAR, referenceId);
-        }
+    @Override
+    public void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
+        MimeMessage message = newDARMessageCreator.newDARRequestMessage(getMailSession, template, referenceId, type);
+        sendMessages(message, usersAddress);
     }
 
-    private String assignCollectSubject(String referenceId, String type) throws MessagingException {
-        if(type.equals("Data Use Limitations"))
-            return String.format(COLLECT_DUL, referenceId);
-        else
-            return String.format(COLLECT_DAR, referenceId);
-    }
-
-    private String assignReminderSubject(String referenceId, String type) throws MessagingException {
-        if(type.equals("Data Use Limitations"))
-            return String.format(REMINDER_DUL, referenceId);
-        else {
-            if (type.equals("Data Access Request")) {
-                return String.format(REMINDER_DAR, referenceId);
-            }
-        }
-        return String.format(REMINDER_RP, referenceId);
-    }
 }
