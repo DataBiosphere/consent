@@ -63,4 +63,6 @@ public interface ConsentAPI {
 
     List<ConsentManage> describeConsentManage();
 
+    Integer getUnReviewedConsents();
+
 }

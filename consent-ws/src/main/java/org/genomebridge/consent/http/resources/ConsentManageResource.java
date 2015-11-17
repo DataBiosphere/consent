@@ -6,7 +6,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
-@Path("{api : (api/)?}consent/manage")
+@Path("{api : (api/)?}consent")
 public class ConsentManageResource extends Resource {
 
     private final ConsentAPI api;
@@ -16,9 +16,17 @@ public class ConsentManageResource extends Resource {
     }
 
     @GET
+    @Path("/manage")
     public Response getConsentManage() {
         return Response.ok(api.describeConsentManage())
                 .build();
     }
+
+    @GET
+    @Path("/unreviewed")
+    public Response getTotalUnreviewedConsent() {
+        return Response.ok("{\"dulUnReviewedCases\":"+api.getUnReviewedConsents()+"}").build();
+    }
+
 
 }

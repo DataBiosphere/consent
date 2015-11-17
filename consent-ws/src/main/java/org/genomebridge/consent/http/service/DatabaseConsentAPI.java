@@ -4,6 +4,7 @@ import com.google.common.collect.Collections2;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.bson.Document;
@@ -346,6 +347,16 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             }
         }
         return consentManageList;
+    }
+
+    @Override
+    public Integer getUnReviewedConsents(){
+        Integer unreviewedCases = 0;
+        List<Consent> consents = consentDAO.findUnreviewedConsents();
+        if(CollectionUtils.isNotEmpty(consents)){
+            unreviewedCases = consents.size();
+        }
+        return unreviewedCases;
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents, String status) {

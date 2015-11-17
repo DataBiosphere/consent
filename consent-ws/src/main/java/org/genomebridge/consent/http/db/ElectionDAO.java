@@ -22,16 +22,17 @@ import java.util.Set;
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     final String CHAIRPERSON = "CHAIRPERSON";
+    final String FINAL = "FINAL";
 
     @SqlQuery("select electionId from election  where referenceId = :referenceId and status = 'Open'")
     Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select  e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, " +
-             " e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v on v.electionId = e.electionId and v.type = '"+ CHAIRPERSON +"' where referenceId = :referenceId")
+            " e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v on v.electionId = e.electionId and v.type = '"+ CHAIRPERSON +"' where referenceId = :referenceId")
     List<Election> findElectionsByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select  e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, " +
-             " e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v on v.electionId = e.electionId and v.type = '"+ CHAIRPERSON +"'  where referenceId in (<referenceId>) ")
+            " e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v on v.electionId = e.electionId and v.type = '"+ CHAIRPERSON +"'  where referenceId in (<referenceId>) ")
     Set<Election> findElectionsByReferenceId(@BindIn("referenceId") List<String> referenceId);
 
     @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote ) values " +
@@ -93,7 +94,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             +"' inner join (select referenceId, MAX(createDate) maxDate from election e where  e.electionType = :type  group by referenceId) "
             +" electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId"
             +" AND e.electionType = :type  order by createDate asc")
-   List<Election> findLastElectionsByType(@Bind("type") String type);
+    List<Election> findLastElectionsByType(@Bind("type") String type);
 
     @SqlQuery("select e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, " +
             "e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 1 "+
@@ -115,7 +116,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Integer> findElectionsIdByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
     @SqlQuery("select count(*) from election e inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "' where e.electionType = :type and e.status = :status and " +
-              " v.vote = :finalVote ")
+            " v.vote = :finalVote ")
     Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
 
     @SqlQuery("select count(*) from election e where e.status = 'Open' ")
@@ -123,10 +124,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select  e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType from election e " +
-            "inner join (select referenceId, MAX(createDate) maxDate from election e group by referenceId) " +
+            "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
-            "AND e.referenceId in (<referenceIds>) " +
-            "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
+            "AND e.referenceId in (<referenceIds>) AND e.electionType = :type " +
+            "left join vote v on v.electionId = e.electionId and v.type = '" + FINAL + "'")
     List<Election> findLastElectionsByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type);
 
     @SqlQuery("select  e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, " +

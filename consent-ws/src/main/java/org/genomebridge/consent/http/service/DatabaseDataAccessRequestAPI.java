@@ -16,10 +16,7 @@ import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -127,8 +124,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return result;
     }
 
-    public List<DataAccessRequestManage> describeDataAccessRequestManage() {
-        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1));
+    @Override
+    public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId) {
+        FindIterable<Document> accessList = userId == null ? mongo.getDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
+                : mongo.getDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
         if(CollectionUtils.isNotEmpty(accessRequestIds)){
@@ -156,6 +155,35 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         mongo.getDataAccessRequestCollection().findOneAndDelete(query);
     }
 
+    @Override
+    public Document updateDataAccessRequest(Document dataAccessRequest, String id) throws MongoException {
+        BasicDBObject query = new BasicDBObject("dar_code", id);
+        dataAccessRequest.remove("_id");
+        dataAccessRequest.put("sortDate", new Date());
+        if (mongo.getDataAccessRequestCollection().findOneAndReplace(query, dataAccessRequest) == null) {
+            throw new NotFoundException("Data access for the specified id does not exist");
+        }
+        return mongo.getDataAccessRequestCollection().find(query).first();
+    }
+
+    @Override
+    public Integer getTotalUnReviewedDAR() {
+        FindIterable<Document> accessList =  mongo.getDataAccessRequestCollection().find();
+        Integer unReviewedDAR = 0;
+        List<String> accessRequestIds = getRequestIds(accessList);
+        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+            List<Election> electionList = new ArrayList<>();
+            electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
+            HashMap<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
+            for(Document dar :accessList){
+                ObjectId id = dar.get("_id", ObjectId.class);
+                Election election = electionAccessMap.get(id.toString());
+                if(election == null)  ++unReviewedDAR;
+            }
+        }
+        return unReviewedDAR;
+    }
+
     private  List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents,  Map<String,Election> electionList){
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         documents.forEach((Block<Document>) dar -> {
@@ -173,6 +201,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             }else{
                 darManage.setElectionId(election.getElectionId());
                 darManage.setElectionStatus(election.getStatus());
+                darManage.setElectionVote(election.getFinalVote());
             }
             requestsManage.add(darManage);
         });
