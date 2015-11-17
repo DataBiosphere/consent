@@ -57,7 +57,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         Vote vote = voteDAO.findVoteById(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
-        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, electionId, new Date());
+        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, false, electionId, new Date());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -69,7 +69,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         Vote vote = voteDAO.findVoteById(voteId);
         Date updateDate = rec.getVote() == null ? null : new Date();
         String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, getElectionId(referenceId), vote.getCreateDate());
+        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false,  getElectionId(referenceId), vote.getCreateDate());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -96,7 +96,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     @Override
     public Vote describeVoteFinalAccessVoteById(Integer voteId)
             throws IllegalArgumentException {
-        Vote vote = voteDAO.findChairPersonVoteByElectionId(voteId);
+        Vote vote = voteDAO.findVoteByElectionIdAndType(voteId, VoteType.FINAL.getValue());
         if (vote == null) {
             throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
         }
@@ -132,6 +132,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
             for (DACUser user : dacUserList) {
                 Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
                 votes.add(voteDAO.findVoteById(id));
+                if(isChairPerson(user.getDacUserId())){
+                    Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
+                    votes.add(voteDAO.findVoteById(chairPersonVoteId));
+                }
                 if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
                     id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));

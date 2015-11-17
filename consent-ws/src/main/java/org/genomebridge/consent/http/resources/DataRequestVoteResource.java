@@ -1,18 +1,19 @@
 package org.genomebridge.consent.http.resources;
 
+import freemarker.template.TemplateException;
+
 import org.genomebridge.consent.http.enumeration.VoteType;
 import org.genomebridge.consent.http.models.Vote;
-import org.genomebridge.consent.http.service.AbstractElectionAPI;
-import org.genomebridge.consent.http.service.AbstractVoteAPI;
-import org.genomebridge.consent.http.service.ElectionAPI;
-import org.genomebridge.consent.http.service.VoteAPI;
+import org.genomebridge.consent.http.service.*;
 
+import javax.mail.MessagingException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
@@ -21,11 +22,12 @@ public class DataRequestVoteResource extends Resource {
 
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
+    private final EmailNotifierAPI emailAPI;
 
     public DataRequestVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
-
+        this.emailAPI = AbstractEmailNotifierAPI.getInstance();
     }
 
     @POST
@@ -36,6 +38,13 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("id") Integer voteId) {
         try {
             Vote vote = api.firstVoteUpdate(rec, voteId);
+            if(electionAPI.validateCollectDAREmailCondition(vote)){
+                try {
+                    emailAPI.sendCollectMessage(vote.getElectionId());
+                } catch (MessagingException | IOException | TemplateException e) {
+                    e.printStackTrace();
+                }
+            }
             URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
             return Response.ok(uri).build();
         } catch (IllegalArgumentException e) {

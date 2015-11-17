@@ -9,10 +9,13 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Date;
 import java.util.List;
 
+@UseStringTemplate3StatementLocator
 @RegisterMapper({VoteMapper.class})
 public interface VoteDAO extends Transactional<VoteDAO> {
 
@@ -21,7 +24,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId " +
-            "where election.electionId = :electionId")
+            "where election.electionId = :electionId and v.type != 'CHAIRPERSON'")
     @Mapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
@@ -36,6 +39,10 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = 'DAC'")
     List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
 
+    @SqlQuery("select  *  from vote v where  v.electionId IN (<electionIds>)")
+    List<Vote> findVotesByElectionIds(@BindIn("electionIds") List<Integer> electionIds);
+
+
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.type = 'DAC'")
     List<Vote> findPendingDACVotesByElectionId(@Bind("electionId") Integer electionId);
 
@@ -43,8 +50,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                           @Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = 'FINAL'")
-    Vote findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
+    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = :type")
+    Vote findVoteByElectionIdAndType(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
 
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.type = 'FINAL'")
@@ -73,11 +80,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete v from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId ")
     void deleteVotes(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, createDate = :createDate where voteId = :voteId")
+    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
                     @Bind("rationale") String rationale,
                     @Bind("updateDate") Date updateDate,
                     @Bind("voteId") Integer voteId,
+                    @Bind("reminderSent") boolean reminder,
                     @Bind("electionId") Integer electionId,
                     @Bind("createDate") Date createDate);
 
@@ -94,4 +102,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select count(*) from vote v inner join election e on v.electionId = e.electionId where e.electionType = :type and e.status = 'Closed' and "
             + " v.type = 'FINAL' and v.vote = :finalVote ")
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
+
+    @SqlQuery("SELECT MAX(c) FROM  ((SELECT  COUNT(vote) as c FROM vote  WHERE type = 'DAC' and electionId  IN (<electionIds>) GROUP BY electionId  ) as members)")
+    Integer findMaxNumberOfDACMembers(@BindIn("electionIds") List<Integer> electionIds);
+
 }

@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
 import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
@@ -43,6 +44,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         Response response = checkStatus(CREATED,
                 post(client, electionConsentPath(CONSENT_ID), election));
         String createdLocation = checkHeader(response, "Location");
@@ -66,15 +68,12 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
-        created = retrieveElection(client, electionConsentPath(CONSENT_ID));
+        created = retrieveElection(client, electionPathById(created.getElectionId()));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
         assertThat(created.getReferenceId()).isEqualTo(CONSENT_ID);
         assertThat(created.getCreateDate()).isNotNull();
         assertThat(created.getElectionId()).isNotNull();
-        assertThat(created.getFinalRationale()).isEqualTo(FINAL_RATIONALE);
-        assertThat(created.getFinalVote()).isTrue();
-
     }
 
     public void deleteElection(Integer electionId) {
@@ -101,6 +100,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     public void testCreateConsentElectionWithInvalidConsent() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         election.setStatus(ElectionStatus.OPEN.getValue());
         // should return 400 bad request because the consent id does not exist
         checkStatus(BADREQUEST,
@@ -120,6 +120,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     public void testCreateConsentElectionWithInvalidStatus() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         election.setStatus(INVALID_STATUS);
         // should return 400 bad request because status is invalid
         checkStatus(BAD_REQUEST,

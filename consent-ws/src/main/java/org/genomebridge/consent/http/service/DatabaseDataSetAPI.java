@@ -1,6 +1,7 @@
 package org.genomebridge.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.bson.Document;
 import org.genomebridge.consent.http.db.ConsentDAO;
 import org.genomebridge.consent.http.db.DACUserRoleDAO;
 import org.genomebridge.consent.http.db.DataSetDAO;
@@ -12,7 +13,6 @@ import org.genomebridge.consent.http.models.dto.DataSetDTO;
 
 import java.io.File;
 import java.util.*;
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
@@ -25,7 +25,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final ElectionDAO dsElectionDAO;
     private final DACUserRoleDAO dsRoleDAO;
     private final ConsentDAO consentDAO;
-
+    private DataAccessRequestAPI accessAPI;
 
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
@@ -36,15 +36,16 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO ,ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO , ConsentDAO consentDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO,dsElectionDAO, dsRoleDAO , consentDAO));
+    public static void initInstance(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dsElectionDAO, dsRoleDAO, consentDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO , ConsentDAO consentDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
         this.dsDAO = dsDAO;
         this.dsElectionDAO = dsElectionDAO;
         this.dsRoleDAO = dsRoleDAO;
         this.consentDAO = consentDAO;
+        this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
     }
 
 
@@ -87,26 +88,24 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
 
         Collection<DataSetDTO> dataSetDTOList;
-        if(userIs(DACUserRoles.RESEARCHER.getValue(), dacUserId)){
-            dataSetDTOList =  dsDAO.findDataSetsForResearcher();
-        }else{
+        if (userIs(DACUserRoles.RESEARCHER.getValue(), dacUserId)) {
+            dataSetDTOList = dsDAO.findDataSetsForResearcher();
+        } else {
             dataSetDTOList = dsDAO.findDataSets();
-            if(userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0 ){
-                List<String> attributes = dataSetDTOList.stream().map(sc -> sc.getConsentId()).collect(Collectors.toList());
-                Set<Election> elections =  dsElectionDAO.findElectionsByReferenceId(attributes);
-                for(DataSetDTO DTO : dataSetDTOList)  {
-                    if (elections.stream().anyMatch(el -> el.getReferenceId().equals(DTO.getConsentId()))) {
-                        DTO.setDeletable(false);
+            if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
+                List<Document> accessRequests = accessAPI.describeDataAccessRequests();
+                for (DataSetDTO dataSet : dataSetDTOList) {
+                    if (accessRequests.stream().anyMatch(access -> access.getString("datasetId").equals(dataSet.getProperties().get(9).getPropertyValue()))) {
+                        dataSet.setDeletable(false);
                     } else {
-                        DTO.setDeletable(true);
+                        dataSet.setDeletable(true);
                     }
                 }
             }
         }
-        if (!dataSetDTOList.isEmpty())setConsentNameDTOList(dataSetDTOList);
+        if (!dataSetDTOList.isEmpty()) setConsentNameDTOList(dataSetDTOList);
         return dataSetDTOList;
     }
-
 
 
     @Override
@@ -191,13 +190,13 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     /**
      * This method takes a List<Map<objectId, datasetId>> and returns a merged
      * Map<objectId, datasetIs>.
-     * <p>
+     * <p/>
      * Due to database constraints, like objectId UNIQUE, each Map in List has
      * only one element. This method will NOT work properly if Maps in the List
      * contains duplicated keys.
      *
      * @param retrievedValues a List<Map<String, Integer>> produced by
-     * DataSetDAO.
+     *                        DataSetDAO.
      * @return a single, merged, Map<String, Integer>
      * @see
      */
@@ -212,17 +211,16 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
 
-    private boolean userIs(String rol,Integer dacUserId) {
-
-        if(dsRoleDAO.findRoleByNameAndUser(rol,dacUserId)!= null){
+    private boolean userIs(String rol, Integer dacUserId) {
+        if (dsRoleDAO.findRoleByNameAndUser(rol, dacUserId) != null) {
             return true;
         }
         return false;
     }
 
 
-    private void setConsentNameDTOList( Collection<DataSetDTO> dataSetDTOList){
-        if(CollectionUtils.isNotEmpty(dataSetDTOList)){
+    private void setConsentNameDTOList(Collection<DataSetDTO> dataSetDTOList) {
+        if (CollectionUtils.isNotEmpty(dataSetDTOList)) {
             List<String> consentIds = dataSetDTOList.stream().map(sc -> sc.getConsentId()).collect(Collectors.toList());
             Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
             consents.forEach(consent -> {

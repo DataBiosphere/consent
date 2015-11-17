@@ -10,8 +10,10 @@ import de.flapdoodle.embedmongo.distribution.Version;
 import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.bson.Document;
+import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
 import org.genomebridge.consent.http.enumeration.ElectionStatus;
+import org.genomebridge.consent.http.enumeration.ElectionType;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.PendingCase;
 import org.genomebridge.consent.http.models.Vote;
@@ -73,7 +75,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
 
         // Create Documents needed in mongo for testing
-        Document doc = new Document().append("testingInfo1", "someValue");
+        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", "SC-20660");
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
         DATA_REQUEST_ID = String.valueOf(dars.next().get("_id"));
@@ -135,6 +137,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     private Integer createElection() {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
+        election.setElectionType(ElectionType.DATA_ACCESS.getValue());
         election.setStatus(ElectionStatus.OPEN.getValue());
         post(client, electionDataRequestPath(DATA_REQUEST_ID), election);
         election = getJson(client, electionDataRequestPath(DATA_REQUEST_ID))

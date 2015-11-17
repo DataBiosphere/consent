@@ -39,6 +39,17 @@ public class Election {
 
     public Election() {
     }
+    public Election(Integer electionId, String electionType,
+        String status, Date createDate,
+        String referenceId, Date lastUpdate , Boolean finalAccessVote) {
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.lastUpdate = lastUpdate;
+        this.finalAccessVote = finalAccessVote;
+    }
 
 
     public Election(Integer electionId, String electionType,
@@ -46,14 +57,14 @@ public class Election {
                     Date finalVoteDate, String referenceId, Date lastUpdate , Boolean finalAccessVote) {
         this.electionId = electionId;
         this.electionType = electionType;
-        this.finalVote = finalVote;
         this.status = status;
         this.createDate = createDate;
         this.referenceId = referenceId;
-        this.finalRationale = finalRationale;
-        this.finalVoteDate = finalVoteDate;
         this.lastUpdate = lastUpdate;
         this.finalAccessVote = finalAccessVote;
+        this.finalVote = finalVote;
+        this.finalRationale = finalRationale;
+        this.finalVoteDate = finalVoteDate;
     }
 
     public Integer getElectionId() {
