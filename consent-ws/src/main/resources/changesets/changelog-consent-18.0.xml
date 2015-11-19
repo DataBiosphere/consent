@@ -1,0 +1,25 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="aracioppi" id="73">
+        <dropColumn columnName="electionId"
+                    tableName="emailEntity"/>
+    </changeSet>
+
+    <changeSet author="aracioppi" id="74">
+        <addColumn tableName="emailEntity">
+            <column name="entityReferenceId" type="varchar(255)"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="aracioppi" id="75">
+        <insert tableName="emailType">
+            <column name="emailTypeId" value="4"/>
+            <column name="emailType" value="NewDARRequestEmail"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

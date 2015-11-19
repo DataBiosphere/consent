@@ -16,6 +16,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
@@ -23,6 +24,7 @@ public class DataRequestVoteResource extends Resource {
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;
+    private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     public DataRequestVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
@@ -42,7 +44,7 @@ public class DataRequestVoteResource extends Resource {
                 try {
                     emailAPI.sendCollectMessage(vote.getElectionId());
                 } catch (MessagingException | IOException | TemplateException e) {
-                    e.printStackTrace();
+                    logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
                 }
             }
             URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());

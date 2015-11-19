@@ -40,5 +40,6 @@
 
     <include file="changesets/changelog-consent-17.0.xml"/>
 
+    <include file="changesets/changelog-consent-18.0.xml"/>
 
 </databaseChangeLog>

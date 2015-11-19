@@ -383,7 +383,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<Vote> rpElectionVotes = voteDAO.findPendingDACVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingDACVotesByElectionId(darElectionId);
         DACUser chairperson = dacUserDAO.findChairpersonUser();
-        if((mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId) == null)){
+        Integer exists = mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId);
+        if((exists == null)){
             if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (vote.getDacUserId() != chairperson.getDacUserId()))){
                 return true;
             } else {

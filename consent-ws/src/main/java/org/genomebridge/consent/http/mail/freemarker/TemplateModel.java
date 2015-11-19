@@ -2,7 +2,7 @@ package org.genomebridge.consent.http.mail.freemarker;
 
 public class TemplateModel {
 
-    /* This model works for every template we have: collect, new-case and reminder. The placeholders are all the same. */
+    /* This model works for templates: collect and reminder. The placeholders are all the same. */
 
     private String userName;
 

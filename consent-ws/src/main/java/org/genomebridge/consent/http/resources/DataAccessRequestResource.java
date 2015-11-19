@@ -2,11 +2,13 @@ package org.genomebridge.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import freemarker.template.TemplateException;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.genomebridge.consent.http.service.*;
 
+import javax.mail.MessagingException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -26,15 +28,16 @@ public class DataAccessRequestResource extends Resource {
 
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final ResearchPurposeAPI researchPurposeAPI;
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
+    private final EmailNotifierAPI emailApi;
+    private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
 
     public DataAccessRequestResource() {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
-        this.researchPurposeAPI = AbstractResearchPurposeAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
+        this.emailApi = AbstractEmailNotifierAPI.getInstance();
     }
 
     @POST
@@ -42,7 +45,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
 
-        URI uri;
+        URI uri = null;
         Document result = null;
         UseRestriction useRestriction = null;
         Document rus = null;
@@ -53,10 +56,9 @@ public class DataAccessRequestResource extends Resource {
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 rus = Document.parse(useRestriction.toString());
                 dar.append("restriction", rus);
-
             }
         } catch (IOException ex) {
-            Logger.getLogger(DataAccessRequestResource.class.getName()).log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
+            logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
         }
 
         try {
@@ -64,9 +66,14 @@ public class DataAccessRequestResource extends Resource {
             result = dataAccessRequestAPI.createDataAccessRequest(dar);
             uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
             matchProcessAPI.processMatchesForPurpose(result.get("_id").toString());
+            try {
+                emailApi.sendNewDARRequestMessage(result.getString("dar_code"));
+            } catch(MessagingException | IOException | TemplateException ex){
+                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id "+ result.getString("dar_code") + ". Error caused by:", ex);
+            }
             return Response.created(uri).entity(result).build();
         }
-        catch (Exception e) {
+         catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }

@@ -2,6 +2,8 @@ package org.genomebridge.consent.http.mail.freemarker;
 
 public class NewCaseTemplate {
 
+     /* This model works for templates: new-case. */
+
     private String electionType;
 
     private String entityId;

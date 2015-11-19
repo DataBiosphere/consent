@@ -8,4 +8,3 @@ DELETE FROM election WHERE electionId IN (130);
 DELETE FROM consents WHERE consentId IN ('testId4');
 DELETE FROM dataset WHERE datasetId IN (1, 2);
 DELETE FROM dataset WHERE objectId IN ('SC-20657', 'SC-20659', 'SC-20658', 'SC-20660');
-

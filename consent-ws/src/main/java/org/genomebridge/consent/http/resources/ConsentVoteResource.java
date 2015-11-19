@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Path("{api : (api/)?}consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
@@ -20,6 +21,7 @@ public class ConsentVoteResource extends Resource {
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;
+    private static final Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
 
     public ConsentVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
@@ -38,7 +40,7 @@ public class ConsentVoteResource extends Resource {
                 try {
                     emailAPI.sendCollectMessage(vote.getElectionId());
                 } catch (MessagingException | IOException | TemplateException e) {
-                    e.printStackTrace();
+                    logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
                 }
             }
             return Response.ok(vote).build();

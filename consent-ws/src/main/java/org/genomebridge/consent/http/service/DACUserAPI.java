@@ -14,6 +14,8 @@ public interface DACUserAPI {
 
     DACUser describeChairpersonUser() throws NotFoundException;
 
+    Collection<DACUser> describeAdminUsers() throws NotFoundException;
+
     DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
 
     DACUser updateDACUserById(DACUser rec, Integer userId) throws IllegalArgumentException, NotFoundException;

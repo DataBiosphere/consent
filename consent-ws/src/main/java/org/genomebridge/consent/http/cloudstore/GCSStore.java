@@ -6,8 +6,8 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.storage.StorageScopes;
-import org.genomebridge.consent.http.configurations.StoreConfiguration;
 import org.apache.log4j.Logger;
+import org.genomebridge.consent.http.configurations.StoreConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class GCSStore implements CloudStore {
                     .setServiceAccountPrivateKeyFromP12File(file)
                     .build();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger().error("Error on GCS Store initialization. Service won't work: " + e);
         }
         return credential;
     }
