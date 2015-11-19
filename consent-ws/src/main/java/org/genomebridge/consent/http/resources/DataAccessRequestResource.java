@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import freemarker.template.TemplateException;
+import org.apache.commons.collections.CollectionUtils;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
@@ -79,6 +80,28 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/{id}")
+    public Response updateDataAccessRequest(@Context UriInfo info, Document dar, @PathParam("id") String id) {
+        try {
+            if (!requiresManualReview(dar)) {
+                // generates research purpose, if needed, and store it on Document rus
+                UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
+                Document restriction = Document.parse(useRestriction.toString());
+                dar.append("restriction", restriction);
+            }
+            dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
+            matchProcessAPI.processMatchesForPurpose(dar.get("_id").toString());
+            return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+
+    }
+
+
     @GET
     @Produces("application/json")
     public List<Document> describeDataAccessRequests() {
@@ -110,10 +133,10 @@ public class DataAccessRequestResource extends Resource {
     @Path("/find/{id}")
     @Produces("application/json")
     public Document describeSpecificFields(@PathParam("id") String id, @QueryParam("fields") List<String> fields){
-        List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
-        if(!fields.isEmpty()){
+        if(CollectionUtils.isNotEmpty(fields)){
+            List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
             return dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, fieldValues);
-        } else {
+        }else {
             return dataAccessRequestAPI.describeDataAccessRequestById(id);
         }
     }
@@ -139,8 +162,8 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage")
-    public Response describeManageDataAccessRequests() {
-        return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage()).build();
+    public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId) {
+        return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage(userId)).build();
     }
 
     @GET
@@ -150,6 +173,12 @@ public class DataAccessRequestResource extends Resource {
        return Response.ok().entity(dataAccessRequestAPI.describeResearchPurposeById(id)).build();
     }
 
+    @GET
+    @Path("cases/unreviewed")
+    @Produces("application/json")
+    public Response getTotalUnReviewedDAR(){
+        return Response.ok("{\"darUnReviewedCases\":"+dataAccessRequestAPI.getTotalUnReviewedDAR()+"}").build();
+    }
 
     // Fields that trigger manual review flag.
     String[] fieldsForManualReview = {

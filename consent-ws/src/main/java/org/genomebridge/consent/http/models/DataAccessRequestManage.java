@@ -15,7 +15,7 @@ import java.util.Date;
 public class DataAccessRequestManage {
 
     @JsonProperty
-	private String electionStatus;
+    private String electionStatus;
 
     @JsonProperty
     private String rus;
@@ -30,17 +30,19 @@ public class DataAccessRequestManage {
     private String frontEndId;
 
     @JsonProperty
-	private Integer electionId;
+    private Integer electionId;
 
-	@JsonProperty
-	private Timestamp createDate;
+    @JsonProperty
+    private Timestamp createDate;
 
     @JsonProperty
     private Date sortDate;
 
+    @JsonProperty
+    private Boolean electionVote;
 
-	public DataAccessRequestManage() {
-	}
+    public DataAccessRequestManage() {
+    }
 
     public String getElectionStatus() {
         return electionStatus;
@@ -104,5 +106,13 @@ public class DataAccessRequestManage {
 
     public void setSortDate(Date sortDate) {
         this.sortDate = sortDate;
+    }
+
+    public Boolean getElectionVote() {
+        return electionVote;
+    }
+
+    public void setElectionVote(Boolean electionVote) {
+        this.electionVote = electionVote;
     }
 }

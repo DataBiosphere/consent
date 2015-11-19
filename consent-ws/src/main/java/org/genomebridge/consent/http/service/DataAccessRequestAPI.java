@@ -20,7 +20,7 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
 
-    List<DataAccessRequestManage> describeDataAccessRequestManage();
+    List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId);
 
     List<Document> describeDataAccessRequests();
 
@@ -32,4 +32,7 @@ public interface DataAccessRequestAPI {
 
     Document describeResearchPurposeById(String id);
 
+    Document updateDataAccessRequest(Document dar, String id);
+
+    Integer getTotalUnReviewedDAR();
 }
