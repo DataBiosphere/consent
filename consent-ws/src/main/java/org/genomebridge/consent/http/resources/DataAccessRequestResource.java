@@ -6,6 +6,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.bson.Document;
 import org.genomebridge.consent.http.models.Consent;
+import org.genomebridge.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.genomebridge.consent.http.models.grammar.UseRestriction;
 import org.genomebridge.consent.http.service.*;
 
@@ -101,6 +102,13 @@ public class DataAccessRequestResource extends Resource {
 
     }
 
+    @GET
+    @Produces("application/json")
+    @Path("/modalSummary/{id}")
+    public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id){
+        Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
+        return new DARModalDetailsDTO(dar);
+    }
 
     @GET
     @Produces("application/json")
