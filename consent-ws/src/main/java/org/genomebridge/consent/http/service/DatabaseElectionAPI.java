@@ -4,20 +4,21 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.*;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
-import org.genomebridge.consent.http.enumeration.*;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
-
+import org.genomebridge.consent.http.enumeration.DACUserRoles;
+import org.genomebridge.consent.http.enumeration.ElectionStatus;
+import org.genomebridge.consent.http.enumeration.ElectionType;
+import org.genomebridge.consent.http.enumeration.VoteType;
+import org.genomebridge.consent.http.models.*;
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,8 +34,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
+    private DataSetDAO dataSetDAO;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
-
+    private final String INACTIVE_DS = "Election was not created. The specified DataSet is inactive.";
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -46,8 +48,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO));
+    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
     }
 
     /**
@@ -56,13 +58,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO) {
+    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
         this.mongo = mongo;
         this.voteDAO = voteDAO;
         this.mailMessageDAO = mailMessageDAO;
+        this.dataSetDAO = dataSetDAO;
     }
 
     public void setMongoDBInstance(MongoConsentDB mongo) {
@@ -227,6 +230,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             Document dar = describeDataAccessRequestById(referenceId);
             if(dar == null){
                 throw new NotFoundException();
+            }
+            DataSet dataSet = dataSetDAO.findDataSetByObjectId(dar.getString("datasetId"));
+            if(!dataSet.getActive()){
+                throw new IllegalArgumentException(INACTIVE_DS);
             }
             Consent consent = consentDAO.findConsentFromDatasetID(dar.getString("datasetId"));
             Election consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");

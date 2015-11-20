@@ -71,12 +71,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             List<String> objectIdList = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
-            Map<String, Integer> retrievedValuesMap = getOneMap(dsDAO.searchByObjectIdList(objectIdList));
-            Collection<Integer> dataSetsIds = retrievedValuesMap.values();
+            List<DataSet> existentDataSets = dsDAO.searchDataSetsByObjectIdList(objectIdList);
+            List<Integer> existentIdList = existentDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if (validateExistentAssociations(dataSets)) {
-                dsDAO.deleteDataSetsProperties(dataSetsIds);
-                dsDAO.deleteDataSets(dataSetsIds);
-                dsDAO.insertAll(dataSets);
+                dsDAO.deleteDataSetsProperties(existentIdList);
+                dsDAO.deleteDataSets(existentIdList);
+                dsDAO.insertAll(processDisableDataSets(dataSets, existentDataSets));
                 insertProperties(dataSets);
             }
         }
@@ -84,9 +84,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return result;
     }
 
+
     @Override
     public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
-
         Collection<DataSetDTO> dataSetDTOList;
         if (userIs(DACUserRoles.RESEARCHER.getValue(), dacUserId)) {
             dataSetDTOList = dsDAO.findDataSetsForResearcher();
@@ -136,6 +136,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         dataSetId.add(dataset.getDataSetId());
         dsDAO.deleteDataSetsProperties(dataSetId);
         dsDAO.deleteDataSets(dataSetId);
+    }
+
+    @Override
+    public void disableDataset(String datasetId, Boolean active){
+        DataSet dataset = dsDAO.findDataSetByObjectId(datasetId);
+        if(dataset != null){
+            dsDAO.updateDataSetActive(dataset.getDataSetId(), active);
+        }
     }
 
 
@@ -231,4 +239,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         }
 
     }
+
+    private Collection<DataSet> processDisableDataSets(List<DataSet> dataSets, List<DataSet> existentDataSets) {
+        Map<String, DataSet> dataSetMap = dataSets.stream().collect(Collectors.toMap(DataSet::getObjectId, dataSet -> dataSet));
+        if(CollectionUtils.isNotEmpty(dataSets) && CollectionUtils.isNotEmpty(existentDataSets)){
+            existentDataSets.stream().filter(ds -> !ds.getActive()).forEach(s ->
+                      dataSetMap.get(s.getObjectId()).setActive(false)
+            );
+        }
+        return dataSetMap.values();
+    }
+
 }

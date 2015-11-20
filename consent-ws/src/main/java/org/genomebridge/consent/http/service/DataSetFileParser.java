@@ -83,6 +83,7 @@ public class DataSetFileParser {
         dataset.setCreateDate(new Date());
         dataset.setName(record[0]);
         dataset.setObjectId(record[9]);
+        dataset.setActive(true);
         return dataset;
     }
 

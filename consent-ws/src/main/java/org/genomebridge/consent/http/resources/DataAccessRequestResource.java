@@ -46,10 +46,10 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
 
-        URI uri = null;
+        URI uri;
         Document result = null;
-        UseRestriction useRestriction = null;
-        Document rus = null;
+        UseRestriction useRestriction;
+        Document rus;
 
         try {
             if (!requiresManualReview(dar)) {

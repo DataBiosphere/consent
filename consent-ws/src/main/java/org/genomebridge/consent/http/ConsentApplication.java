@@ -102,7 +102,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO);
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
 
         // Mail Services
         try {

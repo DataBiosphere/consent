@@ -117,7 +117,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public void update(String id, Consent rec) throws UnknownIdentifierException {
         rec = updateConsentDates(rec);
-        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate());
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate(), rec.getTranslatedUseRestriction());
     }
 
     @Override
