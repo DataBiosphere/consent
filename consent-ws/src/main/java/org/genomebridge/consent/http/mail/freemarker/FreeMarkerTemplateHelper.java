@@ -18,7 +18,7 @@ public class FreeMarkerTemplateHelper {
     public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
         freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        freeMarkerConfig.setDirectoryForTemplateLoading(new File(config.getTemplateDirectory()));
+        freeMarkerConfig.setClassForTemplateLoading(this.getClass(), config.getTemplateDirectory());
         freeMarkerConfig.setDefaultEncoding(config.getDefaultEncoding());
     }
 
