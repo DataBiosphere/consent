@@ -3,9 +3,12 @@ package org.genomebridge.consent.http.resources;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.service.AbstractElectionAPI;
 import org.genomebridge.consent.http.service.ElectionAPI;
+
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
 @Path("{api : (api/)?}election/")
 public class ElectionResource extends Resource {

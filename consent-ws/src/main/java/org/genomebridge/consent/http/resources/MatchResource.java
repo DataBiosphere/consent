@@ -1,7 +1,8 @@
 package org.genomebridge.consent.http.resources;
 
 
-import org.genomebridge.consent.http.service.*;
+import org.genomebridge.consent.http.service.AbstractMatchAPI;
+import org.genomebridge.consent.http.service.MatchAPI;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

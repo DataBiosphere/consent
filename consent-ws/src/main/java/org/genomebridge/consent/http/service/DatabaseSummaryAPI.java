@@ -172,7 +172,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals("CHAIRPERSON")).collect(singletonCollector());
                         DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
                         summaryWriter.write(electionConsent.getName() + SEPARATOR);
-                        summaryWriter.write(electionConsent.getUseRestriction()+ SEPARATOR);
+                        summaryWriter.write(nullToString(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
 
                         summaryWriter.write(formatTimeToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);

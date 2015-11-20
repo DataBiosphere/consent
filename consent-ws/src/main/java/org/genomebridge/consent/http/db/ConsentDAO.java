@@ -44,17 +44,18 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, structuredDataUseLetter, dulName, createDate, sortDate) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :structuredDataUseLetter, :dulName, :createDate, :sortDate)")
+            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
-                       @Bind("structuredDataUseLetter") String structuredDataUseLetter,
                        @Bind("dulName") String dulName,
                        @Bind("createDate") Date createDate,
-                       @Bind("sortDate") Date sortDate);
+                       @Bind("sortDate") Date sortDate,
+                       @Bind("translatedUseRestriction") String translatedUseRestriction);
+
 
 
     @SqlUpdate("delete from consents where consentId = :consentId")
@@ -66,7 +67,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
             "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, name = :name, " +
-            "structuredDataUseLetter = :structuredDataUseLetter, dulName = :dulName, " +
+            "dulName = :dulName, " +
             "lastUpdate = :lastUpdate, sortDate = :sortDate " +
             "where consentId = :consentId and active = true")
     void updateConsent(@Bind("consentId") String consentId,
@@ -74,7 +75,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("useRestriction") String useRestriction,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
-                       @Bind("structuredDataUseLetter") String structuredDataUseLetter,
                        @Bind("dulName") String dulName,
                        @Bind("lastUpdate") Date createDate,
                        @Bind("sortDate") Date sortDate);

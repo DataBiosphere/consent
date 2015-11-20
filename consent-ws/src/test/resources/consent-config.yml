@@ -13,7 +13,7 @@ database:
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
 googleStore:
   username:
-  password: 
+  password:
   bucket:
   endpoint:
   type: GCS
@@ -47,6 +47,7 @@ ontology:
 services:
     matchURL: https://consent-ontology.dsde-dev.broadinstitute.org/match
     localURL: http://localhost:8000/
+    translateURL: https://consent-ontology.dsde-dev.broadinstitute.org/translate
 mailConfiguration:
   activateEmailNotifications: false
   smtpPort: 587
@@ -54,7 +55,7 @@ mailConfiguration:
   host: smtp.gmail.com
   smtpStartTlsEnable: true
   googleAccount:
-  accountPassword: 
+  accountPassword:
 freeMarkerConfiguration:
   templateDirectory: src/main/resources/freemarker
   defaultEncoding: UTF-8

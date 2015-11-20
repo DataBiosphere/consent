@@ -2,12 +2,20 @@ package org.genomebridge.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.genomebridge.consent.http.configurations.ConsentConfiguration;
+import org.genomebridge.consent.http.service.DatabaseTranslateServiceAPI;
+import org.mockito.Mockito;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,5 +111,17 @@ abstract public class AbstractTest extends ResourcedTest {
         return String.format("http://localhost:%d/%s", rule().getLocalPort(), path);
     }
 
-
+    public void mockTranslateResponse(){
+        final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
+        final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
+        String mockString = "TranslateMock";
+        InputStream stream = new ByteArrayInputStream(mockString.getBytes(StandardCharsets.UTF_8));
+        Response responseMock = Response.status(Response.Status.OK).entity(stream).build();
+        Mockito.when(builderMock.post(Entity.json(Mockito.anyString()))).thenReturn(responseMock);
+        Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
+        final Client clientMock= Mockito.mock(Client.class);
+        Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
+        Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
+        DatabaseTranslateServiceAPI.getInstance().setClient(clientMock);
+    }
 }

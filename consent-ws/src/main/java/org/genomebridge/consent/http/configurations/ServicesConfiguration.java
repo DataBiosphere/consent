@@ -10,13 +10,8 @@ public class ServicesConfiguration {
     @NotNull
     public String localURL;
 
-    public String getLocalURL() {
-        return localURL;
-    }
-
-    public void setLocalURL(String localURL) {
-        this.localURL = localURL;
-    }
+    @NotNull
+    public String translateURL;
 
     public String getMatchURL() {
         return matchURL;
@@ -25,4 +20,21 @@ public class ServicesConfiguration {
     public void setMatchURL(String matchURL) {
         this.matchURL = matchURL;
     }
+
+    public String getLocalURL() {
+        return localURL;
+    }
+
+    public void setLocalURL(String localURL) {
+        this.localURL = localURL;
+    }
+
+    public String getTranslateURL() {
+        return translateURL;
+    }
+
+    public void setTranslateURL(String translateURL) {
+        this.translateURL = translateURL;
+    }
+
 }
