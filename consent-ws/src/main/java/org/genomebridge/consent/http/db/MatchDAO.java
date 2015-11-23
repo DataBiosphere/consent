@@ -15,22 +15,22 @@ import java.util.List;
 @RegisterMapper({MatchMapper.class})
 public interface MatchDAO extends Transactional<MatchDAO> {
 
-    @SqlQuery("select * from matchEntity where consent = :consentId ")
+    @SqlQuery("select * from match_entity where consent = :consentId ")
     List<Match> findMatchByConsentId(@Bind("consentId") String consentId);
 
-    @SqlQuery("select * from matchEntity where purpose = :purposeId ")
+    @SqlQuery("select * from match_entity where purpose = :purposeId ")
     List<Match>  findMatchByPurposeId(@Bind("purposeId") String purposeId);
 
-    @SqlQuery("select * from matchEntity where purpose = :purposeId and consent = :consentId ")
+    @SqlQuery("select * from match_entity where purpose = :purposeId and consent = :consentId ")
     Match  findMatchByPurposeIdAndConsent(@Bind("purposeId") String purposeId, @Bind("consentId") String consentId);
 
-    @SqlQuery("select * from matchEntity where matchId = :id ")
+    @SqlQuery("select * from match_entity where matchId = :id ")
     Match  findMatchById(@Bind("id") Integer id);
 
-    @SqlQuery("select * from matchEntity where purpose  IN (<purposeId>)")
+    @SqlQuery("select * from match_entity where purpose  IN (<purposeId>)")
     List<Match>  findMatchesPurposeId(@BindIn("purposeId") List<String> purposeId);
 
-    @SqlUpdate("insert into matchEntity " +
+    @SqlUpdate("insert into match_entity " +
             "(consent, purpose, matchEntity, failed, date) values " +
             "(:consentId, :purposeId, :match, :failed, :createDate)")
     @GetGeneratedKeys
@@ -40,26 +40,26 @@ public interface MatchDAO extends Transactional<MatchDAO> {
                         @Bind("failed") Boolean failed,
                         @Bind("createDate") Date date);
 
-    @SqlBatch("insert into matchEntity (consent, purpose, matchEntity, failed, createDate) values (:consent, :purpose, :match, :failed, :createDate)")
+    @SqlBatch("insert into match_entity (consent, purpose, matchEntity, failed, createDate) values (:consent, :purpose, :match, :failed, :createDate)")
     void insertAll(@BindBean List<Match> matches);
 
-    @SqlUpdate("update matchEntity set matchEntity = :match, consent = :consentId, purpose = :purposeId, failed = :failed where matchId = :id ")
+    @SqlUpdate("update match_entity set matchEntity = :match, consent = :consentId, purpose = :purposeId, failed = :failed where matchId = :id ")
     void updateMatch(@BindIn("match") Boolean match,
                      @Bind("consentId") String consent,
                      @Bind("purposeId") String purpose,
                      @Bind("failed") Boolean failed);
 
-    @SqlBatch("delete from matchEntity where matchId = :matchId")
+    @SqlBatch("delete from match_entity where matchId = :matchId")
     void deleteMatchs(@Bind("matchId") Collection<Integer> matchId);
 
 
-    @SqlUpdate("delete from matchEntity where matchId = :id")
+    @SqlUpdate("delete from match_entity where matchId = :id")
     void deleteMatch(@Bind("id") Integer matchId);
 
-    @SqlQuery("delete matchEntity where name in (<matchIds>)")
+    @SqlQuery("delete match_entity where name in (<matchIds>)")
     List<Integer> matchBulkDeleteByIds(@BindIn("matchIds") List<String> matchIds);
 
-    @SqlQuery("SELECT COUNT(*) FROM matchentity where matchEntity = :matchEntity and failed ='FALSE' ")
+    @SqlQuery("SELECT COUNT(*) FROM match_entity where matchEntity = :matchEntity and failed ='FALSE' ")
     Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
 
 

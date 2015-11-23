@@ -147,21 +147,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @Mapper(DatabaseElectionMapper.class)
     Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceIds, @Bind("status") String status);
 
-    @SqlQuery("select electionRPId from accessRp arp where arp.electionAccessId = :electionAccessId ")
+    @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
 
-    @SqlUpdate("insert into accessRp (electionAccessId, electionRPId ) values ( :electionAccessId, :electionRPId)")
+    @SqlUpdate("insert into access_rp (electionAccessId, electionRPId ) values ( :electionAccessId, :electionRPId)")
     void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
                         @Bind("electionRPId") Integer electionRPId);
 
     @RegisterMapper({AccessRPMapper.class})
-    @SqlQuery("select * from accessRp where electionAccessId in (<electionAccessIds>) ")
+    @SqlQuery("select * from access_rp where electionAccessId in (<electionAccessIds>) ")
     List<AccessRP> findAccessRPbyElectionAccessId(@BindIn("electionAccessIds") List<Integer> electionAccessIds);
 
-    @SqlUpdate("delete  from accessRp where electionAccessId = :electionAccessId")
+    @SqlUpdate("delete  from access_rp where electionAccessId = :electionAccessId")
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
 
-    @SqlQuery("select electionAccessId from accessRp arp where arp.electionRPId = :electionRPId ")
+    @SqlQuery("select electionAccessId from access_rp arp where arp.electionRPId = :electionRPId ")
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
 
     @SqlQuery("select e.electionId, v.vote finalVote, e.status, e.createDate, e.referenceId, v.rationale finalRationale, v.createDate finalVoteDate, "
