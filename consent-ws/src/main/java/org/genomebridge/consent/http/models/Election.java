@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.models;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.genomebridge.consent.http.models.grammar.UseRestriction;
 
 public class Election {
 
@@ -36,6 +37,12 @@ public class Election {
     @JsonProperty
     private Boolean finalAccessVote;
 
+    @JsonProperty
+    public UseRestriction useRestriction;
+
+    @JsonProperty
+    private String translatedUseRestriction;
+
 
     public Election() {
     }
@@ -54,7 +61,8 @@ public class Election {
 
     public Election(Integer electionId, String electionType,
                     Boolean finalVote, String finalRationale, String status, Date createDate,
-                    Date finalVoteDate, String referenceId, Date lastUpdate , Boolean finalAccessVote) {
+                    Date finalVoteDate, String referenceId, Date lastUpdate , Boolean finalAccessVote,
+                    UseRestriction useRestriction, String translatedUseRestriction) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -65,6 +73,8 @@ public class Election {
         this.finalVote = finalVote;
         this.finalRationale = finalRationale;
         this.finalVoteDate = finalVoteDate;
+        this.useRestriction = useRestriction;
+        this.translatedUseRestriction = translatedUseRestriction;
     }
 
     public Integer getElectionId() {
@@ -145,5 +155,21 @@ public class Election {
 
     public void setFinalAccessVote(Boolean finalAccessVote) {
         this.finalAccessVote = finalAccessVote;
+    }
+
+    public UseRestriction getUseRestriction() {
+        return useRestriction;
+    }
+
+    public void setUseRestriction(UseRestriction useRestriction) {
+        this.useRestriction = useRestriction;
+    }
+
+    public String getTranslatedUseRestriction() {
+        return translatedUseRestriction;
+    }
+
+    public void setTranslatedUseRestriction(String translatedUseRestriction) {
+        this.translatedUseRestriction = translatedUseRestriction;
     }
 }

@@ -9,6 +9,7 @@ import org.genomebridge.consent.http.configurations.ConsentConfiguration;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.ConsentAssociation;
 import org.genomebridge.consent.http.models.grammar.Everything;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -38,6 +39,13 @@ public class AssociationTest extends ConsentServiceTest {
     public DropwizardAppRule<ConsentConfiguration> rule() {
         return RULE;
     }
+
+
+    @Before
+    public void setup() throws Exception {
+        mockTranslateResponse();
+    }
+
 
     //
     //  TESTS

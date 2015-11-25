@@ -29,9 +29,6 @@ public class Consent {
     public String name;
 
     @JsonProperty
-    public String structuredDataUseLetter;
-
-    @JsonProperty
     public String dulName;
 
     @JsonProperty
@@ -42,6 +39,10 @@ public class Consent {
 
     @JsonProperty
     public Timestamp sortDate;
+
+    @JsonProperty
+    public String translatedUseRestriction;
+
 
     public Consent() {
     }
@@ -54,11 +55,10 @@ public class Consent {
     }
 
     public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
-                   String structuredDataUseLetter, String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate) {
+                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
         this.dataUseLetter = dataUseLetter;
-        this.structuredDataUseLetter = structuredDataUseLetter;
         this.name = name;
         this.createDate = createDate;
         this.sortDate = sortDate;
@@ -126,16 +126,6 @@ public class Consent {
     }
 
     @JsonProperty
-    public String getStructuredDataUseLetter() {
-        return structuredDataUseLetter;
-    }
-
-    @JsonProperty
-    public void setStructuredDataUseLetter(String structuredDataUseLetter) {
-        this.structuredDataUseLetter = structuredDataUseLetter;
-    }
-
-    @JsonProperty
     public String getName() {
         return name;
     }
@@ -165,5 +155,13 @@ public class Consent {
         this.dulName = dulName;
     }
 
+    @JsonProperty
+    public String getTranslatedUseRestriction() {
+        return translatedUseRestriction;
+    }
+    @JsonProperty
+    public void setTranslatedUseRestriction(String translatedUseRestriction) {
+        this.translatedUseRestriction = translatedUseRestriction;
+    }
 
 }

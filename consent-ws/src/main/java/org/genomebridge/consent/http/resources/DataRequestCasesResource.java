@@ -1,16 +1,15 @@
 package org.genomebridge.consent.http.resources;
 
-import java.util.List;
+import org.genomebridge.consent.http.models.Election;
+import org.genomebridge.consent.http.models.PendingCase;
+import org.genomebridge.consent.http.service.*;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-
-import org.genomebridge.consent.http.models.Election;
-import org.genomebridge.consent.http.models.PendingCase;
-import org.genomebridge.consent.http.service.*;
+import java.util.List;
 
 @Path("{api : (api/)?}dataRequest/cases")
 public class DataRequestCasesResource extends Resource {

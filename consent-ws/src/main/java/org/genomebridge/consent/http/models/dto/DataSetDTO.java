@@ -11,7 +11,7 @@ public class DataSetDTO {
     private String consentId;
 
     @JsonProperty
-    private UseRestriction useRestriction;
+    private String translatedUseRestriction;
 
     @JsonProperty
     private Boolean deletable;
@@ -34,12 +34,12 @@ public class DataSetDTO {
         this.consentId = consentId;
     }
 
-    public UseRestriction getUseRestriction() {
-        return useRestriction;
+    public String getTranslatedUseRestriction() {
+        return translatedUseRestriction;
     }
 
-    public void setUseRestriction(UseRestriction useRestriction) {
-        this.useRestriction = useRestriction;
+    public void setTranslatedUseRestriction(String translatedUseRestriction) {
+        this.translatedUseRestriction = translatedUseRestriction;
     }
 
     public Boolean getDeletable() {

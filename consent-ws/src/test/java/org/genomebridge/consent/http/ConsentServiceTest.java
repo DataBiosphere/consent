@@ -8,6 +8,7 @@ import java.net.URLEncoder;
 
 public abstract class ConsentServiceTest extends AbstractTest {
 
+
     public String consentPath() {
         return path2Url("/consent");
     }
@@ -24,5 +25,6 @@ public abstract class ConsentServiceTest extends AbstractTest {
     public Consent retrieveConsent(Client client, String url) {
         return getJson(client, url).readEntity(Consent.class);
     }
+
 
 }

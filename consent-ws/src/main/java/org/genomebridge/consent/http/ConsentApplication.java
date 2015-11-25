@@ -100,6 +100,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseResearchPurposeAPI.initInstance(mongoInstance);
+        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO);
 
@@ -161,6 +162,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
+                AbstractTranslateServiceAPI.clearInstance();
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();

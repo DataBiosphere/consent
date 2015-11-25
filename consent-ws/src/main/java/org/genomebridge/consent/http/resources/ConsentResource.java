@@ -1,5 +1,6 @@
 package org.genomebridge.consent.http.resources;
 
+import org.genomebridge.consent.http.enumeration.TranslateType;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.service.*;
 
@@ -8,6 +9,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.net.URI;
 
 @Path("{api : (api/)?}consent")
@@ -16,6 +18,7 @@ public class ConsentResource extends Resource {
     private final ConsentAPI api;
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
+    private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
 
 
     @Path("{id}")
@@ -34,11 +37,15 @@ public class ConsentResource extends Resource {
     @Consumes("application/json")
     public Response createConsent(@Context UriInfo info, Consent rec) {
         try {
+            rec.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),rec.getUseRestriction()));
             Consent consent = api.create(rec);
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
-        } catch (Exception e) {
+        }  catch (IOException ie) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        catch (Exception e){
             return Response.serverError().entity(e).build();
         }
     }
@@ -49,11 +56,14 @@ public class ConsentResource extends Resource {
     @Produces("application/json")
     public Response update(@PathParam("id") String id, Consent updated) {
         try {
+            updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
             api.update(id, updated);
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s to update", id));
+        } catch (IOException ie) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
         } catch (Exception e) {
             return Response.serverError().entity(e).build();
         }
@@ -86,11 +96,10 @@ public class ConsentResource extends Resource {
         }
     }
 
-
-
-    private Consent populateFromApi(String id) throws UnknownIdentifierException {
+   private Consent populateFromApi(String id) throws UnknownIdentifierException {
         return api.retrieve(id);
     }
+
 
     public ConsentResource() {
         this.api = AbstractConsentAPI.getInstance();

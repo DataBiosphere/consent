@@ -55,18 +55,18 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.useRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId order by d.dataSetId, k.displayOrder")
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets();
 
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.useRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
+    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  + "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate " +
             " and ev.referenceId = e.referenceId and v.vote = true order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId where d.objectId in (<objectIdList>) order by d.dataSetId, k.displayOrder")
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId where d.objectId in (<objectIdList>) order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets(@BindIn("objectIdList") List<String> objectIdList);
 
     @Mapper(BatchMapper.class)

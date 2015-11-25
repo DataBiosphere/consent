@@ -23,10 +23,10 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
             throw new SQLException(e);
         }
         consent.name = r.getString("name");
-        consent.structuredDataUseLetter = r.getString("structuredDataUseLetter");
         consent.setCreateDate(r.getTimestamp("createDate"));
         consent.setSortDate(r.getTimestamp("sortDate"));
         consent.setLastUpdate((r.getTimestamp("lastUpdate") == null) ? null : r.getTimestamp("lastUpdate"));
+        consent.setTranslatedUseRestriction((r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"));
         return consent;
     }
 

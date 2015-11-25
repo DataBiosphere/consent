@@ -23,20 +23,14 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
 
     public DataSetDTO map(int index, ResultSet r, StatementContext ctx) throws SQLException {
 
-        DataSetDTO dataSetDTO= new DataSetDTO();
+        DataSetDTO dataSetDTO;
         Integer dataSetId = r.getInt("dataSetId");
         String consentId = r.getString("consentId");
 
         if (!dataSets.containsKey(dataSetId)) {
             dataSetDTO = new DataSetDTO( new ArrayList<>());
             dataSetDTO.setConsentId(consentId);
-            if(hasColumn(r,"useRestriction")) {
-                try {
-                    dataSetDTO.setUseRestriction(UseRestriction.parse(r.getString("useRestriction")));
-                } catch (IOException e) {
-                    throw new SQLException(e);
-                }
-            }
+            dataSetDTO.setTranslatedUseRestriction((r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"));
             DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name",r.getString("name"));
             dataSetDTO.getProperties().add(property);
             property = new DataSetPropertyDTO(r.getString(PROPERTY_KEY),r.getString(PROPERTY_PROPERTYVALUE));
@@ -49,19 +43,6 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
         }
         return dataSetDTO;
     }
-
-
-    public static boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int columns = rsmd.getColumnCount();
-        for (int x = 1; x <= columns; x++) {
-            if (columnName.equals(rsmd.getColumnName(x))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }
 
 

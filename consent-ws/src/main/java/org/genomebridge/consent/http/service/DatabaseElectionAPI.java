@@ -1,25 +1,23 @@
 package org.genomebridge.consent.http.service;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.genomebridge.consent.http.db.*;
 import org.genomebridge.consent.http.db.mongo.MongoConsentDB;
-import org.genomebridge.consent.http.enumeration.DACUserRoles;
-import org.genomebridge.consent.http.enumeration.ElectionStatus;
-import org.genomebridge.consent.http.enumeration.ElectionType;
-import org.genomebridge.consent.http.enumeration.VoteType;
+import org.genomebridge.consent.http.enumeration.*;
 import org.genomebridge.consent.http.models.Consent;
 import org.genomebridge.consent.http.models.DACUser;
 import org.genomebridge.consent.http.models.Election;
 import org.genomebridge.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,6 +32,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
+    private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
 
 
@@ -75,13 +74,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             IllegalArgumentException {
         validateElectionIsValid(referenceId, electionType);
         validateAvailableUsers();
-        validateReferenceId(referenceId, electionType);
-        validateExistentElection(referenceId, electionType);
+        validateReferenceId(referenceId, electionType); validateExistentElection(referenceId, electionType);
         validateStatus(election.getStatus());
         setGeneralFields(election, referenceId, electionType);
         Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
-                createDate, election.getReferenceId(), election.getFinalAccessVote());
+                createDate, election.getReferenceId(), election.getFinalAccessVote() , java.util.Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction());
         updateSortDate(referenceId, createDate);
         if(electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
@@ -181,7 +179,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public void deleteElection(String referenceId, Integer id) {
-        if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
+        if (electionDAO.
+                findElectionsByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException("Does not exist an election for the specified id");
         }
         Election election = electionDAO.findElectionById(id);
@@ -261,7 +260,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private List<Election> openElections(List<Election> openElections) {
+    private List<Election> openElections(List<Election> openElections)   {
         List<Election> elections = new ArrayList<>();
         for (Election existentElection : openElections) {
             Election election = new Election();
@@ -278,6 +277,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             case TRANSLATE_DUL:
                 election.setElectionType(electionDAO
                         .findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue()));
+                Consent consent = consentDAO.findConsentById(referenceId);
+                election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
+                election.setUseRestriction(consent.getUseRestriction());
                 break;
             case DATA_ACCESS:
                 election.setElectionType(electionDAO

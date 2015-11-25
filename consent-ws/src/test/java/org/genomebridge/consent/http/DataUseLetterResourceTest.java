@@ -54,6 +54,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         dulResource = new DataUseLetterResource(storage);
+        mockTranslateResponse();
     }
 
     @Test
@@ -111,7 +112,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     private String setupConsent(String dul) {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         Timestamp createDate = new Timestamp(new Date().getTime());
-        Consent rec = new Consent(false, new Everything(), dul, "structuredDataUseLetter", UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = new Consent(false, new Everything(), dul, UUID.randomUUID().toString(), createDate, createDate, createDate);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
