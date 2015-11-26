@@ -19,6 +19,9 @@ public class DataSetDTO {
     @JsonProperty
     private List<DataSetPropertyDTO> properties;
 
+    @JsonProperty
+    private Boolean active;
+
     public DataSetDTO() {
     }
 
@@ -56,5 +59,13 @@ public class DataSetDTO {
 
     public void setProperties(List<DataSetPropertyDTO> properties) {
         this.properties = properties;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

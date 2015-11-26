@@ -19,16 +19,20 @@ public class DataSet {
     @JsonProperty
     private Date createDate;
 
+    @JsonProperty
+    private Boolean active;
+
     private Set<DataSetProperty> properties;
 
     public DataSet() {
     }
 
-    public DataSet(Integer dataSetId, String objectId, String name, Date createDate) {
+    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;
         this.name = name;
         this.createDate = createDate;
+        this.active = active;
     }
 
     public Integer getDataSetId() {
@@ -69,5 +73,13 @@ public class DataSet {
 
     public void setProperties(Set<DataSetProperty> properties) {
         this.properties = properties;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

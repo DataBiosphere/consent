@@ -93,7 +93,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Election election = new Election();
         election.setElectionType(ElectionType.DATA_ACCESS.getValue());
         election.setStatus(ElectionStatus.OPEN.getValue());
-        //election.setReferenceId(DATA_REQUEST_ID);
+        election.setReferenceId(DATA_REQUEST_ID);
         Response response = checkStatus(CREATED,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         String createdLocation = checkHeader(response, "Location");

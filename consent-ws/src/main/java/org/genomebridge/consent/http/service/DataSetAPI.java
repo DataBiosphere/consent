@@ -25,4 +25,6 @@ public interface DataSetAPI {
     List<String> autoCompleteDataSets(String partial);
 
     void deleteDataset(String datasetObjectId);
+
+    void disableDataset(String datasetObjectId, Boolean active);
 }

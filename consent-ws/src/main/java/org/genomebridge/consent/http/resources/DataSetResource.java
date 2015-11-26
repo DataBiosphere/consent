@@ -3,6 +3,7 @@ package org.genomebridge.consent.http.resources;
 import com.google.common.io.Resources;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.genomebridge.consent.http.models.DataSet;
 import org.genomebridge.consent.http.models.Dictionary;
@@ -90,7 +91,7 @@ public class DataSetResource extends Resource {
     @GET
     @Produces("application/json")
     public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
-        if (null == request.getParameter("dacUserId")) {
+        if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }else{
             Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
@@ -109,7 +110,7 @@ public class DataSetResource extends Resource {
             inputStream = Resources.getResource(fileName).openStream();
         } catch (IOException e) {
             Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-            logger().error("Error when GETting dataset sample. Cause: "+e);
+            logger().error("Error when GETting dataset sample. Cause: " + e);
         }
         return Response.ok(inputStream).header("Content-Disposition", "attachment; filename=" + fileName).build();
     }
@@ -168,6 +169,13 @@ public class DataSetResource extends Resource {
         return Response.ok().build();
     }
 
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/disable/{datasetObjectId}/{active}")
+    public Response disableDataSet(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("active") Boolean active, @Context UriInfo info) {
+        api.disableDataset(datasetObjectId, active);
+        return Response.ok().build();
+    }
 
     @GET
     @Path("/dictionary")

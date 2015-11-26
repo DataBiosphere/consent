@@ -13,7 +13,6 @@ import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLoc
 import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,13 +35,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select ds.objectId from dataset ds")
     List<String> findAllObjectId();
 
-
-    @SqlUpdate("insert into dataset (name, createDate) values ( :name, :createDate)")
-    @GetGeneratedKeys
-    Integer insertDataSet(@Bind("name") String name, @Bind("createDate") Date createDate);
-
-    @SqlBatch("insert into dataset (name, createDate, objectId) values (:name, :createDate, :objectId)")
-    void insertAll(@BindBean List<DataSet> dataSets);
+    @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
+    void insertAll(@BindBean Collection<DataSet> dataSets);
 
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
             " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
@@ -54,15 +48,17 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from dataset where dataSetId = :dataSetId")
     void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
+    @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
+    void updateDataSetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);
+
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets();
 
-
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  + "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate " +
-            " and ev.referenceId = e.referenceId and v.vote = true order by d.dataSetId, k.displayOrder")
+            " and ev.referenceId = e.referenceId and v.vote = true and d.active = true order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @Mapper(DataSetPropertiesMapper.class)
@@ -73,9 +69,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select datasetId, objectId  from dataset where objectId in (<objectIdList>)")
     List<Map<String,Integer>> searchByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
-    @RegisterMapper({DictionaryMapper.class})
-    @SqlQuery("SELECT * FROM dictionary d where d.required = true order by displayOrder")
-    List<Dictionary> getRequiredFields();
+
+    @SqlQuery("select *  from dataset where objectId in (<objectIdList>) ")
+    List<DataSet> searchDataSetsByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({DictionaryMapper.class})
     @SqlQuery("SELECT * FROM dictionary d order by displayOrder")
@@ -95,13 +91,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
 
     @RegisterMapper({AssociationMapper.class})
-    @SqlQuery(" SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
+    @SqlQuery("SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
-    @SqlQuery(" SELECT d.objectId FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId " +
+    @SqlQuery("SELECT d.objectId FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId " +
               " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
               " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +
-              "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId and v.vote = true  and d.objectId like concat('%',:partial,'%') order by d.dataSetId")
+              "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId and v.vote = true  and d.objectId like concat('%',:partial,'%') and d.active = true order by d.dataSetId")
     List<String> getObjectIdsbyPartial(@Bind("partial") String partial);
 
 }
