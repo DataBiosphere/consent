@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.PendingCaseAPI;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -31,12 +30,26 @@ public class DataRequestCasesResource extends Resource {
 
     @GET
     @Path("/pending/{dacUserId}")
+    @RolesAllowed({"CHAIRPERSON", "MEMBER"})
     public List<PendingCase> getDataRequestPendingCases(@PathParam("dacUserId") Integer dacUserId) {
         return api.describeDataRequestPendingCases(dacUserId);
     }
 
     @GET
+    @Path("/pending/dataOwner/{dataOwnerId}")
+    @RolesAllowed({"CHAIRPERSON", "DATAOWNER"})
+    public Response getDataOwnerPendingCases(@PathParam("dataOwnerId") Integer dataOwnerId) {
+        try{
+            return Response.ok(api.describeDataOwnerPendingCases(dataOwnerId)).build();
+        }catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+
+    }
+
+    @GET
     @Path("/summary/{type}")
+    @PermitAll
     public Response getDataRequestSummaryCases(@PathParam("type") String type) {
         return Response.ok(summaryApi.describeDataRequestSummaryCases(type))
                 .build();
@@ -45,17 +58,19 @@ public class DataRequestCasesResource extends Resource {
 
     @GET
     @Path("/matchsummary")
+    @PermitAll
     public Response getMatchSummaryCases() {
         return Response.ok(summaryApi.describeMatchSummaryCases())
-              .build();
+                .build();
     }
 
 
     @GET
     @Path("/closed")
     @Produces("application/json")
+    @RolesAllowed({"CHAIRPERSON", "MEMBER","ALUMNI","ADMIN"})
     public List<Election> describeClosedElections() {
-        return electionApi.describeClosedElectionsByType("1");
+        return electionApi.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue());
     }
 
 }

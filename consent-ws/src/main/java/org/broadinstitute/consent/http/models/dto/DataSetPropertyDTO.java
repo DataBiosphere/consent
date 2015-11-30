@@ -31,4 +31,24 @@ public class DataSetPropertyDTO {
     public void setPropertyValue(String propertyValue) {
         this.propertyValue = propertyValue;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        final DataSetPropertyDTO other = (DataSetPropertyDTO) obj;
+        if (this.propertyName.equals(other.getPropertyName())) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + (this.propertyName != null ? this.propertyName.hashCode() : 0);
+        hash = 53 * hash + this.propertyValue.hashCode();
+        return hash;
+    }
 }

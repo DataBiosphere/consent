@@ -25,6 +25,8 @@ public class ElectionReview {
     @JsonProperty
     private Integer rpElectionId;
 
+    public ElectionReview(){}
+
     public Consent getConsent() {
         return consent;
     }

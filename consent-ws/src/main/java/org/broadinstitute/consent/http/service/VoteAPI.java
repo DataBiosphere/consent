@@ -9,13 +9,15 @@ import java.util.List;
 
 public interface VoteAPI {
 
-    List<Vote> createVotes(Integer electionId, ElectionType electionType) throws IllegalArgumentException;
+    List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) throws IllegalArgumentException;
 
     Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
 
     Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
 
     List<Vote> describeVotes(String referenceId);
+
+    List<Vote> describeUserVotesByElectionsId(List<Integer> electionIds, Integer userId);
 
     Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
 
@@ -31,4 +33,11 @@ public interface VoteAPI {
 
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 
+    List<Vote> createDataOwnersReviewVotes(Election electionId);
+
+    Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException;
+
+    void updateUserIdForVotes(List<Integer> voteIds, Integer dacUserId);
+
+    void removeVotesById(List<Integer> votesId);
 }

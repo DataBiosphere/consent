@@ -13,16 +13,14 @@
     <lucene.version>4.9.0</lucene.version>
     <hsqldb.version>2.3.3</hsqldb.version>
     <liquibase.version>3.1.1</liquibase.version>
-    <dropwizard.version>0.8.1</dropwizard.version>
+    <dropwizard.version>1.0.0</dropwizard.version>
     <jersey.version>2.19</jersey.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <jetty.version>9.0.7.v20131107</jetty.version>
+    <jetty.version>9.3.11.v20160721</jetty.version>
   </properties>
 
   <modules>
-    <module>consent-core</module>
-    <module>consent-indexer</module>
     <module>consent-ws</module>
   </modules>
 
@@ -38,6 +36,43 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.7.2.201409121644</version>
+        <configuration>
+          <excludes>
+            <exclude>org.broadinstitute.consent.http.enumeration</exclude>
+          </excludes>
+          <destFile>${basedir}/target/coverage-reports/jacoco-unit.exec</destFile>
+          <dataFile>${basedir}/target/coverage-reports/jacoco-unit.exec</dataFile>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>post-unit-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.eluder.coveralls</groupId>
+        <artifactId>coveralls-maven-plugin</artifactId>
+        <version>4.1.0</version>
+        <configuration>
+          <repoToken>${env.coveralls_repo_token}</repoToken>
+          <serviceName>travis-pro</serviceName>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -48,6 +83,12 @@
         <groupId>net.sourceforge.owlapi</groupId>
         <artifactId>owlapi-distribution</artifactId>
         <version>3.4.10</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-contract</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -93,7 +134,7 @@
         <artifactId>xercesImpl</artifactId>
         <version>2.11.0</version>
       </dependency>
-      
+
       <dependency>
         <groupId>com.github.ansell.pellet</groupId>
         <artifactId>pellet-owlapiv3</artifactId>

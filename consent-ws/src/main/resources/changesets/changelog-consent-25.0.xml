@@ -1,0 +1,37 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+
+    <changeSet author="vvicario" id="91">
+        <addColumn tableName="election">
+            <column name="type" type="varchar(255)"/>
+        </addColumn>
+        <sql dbms="hsql, mysql">
+            update election  set type = "DataAccess" where electionType = 1;
+            update election  set type = "TranslateDUL" where electionType = 2;
+            update election  set type = "RP" where electionType = 3;
+            update election  set type = "DataSet" where electionType = 4;
+        </sql>
+    </changeSet>
+
+    <changeSet author="vvicario" id="92">
+        <dropForeignKeyConstraint baseTableName="election" constraintName="fkElectionElectionType"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="93">
+        <dropColumn columnName="electiontype"
+                    tableName="election"/>
+        <renameColumn tableName="election" columnDataType="varchar(255)"
+                      newColumnName="electionType"
+                      oldColumnName="type"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="94">
+        <dropTable tableName="electiontype"/>
+    </changeSet>
+
+
+</databaseChangeLog>

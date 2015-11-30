@@ -4,7 +4,6 @@ import javax.validation.constraints.NotNull;
 
 public class StoreConfiguration {
 
-    public String username;
 
     public String password;
 
@@ -13,17 +12,6 @@ public class StoreConfiguration {
 
     @NotNull
     public String bucket;
-
-    @NotNull
-    public String type; // currently either S3 or GCS
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     public String getPassword() {
         return password;
@@ -49,11 +37,4 @@ public class StoreConfiguration {
         this.bucket = bucket;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
 }

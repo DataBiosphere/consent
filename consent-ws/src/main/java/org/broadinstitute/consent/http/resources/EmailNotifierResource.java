@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -19,6 +20,7 @@ public class EmailNotifierResource {
 
     @POST
     @Path("/reminderMessage/{voteId}")
+    @RolesAllowed("CHAIRPERSON")
     public Response sendReminderMessage(@PathParam("voteId") String voteId) {
         try {
             emailApi.sendReminderMessage(Integer.valueOf(voteId));

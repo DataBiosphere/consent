@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import org.broadinstitute.consent.http.models.Vote;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class VoteMapper implements ResultSetMapper<Vote> {
 
@@ -19,8 +19,8 @@ public class VoteMapper implements ResultSetMapper<Vote> {
                 r.getInt("electionId"),
                 r.getString("rationale"),
                 r.getString("type"),
-                (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent")
+                (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent"),
+                (r.getString("has_concerns") == null) ? null : r.getBoolean("has_concerns")
         );
-
     }
 }

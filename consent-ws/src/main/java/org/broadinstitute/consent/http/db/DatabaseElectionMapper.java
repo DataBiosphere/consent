@@ -9,6 +9,8 @@ import java.sql.SQLException;
 
 public class DatabaseElectionMapper implements ResultSetMapper<Election> {
 
+
+    @Override
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         return new Election(
                 r.getInt("electionId"),
@@ -17,7 +19,8 @@ public class DatabaseElectionMapper implements ResultSetMapper<Election> {
                 r.getDate("createDate"),
                 r.getString("referenceId"),
                 (r.getDate("lastUpdate") == null) ? null : r.getDate("lastUpdate"),
-                (r.getString("finalAccessVote") == null) ? null : r.getBoolean("finalAccessVote")
+                (r.getString("finalAccessVote") == null) ? null : r.getBoolean("finalAccessVote"),
+                r.getInt("datasetId")
         );
     }
 }

@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Date;
 
 public class Vote {
 
@@ -33,11 +33,14 @@ public class Vote {
     @JsonProperty
     private Boolean isReminderSent;
 
+    @JsonProperty
+    private Boolean hasConcerns;
+
     public Vote() {
     }
 
     public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
-                Integer electionId, String rationale, String type, Boolean isReminderSent) {
+                Integer electionId, String rationale, String type, Boolean isReminderSent, Boolean hasConcerns) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;
@@ -47,6 +50,18 @@ public class Vote {
         this.rationale = rationale;
         this.type = type;
         this.isReminderSent = isReminderSent;
+        this.hasConcerns = hasConcerns;
+    }
+
+    public void initVote(Integer dacUserId, Date createDate, Date updateDate,
+                         String rationale, Boolean isReminderSent, Boolean hasConcerns, Boolean vote) {
+        this.dacUserId = dacUserId;
+        this.createDate = createDate;
+        this.updateDate = updateDate;
+        this.rationale = rationale;
+        this.isReminderSent = isReminderSent;
+        this.hasConcerns = hasConcerns;
+        this.vote = vote;
     }
 
     public Integer getVoteId() {
@@ -55,14 +70,6 @@ public class Vote {
 
     public void setVoteId(Integer voteId) {
         this.voteId = voteId;
-    }
-
-    public Boolean isReminderSent() {
-        return isReminderSent;
-    }
-
-    public void setReminderSent(Boolean reminderSent) {
-        this.isReminderSent = reminderSent;
     }
 
     public Boolean getVote() {
@@ -127,5 +134,13 @@ public class Vote {
 
     public void setIsReminderSent(Boolean isReminderSent) {
         this.isReminderSent = isReminderSent;
+    }
+
+    public Boolean getHasConcerns() {
+        return hasConcerns;
+    }
+
+    public void setHasConcerns(Boolean hasConcerns) {
+        this.hasConcerns = hasConcerns;
     }
 }

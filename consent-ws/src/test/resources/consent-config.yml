@@ -12,13 +12,13 @@ database:
   url: jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
 googleStore:
-  username:
-  password:
-  bucket:
-  endpoint:
-  type: GCS
+  password: password
+  bucket: bucket
+  endpoint: endpoint
 mongo:
   uri: mongodb://localhost:27017
+  host1:
+  host2:
   dbName: consent
   username:
   password:
@@ -26,36 +26,46 @@ mongo:
 # Logging settings
 logging:
   # default logging level
-  # level: TRACE
+  level: WARN
   # logger specific levels
   loggers:
-    ConsentAssociationResource: ALL
-    AllAssociationsResource: ALL
-    ConsentApplication: ALL
-    ConsentModule: ALL
-    DatabaseResearchPurposeAPI: ALL
-ontology:
-    methods: http://www.broadinstitute.org/ontologies/DURPO/methods_research
-    population: http://www.broadinstitute.org/ontologies/DURPO/population
-    male: http://www.broadinstitute.org/ontologies/DURPO/male
-    female: http://www.broadinstitute.org/ontologies/DURPO/female
-    profit: http://www.broadinstitute.org/ontologies/DURPO/For_profit
-    nonProfit: http://www.broadinstitute.org/ontologies/DURPO/Non_profit
-    pediatric: http://www.broadinstitute.org/ontologies/DURPO/children
-    boys: http://www.broadinstitute.org/ontologies/DURPO/boys
-    girls: http://www.broadinstitute.org/ontologies/DURPO/girls
+    ConsentAssociationResource: WARN
+    AllAssociationsResource: WARN
+    ConsentApplication: WARN
+    ConsentModule: WARN
+    DatabaseResearchPurposeAPI: WARN
+    "org.semanticweb": ERROR
+    "net.sourceforge": ERROR
+    "org.reflections": ERROR
+    "de.spinscale": ERROR
+    "org.mongodb": ERROR
+    "org.liquibase": ERROR
 services:
-    matchURL: https://consent-ontology.dsde-dev.broadinstitute.org/match
-    localURL: http://localhost:8000/
-    translateURL: https://consent-ontology.dsde-dev.broadinstitute.org/translate
+    ontologyURL: http://localhost:8180/
+    localURL: http://localhost:8000/#/
 mailConfiguration:
   activateEmailNotifications: false
   smtpPort: 587
   smtpAuth: true
   host: smtp.gmail.com
   smtpStartTlsEnable: true
-  googleAccount:
-  accountPassword:
+  googleAccount: test@gmail.com
+  accountPassword: password
 freeMarkerConfiguration:
-  templateDirectory: src/main/resources/freemarker
+  templateDirectory: /freemarker
   defaultEncoding: UTF-8
+googleAuthentication:
+  clientId: clientId
+basicAuthentication:
+  users:
+    - user: testuser
+      password: testpassword
+    - user: testuser2
+      password: testpassword2
+storeOntology:
+  bucketSubdirectory:   bucket
+  configurationFileName: configuration
+elasticSearch:
+    clusterName: cName
+    servers: [localhost]
+    indexName: iName

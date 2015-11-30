@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCursor;
 import de.flapdoodle.embedmongo.MongoDBRuntime;
@@ -10,7 +9,6 @@ import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.bson.Document;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -19,6 +17,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -28,6 +28,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +40,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     private static String DATA_REQUEST_ID;
     private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
+    private static final String TEST_DATABASE_NAME = "TestConsent";
     private MongodExecutable mongodExe;
     private MongodProcess mongod;
     private MongoClient mongo;
@@ -66,7 +68,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         mongod = mongodExe.start();
         mongo = new MongoClient("localhost", 37017);
 
-        MongoConsentDB mongoi = new MongoConsentDB(mongo);
+        MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
         mongoi.getCountersCollection().drop();
         mongoi.getDataAccessRequestCollection().drop();
         mongoi.getResearchPurposeCollection().drop();
@@ -76,10 +78,12 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
 
         // Create Documents needed in mongo for testing
-        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", "SC-20660");
+        List<String> dataSets = new ArrayList<>();
+        dataSets.add("SC-20660");
+        Document doc = new Document().append("testingInfo1", "someValue").append(DarConstants.DATASET_ID, dataSets);
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
-        DATA_REQUEST_ID = String.valueOf(dars.next().get("_id"));
+        DATA_REQUEST_ID = String.valueOf(dars.next().get(DarConstants.ID));
     }
 
     @After

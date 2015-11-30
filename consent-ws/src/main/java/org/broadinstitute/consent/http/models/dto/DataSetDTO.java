@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import java.util.List;
 
 
@@ -21,6 +20,16 @@ public class DataSetDTO {
 
     @JsonProperty
     private Boolean active;
+
+    @JsonProperty
+    private Boolean needsApproval;
+
+    @JsonProperty
+    private Boolean isAssociatedToDataOwners;
+
+    @JsonProperty
+    private Boolean updateAssociationToDataOwnerAllowed;
+
 
     public DataSetDTO() {
     }
@@ -53,6 +62,10 @@ public class DataSetDTO {
         this.deletable = deletable;
     }
 
+    public String getPropertyValue(String propertyName){
+        return properties.get(properties.indexOf(new DataSetPropertyDTO(propertyName, ""))).getPropertyValue();
+    }
+
     public List<DataSetPropertyDTO> getProperties() {
         return properties;
     }
@@ -67,5 +80,29 @@ public class DataSetDTO {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Boolean getNeedsApproval() {
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(Boolean needsApproval) {
+        this.needsApproval = needsApproval;
+    }
+
+    public Boolean getIsAssociatedToDataOwners() {
+        return isAssociatedToDataOwners;
+    }
+
+    public void setIsAssociatedToDataOwners(Boolean isAssociatedToDataOwners) {
+        this.isAssociatedToDataOwners = isAssociatedToDataOwners;
+    }
+
+    public Boolean getUpdateAssociationToDataOwnerAllowed() {
+        return updateAssociationToDataOwnerAllowed;
+    }
+
+    public void setUpdateAssociationToDataOwnerAllowed(Boolean updateAssociationToDataOwnerAllowed) {
+        this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
     }
 }

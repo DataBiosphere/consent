@@ -1,0 +1,71 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+
+    <changeSet author="vvicario" id="84">
+        <insert tableName="roles">
+            <column name="roleId" value="6"/>
+            <column name="name" value="DataOwner"/>
+        </insert>
+        <insert tableName="electiontype">
+            <column name="type" value="DataSet"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="vvicario" id="85">
+        <addColumn tableName="dataset">
+            <column name="needs_approval" type="boolean" defaultValueBoolean= "false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet  author="ssaucedo" id="86">
+        <createTable tableName="dataset_user_association">
+            <column name="datasetId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dacuserId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="createDate" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey
+                columnNames="datasetId, dacuserId"
+                constraintName="avoid_duplicated_associations"
+                tableName="dataset_user_association"/>
+
+        <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="dataset_user_association" constraintName="fkDataSetId"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dataSetId" referencedTableName="dataset"
+                                 referencesUniqueColumn="true"/>
+        <addForeignKeyConstraint baseColumnNames="dacuserId" baseTableName="dataset_user_association" constraintName="fkDacuserId"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacUserId" referencedTableName="dacuser"
+                                 referencesUniqueColumn="true"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="87">
+        <addColumn tableName="vote">
+            <column name="has_concerns" type="boolean" defaultValueBoolean= "false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="88">
+        <addColumn tableName="election">
+            <column name="datasetId" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="89">
+        <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="election"
+                                 constraintName="fkDataSetElection" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetId"
+                                 referencedTableName="dataset" referencesUniqueColumn="false"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -18,6 +18,9 @@ public class DataAccessRequestManage {
     private String electionStatus;
 
     @JsonProperty
+    private String status;
+
+    @JsonProperty
     private String rus;
 
     @JsonProperty
@@ -40,6 +43,16 @@ public class DataAccessRequestManage {
 
     @JsonProperty
     private Boolean electionVote;
+
+    @JsonProperty
+    private Boolean isCanceled;
+
+    @JsonProperty
+    private Boolean needsApproval;
+
+    @JsonProperty
+    private String dataSetElectionResult;
+
 
     public DataAccessRequestManage() {
     }
@@ -114,5 +127,37 @@ public class DataAccessRequestManage {
 
     public void setElectionVote(Boolean electionVote) {
         this.electionVote = electionVote;
+    }
+
+    public Boolean getIsCanceled() {
+        return isCanceled;
+    }
+
+    public void setIsCanceled(Boolean isCanceled) {
+        this.isCanceled = isCanceled;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Boolean getNeedsApproval() {
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(Boolean needsApproval) {
+        this.needsApproval = needsApproval;
+    }
+
+    public String getDataSetElectionResult() {
+        return dataSetElectionResult;
+    }
+
+    public void setDataSetElectionResult(String dataSetElectionResult) {
+        this.dataSetElectionResult = dataSetElectionResult;
     }
 }

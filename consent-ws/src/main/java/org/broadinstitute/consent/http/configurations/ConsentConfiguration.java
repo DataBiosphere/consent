@@ -4,11 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.configurations.MongoConfiguration;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.configurations.UseRestrictionConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -23,10 +18,20 @@ public class ConsentConfiguration extends Configuration {
     @JsonProperty
     private final DataSourceFactory database = new DataSourceFactory();
 
-    @Valid
-    @NotNull
-    @JsonProperty
-    private final UseRestrictionConfig ontology = new UseRestrictionConfig();
+    private final UseRestrictionConfig ontology = new UseRestrictionConfig(
+        "http://www.broadinstitute.org/ontologies/DUOS/methods_research",
+        "http://www.broadinstitute.org/ontologies/DUOS/aggregate_research",
+        "http://www.broadinstitute.org/ontologies/DUOS/control",
+        "http://www.broadinstitute.org/ontologies/DUOS/population_structure",
+        "http://www.broadinstitute.org/ontologies/DUOS/male",
+        "http://www.broadinstitute.org/ontologies/DUOS/female",
+        "http://www.broadinstitute.org/ontologies/DUOS/For_profit",
+        "http://www.broadinstitute.org/ontologies/DUOS/Non_profit",
+        "http://www.broadinstitute.org/ontologies/DUOS/boys",
+        "http://www.broadinstitute.org/ontologies/DUOS/girls",
+        "http://www.broadinstitute.org/ontologies/DUOS/children"
+
+    );
 
     @Valid
     @NotNull
@@ -55,10 +60,30 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
+    @Valid
+    @NotNull
+    private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
+
+    @Valid
+    @NotNull
+    private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
+
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
     }
+
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private final StoreOntologyConfiguration storeOntology = new StoreOntologyConfiguration();
+
 
     public DataSourceFactory getDataSourceFactory() {
         return database;
@@ -86,5 +111,29 @@ public class ConsentConfiguration extends Configuration {
 
     public FreeMarkerConfiguration getFreeMarkerConfiguration() {
         return freeMarkerConfiguration;
+    }
+
+    public BasicAuthConfig getBasicAuthentication() {
+        return basicAuthentication;
+    }
+
+    public void setBasicAuthentication(BasicAuthConfig basicAuthentication) {
+        this.basicAuthentication = basicAuthentication;
+    }
+
+    public GoogleOAuth2Config getGoogleAuthentication() {
+        return googleAuthentication;
+    }
+
+    public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
+        this.googleAuthentication = googleAuthentication;
+    }
+
+    public ElasticSearchConfiguration getElasticSearchConfiguration() {
+        return elasticSearch;
+    }
+
+    public StoreOntologyConfiguration getStoreOntologyConfiguration() {
+        return storeOntology;
     }
 }

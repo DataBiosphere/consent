@@ -1,24 +1,21 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
+
 
 @Path("{api : (api/)?}consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
@@ -37,7 +34,8 @@ public class ConsentVoteResource extends Resource {
     @POST
     @Consumes("application/json")
     @Path("/{id}")
-    public Response firstVoteUpdate(@Context UriInfo info, Vote rec,
+    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
+    public Response firstVoteUpdate(Vote rec,
                                     @PathParam("consentId") String consentId, @PathParam("id") Integer voteId){
         try {
             Vote vote = api.firstVoteUpdate(rec, voteId);
@@ -50,10 +48,9 @@ public class ConsentVoteResource extends Resource {
             }
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", voteId));
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
@@ -61,19 +58,23 @@ public class ConsentVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    public Response updateConsentVote(@Context UriInfo info, Vote rec,
+    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
+    public Response updateConsentVote(Vote rec,
                                       @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.updateVote(rec, id, consentId);
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
     @GET
     @Produces("application/json")
     @Path("/{id}")
+    @PermitAll
     public Vote describe(@PathParam("consentId") String consentId,
                          @PathParam("id") Integer id) {
         return api.describeVoteById(id, consentId);
@@ -81,6 +82,7 @@ public class ConsentVoteResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public List<Vote> describeAllVotes(@PathParam("consentId") String consentId) {
         return api.describeVotes(consentId);
     }
@@ -88,6 +90,7 @@ public class ConsentVoteResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response deleteVote(@PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
             api.deleteVote(id, consentId);
@@ -100,6 +103,7 @@ public class ConsentVoteResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Response deleteVotes(@PathParam("consentId") String consentId) {
         try {
             if (consentId == null) {

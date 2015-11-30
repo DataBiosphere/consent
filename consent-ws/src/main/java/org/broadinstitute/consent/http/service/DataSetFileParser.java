@@ -75,7 +75,7 @@ public class DataSetFileParser {
     }
 
     private List<String> validateRequiredFields(int row, String[] record, List<Dictionary> requiredFields, String id){
-        return requiredFields.stream().filter(field -> record[field.getDisplayOrder()].isEmpty()).map(field -> String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row)).collect(Collectors.toList());
+        return requiredFields.stream().filter(field -> record[field.getReceiveOrder()].isEmpty()).map(field -> String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row)).collect(Collectors.toList());
     }
 
     private DataSet createDataSet(String[] record) {

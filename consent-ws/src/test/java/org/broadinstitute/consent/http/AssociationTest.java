@@ -1,11 +1,18 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -13,11 +20,6 @@ import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -45,6 +47,7 @@ public class AssociationTest extends ConsentServiceTest {
     @Before
     public void setup() throws Exception {
         mockTranslateResponse();
+        mockValidateResponse();
     }
 
 
@@ -285,14 +288,9 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("*** testQueryByAssociation(2) - returned location '%s'", location));
 
         // check that we got back no consents
-        response = checkStatus(OK, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
-        consent_urls = getConsentUrls(response);
-        assertThat(consent_urls.size()).isEqualTo(0);
-
-        // check that we got back no consents
-        response = checkStatus(OK, getJson(client, queryAssociationPath("sampleSet", s2)));
-        consent_urls = getConsentUrls(response);
-        assertThat(consent_urls.size()).isEqualTo(0);
+       checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
+       // check that we got back no consents
+        checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sampleSet", s2)));
     }
 
     //

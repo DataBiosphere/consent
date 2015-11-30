@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import com.google.common.io.Resources;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.eclipse.jetty.http.HttpHeader;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -40,10 +40,12 @@ public class DataSetResourceTest extends DataSetServiceTest {
     @Test
     public void testCreateDataSetWrongType() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(false));
+        WebTarget webTarget = client.target(postDataSetFile(false, 1));
         MultiPart mp = createFormData("wrongExt", "pdf");
 
-        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        Response response = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
@@ -55,10 +57,12 @@ public class DataSetResourceTest extends DataSetServiceTest {
     public void testCreateMissingHeaders() throws Exception {
         // No matter other errors in the file, if the headers doesn't match, it will not try to parse.
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(false));
+        WebTarget webTarget = client.target(postDataSetFile(false, 1));
         MultiPart mp = createFormData("missingHeader", "txt");
 
-        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        Response response = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
@@ -70,9 +74,10 @@ public class DataSetResourceTest extends DataSetServiceTest {
     public void testCreateCorrectFile() throws Exception {
         Client client = ClientBuilder.newBuilder()
                 .register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(true));
+        WebTarget webTarget = client.target(postDataSetFile(true, 1));
         MultiPart mp = createFormData("correctFile", "txt");
-        Response response = webTarget.request(MediaType.APPLICATION_JSON)
+        Response response = webTarget
+                .request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
         assertTrue(response.getStatus() == (OK));

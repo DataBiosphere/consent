@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+
+import java.util.Date;
 
 public class Election {
 
@@ -43,12 +43,17 @@ public class Election {
     @JsonProperty
     private String translatedUseRestriction;
 
+    @JsonProperty
+    private Integer dataSetId;
+
+    @JsonProperty
+    private String displayId;
 
     public Election() {
     }
     public Election(Integer electionId, String electionType,
-        String status, Date createDate,
-        String referenceId, Date lastUpdate , Boolean finalAccessVote) {
+                    String status, Date createDate,
+                    String referenceId, Date lastUpdate , Boolean finalAccessVote, Integer dataSetId) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -56,6 +61,7 @@ public class Election {
         this.referenceId = referenceId;
         this.lastUpdate = lastUpdate;
         this.finalAccessVote = finalAccessVote;
+        this.dataSetId = dataSetId;
     }
 
 
@@ -75,6 +81,15 @@ public class Election {
         this.finalVoteDate = finalVoteDate;
         this.useRestriction = useRestriction;
         this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    public Election(Integer electionId, String electionType, String status, Date createDate, String referenceId, Integer dataSetId) {
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.dataSetId = dataSetId;
     }
 
     public Integer getElectionId() {
@@ -171,5 +186,29 @@ public class Election {
 
     public void setTranslatedUseRestriction(String translatedUseRestriction) {
         this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
+
+    public void setLastUpdate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
+
+    public Integer getDataSetId() {
+        return dataSetId;
+    }
+
+    public void setDataSetId(Integer dataSetId) {
+        this.dataSetId = dataSetId;
+    }
+
+    public String getDisplayId() {
+        return displayId;
+    }
+
+    public void setDisplayId(String displayId) {
+        this.displayId = displayId;
     }
 }

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Roboto', sans-serif;">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Broad Data Use Oversight System - Disabled Datasets Notification</title>
+</head>
+
+<body style="font-family: 'Roboto', sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100%; height: 100%; color: #777777; margin: 0;">
+<center style="font-family: 'Roboto', sans-serif;">
+    <table width="600" bgcolor="#eeeeee" style="border-collapse: collapse; font-family: 'Roboto', sans-serif; box-shadow: 3px 3px 0 #cccccc; border-radius: 5px; -moz-border-radius: 5px; margin-top: 20px; background-color: #eeeeee;">
+        <tr width="600" style="font-family: 'Roboto', sans-serif;">
+            <td align="left" style="font-family: 'Roboto', sans-serif; font-size: 14px; color: #777777; text-align: left; line-height: 21px; padding: 20px 30px 25px 30px;">
+                <img src="http://imageshack.com/a/img905/7554/gjprR0.png" alt="Broad Institute Logo" style=" margin-top: 10px; display: inline-block; font-family: 'Roboto', sans-serif;">
+            </td>
+        </tr>
+        <tr width="600" align="center" bgcolor="#dedede" style="font-family: 'Roboto', sans-serif; background-color: #dedede; display: inline-table; text-align: center; margin: 0;">
+            <td width="600" align="center" style="border-collapse: collapse; font-family: 'Roboto', sans-serif; font-size: 26px; color: #777777; text-align: center; line-height: 21px; font-weight: bold; padding: 30px;">Broad Data Use Oversight System</td>
+        </tr>
+        <tr align="center" style="font-family: 'Roboto', sans-serif; padding-top: 20px; margin-top: 20px;">
+            <td id="userName" align="left" style="border-collapse: collapse; font-family: 'Roboto', sans-serif; font-size: 22px; color: #777777; text-align: left; line-height: 21px; display: block; font-weight: 500; padding: 25px 30px 20px 30px;">Hello ${userName}!</td>
+        </tr>
+        <tr width="600" style="font-family: 'Roboto', sans-serif;">
+            <td align="left" style="border-collapse: collapse; font-family: 'Roboto', sans-serif; font-size: 16px; color: #777777; text-align: left; line-height: 25px; padding: 0px 30px 30px 30px;">
+                The following Datasets are disabled and couldn't be added to your Data Access Request Application ID ${entityId}:
+            </td>
+        </tr>
+        <#list disabledDatasets>
+            <tr style="font-family: 'Roboto', sans-serif;">
+                <#items as da>
+                    <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 20px;" align="left">
+                        <ul style="padding-left: 20px;">
+                            <li>${da}</li>
+                        </ul>
+                    </td>
+                </#items>
+            </tr>
+        </#list>
+    </table>
+    <table width ="600" style="font-family: 'Roboto', sans-serif; margin-top: 15px;">
+        <tr align="center" style="font-family: 'Roboto', sans-serif; color: #999999;">
+            <td align="center" valign="middle" style="padding: 0 10px 0 10px; border-collapse: collapse; font-family: 'Roboto', sans-serif; font-size: 14px; color: #999999; text-align: center; line-height: 21px; display: inline-block; vertical-align: middle;">	&#169; Broad Institute </td>
+        </tr>
+    </table>
+</center>
+</body>
+</html>

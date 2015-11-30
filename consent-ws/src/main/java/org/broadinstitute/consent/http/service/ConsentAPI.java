@@ -2,11 +2,14 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface ConsentAPI {
 
@@ -17,8 +20,10 @@ public interface ConsentAPI {
     Collection<Consent> findConsentsByAssociationType(String associationType);
 
     Collection<Consent> retrieve(List<String> ids);
+    
+    String getByName(String name);
 
-    void update(String id, Consent rec) throws UnknownIdentifierException;
+    Consent update(String id, Consent rec) throws UnknownIdentifierException;
 
     /**
      * This isn't actually used in the web services at the moment, but i'm including it for
@@ -54,6 +59,8 @@ public interface ConsentAPI {
 
     Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetId);
 
+    Set<ConsentDataSet> getConsentIdAndDataSets(List<String> datasetId);
+
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;
 
@@ -65,4 +72,5 @@ public interface ConsentAPI {
 
     Integer getUnReviewedConsents();
 
+    List<UseRestrictionDTO> getInvalidConsents();
 }

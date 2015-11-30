@@ -1,17 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ElectionReviewVote;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-
-import javax.ws.rs.NotFoundException;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ElectionReview;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,7 +24,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
     }
 
-    private DatabaseReviewResultsAPI(ElectionDAO electionDAO, VoteDAO voteDAO, ConsentDAO consentDAO) {
+    protected DatabaseReviewResultsAPI(ElectionDAO electionDAO, VoteDAO voteDAO, ConsentDAO consentDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.consentDAO = consentDAO;
@@ -34,7 +32,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
     @Override
     public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type) {
-        Election election = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, type);
+        Election election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, type);
         return getElectionReview(referenceId, election);
     }
 
@@ -49,38 +47,41 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
     @Override
     public ElectionReview describeElectionReviewByElectionId(Integer electionId, Boolean isFinalAccess) {
-        ElectionReview review = new ElectionReview();
-        review.setElection(electionDAO.findElectionById(electionId));
-        Consent consent = consentDAO.findConsentById(review.getElection().getReferenceId());
-        List<ElectionReviewVote> rVotes = (isFinalAccess == null || isFinalAccess == false) ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue()) :  voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
-        review.setReviewVote(rVotes);
-        review.setConsent(consent);
+        ElectionReview review = null;
+        Election election = electionDAO.findElectionWithFinalVoteById(electionId);
+        if(election != null){
+            review = new ElectionReview();
+            review.setElection(election);
+            Consent consent = consentDAO.findConsentById(review.getElection().getReferenceId());
+            List<ElectionReviewVote> rVotes = (isFinalAccess == null || isFinalAccess == false) ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue()) :  voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
+            review.setReviewVote(rVotes);
+            review.setConsent(consent);
+        }
         return review;
     }
 
     @Override
     public ElectionReview describeElectionReviewByReferenceId(String referenceId){
         List<String> status = Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue());
-        Election election = electionDAO.findLastElectionByReferenceIdAndStatus(referenceId, status);
+        Election election = electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(referenceId, status);
         return getElectionReview(referenceId, election);
     }
 
     @Override
-    public Vote describeAgreementVote(Integer electionId) {
-        try{
-            return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue()).get(0);
-        }catch (Exception e){
-            throw new NotFoundException(e.getMessage());
-        }
+    public List<Vote> describeAgreementVote(Integer electionId) {
+        return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue());
     }
 
     private ElectionReview getElectionReview(String referenceId, Election election) {
-        List<ElectionReviewVote> rVotes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId());
-        ElectionReview review = new ElectionReview();
-        Consent consent = consentDAO.findConsentById(referenceId);
-        review.setConsent(consent);
-        review.setElection(election);
-        review.setReviewVote(rVotes);
+        ElectionReview review = null;
+        if(election != null){
+            review = new ElectionReview();
+            List<ElectionReviewVote> rVotes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId());
+            Consent consent = consentDAO.findConsentById(referenceId);
+            review.setConsent(consent);
+            review.setElection(election);
+            review.setReviewVote(rVotes);
+        }
         return review;
     }
 

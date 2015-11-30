@@ -16,6 +16,12 @@ public class SummaryItem {
         this.manualReview = manualReview;
     }
 
+    public SummaryItem(String title, String description, boolean manualReview) {
+        this.title = title;
+        this.manualReview = manualReview;
+        this.description = description;
+    }
+
     public boolean isManualReview() {
         return manualReview;
     }

@@ -7,24 +7,36 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface DataSetAPI {
 
-    ParseResult create(File dataSetFile);
+    ParseResult create(File dataSetFile, Integer userId);
 
-    ParseResult overwrite(File dataSetFile);
+    ParseResult overwrite(File dataSetFile, Integer userId);
 
     Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
 
+    DataSet describeDataSetsByObjectId(String objectId) ;
+
     List<DataSet> getDataSetsForConsent(String consentId);
 
-    Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
+    DataSetDTO getDataSetDTO(String objectId ) ;
 
-    Collection<Dictionary> describeDictionary();
-    
-    List<String> autoCompleteDataSets(String partial);
+    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) ;
 
-    void deleteDataset(String datasetObjectId);
+    Collection<Dictionary> describeDictionaryByDisplayOrder();
+
+    Collection<Dictionary> describeDictionaryByReceiveOrder();
+
+    List<Map<String, String>> autoCompleteDataSets(String partial);
+
+    void deleteDataset(String datasetObjectId, Integer dacUserId) throws IllegalStateException;
 
     void disableDataset(String datasetObjectId, Boolean active);
+
+    DataSet updateNeedsReviewDataSets(String dataSetId, Boolean needsApproval);
+
+    List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList);
+
 }

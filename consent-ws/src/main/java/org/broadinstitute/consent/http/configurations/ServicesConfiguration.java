@@ -4,21 +4,25 @@ import javax.validation.constraints.NotNull;
 
 public class ServicesConfiguration {
 
-    @NotNull
-    public String matchURL;
 
     @NotNull
-    public String localURL;
+    private String ontologyURL;
 
     @NotNull
-    public String translateURL;
+    private String localURL;
 
-    public String getMatchURL() {
-        return matchURL;
+    private final String MATCH = "match";
+
+    private final String TRANSLATE = "translate";
+
+    private final String VALIDATE_USE_RESTRICTION = "validate/userestriction";
+
+    public String getOntologyURL() {
+        return ontologyURL;
     }
 
-    public void setMatchURL(String matchURL) {
-        this.matchURL = matchURL;
+    public void setOntologyURL(String ontologyURL) {
+        this.ontologyURL = ontologyURL;
     }
 
     public String getLocalURL() {
@@ -30,11 +34,17 @@ public class ServicesConfiguration {
     }
 
     public String getTranslateURL() {
-        return translateURL;
+        return getOntologyURL() + TRANSLATE;
     }
 
-    public void setTranslateURL(String translateURL) {
-        this.translateURL = translateURL;
+    public String getMatchURL() {
+        return getOntologyURL() + MATCH;
     }
+
+    public String getValidateUseRestrictionURL() {
+        return getOntologyURL() + VALIDATE_USE_RESTRICTION;
+    }
+
+
 
 }

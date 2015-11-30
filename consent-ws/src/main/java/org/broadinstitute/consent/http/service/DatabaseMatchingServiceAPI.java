@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
-import org.bson.Document;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -10,15 +10,15 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 import org.glassfish.jersey.client.ClientProperties;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
-    Client client;
     ConsentAPI consentAPI;
     DataAccessRequestAPI dataAccessAPI;
     DataSetAPI dsAPI;
@@ -38,14 +37,13 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     public static void initInstance(Client client, ServicesConfiguration config) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config));
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), AbstractDataSetAPI.getInstance()));
     }
 
-    private DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config){
-        this.client = ClientBuilder.newClient();
-        this.dataAccessAPI = AbstractDataAccessRequestAPI.getInstance();
-        this.consentAPI = AbstractConsentAPI.getInstance();
-        this.dsAPI = AbstractDataSetAPI.getInstance();
+    protected DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DataSetAPI dsAPI){
+        this.dataAccessAPI = darAPI;
+        this.consentAPI = consentAPI;
+        this.dsAPI = dsAPI;
         client.property(ClientProperties.CONNECT_TIMEOUT, 10000);
         client.property(ClientProperties.READ_TIMEOUT,    10000);
         target = client.target(config.getMatchURL());
@@ -68,25 +66,19 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     @Override
-    public List<Match> findMatchesForPurpose(String purposeId){
-        List<Match> matches = new ArrayList<>();
+    public Match findMatchForPurpose(String purposeId){
         Document dar = dataAccessAPI.describeDataAccessRequestById(purposeId);
-        List<Consent> consents = findRelatedConsents(purposeId);
-        if(dar != null && !consents.isEmpty()){
-            for (Consent consent : consents) {
-                Match match;
+        Consent consent = findRelatedConsents(purposeId);
+        Match match = null;
+        if(dar != null){
                 try {
                     match = singleEntitiesMatch(consent, dar);
-                    if(match != null){
-                        matches.add(match);
-                    }
                 } catch (Exception e) {
                     logger().error("Error finding single match.", e);
-                    matches.add(createMatch(consent.getConsentId(), purposeId, true, false));
+                    match = createMatch(consent.getConsentId(), purposeId, true, false);
                 }
             }
-        }
-        return matches;
+        return match;
     }
 
     @Override
@@ -105,16 +97,20 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                     }
                 } catch (Exception e) {
                     logger().error("Error finding  matches for consent.", e);
-                    matches.add(createMatch(consentId, dar.get("_id").toString(), true, false));
+                    matches.add(createMatch(consentId, dar.get(DarConstants.ID).toString(), true, false));
                 }
             }
         }
         return matches;
     }
 
-    private Match singleEntitiesMatch(Consent consent, Document dar) throws IOException, UnknownIdentifierException {
+    private Match singleEntitiesMatch(Consent consent, Document dar) throws Exception {
+        if(!dar.containsKey(DarConstants.RESTRICTION)){
+            logger().error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
+            throw new Exception("Data Access Request: " + dar.getString(DarConstants.DAR_CODE) + " cannot be matched. Missing Use Restriction field.");
+        }
         if(consent != null && dar != null){
-            Match match = createMatch(consent.getConsentId(), dar.get("_id").toString(), false, false);
+            Match match = createMatch(consent.getConsentId(), dar.get(DarConstants.ID).toString(), false, false);
             RequestMatchingObject requestObject = createRequestObject(consent, dar);
             String json = new Gson().toJson(requestObject);
             Response res = target.request("application/json").post(Entity.json(json));
@@ -149,19 +145,21 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return consent;
     }
 
-    private List<Consent> findRelatedConsents(String purposeId){
-        String datasetId = (dataAccessAPI.describeDataAccessRequestById(purposeId)).getString("datasetId");
-        List<Consent> consents = new ArrayList<>();
-        consents.add(consentAPI.getConsentFromDatasetID(datasetId));
-        return consents;
+    private Consent findRelatedConsents(String purposeId){
+        List<String> datasetIdList = (dataAccessAPI.describeDataAccessRequestById(purposeId)).get(DarConstants.DATASET_ID,List.class);
+        Consent consent =  null;
+        if(CollectionUtils.isNotEmpty(datasetIdList)){
+            consent = consentAPI.getConsentFromDatasetID(datasetIdList.get(0));
+        }
+        return consent;
     }
 
     private List<Document> findRelatedDars(List<String> dataSetIds){
         return dataAccessAPI.describeDataAccessWithDataSetId(dataSetIds);
     }
 
-    private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws UnknownIdentifierException, IOException {
-        String restriction = new Gson().toJson(dar.get("restriction", Map.class));
+    private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws Exception {
+        String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
         return new RequestMatchingObject(consent.getUseRestriction(), UseRestriction.parse(restriction));
     }
 }

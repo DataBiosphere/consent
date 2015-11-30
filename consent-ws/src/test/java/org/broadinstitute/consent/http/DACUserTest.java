@@ -1,17 +1,20 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
+
+import java.util.*;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,6 +32,7 @@ public class DACUserTest extends DACUserServiceTest {
     private static final String CHAIRPERSON = "CHAIRPERSON";
     private static final String DACMEMBER = "DACMEMBER";
     private static String DACMEMBERMAIL;
+    private static String CONSENT_ID = "testId";
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -98,9 +102,28 @@ public class DACUserTest extends DACUserServiceTest {
     public void testUpdateDACUser() {
         Client client = ClientBuilder.newClient();
         DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
-        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), user));
+        Map<String, Object> updateUserMap = new HashMap<>();
+        updateUserMap.put("updatedUser",user);
+        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), updateUserMap));
         user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(DACUser.class);
         assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
+    }
+
+    @Test
+    public void testValidateDacUserDelegationNotNeeded() {
+        Client client = ClientBuilder.newClient();
+        DACUser user = getJson(client, dacUserPathByEmail(DAC_USER_EMAIL)).readEntity(DACUser.class);
+        user.setEmail(DAC_USER_EMAIL);
+        DACUserRole role = new DACUserRole();
+        role.setName(DACUserRoles.MEMBER.getValue());
+        user.setRoles(new ArrayList<>(Arrays.asList(role)));
+        Map<String, Object> updateUserMap = new HashMap<>();
+        updateUserMap.put("updatedUser",user);
+        HashMap response = post(client, validateDelegationPath(DACUserRoles.MEMBER.getValue()), user).readEntity(HashMap.class);
+        boolean needsDelegation = (Boolean)response.get("needsDelegation");
+        List<DACUser> dacUsers = (List<DACUser>)response.get("delegateCandidates");
+        assertThat(dacUsers).isEmpty();
+        assertThat(needsDelegation).isFalse();
     }
 
 }
