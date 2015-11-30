@@ -1,0 +1,18 @@
+package org.broadinstitute.consent.http.cloudstore;
+
+import com.google.api.client.http.HttpResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+
+public interface CloudStore {
+
+    boolean deleteStorageDocument(String documentUrl) throws IOException, GeneralSecurityException;
+
+    HttpResponse getStorageDocument(String documentUrl) throws IOException, GeneralSecurityException;
+
+    String putStorageDocument(String document, InputStream stream, String type, String ext) throws IOException, GeneralSecurityException;
+
+    String postStorageDocument(String document, InputStream stream, String type, String ext) throws IOException, GeneralSecurityException;
+}
