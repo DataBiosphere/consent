@@ -94,6 +94,9 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     public Response updateDataAccessRequest(@Context UriInfo info, Document dar, @PathParam("id") String id) {
         try {
+            if(dar.containsKey("restriction")){
+                dar.remove("restriction");
+            }
             if (!requiresManualReview(dar)) {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
