@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCursor;
 import de.flapdoodle.embedmongo.MongoDBRuntime;
@@ -10,7 +9,6 @@ import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.bson.Document;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -19,6 +17,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -39,6 +38,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     private static String DATA_REQUEST_ID;
     private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
+    private static final String TEST_DATABASE_NAME = "TestConsent";
     private MongodExecutable mongodExe;
     private MongodProcess mongod;
     private MongoClient mongo;
@@ -66,7 +66,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         mongod = mongodExe.start();
         mongo = new MongoClient("localhost", 37017);
 
-        MongoConsentDB mongoi = new MongoConsentDB(mongo);
+        MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
         mongoi.getCountersCollection().drop();
         mongoi.getDataAccessRequestCollection().drop();
         mongoi.getResearchPurposeCollection().drop();
