@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCursor;
 import de.flapdoodle.embedmongo.MongoDBRuntime;
@@ -9,15 +8,14 @@ import de.flapdoodle.embedmongo.MongodProcess;
 import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.bson.Document;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -27,7 +25,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +37,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     private static final String INVALID_DATA_REQUEST_ID = "55fb15569a434c232c5d50a9";
     private static final String INVALID_STATUS = "testStatus";
     private static final String FINAL_RATIONALE = "Test";
+    private static final String TEST_DATABASE_NAME = "TestConsent";
     private MongodExecutable mongodExe;
     private MongodProcess mongod;
     private MongoClient mongo;
@@ -67,7 +65,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         mongod = mongodExe.start();
         mongo = new MongoClient("127.0.0.1", 37017);
 
-        MongoConsentDB mongoi = new MongoConsentDB(mongo);
+        MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
 
         // configuring ResearchPurposeAPI instance to use in memory Mongo
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);

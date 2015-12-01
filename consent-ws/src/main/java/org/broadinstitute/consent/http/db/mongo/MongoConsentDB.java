@@ -13,14 +13,15 @@ public class MongoConsentDB {
     private final MongoClient mongo;
     public static final String DAR_CODE_COUNTER = "dar_code_counter";
     public static final String DAR_CODE = "dar_code";
+    public String DATABASE_NAME;
 
     /**
      *
      * @param mongo
      */
-    public MongoConsentDB(MongoClient mongo) {
-        
+    public MongoConsentDB(MongoClient mongo, String databaseName) {
         this.mongo = mongo;
+        this.DATABASE_NAME = databaseName;
     }
 
     /**
@@ -36,7 +37,7 @@ public class MongoConsentDB {
      * @return dataAccessRequest collection
      */
     public MongoCollection<Document> getDataAccessRequestCollection() {
-        return mongo.getDatabase("consent").getCollection("dataAccessRequest");
+        return mongo.getDatabase(DATABASE_NAME).getCollection("dataAccessRequest");
     }
 
     /**
@@ -44,7 +45,7 @@ public class MongoConsentDB {
      * @return researchPurposeCollection
      */
     public MongoCollection<Document> getResearchPurposeCollection() {
-        return mongo.getDatabase("consent").getCollection("researchPurpose");
+        return mongo.getDatabase(DATABASE_NAME).getCollection("researchPurpose");
     }
 
     /**
@@ -52,7 +53,7 @@ public class MongoConsentDB {
      * @return counters collection
      */
     public MongoCollection<Document> getCountersCollection() {
-        return mongo.getDatabase("consent").getCollection("counters");
+        return mongo.getDatabase(DATABASE_NAME).getCollection("counters");
     }
 
     /**
