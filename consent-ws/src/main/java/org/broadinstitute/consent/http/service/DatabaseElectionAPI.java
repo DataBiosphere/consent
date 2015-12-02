@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -12,6 +13,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -24,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -285,6 +288,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
+        BasicDBObject query;
+        Document dar;
         switch (electionType) {
             case TRANSLATE_DUL:
                 election.setElectionType(electionDAO
@@ -296,10 +301,29 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             case DATA_ACCESS:
                 election.setElectionType(electionDAO
                         .findElectionTypeByType(ElectionType.DATA_ACCESS.getValue()));
+                query = new BasicDBObject("_id", new ObjectId(referenceId));
+                dar = mongo.getDataAccessRequestCollection().find(query).first();
+                election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
+                try {
+                   String restriction  =  new Gson().toJson(dar.get("restriction", Map.class));
+                   election.setUseRestriction((UseRestriction.parse(restriction)));
+                } catch (IOException e) {
+                    election.setUseRestriction(null);
+                }
                 break;
             case RP:
                 election.setElectionType(electionDAO
                         .findElectionTypeByType(ElectionType.RP.getValue()));
+                query = new BasicDBObject("_id", new ObjectId(referenceId));
+                dar = mongo.getDataAccessRequestCollection().find(query).first();
+                election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
+                try {
+                    String restriction = new Gson().toJson(dar.get("restriction", Map.class));
+                    election.setUseRestriction((UseRestriction.parse(restriction)));
+
+                } catch (IOException e) {
+                    election.setUseRestriction(null);
+                }
                 break;
         }
         if (StringUtils.isEmpty(election.getStatus())) {

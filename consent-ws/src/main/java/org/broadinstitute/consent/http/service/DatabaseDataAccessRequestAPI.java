@@ -114,17 +114,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public Document describeResearchPurposeById(String id) {
-        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
-        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-        Document result = new Document();
-        if(dar != null && dar.get("restriction") != null){
-            result.put("restriction",  dar.get("restriction", Document.class).toJson());
-        }
-        return result;
-    }
-
-    @Override
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId) {
         FindIterable<Document> accessList = userId == null ? mongo.getDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
                 : mongo.getDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
