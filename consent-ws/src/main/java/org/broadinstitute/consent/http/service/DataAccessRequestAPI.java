@@ -30,8 +30,6 @@ public interface DataAccessRequestAPI {
 
     void deleteDataAccessRequestById(String id) throws IllegalArgumentException;
 
-    Document describeResearchPurposeById(String id);
-
     Document updateDataAccessRequest(Document dar, String id);
 
     Integer getTotalUnReviewedDAR();

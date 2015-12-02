@@ -8,6 +8,8 @@ import de.flapdoodle.embedmongo.MongodProcess;
 import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.bson.Document;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -15,7 +17,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
-import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -71,8 +72,12 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
 
         // Create Documents needed in mongo for testing
-        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", "SC-20660");
-        Document doc2 = new Document().append("testingInfo2", "someValue2").append("datasetId", "SC-20660");
+        UseRestriction useRestriction = UseRestriction.parse("{\"type\":\"everything\"}");
+        Document doc = new Document().append("testingInfo1", "someValue");
+        doc.append("datasetId", "SC-20660");
+        doc.append("restriction", Document.parse(useRestriction.toString()));
+        doc.append("translated_restriction","translated_test_restriction");
+        Document doc2 = new Document().append("testingInfo2", "someValue2").append("datasetId", "SC-20660").append("restriction", Document.parse(useRestriction.toString())).append("translated_restriction","translated_test_restriction");
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         mongoi.getDataAccessRequestCollection().insertOne(doc2);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();

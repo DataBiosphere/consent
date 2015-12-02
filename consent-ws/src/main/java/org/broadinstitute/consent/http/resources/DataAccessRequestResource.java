@@ -1,13 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.enumeration.TranslateType;
+import org.broadinstitute.consent.http.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import freemarker.template.TemplateException;
@@ -40,6 +34,7 @@ public class DataAccessRequestResource extends Resource {
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
+    private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
 
     public DataAccessRequestResource() {
@@ -63,8 +58,8 @@ public class DataAccessRequestResource extends Resource {
             if (!requiresManualReview(dar)) {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                rus = Document.parse(useRestriction.toString());
-                dar.append("restriction", rus);
+                dar.append("restriction", Document.parse(useRestriction.toString()));
+                dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
@@ -100,8 +95,8 @@ public class DataAccessRequestResource extends Resource {
             if (!requiresManualReview(dar)) {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                Document restriction = Document.parse(useRestriction.toString());
-                dar.append("restriction", restriction);
+                dar.append("restriction", Document.parse(useRestriction.toString()));
+                dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
             matchProcessAPI.processMatchesForPurpose(dar.get("_id").toString());
@@ -182,13 +177,6 @@ public class DataAccessRequestResource extends Resource {
     @Path("/manage")
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage(userId)).build();
-    }
-
-    @GET
-    @Path("/restriction/{id}")
-    @Produces("application/json")
-    public Response describeResearchPurposeById(@PathParam("id") String id){
-       return Response.ok().entity(dataAccessRequestAPI.describeResearchPurposeById(id)).build();
     }
 
     @GET
