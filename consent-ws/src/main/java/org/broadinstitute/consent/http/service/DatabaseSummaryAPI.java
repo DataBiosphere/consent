@@ -204,7 +204,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         }
                         summaryWriter.write(END_OF_LINE);
                     }
-                }
+                }else file = null;
                 summaryWriter.flush();
             }
             return file;
@@ -303,7 +303,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         }
                         summaryWriter.write(END_OF_LINE);
                     }
-                }
+                }else file = null;
                 summaryWriter.flush();
             }
             return file;
