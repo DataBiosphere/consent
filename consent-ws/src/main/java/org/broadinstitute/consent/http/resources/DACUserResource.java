@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.Error;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -48,7 +49,7 @@ public class DACUserResource extends Resource {
             uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(uri).entity(dacUser).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 

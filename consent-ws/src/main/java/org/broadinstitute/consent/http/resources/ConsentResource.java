@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.TranslateServiceAPI;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
-
+import org.broadinstitute.consent.http.models.dto.Error;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -88,7 +88,7 @@ public class ConsentResource extends Resource {
         }catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         } catch (Exception e) {
-            return Response.serverError().entity(e.getMessage()).build();
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
       }
     }
 
@@ -100,7 +100,7 @@ public class ConsentResource extends Resource {
         try {
             return Response.status(Response.Status.OK).entity(matchAPI.findMatchByConsentId(purposeId)).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 

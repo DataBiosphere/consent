@@ -10,6 +10,7 @@ import freemarker.template.TemplateException;
 
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.*;
@@ -56,7 +57,7 @@ public class DataRequestVoteResource extends Resource {
             return Response.ok(uri).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity(e.getMessage()).build();
+                    .entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             throw new NotFoundException(String.format(
                     "Could not find vote with id %s", voteId));
@@ -77,7 +78,7 @@ public class DataRequestVoteResource extends Resource {
             }
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
@@ -91,7 +92,7 @@ public class DataRequestVoteResource extends Resource {
             Vote vote = api.updateVote(rec, id, requestId);
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 

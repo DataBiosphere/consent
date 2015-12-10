@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.*;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
+
 
 @Path("{api : (api/)?}consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
@@ -50,7 +52,7 @@ public class ConsentVoteResource extends Resource {
             }
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             throw new NotFoundException(String.format(
                     "Could not find vote with id %s", voteId));
@@ -67,7 +69,7 @@ public class ConsentVoteResource extends Resource {
             Vote vote = api.updateVote(rec, id, consentId);
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 

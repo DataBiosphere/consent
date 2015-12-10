@@ -100,7 +100,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseResearchPurposeAPI.initInstance(mongoInstance);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
@@ -151,7 +150,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
-        env.jersey().register(ResearchPurposeResource.class);
         env.jersey().register(ElectionResource.class);
         env.jersey().register(MatchResource.class);
         env.jersey().register(EmailNotifierResource.class);
@@ -174,7 +172,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
-                AbstractResearchPurposeAPI.clearInstance();
                 AbstractDataSetAPI.clearInstance();
                 AbstractDataAccessRequestAPI.clearInstance();
                 AbstractMatchingServiceAPI.clearInstance();
