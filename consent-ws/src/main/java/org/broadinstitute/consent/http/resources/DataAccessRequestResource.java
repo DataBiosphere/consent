@@ -4,14 +4,13 @@ import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.bson.Document;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.models.dto.Error;
-import javax.mail.MessagingException;
+
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -50,10 +49,8 @@ public class DataAccessRequestResource extends Resource {
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
 
         URI uri;
-        Document result = null;
+        List<Document> result;
         UseRestriction useRestriction;
-        Document rus;
-
         try {
             if (!requiresManualReview(dar)) {
                 // generates research purpose, if needed, and store it on Document rus
@@ -64,23 +61,19 @@ public class DataAccessRequestResource extends Resource {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
         }
-
-        try {
-            dar.append("sortDate",new Date());
-            result = dataAccessRequestAPI.createDataAccessRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
-            matchProcessAPI.processMatchesForPurpose(result.get("_id").toString());
+        dar.append("sortDate", new Date());
+        result = dataAccessRequestAPI.createDataAccessRequest(dar);
+        uri = info.getRequestUriBuilder().build();
+        result.forEach(r -> {
             try {
-                emailApi.sendNewDARRequestMessage(result.getString("dar_code"));
-            } catch(MessagingException | IOException | TemplateException ex){
-                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id "+ result.getString("dar_code") + ". Error caused by:", ex);
+                matchProcessAPI.processMatchesForPurpose(r.get("_id").toString());
+                emailApi.sendNewDARRequestMessage(r.getString("dar_code"));
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id " + r.getString("dar_code") + ". Error caused by:", e);
             }
-            return Response.created(uri).entity(result).build();
-        }
-         catch (Exception e) {
-            dataAccessRequestAPI.deleteDataAccessRequest(result);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-        }
+        });
+        return Response.created(uri).build();
+
     }
 
     @PUT
@@ -89,7 +82,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     public Response updateDataAccessRequest(@Context UriInfo info, Document dar, @PathParam("id") String id) {
         try {
-            if(dar.containsKey("restriction")){
+            if (dar.containsKey("restriction")) {
                 dar.remove("restriction");
             }
             if (!requiresManualReview(dar)) {
@@ -102,7 +95,7 @@ public class DataAccessRequestResource extends Resource {
             matchProcessAPI.processMatchesForPurpose(dar.get("_id").toString());
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
 
     }
@@ -110,7 +103,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/modalSummary/{id}")
-    public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id){
+    public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         return new DARModalDetailsDTO(dar);
     }
@@ -138,18 +131,18 @@ public class DataAccessRequestResource extends Resource {
             matchProcessAPI.removeMatchesForPurpose(id);
             return Response.status(Response.Status.OK).entity("Research Purpose was deleted").build();
         } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 
     @GET
     @Path("/find/{id}")
     @Produces("application/json")
-    public Document describeSpecificFields(@PathParam("id") String id, @QueryParam("fields") List<String> fields){
-        if(CollectionUtils.isNotEmpty(fields)){
+    public Document describeSpecificFields(@PathParam("id") String id, @QueryParam("fields") List<String> fields) {
+        if (CollectionUtils.isNotEmpty(fields)) {
             List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
             return dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, fieldValues);
-        }else {
+        } else {
             return dataAccessRequestAPI.describeDataAccessRequestById(id);
         }
     }
@@ -157,12 +150,12 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("/find/{id}/consent")
     @Produces("application/json")
-    public Consent describeConsentForDAR(@PathParam("id") String id){
-        String datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList("datasetId"))).getString("datasetId");
+    public Consent describeConsentForDAR(@PathParam("id") String id) {
+        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList("datasetId"))).get("datasetId", List.class);
         Consent c;
-        if(datasetId != null){
-            c = consentAPI.getConsentFromDatasetID(datasetId);
-            if(c == null){
+        if (CollectionUtils.isNotEmpty(datasetId)) {
+            c = consentAPI.getConsentFromDatasetID(datasetId.get(0));
+            if (c == null) {
                 throw new NotFoundException("Unable to find the consent related to the datasetId present in the DAR.");
             }
         } else {
@@ -182,22 +175,90 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("cases/unreviewed")
     @Produces("application/json")
-    public Response getTotalUnReviewedDAR(){
-        return Response.ok("{\"darUnReviewedCases\":"+dataAccessRequestAPI.getTotalUnReviewedDAR()+"}").build();
+    public Response getTotalUnReviewedDAR() {
+        return Response.ok("{\"darUnReviewedCases\":" + dataAccessRequestAPI.getTotalUnReviewedDAR() + "}").build();
     }
 
     // Fields that trigger manual review flag.
     String[] fieldsForManualReview = {
-        "other",
-        "illegalbehave",
-        "addiction",
-        "sexualdiseases",
-        "stigmatizediseases",
-        "vulnerablepop",
-        "popmigration",
-        "psychtraits",
-        "nothealth"
+            "other",
+            "illegalbehave",
+            "addiction",
+            "sexualdiseases",
+            "stigmatizediseases",
+            "vulnerablepop",
+            "popmigration",
+            "psychtraits",
+            "nothealth"
     };
+
+    // Partial Data Access Requests Methods
+
+    @GET
+    @Produces("application/json")
+    @Path("/partials")
+    public List<Document> describePartialDataAccessRequests() {
+        return dataAccessRequestAPI.describePartialDataAccessRequests();
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/partial")
+    public Response createPartialDataAccessRequest(@Context UriInfo info, Document dar) {
+        URI uri;
+        Document result = null;
+        try {
+            dar.append("sortDate",new Date());
+            result = dataAccessRequestAPI.createPartialDataAccessRequest(dar);
+            uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
+            return Response.created(uri).entity(result).build();
+        }
+        catch (Exception e) {
+            dataAccessRequestAPI.deleteDataAccessRequest(result);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/partial")
+    public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
+        try {
+            dar = dataAccessRequestAPI.updatePartialDataAccessRequest(dar);
+            return Response.ok().entity(dataAccessRequestAPI.updatePartialDataAccessRequest(dar)).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/partial/{id}")
+    public Document describePartialDar(@PathParam("id") String id) {
+        return dataAccessRequestAPI.describePartialDataAccessRequestById(id);
+    }
+
+
+    @DELETE
+    @Produces("application/json")
+    @Path("/partial/{id}")
+    public Response deletePartialDar(@PathParam("id") String id, @Context UriInfo info) {
+        try {
+            dataAccessRequestAPI.deletePartialDataAccessRequestById(id);
+            return Response.ok().build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/partials/manage")
+    public Response describePartialManageDataAccessRequests(@QueryParam("userId") Integer userId) {
+        return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
+    }
 
     private boolean requiresManualReview(Document dar) throws IOException {
         Map<String, Object> form = parseAsMap(dar.toJson());

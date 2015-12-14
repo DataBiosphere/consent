@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 
 public interface DataAccessRequestAPI {
 
-    Document createDataAccessRequest(Document dataAccessRequest) throws MongoException;
+    List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException;
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 

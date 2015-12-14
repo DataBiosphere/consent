@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface ConsentAPI {
 
@@ -53,6 +54,8 @@ public interface ConsentAPI {
     Consent getConsentFromDatasetID(String datasetId);
 
     Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetId);
+
+    Map<String, List<String>> getConsentIdAndDataSets(List<String> datasetId);
 
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;

@@ -88,7 +88,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, electionDAO, dacUserRoleDAO , consentDAO);

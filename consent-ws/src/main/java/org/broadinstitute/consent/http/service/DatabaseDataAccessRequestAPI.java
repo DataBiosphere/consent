@@ -6,6 +6,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -34,6 +35,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ElectionDAO electionDAO;
 
+    private final ConsentDAO consentDAO;
+
     private final Logger logger = Logger.getLogger("DatabaseDataAccessRequestAPI");
 
 
@@ -48,8 +51,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *                  read/write data.
      * @param converter
      */
-    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO));
+    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO));
     }
 
     /**
@@ -58,24 +61,34 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO) {
+    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO) {
         this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
+        this.consentDAO = consentDAO;
     }
 
 
     @Override
-    public Document createDataAccessRequest(Document dataAccessRequest) throws MongoException {
-        try {
-            String seq = mongo.getNextSequence("dar_code_counter");
-            dataAccessRequest.append("dar_code", "DAR-"+seq);
-            mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
-        }catch (MongoException e){
-            logger.error(e.getMessage());
-            throw  e;
-       }
-        return dataAccessRequest;
+    public List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException {
+        List<Document> dataAcessList = new ArrayList<>();
+        List<String> dataSets = dataAccessRequest.get("dataSetId", List.class);
+        if (CollectionUtils.isNotEmpty(dataSets)) {
+            Map<String, List<String>> consentDataSets = consentDAO.getConsentIdAndDataSets(dataSets);
+            consentDataSets.forEach((k, v) -> {
+                Document dataAccess = dataAccessRequest;
+                dataAccess.put("datasetId", v);
+                insertDataAccess(dataAccess);
+                dataAcessList.add(dataAccess);
+            });
+        }
+        return dataAcessList;
+    }
+
+    private void insertDataAccess(Document dataAccessRequest) {
+        String seq = mongo.getNextSequence("dar_code_counter");
+        dataAccessRequest.append("dar_code", "DAR-" + seq);
+        mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
     }
 
     @Override
@@ -105,9 +118,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds){
+    public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds) {
         List<Document> response = new ArrayList<>();
-        for(String datasetId: dataSetIds){
+        for (String datasetId : dataSetIds) {
             response.addAll(mongo.getDataAccessRequestCollection().find(eq("datasetId", datasetId)).into(new ArrayList<>()));
         }
         return response;
@@ -119,7 +132,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 : mongo.getDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
-        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+        if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
             electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
             HashMap electionAccessMap = createAccessRequestElectionMap(electionList);
@@ -157,23 +170,23 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Integer getTotalUnReviewedDAR() {
-        FindIterable<Document> accessList =  mongo.getDataAccessRequestCollection().find();
+        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find();
         Integer unReviewedDAR = 0;
         List<String> accessRequestIds = getRequestIds(accessList);
-        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+        if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
             electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
             HashMap<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
-            for(Document dar :accessList){
+            for (Document dar : accessList) {
                 ObjectId id = dar.get("_id", ObjectId.class);
                 Election election = electionAccessMap.get(id.toString());
-                if(election == null)  ++unReviewedDAR;
+                if (election == null) ++unReviewedDAR;
             }
         }
         return unReviewedDAR;
     }
 
-    private  List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents,  Map<String,Election> electionList){
+    private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         documents.forEach((Block<Document>) dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
@@ -185,9 +198,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setDataRequestId(id.toString());
             darManage.setFrontEndId(dar.get("dar_code").toString());
             darManage.setSortDate(dar.getDate("sortDate"));
-            if(election == null){
+            if (election == null) {
                 darManage.setElectionStatus(UN_REVIEWED);
-            }else{
+            } else {
                 darManage.setElectionId(election.getElectionId());
                 darManage.setElectionStatus(election.getStatus());
                 darManage.setElectionVote(election.getFinalVote());
@@ -196,9 +209,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         });
         return requestsManage;
     }
+
     private List getRequestIds(FindIterable<Document> access) {
         List<String> accessIds = new ArrayList<>();
-        if(access != null){
+        if (access != null) {
             access.forEach((Block<Document>) document -> {
                 accessIds.add(document.get("_id").toString());
             });
@@ -208,7 +222,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private HashMap createAccessRequestElectionMap(List<Election> elections) {
         HashMap electionMap = new HashMap<>();
-        elections.forEach( election -> {
+        elections.forEach(election -> {
             electionMap.put(election.getReferenceId(), election);
         });
         return electionMap;
