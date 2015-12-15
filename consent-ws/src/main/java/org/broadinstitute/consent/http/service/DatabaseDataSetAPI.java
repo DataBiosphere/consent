@@ -127,9 +127,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public List<String> autoCompleteDataSets(String partial) {
-        List<String> retrievedValues = dsDAO.getObjectIdsbyPartial(partial);
-        return retrievedValues;
+    public  List< Map<String, String>> autoCompleteDataSets(String partial) {
+        List< Map<String, String>> map =  dsDAO.getObjectIdsbyPartial(partial);
+        return map;
     }
 
     @Override

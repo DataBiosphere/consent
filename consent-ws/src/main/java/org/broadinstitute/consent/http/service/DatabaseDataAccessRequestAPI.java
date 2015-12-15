@@ -7,6 +7,7 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -37,7 +39,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ConsentDAO consentDAO;
 
+    private final String DATA_SET_ID = "datasetId";
+
+    private final String SUFFIX = "-A-";
+
     private final Logger logger = Logger.getLogger("DatabaseDataAccessRequestAPI");
+
 
 
     /**
@@ -71,25 +78,20 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException {
-        List<Document> dataAcessList = new ArrayList<>();
-        List<String> dataSets = dataAccessRequest.get("dataSetId", List.class);
+        List<Document> dataAccessList = new ArrayList<>();
+        List<String> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
+        dataAccessRequest.remove(DATA_SET_ID);
         if (CollectionUtils.isNotEmpty(dataSets)) {
-            Map<String, List<String>> consentDataSets = consentDAO.getConsentIdAndDataSets(dataSets);
-            consentDataSets.forEach((k, v) -> {
-                Document dataAccess = dataAccessRequest;
-                dataAccess.put("datasetId", v);
-                insertDataAccess(dataAccess);
-                dataAcessList.add(dataAccess);
+            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(dataSets);
+            consentDataSets.forEach((consentDataSet) -> {
+                Document dataAccess = processDataSet(dataAccessRequest, consentDataSet);
+                dataAccessList.add(dataAccess);
             });
         }
-        return dataAcessList;
+        insertDataAccess(dataAccessList);
+        return dataAccessList;
     }
 
-    private void insertDataAccess(Document dataAccessRequest) {
-        String seq = mongo.getNextSequence("dar_code_counter");
-        dataAccessRequest.append("dar_code", "DAR-" + seq);
-        mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
-    }
 
     @Override
     public Document describeDataAccessRequestById(String id) throws NotFoundException {
@@ -102,6 +104,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public void deleteDataAccessRequestById(String id) {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         mongo.getDataAccessRequestCollection().findOneAndDelete(query);
+
     }
 
 
@@ -111,8 +114,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Document dar = mongo.getDataAccessRequestCollection().find(query).first();
         Document result = new Document();
         for (String field : fields) {
-            String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
-            result.append(field, content);
+            if(field.equals("datasetId")){
+                List<String> dataSets = dar.get(field, List.class);
+                result.append(field, dataSets);
+            }else{
+                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
+                result.append(field, content);
+            }
         }
         return result;
     }
@@ -186,6 +194,27 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return unReviewedDAR;
     }
 
+    private void insertDataAccess(List<Document> dataAccessRequestList) {
+        if(CollectionUtils.isNotEmpty(dataAccessRequestList)){
+            String seq = mongo.getNextSequence("dar_code_counter");
+            if (dataAccessRequestList.size() > 1) {
+                IntStream.range(0, dataAccessRequestList.size())
+                        .forEach(idx -> {
+                                    dataAccessRequestList.get(idx).append("dar_code", "DAR-" + seq + SUFFIX + idx);
+                                    dataAccessRequestList.get(idx).remove("_id");;
+                                }
+
+                        );
+                mongo.getDataAccessRequestCollection().insertMany(dataAccessRequestList);
+            }else{
+                dataAccessRequestList.get(0).append("dar_code", "DAR-" + seq);
+                mongo.getDataAccessRequestCollection().insertMany(dataAccessRequestList);
+            }
+
+        }
+
+    }
+
     private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         documents.forEach((Block<Document>) dar -> {
@@ -227,7 +256,21 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         });
         return electionMap;
     }
+
+    private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
+        List<Document> dataSetList = new ArrayList<>();
+        List<String> datasetId = new ArrayList<>();
+        Document dataAccess = new Document(dataAccessRequest);
+        consentDataSet.getDataSets().forEach((k,v) -> {
+            Document document = new Document();
+            document.put(DATA_SET_ID,k);
+            datasetId.add(k);
+            document.put("name", v);
+            dataSetList.add(document);
+        });
+        dataAccess.put("datasetId", datasetId);
+        dataAccess.put("datasetDetail",dataSetList);
+        return dataAccess;
+    }
 }
-
-
 

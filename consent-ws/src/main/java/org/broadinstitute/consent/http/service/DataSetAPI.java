@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface DataSetAPI {
 
@@ -21,8 +22,8 @@ public interface DataSetAPI {
     Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
 
     Collection<Dictionary> describeDictionary();
-    
-    List<String> autoCompleteDataSets(String partial);
+
+    List<Map<String, String>> autoCompleteDataSets(String partial);
 
     void deleteDataset(String datasetObjectId);
 

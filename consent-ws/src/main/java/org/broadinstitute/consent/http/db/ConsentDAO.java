@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
@@ -12,10 +13,7 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({ConsentMapper.class})
@@ -39,10 +37,11 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsFromDatasetIDs(@BindIn("datasetId") List<String> datasetId);
 
     @Mapper(ConsentDataSetMapper.class)
-    @SqlQuery("SELECT c.consentId, cs.objectId " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
+    @SqlQuery("SELECT c.consentId, cs.objectId, ds.name " +
+            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
+            "INNER JOIN dataset ds on cs.objectId = ds.objectId "+
             "WHERE cs.objectId IN (<datasetId>)")
-    Map<String, List<String>> getConsentIdAndDataSets(@BindIn("datasetId") List<String> datasetId);
+    Set<ConsentDataSet> getConsentIdAndDataSets(@BindIn("datasetId") List<String> datasetId);
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     String checkConsentbyId(@Bind("consentId") String consentId);

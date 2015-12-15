@@ -44,7 +44,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private DataSetDAO dataSetDAO;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
-    private final String INACTIVE_DS = "Election was not created. The specified DataSet is inactive.";
+    private final String INACTIVE_DS = "Election was not created. The following DataSets are inactive: ";
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -239,11 +239,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             if(dar == null){
                 throw new NotFoundException();
             }
-            DataSet dataSet = dataSetDAO.findDataSetByObjectId(dar.getString("datasetId"));
-            if(!dataSet.getActive()){
-                throw new IllegalArgumentException(INACTIVE_DS);
+            List<DataSet> dataSets = dataSetDAO.searchDataSetsByObjectIdList(dar.get("datasetId", List.class));
+            List<DataSet> inactiveDataSets = dataSets.stream().filter(ds -> !ds.getActive()).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(inactiveDataSets)){
+                throw new IllegalArgumentException(INACTIVE_DS + inactiveDataSets.toArray());
             }
-            Consent consent = consentDAO.findConsentFromDatasetID(dar.getString("datasetId"));
+            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getObjectId());
             Election consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
             if((consentElection == null)){
                 throw new IllegalArgumentException(DUL_NOT_APROVED);

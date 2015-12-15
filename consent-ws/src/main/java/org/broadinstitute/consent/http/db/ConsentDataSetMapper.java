@@ -1,34 +1,32 @@
 package org.broadinstitute.consent.http.db;
 
 
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.DataSet;
+
+import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
-public class ConsentDataSetMapper implements ResultSetMapper<Map<String, List<String>>> {
+public class ConsentDataSetMapper implements ResultSetMapper<ConsentDataSet> {
 
-    private Map<String, List<String>> consentDataSets = new HashMap<>();
+    private Map<String, ConsentDataSet>  consentDataSets = new HashMap<>();
 
-    public Map<String, List<String>> map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-        List<String> dataSets = new ArrayList<>();
+    public ConsentDataSet map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+        ConsentDataSet consentDataSet;
         if (index == 0 || !consentDataSets.containsKey(r.getString("consentId"))) {
-            dataSets.add(r.getString("objectId"));
-            consentDataSets.put(r.getString("consentId"),dataSets);
+            consentDataSet = new ConsentDataSet(r.getString("consentId"), new HashMap<>());
+            consentDataSet.getDataSets().put(r.getString("objectId"), r.getString("name"));
+            consentDataSets.put(r.getString("consentId"),consentDataSet);
         } else {
-            dataSets = consentDataSets.get(r.getInt("consentId"));
-            dataSets.add(r.getString("objectId"));
+            consentDataSet = consentDataSets.get(r.getString("consentId"));
+            consentDataSet.getDataSets().put(r.getString("objectId"), r.getString("name"));
+            consentDataSets.put(r.getString("consentId"), consentDataSet);
         }
-        return consentDataSets;
+        return consentDataSet;
     }
 
 }

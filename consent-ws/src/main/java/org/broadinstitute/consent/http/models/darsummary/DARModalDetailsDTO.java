@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.bson.Document;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +22,9 @@ public class DARModalDetailsDTO {
     private boolean sensitivePopulation = false;
     private boolean requiresManualReview = false;
 
+    @JsonProperty
+    private Map<String, String> datasetDetail;
+
     public DARModalDetailsDTO(Document darDocument){
         setPrincipalInvestigator(darDocument.getString("investigator"));
         setInstitutionName(this.institutionName = darDocument.getString("institution"));
@@ -28,6 +34,7 @@ public class DARModalDetailsDTO {
         setResearchType(generateResearchTypeSummary(darDocument));
         setDiseases(generateDiseasesSummary(darDocument));
         setPurposeStatements(generatePurposeStatementsSummary(darDocument));
+        setDatasetDetail((ArrayList<Document>) darDocument.get("datasetDetail"));
     }
 
     public boolean isRequiresManualReview() {
@@ -194,4 +201,11 @@ public class DARModalDetailsDTO {
     public void setIsTherePurposeStatements(boolean isTherePurposeStatements) {
         this.isTherePurposeStatements = isTherePurposeStatements;
     }
+
+    public void setDatasetDetail(ArrayList<Document> datasetDetail) {
+        Map<String, String> datasetDetailMap = new HashMap<>();
+        datasetDetail.forEach((doc) -> datasetDetailMap.put(doc.getString("datasetId"),doc.getString("name")));
+        this.datasetDetail = datasetDetailMap;
+    }
 }
+
