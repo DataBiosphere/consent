@@ -1,30 +1,22 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -44,8 +36,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private DataSetDAO dataSetDAO;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
-    private final String INACTIVE_DS = "Election was not created. The following DataSets are inactive: ";
-
+    private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
+    private EmailNotifierAPI emailNotifierAPI;
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -74,6 +66,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.voteDAO = voteDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.dataSetDAO = dataSetDAO;
+        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
     }
 
     public void setMongoDBInstance(MongoConsentDB mongo) {
@@ -81,8 +74,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election createElection(Election election, String referenceId, ElectionType electionType) throws
-            IllegalArgumentException {
+    public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
         validateElectionIsValid(referenceId, electionType);
         validateAvailableUsers();
         validateReferenceId(referenceId, electionType); validateExistentElection(referenceId, electionType);
@@ -216,7 +208,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public List<Election> cancelOpenElectionAndReopen() {
+    public Election describeElectionById(Integer electionId) {
+        return electionDAO.findElectionById(electionId);
+    }
+
+    @Override
+    public List<Election> cancelOpenElectionAndReopen() throws Exception{
         String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
         List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         cancelOpenElection(electionTypeId);
@@ -228,22 +225,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return openElections(openElections);
     }
 
-    @Override
-    public Election describeElectionById(Integer electionId) {
-        return electionDAO.findElectionById(electionId);
-    }
 
-    private void validateElectionIsValid(String referenceId, ElectionType electionType) {
+    private void validateElectionIsValid(String referenceId, ElectionType electionType) throws Exception{
         if(electionType.equals(ElectionType.DATA_ACCESS)){
             Document dar = describeDataAccessRequestById(referenceId);
             if(dar == null){
                 throw new NotFoundException();
             }
-            List<DataSet> dataSets = dataSetDAO.searchDataSetsByObjectIdList(dar.get("datasetId", List.class));
-            List<DataSet> inactiveDataSets = dataSets.stream().filter(ds -> !ds.getActive()).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(inactiveDataSets)){
-                throw new IllegalArgumentException(INACTIVE_DS + inactiveDataSets.toArray());
-            }
+            List<DataSet> dataSets = verifyDisableDataSets(dar, referenceId);
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getObjectId());
             Election consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
             if((consentElection == null)){
@@ -256,6 +245,41 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 }
             }
         }
+    }
+
+    private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
+        List<String> dataSets = dar.get("datasetId", List.class);
+        List<DataSet> dataSetList = dataSetDAO.searchDataSetsByObjectIdList(dataSets);
+        List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(disabledDataSets)) {
+            boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
+            DACUser dacUser = dacUserDAO.findDACUserById(dar.getInteger("userId"));
+            if(!createElection){
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString("dar_code"));
+                throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
+            }else{
+                updateDataAccessRequest(dataSetList, dar, dar.getString("dar_code"));
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString("dar_code"));
+            }
+        }
+        return dataSetList;
+    }
+
+    private void updateDataAccessRequest(List<DataSet> dataSets, Document dar, String id){
+        List<Document> dataSetList = new ArrayList<>();
+        List<String> dataSetId = new ArrayList<>();
+        List<DataSet> activeDataSets = dataSets.stream().filter(ds -> ds.getActive()).collect(Collectors.toList());
+        activeDataSets.forEach((dataSet) -> {
+            Document document = new Document();
+            document.put("datasetId", dataSet.getObjectId());
+            dataSetId.add(dataSet.getObjectId());
+            document.put("name", dataSet.getName());
+            dataSetList.add(document);
+        });
+        dar.put("datasetId",dataSetId);
+        dar.put("datasetDetail",dataSetList);
+        BasicDBObject query = new BasicDBObject("dar_code", id);
+        mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
     }
 
     private void cancelOpenElection(String electionTypeId){
@@ -276,7 +300,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private List<Election> openElections(List<Election> openElections)   {
+    private List<Election> openElections(List<Election> openElections) throws Exception{
         List<Election> elections = new ArrayList<>();
         for (Election existentElection : openElections) {
             Election election = new Election();
@@ -306,8 +330,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 dar = mongo.getDataAccessRequestCollection().find(query).first();
                 election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
                 try {
-                   String restriction  =  new Gson().toJson(dar.get("restriction", Map.class));
-                   election.setUseRestriction((UseRestriction.parse(restriction)));
+                    String restriction  =  new Gson().toJson(dar.get("restriction", Map.class));
+                    election.setUseRestriction((UseRestriction.parse(restriction)));
                 } catch (IOException e) {
                     election.setUseRestriction(null);
                 }

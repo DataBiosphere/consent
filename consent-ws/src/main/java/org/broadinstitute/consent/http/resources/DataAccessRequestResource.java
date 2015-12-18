@@ -1,15 +1,15 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.enumeration.TranslateType;
-import org.broadinstitute.consent.http.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.collections.CollectionUtils;
-import org.bson.Document;
+import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-
+import org.broadinstitute.consent.http.service.*;
+import org.bson.Document;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -208,6 +208,9 @@ public class DataAccessRequestResource extends Resource {
     public Response createPartialDataAccessRequest(@Context UriInfo info, Document dar) {
         URI uri;
         Document result = null;
+        if((dar.size() == 1 && dar.containsKey("userId")) || (dar.size() == 0)){
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }
         try {
             dar.append("sortDate",new Date());
             result = dataAccessRequestAPI.createPartialDataAccessRequest(dar);
@@ -227,7 +230,7 @@ public class DataAccessRequestResource extends Resource {
     public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
         try {
             dar = dataAccessRequestAPI.updatePartialDataAccessRequest(dar);
-            return Response.ok().entity(dataAccessRequestAPI.updatePartialDataAccessRequest(dar)).build();
+            return Response.ok().entity(dar).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }

@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import com.mongodb.MongoException;
-import org.bson.Document;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
 import java.util.List;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 
 
 
@@ -33,4 +33,17 @@ public interface DataAccessRequestAPI {
     Document updateDataAccessRequest(Document dar, String id);
 
     Integer getTotalUnReviewedDAR();
+
+    // Partial Data Access Requests
+    Document createPartialDataAccessRequest(Document dataAccessRequest) throws MongoException;
+
+    List<Document> describePartialDataAccessRequests();
+
+    Document describePartialDataAccessRequestById(String id) throws NotFoundException;
+
+    void deletePartialDataAccessRequestById(String id) throws IllegalArgumentException;
+
+    Document updatePartialDataAccessRequest(Document partialDar);
+
+    List<Document> describePartialDataAccessRequestManage(Integer userId);
 }

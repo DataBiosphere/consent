@@ -36,7 +36,7 @@ public class DACUserResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    public Response createdDACUser(@Context UriInfo info, DACUser dac) {
+    public Response createdDACUser(@Context UriInfo info, DACUser dac)  {
         URI uri;
         DACUser dacUser;
         try {
@@ -48,7 +48,7 @@ public class DACUserResource extends Resource {
             }
             uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(uri).entity(dacUser).build();
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }

@@ -45,9 +45,9 @@ ontology:
     boys: http://www.broadinstitute.org/ontologies/DURPO/boys
     girls: http://www.broadinstitute.org/ontologies/DURPO/girls
 services:
-    matchURL: https://consent-ontology.dsde-dev.broadinstitute.org/match
+    matchURL:
     localURL: http://localhost:8000/
-    translateURL: https://consent-ontology.dsde-dev.broadinstitute.org/translate
+    translateURL:
 mailConfiguration:
   activateEmailNotifications: false
   smtpPort: 587

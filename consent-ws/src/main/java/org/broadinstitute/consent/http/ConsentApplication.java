@@ -103,8 +103,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
-
         // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
@@ -112,7 +110,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         } catch (IOException e) {
             LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
         }
-
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");

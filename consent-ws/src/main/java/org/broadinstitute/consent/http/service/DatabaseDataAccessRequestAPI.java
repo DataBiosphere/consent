@@ -7,14 +7,14 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -47,6 +47,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
 
 
+
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -75,10 +76,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.consentDAO = consentDAO;
     }
 
-
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException {
         List<Document> dataAccessList = new ArrayList<>();
+        if(dataAccessRequest.containsKey("partial_dar_code")){
+            mongo.getPartialDataAccessRequestCollection().findOneAndDelete(new BasicDBObject("partial_dar_code", dataAccessRequest.getString("partial_dar_code")));
+            dataAccessRequest.remove("_id");
+            dataAccessRequest.remove("partial_dar_code");
+        }
         List<String> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
         dataAccessRequest.remove(DATA_SET_ID);
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -99,12 +104,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return mongo.getDataAccessRequestCollection().find(query).first();
     }
 
-
     @Override
     public void deleteDataAccessRequestById(String id) {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         mongo.getDataAccessRequestCollection().findOneAndDelete(query);
-
     }
 
 
@@ -154,6 +157,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
 
+
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
         return converter.parseJsonFormulary(document.toJson());
@@ -194,6 +198,59 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return unReviewedDAR;
     }
 
+    // Partial Data Access Request Methods below
+    @Override
+    public List<Document> describePartialDataAccessRequests() {
+        return mongo.getPartialDataAccessRequestCollection().find().into(new ArrayList<>());
+    }
+
+    @Override
+    public Document describePartialDataAccessRequestById(String id) throws NotFoundException {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+    }
+
+    @Override
+    public void deletePartialDataAccessRequestById(String id) throws IllegalArgumentException {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+    }
+
+    @Override
+    public Document updatePartialDataAccessRequest(Document partialDar) {
+        BasicDBObject query = new BasicDBObject("partial_dar_code", partialDar.get("partial_dar_code"));
+        partialDar.remove("_id");
+        partialDar.put("sortDate", new Date());
+        if (mongo.getPartialDataAccessRequestCollection().findOneAndReplace(query, partialDar) == null) {
+            throw new NotFoundException("Partial Data access for the specified id does not exist");
+        }
+        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+    }
+
+    @Override
+    public Document createPartialDataAccessRequest(Document partialDar){
+        String seq = mongo.getNextSequence("partial_dar_code_counter");
+        partialDar.put("createDate", new Date());
+        partialDar.append("partial_dar_code", "temp_DAR" + seq);
+        mongo.getPartialDataAccessRequestCollection().insertOne(partialDar);
+        return partialDar;
+    }
+
+    @Override
+    public List<Document> describePartialDataAccessRequestManage(Integer userId) {
+        FindIterable<Document> accessList = userId == null ? mongo.getPartialDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
+                : mongo.getPartialDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
+        List<Document> darManage = new ArrayList<>();
+        List<String> accessRequestIds = getRequestIds(accessList);
+        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+            for(Document doc: accessList){
+                doc.append("dataRequestId", doc.get("_id").toString());
+                darManage.add(doc);
+            }
+        }
+        return darManage;
+    }
+
     private void insertDataAccess(List<Document> dataAccessRequestList) {
         if(CollectionUtils.isNotEmpty(dataAccessRequestList)){
             String seq = mongo.getNextSequence("dar_code_counter");
@@ -201,7 +258,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 IntStream.range(0, dataAccessRequestList.size())
                         .forEach(idx -> {
                                     dataAccessRequestList.get(idx).append("dar_code", "DAR-" + seq + SUFFIX + idx);
-                                    dataAccessRequestList.get(idx).remove("_id");;
+                                    dataAccessRequestList.get(idx).remove("_id");
+                                    if(dataAccessRequestList.get(idx).get("partial_dar_code") != null){
+                                        BasicDBObject query = new BasicDBObject("partial_dar_code", dataAccessRequestList.get(idx).get("partial_dar_code"));
+                                        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+                                        dataAccessRequestList.get(idx).remove("partial_dar_code");
+                                    }
                                 }
 
                         );
@@ -210,9 +272,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 dataAccessRequestList.get(0).append("dar_code", "DAR-" + seq);
                 mongo.getDataAccessRequestCollection().insertMany(dataAccessRequestList);
             }
-
         }
-
     }
 
     private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
@@ -257,6 +317,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return electionMap;
     }
 
+
     private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
         List<Document> dataSetList = new ArrayList<>();
         List<String> datasetId = new ArrayList<>();
@@ -272,5 +333,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccess.put("datasetDetail",dataSetList);
         return dataAccess;
     }
+
+
+
 }
 

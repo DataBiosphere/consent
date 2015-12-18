@@ -1,18 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSetProperty;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.apache.commons.collections.CollectionUtils;
-import org.bson.Document;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.bson.Document;
 
 import java.io.File;
 import java.util.*;
@@ -98,9 +95,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
                 for (DataSetDTO dataSet : dataSetDTOList) {
-                    if (accessRequests.stream().anyMatch(access -> access.getString("datasetId").equals(dataSet.getProperties().get(9).getPropertyValue()))) {
-                        dataSet.setDeletable(false);
-                    } else {
+                    if(CollectionUtils.isNotEmpty(accessRequests)){
+                        accessRequests.stream().forEach(access -> {
+                            if(access.get("datasetId", List.class).stream().anyMatch(objectId -> objectId.equals(dataSet.getProperties().get(9).getPropertyValue()))){
+                                dataSet.setDeletable(false);
+                            } else {
+                                dataSet.setDeletable(true);
+                            }
+                        });
+                    }else {
                         dataSet.setDeletable(true);
                     }
                 }
@@ -235,9 +238,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             List<String> consentIds = dataSetDTOList.stream().map(sc -> sc.getConsentId()).collect(Collectors.toList());
             Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
             consents.forEach(consent -> {
-                List<DataSetDTO> dto = dataSetDTOList.stream().filter(d -> d.getConsentId().equals(consent.getConsentId())).
+                List<DataSetDTO> dsList = dataSetDTOList.stream().filter(d -> d.getConsentId().equals(consent.getConsentId())).
                         collect(Collectors.toList());
-                dto.get(0).setConsentId(consent.getName());
+                dsList.stream().forEach(ds -> {
+                    ds.setConsentId(consent.getName());
+                });
+
             });
         }
 

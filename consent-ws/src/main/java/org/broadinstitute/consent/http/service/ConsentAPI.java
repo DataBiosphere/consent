@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface ConsentAPI {

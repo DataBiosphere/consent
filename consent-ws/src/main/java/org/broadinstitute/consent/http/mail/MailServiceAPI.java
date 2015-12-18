@@ -12,5 +12,7 @@ public interface MailServiceAPI {
 
     void sendReminderMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
 
+    void sendDisabledDatasetMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
+
     void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException;
 }

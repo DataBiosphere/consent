@@ -27,6 +27,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,7 +77,9 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
 
         // Create Documents needed in mongo for testing
-        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", "SC-20660");
+        List<String> dataSets = new ArrayList<>();
+        dataSets.add("SC-20660");
+        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", dataSets);
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
         DATA_REQUEST_ID = String.valueOf(dars.next().get("_id"));

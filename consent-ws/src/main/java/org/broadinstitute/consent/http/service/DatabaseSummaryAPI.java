@@ -1,31 +1,20 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.models.AccessRP;
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.*;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -50,6 +39,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private static final String COMMA_SEPARATOR = ",";
     private static final String END_OF_LINE = System.lineSeparator();
     private static final String MANUAL_REVIEW = "Manual Review";
+    private static final Logger logger = Logger.getLogger(DatabaseSummaryAPI.class.getName());
 
 
     /**
@@ -209,7 +199,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
             }
             return file;
         } catch (Exception ignored) {
-
+            logger.error("There is an error trying to create statistics file, error: "+ ignored.getMessage());
         }
         return file;
     }
@@ -228,7 +218,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     FindIterable<Document> dataAccessRequests = findDataAccessRequests(objectIds);
                     List<String> associationObjectIds = new ArrayList<>();
                     dataAccessRequests.forEach((Block<Document>) dar -> {
-                        associationObjectIds.add(dar.get("datasetId").toString());
+                        associationObjectIds.addAll(dar.get("datasetId", List.class));
                     });
                     List<Association> associations = datasetDAO.getAssociationsForObjectIdList(associationObjectIds);
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
@@ -265,50 +255,52 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         }
                         Document dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
                         if ( !dar.isEmpty() ){
-                            String datasetId =  dar.get("datasetId").toString();
-                            Association association = associations.stream().filter(as -> as.getObjectId().equals(datasetId)).collect(singletonCollector());
-                            Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
-                            List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
-                            Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
-                            summaryWriter.write(dar.get("dar_code") + SEPARATOR);
-                            summaryWriter.write(formatTimeToDate(election.getCreateDate().getTime()) + SEPARATOR);
-                            summaryWriter.write(chairPerson.getDisplayName() + SEPARATOR);
-                            summaryWriter.write( booleanToString(finalVote.getVote()) + SEPARATOR);
-                            summaryWriter.write( nullToString(finalVote.getRationale()) + SEPARATOR);
-                            if (match != null){
-                                summaryWriter.write( booleanToString(match.getMatch()) + SEPARATOR);
-                            }else{
-                                summaryWriter.write(MANUAL_REVIEW + SEPARATOR);
-                            }
-                            summaryWriter.write( booleanToString(agreementVote.getVote()) + SEPARATOR);
-                            summaryWriter.write( nullToString(agreementVote.getRationale())  + SEPARATOR);
-                            summaryWriter.write( dar.get("investigator")  + SEPARATOR);
-                            summaryWriter.write( dar.get("projectTitle")  + SEPARATOR);
-                            summaryWriter.write( dar.get("datasetId")  + SEPARATOR);summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
-                            for (DACUser dacUser : electionDacUsers){
-                                summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
+                            List<String> datasetId =  dar.get("datasetId", List.class);
+                            if(CollectionUtils.isNotEmpty(datasetId)){
+                                Association association = associations.stream().filter((as) -> as.getObjectId().equals(datasetId.get(0))).collect(singletonCollector());
+                                Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
+                                List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
+                                Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
+                                summaryWriter.write(dar.get("dar_code") + SEPARATOR);
+                                summaryWriter.write(formatTimeToDate(election.getCreateDate().getTime()) + SEPARATOR);
+                                summaryWriter.write(chairPerson.getDisplayName() + SEPARATOR);
+                                summaryWriter.write( booleanToString(finalVote.getVote()) + SEPARATOR);
+                                summaryWriter.write( nullToString(finalVote.getRationale()) + SEPARATOR);
+                                if (match != null){
+                                    summaryWriter.write( booleanToString(match.getMatch()) + SEPARATOR);
+                                }else{
+                                    summaryWriter.write(MANUAL_REVIEW + SEPARATOR);
+                                }
+                                summaryWriter.write( booleanToString(agreementVote.getVote()) + SEPARATOR);
+                                summaryWriter.write( nullToString(agreementVote.getRationale())  + SEPARATOR);
+                                summaryWriter.write( dar.get("investigator")  + SEPARATOR);
+                                summaryWriter.write( dar.get("projectTitle")  + SEPARATOR);
+                                summaryWriter.write( dar.get("datasetId")  + SEPARATOR);summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
+                                for (DACUser dacUser : electionDacUsers){
+                                    summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
 
+                                }
+                                for (int i = 0; i < (maxNumberOfDACMembers - electionDacUsers.size()); i++) {
+                                    summaryWriter.write(
+                                            SEPARATOR);
+                                }
+                                summaryWriter.write( booleanToString(!dar.containsKey("restriction"))+ SEPARATOR);
+                                summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
+                                summaryWriter.write( nullToString(chairPersonVote.getRationale())+ SEPARATOR);
+                                summaryWriter.write(booleanToString(chairPersonRPVote.getVote()) + SEPARATOR);
+                                summaryWriter.write(nullToString(chairPersonRPVote.getRationale()) + SEPARATOR);
+                                summaryWriter.write(booleanToString(chairPersonConsentVote.getVote()) + SEPARATOR);
+                                summaryWriter.write( nullToString(chairPersonConsentVote.getRationale())+ SEPARATOR);
                             }
-                            for (int i = 0; i < (maxNumberOfDACMembers - electionDacUsers.size()); i++) {
-                                summaryWriter.write(
-                                        SEPARATOR);
-                            }
-                            summaryWriter.write( booleanToString(!dar.containsKey("restriction"))+ SEPARATOR);
-                            summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
-                            summaryWriter.write( nullToString(chairPersonVote.getRationale())+ SEPARATOR);
-                            summaryWriter.write(booleanToString(chairPersonRPVote.getVote()) + SEPARATOR);
-                            summaryWriter.write(nullToString(chairPersonRPVote.getRationale()) + SEPARATOR);
-                            summaryWriter.write(booleanToString(chairPersonConsentVote.getVote()) + SEPARATOR);
-                            summaryWriter.write( nullToString(chairPersonConsentVote.getRationale())+ SEPARATOR);
-                        }
+                         }
                         summaryWriter.write(END_OF_LINE);
                     }
                 }else file = null;
                 summaryWriter.flush();
             }
             return file;
-        } catch (Exception ignored) {
-
+        } catch (Exception e) {
+            logger.error(e.getMessage());
         }
         return file;
     }
