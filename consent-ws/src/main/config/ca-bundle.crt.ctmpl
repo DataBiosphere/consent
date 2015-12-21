@@ -1,0 +1,2 @@
+
+{{with vault "secret/common/ca-bundle.crt"}}{{.Data.chain}}{{end}}

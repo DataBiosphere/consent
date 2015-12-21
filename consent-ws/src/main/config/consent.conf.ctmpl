@@ -1,0 +1,50 @@
+{{with $environment := env "ENVIRONMENT"}}{{$keyname := printf "secret/dsde/consent/%s/consent/consent.conf" $environment}}{{with vault $keyname}}
+server:
+  adminConnectors:
+    - type: http
+      port: 8181
+  applicationConnectors:
+    - type: http
+      port: 8180
+logging:
+  level: {{.Data.logging_level}}
+#  appenders:
+#   - type: file
+#      currentLogFilename: /opt/consent.log
+#      threshold: ALL
+#      archive: true
+#      archivedLogFilenamePattern: /opt/consent-%d.log
+#      archivedFileCount: 5
+database:
+  driverClass: com.mysql.jdbc.Driver
+  user: {{.Data.db_user}}
+  password: {{.Data.db_password}}
+  url: {{.Data.db_url}}
+  initialSize: 20
+  minSize: 20
+  maxSize: 128
+  validationQuery: SELECT 1
+googleStore:
+  username: {{.Data.gce_user}}
+  password: {{.Data.gce_password}}
+  endpoint: {{.Data.gce_endpoint}}
+  bucket: {{.Data.gce_bucket}}
+  type: GCS
+ontology:
+    methods: {{.Data.ontology_methods}}
+    population: {{.Data.ontology_population}}
+    male: {{.Data.ontology_men}}
+    female: {{.Data.ontology_women}}
+    profit: {{.Data.ontology_profit}}
+    nonProfit: {{.Data.ontology_non_profit}}
+    pediatric: {{.Data.ontology_pediatric}}
+mongo:
+  uri: {{.Data.mongodb_uri}}
+  dbName: {{.Data.mongodb_name}}
+  username: {{.Data.mongodb_user}}
+  password: {{.Data.mongodb_password}}
+services:
+    matchURL: {{.Data.services_match_url}}
+
+{{end}}
+{{end}}
