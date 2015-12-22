@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.DataRequest;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractDataRequestAPI;
 import org.broadinstitute.consent.http.service.DataRequestAPI;
 
@@ -28,7 +29,7 @@ public class DataRequestResource extends Resource {
             uri = info.getRequestUriBuilder().path("{id}").build(dataRequest.getRequestId());
             return Response.created(uri).entity(dataRequest).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
@@ -42,7 +43,7 @@ public class DataRequestResource extends Resource {
             URI assocURI = buildDataRequestURI(id);
             return Response.ok(dataRequest).location(assocURI).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         }
 
     }

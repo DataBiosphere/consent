@@ -37,7 +37,7 @@ public class ConsentAssociationResource extends Resource {
             URI assocURI = buildConsentAssociationURI(consentId);
             matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (Exception e) { //catch (UnknownIdentifierException e) {
+        } catch (Exception e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         }
     }
