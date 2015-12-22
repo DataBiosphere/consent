@@ -33,18 +33,34 @@ googleStore:
 ontology:
     methods: {{.Data.ontology_methods}}
     population: {{.Data.ontology_population}}
-    male: {{.Data.ontology_men}}
-    female: {{.Data.ontology_women}}
+    male: {{.Data.ontology_male}}
+    female: {{.Data.ontology_female}}
     profit: {{.Data.ontology_profit}}
     nonProfit: {{.Data.ontology_non_profit}}
     pediatric: {{.Data.ontology_pediatric}}
+    boys: {{.Data.ontology_boys}}
+    girls: {{.Data.ontology_girls}}
 mongo:
   uri: {{.Data.mongodb_uri}}
   dbName: {{.Data.mongodb_name}}
   username: {{.Data.mongodb_user}}
   password: {{.Data.mongodb_password}}
+  testMode: false
 services:
     matchURL: {{.Data.services_match_url}}
+    localURL: {{.Data.services_local_url}}
+    translateURL: {{.Data.services_translate_url}}
+mailConfiguration:
+  activateEmailNotifications: {{.Data.mailconfig_activate_notifications}}
+  smtpPort: {{.Data.mailconfig_smtp_port}}
+  smtpAuth: {{.Data.mailconfig_smtp_auth}}
+  host: {{.Data.mailconfig_host}}
+  smtpStartTlsEnable: {{.Data.mailconfig_starttls_enable}}
+  googleAccount: {{.Data.mailconfig_google_account}}
+  accountPassword: {{.Data.mailconfig_account_password}}
+freeMarkerConfiguration:
+  templateDirectory: {{.Data.freemarker_template_directory}}
+  defaultEncoding: {{.Data.freemarker_default_encoding}}
 
 {{end}}
 {{end}}
