@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
@@ -44,11 +45,11 @@ public class ConsentElectionResource extends Resource {
             emailApi.sendNewCaseMessageToList(votes, election);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         } catch (NotFoundException e){
-            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         } catch (Exception e){
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(),Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
         return Response.created(uri).build();
     }
@@ -59,7 +60,7 @@ public class ConsentElectionResource extends Resource {
         try {
             return Response.status(Status.OK).entity(api.describeConsentElection(consentId)).build();
         } catch (Exception e) {
-            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
@@ -71,7 +72,7 @@ public class ConsentElectionResource extends Resource {
             api.deleteElection(consentId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
-            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 

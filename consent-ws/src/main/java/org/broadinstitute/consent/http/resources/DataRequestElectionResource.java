@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -49,11 +50,11 @@ public class DataRequestElectionResource extends Resource {
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (NotFoundException e){
-            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e){
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(),Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
         return Response.created(uri).entity(accessElection).build();
     }
@@ -65,7 +66,7 @@ public class DataRequestElectionResource extends Resource {
         try {
             return  Response.status(Status.OK).entity(api.describeDataRequestElection(requestId)).build();
         } catch (Exception e) {
-            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
