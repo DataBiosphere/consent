@@ -1,15 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ElectionReviewVote;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.*;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Arrays;

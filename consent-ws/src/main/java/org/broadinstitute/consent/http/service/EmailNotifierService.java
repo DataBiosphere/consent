@@ -82,6 +82,67 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         this.isServiceActive = serviceActive;
     }
 
+
+    @Override
+    public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive) {
+            List<DACUser> users = (List<DACUser>) dacUserAPI.describeAdminUsers();
+            List<String> addresses = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
+            List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
+            Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
+            Writer template = templateHelper.getNewDARRequestTemplate(SERVERURL);
+            mailService.sendNewDARRequests(addresses, data.get("entityId"), data.get("electionType"), template);
+            emailDAO.insertBulkEmailNoVotes(usersId, dataAccessRequestId, 4, new Date(), template.toString());
+        }
+    }
+
+    @Override
+    public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive) {
+            Map<String, String> data = retrieveForCollect(electionId);
+            Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityId"), SERVERURL);
+            mailService.sendCollectMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
+            emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
+        }
+    }
+
+    @Override
+    public void sendReminderMessage(Integer voteId) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            Map<String, String> data = retrieveForVote(voteId);
+            Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityId"), SERVERURL);
+            mailService.sendReminderMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
+            emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
+            voteDAO.updateVoteReminderFlag(voteId, true);
+        }
+    }
+
+    @Override
+    public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive) {
+            List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
+            List<String> usersAddress = (List<String>) dacUserAPI.describeUsersEmails(userIds);
+            List<Integer> votesId = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
+            String electionType = retrieveElectionTypeString(election.getElectionType());
+            String entityId = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
+            Writer template = templateHelper.getNewCaseTemplate(electionType, entityId, SERVERURL);
+            sendNewCaseMessages(usersAddress, electionType, entityId, template);
+            emailDAO.insertBulkEmail(votesId, userIds, election.getElectionId().toString(), 2, new Date(), template.toString());
+        }
+    }
+
+    @Override
+    public void sendDisabledDatasetsMessage(DACUser user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVERURL);
+            mailService.sendDisabledDatasetMessage(user.getEmail(), dataAcessRequestId, null, template);
+        }
+    }
+
+    private void sendNewCaseMessages(List<String> usersAddress, String electionType, String entityId, Writer template) throws MessagingException, IOException, TemplateException {
+        mailService.sendNewCaseMessages(usersAddress, entityId, electionType, template);
+    }
+
     private Map<String, String> retrieveForVote(Integer voteId){
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionById(vote.getElectionId());
@@ -155,57 +216,5 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             return ElectionTypeString.TRANSLATE_DUL.getValue();
         }
         return ElectionTypeString.DATA_ACCESS.getValue();
-    }
-
-    @Override
-    public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive) {
-            List<DACUser> users = (List<DACUser>) dacUserAPI.describeAdminUsers();
-            List<String> addresses = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
-            List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
-            Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
-            Writer template = templateHelper.getNewDARRequestTemplate(SERVERURL);
-            mailService.sendNewDARRequests(addresses, data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertBulkEmailNoVotes(usersId, dataAccessRequestId, 4, new Date(), template.toString());
-        }
-    }
-
-    @Override
-    public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive) {
-            Map<String, String> data = retrieveForCollect(electionId);
-            Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityId"), SERVERURL);
-            mailService.sendCollectMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
-        }
-    }
-
-    @Override
-    public void sendReminderMessage(Integer voteId) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            Map<String, String> data = retrieveForVote(voteId);
-            Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityId"), SERVERURL);
-            mailService.sendReminderMessage(data.get("email"), data.get("entityId"), data.get("electionType"), template);
-            emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
-            voteDAO.updateVoteReminderFlag(voteId, true);
-        }
-    }
-
-    private void sendNewCaseMessages(List<String> usersAddress, String electionType, String entityId, Writer template) throws MessagingException, IOException, TemplateException {
-        mailService.sendNewCaseMessages(usersAddress, entityId, electionType, template);
-    }
-
-    @Override
-    public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive) {
-            List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-            List<String> usersAddress = (List<String>) dacUserAPI.describeUsersEmails(userIds);
-            List<Integer> votesId = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
-            String electionType = retrieveElectionTypeString(election.getElectionType());
-            String entityId = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
-            Writer template = templateHelper.getNewCaseTemplate(electionType, entityId, SERVERURL);
-            sendNewCaseMessages(usersAddress, electionType, entityId, template);
-            emailDAO.insertBulkEmail(votesId, userIds, election.getElectionId().toString(), 2, new Date(), template.toString());
-        }
     }
 }

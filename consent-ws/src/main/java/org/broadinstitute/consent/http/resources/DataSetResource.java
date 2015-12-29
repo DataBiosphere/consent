@@ -25,10 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Path("{api : (api/)?}dataset")
 public class DataSetResource extends Resource {
@@ -188,8 +185,8 @@ public class DataSetResource extends Resource {
     @Path("/autocomplete/{partial}")
     @Produces("application/json")
     public Response datasetAutocomplete(@PathParam("partial") String partial){
-        List<String> objectIds = api.autoCompleteDataSets(partial);
-        return Response.ok(objectIds, MediaType.APPLICATION_JSON).build();
+        List<Map<String, String>> j = api.autoCompleteDataSets(partial);
+        return Response.ok(j, MediaType.APPLICATION_JSON).build();
     }
 
     @Override

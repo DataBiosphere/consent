@@ -1,14 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
+
 import javax.ws.rs.NotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 
 /**

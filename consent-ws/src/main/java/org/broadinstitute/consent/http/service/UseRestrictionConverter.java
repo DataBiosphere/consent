@@ -4,19 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.UseRestrictionConfig;
-import org.broadinstitute.consent.http.models.grammar.And;
-import org.broadinstitute.consent.http.models.grammar.Or;
-import org.broadinstitute.consent.http.models.grammar.Named;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.models.grammar.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.broadinstitute.consent.http.models.grammar.Not;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UseRestrictionConverter {
 

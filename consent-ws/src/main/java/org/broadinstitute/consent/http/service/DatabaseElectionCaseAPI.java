@@ -1,14 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -17,6 +11,8 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Vote;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.util.*;

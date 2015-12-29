@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.bson.Document;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +22,9 @@ public class DARModalDetailsDTO {
     private boolean sensitivePopulation = false;
     private boolean requiresManualReview = false;
 
+    @JsonProperty
+    private Map<String, String> datasetDetail;
+
     public DARModalDetailsDTO(Document darDocument){
         setPrincipalInvestigator(darDocument.getString("investigator"));
         setInstitutionName(this.institutionName = darDocument.getString("institution"));
@@ -28,6 +34,7 @@ public class DARModalDetailsDTO {
         setResearchType(generateResearchTypeSummary(darDocument));
         setDiseases(generateDiseasesSummary(darDocument));
         setPurposeStatements(generatePurposeStatementsSummary(darDocument));
+        setDatasetDetail((ArrayList<Document>) darDocument.get("datasetDetail"));
     }
 
     public boolean isRequiresManualReview() {
@@ -112,19 +119,19 @@ public class DARModalDetailsDTO {
 
     private List<SummaryItem> generateResearchTypeSummary(Document darDocument) {
         List<SummaryItem> researchList = new ArrayList<>();
-        if(darDocument.containsKey("diseases")){
+        if(darDocument.containsKey("diseases") && darDocument.getBoolean("diseases")){
             researchList.add(new SummaryItem("Disease-related studies:", " The primary purpose of the research is to learn more about a particular disease or disorder, a trait, or a set of related conditions."));
         }
-        if(darDocument.containsKey("methods")){
+        if(darDocument.containsKey("methods") && darDocument.getBoolean("methods")){
             researchList.add(new SummaryItem("Methods development and validation studies:", " The primary purpose of the research is to develop and/or validate new methods for analyzing or interpreting data. Data will be used for developing and/or validating new methods."));
         }
-        if(darDocument.containsKey("controls")){
+        if(darDocument.containsKey("controls") && darDocument.getBoolean("controls")){
             researchList.add(new SummaryItem("Controls:", " The reason for this request is to increase the number of controls available for a comparison group."));
         }
-        if(darDocument.containsKey("population")){
+        if(darDocument.containsKey("population") && darDocument.getBoolean("population")){
             researchList.add(new SummaryItem("Population structure or normal variation studies:", " The primary purpose of the research is to understand variation in the general population."));
         }
-        if(darDocument.containsKey("other")){
+        if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
             researchList.add(new SummaryItem("Other: ", darDocument.getString("othertext")));
             manualReviewIsTrue();
         }
@@ -194,4 +201,11 @@ public class DARModalDetailsDTO {
     public void setIsTherePurposeStatements(boolean isTherePurposeStatements) {
         this.isTherePurposeStatements = isTherePurposeStatements;
     }
+
+    public void setDatasetDetail(ArrayList<Document> datasetDetail) {
+        Map<String, String> datasetDetailMap = new HashMap<>();
+        datasetDetail.forEach((doc) -> datasetDetailMap.put(doc.getString("datasetId"),doc.getString("name")));
+        this.datasetDetail = datasetDetailMap;
+    }
 }
+

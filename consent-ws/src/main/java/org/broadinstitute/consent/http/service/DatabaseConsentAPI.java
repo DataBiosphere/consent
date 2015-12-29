@@ -7,18 +7,15 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ConsentMapper;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.*;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
@@ -255,6 +252,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
+    public Set<ConsentDataSet> getConsentIdAndDataSets(List<String> datasetIds){
+        return consentDAO.getConsentIdAndDataSets(datasetIds);
+    }
+
+    @Override
     public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
         Consent consent = retrieve(consentId);
         consent.setDulName(dulName);
@@ -335,7 +337,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
             List<String> datasetNames = new ArrayList<>();
             dataAccessRequests.forEach((Block<Document>) dar -> {
-                datasetNames.add(dar.get("datasetId").toString());
+                List<String> dataSets = dar.get("datasetId", List.class);
+                datasetNames.addAll(dataSets);
             });
             List<String> objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
             for (ConsentManage consentManage : consentManageList) {
