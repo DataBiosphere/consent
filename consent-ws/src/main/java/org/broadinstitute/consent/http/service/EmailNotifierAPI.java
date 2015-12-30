@@ -20,4 +20,7 @@ public interface EmailNotifierAPI {
     void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException;
 
     void sendDisabledDatasetsMessage(DACUser user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException;
+
+    void sendCancelDARRequestMessage(List<DACUser> userAddress, String dataAcessRequestId) throws MessagingException, IOException, TemplateException;
+
 }

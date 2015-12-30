@@ -22,6 +22,7 @@ public class MailService extends AbstractMailServiceAPI {
     private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
     private ReminderMessage reminderMessageCreator = new ReminderMessage();
     private DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
+    private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -82,6 +83,12 @@ public class MailService extends AbstractMailServiceAPI {
     @Override
     public void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
         MimeMessage message = newDARMessageCreator.newDARRequestMessage(getMailSession, template, referenceId, type);
+        sendMessages(message, usersAddress);
+    }
+
+    @Override
+    public void sendCancelDARRequestMessage(List<String> usersAddress, String dataAcessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = darCancelMessageCreator.cancelDarMessage(getMailSession, template, dataAcessRequestId, type);
         sendMessages(message, usersAddress);
     }
 
