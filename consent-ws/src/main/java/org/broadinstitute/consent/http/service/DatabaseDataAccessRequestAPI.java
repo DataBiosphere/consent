@@ -6,17 +6,20 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -34,7 +37,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ElectionDAO electionDAO;
 
+    private final ConsentDAO consentDAO;
+
+    private final String DATA_SET_ID = "datasetId";
+
+    private final String SUFFIX = "-A-";
+
     private final Logger logger = Logger.getLogger("DatabaseDataAccessRequestAPI");
+
+
 
 
     /**
@@ -48,8 +59,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *                  read/write data.
      * @param converter
      */
-    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO));
+    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO));
     }
 
     /**
@@ -58,32 +69,40 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO) {
+    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO) {
         this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
+        this.consentDAO = consentDAO;
     }
-
 
     @Override
-    public Document createDataAccessRequest(Document dataAccessRequest) throws MongoException {
-        try {
-            String seq = mongo.getNextSequence("dar_code_counter");
-            dataAccessRequest.append("dar_code", "DAR-"+seq);
-            mongo.getDataAccessRequestCollection().insertOne(dataAccessRequest);
-        }catch (MongoException e){
-            logger.error(e.getMessage());
-            throw  e;
-       }
-        return dataAccessRequest;
+    public List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException {
+        List<Document> dataAccessList = new ArrayList<>();
+        if(dataAccessRequest.containsKey("partial_dar_code")){
+            mongo.getPartialDataAccessRequestCollection().findOneAndDelete(new BasicDBObject("partial_dar_code", dataAccessRequest.getString("partial_dar_code")));
+            dataAccessRequest.remove("_id");
+            dataAccessRequest.remove("partial_dar_code");
+        }
+        List<String> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
+        dataAccessRequest.remove(DATA_SET_ID);
+        if (CollectionUtils.isNotEmpty(dataSets)) {
+            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(dataSets);
+            consentDataSets.forEach((consentDataSet) -> {
+                Document dataAccess = processDataSet(dataAccessRequest, consentDataSet);
+                dataAccessList.add(dataAccess);
+            });
+        }
+        insertDataAccess(dataAccessList);
+        return dataAccessList;
     }
+
 
     @Override
     public Document describeDataAccessRequestById(String id) throws NotFoundException {
         BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
         return mongo.getDataAccessRequestCollection().find(query).first();
     }
-
 
     @Override
     public void deleteDataAccessRequestById(String id) {
@@ -98,16 +117,21 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Document dar = mongo.getDataAccessRequestCollection().find(query).first();
         Document result = new Document();
         for (String field : fields) {
-            String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
-            result.append(field, content);
+            if(field.equals("datasetId")){
+                List<String> dataSets = dar.get(field, List.class);
+                result.append(field, dataSets);
+            }else{
+                String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
+                result.append(field, content);
+            }
         }
         return result;
     }
 
     @Override
-    public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds){
+    public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds) {
         List<Document> response = new ArrayList<>();
-        for(String datasetId: dataSetIds){
+        for (String datasetId : dataSetIds) {
             response.addAll(mongo.getDataAccessRequestCollection().find(eq("datasetId", datasetId)).into(new ArrayList<>()));
         }
         return response;
@@ -119,7 +143,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 : mongo.getDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
-        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+        if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
             electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
             HashMap electionAccessMap = createAccessRequestElectionMap(electionList);
@@ -132,6 +156,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public List<Document> describeDataAccessRequests() {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
+
 
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
@@ -157,23 +182,100 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Integer getTotalUnReviewedDAR() {
-        FindIterable<Document> accessList =  mongo.getDataAccessRequestCollection().find();
+        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find();
         Integer unReviewedDAR = 0;
         List<String> accessRequestIds = getRequestIds(accessList);
-        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+        if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
             electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
             HashMap<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
-            for(Document dar :accessList){
+            for (Document dar : accessList) {
                 ObjectId id = dar.get("_id", ObjectId.class);
                 Election election = electionAccessMap.get(id.toString());
-                if(election == null)  ++unReviewedDAR;
+                if (election == null) ++unReviewedDAR;
             }
         }
         return unReviewedDAR;
     }
 
-    private  List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents,  Map<String,Election> electionList){
+    // Partial Data Access Request Methods below
+    @Override
+    public List<Document> describePartialDataAccessRequests() {
+        return mongo.getPartialDataAccessRequestCollection().find().into(new ArrayList<>());
+    }
+
+    @Override
+    public Document describePartialDataAccessRequestById(String id) throws NotFoundException {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+    }
+
+    @Override
+    public void deletePartialDataAccessRequestById(String id) throws IllegalArgumentException {
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+    }
+
+    @Override
+    public Document updatePartialDataAccessRequest(Document partialDar) {
+        BasicDBObject query = new BasicDBObject("partial_dar_code", partialDar.get("partial_dar_code"));
+        partialDar.remove("_id");
+        partialDar.put("sortDate", new Date());
+        if (mongo.getPartialDataAccessRequestCollection().findOneAndReplace(query, partialDar) == null) {
+            throw new NotFoundException("Partial Data access for the specified id does not exist");
+        }
+        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+    }
+
+    @Override
+    public Document createPartialDataAccessRequest(Document partialDar){
+        String seq = mongo.getNextSequence("partial_dar_code_counter");
+        partialDar.put("createDate", new Date());
+        partialDar.append("partial_dar_code", "temp_DAR" + seq);
+        mongo.getPartialDataAccessRequestCollection().insertOne(partialDar);
+        return partialDar;
+    }
+
+    @Override
+    public List<Document> describePartialDataAccessRequestManage(Integer userId) {
+        FindIterable<Document> accessList = userId == null ? mongo.getPartialDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
+                : mongo.getPartialDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
+        List<Document> darManage = new ArrayList<>();
+        List<String> accessRequestIds = getRequestIds(accessList);
+        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+            for(Document doc: accessList){
+                doc.append("dataRequestId", doc.get("_id").toString());
+                darManage.add(doc);
+            }
+        }
+        return darManage;
+    }
+
+    private void insertDataAccess(List<Document> dataAccessRequestList) {
+        if(CollectionUtils.isNotEmpty(dataAccessRequestList)){
+            String seq = mongo.getNextSequence("dar_code_counter");
+            if (dataAccessRequestList.size() > 1) {
+                IntStream.range(0, dataAccessRequestList.size())
+                        .forEach(idx -> {
+                                    dataAccessRequestList.get(idx).append("dar_code", "DAR-" + seq + SUFFIX + idx);
+                                    dataAccessRequestList.get(idx).remove("_id");
+                                    if(dataAccessRequestList.get(idx).get("partial_dar_code") != null){
+                                        BasicDBObject query = new BasicDBObject("partial_dar_code", dataAccessRequestList.get(idx).get("partial_dar_code"));
+                                        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+                                        dataAccessRequestList.get(idx).remove("partial_dar_code");
+                                    }
+                                }
+
+                        );
+                mongo.getDataAccessRequestCollection().insertMany(dataAccessRequestList);
+            }else{
+                dataAccessRequestList.get(0).append("dar_code", "DAR-" + seq);
+                mongo.getDataAccessRequestCollection().insertMany(dataAccessRequestList);
+            }
+        }
+    }
+
+    private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         documents.forEach((Block<Document>) dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
@@ -185,9 +287,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setDataRequestId(id.toString());
             darManage.setFrontEndId(dar.get("dar_code").toString());
             darManage.setSortDate(dar.getDate("sortDate"));
-            if(election == null){
+            if (election == null) {
                 darManage.setElectionStatus(UN_REVIEWED);
-            }else{
+            } else {
                 darManage.setElectionId(election.getElectionId());
                 darManage.setElectionStatus(election.getStatus());
                 darManage.setElectionVote(election.getFinalVote());
@@ -196,9 +298,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         });
         return requestsManage;
     }
+
     private List getRequestIds(FindIterable<Document> access) {
         List<String> accessIds = new ArrayList<>();
-        if(access != null){
+        if (access != null) {
             access.forEach((Block<Document>) document -> {
                 accessIds.add(document.get("_id").toString());
             });
@@ -208,12 +311,30 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private HashMap createAccessRequestElectionMap(List<Election> elections) {
         HashMap electionMap = new HashMap<>();
-        elections.forEach( election -> {
+        elections.forEach(election -> {
             electionMap.put(election.getReferenceId(), election);
         });
         return electionMap;
     }
+
+
+    private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
+        List<Document> dataSetList = new ArrayList<>();
+        List<String> datasetId = new ArrayList<>();
+        Document dataAccess = new Document(dataAccessRequest);
+        consentDataSet.getDataSets().forEach((k,v) -> {
+            Document document = new Document();
+            document.put(DATA_SET_ID,k);
+            datasetId.add(k);
+            document.put("name", v);
+            dataSetList.add(document);
+        });
+        dataAccess.put("datasetId", datasetId);
+        dataAccess.put("datasetDetail",dataSetList);
+        return dataAccess;
+    }
+
+
+
 }
-
-
 

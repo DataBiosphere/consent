@@ -6,10 +6,10 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.List;
 
 public class FreeMarkerTemplateHelper {
 
@@ -41,6 +41,18 @@ public class FreeMarkerTemplateHelper {
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;
+    }
+
+    private Writer generateDisabledDatasetsTemplate(String user, List<String> datasets, String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
+        DisabledDatasetModel model = new DisabledDatasetModel(user, datasets, entityId, serverUrl);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    public Writer getDisabledDatasetsTemplate(String user, List<String> datasets, String entityId, String serverUrl) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("disabled-datasets.html");
+        return generateDisabledDatasetsTemplate(user, datasets, entityId, serverUrl, temp);
     }
 
     public Writer getCollectTemplate(String user, String election, String entityId, String serverUrl) throws IOException, TemplateException {

@@ -26,6 +26,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,10 +76,10 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         // Create Documents needed in mongo for testing
         UseRestriction useRestriction = UseRestriction.parse("{\"type\":\"everything\"}");
         Document doc = new Document().append("testingInfo1", "someValue");
-        doc.append("datasetId", "SC-20660");
+        doc.append("datasetId", new ArrayList<>(Arrays.asList("SC-20660")));
         doc.append("restriction", Document.parse(useRestriction.toString()));
         doc.append("translated_restriction","translated_test_restriction");
-        Document doc2 = new Document().append("testingInfo2", "someValue2").append("datasetId", "SC-20660").append("restriction", Document.parse(useRestriction.toString())).append("translated_restriction","translated_test_restriction");
+        Document doc2 = new Document().append("testingInfo2", "someValue2").append("datasetId", Arrays.asList("SC-20660")).append("restriction", Document.parse(useRestriction.toString())).append("translated_restriction","translated_test_restriction");
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         mongoi.getDataAccessRequestCollection().insertOne(doc2);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();

@@ -12,7 +12,9 @@ public class MongoConsentDB {
 
     private final MongoClient mongo;
     public static final String DAR_CODE_COUNTER = "dar_code_counter";
+    public static final String PARTIAL_DAR_CODE_COUNTER = "partial_dar_code_counter";
     public static final String DAR_CODE = "dar_code";
+    public static final String PARTIAL_DAR_CODE = "partial_dar_code";
     public String DATABASE_NAME;
 
     /**
@@ -38,6 +40,14 @@ public class MongoConsentDB {
      */
     public MongoCollection<Document> getDataAccessRequestCollection() {
         return mongo.getDatabase(DATABASE_NAME).getCollection("dataAccessRequest");
+    }
+
+    /**
+     *
+     * @return dataAccessRequest collection
+     */
+    public MongoCollection<Document> getPartialDataAccessRequestCollection() {
+        return mongo.getDatabase(DATABASE_NAME).getCollection("dataAccessRequestPartials");
     }
 
     /**
@@ -77,7 +87,13 @@ public class MongoConsentDB {
             Document counter = new Document("seq", 0);
             counter.append("_id", DAR_CODE_COUNTER);
             getCountersCollection().insertOne(counter);
+        }
 
+        BasicDBObject partialCounter = new BasicDBObject().append("_id", PARTIAL_DAR_CODE_COUNTER);
+        if (getCountersCollection().find(partialCounter).first() == null) {
+            Document counter = new Document("seq", 0);
+            counter.append("_id", PARTIAL_DAR_CODE_COUNTER);
+            getCountersCollection().insertOne(counter);
         }
 
         // Creates  MongoDB DataAccessRequest Index
@@ -87,6 +103,10 @@ public class MongoConsentDB {
         indexOptions.sparse(true);
         getDataAccessRequestCollection().createIndex(indexFields, indexOptions);
 
+        // Creates MongoDB Partial DataAccessRequest Index
+        BasicDBObject secondIndexFields = new BasicDBObject(PARTIAL_DAR_CODE, 1);
+        getPartialDataAccessRequestCollection().createIndex(secondIndexFields, indexOptions);
+
         FindIterable<Document> documents = getDataAccessRequestCollection().find();
         documents.forEach((Block<Document>) dar -> {
             if (dar.get(DAR_CODE) == null) {
@@ -94,6 +114,16 @@ public class MongoConsentDB {
                 BasicDBObject set = new BasicDBObject("$set", object);
                 BasicDBObject searchQuery = new BasicDBObject().append("_id", dar.get("_id"));
                 getDataAccessRequestCollection().updateOne(searchQuery, set);
+            }
+        });
+
+        FindIterable<Document> partialDocuments = getPartialDataAccessRequestCollection().find();
+        partialDocuments.forEach((Block<Document>) dar -> {
+            if (dar.get(PARTIAL_DAR_CODE) == null) {
+                BasicDBObject object = new BasicDBObject(PARTIAL_DAR_CODE, "PARTIAL DAR-" + getNextSequence(PARTIAL_DAR_CODE_COUNTER));
+                BasicDBObject set = new BasicDBObject("$set", object);
+                BasicDBObject searchQuery = new BasicDBObject().append("_id", dar.get("_id"));
+                getPartialDataAccessRequestCollection().updateOne(searchQuery, set);
             }
         });
     }

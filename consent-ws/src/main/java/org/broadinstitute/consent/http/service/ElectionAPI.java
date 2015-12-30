@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ElectionAPI {
 
-    Election createElection(Election rec, String referenceId, ElectionType electionType) throws IllegalArgumentException, IOException;
+    Election createElection(Election rec, String referenceId, ElectionType electionType) throws IllegalArgumentException, IOException, Exception;
 
     Election updateElectionById(Election rec, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
@@ -25,7 +25,7 @@ public interface ElectionAPI {
 
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
-    List<Election> cancelOpenElectionAndReopen()  ;
+    List<Election> cancelOpenElectionAndReopen() throws Exception;
 
     List<Election> describeClosedElectionsByType(String type);
 
