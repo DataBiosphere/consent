@@ -54,7 +54,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 if (vote == null) {
                     continue;
                 }
-                PendingCase pendingCase = setGeneralFields(election, vote, vote.isReminderSent());
+                PendingCase pendingCase = new PendingCase();
+                setGeneralFields(pendingCase, election, vote, vote.isReminderSent());
                 pendingCases.add(pendingCase);
             }
         }
@@ -85,17 +86,26 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                     continue;
                 }
                 Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(election.getElectionId());
-                Election rpElection = electionDAO.findElectionById(rpElectionId);
-                Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
-                Boolean isReminderSent = (accessVote.isReminderSent() || rpVote.isReminderSent()) ? true : false;
-                PendingCase pendingCase = setGeneralFields(election, accessVote, isReminderSent);
-                pendingCase.setRpElectionId(rpElectionId);
-                pendingCase.setAlreadyVoted(accessVote.getVote() != null && rpVote.getVote() != null);
-                pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
-                // it depends if the chairperson vote was done after collect votes
+                PendingCase pendingCase = new PendingCase();
+                Boolean isReminderSent;
+                if(Objects.nonNull(rpElectionId)) {
+                    Election rpElection = electionDAO.findElectionById(rpElectionId);
+                    Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
+                    isReminderSent = (accessVote.isReminderSent() || rpVote.isReminderSent()) ? true : false;
+                    pendingCase.setRpElectionId(rpElectionId);
+                    pendingCase.setAlreadyVoted(accessVote.getVote() != null && rpVote.getVote() != null);
+                    pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
+                    pendingCase.setRpVoteId(rpVote.getVoteId());
+                    pendingCase.setStatus(accessVote.getVote() == null || rpVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+
+                }else{
+                    isReminderSent = (accessVote.isReminderSent());
+                    pendingCase.setAlreadyVoted(accessVote.getVote() != null);
+                    pendingCase.setElectionStatus(election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
+                    pendingCase.setStatus(accessVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+                }
+                setGeneralFields(pendingCase, election, accessVote, isReminderSent);
                 setFinalVote(dacUserId, election, pendingCase);
-                pendingCase.setStatus(accessVote.getVote() == null || rpVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
-                pendingCase.setRpVoteId(rpVote.getVoteId());
                 pendingCases.add(pendingCase);
             }
         }
@@ -115,9 +125,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         }
     }
 
-    private PendingCase setGeneralFields(Election election, Vote vote, boolean isReminderSent) {
+    private PendingCase setGeneralFields(PendingCase pendingCase , Election election, Vote vote, boolean isReminderSent) {
         String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        PendingCase pendingCase = new PendingCase();
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
         List<Vote> pendingVotes = voteDAO.findPendingDACVotesByElectionId(election.getElectionId());
         pendingCase.setTotalVotes(votes.size());

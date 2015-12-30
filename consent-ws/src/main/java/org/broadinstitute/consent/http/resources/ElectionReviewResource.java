@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.ElectionReview;
 import javax.ws.rs.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Path("{api : (api/)?}electionReview")
 public class ElectionReviewResource {
@@ -73,8 +74,12 @@ public class ElectionReviewResource {
     @Produces("application/json")
     public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Integer rpElectionId = electionAPI.findRPElectionByElectionAccessId(electionId);
-        return api.describeElectionReviewByElectionId(rpElectionId,isFinalAccess);
+        if (Objects.nonNull(rpElectionId)) {
+            return api.describeElectionReviewByElectionId(rpElectionId,isFinalAccess);
+        }
+        else return null;
     }
+
 
     @GET
     @Path("last/{referenceId}")

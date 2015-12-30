@@ -7,14 +7,14 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -29,7 +29,7 @@ import static com.mongodb.client.model.Filters.eq;
  */
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private final MongoConsentDB mongo;
+    private MongoConsentDB mongo;
 
     private final UseRestrictionConverter converter;
 
@@ -75,6 +75,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
     }
+
+
+    public void setMongoDBInstance(MongoConsentDB mongo) {
+        this.mongo = mongo;
+    }
+
 
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException {
@@ -332,6 +338,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccess.put("datasetId", datasetId);
         dataAccess.put("datasetDetail",dataSetList);
         return dataAccess;
+    }
+
+    @Override
+    public Object getField(String requestId , String field){
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(requestId));
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(field,true);
+        return mongo.getDataAccessRequestCollection().find(query).projection(projection).first().get(field);
     }
 
 

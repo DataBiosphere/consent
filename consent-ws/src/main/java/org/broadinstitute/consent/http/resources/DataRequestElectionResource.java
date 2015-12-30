@@ -1,11 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -19,6 +15,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/election")
@@ -27,11 +24,13 @@ public class DataRequestElectionResource extends Resource {
     private final ElectionAPI api;
     private final VoteAPI voteAPI;
     private final EmailNotifierAPI emailApi;
+    private final DataAccessRequestAPI darApi;
 
     public DataRequestElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
+        this.darApi = AbstractDataAccessRequestAPI.getInstance();
     }
 
     @POST
@@ -45,9 +44,12 @@ public class DataRequestElectionResource extends Resource {
             List<Vote> votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS);
             List<Vote> darVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
             //create RP election
-            Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
-            voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP);
+            if(!Objects.isNull(darApi.getField(requestId, "restriction"))){
+                Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
+                voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP);
+            }
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
+
             uri = info.getRequestUriBuilder().build();
         } catch (NotFoundException e){
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();

@@ -17,5 +17,4 @@ public interface SummaryAPI {
 
     List<Summary> describeMatchSummaryCases();
 
-
 }
