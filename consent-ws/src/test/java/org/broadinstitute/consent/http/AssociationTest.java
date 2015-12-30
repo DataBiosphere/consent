@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -285,14 +284,9 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("*** testQueryByAssociation(2) - returned location '%s'", location));
 
         // check that we got back no consents
-        response = checkStatus(OK, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
-        consent_urls = getConsentUrls(response);
-        assertThat(consent_urls.size()).isEqualTo(0);
-
-        // check that we got back no consents
-        response = checkStatus(OK, getJson(client, queryAssociationPath("sampleSet", s2)));
-        consent_urls = getConsentUrls(response);
-        assertThat(consent_urls.size()).isEqualTo(0);
+       checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
+       // check that we got back no consents
+        checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sampleSet", s2)));
     }
 
     //

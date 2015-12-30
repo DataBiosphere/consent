@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.mongodb.MongoException;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.bson.Document;
@@ -48,9 +49,14 @@ public interface DataAccessRequestAPI {
 
     List<Document> describePartialDataAccessRequestManage(Integer userId);
 
+
     Object getField(String requestId , String field);
 
     void setMongoDBInstance(MongoConsentDB mongo);
+
+    Document cancelDataAccessRequest(String referenceId);
+
+    List<DACUser> getUserEmailAndCancelElection(String referenceId);
 
 }
 

@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.models.grammar.Named;
 import org.broadinstitute.consent.http.models.grammar.Some;
 import org.broadinstitute.consent.http.models.grammar.Only;
 import org.broadinstitute.consent.http.models.grammar.Or;
-import org.broadinstitute.consent.http.ConsentApplication;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;

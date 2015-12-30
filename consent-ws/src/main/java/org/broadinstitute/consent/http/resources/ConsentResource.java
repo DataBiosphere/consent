@@ -1,18 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.MatchAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.TranslateServiceAPI;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.dto.Error;
 import javax.ws.rs.*;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -37,7 +30,7 @@ public class ConsentResource extends Resource {
             return Response.ok(populateFromApi(id))
                     .build();
         } catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", id));
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", id), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
@@ -51,10 +44,12 @@ public class ConsentResource extends Resource {
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
         }  catch (IOException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
         catch (Exception e){
-            return Response.serverError().entity(e).build();
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -65,15 +60,15 @@ public class ConsentResource extends Resource {
     public Response update(@PathParam("id") String id, Consent updated) {
         try {
             updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
-            api.update(id, updated);
+            updated = api.update(id, updated);
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
-        } catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s to update", id));
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s to update", id), Response.Status.NOT_FOUND.getStatusCode())).build();
         } catch (IOException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.serverError().entity(e).build();
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -85,8 +80,10 @@ public class ConsentResource extends Resource {
         try {
             api.delete(consentId);
             return Response.ok().build();
+        }catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
       }
@@ -104,6 +101,7 @@ public class ConsentResource extends Resource {
         }
     }
 
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
@@ -120,9 +118,10 @@ public class ConsentResource extends Resource {
         }
     }
     
+
    private Consent populateFromApi(String id) throws UnknownIdentifierException {
-        return api.retrieve(id);
-    }
+      return api.retrieve(id);
+   }
 
 
     public ConsentResource() {

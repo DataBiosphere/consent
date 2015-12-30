@@ -2,15 +2,18 @@ package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.*;
 import org.bson.Document;
 
+import javax.mail.MessagingException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -273,6 +276,23 @@ public class DataAccessRequestResource extends Resource {
             }
         }
         return false;
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/cancel/{referenceId}")
+    public Response cancelDataAccessRequest(@Context UriInfo info, @PathParam("referenceId") String referenceId) {
+        try {
+            List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
+            Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
+            emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString("dar_code"));
+            return Response.ok().entity(dar).build();
+        } catch (MessagingException | TemplateException | IOException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal server error on delete. Please try again later. ", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     private Map<String, Object> parseAsMap(String str) throws IOException {
