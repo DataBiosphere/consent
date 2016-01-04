@@ -1,16 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.*;
 import freemarker.template.TemplateException;
 
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.bson.Document;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.*;
@@ -30,12 +26,14 @@ public class DataRequestVoteResource extends Resource {
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;
+    private final DataAccessRequestAPI accessRequestAPI;
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     public DataRequestVoteResource() {
         this.api = AbstractVoteAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.emailAPI = AbstractEmailNotifierAPI.getInstance();
+        this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
     }
 
     @POST
@@ -72,8 +70,13 @@ public class DataRequestVoteResource extends Resource {
                                                  @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.firstVoteUpdate(rec, id);
-            List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
-            if(vote.getVote() != null && votes.get(0).getVote() != null){
+            Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
+            if(access.containsKey("restriction")){
+                List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+                if(vote.getVote() != null && votes.get(0).getVote() != null){
+                    electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
+                }
+            }else {
                 electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
             }
             return Response.ok(vote).build();

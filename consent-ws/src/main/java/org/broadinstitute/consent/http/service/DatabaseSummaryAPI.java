@@ -111,10 +111,12 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
             List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
             List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
             List<Vote> agreementVotes = votes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(Collectors.toList());
-            Map<Boolean, List<Vote>> partition =
-                    agreementVotes.stream()
-                            .collect(Collectors.partitioningBy(v -> v.getVote()));
-            summaryList.add(createSummary(0, partition.get(Boolean.TRUE).size(), partition.get(Boolean.FALSE).size()));
+            if(CollectionUtils.isNotEmpty(agreementVotes)){
+                Map<Boolean, List<Vote>> partition =
+                        agreementVotes.stream()
+                                .collect(Collectors.partitioningBy(v -> v.getVote()));
+                summaryList.add(createSummary(0, partition.get(Boolean.TRUE).size(), partition.get(Boolean.FALSE).size()));
+            }
         }else{
             summaryList.add(createSummary(0,0,0));
         }
@@ -243,11 +245,13 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equals("DAC")).map(e -> e.getDacUserId()).collect(Collectors.toList());
                         Collection<DACUser> electionDacUsers = dacUsers.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
-                        Vote agreementVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(singletonCollector());
+
                         Vote finalVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.FINAL.getValue())).collect(singletonCollector());
                         Vote chairPersonVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
                         Vote  chairPersonRPVote = null;
+                        Vote agreementVote = null;
                         if(CollectionUtils.isNotEmpty(reviewedRPElections) && CollectionUtils.isNotEmpty(accessRPList)) {
+                            agreementVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(singletonCollector());
                             AccessRP  accessRP =  accessRPList.stream().filter(arp -> arp.getElectionAccessId().equals(election.getElectionId())).collect(singletonCollector());
                             if (Objects.nonNull(accessRP)) {
                                 List<Vote> electionRPVotes = rpVotes.stream().filter(ev -> ev.getElectionId().equals(accessRP.getElectionRPId())).collect(Collectors.toList());
@@ -279,8 +283,13 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }else{
                                     summaryWriter.write(MANUAL_REVIEW + SEPARATOR);
                                 }
-                                summaryWriter.write( booleanToString(agreementVote.getVote()) + SEPARATOR);
-                                summaryWriter.write( nullToString(agreementVote.getRationale())  + SEPARATOR);
+                                if(agreementVote != null){
+                                    summaryWriter.write( booleanToString(agreementVote.getVote()) + SEPARATOR);
+                                    summaryWriter.write( nullToString(agreementVote.getRationale())  + SEPARATOR);
+                                }else{
+                                    summaryWriter.write("-" + SEPARATOR);
+                                    summaryWriter.write("-"  + SEPARATOR);
+                                }
                                 summaryWriter.write( dar.get("investigator")  + SEPARATOR);
                                 summaryWriter.write( dar.get("projectTitle")  + SEPARATOR);
                                 summaryWriter.write( dar.get("datasetId")  + SEPARATOR);summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
@@ -64,7 +66,8 @@ public class ElectionReviewResource {
         List<String> dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList("datasetId")).get("datasetId", List.class);
         Consent consent =  consentAPI.getConsentFromDatasetID(dataSetId.get(0));
         ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId,isFinalAccess);
-        accessElectionReview.setVoteAgreement(api.describeAgreementVote(electionId));
+        List<Vote> agreementVote = api.describeAgreementVote(electionId);
+        accessElectionReview.setVoteAgreement(CollectionUtils.isNotEmpty(agreementVote) ? agreementVote.get(0) : null);
         accessElectionReview.setConsent(consent);
         return accessElectionReview;
     }

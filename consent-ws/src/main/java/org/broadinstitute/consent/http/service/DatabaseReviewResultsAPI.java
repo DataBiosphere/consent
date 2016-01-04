@@ -62,12 +62,8 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     }
 
     @Override
-    public Vote describeAgreementVote(Integer electionId) {
-        try{
-            return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue()).get(0);
-        }catch (Exception e){
-            throw new NotFoundException(e.getMessage());
-        }
+    public List<Vote> describeAgreementVote(Integer electionId) {
+        return voteDAO.findVoteByTypeAndElectionId(electionId, VoteType.AGREEMENT.getValue());
     }
 
     private ElectionReview getElectionReview(String referenceId, Election election) {

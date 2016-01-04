@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -41,13 +42,16 @@ public class DataRequestElectionResource extends Resource {
         Election accessElection;
         try {
             accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
-            List<Vote> votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS);
-            List<Vote> darVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
+            List<Vote> votes = new ArrayList<>();
             //create RP election
             if(!Objects.isNull(darApi.getField(requestId, "restriction"))){
+                votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
                 Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
-                voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP);
+                voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
+            }else{
+                votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, true);
             }
+            List<Vote> darVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
 
             uri = info.getRequestUriBuilder().build();
