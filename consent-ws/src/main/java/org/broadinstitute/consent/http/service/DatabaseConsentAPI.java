@@ -34,12 +34,12 @@ import java.util.stream.Collectors;
  */
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
-    private ConsentDAO consentDAO;
-    private ElectionDAO electionDAO;
-    private DBI jdbi;
-    private Logger logger;
+    private final ConsentDAO consentDAO;
+    private final ElectionDAO electionDAO;
+    private final DBI jdbi;
+    private final Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
-    private MongoConsentDB mongo;
+    private final MongoConsentDB mongo;
 
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
@@ -374,6 +374,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         c.setLastUpdate(updateDate);
         c.setSortDate(updateDate);
         return c;
+    }
+
+    @Override
+    public String getByName(String name) {
+        String id = consentDAO.getIdByName(name);
+        return id;
     }
 
 }
