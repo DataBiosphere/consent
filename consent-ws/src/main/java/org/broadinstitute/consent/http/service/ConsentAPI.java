@@ -19,6 +19,8 @@ public interface ConsentAPI {
     Collection<Consent> findConsentsByAssociationType(String associationType);
 
     Collection<Consent> retrieve(List<String> ids);
+    
+    String getByName(String name);
 
     void update(String id, Consent rec) throws UnknownIdentifierException;
 
