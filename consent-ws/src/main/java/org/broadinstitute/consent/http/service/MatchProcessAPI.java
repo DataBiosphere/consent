@@ -1,8 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
 
-import java.io.IOException;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+
+import java.io.IOException;
 
 public interface MatchProcessAPI {
 

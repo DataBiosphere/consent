@@ -104,6 +104,22 @@ public class ConsentResource extends Resource {
         }
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
+        
+        String id;
+        try {
+            id = api.getByName(name);
+            if (id == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Requested name = %s not found on consents", name), Response.Status.NOT_FOUND.getStatusCode())).build();
+            }
+            return Response.status(Response.Status.OK).entity(id).build();            
+        } catch(Exception ex) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+    
    private Consent populateFromApi(String id) throws UnknownIdentifierException {
         return api.retrieve(id);
     }

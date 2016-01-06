@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import javax.ws.rs.client.Client;
-
 public abstract class AbstractTranslateServiceAPI implements TranslateServiceAPI {
 
 

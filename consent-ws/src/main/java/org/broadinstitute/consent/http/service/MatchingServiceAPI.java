@@ -10,5 +10,5 @@ public interface MatchingServiceAPI {
 
     List<Match> findMatchesForConsent(String consentId);
 
-    List<Match> findMatchesForPurpose(String purposeId);
+    Match findMatchForPurpose(String purposeId);
 }

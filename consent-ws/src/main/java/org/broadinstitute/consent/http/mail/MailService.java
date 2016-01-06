@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.mail;
 
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.mail.message.CollectMessage;
-import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
-import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
-import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.*;
 
 import javax.mail.*;
-import javax.mail.internet.*;
+import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
@@ -24,6 +21,7 @@ public class MailService extends AbstractMailServiceAPI {
     private NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
     private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
     private ReminderMessage reminderMessageCreator = new ReminderMessage();
+    private DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -72,6 +70,12 @@ public class MailService extends AbstractMailServiceAPI {
 
     public void sendReminderMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
         MimeMessage message = reminderMessageCreator.reminderMessage(getMailSession, template, referenceId, type);
+        sendMessage(message, address);
+    }
+
+    @Override
+    public void sendDisabledDatasetMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
+        MimeMessage message = disabledDatasetCreator.disabledDatasetMessage(getMailSession, template, referenceId, type);
         sendMessage(message, address);
     }
 
