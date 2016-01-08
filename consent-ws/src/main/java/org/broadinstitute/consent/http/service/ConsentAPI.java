@@ -22,7 +22,7 @@ public interface ConsentAPI {
     
     String getByName(String name);
 
-    void update(String id, Consent rec) throws UnknownIdentifierException;
+    Consent update(String id, Consent rec) throws UnknownIdentifierException;
 
     /**
      * This isn't actually used in the web services at the moment, but i'm including it for

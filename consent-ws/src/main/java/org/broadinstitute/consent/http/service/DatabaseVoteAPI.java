@@ -125,7 +125,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
 
     @Override
-    public List<Vote> createVotes(Integer electionId, ElectionType electionType) {
+    public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
         Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
         if (dacUserList != null) {
@@ -139,8 +139,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
                 if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
                     id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
-                    votes.add(voteDAO.findVoteById(id));
+                    if(!isManualReview){
+                        id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
+                        votes.add(voteDAO.findVoteById(id));
+                    }
                 }
              }
         }
@@ -161,7 +163,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     public void createVotesForElections(List<Election> elections, Boolean isConsent){
         if(elections != null){
             for(Election election : elections){
-                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL);
+                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
             }
         }
     }

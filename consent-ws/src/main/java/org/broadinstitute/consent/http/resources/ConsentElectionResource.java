@@ -41,7 +41,7 @@ public class ConsentElectionResource extends Resource {
         URI uri;
         try {
             Election election = api.createElection(rec, consentId, ElectionType.TRANSLATE_DUL);
-            List<Vote> votes  = voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL);
+            List<Vote> votes  = voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
             emailApi.sendNewCaseMessageToList(votes, election);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {

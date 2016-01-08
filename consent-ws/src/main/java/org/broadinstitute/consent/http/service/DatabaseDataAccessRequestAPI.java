@@ -5,23 +5,28 @@ import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+
+import org.broadinstitute.consent.http.db.DACUserDAO;
+
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.ne;
 
 
 /**
@@ -29,7 +34,7 @@ import static com.mongodb.client.model.Filters.eq;
  */
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private final MongoConsentDB mongo;
+    private MongoConsentDB mongo;
 
     private final UseRestrictionConverter converter;
 
@@ -43,10 +48,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final String SUFFIX = "-A-";
 
-    private final Logger logger = Logger.getLogger("DatabaseDataAccessRequestAPI");
+    private final VoteDAO voteDAO;
 
-
-
+    private final DACUserDAO dacUserDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -59,8 +63,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *                  read/write data.
      * @param converter
      */
-    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO));
+    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO));
     }
 
     /**
@@ -69,12 +73,20 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO) {
+    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO) {
         this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
+        this.voteDAO = voteDAO;
+        this.dacUserDAO = dacUserDAO;
     }
+
+
+    public void setMongoDBInstance(MongoConsentDB mongo) {
+        this.mongo = mongo;
+    }
+
 
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException {
@@ -182,7 +194,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Integer getTotalUnReviewedDAR() {
-        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find();
+        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find(ne("status",ElectionStatus.CANCELED.getValue()));
         Integer unReviewedDAR = 0;
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
@@ -251,6 +263,43 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return darManage;
     }
 
+    @Override
+    public Document cancelDataAccessRequest(String referenceId){
+        Document dar = describeDataAccessRequestById(referenceId);
+        dar.append("status", ElectionStatus.CANCELED.getValue());
+        BasicDBObject query = new BasicDBObject("dar_code", dar.get("dar_code"));
+        dar = mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
+        return dar;
+    }
+
+    @Override
+    public List<DACUser> getUserEmailAndCancelElection(String referenceId) {
+        Election access = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
+        Election rp = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
+        updateElection(access, rp);
+        List<DACUser> dacUsers = new ArrayList<>();
+        if(access != null){
+            List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
+            List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
+            dacUsers.addAll(dacUserDAO.findUsers(userIds));
+        } else {
+            dacUsers.addAll(dacUserDAO.describeAdminUsers());
+        }
+        return dacUsers;
+    }
+
+    private void updateElection(Election access, Election rp) {
+        if(access != null) {
+            access.setStatus(ElectionStatus.CANCELED.getValue());
+            electionDAO.updateElectionStatus(new ArrayList<>(Arrays.asList(access.getElectionId())), access.getStatus());
+        }
+        if(rp != null){
+            rp.setStatus(ElectionStatus.CANCELED.getValue());
+            electionDAO.updateElectionStatus(new ArrayList<>(Arrays.asList(rp.getElectionId())), rp.getStatus());
+        }
+    }
+
+
     private void insertDataAccess(List<Document> dataAccessRequestList) {
         if(CollectionUtils.isNotEmpty(dataAccessRequestList)){
             String seq = mongo.getNextSequence("dar_code_counter");
@@ -287,13 +336,16 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setDataRequestId(id.toString());
             darManage.setFrontEndId(dar.get("dar_code").toString());
             darManage.setSortDate(dar.getDate("sortDate"));
+            darManage.setIsCanceled(dar.containsKey("status") && dar.get("status").equals(ElectionStatus.CANCELED.getValue()) ? true : false);
             if (election == null) {
                 darManage.setElectionStatus(UN_REVIEWED);
-            } else {
+            }
+            else {
                 darManage.setElectionId(election.getElectionId());
                 darManage.setElectionStatus(election.getStatus());
                 darManage.setElectionVote(election.getFinalVote());
             }
+
             requestsManage.add(darManage);
         });
         return requestsManage;
@@ -335,6 +387,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
 
+    @Override
+    public Object getField(String requestId , String field){
+        BasicDBObject query = new BasicDBObject("_id", new ObjectId(requestId));
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(field,true);
+        Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
+        return dar != null ? dar.get(field) : null;
+    }
 
 }
 

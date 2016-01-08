@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 
@@ -29,17 +32,18 @@ public class AllAssociationsResource extends Resource {
         try {
             String msg = String.format("GETing all consents with associations of type='%s' for object '%s'.", (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
             logger().debug(msg);
-            if (atype == null || objectId == null)
+            if (StringUtils.isEmpty(atype)  || StringUtils.isEmpty(objectId))
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<String> result = api.getConsentsForAssociation(uriInfo, atype, objectId);
-            if (result.size() > 0) {
+            if (CollectionUtils.isNotEmpty(result)) {
                 URI uri = URI.create(result.get(0));
                 return Response.ok(result).location(uri).build();
+            }else{
+                return Response.status(Response.Status.NOT_FOUND).entity(new Error("Could not find associations for object", Response.Status.NOT_FOUND.getStatusCode())).build();
             }
-            return Response.ok(result).build();
-        } catch (Exception e) { //catch (UnknownIdentifierException e) {
+        } catch (Exception e) {
             logger().debug(String.format("GETconsentsForAssociation:  Caught exception '%s' in getConsentsForAssociation", e.getMessage()));
-            throw new NotFoundException("Could not find associations for object");
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 

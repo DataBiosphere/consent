@@ -42,6 +42,20 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private final MongoConsentDB mongo;
 
     /**
+     * The constructor is private to force use of the factory methods and enforce the singleton pattern.
+     *
+     * @param dao The Data Access Object used to read/write data.
+     */
+    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, MongoConsentDB mongo, DBI jdbi) {
+        this.consentDAO = dao;
+        this.electionDAO = electionDAO;
+        this.mongo = mongo;
+        this.jdbi = jdbi;
+        this.logger = Logger.getLogger("DatabaseConsentAPI");
+
+    }
+
+    /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
      * during application initialization (from the run() method).  If called a second time it will throw an
      * IllegalStateException.
@@ -50,22 +64,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO , MongoConsentDB mongo) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(jdbi, dao, electionDAO, mongo));
-    }
-
-    /**
-     * The constructor is private to force use of the factory methods and enforce the singleton pattern.
-     *
-     * @param dao The Data Access Object used to read/write data.
-     */
-    private DatabaseConsentAPI(DBI jdbi, ConsentDAO dao , ElectionDAO electionDAO, MongoConsentDB mongo) {
-        this.jdbi = jdbi;
-        this.consentDAO = dao;
-        this.electionDAO = electionDAO;
-        this.mongo = mongo;
-        this.logger = Logger.getLogger("DatabaseConsentAPI");
-
+    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, MongoConsentDB mongo) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, mongo, jdbi));
     }
 
     // Consent Methods
@@ -73,20 +73,28 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent create(Consent rec) {
         String id;
-        if (StringUtils.isNotEmpty(rec.consentId)){
+        if (StringUtils.isNotEmpty(rec.consentId)) {
             id = rec.consentId;
-        }else{
+        } else {
             id = UUID.randomUUID().toString();
         }
+        if(consentDAO.getIdByName(rec.getName()) != null){
+            throw new IllegalArgumentException("Consent for the specified name already exist");
+        }
         Date createDate = new Date();
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.dulName, createDate, createDate , rec.getTranslatedUseRestriction());
+
+        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.dulName, createDate, createDate, rec.getTranslatedUseRestriction());
         return consentDAO.findConsentById(id);
     }
 
 
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
-        return consentDAO.findConsentById(id);
+        Consent consent = consentDAO.findConsentById(id);
+        if (consent == null) {
+            throw new UnknownIdentifierException("Consent does not exist");
+        }
+        return consent;
     }
 
     @Override
@@ -112,21 +120,25 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
 
     @Override
-    public void update(String id, Consent rec) throws UnknownIdentifierException {
+    public Consent update(String id, Consent rec) throws NotFoundException {
         rec = updateConsentDates(rec);
+        if (StringUtils.isEmpty(consentDAO.checkConsentbyId(id))) {
+            throw new NotFoundException();
+        }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate(), rec.getTranslatedUseRestriction());
+        return consentDAO.findConsentById(id);
     }
 
     @Override
-    public void delete(String id) throws  IllegalArgumentException {
-
-            List<Election> elections = electionDAO.findElectionsByReferenceId(id);
-            if(elections.isEmpty()){
-                    consentDAO.deleteConsent(id);
-                    consentDAO.deleteAllAssociationsForConsent(id);
-                }else
-                  throw new IllegalArgumentException();
-             }
+    public void delete(String id) throws IllegalArgumentException {
+        checkConsentExists(id);
+        List<Election> elections = electionDAO.findElectionsByReferenceId(id);
+        if (elections.isEmpty()) {
+            consentDAO.deleteConsent(id);
+            consentDAO.deleteAllAssociationsForConsent(id);
+        } else
+            throw new IllegalArgumentException("Consent cannot be deleted because already exist elections associated with it");
+    }
 
     @Override
     public void logicalDelete(String id) throws UnknownIdentifierException {
@@ -144,14 +156,19 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 consentId, new_associations.size()));
         checkConsentExists(consentId);
         validateAssociations(new_associations);
-
         for (ConsentAssociation association : new_associations) {
             logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
                     association.getAssociationType(), association.getElements().size()));
-            consentDAO.begin();
-            consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
-            consentDAO.insertAssociations(consentId, association.getAssociationType(), association.getElements());
-            consentDAO.commit();
+            validateElements(association.getElements());
+            try {
+                consentDAO.begin();
+                consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
+                consentDAO.insertAssociations(consentId, association.getAssociationType(), association.getElements());
+                consentDAO.commit();
+            } catch (Exception e) {
+                consentDAO.rollback();
+                throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
+            }
         }
         return getAllAssociationsForConsent(consentId);
     }
@@ -165,11 +182,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 consentId, new_associations.size(), new_associations.toString()));
         checkConsentExists(consentId);
         validateAssociations(new_associations);
-
         // Loop over all the ConsentAssociations sent in the body.
         for (ConsentAssociation association : new_associations) {
             String atype = association.getAssociationType();
             List<String> new_ids = association.getElements();
+            validateElements(new_ids);
             logger.debug(String.format("updateAssociation, adding associations for '%s', ids(cnt=%d) are '%s'",
                     atype, new_ids.size(), new_ids.toString()));
             // First retrieve the existing associations for that type.
@@ -177,10 +194,25 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             // Remove any objectId's that already exist
             new_ids.removeAll(old_ids);
             // and add the new associations
-            consentDAO.insertAssociations(consentId, atype, new_ids);
+            try {
+                consentDAO.insertAssociations(consentId, atype, new_ids);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
+            }
+
         }
 
         return getAllAssociationsForConsent(consentId);
+    }
+
+    private void validateElements(List<String> newIds) {
+        if (CollectionUtils.isNotEmpty(newIds)) {
+            newIds.stream().forEach(objectId -> {
+                if(StringUtils.isEmpty(objectId)){
+                    throw new IllegalArgumentException("Elements are requiered");
+                }
+            });
+        }
     }
 
     @Override
@@ -242,7 +274,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Consent getConsentFromDatasetID(String datasetId){
+    public Consent getConsentFromDatasetID(String datasetId) {
         return consentDAO.findConsentFromDatasetID(datasetId);
     }
 
@@ -252,7 +284,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Set<ConsentDataSet> getConsentIdAndDataSets(List<String> datasetIds){
+    public Set<ConsentDataSet> getConsentIdAndDataSets(List<String> datasetIds) {
         return consentDAO.getConsentIdAndDataSets(datasetIds);
     }
 
@@ -327,7 +359,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
         String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
-        if(!openElections.isEmpty()) {
+        if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(sc -> sc.getReferenceId()).collect(Collectors.toList());
             ObjectId[] objarray = new ObjectId[referenceIds.size()];
             for (int i = 0; i < referenceIds.size(); i++)
@@ -353,10 +385,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Integer getUnReviewedConsents(){
+    public Integer getUnReviewedConsents() {
         Integer unreviewedCases = 0;
         List<Consent> consents = consentDAO.findUnreviewedConsents();
-        if(CollectionUtils.isNotEmpty(consents)){
+        if (CollectionUtils.isNotEmpty(consents)) {
             unreviewedCases = consents.size();
         }
         return unreviewedCases;
@@ -369,7 +401,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consentManageList;
     }
 
-    private Consent updateConsentDates(Consent c){
+    private Consent updateConsentDates(Consent c) {
         Timestamp updateDate = new Timestamp(new Date().getTime());
         c.setLastUpdate(updateDate);
         c.setSortDate(updateDate);

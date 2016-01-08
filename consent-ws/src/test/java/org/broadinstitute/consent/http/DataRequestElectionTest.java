@@ -9,6 +9,8 @@ import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.bson.Document;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -72,7 +74,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
         // configuring ResearchPurposeAPI instance to use in memory Mongo
         DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
-
+        DatabaseDataAccessRequestAPI.getInstance().setMongoDBInstance(mongoi);
         // Create Documents needed in mongo for testing
         UseRestriction useRestriction = UseRestriction.parse("{\"type\":\"everything\"}");
         Document doc = new Document().append("testingInfo1", "someValue");

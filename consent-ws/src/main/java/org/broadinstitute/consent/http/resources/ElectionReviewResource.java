@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
@@ -15,6 +17,7 @@ import org.broadinstitute.consent.http.models.ElectionReview;
 import javax.ws.rs.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Path("{api : (api/)?}electionReview")
 public class ElectionReviewResource {
@@ -63,7 +66,8 @@ public class ElectionReviewResource {
         List<String> dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList("datasetId")).get("datasetId", List.class);
         Consent consent =  consentAPI.getConsentFromDatasetID(dataSetId.get(0));
         ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId,isFinalAccess);
-        accessElectionReview.setVoteAgreement(api.describeAgreementVote(electionId));
+        List<Vote> agreementVote = api.describeAgreementVote(electionId);
+        accessElectionReview.setVoteAgreement(CollectionUtils.isNotEmpty(agreementVote) ? agreementVote.get(0) : null);
         accessElectionReview.setConsent(consent);
         return accessElectionReview;
     }
@@ -73,8 +77,12 @@ public class ElectionReviewResource {
     @Produces("application/json")
     public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Integer rpElectionId = electionAPI.findRPElectionByElectionAccessId(electionId);
-        return api.describeElectionReviewByElectionId(rpElectionId,isFinalAccess);
+        if (Objects.nonNull(rpElectionId)) {
+            return api.describeElectionReviewByElectionId(rpElectionId,isFinalAccess);
+        }
+        else return null;
     }
+
 
     @GET
     @Path("last/{referenceId}")

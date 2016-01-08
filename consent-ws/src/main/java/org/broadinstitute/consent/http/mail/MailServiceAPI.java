@@ -15,4 +15,7 @@ public interface MailServiceAPI {
     void sendDisabledDatasetMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
 
     void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException;
+
+    void sendCancelDARRequestMessage(List<String> usersAddress, String dataAcessRequestId, String type, Writer template) throws MessagingException;
+
 }

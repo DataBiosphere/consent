@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface VoteAPI {
 
-    List<Vote> createVotes(Integer electionId, ElectionType electionType) throws IllegalArgumentException;
+    List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) throws IllegalArgumentException;
 
     Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
 

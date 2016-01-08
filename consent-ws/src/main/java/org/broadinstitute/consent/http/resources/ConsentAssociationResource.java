@@ -2,10 +2,9 @@ package org.broadinstitute.consent.http.resources;
 
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -19,11 +18,9 @@ import java.util.List;
 public class ConsentAssociationResource extends Resource {
 
     private final ConsentAPI api;
-    private final MatchProcessAPI matchProcessAPI;
 
     public ConsentAssociationResource() {
         this.api = AbstractConsentAPI.getInstance();
-        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
     }
 
     @POST
@@ -35,10 +32,13 @@ public class ConsentAssociationResource extends Resource {
             logger().debug(msg);
             List<ConsentAssociation> result = api.createAssociation(consentId, body);
             URI assocURI = buildConsentAssociationURI(consentId);
-            matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
@@ -55,10 +55,13 @@ public class ConsentAssociationResource extends Resource {
             logger().debug(msg);
             List<ConsentAssociation> result = api.updateAssociation(consentId, body);
             URI assocURI = buildConsentAssociationURI(consentId);
-            matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
+        }  catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
@@ -73,8 +76,8 @@ public class ConsentAssociationResource extends Resource {
             List<ConsentAssociation> result = api.getAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
@@ -88,10 +91,11 @@ public class ConsentAssociationResource extends Resource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             List<ConsentAssociation> result = api.deleteAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
-            matchProcessAPI.processMatchesForConsent(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (Exception e) { //catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
