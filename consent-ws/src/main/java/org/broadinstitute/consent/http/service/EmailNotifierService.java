@@ -139,6 +139,15 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
+    @Override
+    public void sendCancelDARRequestMessage(List<DACUser> users, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            Writer template = templateHelper.getCancelledDarTemplate("DAC Member", dataAcessRequestId, SERVERURL);
+            List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
+            mailService.sendCancelDARRequestMessage(usersEmail, dataAcessRequestId, null, template);
+        }
+    }
+
     private void sendNewCaseMessages(List<String> usersAddress, String electionType, String entityId, Writer template) throws MessagingException, IOException, TemplateException {
         mailService.sendNewCaseMessages(usersAddress, entityId, electionType, template);
     }
