@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
@@ -28,4 +29,13 @@ public interface DataSetAPI {
     void deleteDataset(String datasetObjectId);
 
     void disableDataset(String datasetObjectId, Boolean active);
+
+    DataSet updateNeedsReviewDataSets(String dataSetId, Boolean needsApproval);
+
+    List<DataSet> findNeedsApprovedDataSetByObjectId(List<String> objectIdList);
+
+    boolean createDatasetUsersAssociation(Integer datasetId, List<Integer> user_ids);
+
+    List<DatasetAssociation> findDatasetAssociations(Integer datasetId);
+
 }

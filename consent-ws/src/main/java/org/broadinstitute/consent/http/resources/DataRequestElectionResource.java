@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.util.DarConstants;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -44,7 +44,7 @@ public class DataRequestElectionResource extends Resource {
             accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
             List<Vote> votes = new ArrayList<>();
             //create RP election
-            if(!Objects.isNull(darApi.getField(requestId, "restriction"))){
+            if(!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))){
                 votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
                 Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
                 voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP, false);

@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.skife.jdbi.v2.DBI;
@@ -365,11 +366,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             for (int i = 0; i < referenceIds.size(); i++)
                 objarray[i] = new ObjectId(referenceIds.get(i));
             BasicDBObject in = new BasicDBObject("$in", objarray);
-            BasicDBObject q = new BasicDBObject("_id", in);
+            BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
             List<String> datasetNames = new ArrayList<>();
             dataAccessRequests.forEach((Block<Document>) dar -> {
-                List<String> dataSets = dar.get("datasetId", List.class);
+                List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
                 datasetNames.addAll(dataSets);
             });
             List<String> objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);

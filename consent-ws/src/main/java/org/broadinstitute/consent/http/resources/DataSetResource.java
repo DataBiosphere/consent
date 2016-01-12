@@ -6,9 +6,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.*;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ParseResult;
@@ -188,6 +189,46 @@ public class DataSetResource extends Resource {
     public Response datasetAutocomplete(@PathParam("partial") String partial){
         List<Map<String, String>> j = api.autoCompleteDataSets(partial);
         return Response.ok(j, MediaType.APPLICATION_JSON).build();
+    }
+
+    @PUT
+    @Produces("application/json")
+    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") String dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
+        try{
+            DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
+            return Response.ok().entity(dataSet).build();
+        }catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }
+    }
+
+    @POST
+    @Path("/association/{datasetId}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response associateDatasetWithUsers(@PathParam("datasetId") Integer datasetId, List<Integer> user_ids) {
+        try {
+            api.createDatasetUsersAssociation(datasetId, user_ids);
+        } catch (BadRequestException e){
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/association/{datasetId}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response getDatasetAssociations(@PathParam("datasetId") Integer datasetId) {
+        try {
+            return Response.ok( api.findDatasetAssociations(datasetId)).build();
+        } catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }catch (Exception e){
+            //change null value*
+            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+
     }
 
     @Override

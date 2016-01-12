@@ -88,10 +88,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
-        DatabaseDataSetAPI.initInstance(dataSetDAO, electionDAO, dacUserRoleDAO , consentDAO);
+        DatabaseDataSetAPI.initInstance(dataSetDAO, electionDAO, dacUserRoleDAO , dacUserDAO, consentDAO);
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
@@ -102,7 +102,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
-        //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
         // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());

@@ -32,6 +32,11 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
+
+    @SqlQuery("select * from dataset where objectId in (<objectIdList>) and needs_approval = true")
+    List<DataSet> findNeedsApprovalDataSetByObjectId(@BindIn("objectIdList") List<String> objectIdList);
+
+
     @SqlQuery("select ds.objectId from dataset ds")
     List<String> findAllObjectId();
 
@@ -50,6 +55,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
     void updateDataSetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);
+
+    @SqlUpdate("update dataset set needs_approval = :needs_approval where objectId = :objectId")
+    void updateDataSetNeedsApproval(@Bind("objectId") String objectId, @Bind("needs_approval") Boolean needs_approval);
 
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId order by d.dataSetId, k.displayOrder")

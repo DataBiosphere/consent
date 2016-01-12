@@ -22,6 +22,9 @@ public class DataSet {
     @JsonProperty
     private Boolean active;
 
+    @JsonProperty
+    private Boolean needsApproval;
+
     private Set<DataSetProperty> properties;
 
     public DataSet() {
@@ -81,5 +84,13 @@ public class DataSet {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Boolean getNeedsApproval() {
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(Boolean needsApproval) {
+        this.needsApproval = needsApproval;
     }
 }

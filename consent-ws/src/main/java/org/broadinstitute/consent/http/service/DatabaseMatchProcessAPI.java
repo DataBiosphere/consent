@@ -6,6 +6,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -43,9 +44,9 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     @Override
     public void processMatchesForPurpose(String purposeId) {
         removeMatchesForPurpose(purposeId);
-        BasicDBObject query = new BasicDBObject("_id", new ObjectId(purposeId));
+        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(purposeId));
         Document rp = mongo.getDataAccessRequestCollection().find(query).first();
-        if (rp != null && rp.get("restriction") != null) {
+        if (rp != null && rp.get(DarConstants.RESTRICTION) != null) {
             Match match = matchingServiceAPI.findMatchForPurpose(purposeId);
             saveMatch(Arrays.asList(match));
         }

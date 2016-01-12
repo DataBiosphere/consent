@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.MailServiceAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
@@ -145,6 +146,24 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             Writer template = templateHelper.getCancelledDarTemplate("DAC Member", dataAcessRequestId, SERVERURL);
             List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             mailService.sendCancelDARRequestMessage(usersEmail, dataAcessRequestId, null, template);
+        }
+    }
+
+    @Override
+    public void sendNeedsPIApprovalMessage(DACUser user, List<DataSet> dataSet, String darCode) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            Writer template = templateHelper.getApprovedDarTemplate(user.getDisplayName(), darCode, dataSet, SERVERURL);
+            mailService.sendFlaggedDarAdminApprovedMessage(user.getEmail(), darCode, SERVERURL, template);
+        }
+    }
+
+    @Override
+    public void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
+        if(isServiceActive){
+            for(DACUser admin: admins) {
+                Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets,  SERVERURL);
+                mailService.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVERURL, template);
+            }
         }
     }
 

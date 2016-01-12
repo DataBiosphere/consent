@@ -23,6 +23,8 @@ public class MailService extends AbstractMailServiceAPI {
     private ReminderMessage reminderMessageCreator = new ReminderMessage();
     private DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
     private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
+    private FlaggedDarAdminApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarAdminApprovedMessage();
+    private FlaggedDarMessage darApprovedMessageCreator = new FlaggedDarMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -87,9 +89,21 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     @Override
-    public void sendCancelDARRequestMessage(List<String> usersAddress, String dataAcessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = darCancelMessageCreator.cancelDarMessage(getMailSession, template, dataAcessRequestId, type);
+    public void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = darCancelMessageCreator.cancelDarMessage(getMailSession, template, dataAccessRequestId, type);
         sendMessages(message, usersAddress);
+    }
+
+    @Override
+    public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarAdminMessage(getMailSession, template, dataAccessRequestId, type);
+        sendMessage(message, userAddress);
+    }
+
+    @Override
+    public void sendFlaggedDarMessageMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = darApprovedMessageCreator.flaggedDarMessage(getMailSession, template, dataAccessRequestId, type);
+        sendMessage(message, userAddress);
     }
 
 }

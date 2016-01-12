@@ -47,6 +47,10 @@ public class DataAccessRequestManage {
     @JsonProperty
     private Boolean isCanceled;
 
+    @JsonProperty
+    private Boolean needsApproval;
+
+
     public DataAccessRequestManage() {
     }
 
@@ -136,5 +140,13 @@ public class DataAccessRequestManage {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Boolean getNeedsApproval() {
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(Boolean needsApproval) {
+        this.needsApproval = needsApproval;
     }
 }

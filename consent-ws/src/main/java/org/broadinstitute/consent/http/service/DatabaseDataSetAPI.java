@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +24,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final DataSetDAO dsDAO;
     private final ElectionDAO dsElectionDAO;
     private final DACUserRoleDAO dsRoleDAO;
+    private final DACUserDAO dacUserDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
 
@@ -36,14 +37,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dsElectionDAO, dsRoleDAO, consentDAO));
+    public static void initInstance(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO,DACUserDAO dacUserDAO, ConsentDAO consentDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dsElectionDAO, dsRoleDAO,dacUserDAO, consentDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO,DACUserDAO dacUserDAO, ConsentDAO consentDAO) {
         this.dsDAO = dsDAO;
         this.dsElectionDAO = dsElectionDAO;
         this.dsRoleDAO = dsRoleDAO;
+        this.dacUserDAO = dacUserDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
     }
@@ -97,7 +99,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 for (DataSetDTO dataSet : dataSetDTOList) {
                     if(CollectionUtils.isNotEmpty(accessRequests)){
                         accessRequests.stream().forEach(access -> {
-                            if(access.get("datasetId", List.class).stream().anyMatch(objectId -> objectId.equals(dataSet.getProperties().get(9).getPropertyValue()))){
+                            if(access.get(DarConstants.DATASET_ID, List.class).stream().anyMatch(objectId -> objectId.equals(dataSet.getProperties().get(9).getPropertyValue()))){
                                 dataSet.setDeletable(false);
                             } else {
                                 dataSet.setDeletable(true);
@@ -150,6 +152,58 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         if(dataset != null){
             dsDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }
+    }
+
+    @Override
+    public DataSet updateNeedsReviewDataSets(String objectId, Boolean needsApproval){
+        if(dsDAO.findDataSetByObjectId(objectId) == null){
+            throw new NotFoundException("DataSet doesn't exist");
+        }
+        dsDAO.updateDataSetNeedsApproval(objectId, needsApproval);
+        return dsDAO.findDataSetByObjectId(objectId);
+    }
+
+    @Override
+    public List<DataSet> findNeedsApprovedDataSetByObjectId(List<String> objectIdList){
+        return dsDAO.findNeedsApprovedDataSetByObjectId(objectIdList);
+    }
+
+    @Override
+    public boolean createDatasetUsersAssociation(Integer datasetId, List<Integer> user_ids){
+        Collection<DACUser> users = dacUserDAO.findUsersWithRoles(user_ids);
+        for (DACUser user : users) {
+            if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.DATA_OWNER.getValue()))) {
+                throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getDacUserId()));
+            }
+            if(Objects.isNull(dsDAO.findDataSetById(datasetId))){
+                throw new BadRequestException("Invalid DatasetId");
+            }
+            try {
+
+                dsDAO.insertDatasetUserAssociation(datasetId,
+                        users.stream().map(u -> u.getDacUserId()).collect(Collectors.toList()), new Date());
+            }catch(Exception e){
+                // Define better
+                throw e;
+
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public  List<DatasetAssociation> findDatasetAssociations(Integer datasetId){
+        try{
+            return dsDAO.getDatasetAssociation(datasetId);
+        }catch(Exception e){
+            throw e;
+        }
+    }
+
+    @Override
+    public List<DataSet>findNeedsApprovedDataSetByObjectId(List<String> objectIdList){
+        return dsDAO.findNeedsApprovalDataSetByObjectId(objectIdList);
     }
 
 
@@ -253,7 +307,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         Map<String, DataSet> dataSetMap = dataSets.stream().collect(Collectors.toMap(DataSet::getObjectId, dataSet -> dataSet));
         if(CollectionUtils.isNotEmpty(dataSets) && CollectionUtils.isNotEmpty(existentDataSets)){
             existentDataSets.stream().filter(ds -> !ds.getActive()).forEach(s ->
-                      dataSetMap.get(s.getObjectId()).setActive(false)
+                            dataSetMap.get(s.getObjectId()).setActive(false)
             );
         }
         return dataSetMap.values();

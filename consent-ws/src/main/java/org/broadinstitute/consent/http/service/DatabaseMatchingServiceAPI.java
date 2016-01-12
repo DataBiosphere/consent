@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.glassfish.jersey.client.ClientProperties;
 
@@ -97,7 +98,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                     }
                 } catch (Exception e) {
                     logger().error("Error finding  matches for consent.", e);
-                    matches.add(createMatch(consentId, dar.get("_id").toString(), true, false));
+                    matches.add(createMatch(consentId, dar.get(DarConstants.ID).toString(), true, false));
                 }
             }
         }
@@ -106,7 +107,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
     private Match singleEntitiesMatch(Consent consent, Document dar) throws IOException, UnknownIdentifierException {
         if(consent != null && dar != null){
-            Match match = createMatch(consent.getConsentId(), dar.get("_id").toString(), false, false);
+            Match match = createMatch(consent.getConsentId(), dar.get(DarConstants.ID).toString(), false, false);
             RequestMatchingObject requestObject = createRequestObject(consent, dar);
             String json = new Gson().toJson(requestObject);
             Response res = target.request("application/json").post(Entity.json(json));
@@ -142,7 +143,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private Consent findRelatedConsents(String purposeId){
-        List<String> datasetIdList = (dataAccessAPI.describeDataAccessRequestById(purposeId)).get("datasetId",List.class);
+        List<String> datasetIdList = (dataAccessAPI.describeDataAccessRequestById(purposeId)).get(DarConstants.DATASET_ID,List.class);
         Consent consent =  null;
         if(CollectionUtils.isNotEmpty(datasetIdList)){
             consent = consentAPI.getConsentFromDatasetID(datasetIdList.get(0));
@@ -155,7 +156,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws UnknownIdentifierException, IOException {
-        String restriction = new Gson().toJson(dar.get("restriction", Map.class));
+        String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
         return new RequestMatchingObject(consent.getUseRestriction(), UseRestriction.parse(restriction));
     }
 }

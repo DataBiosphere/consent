@@ -2,12 +2,14 @@ package org.broadinstitute.consent.http.service;
 
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public interface EmailNotifierAPI {
 
@@ -22,5 +24,10 @@ public interface EmailNotifierAPI {
     void sendDisabledDatasetsMessage(DACUser user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException;
 
     void sendCancelDARRequestMessage(List<DACUser> userAddress, String dataAcessRequestId) throws MessagingException, IOException, TemplateException;
+
+    void sendNeedsPIApprovalMessage(DACUser user, List<DataSet> dataSet, String darCode) throws MessagingException, IOException, TemplateException;
+
+    void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException;
+
 
 }

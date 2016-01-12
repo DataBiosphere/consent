@@ -5,11 +5,14 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
 
 public class FreeMarkerTemplateHelper {
 
@@ -53,6 +56,15 @@ public class FreeMarkerTemplateHelper {
         return generateCancelledDarTemplate(userType, entityId, serverUrl, temp);
     }
 
+    public Writer getAdminApprovedDarTemplate(String userName, String entityId, Map<DACUser, List<DataSet>> dataOwnersDataSets, String serverUrl) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("admin-dar-approved.html");
+        return generateAdminApprovedDarTemplate(userName, entityId, dataOwnersDataSets, serverUrl, temp);
+    }
+
+    public Writer getApprovedDarTemplate(String userName, String entityId, List<DataSet> datasets, String serverUrl) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("owner-dar-approved.html");
+        return generateApprovedDarTemplate(userName, entityId, datasets, serverUrl, temp);
+    }
 
     private Writer generateTemplate(String user, String election, String entityId, Template temp, String serverUrl) throws IOException, TemplateException {
         TemplateModel model = new TemplateModel(user, election, entityId, serverUrl);
@@ -84,6 +96,20 @@ public class FreeMarkerTemplateHelper {
 
     private Writer generateCancelledDarTemplate(String userType, String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
         CancelledDarModel model = new CancelledDarModel(userType, entityId, serverUrl);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    private Writer generateAdminApprovedDarTemplate(String userType, String entityId, Map<DACUser, List<DataSet>> dataOwnersDataSets, String serverUrl, Template temp) throws IOException, TemplateException {
+        AdminDarApprovedModel model = new AdminDarApprovedModel(userType, entityId, dataOwnersDataSets, serverUrl);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    private Writer generateApprovedDarTemplate(String userName, String entityId, List<DataSet> dataSetList, String serverUrl, Template temp) throws IOException, TemplateException {
+        ApprovedDarModel model = new ApprovedDarModel(userName, entityId, dataSetList, serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

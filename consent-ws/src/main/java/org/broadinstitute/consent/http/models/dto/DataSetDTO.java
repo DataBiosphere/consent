@@ -22,6 +22,10 @@ public class DataSetDTO {
     @JsonProperty
     private Boolean active;
 
+    @JsonProperty
+    private Boolean needsApproval;
+
+
     public DataSetDTO() {
     }
 
@@ -67,5 +71,13 @@ public class DataSetDTO {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Boolean getNeedsApproval() {
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(Boolean needsApproval) {
+        this.needsApproval = needsApproval;
     }
 }

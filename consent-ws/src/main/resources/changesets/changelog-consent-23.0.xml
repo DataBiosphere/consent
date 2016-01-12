@@ -12,5 +12,30 @@
         </insert>
     </changeSet>
 
+    <changeSet author="vvicario" id="85">
+        <addColumn tableName="dataset">
+            <column name="needs_approval" type="boolean" defaultValueBoolean= "false"/>
+        </addColumn>
+    </changeSet>
+
+<<<<<<< HEAD
+=======
+    <changeSet  author="ssaucedo" id="86">
+        <createTable tableName="dataset_user_association">
+            <column name="associationId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="datasetId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dacuserId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="createDate" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+>>>>>>> 7e7cafc... Add data owner role
 
 </databaseChangeLog>

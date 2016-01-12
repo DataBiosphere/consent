@@ -16,6 +16,10 @@ public interface MailServiceAPI {
 
     void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendCancelDARRequestMessage(List<String> usersAddress, String dataAcessRequestId, String type, Writer template) throws MessagingException;
+    void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+
+    void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+
+    void sendFlaggedDarMessageMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
 }

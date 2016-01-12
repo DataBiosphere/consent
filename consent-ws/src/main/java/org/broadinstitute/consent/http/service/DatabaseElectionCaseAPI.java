@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -133,9 +134,9 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         if (election.getElectionType().equals(type)) {
-            BasicDBObject query = new BasicDBObject().append("_id", new ObjectId(election.getReferenceId()));
+            BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
             FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
-            pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get("dar_code").toString() : null);
+            pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
         }else{
              pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
         }

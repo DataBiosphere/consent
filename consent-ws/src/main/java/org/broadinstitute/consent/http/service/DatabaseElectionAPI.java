@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -146,15 +147,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             for (int i = 0; i < referenceIds.size(); i++)
                 objarray[i] = new ObjectId(referenceIds.get(i));
             BasicDBObject in = new BasicDBObject("$in", objarray);
-            BasicDBObject q = new BasicDBObject("_id", in);
+            BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
             elections.forEach(election -> {
                 MongoCursor<Document> itr = dataAccessRequests.iterator();
                 try {
                     while (itr.hasNext()) {
                         Document next = itr.next();
-                        if (next.get("_id").toString().equals(election.getReferenceId())) {
-                            election.setReferenceId(next.get("dar_code").toString());
+                        if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
+                            election.setReferenceId(next.get(DarConstants.DAR_CODE).toString());
                         }
                     }
                 } finally {
@@ -248,18 +249,18 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
-        List<String> dataSets = dar.get("datasetId", List.class);
+        List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
         List<DataSet> dataSetList = dataSetDAO.searchDataSetsByObjectIdList(dataSets);
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
             DACUser dacUser = dacUserDAO.findDACUserById(dar.getInteger("userId"));
             if(!createElection){
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString("dar_code"));
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
             }else{
-                updateDataAccessRequest(dataSetList, dar, dar.getString("dar_code"));
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString("dar_code"));
+                updateDataAccessRequest(dataSetList, dar, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
             }
         }
         return dataSetList;
@@ -271,14 +272,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<DataSet> activeDataSets = dataSets.stream().filter(ds -> ds.getActive()).collect(Collectors.toList());
         activeDataSets.forEach((dataSet) -> {
             Document document = new Document();
-            document.put("datasetId", dataSet.getObjectId());
+            document.put(DarConstants.DATASET_ID, dataSet.getObjectId());
             dataSetId.add(dataSet.getObjectId());
             document.put("name", dataSet.getName());
             dataSetList.add(document);
         });
-        dar.put("datasetId",dataSetId);
-        dar.put("datasetDetail",dataSetList);
-        BasicDBObject query = new BasicDBObject("dar_code", id);
+        dar.put(DarConstants.DATASET_ID,dataSetId);
+        dar.put(DarConstants.DATASET_DETAIL,dataSetList);
+        BasicDBObject query = new BasicDBObject(DarConstants.DAR_CODE, id);
         mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
     }
 
@@ -290,7 +291,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private Document describeDataAccessRequestById(String id){
-        BasicDBObject query = new BasicDBObject("_id", new ObjectId(id));
+        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
         return mongo.getDataAccessRequestCollection().find(query).first();
     }
 
@@ -326,11 +327,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             case DATA_ACCESS:
                 election.setElectionType(electionDAO
                         .findElectionTypeByType(ElectionType.DATA_ACCESS.getValue()));
-                query = new BasicDBObject("_id", new ObjectId(referenceId));
+                query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 dar = mongo.getDataAccessRequestCollection().find(query).first();
                 election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
                 try {
-                    String restriction  =  new Gson().toJson(dar.get("restriction", Map.class));
+                    String restriction  =  new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
                     election.setUseRestriction((UseRestriction.parse(restriction)));
                 } catch (IOException e) {
                     election.setUseRestriction(null);
@@ -339,11 +340,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             case RP:
                 election.setElectionType(electionDAO
                         .findElectionTypeByType(ElectionType.RP.getValue()));
-                query = new BasicDBObject("_id", new ObjectId(referenceId));
+                query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 dar = mongo.getDataAccessRequestCollection().find(query).first();
                 election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
                 try {
-                    String restriction = new Gson().toJson(dar.get("restriction", Map.class));
+                    String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
                     election.setUseRestriction((UseRestriction.parse(restriction)));
 
                 } catch (IOException e) {
@@ -480,7 +481,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(consentDAO.checkConsentbyId(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
-            BasicDBObject query = new BasicDBObject("_id", new ObjectId(referenceId));
+            BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
             Document dar = mongo.getDataAccessRequestCollection().find(query).first();
             dar.put("sortDate", createDate);
             mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
