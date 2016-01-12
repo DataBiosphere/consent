@@ -49,8 +49,9 @@ public class DataSetResource extends Resource {
         logger().debug("POSTing Data Set");
         List<DataSet> dataSets;
         List<String> errors = new ArrayList<>();
-        if (part.getMediaType().toString().equals("text/tab-separated-values")
-                || part.getMediaType().toString().equals("text/plain")) {
+        if (part.getMediaType().getType().equals("text") && 
+                (part.getMediaType().getSubtype().equals("tab-separated-values") 
+                || part.getMediaType().getSubtype().equals("plain") )) {
             File inputFile = null;
             try {
                 inputFile = new File(UUID.randomUUID().toString());
