@@ -12,6 +12,7 @@ import java.util.Map;
 
 public class DARModalDetailsDTO {
 
+    private String darCode;
     private String principalInvestigator;
     private String institutionName;
     private String projectTitle;
@@ -27,6 +28,7 @@ public class DARModalDetailsDTO {
     private Map<String, String> datasetDetail;
 
     public DARModalDetailsDTO(Document darDocument){
+        setDarCode(darDocument.getString(DarConstants.DAR_CODE));
         setPrincipalInvestigator(darDocument.getString(DarConstants.INVESTIGATOR));
         setInstitutionName(this.institutionName = darDocument.getString(DarConstants.INSTITUTION));
         setProjectTitle(this.projectTitle = darDocument.getString(DarConstants.PROJECT_TITLE));
@@ -137,6 +139,14 @@ public class DARModalDetailsDTO {
             manualReviewIsTrue();
         }
         return researchList;
+    }
+
+    public void setDarCode(String darCode) {
+        this.darCode = darCode;
+    }
+
+    public String getDarCode() {
+        return darCode;
     }
 
     public String getPrincipalInvestigator() {

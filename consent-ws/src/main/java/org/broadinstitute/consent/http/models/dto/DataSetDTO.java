@@ -25,6 +25,8 @@ public class DataSetDTO {
     @JsonProperty
     private Boolean needsApproval;
 
+    @JsonProperty
+    private Boolean isAssociatedToDataOwners;
 
     public DataSetDTO() {
     }
@@ -79,5 +81,13 @@ public class DataSetDTO {
 
     public void setNeedsApproval(Boolean needsApproval) {
         this.needsApproval = needsApproval;
+    }
+
+    public Boolean getIsAssociatedToDataOwners() {
+        return isAssociatedToDataOwners;
+    }
+
+    public void setIsAssociatedToDataOwners(Boolean isAssociatedToDataOwners) {
+        this.isAssociatedToDataOwners = isAssociatedToDataOwners;
     }
 }

@@ -133,7 +133,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public void delete(String id) throws IllegalArgumentException {
         checkConsentExists(id);
-        List<Election> elections = electionDAO.findElectionsByReferenceId(id);
+        List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(id);
         if (elections.isEmpty()) {
             consentDAO.deleteConsent(id);
             consentDAO.deleteAllAssociationsForConsent(id);
@@ -359,7 +359,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
         String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(sc -> sc.getReferenceId()).collect(Collectors.toList());
             ObjectId[] objarray = new ObjectId[referenceIds.size()];
@@ -373,7 +373,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
                 datasetNames.addAll(dataSets);
             });
-            List<String> objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
+            List<String> objectIds = new ArrayList<>();
+            if(CollectionUtils.isNotEmpty(datasetNames)){
+                objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
+            }
+
             for (ConsentManage consentManage : consentManageList) {
                 if (objectIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
                     consentManage.setEditable(false);

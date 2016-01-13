@@ -81,6 +81,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
         final DataRequestDAO requestDAO = jdbi.onDemand(DataRequestDAO.class);
         final DataSetDAO dataSetDAO = jdbi.onDemand(DataSetDAO.class);
+        final DataSetAssociationDAO dataSetAssociationDAO = jdbi.onDemand(DataSetAssociationDAO.class);
         final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
@@ -91,14 +92,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
-        DatabaseDataSetAPI.initInstance(dataSetDAO, electionDAO, dacUserRoleDAO , dacUserDAO, consentDAO);
+        DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO);
+        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO );
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance );
-        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance);
+        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance, dataSetDAO);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
-        DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
+        DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
@@ -132,6 +134,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // How register our resources.
         env.jersey().register(DataAccessRequestResource.class);
         env.jersey().register(DataSetResource.class);
+        env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
@@ -166,6 +169,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractVoteAPI.clearInstance();
                 AbstractPendingCaseAPI.clearInstance();
                 AbstractDataRequestAPI.clearInstance();
+                AbstractDataSetAssociationAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();

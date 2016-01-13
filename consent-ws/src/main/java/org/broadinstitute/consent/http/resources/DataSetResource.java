@@ -6,7 +6,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.*;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -97,6 +96,18 @@ public class DataSetResource extends Resource {
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }
     }
+
+    @GET
+    @Path("/{datasetId}")
+    @Produces("application/json")
+    public Response describeDataSet( @PathParam("datasetId") String datasetId){
+        try {
+            return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
+        } catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }
+    }
+
 
     @GET
     @Path("/sample")
@@ -200,35 +211,6 @@ public class DataSetResource extends Resource {
         }catch (NotFoundException e){
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
-    }
-
-    @POST
-    @Path("/association/{datasetId}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public Response associateDatasetWithUsers(@PathParam("datasetId") Integer datasetId, List<Integer> user_ids) {
-        try {
-            api.createDatasetUsersAssociation(datasetId, user_ids);
-        } catch (BadRequestException e){
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }
-        return Response.ok().build();
-    }
-
-    @GET
-    @Path("/association/{datasetId}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public Response getDatasetAssociations(@PathParam("datasetId") Integer datasetId) {
-        try {
-            return Response.ok( api.findDatasetAssociations(datasetId)).build();
-        } catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }catch (Exception e){
-            //change null value*
-            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-        }
-
     }
 
     @Override

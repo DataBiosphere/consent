@@ -25,7 +25,6 @@ public class FreeMarkerTemplateHelper {
         freeMarkerConfig.setDefaultEncoding(config.getDefaultEncoding());
     }
 
-
     public Writer getDisabledDatasetsTemplate(String user, List<String> datasets, String entityId, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("disabled-datasets.html");
         return generateDisabledDatasetsTemplate(user, datasets, entityId, serverUrl, temp);

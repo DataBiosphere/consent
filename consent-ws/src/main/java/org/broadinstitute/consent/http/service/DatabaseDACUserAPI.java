@@ -85,7 +85,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public Collection<DACUser> describeAdminUsers() throws NotFoundException {
+    public List<DACUser> describeAdminUsers() throws NotFoundException {
         return dacUserDAO.describeAdminUsers();
     }
 

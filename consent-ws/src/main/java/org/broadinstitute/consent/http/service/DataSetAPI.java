@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface DataSetAPI {
 
@@ -19,6 +20,8 @@ public interface DataSetAPI {
     Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
 
     List<DataSet> getDataSetsForConsent(String consentId);
+
+    DataSetDTO getDataSetDTO(String objectId ) ;
 
     Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
 
@@ -32,10 +35,6 @@ public interface DataSetAPI {
 
     DataSet updateNeedsReviewDataSets(String dataSetId, Boolean needsApproval);
 
-    List<DataSet> findNeedsApprovedDataSetByObjectId(List<String> objectIdList);
-
-    boolean createDatasetUsersAssociation(Integer datasetId, List<Integer> user_ids);
-
-    List<DatasetAssociation> findDatasetAssociations(Integer datasetId);
+    List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList);
 
 }

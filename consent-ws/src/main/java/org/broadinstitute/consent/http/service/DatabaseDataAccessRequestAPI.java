@@ -157,7 +157,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
-            electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
+            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, 1));
             HashMap electionAccessMap = createAccessRequestElectionMap(electionList);
             darManage.addAll(createAccessRequestManage(accessList, electionAccessMap));
         }
@@ -199,7 +199,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
-            electionList.addAll(electionDAO.findLastElectionsByReferenceIdsAndType(accessRequestIds, 1));
+            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, 1));
             HashMap<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
             for (Document dar : accessList) {
                 ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
@@ -274,8 +274,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public List<DACUser> getUserEmailAndCancelElection(String referenceId) {
-        Election access = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
-        Election rp = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
+        Election access = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
+        Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
         updateElection(access, rp);
         List<DACUser> dacUsers = new ArrayList<>();
         if(access != null){

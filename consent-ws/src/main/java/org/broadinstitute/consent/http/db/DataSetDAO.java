@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.skife.jdbi.v2.sqlobject.*;
@@ -12,10 +10,7 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({DataSetMapper.class})
@@ -64,6 +59,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetDTO> findDataSets();
 
     @Mapper(DataSetPropertiesMapper.class)
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId where d.objectId = :objectId order by d.dataSetId, k.displayOrder")
+    Set<DataSetDTO> findDataSetWithPropertiesByOBjectId(@Bind("objectId") String objectId);
+
+    @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  + "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate " +
             " and ev.referenceId = e.referenceId and v.vote = true and d.active = true order by d.dataSetId, k.displayOrder")
@@ -80,6 +79,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("select *  from dataset where objectId in (<objectIdList>) ")
     List<DataSet> searchDataSetsByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+
+    @SqlQuery("select ds.dataSetId  from dataset ds where ds.objectId in (<objectIdList>) ")
+    List<Integer> searchDataSetsIdsByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({DictionaryMapper.class})
     @SqlQuery("SELECT * FROM dictionary d order by displayOrder")

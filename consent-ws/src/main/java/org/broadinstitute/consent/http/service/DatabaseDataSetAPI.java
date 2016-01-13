@@ -8,11 +8,10 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -22,9 +21,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private final DataSetFileParser parser = new DataSetFileParser();
     private final DataSetDAO dsDAO;
-    private final ElectionDAO dsElectionDAO;
+    private final DataSetAssociationDAO dataSetAssociationDAO;
     private final DACUserRoleDAO dsRoleDAO;
-    private final DACUserDAO dacUserDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
 
@@ -37,15 +35,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO,DACUserDAO dacUserDAO, ConsentDAO consentDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dsElectionDAO, dsRoleDAO,dacUserDAO, consentDAO));
+    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO,  dsRoleDAO, consentDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO,DACUserDAO dacUserDAO, ConsentDAO consentDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
         this.dsDAO = dsDAO;
-        this.dsElectionDAO = dsElectionDAO;
+        this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.dsRoleDAO = dsRoleDAO;
-        this.dacUserDAO = dacUserDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
     }
@@ -96,17 +93,28 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             dataSetDTOList = dsDAO.findDataSets();
             if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
-                for (DataSetDTO dataSet : dataSetDTOList) {
+                List<String> datasetObjectIdList = dataSetDTOList.stream().map(dto -> dto.getProperties().get(9).getPropertyValue()).collect(Collectors.toList());
+                List<DataSet> dataSetList =  dsDAO.getDataSetsForObjectIdList(datasetObjectIdList);
+                Map<String, Integer> datasetMap =
+                        dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
+                                DataSet::getDataSetId));
+                for (DataSetDTO dataSetDTO : dataSetDTOList) {
+                    String datasetObjectId  = dataSetDTO.getProperties().get(9).getPropertyValue();
+                    if(CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(datasetObjectId)))){
+                        dataSetDTO.setIsAssociatedToDataOwners(false);
+                    }else{
+                        dataSetDTO.setIsAssociatedToDataOwners(true);
+                    }
                     if(CollectionUtils.isNotEmpty(accessRequests)){
                         accessRequests.stream().forEach(access -> {
-                            if(access.get(DarConstants.DATASET_ID, List.class).stream().anyMatch(objectId -> objectId.equals(dataSet.getProperties().get(9).getPropertyValue()))){
-                                dataSet.setDeletable(false);
+                            if(access.get(DarConstants.DATASET_ID, List.class).stream().anyMatch(objectId -> objectId.equals(datasetObjectId))){
+                                dataSetDTO.setDeletable(false);
                             } else {
-                                dataSet.setDeletable(true);
+                                dataSetDTO.setDeletable(true);
                             }
                         });
                     }else {
-                        dataSet.setDeletable(true);
+                        dataSetDTO.setDeletable(true);
                     }
                 }
             }
@@ -163,46 +171,17 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return dsDAO.findDataSetByObjectId(objectId);
     }
 
-    @Override
-    public List<DataSet> findNeedsApprovedDataSetByObjectId(List<String> objectIdList){
-        return dsDAO.findNeedsApprovedDataSetByObjectId(objectIdList);
-    }
 
-    @Override
-    public boolean createDatasetUsersAssociation(Integer datasetId, List<Integer> user_ids){
-        Collection<DACUser> users = dacUserDAO.findUsersWithRoles(user_ids);
-        for (DACUser user : users) {
-            if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.DATA_OWNER.getValue()))) {
-                throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getDacUserId()));
-            }
-            if(Objects.isNull(dsDAO.findDataSetById(datasetId))){
-                throw new BadRequestException("Invalid DatasetId");
-            }
-            try {
-
-                dsDAO.insertDatasetUserAssociation(datasetId,
-                        users.stream().map(u -> u.getDacUserId()).collect(Collectors.toList()), new Date());
-            }catch(Exception e){
-                // Define better
-                throw e;
-
-            }
+    public DataSetDTO getDataSetDTO(String objectId){
+        Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByOBjectId(objectId);
+        for( DataSetDTO d : dataSet){
+            return d;
         }
-
-        return true;
+        throw new NotFoundException();
     }
 
-    @Override
-    public  List<DatasetAssociation> findDatasetAssociations(Integer datasetId){
-        try{
-            return dsDAO.getDatasetAssociation(datasetId);
-        }catch(Exception e){
-            throw e;
-        }
-    }
 
-    @Override
-    public List<DataSet>findNeedsApprovedDataSetByObjectId(List<String> objectIdList){
+    public List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList){
         return dsDAO.findNeedsApprovalDataSetByObjectId(objectIdList);
     }
 

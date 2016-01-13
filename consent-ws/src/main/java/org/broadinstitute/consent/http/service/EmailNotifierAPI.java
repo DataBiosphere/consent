@@ -25,7 +25,7 @@ public interface EmailNotifierAPI {
 
     void sendCancelDARRequestMessage(List<DACUser> userAddress, String dataAcessRequestId) throws MessagingException, IOException, TemplateException;
 
-    void sendNeedsPIApprovalMessage(DACUser user, List<DataSet> dataSet, String darCode) throws MessagingException, IOException, TemplateException;
+    void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataOwnersDataSets, String darCode) throws MessagingException, IOException, TemplateException;
 
     void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException;
 

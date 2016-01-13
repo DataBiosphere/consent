@@ -10,6 +10,9 @@
             <column name="roleId" value="6"/>
             <column name="name" value="DataOwner"/>
         </insert>
+        <insert tableName="electiontype">
+            <column name="type" value="DataSet"/>
+        </insert>
     </changeSet>
 
     <changeSet author="vvicario" id="85">
@@ -18,13 +21,8 @@
         </addColumn>
     </changeSet>
 
-<<<<<<< HEAD
-=======
     <changeSet  author="ssaucedo" id="86">
         <createTable tableName="dataset_user_association">
-            <column name="associationId" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
             <column name="datasetId" type="bigint">
                 <constraints nullable="false"/>
             </column>
@@ -35,7 +33,39 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
+        <addPrimaryKey
+                columnNames="datasetId, dacuserId"
+                constraintName="avoid_duplicated_associations"
+                tableName="dataset_user_association"/>
+
+        <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="dataset_user_association" constraintName="fkDataSetId"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dataSetId" referencedTableName="dataset"
+                                 referencesUniqueColumn="true"/>
+        <addForeignKeyConstraint baseColumnNames="dacuserId" baseTableName="dataset_user_association" constraintName="fkDacuserId"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="dacUserId" referencedTableName="dacuser"
+                                 referencesUniqueColumn="true"/>
     </changeSet>
->>>>>>> 7e7cafc... Add data owner role
+
+    <changeSet author="vvicario" id="87">
+        <addColumn tableName="vote">
+            <column name="has_concerns" type="boolean" defaultValueBoolean= "false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="88">
+        <addColumn tableName="election">
+            <column name="datasetId" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="89">
+        <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="election"
+                                 constraintName="fkDataSetElection" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetId"
+                                 referencedTableName="dataset" referencesUniqueColumn="false"/>
+    </changeSet>
 
 </databaseChangeLog>

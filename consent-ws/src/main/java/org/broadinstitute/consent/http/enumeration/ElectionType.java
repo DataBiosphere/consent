@@ -4,7 +4,8 @@ public enum ElectionType {
 
     DATA_ACCESS("DataAccess"),
     TRANSLATE_DUL("TranslateDUL"),
-    RP("RP");
+    RP("RP"),
+    DATA_SET("DataSet");;
 
     private String value;
 
