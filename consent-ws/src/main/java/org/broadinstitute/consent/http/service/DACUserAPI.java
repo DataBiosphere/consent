@@ -12,15 +12,13 @@ public interface DACUserAPI {
 
     DACUser describeDACUserByEmail(String email) throws NotFoundException;
 
-    DACUser describeChairpersonUser() throws NotFoundException;
-
     Collection<DACUser> describeAdminUsers() throws NotFoundException;
 
     DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
 
     DACUser updateDACUserById(DACUser rec, Integer userId) throws IllegalArgumentException, NotFoundException;
 
-    void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
+    void deleteDACUser(String email) throws  NotFoundException;
 
     void updateExistentChairPersonToAlumni(Integer dacUserID);
 

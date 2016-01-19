@@ -1,18 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
-import org.broadinstitute.consent.http.service.ReviewResultsAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.ws.rs.*;
 import java.util.Arrays;
@@ -55,8 +48,6 @@ public class ElectionReviewResource {
     public ElectionReview getElectionReviewByElectionId(@PathParam("electionId") Integer electionId) {
         return api.describeElectionReviewByElectionId(electionId, null);
     }
-
-
 
     @GET
     @Path("access/{electionId}")

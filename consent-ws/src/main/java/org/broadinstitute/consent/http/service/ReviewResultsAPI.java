@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
 
-import javax.ws.rs.NotFoundException;
 import java.util.List;
 
 public interface ReviewResultsAPI {
@@ -16,5 +15,5 @@ public interface ReviewResultsAPI {
 
     ElectionReview describeElectionReviewByReferenceId(String referenceId);
 
-    List<Vote> describeAgreementVote(Integer electionId) throws NotFoundException;
+    List<Vote> describeAgreementVote(Integer electionId);
 }

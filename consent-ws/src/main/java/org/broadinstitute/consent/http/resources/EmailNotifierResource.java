@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.dto.DefaultErrorMessage;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.models.dto.Error;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -24,7 +26,7 @@ public class EmailNotifierResource {
             emailApi.sendReminderMessage(Integer.valueOf(voteId));
             return Response.ok().build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 }

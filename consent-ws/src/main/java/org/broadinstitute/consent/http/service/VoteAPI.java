@@ -21,13 +21,11 @@ public interface VoteAPI {
 
     Vote describeVoteFinalAccessVoteById(Integer requestId) throws NotFoundException;
 
-    void deleteVote(Integer voteId, String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
+    void deleteVote(Integer voteId, String referenceId) throws  UnknownIdentifierException, NotFoundException;
 
-    void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
+    void deleteVotes(String referenceId) throws NotFoundException;
 
     void createVotesForElections(List<Election> elections, Boolean isConsent);
-
-    void setReminderFlag(Integer voteId);
 
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 

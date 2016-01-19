@@ -29,7 +29,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     }
 
     @Override
-    public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type) {
+    public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type){
         Election election = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, type);
         return getElectionReview(referenceId, election);
     }

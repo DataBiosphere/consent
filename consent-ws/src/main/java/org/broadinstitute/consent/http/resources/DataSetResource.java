@@ -81,7 +81,6 @@ public class DataSetResource extends Resource {
                 }
             }
         }
-
         errors.add("The file type is not the expected one. Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.");
         return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.dto.DefaultErrorMessage;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
@@ -53,9 +54,10 @@ public class ConsentVoteResource extends Resource {
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", voteId));
+        } catch (NullPointerException e) {
+            return Response.status(Status.NOT_FOUND).entity(new Error(String.format("Could not find vote with id %s", voteId), Status.NOT_FOUND.getStatusCode())).build();
+        }catch(Exception e){
+            return Response.serverError().entity(new Error( DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage() , Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -70,6 +72,8 @@ public class ConsentVoteResource extends Resource {
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        }catch(Exception e){
+            return Response.serverError().entity(new Error( DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage() , Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -94,9 +98,10 @@ public class ConsentVoteResource extends Resource {
         try {
             api.deleteVote(id, consentId);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
+        } catch (NotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(new Error( e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", id));
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage() , Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -109,9 +114,11 @@ public class ConsentVoteResource extends Resource {
             }
             api.deleteVotes(consentId);
             return Response.ok().entity("Votes for specified consent have been deleted").build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find votes for specified consent id %s", consentId));
+        } catch (NotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(new Error( String.format(
+                    "Could not find votes for specified consent id %s", consentId), Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.serverError().entity(new Error( DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage() , Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
