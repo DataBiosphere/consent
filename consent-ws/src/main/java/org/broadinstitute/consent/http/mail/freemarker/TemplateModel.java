@@ -8,14 +8,14 @@ public class TemplateModel {
 
     private String electionType;
 
-    private String entityId;
+    private String entityName;
 
     private String serverUrl;
 
-    public TemplateModel(String user, String election, String entityId, String serverUrl) {
+    public TemplateModel(String user, String election, String entityName, String serverUrl) {
         this.userName = user;
         this.electionType = election;
-        this.entityId = entityId;
+        this.entityName = entityName;
         this.serverUrl = serverUrl;
     }
 
@@ -35,12 +35,12 @@ public class TemplateModel {
         this.electionType = electionType;
     }
 
-    public String getEntityId() {
-        return entityId;
+    public String getEntityName() {
+        return entityName;
     }
 
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
+    public void setEntityName(String entityName) {
+        this.entityName = entityName;
     }
 
     public String getServerUrl() {

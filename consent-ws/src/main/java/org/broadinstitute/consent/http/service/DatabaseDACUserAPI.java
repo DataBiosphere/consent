@@ -49,7 +49,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
-        validateRequieredFields(dacUser);
+        validateRequiredFields(dacUser);
         Integer dacUserID;
         try {
             dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
@@ -76,14 +76,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser describeChairpersonUser() throws NotFoundException {
-        DACUser dacUser = dacUserDAO.findChairpersonUser();
-        return dacUser;
-    }
-
-    @Override
-    public List<DACUser> describeAdminUsersThatWantToReceiveMails(){
-        return dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(),true);
+    public List<DACUser> describeAdminUsersThatWantToReceiveMails() {
+        return dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
     }
 
     @Override
@@ -99,7 +93,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     @Override
     public DACUser updateDACUserById(DACUser rec,Integer id) throws IllegalArgumentException, NotFoundException {
         validateExistentUserById(id);
-        validateRequieredFields(rec);
+        validateRequiredFields(rec);
         if(rec.getRoles() != null && rec.getRoles().size() > 0){
             validateRoles(rec.getRoles(), id);
             updateRoles(rec, id);
@@ -146,18 +140,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         return dacUserDAO.findUsers();
     }
 
-    @Override
-    public Collection<String> describeUsersEmails(List<Integer> dacUserIds){
-        return dacUserDAO.describeUsersEmails(dacUserIds);
-    }
-
     private void validateExistentUser(String email) {
         if(dacUserDAO.findDACUserByEmail(email) == null){
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
     }
 
-    private void validateRequieredFields(DACUser newDac) {
+    private void validateRequiredFields(DACUser newDac) {
         if(StringUtils.isEmpty(newDac.getDisplayName())){
             throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
         }

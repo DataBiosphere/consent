@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Path("{api : (api/)?}consent/{consentId}/election")
@@ -42,7 +43,8 @@ public class ConsentElectionResource extends Resource {
         try {
             Election election = api.createElection(rec, consentId, ElectionType.TRANSLATE_DUL);
             List<Vote> votes  = voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
-            emailApi.sendNewCaseMessageToList(votes, election);
+            List<Vote> dulVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
+            emailApi.sendNewCaseMessageToList(dulVotes, election);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();

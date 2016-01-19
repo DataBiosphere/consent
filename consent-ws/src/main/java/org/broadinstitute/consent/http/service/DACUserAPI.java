@@ -12,8 +12,6 @@ public interface DACUserAPI {
 
     DACUser describeDACUserByEmail(String email) throws NotFoundException;
 
-    DACUser describeChairpersonUser() throws NotFoundException;
-
     List<DACUser> describeAdminUsersThatWantToReceiveMails();
 
     DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
@@ -25,8 +23,5 @@ public interface DACUserAPI {
     void updateExistentChairPersonToAlumni(Integer dacUserID);
 
     Collection<DACUser> describeUsers();
-
-    Collection<String> describeUsersEmails(List<Integer> dacUserIds);
-
 
 }

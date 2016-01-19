@@ -4,16 +4,19 @@ public class NewCaseTemplate {
 
      /* This model works for templates: new-case. */
 
+    private String userName;
+
     private String electionType;
 
-    private String entityId;
+    private String entityName;
 
     private String serverUrl;
 
-    public NewCaseTemplate(String election, String entityId, String serverUrl) {
+    public NewCaseTemplate(String userName, String election, String entityName, String serverUrl) {
         this.electionType = election;
-        this.entityId = entityId;
+        this.entityName = entityName;
         this.serverUrl = serverUrl;
+        this.userName = userName;
     }
 
     public String getElectionType() {
@@ -24,12 +27,12 @@ public class NewCaseTemplate {
         this.electionType = electionType;
     }
 
-    public String getEntityId() {
-        return entityId;
+    public String getEntityName() {
+        return entityName;
     }
 
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
+    public void setEntityName(String entityName) {
+        this.entityName = entityName;
     }
 
     public String getServerUrl() {
@@ -38,5 +41,13 @@ public class NewCaseTemplate {
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }
