@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.HelpReport;
 
+import javax.ws.rs.NotFoundException;
 import java.util.Date;
 import java.util.List;
 
@@ -48,19 +49,23 @@ public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
     public HelpReport create(HelpReport helpReport){
         Integer reportId = helpReportDAO.insertHelpReport(helpReport.getUserId(), new Date(), helpReport.getSubject(), helpReport.getDescription());
         return helpReportDAO.findHelpReportById(reportId);
-
     }
 
     @Override
-    public HelpReport findHelpReportById(Integer id){
-        return helpReportDAO.findHelpReportById(id);
+    public HelpReport findHelpReportById(Integer id) throws NotFoundException {
+        HelpReport hr = helpReportDAO.findHelpReportById(id);
+        if(hr == null){
+            throw new NotFoundException("Could not find the requested object");
+        }
+        return hr;
     }
 
-
     @Override
-    public void deleteHelpReportById(Integer id){
+    public void deleteHelpReportById(Integer id) throws NotFoundException{
+        HelpReport hr = helpReportDAO.findHelpReportById(id);
+        if(hr == null){
+            throw new NotFoundException("Could not find the requested object");
+        }
         helpReportDAO.deleteHelpReportById(id);
     }
-
-
 }

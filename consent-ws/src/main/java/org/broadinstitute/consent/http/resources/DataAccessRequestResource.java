@@ -98,7 +98,7 @@ public class DataAccessRequestResource extends Resource {
             matchProcessAPI.processMatchesForPurpose(dar.get("_id").toString());
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
 
     }
@@ -134,7 +134,7 @@ public class DataAccessRequestResource extends Resource {
             matchProcessAPI.removeMatchesForPurpose(id);
             return Response.status(Response.Status.OK).entity("Research Purpose was deleted").build();
         } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
@@ -222,7 +222,7 @@ public class DataAccessRequestResource extends Resource {
         }
         catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -235,7 +235,7 @@ public class DataAccessRequestResource extends Resource {
             dar = dataAccessRequestAPI.updatePartialDataAccessRequest(dar);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.dto.DefaultErrorMessage;
 import org.broadinstitute.consent.http.service.DACUserAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
@@ -48,8 +49,10 @@ public class DACUserResource extends Resource {
             }
             uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(uri).entity(dacUser).build();
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -62,8 +65,14 @@ public class DACUserResource extends Resource {
     @GET
     @Path("/{email}")
     @Produces("application/json")
-    public DACUser describe(@PathParam("email") String email) {
-        return dacUserAPI.describeDACUserByEmail(email);
+    public Response describe(@PathParam("email") String email) {
+        try{
+            return Response.ok(dacUserAPI.describeDACUserByEmail(email)).build();
+        }catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error( e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     @PUT
@@ -76,7 +85,11 @@ public class DACUserResource extends Resource {
             DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
             return Response.ok(uri).entity(dacUser).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error( e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e){
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
 
     }
@@ -85,8 +98,14 @@ public class DACUserResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{email}")
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
-        dacUserAPI.deleteDACUser(email);
-        return Response.ok().entity("User was deleted").build();
+        try {
+            dacUserAPI.deleteDACUser(email);
+            return Response.ok().entity("User was deleted").build();
+        }catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error( e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     private boolean isChairPerson(List<DACUserRole> roles) {

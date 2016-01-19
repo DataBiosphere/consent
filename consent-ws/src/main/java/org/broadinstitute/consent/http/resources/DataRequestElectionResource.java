@@ -83,8 +83,10 @@ public class DataRequestElectionResource extends Resource {
         try {
             api.deleteElection(requestId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
-        } catch (Exception e) {
-            throw new NotFoundException(e.getMessage());
+        } catch (NotFoundException e) {
+                return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e){
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(),Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 

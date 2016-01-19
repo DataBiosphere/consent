@@ -53,7 +53,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
-    public Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException {
+    public Vote firstVoteUpdate(Vote rec,  Integer voteId){
         Vote vote = voteDAO.findVoteById(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
@@ -115,9 +115,9 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public void deleteVotes(String referenceId)
-            throws IllegalArgumentException, UnknownIdentifierException {
+            throws IllegalArgumentException {
         if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
-            throw new IllegalArgumentException();
+            throw new NotFoundException();
         }
         voteDAO.deleteVotes(referenceId);
 
@@ -147,11 +147,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
              }
         }
         return votes;
-    }
-
-    @Override
-    public void setReminderFlag(Integer voteId){
-
     }
 
     @Override
@@ -191,6 +186,4 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         rec.setType(rec.getType());
         return electionId;
     }
-
-
 }

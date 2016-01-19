@@ -208,8 +208,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public Election describeElectionById(Integer electionId) {
-        return electionDAO.findElectionById(electionId);
+    public Election describeElectionById(Integer electionId) throws NotFoundException{
+        Election election = electionDAO.findElectionById(electionId);
+        if (election == null) {
+            throw new NotFoundException();
+        }
+        return election;
     }
 
     @Override

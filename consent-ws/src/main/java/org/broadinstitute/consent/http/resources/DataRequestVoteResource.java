@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.dto.DefaultErrorMessage;
 import org.broadinstitute.consent.http.service.*;
 import freemarker.template.TemplateException;
 
@@ -56,9 +57,11 @@ public class DataRequestVoteResource extends Resource {
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", voteId));
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format(
+                    "Could not find vote with id %s", voteId), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch(Exception e){
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -82,6 +85,8 @@ public class DataRequestVoteResource extends Resource {
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -96,6 +101,10 @@ public class DataRequestVoteResource extends Resource {
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        }catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error( e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -130,9 +139,11 @@ public class DataRequestVoteResource extends Resource {
         try {
             api.deleteVote(id, requestId);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", id));
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error( String.format(
+                    "Could not find vote with id %s", id), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
@@ -144,9 +155,10 @@ public class DataRequestVoteResource extends Resource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             api.deleteVotes(requestId);
             return Response.ok().entity("Votes for specified id have been deleted").build();
-        } catch (Exception e) {
-            throw new NotFoundException();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error( e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e) {
+            return Response.serverError().entity(new Error(DefaultErrorMessage.INTERNAL_SERVER_ERROR.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
-
 }
