@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import javax.mail.MessagingException;
@@ -58,7 +59,7 @@ public class DataAccessRequestResource extends Resource {
             if (!requiresManualReview(dar)) {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append("restriction", Document.parse(useRestriction.toString()));
+                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
                 dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
         } catch (IOException ex) {
@@ -69,10 +70,10 @@ public class DataAccessRequestResource extends Resource {
         uri = info.getRequestUriBuilder().build();
         result.forEach(r -> {
             try {
-                matchProcessAPI.processMatchesForPurpose(r.get("_id").toString());
-                emailApi.sendNewDARRequestMessage(r.getString("dar_code"));
+                matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
+                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE));
             } catch (Exception e) {
-                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id " + r.getString("dar_code") + ". Error caused by:", e);
+                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id " + r.getString(DarConstants.DAR_CODE) + ". Error caused by:", e);
             }
         });
         return Response.created(uri).build();
@@ -85,17 +86,17 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     public Response updateDataAccessRequest(@Context UriInfo info, Document dar, @PathParam("id") String id) {
         try {
-            if (dar.containsKey("restriction")) {
-                dar.remove("restriction");
+            if (dar.containsKey(DarConstants.RESTRICTION)) {
+                dar.remove(DarConstants.RESTRICTION);
             }
             if (!requiresManualReview(dar)) {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append("restriction", Document.parse(useRestriction.toString()));
+                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
                 dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
-            matchProcessAPI.processMatchesForPurpose(dar.get("_id").toString());
+            matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -154,7 +155,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/find/{id}/consent")
     @Produces("application/json")
     public Consent describeConsentForDAR(@PathParam("id") String id) {
-        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList("datasetId"))).get("datasetId", List.class);
+        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
         Consent c;
         if (CollectionUtils.isNotEmpty(datasetId)) {
             c = consentAPI.getConsentFromDatasetID(datasetId.get(0));
@@ -217,7 +218,7 @@ public class DataAccessRequestResource extends Resource {
         try {
             dar.append("sortDate",new Date());
             result = dataAccessRequestAPI.createPartialDataAccessRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
+            uri = info.getRequestUriBuilder().path("{id}").build(result.get(DarConstants.ID));
             return Response.created(uri).entity(result).build();
         }
         catch (Exception e) {
@@ -286,7 +287,7 @@ public class DataAccessRequestResource extends Resource {
         try {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
-            emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString("dar_code"));
+            emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
             return Response.ok().entity(dar).build();
         } catch (MessagingException | TemplateException | IOException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();

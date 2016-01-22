@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.util.DarConstants;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -14,7 +14,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,9 +41,9 @@ public class DataRequestElectionResource extends Resource {
         Election accessElection;
         try {
             accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
-            List<Vote> votes = new ArrayList<>();
+            List<Vote> votes;
             //create RP election
-            if(!Objects.isNull(darApi.getField(requestId, "restriction"))){
+            if(!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))){
                 votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
                 Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
                 voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
@@ -53,7 +52,6 @@ public class DataRequestElectionResource extends Resource {
             }
             List<Vote> darVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
-
             uri = info.getRequestUriBuilder().build();
         } catch (NotFoundException e){
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();

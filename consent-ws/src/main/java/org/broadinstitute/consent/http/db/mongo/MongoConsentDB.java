@@ -6,6 +6,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.IndexOptions;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 public class MongoConsentDB {
@@ -82,17 +83,17 @@ public class MongoConsentDB {
     public void configureMongo() {
 
         // Creates  MongoDB counter
-        BasicDBObject searchCounter = new BasicDBObject().append("_id", DAR_CODE_COUNTER);
+        BasicDBObject searchCounter = new BasicDBObject().append(DarConstants.ID, DAR_CODE_COUNTER);
         if (getCountersCollection().find(searchCounter).first() == null) {
             Document counter = new Document("seq", 0);
-            counter.append("_id", DAR_CODE_COUNTER);
+            counter.append(DarConstants.ID, DAR_CODE_COUNTER);
             getCountersCollection().insertOne(counter);
         }
 
-        BasicDBObject partialCounter = new BasicDBObject().append("_id", PARTIAL_DAR_CODE_COUNTER);
+        BasicDBObject partialCounter = new BasicDBObject().append(DarConstants.ID, PARTIAL_DAR_CODE_COUNTER);
         if (getCountersCollection().find(partialCounter).first() == null) {
             Document counter = new Document("seq", 0);
-            counter.append("_id", PARTIAL_DAR_CODE_COUNTER);
+            counter.append(DarConstants.ID, PARTIAL_DAR_CODE_COUNTER);
             getCountersCollection().insertOne(counter);
         }
 
@@ -112,7 +113,7 @@ public class MongoConsentDB {
             if (dar.get(DAR_CODE) == null) {
                 BasicDBObject object = new BasicDBObject(DAR_CODE, "DAR-" + getNextSequence(DAR_CODE_COUNTER));
                 BasicDBObject set = new BasicDBObject("$set", object);
-                BasicDBObject searchQuery = new BasicDBObject().append("_id", dar.get("_id"));
+                BasicDBObject searchQuery = new BasicDBObject().append(DarConstants.ID, dar.get(DarConstants.ID));
                 getDataAccessRequestCollection().updateOne(searchQuery, set);
             }
         });
@@ -122,7 +123,7 @@ public class MongoConsentDB {
             if (dar.get(PARTIAL_DAR_CODE) == null) {
                 BasicDBObject object = new BasicDBObject(PARTIAL_DAR_CODE, "PARTIAL DAR-" + getNextSequence(PARTIAL_DAR_CODE_COUNTER));
                 BasicDBObject set = new BasicDBObject("$set", object);
-                BasicDBObject searchQuery = new BasicDBObject().append("_id", dar.get("_id"));
+                BasicDBObject searchQuery = new BasicDBObject().append(DarConstants.ID, dar.get("_id"));
                 getPartialDataAccessRequestCollection().updateOne(searchQuery, set);
             }
         });

@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.*;
 import freemarker.template.TemplateException;
-
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import javax.mail.MessagingException;
@@ -18,7 +22,9 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
@@ -27,6 +33,10 @@ public class DataRequestVoteResource extends Resource {
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;
     private final DataAccessRequestAPI accessRequestAPI;
+    private final DataSetAPI dataSetAPI;
+    private final DACUserAPI dacUserAPI;
+    private final EmailNotifierAPI emailNotifierAPI;
+    private final DataSetAssociationAPI dataSetAssociationAPI;
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     public DataRequestVoteResource() {
@@ -34,6 +44,10 @@ public class DataRequestVoteResource extends Resource {
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.emailAPI = AbstractEmailNotifierAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
+        this.dataSetAPI = AbstractDataSetAPI.getInstance();
+        this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
+        this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
     }
 
     @POST
@@ -44,12 +58,9 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("id") Integer voteId) {
         try {
             Vote vote = api.firstVoteUpdate(rec, voteId);
-            if(electionAPI.validateCollectDAREmailCondition(vote)){
-                try {
-                    emailAPI.sendCollectMessage(vote.getElectionId());
-                } catch (MessagingException | IOException | TemplateException e) {
-                    logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
-                }
+            validateCollectDAREmail(vote);
+            if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
+                electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
             }
             URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
             return Response.ok(uri).build();
@@ -62,16 +73,18 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
+
     @POST
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}/final")
-    public Response updateFinalAccessConsentVote(@Context UriInfo info, Vote rec,
+    public Response updateFinalAccessVote(@Context UriInfo info, Vote rec,
                                                  @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
-            if(access.containsKey("restriction")){
+            List<String> dataSets = access.get(DarConstants.DATASET_ID, List.class);
+            if(access.containsKey(DarConstants.RESTRICTION)){
                 List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
                 if(vote.getVote() != null && votes.get(0).getVote() != null){
                     electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
@@ -79,11 +92,17 @@ public class DataRequestVoteResource extends Resource {
             }else {
                 electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
             }
+            createDataOwnerElection(requestId, vote, access, dataSets);
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (MessagingException | IOException | TemplateException e){
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error("Error sending Email to Admin/Data Owners", Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        } catch (Exception e){
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
+
 
     @PUT
     @Consumes("application/json")
@@ -93,6 +112,9 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.updateVote(rec, id, requestId);
+            if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
+                electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
+            }
             return Response.ok(vote).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
@@ -114,6 +136,19 @@ public class DataRequestVoteResource extends Resource {
     public Vote describeFinalAccessVote(@PathParam("requestId") Integer requestId){
         return api.describeVoteFinalAccessVoteById(requestId);
 
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/dataOwner/{dataOwnerId}")
+    public Response describeDataOwnerVote(@PathParam("requestId") String requestId, @PathParam("dataOwnerId") Integer dataOwnerId){
+        try{
+            return Response.ok(api.describeDataOwnerVote(requestId,dataOwnerId)).build();
+        }catch (NotFoundException e){
+            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     @GET
@@ -149,4 +184,45 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
+    private void createDataOwnerElection(String requestId, Vote vote, Document access, List<String> dataSets) throws MessagingException, IOException, TemplateException {
+        Vote agreementVote = null;
+        Vote finalVote = null;
+        if(vote.getType().equals(VoteType.FINAL.getValue())){
+            List<Vote> agreement = api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId());
+            agreementVote = CollectionUtils.isNotEmpty(agreement) ? agreement.get(0) : null;
+            finalVote = vote;
+        }else if(vote.getType().equals(VoteType.AGREEMENT.getValue())){
+            List<Vote> finalVotes = api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+            finalVote = CollectionUtils.isNotEmpty(finalVotes) ? finalVotes.get(0) : null;
+            agreementVote = vote;
+        }
+        if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || (agreementVote != null && agreementVote.getVote() != null))){
+            List<DataSet> needsApprovedDataSets = dataSetAPI.findNeedsApprovalDataSetByObjectId(dataSets);
+            List<String> objectIds = needsApprovedDataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
+                Map<DACUser, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(objectIds);
+                List<DACUser> admins = dacUserAPI.describeAdminUsers();
+                List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
+                if(CollectionUtils.isNotEmpty(elections)){
+                    elections.stream().forEach(election -> {
+                        api.createDataOwnersReviewVotes(election);
+                    });
+                }
+                emailNotifierAPI.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
+                emailNotifierAPI.sendNeedsPIApprovalMessage(dataOwnerDataSet, access.getString(DarConstants.DAR_CODE));
+            }
+        }
+    }
+
+    private void validateCollectDAREmail(Vote vote) {
+        if(!vote.getType().equals(VoteType.DATA_OWNER.getValue()) && electionAPI.validateCollectDAREmailCondition(vote)){
+            try {
+                emailAPI.sendCollectMessage(vote.getElectionId());
+            } catch (MessagingException | IOException | TemplateException e) {
+                logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
+            }
+        }
+    }
+
 }
+

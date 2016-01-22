@@ -1,18 +1,17 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-
+import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -22,7 +21,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private final DataSetFileParser parser = new DataSetFileParser();
     private final DataSetDAO dsDAO;
-    private final ElectionDAO dsElectionDAO;
+    private final DataSetAssociationDAO dataSetAssociationDAO;
     private final DACUserRoleDAO dsRoleDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
@@ -36,13 +35,13 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dsElectionDAO, dsRoleDAO, consentDAO));
+    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO,  dsRoleDAO, consentDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, ElectionDAO dsElectionDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
         this.dsDAO = dsDAO;
-        this.dsElectionDAO = dsElectionDAO;
+        this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.dsRoleDAO = dsRoleDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
@@ -94,17 +93,28 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             dataSetDTOList = dsDAO.findDataSets();
             if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
-                for (DataSetDTO dataSet : dataSetDTOList) {
+                List<String> datasetObjectIdList = dataSetDTOList.stream().map(dto -> dto.getProperties().get(9).getPropertyValue()).collect(Collectors.toList());
+                List<DataSet> dataSetList =  dsDAO.getDataSetsForObjectIdList(datasetObjectIdList);
+                Map<String, Integer> datasetMap =
+                        dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
+                                DataSet::getDataSetId));
+                for (DataSetDTO dataSetDTO : dataSetDTOList) {
+                    String datasetObjectId  = dataSetDTO.getProperties().get(9).getPropertyValue();
+                    if(CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(datasetObjectId)))){
+                        dataSetDTO.setIsAssociatedToDataOwners(false);
+                    }else{
+                        dataSetDTO.setIsAssociatedToDataOwners(true);
+                    }
                     if(CollectionUtils.isNotEmpty(accessRequests)){
                         accessRequests.stream().forEach(access -> {
-                            if(access.get("datasetId", List.class).stream().anyMatch(objectId -> objectId.equals(dataSet.getProperties().get(9).getPropertyValue()))){
-                                dataSet.setDeletable(false);
+                            if(access.get(DarConstants.DATASET_ID, List.class).stream().anyMatch(objectId -> objectId.equals(datasetObjectId))){
+                                dataSetDTO.setDeletable(false);
                             } else {
-                                dataSet.setDeletable(true);
+                                dataSetDTO.setDeletable(true);
                             }
                         });
                     }else {
-                        dataSet.setDeletable(true);
+                        dataSetDTO.setDeletable(true);
                     }
                 }
             }
@@ -150,6 +160,29 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         if(dataset != null){
             dsDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }
+    }
+
+    @Override
+    public DataSet updateNeedsReviewDataSets(String objectId, Boolean needsApproval){
+        if(dsDAO.findDataSetByObjectId(objectId) == null){
+            throw new NotFoundException("DataSet doesn't exist");
+        }
+        dsDAO.updateDataSetNeedsApproval(objectId, needsApproval);
+        return dsDAO.findDataSetByObjectId(objectId);
+    }
+
+
+    public DataSetDTO getDataSetDTO(String objectId){
+        Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByOBjectId(objectId);
+        for( DataSetDTO d : dataSet){
+            return d;
+        }
+        throw new NotFoundException();
+    }
+
+
+    public List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList){
+        return dsDAO.findNeedsApprovalDataSetByObjectId(objectIdList);
     }
 
 
@@ -253,7 +286,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         Map<String, DataSet> dataSetMap = dataSets.stream().collect(Collectors.toMap(DataSet::getObjectId, dataSet -> dataSet));
         if(CollectionUtils.isNotEmpty(dataSets) && CollectionUtils.isNotEmpty(existentDataSets)){
             existentDataSets.stream().filter(ds -> !ds.getActive()).forEach(s ->
-                      dataSetMap.get(s.getObjectId()).setActive(false)
+                            dataSetMap.get(s.getObjectId()).setActive(false)
             );
         }
         return dataSetMap.values();

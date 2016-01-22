@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.*;
 
-import javax.ws.rs.NotFoundException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,7 +29,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
     @Override
     public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type) {
-        Election election = electionDAO.getOpenElectionByReferenceIdAndType(referenceId, type);
+        Election election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, type);
         return getElectionReview(referenceId, election);
     }
 
@@ -46,7 +45,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     @Override
     public ElectionReview describeElectionReviewByElectionId(Integer electionId, Boolean isFinalAccess) {
         ElectionReview review = new ElectionReview();
-        review.setElection(electionDAO.findElectionById(electionId));
+        review.setElection(electionDAO.findElectionWithFinalVoteById(electionId));
         Consent consent = consentDAO.findConsentById(review.getElection().getReferenceId());
         List<ElectionReviewVote> rVotes = (isFinalAccess == null || isFinalAccess == false) ? voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.DAC.getValue()) :  voteDAO.findElectionReviewVotesByElectionId(electionId, VoteType.FINAL.getValue());
         review.setReviewVote(rVotes);
@@ -57,7 +56,7 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     @Override
     public ElectionReview describeElectionReviewByReferenceId(String referenceId){
         List<String> status = Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue());
-        Election election = electionDAO.findLastElectionByReferenceIdAndStatus(referenceId, status);
+        Election election = electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(referenceId, status);
         return getElectionReview(referenceId, election);
     }
 

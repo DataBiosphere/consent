@@ -81,4 +81,18 @@ public class DACUser {
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
     }
+
+    @Override
+    public int hashCode(){
+        return  dacUserId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if ((o instanceof DACUser) && (((DACUser) o).getDacUserId() == this.dacUserId)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

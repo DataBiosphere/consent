@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
+import org.broadinstitute.consent.http.util.DarConstants;
 
 import javax.ws.rs.*;
 import java.util.Arrays;
@@ -63,7 +64,7 @@ public class ElectionReviewResource {
     @Produces("application/json")
     public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Election election = electionAPI.describeElectionById(electionId);
-        List<String> dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList("datasetId")).get("datasetId", List.class);
+        List<String> dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList(DarConstants.DATASET_ID)).get(DarConstants.DATASET_ID, List.class);
         Consent consent =  consentAPI.getConsentFromDatasetID(dataSetId.get(0));
         ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId,isFinalAccess);
         List<Vote> agreementVote = api.describeAgreementVote(electionId);

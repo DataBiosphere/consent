@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface VoteAPI {
 
@@ -31,4 +35,7 @@ public interface VoteAPI {
 
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 
+    List<Vote> createDataOwnersReviewVotes(Election electionId);
+
+    Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException;
 }

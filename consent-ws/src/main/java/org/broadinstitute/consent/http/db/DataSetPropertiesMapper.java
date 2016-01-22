@@ -31,6 +31,7 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
             dataSetDTO.getProperties().add(property);
             property = new DataSetPropertyDTO(r.getString(PROPERTY_KEY),r.getString(PROPERTY_PROPERTYVALUE));
             dataSetDTO.getProperties().add(property);
+            dataSetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
             dataSets.put(dataSetId, dataSetDTO);
         } else {
             dataSetDTO = dataSets.get(dataSetId);

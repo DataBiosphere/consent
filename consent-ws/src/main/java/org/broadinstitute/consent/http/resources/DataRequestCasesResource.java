@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.dto.*;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
 import org.broadinstitute.consent.http.service.SummaryAPI;
@@ -33,6 +35,17 @@ public class DataRequestCasesResource extends Resource {
     @Path("/pending/{dacUserId}")
     public List<PendingCase> getDataRequestPendingCases(@PathParam("dacUserId") Integer dacUserId) {
         return api.describeDataRequestPendingCases(dacUserId);
+    }
+
+    @GET
+    @Path("/pending/dataOwner/{dataOwnerId}")
+    public Response getDataOwnerPendingCases(@PathParam("dataOwnerId") Integer dataOwnerId) {
+        try{
+            return Response.ok(api.describeDataOwnerPendingCases(dataOwnerId)).build();
+        }catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+
     }
 
     @GET

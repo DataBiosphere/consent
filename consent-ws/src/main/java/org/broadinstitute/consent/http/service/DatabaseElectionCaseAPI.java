@@ -2,15 +2,16 @@ package org.broadinstitute.consent.http.service;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteStatus;
-import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.PendingCase;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -25,27 +26,28 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     private DACUserRoleDAO rolesDAO;
     private DACUserDAO userDAO;
     private ConsentDAO consentDAO;
-
+    private DataSetDAO dataSetDAO;
     private final MongoConsentDB mongo;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO ,MongoConsentDB mongoDB) {
-        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO, consentDAO, mongoDB));
+    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO ,MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO, consentDAO, mongoDB, dataSetDAO));
 
     }
 
-    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
         this.rolesDAO = rolesDAO;
         this.consentDAO = consentDAO;
         this.mongo = mongoDB;
+        this.dataSetDAO = dataSetDAO;
     }
 
     @Override
     public List<PendingCase> describeConsentPendingCases(Integer dacUserId) throws NotFoundException {
         String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
-        List<Election> elections = electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -76,7 +78,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
         String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> elections;
-        elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(type,false) : electionDAO.findElectionsByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(type,false) : electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -89,7 +91,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 PendingCase pendingCase = new PendingCase();
                 Boolean isReminderSent;
                 if(Objects.nonNull(rpElectionId)) {
-                    Election rpElection = electionDAO.findElectionById(rpElectionId);
+                    Election rpElection = electionDAO.findElectionWithFinalVoteById(rpElectionId);
                     Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
                     isReminderSent = (accessVote.isReminderSent() || rpVote.isReminderSent()) ? true : false;
                     pendingCase.setRpElectionId(rpElectionId);
@@ -112,6 +114,35 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         return pendingCases;
     }
 
+    @Override
+    public List<DataOwnerCase> describeDataOwnerPendingCases(Integer dataOwnerId) {
+        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_SET.getValue());
+        List<Election> elections = electionDAO.getElectionByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<DataOwnerCase> pendingCases = new ArrayList<>();
+        if (elections != null) {
+            for (Election election : elections) {
+                DataOwnerCase dataOwnerCase = new DataOwnerCase();
+                List<Vote> dataOwnerVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), dataOwnerId, VoteType.DATA_OWNER.getValue());
+                if(CollectionUtils.isNotEmpty(dataOwnerVotes)){
+                    dataOwnerVotes.stream().forEach(v -> {
+                        BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
+                        FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
+                        DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
+                        dataOwnerCase.setDarCode(dataAccessRequest != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
+                        dataOwnerCase.setDataSetId(dataSet.getObjectId());
+                        dataOwnerCase.setDataSetName(dataSet.getName());
+                        dataOwnerCase.setVoteId(v.getVoteId());
+                        dataOwnerCase.setAlreadyVoted(v.getVote() != null);
+                        dataOwnerCase.setReferenceId(election.getReferenceId());
+                        dataOwnerCase.setHasConcerns(v.getHasConcerns());
+                        pendingCases.add(dataOwnerCase);
+                    });
+                }
+            }
+        }
+        return pendingCases;
+    }
+
 
     private void setFinalVote(Integer dacUserId, Election election, PendingCase pendingCase) {
         if (pendingCase.getAlreadyVoted()) {
@@ -128,27 +159,27 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     private PendingCase setGeneralFields(PendingCase pendingCase , Election election, Vote vote, boolean isReminderSent) {
         String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
-        List<Vote> pendingVotes = voteDAO.findPendingDACVotesByElectionId(election.getElectionId());
+        List<Vote> pendingVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
         pendingCase.setTotalVotes(votes.size());
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         if (election.getElectionType().equals(type)) {
-            BasicDBObject query = new BasicDBObject().append("_id", new ObjectId(election.getReferenceId()));
+            BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
             FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
-            pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get("dar_code").toString() : null);
+            pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
         }else{
              pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
         }
-            pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
-            pendingCase.setAlreadyVoted(vote.getVote() != null);
-            pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
-            pendingCase.setVoteId(vote.getVoteId());
-            pendingCase.setIsReminderSent(isReminderSent);
-            pendingCase.setCreateDate(election.getCreateDate());
-            pendingCase.setElectionStatus(election.getStatus());
-            pendingCase.setElectionId(election.getElectionId());
-            return pendingCase;
-        }
+        pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
+        pendingCase.setAlreadyVoted(vote.getVote() != null);
+        pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
+        pendingCase.setVoteId(vote.getVoteId());
+        pendingCase.setIsReminderSent(isReminderSent);
+        pendingCase.setCreateDate(election.getCreateDate());
+        pendingCase.setElectionStatus(election.getStatus());
+        pendingCase.setElectionId(election.getElectionId());
+        return pendingCase;
+    }
 
 
     private String setLogged(Integer totalVotes, Integer loggedVotes) {

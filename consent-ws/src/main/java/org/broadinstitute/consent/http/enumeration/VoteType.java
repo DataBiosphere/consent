@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.enumeration;
 
 public enum VoteType {
 
-    DAC("DAC"), FINAL("FINAL"), AGREEMENT("AGREEMENT"), CHAIRPERSON("CHAIRPERSON");
+    DAC("DAC"), FINAL("FINAL"), AGREEMENT("AGREEMENT"), CHAIRPERSON("CHAIRPERSON"), DATA_OWNER("DATA_OWNER");
 
     private String value;
 

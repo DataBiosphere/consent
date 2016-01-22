@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.MailServiceAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
@@ -148,13 +149,33 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
+    @Override
+    public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSet, String darCode) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            for(DACUser owner: dataSet.keySet()){
+                Writer template = templateHelper.getApprovedDarTemplate(owner.getDisplayName(), darCode, dataSet.get(owner), SERVERURL);
+                mailService.sendFlaggedDarAdminApprovedMessage(owner.getEmail(), darCode, SERVERURL, template);
+            }
+        }
+    }
+
+    @Override
+    public void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
+        if(isServiceActive){
+            for(DACUser admin: admins) {
+                Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVERURL);
+                mailService.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVERURL, template);
+            }
+        }
+    }
+
     private void sendNewCaseMessages(List<String> usersAddress, String electionType, String entityId, Writer template) throws MessagingException, IOException, TemplateException {
         mailService.sendNewCaseMessages(usersAddress, entityId, electionType, template);
     }
 
     private Map<String, String> retrieveForVote(Integer voteId){
         Vote vote = voteDAO.findVoteById(voteId);
-        Election election = electionDAO.findElectionById(vote.getElectionId());
+        Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
         DACUser user = dacUserAPI.describeDACUserById(vote.getDacUserId());
         return createDataMap(user.getDisplayName(),
                 retrieveElectionTypeStringCollect(election.getElectionType()),
@@ -165,7 +186,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     private Map<String, String> retrieveForCollect(Integer electionId){
-        Election election = electionDAO.findElectionById(electionId);
+        Election election = electionDAO.findElectionWithFinalVoteById(electionId);
         DACUser user = dacUserDAO.findChairpersonUser();
         return createDataMap(user.getDisplayName(),
                 retrieveElectionTypeStringCollect(election.getElectionType()),

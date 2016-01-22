@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
@@ -79,10 +80,10 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         // Create Documents needed in mongo for testing
         List<String> dataSets = new ArrayList<>();
         dataSets.add("SC-20660");
-        Document doc = new Document().append("testingInfo1", "someValue").append("datasetId", dataSets);
+        Document doc = new Document().append("testingInfo1", "someValue").append(DarConstants.DATASET_ID, dataSets);
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
-        DATA_REQUEST_ID = String.valueOf(dars.next().get("_id"));
+        DATA_REQUEST_ID = String.valueOf(dars.next().get(DarConstants.ID));
     }
 
     @After

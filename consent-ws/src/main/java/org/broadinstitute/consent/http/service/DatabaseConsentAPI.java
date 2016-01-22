@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.skife.jdbi.v2.DBI;
@@ -132,7 +133,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public void delete(String id) throws IllegalArgumentException {
         checkConsentExists(id);
-        List<Election> elections = electionDAO.findElectionsByReferenceId(id);
+        List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(id);
         if (elections.isEmpty()) {
             consentDAO.deleteConsent(id);
             consentDAO.deleteAllAssociationsForConsent(id);
@@ -358,21 +359,25 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
         String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
         if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(sc -> sc.getReferenceId()).collect(Collectors.toList());
             ObjectId[] objarray = new ObjectId[referenceIds.size()];
             for (int i = 0; i < referenceIds.size(); i++)
                 objarray[i] = new ObjectId(referenceIds.get(i));
             BasicDBObject in = new BasicDBObject("$in", objarray);
-            BasicDBObject q = new BasicDBObject("_id", in);
+            BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
             List<String> datasetNames = new ArrayList<>();
             dataAccessRequests.forEach((Block<Document>) dar -> {
-                List<String> dataSets = dar.get("datasetId", List.class);
+                List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
                 datasetNames.addAll(dataSets);
             });
-            List<String> objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
+            List<String> objectIds = new ArrayList<>();
+            if(CollectionUtils.isNotEmpty(datasetNames)){
+                objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
+            }
+
             for (ConsentManage consentManage : consentManageList) {
                 if (objectIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
                     consentManage.setEditable(false);

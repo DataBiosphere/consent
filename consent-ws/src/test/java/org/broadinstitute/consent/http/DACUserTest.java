@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -28,6 +28,7 @@ public class DACUserTest extends DACUserServiceTest {
     private static final String CHAIR_2_USER_EMAIL = "chairperson2@broad.com";
     private static final String CHAIRPERSON = "CHAIRPERSON";
     private static final String DACMEMBER = "DACMEMBER";
+    private static final String DATAOWNER = "DATAOWNER";
     private static String DACMEMBERMAIL;
 
     @ClassRule
