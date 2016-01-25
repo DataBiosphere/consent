@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.client.JerseyClientBuilder;
@@ -198,5 +199,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             }
         });
         bootstrap.addBundle(new DBIExceptionsBundle());
+        bootstrap.addBundle(new JobsBundle());
     }
 }

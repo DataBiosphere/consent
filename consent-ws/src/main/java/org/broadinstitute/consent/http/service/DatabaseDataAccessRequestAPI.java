@@ -158,7 +158,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
-            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, 1));
+            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue()));
             HashMap electionAccessMap = createAccessRequestElectionMap(electionList);
             darManage.addAll(createAccessRequestManage(accessList, electionAccessMap));
         }
@@ -200,7 +200,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>();
-            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, 1));
+            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue()));
             HashMap<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
             for (Document dar : accessList) {
                 ObjectId id = dar.get(DarConstants.ID, ObjectId.class);

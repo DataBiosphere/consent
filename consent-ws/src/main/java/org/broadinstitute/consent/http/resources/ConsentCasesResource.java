@@ -63,7 +63,7 @@ public class ConsentCasesResource extends Resource {
     @Path("/closed")
     @Produces("application/json")
     public List<Election> describeClosedElections() {
-        return electionApi.describeClosedElectionsByType("2");
+        return electionApi.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue());
     }
 
 }

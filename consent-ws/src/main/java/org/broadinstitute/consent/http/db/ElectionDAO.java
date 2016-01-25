@@ -15,8 +15,6 @@ import org.skife.jdbi.v2.unstable.BindIn;
 import java.util.Date;
 import java.util.List;
 
-
-
 @UseStringTemplate3StatementLocator
 @RegisterMapper({ElectionMapper.class})
 public interface ElectionDAO extends Transactional<ElectionDAO> {
@@ -73,22 +71,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                                       @Bind("lastUpdate") Date lastUpdate);
 
 
-    @SqlQuery("select typeId from electiontype where type = :type")
-    String findElectionTypeByType(@Bind("type") String type);
-
-    @SqlQuery("select type from electiontype where typeId = :typeId")
-    String findElectionTypeByElectionTypeId(@Bind("typeId") String typeId);
-
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
-            +  "e.lastUpdate, e.finalAccessVote, et.type electionType  from election e"
-            + " inner join electiontype et on e.electionType = et.typeId and et.type = :type"
+            +  "e.lastUpdate, e.finalAccessVote, e.electionType  from election e"
             + " inner join vote v on v.electionId = e.electionId and v.type = '"+ CHAIRPERSON
-            + "'  where   e.referenceId = :referenceId and e.status = 'Open'")
+            + "'  where   e.referenceId = :referenceId and e.status = 'Open' and e.electionType = :type")
     Election getOpenElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
-            + " e.lastUpdate, e.finalAccessVote, et.type electionType  from election e"
-            + " inner join electiontype et on e.electionType = et.typeId"
+            + " e.lastUpdate, e.finalAccessVote, e.electionType  from election e"
             + " left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON
             + "' where  e.electionId = :electionId")
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
@@ -100,10 +90,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
 
-    @SqlQuery("select electionId, datasetId, status, createDate, referenceId, useRestriction, translatedUseRestriction, "
-            + "lastUpdate, finalAccessVote, electionType from election "
-            +" where electiontype = 4 and status = 'Open' and datediff(NOW(),createDate)>7")
-    List<Election> findExpiredElections();
+    @SqlQuery("select * from election where electiontype = :electionType and status = 'Open' and datediff(NOW(), createDate) > :amountOfDays")
+    @Mapper(DatabaseElectionMapper.class)
+    List<Election> findExpiredElections(@Bind("electionType") String electionType, @Bind("amountOfDays")Integer amountOfDays);
 
 
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
@@ -114,7 +103,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findLastElectionsWithFinalVoteByType(@Bind("type") String type);
 
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
-            "e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 1 "+
+            "e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 'DataAccess' "+
             "and e.finalAccessVote is true  and v.type = 'FINAL'  and e.status = :status order by e.createDate asc")
     List<Election> findRequestElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
@@ -145,7 +134,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId in (<referenceIds>) AND e.electionType = :type " +
             "left join vote v on v.electionId = e.electionId and v.type = '" + FINAL + "'")
-    List<Election> findLastElectionsWithFinalVoteByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type);
+    List<Election> findLastElectionsWithFinalVoteByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") String type);
 
     @SqlQuery("select  e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType from election e " +
@@ -153,7 +142,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId in (<referenceIds>) " +
             "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
-    List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") Integer type, @Bind("status") String status);
+    List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindIn("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
     @SqlQuery("select count(*) from election e where e.status = 'Open' and e.referenceId = :referenceId")
     Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId);

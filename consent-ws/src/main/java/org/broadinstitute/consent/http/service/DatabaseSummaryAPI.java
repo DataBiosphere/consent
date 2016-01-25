@@ -77,18 +77,16 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     @Override
     public Summary describeConsentSummaryCases() {
-        String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
-        return getSummaryCases(type);
+        return getSummaryCases(ElectionType.TRANSLATE_DUL.getValue());
     }
 
     @Override
     public Summary describeDataRequestSummaryCases(String electionType) {
-        String type = electionDAO.findElectionTypeByType(electionType);
         Summary summary;
         if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
-            summary = getAccessSummaryCases(type);
+            summary = getAccessSummaryCases(electionType);
         }else{
-            summary = getSummaryCases(type);
+            summary = getSummaryCases(electionType);
         }
         return summary;
     }
@@ -103,7 +101,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private List<Summary> getMatchSummaryCases() {
         List<Summary> summaryList = new ArrayList<>();
         summaryList.add(createSummary(0,matchDAO.countMatchesByResult(Boolean.TRUE),matchDAO.countMatchesByResult(Boolean.FALSE)));
-        List<Election> latestElections = electionDAO.findLastElectionsWithFinalVoteByType("1");
+        List<Election> latestElections = electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> reviewedElections = null;
         if(!CollectionUtils.isEmpty(latestElections)){
             reviewedElections = latestElections.stream().filter(le -> le.getStatus().equals(ElectionStatus.CLOSED.getValue())).collect(Collectors.toList());
@@ -158,7 +156,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.CLOSED.getValue());
                     if (!CollectionUtils.isEmpty(reviewedElections)) {
                         List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
@@ -214,8 +212,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("DAR_summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus("1", ElectionStatus.CLOSED.getValue());
-                List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus("3", ElectionStatus.CLOSED.getValue());
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue());
+                List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> objectIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     FindIterable<Document> dataAccessRequests = findDataAccessRequests(objectIds);
@@ -225,7 +223,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     });
                     List<Association> associations = datasetDAO.getAssociationsForObjectIdList(new ArrayList<String>(associationObjectIds));
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
-                    List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, 2, ElectionStatus.CLOSED.getValue());
+                    List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
                     List<Integer> darElectionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
                     List<Integer> consentElectionIds = reviewedConsentElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
                     List<AccessRP> accessRPList = electionDAO.findAccessRPbyElectionAccessId(darElectionIds);

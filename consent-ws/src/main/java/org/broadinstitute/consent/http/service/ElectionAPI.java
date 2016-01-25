@@ -44,4 +44,6 @@ public interface ElectionAPI {
     boolean checkDataOwnerToCloseElection(Integer electionId);
 
     public List<Election> createDataSetElections(String referenceId, Map<DACUser, List<DataSet>> dataOwnerDataSet);
+
+    List<Election> findExpiredElections(String electionType);
 }
