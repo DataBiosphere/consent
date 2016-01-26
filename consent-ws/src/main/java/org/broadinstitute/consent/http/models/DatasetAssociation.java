@@ -1,15 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-
 import java.util.*;
 
 
 public class DatasetAssociation {
 
-    @JsonProperty
-    private Integer associationId;
 
     @JsonProperty
     private Integer datasetId;
@@ -29,9 +25,6 @@ public class DatasetAssociation {
     }
 
 
-    public void setAssociationId(Integer associationId) {
-        this.associationId = associationId;
-    }
 
     public Integer getDatasetId() {
         return datasetId;
@@ -53,14 +46,9 @@ public class DatasetAssociation {
         this.createDate = createDate;
     }
 
-    public Integer getAssociationId() {
-        return associationId;
-    }
-
     public Integer getDacuserId() {
         return dacuserId;
     }
-
 
     public static List<DatasetAssociation>  createDatasetAssociations(Integer datasetId, Collection<Integer> usersIdList){
         ArrayList<DatasetAssociation> associationList = new ArrayList<>();
