@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import freemarker.template.TemplateException;
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -87,7 +88,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
-            List<DACUser> users = (List<DACUser>) dacUserAPI.describeAdminUsers();
+            List<DACUser> users =  dacUserAPI.describeAdminUsersThatWantToReceiveMails();
+            if(CollectionUtils.isEmpty(users)) return;
             List<String> addresses = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
             Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);

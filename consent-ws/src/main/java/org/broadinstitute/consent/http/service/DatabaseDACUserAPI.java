@@ -9,10 +9,7 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -85,8 +82,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public List<DACUser> describeAdminUsers() throws NotFoundException {
-        return dacUserDAO.describeAdminUsers();
+    public List<DACUser> describeAdminUsersThatWantToReceiveMails(){
+        return dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(),true);
     }
 
     @Override
@@ -182,14 +179,16 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         }
     }
 
+
     private void insertUserRoles(DACUser dacUser, Integer dacUserId){
         List<DACUserRole> roles = dacUser.getRoles();
-        List<String> rolesName = new ArrayList<>();
-        for(DACUserRole role : roles){
-            rolesName.add(role.getName());
-        }
-        List<Integer> rolesId = roleDAO.findRolesIdByName(rolesName);
-        roleDAO.insertUserRoles(rolesId, dacUserId);
+        roles.forEach(r -> {
+            r.setRoleId(roleDAO.findRoleIdByName(r.getName()));
+            if(Objects.isNull(r.getEmailPreference())){
+                r.setEmailPreference(true);
+            }
+        });
+        roleDAO.insertUserRoles(roles,dacUserId);
     }
 
 }
