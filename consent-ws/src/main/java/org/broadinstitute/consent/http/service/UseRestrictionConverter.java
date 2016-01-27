@@ -27,10 +27,11 @@ public class UseRestrictionConverter {
 
     // Fields to be parsed. We'll see if we can configure it with an external file.
     String[] typeOfResearch = {
-        "methods"
-        // this is regarding 2.4.4 in form, currently will no map to anything
-        // population support should be added when an open population ontology is ready
-        //, "population"
+        "methods",
+        // this is regarding 2.4.4 in form
+         "population",
+        // this is regarding 2.4.3 in form
+         "controls"
 
     };
 
