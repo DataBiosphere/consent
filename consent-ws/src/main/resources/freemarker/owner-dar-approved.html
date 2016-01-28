@@ -26,29 +26,26 @@
         <tr style="font-family: 'Roboto', sans-serif !important;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 20px;" align="left">
 
-                <p>The following Datasets, for which you are the Data Owner, were approved for sharing by the Broad Data Use Oversight System data access committee (DAC). The system will enable you to notify the DAC in the next 7 days in case you have any concern or would like to disapprove sharing of this data in this case.</p>
-
-                <table style="width:100%;">
+                <p>The following Dataset(s), for which you are the Data Owner, were approved for sharing by the Broad Data Use Oversight System Data Access Committee (DAC). The system will enable you to notify the DAC in the next 7 days in case you have any concern or would like to disapprove sharing this data for this particular case.</p>
+                <table style="width: 100%; margin: 15px 0 0 0; border-collapse: collapse;">
                     <tr>
-                        <th>Dataset ID</th>
-                        <th>Dataset Name</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Dataset ID</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Dataset Name</th>
                     </tr>
                     <#list dsl>
                         <#items as ds>
                             <tr style="font-family: 'Roboto', sans-serif !important;">
-                                <td>${ds.objectId}</td>
-                                <td>${ds.name}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${ds.objectId}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${ds.name}</td>
                             </tr>
                         </#items>
                     </#list>
-                    </td>
-                    </tr>
-                    <tr style="font-family: 'Roboto', sans-serif !important;">
-                        <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: center; line-height: 21px; padding: 0;" align="center">
-                            <a href="${serverUrl}" style="cursor: pointer; font-family: 'Roboto', sans-serif !important; text-decoration: none !important; border-radius: 5px; color: #ffffff; display: inline-block; font-size: 18px; font-weight: 500; text-align: center; -webkit-text-size-adjust: none; mso-hide: all; transition: background-color 0.3s ease; background-color: #00609f; margin: 5px 0 30px; padding: 12px 20px;" onMouseOver="this.style.backgroundColor='#2FA4E7'" onMouseOut="this.style.backgroundColor='#00609f'">Review</a>
-                        </td>
-                    </tr>
                 </table>
+            </td>
+        </tr>
+        <tr style="font-family: 'Roboto', sans-serif !important;">
+            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: center; line-height: 21px; padding: 0;" align="center">
+                <a href="${serverUrl}" style="cursor: pointer; font-family: 'Roboto', sans-serif !important; text-decoration: none !important; border-radius: 5px; color: #ffffff; display: inline-block; font-size: 18px; font-weight: 500; text-align: center; -webkit-text-size-adjust: none; mso-hide: all; transition: background-color 0.3s ease; background-color: #00609f; margin: 5px 0 30px; padding: 12px 20px;" onMouseOver="this.style.backgroundColor='#2FA4E7'" onMouseOut="this.style.backgroundColor='#00609f'">Review</a>
             </td>
         </tr>
     </table>

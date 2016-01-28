@@ -27,7 +27,14 @@ public enum HeaderSummary {
     FINAL_DECISION_RP("Final Decision on RP"),
     FINAL_RATIONALE_RP("Final Rationale  on RP"),
     FINAL_DECISION_DUL("Final Decision on DUL"),
-    FINAL_RATIONALE_DUL("Final Rationale  on DUL");
+    FINAL_RATIONALE_DUL("Final Rationale  on DUL"),
+
+    DATASET_NAME("Dataset Name"),
+    DATASET_FINAL_STATUS("Dataset Final Status"),
+    DATA_OWNER_NAME("Data Owner Name"),
+    DATA_OWNER_EMAIL("Data Owner Email"),
+    DATA_OWNER_VOTE("Data Owner Vote"),
+    DATA_OWNER_COMMENT("Data Owner Comment");
 
     private String value;
 

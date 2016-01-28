@@ -1,14 +1,14 @@
 package org.broadinstitute.consent.http.resources;
 
+import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.*;
-import freemarker.template.TemplateException;
-import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 

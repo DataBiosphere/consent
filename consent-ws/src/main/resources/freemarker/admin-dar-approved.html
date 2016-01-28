@@ -26,19 +26,19 @@
         <tr style="font-family: 'Roboto', sans-serif !important;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 20px;" align="left">
                 <p>${referenceId} was approved and needs the consent of the following Data Owners. An email was sent to them.</p>
-                <table style="width:100%;">
+
+                <table style="width: 100%; margin: 15px 0 10px 0; border-collapse: collapse;">
                     <tr>
-                        <th>Owner Name</th>
-                        <th>Dataset Name</th>
-                        <th>Dataset ID</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Data Owner</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Dataset Name</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Dataset ID</th>
                     </tr>
                     <#list dol>
                         <#items as owner>
                             <tr style="font-family: 'Roboto', sans-serif !important;">
-
-                                <td>${owner.ownerName}</td>
-                                <td>${owner.datasetName}</td>
-                                <td>${owner.datasetId}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.ownerName}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.datasetName}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.datasetId}</td>
                             </tr>
                         </#items>
                     </#list>

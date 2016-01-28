@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Broad Data Use Oversight System - Collect Votes Notification</title>
+    <title>Broad Data Use Oversight System - Admin - DAR Approved Notification</title>
 </head>
 
 <body style="font-family: 'Roboto', sans-serif !important; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; color: #777777; margin: 0;">
@@ -24,9 +24,26 @@
 
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important;">
-            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 30px;" align="left">
-                The Data Access Request ID ${entityId} has been canceled by the Researcher that created it, and therefore, the possible elections
-                related to it.
+            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 20px;" align="left">
+
+                <p>The following Dataset(s) elections finished its reviewing process by the Data Owners, or were closed by the system automatically because the allowed voting time expired.</p>
+
+                <table style="width: 100%; margin: 15px 0 0 0; border-collapse: collapse;">
+                    <tr>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Data Access Request ID</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Amount of Datasets</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Election Result</th>
+                    </tr>
+                    <#list closedElections>
+                        <#items as election>
+                            <tr style="font-family: 'Roboto', sans-serif !important;">
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${election.darId}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${election.numberOfDatasets}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${election.dsElectionResult}</td>
+                            </tr>
+                        </#items>
+                    </#list>
+                </table>
             </td>
         </tr>
     </table>

@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import com.mongodb.MongoException;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.bson.Document;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
 import java.util.List;
@@ -48,7 +48,6 @@ public interface DataAccessRequestAPI {
     Document updatePartialDataAccessRequest(Document partialDar);
 
     List<Document> describePartialDataAccessRequestManage(Integer userId);
-
 
     Object getField(String requestId , String field);
 

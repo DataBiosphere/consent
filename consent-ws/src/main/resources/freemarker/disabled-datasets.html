@@ -25,14 +25,15 @@
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 0px;" align="left">
-                The following datasets are disabled and could not be added to your Data Access Request Application number ${entityId}:
+                The following Datasets are disabled and couldn't be added to your Data Access Request Application ID ${entityId}:
             </td>
         </tr>
+
         <#list disabledDatasets>
             <tr style="font-family: 'Roboto', sans-serif !important;">
                 <#items as da>
                     <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 20px;" align="left">
-                        <ul>
+                        <ul style="padding-left: 20px;">
                             <li>${da}</li>
                         </ul>
                     </td>

@@ -25,6 +25,7 @@ public class MailService extends AbstractMailServiceAPI {
     private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
     private FlaggedDarAdminApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarAdminApprovedMessage();
     private FlaggedDarMessage darApprovedMessageCreator = new FlaggedDarMessage();
+    private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -95,14 +96,14 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     @Override
-    public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarAdminMessage(getMailSession, template, dataAccessRequestId, type);
-        sendMessage(message, userAddress);
+    public void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = closedDatasetElections.closedDatasetElectionMessgae(getMailSession, template, dataAccessRequestId, type);
+        sendMessages(message, usersAddress);
     }
 
     @Override
-    public void sendFlaggedDarMessageMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = darApprovedMessageCreator.flaggedDarMessage(getMailSession, template, dataAccessRequestId, type);
+    public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarAdminMessage(getMailSession, template, dataAccessRequestId, type);
         sendMessage(message, userAddress);
     }
 

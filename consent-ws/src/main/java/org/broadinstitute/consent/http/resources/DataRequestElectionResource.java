@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.util.DarConstants;
 
 import javax.ws.rs.*;
@@ -13,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -25,12 +26,14 @@ public class DataRequestElectionResource extends Resource {
     private final VoteAPI voteAPI;
     private final EmailNotifierAPI emailApi;
     private final DataAccessRequestAPI darApi;
+    private final SummaryAPI summaryAPI;
 
     public DataRequestElectionResource() {
         this.api = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
+        this.summaryAPI = AbstractSummaryAPI.getInstance();
     }
 
     @POST
@@ -83,6 +86,22 @@ public class DataRequestElectionResource extends Resource {
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             throw new NotFoundException(e.getMessage());
+        }
+    }
+
+    @GET
+    @Produces("text/plain")
+    @Path("/dataSetVotes")
+    public Response describeDataSetVotes(@PathParam("requestId") String id) {
+        Response.ResponseBuilder response;
+        try {
+            File fileToSend = summaryAPI.describeDataSetElectionsVotesForDar(id);
+            if ((fileToSend != null)) {
+                response = Response.ok(fileToSend);
+            } else response = Response.ok();
+            return response.build();
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 

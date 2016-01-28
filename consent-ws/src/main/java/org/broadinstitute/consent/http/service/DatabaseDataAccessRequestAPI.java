@@ -6,16 +6,15 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.*;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -350,22 +349,39 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setSortDate(dar.getDate("sortDate"));
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
+            darManage.setDataSetElectionResult(darManage.getNeedsApproval()? "Needs Approval":"");
             if (election == null) {
                 darManage.setElectionStatus(UN_REVIEWED);
-            }
-            else {
+            } else {
                 if(!CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))){
                     darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
                 }else{
                     darManage.setElectionId(election.getElectionId());
                     darManage.setElectionStatus(election.getStatus());
                     darManage.setElectionVote(election.getFinalVote());
+                    if(CollectionUtils.isNotEmpty(dataSetsToApprove) && election.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+                        List<String> referenceList = Arrays.asList(election.getReferenceId());
+                        List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
+                        darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
+                    }
                 }
             }
-
             requestsManage.add(darManage);
         });
         return requestsManage;
+    }
+
+    private String consolidateDataSetElectionsResult(List<Election> datasetElections) {
+        try {
+            for (Election election : datasetElections) {
+                if (!election.getFinalAccessVote()) {
+                    return "Denied";
+                }
+            }
+            return "Approved";
+        } catch (NullPointerException e){
+            return "Needs Approval";
+        }
     }
 
     private List getRequestIds(FindIterable<Document> access) {

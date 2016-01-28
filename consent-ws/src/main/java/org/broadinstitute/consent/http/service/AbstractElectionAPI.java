@@ -14,7 +14,6 @@ public abstract class AbstractElectionAPI implements ElectionAPI {
      */
     protected static class ElectionAPIHolder {
         private static ElectionAPI theInstance = null;
-
         /**
          * Initialize the singleton API instance. This method should only be
          * called once during application initialization (from the run()

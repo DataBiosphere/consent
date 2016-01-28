@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import org.broadinstitute.consent.http.models.DataRequest;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DataRequestMapper implements ResultSetMapper<DataRequest> {
 

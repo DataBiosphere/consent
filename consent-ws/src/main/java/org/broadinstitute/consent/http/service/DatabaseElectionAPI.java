@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
+import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.*;
@@ -17,7 +18,10 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -39,6 +43,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private EmailNotifierAPI emailNotifierAPI;
     private static final Integer AMOUNT_OF_TIME = 7;
+    private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -302,6 +307,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         election.setFinalAccessVote(CollectionUtils.isEmpty(rejectedVotes) ? true : false);
         election.setStatus(ElectionStatus.CLOSED.getValue());
         electionDAO.updateElectionById(electionId, election.getStatus(), new Date(), election.getFinalAccessVote());
+        try {
+            List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
+            if(validateAllDatasetElectionsAreClosed(dsElections)){
+                List<Election> darElections = new ArrayList<>();
+                darElections.add(electionDAO.findLastElectionByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_ACCESS.getValue()));
+                emailNotifierAPI.sendClosedDataSetElectionsMessage(darElections);
+            }
+        } catch (MessagingException | IOException | TemplateException e) {
+            logger.error("Exception sending Closed Dataset Elections email. Cause: " + e.getMessage());
+        }
     }
 
     @Override
@@ -332,6 +347,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public List<Election> findExpiredElections(String electionType) {
         return electionDAO.findExpiredElections(electionType, AMOUNT_OF_TIME);
+    }
+
+    private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
+        for(Election e: elections){
+            if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+                return false;
+            }
+        }
+        return true;
     }
 
     private void validateElectionIsValid(String referenceId, ElectionType electionType) throws Exception{

@@ -20,6 +20,6 @@ public interface MailServiceAPI {
 
     void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
-    void sendFlaggedDarMessageMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+    void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
 }
