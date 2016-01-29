@@ -11,7 +11,6 @@ import java.sql.SQLException;
 public class RoleMapper implements ResultSetMapper<DACUserRole> {
 
     public DACUserRole map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-        return new DACUserRole(r.getInt("roleId"), r.getString("name"));
+        return new DACUserRole(r.getInt("roleId"), r.getString("name"),r.getBoolean("email_preference"));
     }
-
 }

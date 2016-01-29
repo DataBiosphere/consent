@@ -6,6 +6,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -283,7 +284,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
             dacUsers.addAll(dacUserDAO.findUsers(userIds));
         } else {
-            dacUsers.addAll(dacUserDAO.describeAdminUsers());
+            dacUsers =  dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
         }
         return dacUsers;
     }
