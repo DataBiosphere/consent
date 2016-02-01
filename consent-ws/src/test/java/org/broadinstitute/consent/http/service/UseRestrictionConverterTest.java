@@ -1,14 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.configurations.UseRestrictionConfig;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class UseRestrictionConverterTest {
 

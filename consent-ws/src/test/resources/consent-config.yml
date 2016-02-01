@@ -34,16 +34,6 @@ logging:
     ConsentApplication: ALL
     ConsentModule: ALL
     DatabaseResearchPurposeAPI: ALL
-ontology:
-    methods: http://www.broadinstitute.org/ontologies/DURPO/methods_research
-    population: http://www.broadinstitute.org/ontologies/DURPO/population
-    male: http://www.broadinstitute.org/ontologies/DURPO/male
-    female: http://www.broadinstitute.org/ontologies/DURPO/female
-    profit: http://www.broadinstitute.org/ontologies/DURPO/For_profit
-    nonProfit: http://www.broadinstitute.org/ontologies/DURPO/Non_profit
-    pediatric: http://www.broadinstitute.org/ontologies/DURPO/children
-    boys: http://www.broadinstitute.org/ontologies/DURPO/boys
-    girls: http://www.broadinstitute.org/ontologies/DURPO/girls
 services:
     matchURL:
     localURL: http://localhost:8000/
