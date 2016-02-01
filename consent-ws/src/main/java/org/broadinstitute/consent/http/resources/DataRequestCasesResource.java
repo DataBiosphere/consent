@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.dto.*;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
@@ -68,7 +69,7 @@ public class DataRequestCasesResource extends Resource {
     @Path("/closed")
     @Produces("application/json")
     public List<Election> describeClosedElections() {
-        return electionApi.describeClosedElectionsByType("1");
+        return electionApi.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue());
     }
 
 }

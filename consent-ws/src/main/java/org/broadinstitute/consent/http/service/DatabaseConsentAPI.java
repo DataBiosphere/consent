@@ -358,8 +358,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
-        String electionTypeId = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(electionTypeId, ElectionStatus.OPEN.getValue());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(sc -> sc.getReferenceId()).collect(Collectors.toList());
             ObjectId[] objarray = new ObjectId[referenceIds.size()];

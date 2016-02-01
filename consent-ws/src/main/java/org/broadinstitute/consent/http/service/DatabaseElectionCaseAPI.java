@@ -46,8 +46,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     @Override
     public List<PendingCase> describeConsentPendingCases(Integer dacUserId) throws NotFoundException {
-        String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
-        List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -76,9 +75,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     @Override
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
-        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> elections;
-        elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(type,false) : electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(),false) : electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -116,8 +114,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     @Override
     public List<DataOwnerCase> describeDataOwnerPendingCases(Integer dataOwnerId) {
-        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_SET.getValue());
-        List<Election> elections = electionDAO.getElectionByTypeAndStatus(type, ElectionStatus.OPEN.getValue());
+        List<Election> elections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
         List<DataOwnerCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -157,13 +154,12 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     }
 
     private PendingCase setGeneralFields(PendingCase pendingCase , Election election, Vote vote, boolean isReminderSent) {
-        String type = electionDAO.findElectionTypeByType(ElectionType.DATA_ACCESS.getValue());
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
         List<Vote> pendingVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
         pendingCase.setTotalVotes(votes.size());
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
-        if (election.getElectionType().equals(type)) {
+        if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
             BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
             FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
             pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
