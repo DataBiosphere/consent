@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.enumeration;
 
 public enum ElectionStatus {
 
-    OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled"), FINAL("Final");
+    OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled"), FINAL("Final"), PENDING_APPROVAL("PendingApproval");
 
     private String value;
 

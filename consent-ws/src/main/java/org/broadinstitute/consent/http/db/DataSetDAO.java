@@ -32,9 +32,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<DataSet> findNeedsApprovalDataSetByObjectId(@BindIn("objectIdList") List<String> objectIdList);
 
 
-    @SqlQuery("select ds.objectId from dataset ds")
-    List<String> findAllObjectId();
-
     @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
 
@@ -90,10 +87,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT COUNT(*) FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
     Integer consentAssociationCount(@BindIn("objectIdList") List<String> objectIdList);
 
-    @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)" +
-            " AND NOT EXISTS (SELECT * FROM consent.consentassociations c WHERE d.objectId = c.objectId)")
-    List<DataSet> missingAssociations(@BindIn("objectIdList") List<String> objectIdList);
-
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
@@ -105,10 +98,12 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
-    @SqlQuery("SELECT d.objectId as id ,CONCAT_WS('   ',d.objectId,d.name) as concatenation FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId " +
+    @SqlQuery("SELECT d.objectId as id, CONCAT_WS('   ',d.objectId,d.name) as concatenation FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId and d.active = true" +
             " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +
-            "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%')  and d.active = true order by d.dataSetId")
+            "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM" +
+            " election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId " +
+            " and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%') order by d.dataSetId")
     List< Map<String, String>> getObjectIdsbyPartial(@Bind("partial") String partial);
 
 }

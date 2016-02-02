@@ -190,6 +190,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select * from election  where  status = :status and  electionType = :electionType")
     List<Election> getElectionByTypeAndStatus(@Bind("electionType") String electionType, @Bind("status") String status);
 
+    @Mapper(DatabaseElectionMapper.class)
+    @SqlQuery("select * from election  where  status = :status and  electionType = :electionType and referenceId = :referenceId")
+    List<Election> getElectionByTypeStatusAndReferenceId(@Bind("electionType") String electionType, @Bind("status") String status, @Bind("referenceId") String referenceId);
+
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate, finalAccessVote = :finalAccessVote where electionId = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,
                             @Bind("status") String status,
