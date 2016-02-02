@@ -32,6 +32,8 @@ googleStore:
   type: GCS
 mongo:
   uri: {{.Data.mongodb_uri}}
+  host1: {{.Data.mongodb_host1}}
+  host2: {{.Data.mongodb_host2}}
   dbName: {{.Data.mongodb_name}}
   username: {{.Data.mongodb_user}}
   password: {{.Data.mongodb_password}}
