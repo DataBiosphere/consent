@@ -23,10 +23,17 @@ public class ConsentConfiguration extends Configuration {
     @JsonProperty
     private final DataSourceFactory database = new DataSourceFactory();
 
-    @Valid
-    @NotNull
-    @JsonProperty
-    private final UseRestrictionConfig ontology = new UseRestrictionConfig();
+    private final UseRestrictionConfig ontology = new UseRestrictionConfig(
+        "http://www.broadinstitute.org/ontologies/DURPO/methods_research",
+        "http://www.broadinstitute.org/ontologies/DURPO/population",
+        "http://www.broadinstitute.org/ontologies/DURPO/male",
+        "http://www.broadinstitute.org/ontologies/DURPO/female",
+        "http://www.broadinstitute.org/ontologies/DURPO/For_profit",
+        "http://www.broadinstitute.org/ontologies/DURPO/Non_profit",
+        "http://www.broadinstitute.org/ontologies/DURPO/boys",
+        "http://www.broadinstitute.org/ontologies/DURPO/girls",
+        "http://www.broadinstitute.org/ontologies/DURPO/children"
+    );
 
     @Valid
     @NotNull

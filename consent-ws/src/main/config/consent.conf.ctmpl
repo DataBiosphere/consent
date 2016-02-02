@@ -30,16 +30,6 @@ googleStore:
   endpoint: {{.Data.gce_endpoint}}
   bucket: {{.Data.gce_bucket}}
   type: GCS
-ontology:
-    methods: {{.Data.ontology_methods}}
-    population: {{.Data.ontology_population}}
-    male: {{.Data.ontology_male}}
-    female: {{.Data.ontology_female}}
-    profit: {{.Data.ontology_profit}}
-    nonProfit: {{.Data.ontology_non_profit}}
-    pediatric: {{.Data.ontology_pediatric}}
-    boys: {{.Data.ontology_boys}}
-    girls: {{.Data.ontology_girls}}
 mongo:
   uri: {{.Data.mongodb_uri}}
   dbName: {{.Data.mongodb_name}}

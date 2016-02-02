@@ -33,6 +33,22 @@ public class UseRestrictionConfig {
     @NotNull
     private String pediatric;
 
+    public UseRestrictionConfig() {
+    }
+
+    public UseRestrictionConfig(String methods, String population, String male, String female, String profit,
+                                String nonProfit, String boys, String girls, String pediatric) {
+        this.methods = methods;
+        this.population = population;
+        this.male = male;
+        this.female = female;
+        this.profit = profit;
+        this.nonProfit = nonProfit;
+        this.boys = boys;
+        this.girls = girls;
+        this.pediatric = pediatric;
+    }
+
     private Map<String, String> values = new HashMap<>();
 
     public String getMethods() {
