@@ -36,7 +36,7 @@ logging:
     DatabaseResearchPurposeAPI: ALL
 services:
     matchURL:
-    localURL: http://localhost:8000/
+    localURL: http://localhost:8000/#/
     translateURL:
 mailConfiguration:
   activateEmailNotifications: false

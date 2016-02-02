@@ -17,6 +17,7 @@ import java.util.Map;
 public class FreeMarkerTemplateHelper {
 
     Configuration freeMarkerConfig;
+    private final String CREATE_DAR_URL = "admin_manage_access";
 
     public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
@@ -35,9 +36,9 @@ public class FreeMarkerTemplateHelper {
         return generateTemplate(user, election, entityId, temp, serverUrl);
     }
 
-    public Writer getNewCaseTemplate(String election, String entityId, String serverUrl) throws IOException, TemplateException {
+    public Writer getNewCaseTemplate(String userName, String election, String entityId, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-case.html");
-        return generateNewCaseTemplate(election, entityId, temp, serverUrl);
+        return generateNewCaseTemplate(userName, election, entityId, temp, serverUrl);
     }
 
     public Writer getReminderTemplate(String user, String election, String entityId, String serverUrl) throws IOException, TemplateException {
@@ -47,7 +48,7 @@ public class FreeMarkerTemplateHelper {
 
     public Writer getNewDARRequestTemplate(String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-request.html");
-        return generateNewDARRequestTemplate(serverUrl, temp);
+        return generateNewDARRequestTemplate(serverUrl+CREATE_DAR_URL, temp);
     }
 
     public Writer getCancelledDarTemplate(String userType, String entityId, String serverUrl) throws IOException, TemplateException {
@@ -72,8 +73,8 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateNewCaseTemplate(String election, String entityId, Template temp, String serverUrl) throws IOException, TemplateException {
-        NewCaseTemplate model = new NewCaseTemplate(election, entityId, serverUrl);
+    private Writer generateNewCaseTemplate(String userName, String election, String entityId, Template temp, String serverUrl) throws IOException, TemplateException {
+        NewCaseTemplate model = new NewCaseTemplate(userName, election, entityId, serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

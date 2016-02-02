@@ -66,9 +66,9 @@ public class MailService extends AbstractMailServiceAPI {
         sendMessage(message, address);
     }
 
-    public void sendNewCaseMessages(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendNewCaseMessage(String userAddress, String referenceId, String type, Writer template) throws MessagingException {
         MimeMessage message = newCaseMessageCreator.newCaseMessage(getMailSession, template, referenceId, type);
-        sendMessages(message, usersAddress);
+        sendMessage(message, userAddress);
     }
 
     public void sendReminderMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
