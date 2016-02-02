@@ -1,6 +1,14 @@
 package org.broadinstitute.consent.http.configurations;
 
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class MongoConfiguration {
 
@@ -10,6 +18,10 @@ public class MongoConfiguration {
 
     @NotNull
     public String uri;
+
+    public String host1;
+
+    public String host2;
 
     @NotNull
     public String dbName;
@@ -28,6 +40,7 @@ public class MongoConfiguration {
         return password;
     }
 
+    @SuppressWarnings("unused")
     public void setPassword(String password) {
         this.password = password;
     }
@@ -40,10 +53,29 @@ public class MongoConfiguration {
         this.uri = uri;
     }
 
+    public String getHost1() {
+        return host1;
+    }
+
+    @SuppressWarnings("unused")
+    public void setHost1(String host1) {
+        this.host1 = host1;
+    }
+
+    public String getHost2() {
+        return host2;
+    }
+
+    @SuppressWarnings("unused")
+    public void setHost2(String host2) {
+        this.host2 = host2;
+    }
+
     public String getDbName() {
         return dbName;
     }
 
+    @SuppressWarnings("unused")
     public void setDbName(String dbName) {
         this.dbName = dbName;
     }
@@ -52,12 +84,28 @@ public class MongoConfiguration {
         return testMode;
     }
 
+    @SuppressWarnings("unused")
     public Boolean getTestMode() {
         return testMode;
     }
 
+    @SuppressWarnings("unused")
     public void setTestMode(Boolean testMode) {
         this.testMode = testMode;
     }
+
+    public MongoClient getMongoClient() {
+        if (getHost1() == null || getHost2() == null) {
+            return new MongoClient(new MongoClientURI(getUri()));
+        } else if (getHost1() != null && getHost2() != null) {
+            List<ServerAddress> seeds = new ArrayList<>();
+            seeds.add(new ServerAddress(getHost1()));
+            seeds.add(new ServerAddress(getHost2()));
+            MongoCredential credential = MongoCredential.createCredential(getUsername(), getDbName(), getPassword().toCharArray());
+            return new MongoClient(seeds, Collections.singletonList(credential));
+        }
+        return null;
+    }
+
 
 }

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http;
 import com.github.fakemongo.Fongo;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
 import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -85,7 +84,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             Fongo fongo = new Fongo("TestServer");
             mongoClient =  fongo.getMongo();
         } else {
-            mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
+            mongoClient = mongoConfiguration.getMongoClient();
         }
 
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient, mongoConfiguration.getDbName());
