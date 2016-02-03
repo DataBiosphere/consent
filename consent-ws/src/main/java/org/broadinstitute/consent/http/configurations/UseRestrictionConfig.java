@@ -10,6 +10,12 @@ public class UseRestrictionConfig {
     private String methods;
 
     @NotNull
+    private String aggregate;
+
+    @NotNull
+    private String control;
+
+    @NotNull
     private String population;
 
     @NotNull
@@ -36,9 +42,12 @@ public class UseRestrictionConfig {
     public UseRestrictionConfig() {
     }
 
-    public UseRestrictionConfig(String methods, String population, String male, String female, String profit,
-                                String nonProfit, String boys, String girls, String pediatric) {
+    public UseRestrictionConfig(String methods, String aggregate, String control, String population, String male,
+                                String female, String profit, String nonProfit, String boys, String girls,
+                                String pediatric) {
         setMethods(methods);
+        setAggregate(aggregate);
+        setControl(control);
         setPopulation(population);
         setMale(male);
         setFemale(female);
@@ -58,6 +67,24 @@ public class UseRestrictionConfig {
     public void setMethods(String methods) {
         this.methods = methods;
         values.put("methods", methods);
+    }
+
+    public String getAggregate() {
+        return aggregate;
+    }
+
+    public void setAggregate(String aggregate) {
+        this.aggregate = aggregate;
+        values.put("aggregate", aggregate);
+    }
+
+    public String getControl() {
+        return control;
+    }
+
+    public void setControl(String control) {
+        this.control = control;
+        values.put("control", control);
     }
 
     public String getPopulation() {
