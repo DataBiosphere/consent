@@ -241,6 +241,9 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     private Map<String, String> retrieveForCollect(Integer electionId){
         Election election = electionDAO.findElectionWithFinalVoteById(electionId);
+        if(election.getElectionType().equals(ElectionType.RP.getValue())){
+            election = electionDAO.findElectionById(electionDAO.findAccessElectionByElectionRPId(electionId));
+        }
         DACUser user = dacUserDAO.findChairpersonUser();
         return createDataMap(user.getDisplayName(),
                 election.getElectionType(),
