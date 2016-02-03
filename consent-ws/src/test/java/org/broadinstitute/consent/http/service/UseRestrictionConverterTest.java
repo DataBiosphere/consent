@@ -411,6 +411,8 @@ public class UseRestrictionConverterTest {
             + "}";
         
     String methods = "http://www.broadinstitute.org/ontologies/DURPO/methods_research";
+    String aggregate = "http://www.broadinstitute.org/ontologies/DURPO/aggregate_analysis";
+    String control = "http://www.broadinstitute.org/ontologies/DURPO/control";
     String population = "http://www.broadinstitute.org/ontologies/DURPO/population";
     String men = "http://www.broadinstitute.org/ontologies/DURPO/male";
     String women = "http://www.broadinstitute.org/ontologies/DURPO/female";
@@ -430,6 +432,8 @@ public class UseRestrictionConverterTest {
 
         config.setMale(men);
         config.setMethods(methods);
+        config.setAggregate(aggregate);
+        config.setControl(control);
         config.setNonProfit(nonProfit);
         config.setPediatric(pediatric);
         config.setPopulation(population);
