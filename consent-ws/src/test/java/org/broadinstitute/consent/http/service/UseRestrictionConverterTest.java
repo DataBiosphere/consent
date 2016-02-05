@@ -1,15 +1,101 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.configurations.UseRestrictionConfig;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.models.grammar.*;
 import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class UseRestrictionConverterTest {
 
-    private String femaleData = "{  "
+    UseRestriction femaleRestriction = new And(
+            new And(
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+            ),
+            new And(
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/female")
+            )
+    );
+
+    UseRestriction allDataRestriction = new And(
+            new And(
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/control")
+            ),
+            new Or(
+                    new Named("http://purl.obolibrary.org/obo/DOID_4023"),
+                    new Named("http://purl.obolibrary.org/obo/DOID_9854"),
+                    new Named("http://purl.obolibrary.org/obo/DOID_0050738")
+
+            ),
+            new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit")
+    );
+
+    UseRestriction maleRestriction = new And(
+            new And(
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+            ),
+            new And(
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/male")
+            )
+    );
+
+    UseRestriction boysRestriction = new And(
+            new And(
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+            ),
+            new And(
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/male"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/children")
+            )
+    );
+
+    UseRestriction girlsRestriction = new And(
+            new And(
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+            ),
+            new And(
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/female"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/children")
+            )
+    );
+
+    UseRestriction childrenRestriction = new And(
+            new And(
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+            ),
+            new And(
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/children")
+            )
+    );
+
+    UseRestriction controlsPopulationRestriction = new And(
+            new And(
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/control")
+            ),
+            new Named("http://www.broadinstitute.org/ontologies/DURPO/Non_profit")
+    );
+
+
+
+    String femaleData = "{  "
             + "   \"investigator\":\"Investigator\","
             + "   \"institution\":\"Name\","
             + "   \"department\":\"Department\","
@@ -39,37 +125,10 @@ public class UseRestrictionConverterTest {
             + "   \"popmigration\":false,"
             + "   \"psychtraits\":false,"
             + "   \"nothealth\":false,"
-            + "   \"ontologies\":[  "
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\","
-            + "         \"label\":\"linitis-plastica\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Linitis plastica (morphologic abnormality)\","
-            + "            \"Leather-bottle stomach\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_9854\","
-            + "         \"label\":\"lingual-facial-buccal-dyskinesia\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Oro-facial dyskinesia\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_0050738\","
-            + "         \"label\":\"Y-linked-disease\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + ""
-            + "         ]"
-            + "      }"
-            + "   ],"
             + "   \"gender\":\"F\""
             + "}";
 
-    private String maleData = "{  "
+    String maleData = "{  "
             + "   \"investigator\":\"Investigator\","
             + "   \"institution\":\"Name\","
             + "   \"department\":\"Department\","
@@ -85,7 +144,7 @@ public class UseRestrictionConverterTest {
             + "   \"rus\":\"SDFG\","
             + "   \"non_tech_rus\":\"SDFG\","
             + "   \"diseases\":true,"
-            + "   \"methods\":true,"
+            + "   \"methods\":false,"
             + "   \"controls\":false,"
             + "   \"population\":false,"
             + "   \"forProfit\":true,"
@@ -99,37 +158,43 @@ public class UseRestrictionConverterTest {
             + "   \"popmigration\":false,"
             + "   \"psychtraits\":false,"
             + "   \"nothealth\":false,"
-            + "   \"ontologies\":[  "
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\","
-            + "         \"label\":\"linitis-plastica\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Linitis plastica (morphologic abnormality)\","
-            + "            \"Leather-bottle stomach\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_9854\","
-            + "         \"label\":\"lingual-facial-buccal-dyskinesia\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Oro-facial dyskinesia\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_0050738\","
-            + "         \"label\":\"Y-linked-disease\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + ""
-            + "         ]"
-            + "      }"
-            + "   ],"
             + "   \"gender\":\"M\""
             + "}";
 
-        private String boysData = "{  "
+     String boysData = "{  "
+            + "   \"investigator\":\"Investigator\","
+            + "   \"institution\":\"Name\","
+            + "   \"department\":\"Department\","
+            + "   \"address1\":\"address 1\","
+            + "   \"division\":\"\","
+            + "   \"address2\":\"\","
+            + "   \"state\":\"state\","
+            + "   \"city\":\"city\","
+            + "   \"zipcode\":\"zcode\","
+            + "   \"country\":\"country\","
+            + "   \"projectTitle\":\"Some title of the project\","
+            + "   \"datasetId\":\"AME-56789\","
+            + "   \"rus\":\"SDFG\","
+            + "   \"non_tech_rus\":\"SDFG\","
+            + "   \"diseases\":false,"
+            + "   \"methods\":false,"
+            + "   \"controls\":false,"
+            + "   \"population\":false,"
+            + "   \"forProfit\":true,"
+            + "   \"onegender\":true,"
+            + "   \"pediatric\":true,"
+            + "   \"illegalbehave\":false,"
+            + "   \"addiction\":false,"
+            + "   \"sexualdiseases\":false,"
+            + "   \"stigmatizediseases\":false,"
+            + "   \"vulnerablepop\":false,"
+            + "   \"popmigration\":false,"
+            + "   \"psychtraits\":false,"
+            + "   \"nothealth\":false,"
+            + "   \"gender\":\"M\""
+            + "}";
+
+      String girlsData = "{  "
             + "   \"investigator\":\"Investigator\","
             + "   \"institution\":\"Name\","
             + "   \"department\":\"Department\","
@@ -145,7 +210,7 @@ public class UseRestrictionConverterTest {
             + "   \"rus\":\"SDFG\","
             + "   \"non_tech_rus\":\"SDFG\","
             + "   \"diseases\":true,"
-            + "   \"methods\":true,"
+            + "   \"methods\":false,"
             + "   \"controls\":false,"
             + "   \"population\":false,"
             + "   \"forProfit\":true,"
@@ -159,97 +224,10 @@ public class UseRestrictionConverterTest {
             + "   \"popmigration\":false,"
             + "   \"psychtraits\":false,"
             + "   \"nothealth\":false,"
-            + "   \"ontologies\":[  "
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\","
-            + "         \"label\":\"linitis-plastica\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Linitis plastica (morphologic abnormality)\","
-            + "            \"Leather-bottle stomach\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_9854\","
-            + "         \"label\":\"lingual-facial-buccal-dyskinesia\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Oro-facial dyskinesia\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_0050738\","
-            + "         \"label\":\"Y-linked-disease\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + ""
-            + "         ]"
-            + "      }"
-            + "   ],"
-            + "   \"gender\":\"M\""
-            + "}";
-
-        private String girlsData = "{  "
-            + "   \"investigator\":\"Investigator\","
-            + "   \"institution\":\"Name\","
-            + "   \"department\":\"Department\","
-            + "   \"address1\":\"address 1\","
-            + "   \"division\":\"\","
-            + "   \"address2\":\"\","
-            + "   \"state\":\"state\","
-            + "   \"city\":\"city\","
-            + "   \"zipcode\":\"zcode\","
-            + "   \"country\":\"country\","
-            + "   \"projectTitle\":\"Some title of the project\","
-            + "   \"datasetId\":\"AME-56789\","
-            + "   \"rus\":\"SDFG\","
-            + "   \"non_tech_rus\":\"SDFG\","
-            + "   \"diseases\":true,"
-            + "   \"methods\":true,"
-            + "   \"controls\":false,"
-            + "   \"population\":false,"
-            + "   \"forProfit\":true,"
-            + "   \"onegender\":true,"
-            + "   \"pediatric\":true,"
-            + "   \"illegalbehave\":false,"
-            + "   \"addiction\":false,"
-            + "   \"sexualdiseases\":false,"
-            + "   \"stigmatizediseases\":false,"
-            + "   \"vulnerablepop\":false,"
-            + "   \"popmigration\":false,"
-            + "   \"psychtraits\":false,"
-            + "   \"nothealth\":false,"
-            + "   \"ontologies\":[  "
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\","
-            + "         \"label\":\"linitis-plastica\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Linitis plastica (morphologic abnormality)\","
-            + "            \"Leather-bottle stomach\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_9854\","
-            + "         \"label\":\"lingual-facial-buccal-dyskinesia\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Oro-facial dyskinesia\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_0050738\","
-            + "         \"label\":\"Y-linked-disease\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + ""
-            + "         ]"
-            + "      }"
-            + "   ],"
             + "   \"gender\":\"F\""
             + "}";
 
-        private String childrensData = "{  "
+       String childrensData = "{  "
             + "   \"investigator\":\"Investigator\","
             + "   \"institution\":\"Name\","
             + "   \"department\":\"Department\","
@@ -265,7 +243,7 @@ public class UseRestrictionConverterTest {
             + "   \"rus\":\"SDFG\","
             + "   \"non_tech_rus\":\"SDFG\","
             + "   \"diseases\":true,"
-            + "   \"methods\":true,"
+            + "   \"methods\":false,"
             + "   \"controls\":false,"
             + "   \"population\":false,"
             + "   \"forProfit\":true,"
@@ -278,37 +256,12 @@ public class UseRestrictionConverterTest {
             + "   \"vulnerablepop\":false,"
             + "   \"popmigration\":false,"
             + "   \"psychtraits\":false,"
-            + "   \"nothealth\":false,"
-            + "   \"ontologies\":[  "
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\","
-            + "         \"label\":\"linitis-plastica\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Linitis plastica (morphologic abnormality)\","
-            + "            \"Leather-bottle stomach\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_9854\","
-            + "         \"label\":\"lingual-facial-buccal-dyskinesia\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Oro-facial dyskinesia\""
-            + "         ]"
-            + "      },"
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_0050738\","
-            + "         \"label\":\"Y-linked-disease\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + ""
-            + "         ]"
-            + "      }"
-            + "   ]"
+            + "   \"nothealth\":false"
             + "}";
 
-        private String allData = "{  "
+
+
+        String allData = "{  "
             + "   \"investigator\":\"Investigator\","
             + "   \"institution\":\"Name\","
             + "   \"department\":\"Department\","
@@ -325,8 +278,8 @@ public class UseRestrictionConverterTest {
             + "   \"non_tech_rus\":\"SDFG\","
             + "   \"diseases\":true,"
             + "   \"methods\":true,"
-            + "   \"controls\":false,"
-            + "   \"population\":false,"
+            + "   \"controls\":true,"
+            + "   \"population\":true,"
             + "   \"forProfit\":true,"
             + "   \"onegender\":false,"
             + "   \"pediatric\":false,"
@@ -367,7 +320,8 @@ public class UseRestrictionConverterTest {
             + "   ]"
             + "}";
 
-        private String singleData = "{  "
+
+         String controlsAndPopulationData = "{  "
             + "   \"investigator\":\"Investigator\","
             + "   \"institution\":\"Name\","
             + "   \"department\":\"Department\","
@@ -382,11 +336,11 @@ public class UseRestrictionConverterTest {
             + "   \"datasetId\":\"AME-56789\","
             + "   \"rus\":\"SDFG\","
             + "   \"non_tech_rus\":\"SDFG\","
-            + "   \"diseases\":true,"
-            + "   \"methods\":true,"
-            + "   \"controls\":false,"
-            + "   \"population\":false,"
-            + "   \"forProfit\":true,"
+            + "   \"diseases\":false,"
+            + "   \"methods\":false,"
+            + "   \"controls\":true,"
+            + "   \"population\":true,"
+            + "   \"forProfit\":false,"
             + "   \"onegender\":false,"
             + "   \"pediatric\":false,"
             + "   \"illegalbehave\":false,"
@@ -396,23 +350,15 @@ public class UseRestrictionConverterTest {
             + "   \"vulnerablepop\":false,"
             + "   \"popmigration\":false,"
             + "   \"psychtraits\":false,"
-            + "   \"nothealth\":false,"
-            + "   \"ontologies\":[  "
-            + "      {  "
-            + "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\","
-            + "         \"label\":\"linitis-plastica\","
-            + "         \"definition\":null,"
-            + "         \"synonyms\":[  "
-            + "            \"Linitis plastica (morphologic abnormality)\","
-            + "            \"Leather-bottle stomach\""
-            + "         ]"
-            + "      }"
-            + "   ]"
+            + "   \"nothealth\":false"
             + "}";
+
+
+
+
         
     String methods = "http://www.broadinstitute.org/ontologies/DURPO/methods_research";
     String aggregate = "http://www.broadinstitute.org/ontologies/DURPO/aggregate_analysis";
-    String control = "http://www.broadinstitute.org/ontologies/DURPO/control";
     String population = "http://www.broadinstitute.org/ontologies/DURPO/population";
     String men = "http://www.broadinstitute.org/ontologies/DURPO/male";
     String women = "http://www.broadinstitute.org/ontologies/DURPO/female";
@@ -420,20 +366,17 @@ public class UseRestrictionConverterTest {
     String nonProfit = "http://www.broadinstitute.org/ontologies/DURPO/Non_profit";
     String pediatric = "http://www.broadinstitute.org/ontologies/DURPO/children";
     String girls = "http://www.broadinstitute.org/ontologies/DURPO/girls";
-    String boys = "http://www.broadinstitute.org/ontologies/DURPO/boys";    
+    String boys = "http://www.broadinstitute.org/ontologies/DURPO/boys";
+    String controls = "http://www.broadinstitute.org/ontologies/DURPO/control";
 
-    /**
-     * Test of parseJsonFormulary method, of class UseRestrictionConverter.
-     */
-    @Test
-    public void testParseJsonFormulary() {
-        System.out.println("parseJsonFormulary");
+
+
+    public UseRestrictionConfig config() {
         UseRestrictionConfig config = new UseRestrictionConfig();
 
         config.setMale(men);
         config.setMethods(methods);
         config.setAggregate(aggregate);
-        config.setControl(control);
         config.setNonProfit(nonProfit);
         config.setPediatric(pediatric);
         config.setPopulation(population);
@@ -441,45 +384,57 @@ public class UseRestrictionConverterTest {
         config.setFemale(women);
         config.setBoys(boys);
         config.setGirls(girls);
+        config.setControls(controls);
+        return  config;
+    }
 
-        UseRestrictionConverter instance = new UseRestrictionConverter(config);
+    @Test
+    public void testParseFemaleData(){
+        UseRestrictionConverter instance = new UseRestrictionConverter(config());
         UseRestriction result = instance.parseJsonFormulary(femaleData);
-        System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/female"));
+        assertTrue(result.toString().equals(femaleRestriction.toString()));
+    }
 
-        instance = new UseRestrictionConverter(config);
-        result = instance.parseJsonFormulary(maleData);
-        System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/male"));
+    @Test
+    public void testParseMaleData(){
+        UseRestrictionConverter  instance = new UseRestrictionConverter(config());
+        UseRestriction result = instance.parseJsonFormulary(maleData);
+        assertTrue(result.toString().equals(maleRestriction.toString()));
+    }
 
-        instance = new UseRestrictionConverter(config);
-        result = instance.parseJsonFormulary(girlsData);
-        System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/children"));
-        assertTrue(result.toString().contains("DURPO/female"));
+    @Test
+    public void testParseGirlsData(){
+        UseRestrictionConverter   instance = new UseRestrictionConverter(config());
+        UseRestriction  result = instance.parseJsonFormulary(girlsData);
+        assertTrue(result.toString().equals(girlsRestriction.toString()));
+    }
 
-        instance = new UseRestrictionConverter(config);
-        result = instance.parseJsonFormulary(boysData);
-        System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/children"));
-        assertTrue(result.toString().contains("DURPO/male"));
+    @Test
+    public void testParseBoysData() {
+        UseRestrictionConverter   instance = new UseRestrictionConverter(config());
+        UseRestriction  result = instance.parseJsonFormulary(boysData);
+        assertTrue(result.toString().equals(boysRestriction.toString()));
+    }
 
-        instance = new UseRestrictionConverter(config);
-        result = instance.parseJsonFormulary(childrensData);
-        System.out.println(result.toString());
-        assertTrue(result.toString().contains("DURPO/children"));
+    @Test
+    public void testParseChildrenData() {
+        UseRestrictionConverter   instance = new UseRestrictionConverter(config());
+        UseRestriction  result = instance.parseJsonFormulary(childrensData);
+        assertTrue(result.toString().equals(childrenRestriction.toString()));
+    }
 
-        instance = new UseRestrictionConverter(config);
-        result = instance.parseJsonFormulary(allData);
-        System.out.println(result.toString());
-        assertFalse(result.toString().contains("DURPO/children"));
-        assertFalse(result.toString().contains("DURPO/female"));
-        assertFalse(result.toString().contains("DURPO/male"));
-    
-        instance = new UseRestrictionConverter(config);
-        result = instance.parseJsonFormulary(singleData);
-        System.out.println(result.toString());
+    @Test
+    public void testParseAllData() {
+        UseRestrictionConverter   instance = new UseRestrictionConverter(config());
+        UseRestriction  result = instance.parseJsonFormulary(allData);
+        assertTrue(result.toString().equals(allDataRestriction.toString()));
+    }
 
+    @Test
+    public void testParseControlsAndPopulationData() {
+        UseRestrictionConverter   instance = new UseRestrictionConverter(config());
+        UseRestriction  result = instance.parseJsonFormulary(controlsAndPopulationData);
+        assertTrue(result.toString().equals(controlsPopulationRestriction.toString()));
     }
 
 }

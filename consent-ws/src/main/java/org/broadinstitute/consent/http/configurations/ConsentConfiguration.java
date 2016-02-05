@@ -4,11 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.configurations.MongoConfiguration;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.configurations.UseRestrictionConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;

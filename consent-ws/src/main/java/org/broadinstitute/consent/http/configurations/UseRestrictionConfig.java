@@ -13,7 +13,7 @@ public class UseRestrictionConfig {
     private String aggregate;
 
     @NotNull
-    private String control;
+    private String controls;
 
     @NotNull
     private String population;
@@ -42,12 +42,13 @@ public class UseRestrictionConfig {
     public UseRestrictionConfig() {
     }
 
-    public UseRestrictionConfig(String methods, String aggregate, String control, String population, String male,
+
+    public UseRestrictionConfig(String methods, String aggregate, String controls, String population, String male,
                                 String female, String profit, String nonProfit, String boys, String girls,
                                 String pediatric) {
+
         setMethods(methods);
         setAggregate(aggregate);
-        setControl(control);
         setPopulation(population);
         setMale(male);
         setFemale(female);
@@ -56,6 +57,7 @@ public class UseRestrictionConfig {
         setBoys(boys);
         setGirls(girls);
         setPediatric(pediatric);
+        setControls(controls);
     }
 
     private Map<String, String> values = new HashMap<>();
@@ -69,6 +71,16 @@ public class UseRestrictionConfig {
         values.put("methods", methods);
     }
 
+
+    public String getControls() {
+        return controls;
+    }
+
+    public void setControls(String controls) {
+        this.controls = controls;
+        values.put("controls", controls);
+    }
+
     public String getAggregate() {
         return aggregate;
     }
@@ -78,14 +90,6 @@ public class UseRestrictionConfig {
         values.put("aggregate", aggregate);
     }
 
-    public String getControl() {
-        return control;
-    }
-
-    public void setControl(String control) {
-        this.control = control;
-        values.put("control", control);
-    }
 
     public String getPopulation() {
         return population;
