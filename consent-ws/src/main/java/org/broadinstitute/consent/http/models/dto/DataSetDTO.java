@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+
 import java.util.List;
 
 

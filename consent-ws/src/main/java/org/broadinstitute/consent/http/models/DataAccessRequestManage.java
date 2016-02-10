@@ -50,6 +50,9 @@ public class DataAccessRequestManage {
     @JsonProperty
     private Boolean needsApproval;
 
+    @JsonProperty
+    private String dataSetElectionResult;
+
 
     public DataAccessRequestManage() {
     }
@@ -148,5 +151,13 @@ public class DataAccessRequestManage {
 
     public void setNeedsApproval(Boolean needsApproval) {
         this.needsApproval = needsApproval;
+    }
+
+    public String getDataSetElectionResult() {
+        return dataSetElectionResult;
+    }
+
+    public void setDataSetElectionResult(String dataSetElectionResult) {
+        this.dataSetElectionResult = dataSetElectionResult;
     }
 }

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mongo;
 
-import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;

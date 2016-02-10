@@ -100,7 +100,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private List<Summary> getMatchSummaryCases() {
         List<Summary> summaryList = new ArrayList<>();
-        summaryList.add(createSummary(0,matchDAO.countMatchesByResult(Boolean.TRUE),matchDAO.countMatchesByResult(Boolean.FALSE)));
+        summaryList.add(createSummary(0, matchDAO.countMatchesByResult(Boolean.TRUE), matchDAO.countMatchesByResult(Boolean.FALSE)));
         List<Election> latestElections = electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> reviewedElections = null;
         if(!CollectionUtils.isEmpty(latestElections)){
@@ -157,8 +157,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
             file = File.createTempFile("summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
                 List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.CLOSED.getValue());
-                    if (!CollectionUtils.isEmpty(reviewedElections)) {
-                        List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(reviewedElections)) {
+                    List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
                     setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
@@ -315,7 +315,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 summaryWriter.write(booleanToString(chairPersonConsentVote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(chairPersonConsentVote.getRationale())+ SEPARATOR);
                             }
-                         }
+                        }
                         summaryWriter.write(END_OF_LINE);
                     }
                 }else file = null;
@@ -328,6 +328,84 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return file;
     }
 
+    @Override
+    public File describeDataSetElectionsVotesForDar(String darId) {
+        File file = null;
+        try {
+            file = File.createTempFile("dar"+darId+"DatasetElectionsDetail", ".txt");
+            try (FileWriter summaryWriter = new FileWriter(file)) {
+                List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(darId, ElectionType.DATA_SET.getValue());
+                Map<Integer, List<Vote>> electionsData = new HashMap<>();
+                int maxNumberOfVotes = 0;
+                for(Election e: elections){
+                    List<Vote> votes = voteDAO.findVoteByTypeAndElectionId(e.getElectionId(), VoteType.DATA_OWNER.getValue());
+                    electionsData.put(e.getElectionId(), votes);
+                    if(votes.size() > maxNumberOfVotes){
+                        maxNumberOfVotes = votes.size();
+                    }
+                }
+                setDatasetElectionsHeader(summaryWriter, maxNumberOfVotes);
+
+                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(darId));
+                String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
+                String dar_election_result;
+                try{
+                    dar_election_result = (electionDAO.findLastElectionByReferenceIdAndType(darId, ElectionType.DATA_ACCESS.getValue())).getFinalAccessVote() ? "Approved" : "Denied";
+                } catch (NullPointerException e){
+                    dar_election_result = "Pending";
+                }
+                for (Election election : elections) {
+                    summaryWriter.write( dar_code + SEPARATOR);
+                    summaryWriter.write( dar_election_result + SEPARATOR);
+                    DataSet dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
+                    summaryWriter.write( dataset.getObjectId() + SEPARATOR);
+                    summaryWriter.write( dataset.getName() + SEPARATOR);
+                    summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
+                    List<Vote> votes = electionsData.get(election.getElectionId());
+                    for(Vote datasetVote : votes){
+                        DACUser dacUser = dacUserDAO.findDACUserById(datasetVote.getDacUserId());
+                        summaryWriter.write(dacUser.getDisplayName() + COMMA_SEPARATOR);
+                        summaryWriter.write(dacUser.getEmail() + COMMA_SEPARATOR);
+                        summaryWriter.write(datasetVoteResult(datasetVote) + COMMA_SEPARATOR);
+                        summaryWriter.write(datasetVote.getRationale() == null ? "None" : datasetVote.getRationale());
+                        summaryWriter.write(SEPARATOR);
+                    }
+                   summaryWriter.write(END_OF_LINE);
+                }
+            }
+            return file;
+        } catch (Exception ignored) {
+            logger.error("There is an error trying to create resume of dataset votes file, error: "+ ignored.getMessage());
+        }
+        return file;
+    }
+
+    private String electionResult(Boolean result){
+        try{
+            if(result){
+                return "Approved";
+            } else {
+                return "Denied";
+            }
+        } catch( NullPointerException e) {
+            return "Pending";
+        }
+    }
+
+    private String datasetVoteResult(Vote vote){
+        try{
+            if(vote.getVote()){
+                return "Approved";
+            } else {
+                return "Denied";
+            }
+        } catch( NullPointerException e) {
+            if(vote.getHasConcerns()){
+                return "Denied";
+            }
+            return "Pending";
+        }
+    }
 
     private void setSummaryHeader(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
         summaryWriter.write(
@@ -343,6 +421,23 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         }
         summaryWriter.write(
                 HeaderSummary.USER_VOTE_RATIONALE.getValue() + END_OF_LINE);
+    }
+
+    private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
+        summaryWriter.write(
+                HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
+                        HeaderSummary.FINAL_DECISION_DAR.getValue() + SEPARATOR +
+                        HeaderSummary.DATASET_ID.getValue() + SEPARATOR +
+                        HeaderSummary.DATASET_NAME.getValue() + SEPARATOR +
+                        HeaderSummary.DATASET_FINAL_STATUS.getValue() + SEPARATOR);
+        for (int i = 0; i < maxNumberOfVotes; i++) {
+            summaryWriter.write(
+                    HeaderSummary.DATA_OWNER_NAME.getValue() + COMMA_SEPARATOR +
+                            HeaderSummary.DATA_OWNER_EMAIL.getValue() + COMMA_SEPARATOR +
+                            HeaderSummary.DATA_OWNER_VOTE.getValue() + COMMA_SEPARATOR +
+                            HeaderSummary.DATA_OWNER_COMMENT.getValue() + SEPARATOR);
+        }
+        summaryWriter.write(END_OF_LINE);
     }
 
     private void setSummaryHeaderDataAccessRequest(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {

@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Date;
 
 public class Vote {
 

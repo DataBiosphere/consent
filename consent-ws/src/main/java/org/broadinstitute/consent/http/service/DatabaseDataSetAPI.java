@@ -1,17 +1,20 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+
 import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**

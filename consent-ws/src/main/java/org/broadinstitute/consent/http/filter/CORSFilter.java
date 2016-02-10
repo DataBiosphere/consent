@@ -1,13 +1,14 @@
 package org.broadinstitute.consent.http.filter;
 
-import java.io.IOException;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
+import java.io.IOException;
 
 public class CORSFilter extends CrossOriginFilter {
 

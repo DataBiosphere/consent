@@ -1,7 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.HelpReport;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
+import org.broadinstitute.consent.http.service.HelpReportAPI;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;

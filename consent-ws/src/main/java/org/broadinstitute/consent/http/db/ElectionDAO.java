@@ -121,6 +121,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select e.electionId from election e where e.electionType = :type and e.status = :status ")
     List<Integer> findElectionsIdByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
+    @SqlQuery("select * from election e where e.electionType = :type and e.referenceId = :referenceId ")
+    @Mapper(DatabaseElectionMapper.class)
+    List<Election> findElectionsByTypeAndReferenceId(@Bind("type") String type, @Bind("referenceId") String referenceId);
+
     @SqlQuery("select count(*) from election e inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "' where e.electionType = :type and e.status = :status and " +
             " v.vote = :finalVote ")
     Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
@@ -144,6 +148,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
     List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindIn("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
+    @SqlQuery("select  e.* " +
+            "from election e " +
+            "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
+            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+            "AND e.referenceId = :referenceId ")
+    @Mapper(DatabaseElectionMapper.class)
+    List<Election> findLastElectionsByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
+
     @SqlQuery("select count(*) from election e where e.status = 'Open' and e.referenceId = :referenceId")
     Integer verifyOpenElectionsForReferenceId(@Bind("referenceId") String referenceId);
 
@@ -152,6 +164,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "AND e.referenceId = :referenceId ")
     @Mapper(DatabaseElectionMapper.class)
     Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceIds, @Bind("status") String status);
+
+    @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
+            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+            "AND e.referenceId = :referenceId ")
+    @Mapper(DatabaseElectionMapper.class)
+    Election findLastElectionByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
@@ -185,6 +203,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select electionId from election  where referenceId = :referenceId and status = 'Open' and datasetId = :dataSetId")
     Integer getOpenElectionByReferenceIdAndDataSet(@Bind("referenceId") String referenceId, @Bind("dataSetId") Integer dataSetId);
+
+    @SqlQuery("select datasetId from election  where electionId = :electionId ")
+    Integer getDatasetIdByElectionId(@Bind("electionId") Integer electionId);
 
     @Mapper(DatabaseElectionMapper.class)
     @SqlQuery("select * from election  where  status = :status and  electionType = :electionType")

@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+
+import java.util.Date;
 
 public class Election {
 

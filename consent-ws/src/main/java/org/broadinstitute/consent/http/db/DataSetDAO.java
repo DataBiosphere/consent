@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.skife.jdbi.v2.sqlobject.*;
@@ -10,7 +12,10 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({DataSetMapper.class})

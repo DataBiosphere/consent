@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
+
 import javax.ws.rs.*;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

@@ -1,15 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;

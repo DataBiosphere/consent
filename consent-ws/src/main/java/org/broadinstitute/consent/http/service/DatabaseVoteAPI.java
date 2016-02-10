@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -9,7 +12,10 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.

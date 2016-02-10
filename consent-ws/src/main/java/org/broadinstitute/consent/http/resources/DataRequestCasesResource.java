@@ -1,16 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.dto.*;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.PendingCaseAPI;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

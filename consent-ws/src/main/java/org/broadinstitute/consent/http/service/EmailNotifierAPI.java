@@ -29,4 +29,5 @@ public interface EmailNotifierAPI {
 
     void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException;
 
+    void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException;
 }
