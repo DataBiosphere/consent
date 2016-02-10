@@ -289,6 +289,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return dacUsers;
     }
 
+    @Override
+    public Object getField(String requestId , String field){
+        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(requestId));
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(field,true);
+        Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
+        return dar != null ? dar.get(field) : null;
+    }
+
     private void updateElection(Election access, Election rp) {
         if(access != null) {
             access.setStatus(ElectionStatus.CANCELED.getValue());
@@ -345,9 +354,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 darManage.setElectionStatus(UN_REVIEWED);
             }
             else {
-                darManage.setElectionId(election.getElectionId());
-                darManage.setElectionStatus(election.getStatus());
-                darManage.setElectionVote(election.getFinalVote());
+                if(!CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))){
+                    darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
+                }else{
+                    darManage.setElectionId(election.getElectionId());
+                    darManage.setElectionStatus(election.getStatus());
+                    darManage.setElectionVote(election.getFinalVote());
+                }
             }
 
             requestsManage.add(darManage);
@@ -391,14 +404,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
 
-    @Override
-    public Object getField(String requestId , String field){
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(requestId));
-        BasicDBObject projection = new BasicDBObject();
-        projection.append(field,true);
-        Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
-        return dar != null ? dar.get(field) : null;
-    }
+
 
 }
-
