@@ -5,7 +5,11 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.skife.jdbi.v2.sqlobject.*;
+import org.skife.jdbi.v2.sqlobject.Bind;
+import org.skife.jdbi.v2.sqlobject.BindBean;
+import org.skife.jdbi.v2.sqlobject.SqlBatch;
+import org.skife.jdbi.v2.sqlobject.SqlQuery;
+import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
@@ -97,6 +101,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (Select objectId FROM consentassociations Where consentId = :consentId)")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
+
+    @SqlQuery("SELECT * FROM dataset d WHERE d.objectId = :objectId ")
+    DataSet getDataSetsByObjectId(@Bind("objectId") String objectId);
 
     @RegisterMapper({AssociationMapper.class})
     @SqlQuery("SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
