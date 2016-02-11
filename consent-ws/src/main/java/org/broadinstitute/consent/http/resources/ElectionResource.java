@@ -45,5 +45,17 @@ public class ElectionResource extends Resource {
         }
     }
 
+    @GET
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/checkdataset")
+    public Response isDataSetElectionOpen(@Context UriInfo info) {
+        try {
+            return Response.ok().entity("{ \"open\" : " + api.isDataSetElectionOpen() + " }").build();
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
 
 }

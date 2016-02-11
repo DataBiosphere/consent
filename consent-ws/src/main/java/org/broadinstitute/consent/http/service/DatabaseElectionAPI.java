@@ -42,8 +42,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private EmailNotifierAPI emailNotifierAPI;
-    private static final Integer AMOUNT_OF_TIME = 7;
     private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
+    private ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -74,6 +74,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.mailMessageDAO = mailMessageDAO;
         this.dataSetDAO = dataSetDAO;
         this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
+        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
     }
 
     public void setMongoDBInstance(MongoConsentDB mongo) {
@@ -346,7 +347,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public List<Election> findExpiredElections(String electionType) {
-        return electionDAO.findExpiredElections(electionType, AMOUNT_OF_TIME);
+        ApprovalExpirationTime timeout = approvalExpirationTimeAPI.findApprovalExpirationTime();
+        return electionDAO.findExpiredElections(electionType, timeout.getAmountOfDays());
+    }
+
+    @Override
+    public boolean isDataSetElectionOpen() {
+        List<Election> elections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
+        return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
@@ -357,6 +365,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         return true;
     }
+
+
 
     private void validateElectionIsValid(String referenceId, ElectionType electionType) throws Exception{
         if(electionType.equals(ElectionType.DATA_ACCESS)){

@@ -88,6 +88,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
         final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
+        final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
@@ -105,6 +106,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
+        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
@@ -155,6 +157,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(MatchResource.class);
         env.jersey().register(EmailNotifierResource.class);
         env.jersey().register(HelpReportResource.class);
+        env.jersey().register(ApprovalExpirationTimeResource.class);
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
@@ -182,6 +185,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractMailServiceAPI.clearInstance();
                 AbstractEmailNotifierAPI.clearInstance();
                 AbstractHelpReportAPI.clearInstance();
+                AbstractApprovalExpirationTimeAPI.clearInstance();
                 super.lifeCycleStopped(event);
             }
         });

@@ -14,13 +14,14 @@ public class ApprovedDarModel {
 
     private String serverUrl;
 
-    private int days = 7;
+    private int days;
 
-    public ApprovedDarModel(String user, String referenceId, List<DataSet> dataSetList, String serverUrl) {
+    public ApprovedDarModel(String user, String referenceId, List<DataSet> dataSetList, String serverUrl, Integer days) {
         this.userName = user;
         this.referenceId = referenceId;
         this.serverUrl = serverUrl;
         this.dsl = dataSetList;
+        this.days = days;
     }
 
     public String getUserName() {

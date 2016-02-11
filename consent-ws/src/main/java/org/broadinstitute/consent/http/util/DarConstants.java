@@ -29,4 +29,8 @@ public class DarConstants {
 
     public static final String STATUS = "status";
 
+    public static final Integer DEFAULT_AMOUNT_OF_DAYS = 7;
+
+    public static final String DUOS_DEFAULT = "Default Duos";
+
 }

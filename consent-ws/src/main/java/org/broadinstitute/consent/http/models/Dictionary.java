@@ -9,16 +9,18 @@ public class Dictionary {
     private Boolean required;
     private Integer displayOrder;
     private Date createDate;
+    private Integer receiveOrder;
 
-    public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder){
-        this(key, required, displayOrder);
+    public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder, Integer receiveOrder){
+        this(key, required, displayOrder, receiveOrder);
         this.keyId = keyId;
     }
 
-    public Dictionary(String key, Boolean required, Integer displayOrder){
+    public Dictionary(String key, Boolean required, Integer displayOrder, Integer receiveOrder){
         this.key = key;
         this.required = required;
         this.displayOrder = displayOrder;
+        this.receiveOrder = receiveOrder;
     }
 
     public Integer getKeyId() {
@@ -59,5 +61,13 @@ public class Dictionary {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public Integer getReceiveOrder() {
+        return receiveOrder;
+    }
+
+    public void setReceiveOrder(Integer receiveOrder) {
+        this.receiveOrder = receiveOrder;
     }
 }

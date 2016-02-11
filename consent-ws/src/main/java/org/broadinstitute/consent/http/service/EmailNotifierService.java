@@ -189,11 +189,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSet, String darCode) throws MessagingException, IOException, TemplateException {
+    public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSet, String darCode, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             for(DACUser owner: dataSet.keySet()){
                 String dataOwnerConsoleURL = SERVERURL + DATA_OWNER_CONSOLE_URL;
-                Writer template = templateHelper.getApprovedDarTemplate(owner.getDisplayName(), darCode, dataSet.get(owner), dataOwnerConsoleURL);
+                Writer template = templateHelper.getApprovedDarTemplate(owner.getDisplayName(), darCode, dataSet.get(owner), dataOwnerConsoleURL, amountOfTime);
                 mailService.sendFlaggedDarAdminApprovedMessage(owner.getEmail(), darCode, SERVERURL, template);
             }
         }
