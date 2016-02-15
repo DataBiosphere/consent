@@ -6,7 +6,10 @@ import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -126,6 +129,10 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return dataSetDTOList;
     }
 
+    @Override
+    public DataSet describeDataSetsByObjectId(String objectId) {
+        return dsDAO.getDataSetsByObjectId(objectId);
+    }
 
     @Override
     public List<DataSet> getDataSetsForConsent(String consentId) {

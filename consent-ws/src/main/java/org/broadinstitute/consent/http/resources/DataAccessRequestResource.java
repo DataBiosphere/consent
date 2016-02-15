@@ -3,6 +3,17 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import freemarker.template.TemplateException;
+import java.util.ArrayList;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
@@ -10,12 +21,22 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.TranslateServiceAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import javax.mail.MessagingException;
-import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -38,6 +59,7 @@ public class DataAccessRequestResource extends Resource {
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
+    private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
 
     public DataAccessRequestResource() {
@@ -216,8 +238,7 @@ public class DataAccessRequestResource extends Resource {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
         try {
-            dar.append("sortDate",new Date());
-            result = dataAccessRequestAPI.createPartialDataAccessRequest(dar);
+            result = savePartialDarRequest(dar);
             uri = info.getRequestUriBuilder().path("{id}").build(result.get(DarConstants.ID));
             return Response.created(uri).entity(result).build();
         }
@@ -225,6 +246,32 @@ public class DataAccessRequestResource extends Resource {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/partial/datasetCatalog")
+    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<String> datasetIds) {
+        Document dar = new Document();
+        dar.append(DarConstants.USER_ID, userId);
+        try {
+            List<Map<String, String>> datasets = new ArrayList<>();
+            for(String datasetId: datasetIds){
+                List<Map<String, String>> ds = dataSetAPI.autoCompleteDataSets(datasetId);
+                datasets.add(ds.get(0));
+            }
+            dar.append(DarConstants.DATASET_ID, datasets);
+            return Response.ok().entity(dar).build();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, " while fetching dataset details to export to DAR formulary. UserId: " + userId + ", datasets: " + datasetIds.toString()+". Cause: "+ e.getLocalizedMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal Server Error when fetching datasets. Please contact Support.", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+    private Document savePartialDarRequest(Document dar) throws Exception{
+        dar.append("sortDate",new Date());
+        return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
     }
 
     @PUT
