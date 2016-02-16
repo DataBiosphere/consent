@@ -104,6 +104,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 Map<String, Integer> datasetMap =
                         dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
                                 DataSet::getDataSetId));
+                Set<String> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<String>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
                     String datasetObjectId  = dataSetDTO.getProperties().get(9).getPropertyValue();
                     if(CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(datasetObjectId)))){
@@ -111,15 +112,13 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     }else{
                         dataSetDTO.setIsAssociatedToDataOwners(true);
                     }
-                    if(CollectionUtils.isNotEmpty(accessRequests)){
-                        accessRequests.stream().forEach(access -> {
-                            if(access.get(DarConstants.DATASET_ID, List.class).stream().anyMatch(objectId -> objectId.equals(datasetObjectId))){
-                                dataSetDTO.setDeletable(false);
-                            } else {
-                                dataSetDTO.setDeletable(true);
-                            }
-                        });
-                    }else {
+                    if (CollectionUtils.isNotEmpty(accessRequests)){
+                        if (accessRequestsDatasetIdSet.contains(datasetObjectId)) {
+                            dataSetDTO.setDeletable(false);
+                        } else {
+                              dataSetDTO.setDeletable(true);
+                          }
+                    } else {
                         dataSetDTO.setDeletable(true);
                     }
                 }
