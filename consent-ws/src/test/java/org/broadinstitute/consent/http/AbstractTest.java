@@ -119,6 +119,7 @@ abstract public class AbstractTest extends ResourcedTest {
         Response responseMock = Response.status(Response.Status.OK).entity(stream).build();
         Mockito.when(builderMock.post(Entity.json(Mockito.anyString()))).thenReturn(responseMock);
         Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
+        Mockito.when(webTargetMock.request(MediaType.TEXT_HTML)).thenReturn(builderMock);
         final Client clientMock= Mockito.mock(Client.class);
         Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
         Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
