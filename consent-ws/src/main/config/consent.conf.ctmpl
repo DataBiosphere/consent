@@ -8,13 +8,9 @@ server:
       port: 8180
 logging:
   level: {{.Data.logging_level}}
-#  appenders:
-#   - type: file
-#      currentLogFilename: /opt/consent.log
-#      threshold: ALL
-#      archive: true
-#      archivedLogFilenamePattern: /opt/consent-%d.log
-#      archivedFileCount: 5
+    loggers:
+      "org.reflections": ERROR
+      "de.spinscale": ERROR
 database:
   driverClass: com.mysql.jdbc.Driver
   user: {{.Data.db_user}}

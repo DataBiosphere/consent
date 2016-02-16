@@ -19,7 +19,6 @@ import java.io.StringWriter;
 public class DatabaseTranslateServiceAPI extends AbstractTranslateServiceAPI {
 
     Client client;
-    private WebTarget target;
     private ServicesConfiguration config;
 
     protected Logger logger() {
@@ -44,10 +43,10 @@ public class DatabaseTranslateServiceAPI extends AbstractTranslateServiceAPI {
 
 
     @Override
-    public String translate(String translateFor ,UseRestriction useRestriction) throws IOException {
+    public String translate(String translateFor, UseRestriction useRestriction) throws IOException {
         String translatedUseRestriction;
         try {
-             translatedUseRestriction = translateService(translateFor , useRestriction);
+             translatedUseRestriction = translateService(translateFor , useRestriction, MediaType.APPLICATION_JSON, config.getTranslateURL());
         } catch (IOException e) {
             logger().error("Translate error.", e);
             throw  e;
@@ -55,19 +54,32 @@ public class DatabaseTranslateServiceAPI extends AbstractTranslateServiceAPI {
         return translatedUseRestriction;
     }
 
+    @Override
+    public String translateAsHtml(String translateFor, UseRestriction useRestriction) throws IOException {
+        String translatedUseRestriction;
+        try {
+             translatedUseRestriction = translateService(translateFor , useRestriction, MediaType.TEXT_HTML, config.getTranslateURL() + "/html");
+        } catch (IOException e) {
+            logger().error("Translate error.", e);
+            throw  e;
+        }
+        return translatedUseRestriction;
+    }
 
-
-    private String translateService(String translateFor , UseRestriction useRestriction) throws IOException {
+    private String translateService(
+        String translateFor ,
+        UseRestriction useRestriction,
+        String mediaType,
+        String url) throws IOException {
         if(useRestriction != null ){
             String responseAsString = null;
             String json = new Gson().toJson(useRestriction);
-            target = client.target(config.getTranslateURL()).queryParam("for",translateFor);
-            Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+            WebTarget target = client.target(url).queryParam("for",translateFor);
+            Response res = target.request(mediaType).post(Entity.json(json));
             if (res.getStatus() == Response.Status.OK.getStatusCode()) {
                 StringWriter writer = new StringWriter();
                 IOUtils.copy((InputStream) res.getEntity(), writer);
-                String theString = writer.toString();
-                responseAsString = theString;
+                responseAsString = writer.toString();
             }else if (res.getStatus() == Response.Status.BAD_REQUEST.getStatusCode()){
                 throw  new IOException();
             }
@@ -75,4 +87,5 @@ public class DatabaseTranslateServiceAPI extends AbstractTranslateServiceAPI {
         }
         return null;
     }
+
 }
