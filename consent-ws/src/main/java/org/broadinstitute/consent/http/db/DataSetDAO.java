@@ -44,6 +44,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
 
+    @SqlBatch("update dataset set name = :name where dataSetId = :dataSetId")
+    void updateAll(@BindBean Collection<DataSet> dataSets);
+
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
             " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
     void insertDataSetsProperties(@BindBean List<DataSetProperty> dataSetPropertiesList);
