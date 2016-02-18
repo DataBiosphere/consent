@@ -47,4 +47,6 @@ public interface ElectionAPI {
 
     List<Election> createDataSetElections(String referenceId, Map<DACUser, List<DataSet>> dataOwnerDataSet);
 
+    boolean isDataSetElectionOpen();
+
 }

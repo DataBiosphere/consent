@@ -37,6 +37,7 @@ public class DataRequestVoteResource extends Resource {
     private final DACUserAPI dacUserAPI;
     private final EmailNotifierAPI emailNotifierAPI;
     private final DataSetAssociationAPI dataSetAssociationAPI;
+    private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     public DataRequestVoteResource() {
@@ -48,6 +49,7 @@ public class DataRequestVoteResource extends Resource {
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
         this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
+        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
     }
 
     @POST
@@ -211,7 +213,7 @@ public class DataRequestVoteResource extends Resource {
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierAPI.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }
-                emailNotifierAPI.sendNeedsPIApprovalMessage(dataOwnerDataSet, access.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendNeedsPIApprovalMessage(dataOwnerDataSet, access.getString(DarConstants.DAR_CODE), approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
             }
         }
     }

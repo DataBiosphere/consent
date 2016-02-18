@@ -121,9 +121,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select e.electionId from election e where e.electionType = :type and e.status = :status ")
     List<Integer> findElectionsIdByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
-    @SqlQuery("select * from election e where e.electionType = :type and e.referenceId = :referenceId ")
-    @Mapper(DatabaseElectionMapper.class)
-    List<Election> findElectionsByTypeAndReferenceId(@Bind("type") String type, @Bind("referenceId") String referenceId);
 
     @SqlQuery("select count(*) from election e inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "' where e.electionType = :type and e.status = :status and " +
             " v.vote = :finalVote ")

@@ -63,9 +63,9 @@ public class FreeMarkerTemplateHelper {
         return generateAdminApprovedDarTemplate(userName, entityId, dataOwnersDataSets, serverUrl, temp);
     }
 
-    public Writer getApprovedDarTemplate(String userName, String entityId, List<DataSet> datasets, String serverUrl) throws IOException, TemplateException {
+    public Writer getApprovedDarTemplate(String userName, String entityId, List<DataSet> datasets, String serverUrl, Integer amountOfTime) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("owner-dar-approved.html");
-        return generateApprovedDarTemplate(userName, entityId, datasets, serverUrl, temp);
+        return generateApprovedDarTemplate(userName, entityId, datasets, serverUrl, temp, amountOfTime);
     }
 
     public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String type, String serverUrl) throws IOException, TemplateException {
@@ -137,8 +137,8 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateApprovedDarTemplate(String userName, String entityId, List<DataSet> dataSetList, String serverUrl, Template temp) throws IOException, TemplateException {
-        ApprovedDarModel model = new ApprovedDarModel(userName, entityId, dataSetList, serverUrl);
+    private Writer generateApprovedDarTemplate(String userName, String entityId, List<DataSet> dataSetList, String serverUrl, Template temp, Integer amountOfTime) throws IOException, TemplateException {
+        ApprovedDarModel model = new ApprovedDarModel(userName, entityId, dataSetList, serverUrl, amountOfTime);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

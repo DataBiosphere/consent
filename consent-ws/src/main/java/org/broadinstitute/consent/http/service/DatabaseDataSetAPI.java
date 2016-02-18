@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -31,6 +32,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final DACUserRoleDAO dsRoleDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
+    public static final String DATA_SET_ID = "Dataset ID";
 
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
@@ -56,7 +58,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public ParseResult create(File dataSetFile) {
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFields());
+        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             if (completeDBCheck(dataSets)) {
@@ -72,7 +74,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public ParseResult overwrite(File dataSetFile) {
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFields());
+        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             List<String> objectIdList = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
@@ -99,33 +101,40 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             dataSetDTOList = dsDAO.findDataSets();
             if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
-                List<String> datasetObjectIdList = dataSetDTOList.stream().map(dto -> dto.getProperties().get(9).getPropertyValue()).collect(Collectors.toList());
-                List<DataSet> dataSetList =  dsDAO.getDataSetsForObjectIdList(datasetObjectIdList);
+                List<String> dataSetObjectIdList = new ArrayList<>();
+                dataSetDTOList.stream().forEach(dataSet -> {
+                    Map<String,String> dataSetProperties = dataSet.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName,DataSetPropertyDTO::getPropertyValue));
+                    dataSetObjectIdList.add(dataSetProperties.get(DATA_SET_ID));
+                });
+                List<DataSet> dataSetList =  dsDAO.getDataSetsForObjectIdList(dataSetObjectIdList);
                 Map<String, Integer> datasetMap =
                         dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
                                 DataSet::getDataSetId));
                 Set<String> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<String>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
                     String datasetObjectId  = dataSetDTO.getProperties().get(9).getPropertyValue();
-                    if(CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(datasetObjectId)))){
+                    Map<String,String> dataSetProperties = dataSetDTO.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName,DataSetPropertyDTO::getPropertyValue));
+                    String dataSetObjectId = dataSetProperties.get(DATA_SET_ID);
+                    if(CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(dataSetObjectId)))){
                         dataSetDTO.setIsAssociatedToDataOwners(false);
                     }else{
                         dataSetDTO.setIsAssociatedToDataOwners(true);
                     }
-                    if (CollectionUtils.isNotEmpty(accessRequests)){
+                    if(CollectionUtils.isNotEmpty(accessRequests)){
                         if (accessRequestsDatasetIdSet.contains(datasetObjectId)) {
                             dataSetDTO.setDeletable(false);
                         } else {
-                              dataSetDTO.setDeletable(true);
-                          }
-                    } else {
+                            dataSetDTO.setDeletable(true);
+                        }
+
+                    }else {
                         dataSetDTO.setDeletable(true);
                     }
                 }
             }
         }
         if (!dataSetDTOList.isEmpty()) setConsentNameDTOList(dataSetDTOList);
-        return dataSetDTOList;
+        return orderByDataSetId(dataSetDTOList);
     }
 
     @Override
@@ -145,7 +154,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public Collection<Dictionary> describeDictionary() {
-        return dsDAO.getMappedFields();
+        return dsDAO.getMappedFieldsOrderByDisplayOrder();
     }
 
     @Override
@@ -180,6 +189,25 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return dsDAO.findDataSetByObjectId(objectId);
     }
 
+    @Override
+    public List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList){
+        return dsDAO.findNeedsApprovalDataSetByObjectId(objectIdList);
+    }
+
+    private Collection<DataSetDTO> orderByDataSetId(Collection<DataSetDTO> dataSetDTOList) {
+        if(CollectionUtils.isNotEmpty(dataSetDTOList)){
+            dataSetDTOList.stream().forEach(dataSetDTO -> {
+                List<DataSetPropertyDTO> dataSetProperty = dataSetDTO.getProperties().stream().filter(property -> property.getPropertyName().equals(DATA_SET_ID)).collect(Collectors.toList());
+                List<DataSetPropertyDTO> properties = dataSetDTO.getProperties().stream().filter(property -> !property.getPropertyName().equals(DATA_SET_ID)).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(dataSetProperty)){
+                    properties.add(1, dataSetProperty.get(0));
+                    dataSetDTO.setProperties(properties);
+                }
+            });
+        }
+        return dataSetDTOList;
+    }
+
 
     public DataSetDTO getDataSetDTO(String objectId){
         Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByOBjectId(objectId);
@@ -190,9 +218,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
 
-    public List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList){
-        return dsDAO.findNeedsApprovalDataSetByObjectId(objectIdList);
-    }
 
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {

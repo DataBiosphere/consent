@@ -10,6 +10,6 @@ import java.sql.SQLException;
 public class DictionaryMapper implements ResultSetMapper<Dictionary> {
     @Override
     public Dictionary map(int i, ResultSet r, StatementContext statementContext) throws SQLException {
-        return new Dictionary(r.getInt("keyId"), r.getString("key"), r.getBoolean("required"), r.getInt("displayOrder"));
+        return new Dictionary(r.getInt("keyId"), r.getString("key"), r.getBoolean("required"), r.getInt("displayOrder"), r.getInt("receiveOrder"));
     }
 }

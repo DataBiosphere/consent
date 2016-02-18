@@ -90,8 +90,12 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Integer> searchDataSetsIdsByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({DictionaryMapper.class})
+    @SqlQuery("SELECT * FROM dictionary d order by receiveOrder")
+    List<Dictionary> getMappedFieldsOrderByReceiveOrder();
+
+    @RegisterMapper({DictionaryMapper.class})
     @SqlQuery("SELECT * FROM dictionary d order by displayOrder")
-    List<Dictionary> getMappedFields();
+    List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
     @SqlQuery("SELECT COUNT(*) FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
     Integer consentAssociationCount(@BindIn("objectIdList") List<String> objectIdList);
