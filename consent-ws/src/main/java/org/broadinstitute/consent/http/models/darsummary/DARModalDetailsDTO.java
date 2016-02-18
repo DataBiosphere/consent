@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 
 public class DARModalDetailsDTO {
 
@@ -58,48 +57,49 @@ public class DARModalDetailsDTO {
     private List<SummaryItem> generatePurposeStatementsSummary(Document darDocument) {
         List<SummaryItem> psList = new ArrayList<>();
         if(darDocument.getBoolean("forProfit")){
-            psList.add(new SummaryItem("The dataset will be used in a study related to a commercial purpose.", false));
+            psList.add(new SummaryItem(SummaryConstants.PS_FOR_PROFIT, false));
         }
         if(darDocument.getBoolean("onegender")) {
             if (darDocument.getString("gender").equals("F")) {
-                psList.add(new SummaryItem("The dataset will be used for the study of females", false));
+                psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_FEMALE, false));
             } else {
-                psList.add(new SummaryItem("The dataset will be used for the study of males.", false));
+                psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_MALE, false));
             }
         }
         if(darDocument.getBoolean("pediatric")){
-            psList.add(new SummaryItem("The dataset will  be used for the study of children.", false));
+            psList.add(new SummaryItem("Pediatric: ", SummaryConstants.PS_PEDIATRIC_STUDY, false));
         }
         if(darDocument.getBoolean("illegalbehave")){
-            psList.add(new SummaryItem("The dataset will be used for the study of illegal behaviors (violence, domestic abuse, prostitution, sexual victimization).", true));
+            psList.add(new SummaryItem("Illegal Behavior: ", SummaryConstants.PS_ILLEGAL_BEHAVIOR_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("addiction")){
-            psList.add(new SummaryItem("The dataset will be used for the study of alcohol or drug abuse, or abuse of other addictive products.", true));
+            psList.add(new SummaryItem("Addiction: ", SummaryConstants.PS_ADDICTIONS_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("sexualdiseases")){
-            psList.add(new SummaryItem("The dataset will be used for the study of sexual preferences or sexually transmitted diseases.", true));
+            psList.add(new SummaryItem("Sexual Diseases: ", SummaryConstants.PS_SEXUAL_DISEASES_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("stigmatizediseases")){
-            psList.add(new SummaryItem("The dataset will be used for the study of stigmatizing illnesses.", true));
+            psList.add(new SummaryItem("Stigmatized Diseases: ", SummaryConstants.PS_STIGMATIZING_ILLNESSES_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("vulnerablepop")){
-            psList.add(new SummaryItem("The dataset will be used for a study targeting a vulnerable population as defined in 456 CFR (children, prisoners, pregnant women, mentally disabled persons, or [SIGNIFICANTLY] economically or educationally disadvantaged persons).", true));
+            psList.add(new SummaryItem("Vulnerable Population: ", SummaryConstants.PS_VULNERABLE_POPULATION_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("popmigration")){
-            psList.add(new SummaryItem("The dataset will be used for the study of Population Origins/Migration patterns.", true));
+            psList.add(new SummaryItem("population Migration: ", SummaryConstants.PS_POPULATION_MIGRATION_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("psychtraits")){
-            psList.add(new SummaryItem("The dataset will be used for the study of psychological traits, including intelligence, attention, emotion.", true));
+            psList.add(new SummaryItem("Psycological Traits: ", SummaryConstants.PS_PSYCOLOGICAL_TRAITS_STUDY, true));
             sensitivePopulationIsTrue();
         }
         if(darDocument.getBoolean("nothealth")){
-            psList.add(new SummaryItem("The dataset will be used for the research that correlates  ethnicity, race, or gender with genotypic or other phenotypic variables, for purposes beyond biomedical or health-related research, or in ways may not be easily related to Health.", true));
+            psList.add(new SummaryItem("Not Health Related: ", SummaryConstants.PS_NOT_HEALT_RELATED_STUDY
+                    , true));
             sensitivePopulationIsTrue();
         }
         if(!CollectionUtils.isEmpty(psList)){
@@ -123,19 +123,19 @@ public class DARModalDetailsDTO {
     private List<SummaryItem> generateResearchTypeSummary(Document darDocument) {
         List<SummaryItem> researchList = new ArrayList<>();
         if(darDocument.containsKey("diseases") && darDocument.getBoolean("diseases")){
-            researchList.add(new SummaryItem("Disease-related studies:", " The primary purpose of the research is to learn more about a particular disease or disorder, a trait, or a set of related conditions."));
+            researchList.add(new SummaryItem(SummaryConstants.RT_DISEASE_RELATED, SummaryConstants.RT_DISEASE_RELATED_DETAIL));
         }
         if(darDocument.containsKey("methods") && darDocument.getBoolean("methods")){
-            researchList.add(new SummaryItem("Methods development and validation studies:", " The primary purpose of the research is to develop and/or validate new methods for analyzing or interpreting data. Data will be used for developing and/or validating new methods."));
+            researchList.add(new SummaryItem(SummaryConstants.RT_METHODS_DEVELOPMENT, SummaryConstants.RT_METHODS_DEVELOPMENT_DETAIL));
         }
         if(darDocument.containsKey("controls") && darDocument.getBoolean("controls")){
-            researchList.add(new SummaryItem("Controls:", " The reason for this request is to increase the number of controls available for a comparison group."));
+            researchList.add(new SummaryItem(SummaryConstants.RT_CONTROLS, SummaryConstants.RT_CONTROLS_DETAIL));
         }
         if(darDocument.containsKey("population") && darDocument.getBoolean("population")){
-            researchList.add(new SummaryItem("Population structure or normal variation studies:", " The primary purpose of the research is to understand variation in the general population."));
+            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL));
         }
         if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
-            researchList.add(new SummaryItem("Other: ", darDocument.getString("othertext")));
+            researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString("othertext")));
             manualReviewIsTrue();
         }
         return researchList;
