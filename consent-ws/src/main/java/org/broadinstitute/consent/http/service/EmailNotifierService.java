@@ -2,6 +2,16 @@ package org.broadinstitute.consent.http.service;
 
 import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import javax.mail.MessagingException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -11,23 +21,20 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.MailServiceAPI;
+import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 import org.bson.types.ObjectId;
-
-import javax.mail.MessagingException;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
@@ -189,17 +196,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSet, String darCode, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            for(DACUser owner: dataSet.keySet()){
-                String dataOwnerConsoleURL = SERVERURL + DATA_OWNER_CONSOLE_URL;
-                Writer template = templateHelper.getApprovedDarTemplate(owner.getDisplayName(), darCode, dataSet.get(owner), dataOwnerConsoleURL, amountOfTime);
-                mailService.sendFlaggedDarAdminApprovedMessage(owner.getEmail(), darCode, SERVERURL, template);
-            }
-        }
-    }
-
-    @Override
     public void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
         if(isServiceActive){
             for(DACUser admin: admins) {
@@ -207,6 +203,53 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 mailService.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVERURL, template);
             }
         }
+    }
+
+    @Override
+    public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSetMap, Document access, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            for(DACUser owner: dataSetMap.keySet()){
+                String dataOwnerConsoleURL = SERVERURL + DATA_OWNER_CONSOLE_URL;
+                Writer template =  getPIApprovalMessageTemplate(access, dataSetMap.get(owner), owner, amountOfTime, dataOwnerConsoleURL);
+                mailService.sendFlaggedDarAdminApprovedMessage(owner.getEmail(), access.getString(DarConstants.DAR_CODE), SERVERURL, template);
+            }
+        }
+    }
+
+    private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, DACUser user, int daysToApprove, String URL) throws IOException, TemplateException {
+        List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
+        for(DataSet ds: dataSets){
+            dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName()));
+        }
+        DARModalDetailsDTO details = new DARModalDetailsDTO(access);
+        List<String> checkedSentences = (details.getPurposeStatements()).stream().map(SummaryItem::getDescription).collect(Collectors.toList());
+        return templateHelper.getApprovedDarTemplate(
+                user.getDisplayName(),
+                getDateString(daysToApprove),
+                details.getDarCode(),
+                details.getPrincipalInvestigator(),
+                details.getInstitutionName(),
+                access.getString(DarConstants.RUS),
+                details.getResearchType(),
+                generateDiseasesString(details.getDiseases()),
+                checkedSentences,
+                consentAPI.getConsentFromDatasetID(dataSets.get(0).getObjectId()).translatedUseRestriction,
+                dsPIModelList,
+                String.valueOf(daysToApprove),
+                URL);
+    }
+
+    private String getDateString(int daysToApprove) {
+        DateTimeFormatter dtfOut = DateTimeFormat.forPattern("MM/dd/yyyy");
+        return new DateTime().plusDays(daysToApprove).toString(dtfOut);
+    }
+
+    private String generateDiseasesString(List<String> dsList){
+        String diseases = new String();
+        for(String ds: dsList){
+            diseases = diseases.concat(ds+", ");
+        }
+        return diseases.substring(0, diseases.length()-2);
     }
 
     private void sendNewCaseMessage(String userAddress, String electionType, String entityId, Writer template) throws MessagingException, IOException, TemplateException {

@@ -4,17 +4,17 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 
 public class FreeMarkerTemplateHelper {
 
@@ -63,9 +63,13 @@ public class FreeMarkerTemplateHelper {
         return generateAdminApprovedDarTemplate(userName, entityId, dataOwnersDataSets, serverUrl, temp);
     }
 
-    public Writer getApprovedDarTemplate(String userName, String entityId, List<DataSet> datasets, String serverUrl, Integer amountOfTime) throws IOException, TemplateException {
+    public Writer getApprovedDarTemplate(String userName, String date, String entityId, String investigator, String institution,
+                                         String researchPurpose, List<SummaryItem> typeOfResearch, String diseaseArea,
+                                         List<String> checkedSentences, String translatedUseRestriction, List<DataSetPIMailModel> datasets,
+                                         String daysToApprove, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("owner-dar-approved.html");
-        return generateApprovedDarTemplate(userName, entityId, datasets, serverUrl, temp, amountOfTime);
+        return generateApprovedDarTemplate(userName, date, entityId, investigator, institution, researchPurpose, typeOfResearch, diseaseArea,
+                checkedSentences, translatedUseRestriction, datasets, daysToApprove, serverUrl, temp);
     }
 
     public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String type, String serverUrl) throws IOException, TemplateException {
@@ -137,8 +141,12 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateApprovedDarTemplate(String userName, String entityId, List<DataSet> dataSetList, String serverUrl, Template temp, Integer amountOfTime) throws IOException, TemplateException {
-        ApprovedDarModel model = new ApprovedDarModel(userName, entityId, dataSetList, serverUrl, amountOfTime);
+    private Writer generateApprovedDarTemplate(String userName, String date, String entityId, String investigator, String institution,
+                                               String researchPurpose, List<SummaryItem> typeOfResearch, String diseaseArea,
+                                               List<String> checkedSentences, String translatedUseRestriction, List<DataSetPIMailModel> datasets,
+                                               String daysToApprove, String serverUrl, Template temp) throws IOException, TemplateException {
+        ApprovedDarModel model = new ApprovedDarModel(userName, date, entityId, investigator, institution, researchPurpose, typeOfResearch, diseaseArea, checkedSentences,
+                translatedUseRestriction, datasets, serverUrl, daysToApprove);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

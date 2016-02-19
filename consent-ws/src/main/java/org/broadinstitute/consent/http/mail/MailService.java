@@ -23,8 +23,7 @@ public class MailService extends AbstractMailServiceAPI {
     private ReminderMessage reminderMessageCreator = new ReminderMessage();
     private DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
     private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
-    private FlaggedDarAdminApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarAdminApprovedMessage();
-    private FlaggedDarMessage darApprovedMessageCreator = new FlaggedDarMessage();
+    private FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
     private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
@@ -103,7 +102,7 @@ public class MailService extends AbstractMailServiceAPI {
 
     @Override
     public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarAdminMessage(getMailSession, template, dataAccessRequestId, type);
+        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarMessage(getMailSession, template, dataAccessRequestId, type);
         sendMessage(message, userAddress);
     }
 

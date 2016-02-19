@@ -213,7 +213,7 @@ public class DataRequestVoteResource extends Resource {
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierAPI.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }
-                emailNotifierAPI.sendNeedsPIApprovalMessage(dataOwnerDataSet, access.getString(DarConstants.DAR_CODE), approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
+                emailNotifierAPI.sendNeedsPIApprovalMessage(dataOwnerDataSet, access, approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
             }
         }
     }
