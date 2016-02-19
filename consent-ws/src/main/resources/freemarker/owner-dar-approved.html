@@ -29,7 +29,7 @@
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 21px; display: block; font-weight: 500; padding: 5px 40px 5px;" align="left">
-                <p>The following Dataset(s), for which you are the Data Owner, were approved for sharing by the Broad Data Use Oversight System Data Access Committee (DAC). The system will enable you to notify the DAC in the next 7 days in case you have any concern or would like to disapprove sharing this data for this particular case.</p>
+                <p>The following Dataset(s), for which you are the Data Owner, were approved for sharing by the Broad Data Use Oversight System Data Access Committee (DAC). The system will enable you to notify the DAC in the next ${days} days in case you have any concern or would like to disapprove sharing this data for this particular case.</p>
             </td>
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important;">
@@ -39,62 +39,66 @@
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
-                <p>Requester Name: ${requesterName}</p>
+                <p><b>Requester Name:</b> ${requesterName}</p>
             </td>
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
-                <p>Requester Institute: ${requesterInstitute}</p>
+                <p><b>Requester Institute:</b> ${requesterInstitute}</p>
             </td>
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
-                <p>Research Purpose: ${researchPurpose}</p>
+                <p style="line-height: 25px;"><b>Research Purpose:</b> ${researchPurpose}</p>
             </td>
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
-                <p>Type of Research:</p>
+                <p><b>Type of Research:</b></p>
             </td>
         </tr>
         <tr>
-            <table style="width: 100%; margin: 15px 0 0 0; border-collapse: collapse;">
-                <tr>
-                    <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Research Type</th>
-                    <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Description</th>
-                </tr>
-                <#list typeOfResearch>
-                    <#items as trItem>
-                        <tr style="font-family: 'Roboto', sans-serif !important;">
-                            <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${trItem.title}</td>
-                            <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${trItem.description}</td>
-                        </tr>
-                    </#items>
-                </#list>
-            </table>
-        </tr>
-        <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
-            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
-                <p>Disease Areas: ${diseaseArea}</p>
-            </td>
-        </tr>
-        <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
-            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
-                <p>Research Purpose Statements:</p>
-            </td>
-        </tr>
-        <tr>
-            <table style="width: 100%; margin: 15px 0 0 0; border-collapse: collapse;">
-                <#list checkedSentences>
-                    <ul>
-                        <#items as checked>
-                            <li style="font-family: 'Roboto', sans-serif !important;">
-                                ${checked}
-                            </li>
+            <td style="border-collapse:collapse;text-align:left;line-height:25px;display:block;padding:0px 40px 20px">
+                <table style="width: 100%; margin: 15px 0 0 0; border-collapse: collapse;">
+                    <tr>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Type</th>
+                        <th style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px;">Description</th>
+                    </tr>
+                    <#list typeOfResearch>
+                        <#items as trItem>
+                            <tr style="font-family: 'Roboto', sans-serif !important;">
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${trItem.title}</td>
+                                <td style="font-family: 'Roboto', sans-serif !important; padding: 5px; border-bottom: 1px solid #cccccc;">${trItem.description}</td>
+                            </tr>
                         </#items>
-                    </ul>
-                </#list>
-            </table>
+                    </#list>
+                </table>
+            </td>
+        </tr>
+        <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
+            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
+                <p style="line-height: 25px;"><b>Disease Areas:</b> ${diseaseArea}</p>
+            </td>
+        </tr>
+        <tr style="font-family: 'Roboto', sans-serif !important; padding: 2px;">
+            <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #777777; text-align: left; line-height: 3px; display: block; font-weight: 500; padding: 1px 40px 1px;" align="left">
+                <p><b>Research Purpose Statements:</b></p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 0px 40px 0px 0px">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <#list checkedSentences>
+                        <ul>
+                            <#items as checked>
+                                <li style="font-family: 'Roboto', sans-serif !important;">
+                                    ${checked}
+                                </li>
+                            </#items>
+                        </ul>
+                    </#list>
+                </table>
+            </td>
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important;">
             <td style="border-collapse: collapse; font-family: 'Roboto', sans-serif !important; font-size: 16px; color: #777777; text-align: left; line-height: 25px; display: block; padding: 0px 40px 20px;" align="left">
@@ -112,11 +116,9 @@
                             </tr>
                         </#items>
                     </#list>
-                    <tr style="font-family: 'Roboto', sans-serif !important; padding: 5px;">
-                        <td style="font-family: 'Roboto', sans-serif !important; font-style: italic; color: #00609f; padding: 0 0 5px 5px;">Data Use Restrictions</td>
-                        <td style="font-family: 'Roboto', sans-serif !important; padding: 5px;">${translatedUseRestriction}</td>
-                    </tr>
                 </table>
+                <p style="font-family: 'Roboto', sans-serif !important; font-size: 14px; color: #00609f; padding: 0 0 5px 5px; margin: 20px 0px 0px 0px">Data Use Restrictions</p>
+                <p style="font-family: 'Roboto', sans-serif !important; font-size: 14px; padding: 5px; margin: 0px">${translatedUseRestriction}</p>
             </td>
         </tr>
         <tr style="font-family: 'Roboto', sans-serif !important;">
