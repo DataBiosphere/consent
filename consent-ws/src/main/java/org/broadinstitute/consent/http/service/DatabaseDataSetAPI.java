@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
@@ -78,13 +79,20 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             List<String> objectIdList = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+
             List<DataSet> existentDataSets = dsDAO.searchDataSetsByObjectIdList(objectIdList);
+            Map<String,DataSet> dataSetMap = new HashMap<>();
+
+            existentDataSets.stream().forEach(dataSet -> {
+                dataSetMap.put(dataSet.getObjectId(),dataSet);
+            });
+
             List<Integer> existentIdList = existentDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if (validateExistentAssociations(dataSets)) {
+
                 dsDAO.deleteDataSetsProperties(existentIdList);
-                dsDAO.deleteDataSets(existentIdList);
-                dsDAO.insertAll(processDisableDataSets(dataSets, existentDataSets));
-                insertProperties(dataSets);
+                processDataSets(dataSets, dataSetMap);
+
             }
         }
         result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
@@ -316,14 +324,25 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     }
 
-    private Collection<DataSet> processDisableDataSets(List<DataSet> dataSets, List<DataSet> existentDataSets) {
-        Map<String, DataSet> dataSetMap = dataSets.stream().collect(Collectors.toMap(DataSet::getObjectId, dataSet -> dataSet));
-        if(CollectionUtils.isNotEmpty(dataSets) && CollectionUtils.isNotEmpty(existentDataSets)){
-            existentDataSets.stream().filter(ds -> !ds.getActive()).forEach(s ->
-                            dataSetMap.get(s.getObjectId()).setActive(false)
-            );
+    private void processDataSets(List<DataSet> dataSets, Map<String,DataSet> existentDataSets) {
+        List<DataSet> dataSetToCreate = new ArrayList<>();
+        List<DataSet> dataSetToUpdate = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(dataSets) && MapUtils.isNotEmpty(existentDataSets)){
+            dataSets.stream().forEach(newDataSet -> {
+                if(existentDataSets.containsKey(newDataSet.getObjectId())){
+                    DataSet existentDataSet = existentDataSets.get(newDataSet.getObjectId());
+                    newDataSet.setDataSetId(existentDataSet.getDataSetId());
+                    dataSetToUpdate.add(newDataSet);
+                }else{
+                    dataSetToCreate.add(newDataSet);
+                }
+            });
+        }else{
+            dataSetToCreate.addAll(dataSets);
         }
-        return dataSetMap.values();
+        dsDAO.insertAll(dataSetToCreate);
+        dsDAO.updateAll(dataSetToUpdate);
+        insertProperties(dataSets);
     }
 
 }

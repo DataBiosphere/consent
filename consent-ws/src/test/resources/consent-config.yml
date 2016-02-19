@@ -47,5 +47,5 @@ mailConfiguration:
   googleAccount:
   accountPassword:
 freeMarkerConfiguration:
-  templateDirectory: src/main/resources/freemarker
+  templateDirectory: /freemarker
   defaultEncoding: UTF-8
