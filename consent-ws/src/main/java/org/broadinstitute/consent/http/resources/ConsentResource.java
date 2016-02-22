@@ -38,7 +38,9 @@ public class ConsentResource extends Resource {
     @Consumes("application/json")
     public Response createConsent(@Context UriInfo info, Consent rec) {
         try {
-            rec.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),rec.getUseRestriction()));
+            if (rec.getTranslatedUseRestriction() == null) {
+                rec.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),rec.getUseRestriction()));
+            }
             Consent consent = api.create(rec);
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
@@ -59,7 +61,9 @@ public class ConsentResource extends Resource {
     @Produces("application/json")
     public Response update(@PathParam("id") String id, Consent updated) {
         try {
-            updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
+            if (updated.getTranslatedUseRestriction() == null) {
+                updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
+            }
             updated = api.update(id, updated);
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
