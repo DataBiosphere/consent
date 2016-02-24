@@ -1,3 +1,5 @@
+DELETE FROM dataset_audit_property;
+DELETE FROM dataset_audit;
 DELETE FROM datasetproperty WHERE dataSetId IN ( Select dataSetId FROM dataset WHERE objectId IN('SC-20657'));
 DELETE FROM datasetproperty WHERE dataSetId IN ( Select dataSetId FROM dataset WHERE objectId IN('SC-20658'));
 DELETE FROM datasetproperty WHERE dataSetId IN ( Select dataSetId FROM dataset WHERE objectId IN('SC-20659'));

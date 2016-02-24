@@ -78,8 +78,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId where d.objectId in (<objectIdList>) order by d.dataSetId, k.displayOrder")
-    Set<DataSetDTO> findDataSets(@BindIn("objectIdList") List<String> objectIdList);
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId where d.objectId in (<objectIdList>) order by d.dataSetId, k.receiveOrder")
+    Set<DataSetDTO> findDataSetsByReceiveOrder(@BindIn("objectIdList") List<String> objectIdList);
 
     @Mapper(BatchMapper.class)
     @SqlQuery("select datasetId, objectId  from dataset where objectId in (<objectIdList>)")

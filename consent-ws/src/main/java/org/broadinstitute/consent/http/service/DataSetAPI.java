@@ -11,9 +11,9 @@ import java.util.Map;
 
 public interface DataSetAPI {
 
-    ParseResult create(File dataSetFile);
+    ParseResult create(File dataSetFile, Integer userId);
 
-    ParseResult overwrite(File dataSetFile);
+    ParseResult overwrite(File dataSetFile, Integer userId);
 
     Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
 
@@ -23,9 +23,11 @@ public interface DataSetAPI {
 
     DataSetDTO getDataSetDTO(String objectId ) ;
 
-    Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
+    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) ;
 
-    Collection<Dictionary> describeDictionary();
+    Collection<Dictionary> describeDictionaryByDisplayOrder();
+
+    Collection<Dictionary> describeDictionaryByReceiveOrder();
 
     List<Map<String, String>> autoCompleteDataSets(String partial);
 

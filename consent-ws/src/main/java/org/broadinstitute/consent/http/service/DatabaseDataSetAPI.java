@@ -2,17 +2,21 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.broadinstitute.consent.http.DataSetAudit;
+import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.DataSetAuditProperty;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -33,38 +37,44 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final DACUserRoleDAO dsRoleDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
+    private DataSetAuditDAO dataSetAuditDAO;
     public static final String DATA_SET_ID = "Dataset ID";
 
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
     private final String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
     private final String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
+    private final String CREATE = "CREATE";
+    private final String UPDATE = "UPDATE";
+
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO,  dsRoleDAO, consentDAO));
+    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO,  dsRoleDAO, consentDAO, dataSetAuditDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.dsRoleDAO = dsRoleDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
+        this.dataSetAuditDAO = dataSetAuditDAO;
     }
 
 
     @Override
-    public ParseResult create(File dataSetFile) {
+    public ParseResult create(File dataSetFile, Integer userId) {
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             if (completeDBCheck(dataSets)) {
                 dsDAO.insertAll(dataSets);
-                insertProperties(dataSets);
+                List<DataSetProperty> dataSetProperties = insertProperties(dataSets);
+                insertDataSetAudit(dataSets, CREATE, userId, dataSetProperties);
             } else {
                 result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
                 result.getErrors().addAll(addDuplicatedRowsErrors(dataSets));
@@ -73,8 +83,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return result;
     }
 
+
     @Override
-    public ParseResult overwrite(File dataSetFile) {
+    public ParseResult overwrite(File dataSetFile, Integer userId) {
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -91,7 +102,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             if (validateExistentAssociations(dataSets)) {
 
                 dsDAO.deleteDataSetsProperties(existentIdList);
-                processDataSets(dataSets, dataSetMap);
+                processDataSets(dataSets, dataSetMap, userId);
 
             }
         }
@@ -156,18 +167,23 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public Collection<DataSetDTO> describeDataSets(List<String> objectIds) {
-        return dsDAO.findDataSets(objectIds);
+    public Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) {
+        return dsDAO.findDataSetsByReceiveOrder(objectIds);
     }
 
     @Override
-    public Collection<Dictionary> describeDictionary() {
+    public Collection<Dictionary> describeDictionaryByDisplayOrder() {
         return dsDAO.getMappedFieldsOrderByDisplayOrder();
     }
 
     @Override
+    public Collection<Dictionary> describeDictionaryByReceiveOrder() {
+        return dsDAO.getMappedFieldsOrderByReceiveOrder();
+    }
+
+    @Override
     public  List< Map<String, String>> autoCompleteDataSets(String partial) {
-        List< Map<String, String>> map =  dsDAO.getObjectIdsbyPartial(partial);
+        List<Map<String, String>> map =  dsDAO.getObjectIdsbyPartial(partial);
         return map;
     }
 
@@ -225,9 +241,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         throw new NotFoundException();
     }
 
-
-
-
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<Association> presentAssociations = dsDAO.getAssociationsForObjectIdList(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
@@ -259,7 +272,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 .map(DataSet::getObjectId).collect(Collectors.toList()));
     }
 
-    private void insertProperties(List<DataSet> dataSets) {
+    private List<DataSetProperty> insertProperties(List<DataSet> dataSets) {
         List<String> objectIdList = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
         List<Map<String, Integer>> retrievedValues = dsDAO.searchByObjectIdList(objectIdList);
         Map<String, Integer> retrievedValuesMap = getOneMap(retrievedValues);
@@ -274,7 +287,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             dataSetPropertiesList.addAll(dataSet.getProperties());
         });
         dsDAO.insertDataSetsProperties(dataSetPropertiesList);
+        return dataSetPropertiesList;
     }
+
 
     /**
      * This method takes a List<Map<objectId, datasetId>> and returns a merged
@@ -324,7 +339,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     }
 
-    private void processDataSets(List<DataSet> dataSets, Map<String,DataSet> existentDataSets) {
+    private void processDataSets(List<DataSet> dataSets, Map<String,DataSet> existentDataSets, Integer userId) {
         List<DataSet> dataSetToCreate = new ArrayList<>();
         List<DataSet> dataSetToUpdate = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(dataSets) && MapUtils.isNotEmpty(existentDataSets)){
@@ -340,9 +355,64 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         }else{
             dataSetToCreate.addAll(dataSets);
         }
-        dsDAO.insertAll(dataSetToCreate);
-        dsDAO.updateAll(dataSetToUpdate);
-        insertProperties(dataSets);
+        if(CollectionUtils.isNotEmpty(dataSetToCreate)){
+            dsDAO.insertAll(dataSetToCreate);
+            List<DataSetProperty> properties = insertProperties(dataSetToCreate);
+            insertDataSetAudit(dataSetToCreate, CREATE, userId, properties);
+        }
+        if(CollectionUtils.isNotEmpty(dataSetToUpdate)){
+            dsDAO.updateAll(dataSetToUpdate);
+            List<DataSetProperty> properties =  insertProperties(dataSetToUpdate);
+            insertDataSetAudit(dataSetToUpdate, UPDATE, userId, properties);
+        }
+    }
+
+
+    private void insertDataSetAudit(List<DataSet> dataSets, String action, Integer userId, List<DataSetProperty> properties ) {
+        Map<String, DataSet> dataSetObjectIdMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(dataSets)){
+            dataSets.stream().forEach(dataSet -> {
+                dataSetObjectIdMap.put(dataSet.getObjectId(), dataSet);
+            });
+        }
+        List<DataSet> existentDataSets = dsDAO.getDataSetsForObjectIdList(new ArrayList(dataSetObjectIdMap.keySet()));
+        createDataSetAudit(existentDataSets, userId, action, properties);
+    }
+
+
+    private void createDataSetAudit(List<DataSet> dataSetList, Integer userId, String action, List<DataSetProperty> properties ) {
+       if(CollectionUtils.isNotEmpty(dataSetList)){
+           Map<Integer, List<DataSetProperty>> dataSetPropertyMap = new HashMap<>();
+           properties.stream().forEach(property -> {
+               if(dataSetPropertyMap.containsKey(property.getDataSetId())){
+                   dataSetPropertyMap.get(property.getDataSetId()).add(property);
+               }else{
+                   dataSetPropertyMap.put(property.getDataSetId(), new ArrayList<>(Arrays.asList(property)));
+               }
+
+           });
+           dataSetList.stream().forEach(dataSet -> {
+               DataSetAudit dataSetAudit = new DataSetAudit(dataSet.getDataSetId(), dataSet.getObjectId(), dataSet.getName(), dataSet.getCreateDate(), dataSet.getActive(), userId, action);
+               Integer dataSetAuditId = dataSetAuditDAO.insertDataSetAudit(dataSetAudit);
+               dataSetAuditDAO.insertDataSetAuditProperties(createDataSetAuditProperties(dataSet, dataSetAuditId, dataSetPropertyMap));
+           });
+       }
+
+    }
+
+    private List<DataSetAuditProperty> createDataSetAuditProperties(DataSet dataSet, Integer dataSetAuditId,  Map<Integer, List<DataSetProperty>> propertiesMap) {
+        List<DataSetAuditProperty> auditProperties = new ArrayList<>();
+        List<DataSetProperty> properties = propertiesMap.get(dataSet.getDataSetId());
+        properties.stream().forEach(property -> {
+            auditProperties.add(new DataSetAuditProperty(
+                    property.getPropertyId(),
+                    property.getDataSetId(),
+                    property.getPropertyKey(),
+                    property.getPropertyValue(),
+                    property.getCreateDate(),
+                    dataSetAuditId));
+        });
+        return auditProperties;
     }
 
 }

@@ -10,6 +10,6 @@ import java.sql.SQLException;
 public class DataSetMapper implements ResultSetMapper<DataSet> {
 
     public DataSet map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-        return new DataSet(r.getInt("dataSetId"), r.getString("objectId"), r.getString("name"), r.getDate("createDate"), r.getBoolean("active"));
+        return new DataSet(r.getInt("dataSetId"), r.getString("objectId"), r.getString("name"), r.getTimestamp("createDate"), r.getBoolean("active"));
     }
 }
