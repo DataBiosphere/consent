@@ -81,7 +81,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Document doc = new Document().append("testingInfo1", "someValue");
         doc.append(DarConstants.DATASET_ID, new ArrayList<>(Arrays.asList("SC-20660")));
         doc.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-        doc.append("translated_restriction","translated_test_restriction");
+        doc.append(DarConstants.TRANSLATED_RESTRICTION,"translated_test_restriction");
         Document doc2 = new Document().append("testingInfo2", "someValue2").append(DarConstants.DATASET_ID, Arrays.asList("SC-20660")).append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString())).append("translated_restriction","translated_test_restriction");
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         mongoi.getDataAccessRequestCollection().insertOne(doc2);

@@ -462,7 +462,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 election.setElectionType(ElectionType.DATA_ACCESS.getValue());
                 query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 dar = mongo.getDataAccessRequestCollection().find(query).first();
-                election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
+                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
                 try {
                     String restriction  =  new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
                     election.setUseRestriction((UseRestriction.parse(restriction)));
@@ -474,7 +474,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 election.setElectionType(ElectionType.RP.getValue());
                 query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 dar = mongo.getDataAccessRequestCollection().find(query).first();
-                election.setTranslatedUseRestriction(dar.getString("translated_restriction"));
+                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
                 try {
                     String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
                     election.setUseRestriction((UseRestriction.parse(restriction)));

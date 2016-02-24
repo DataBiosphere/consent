@@ -82,12 +82,12 @@ public class DataAccessRequestResource extends Resource {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
+                dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
         }
-        dar.append("sortDate", new Date());
+        dar.append(DarConstants.SORT_DATE, new Date());
         result = dataAccessRequestAPI.createDataAccessRequest(dar);
         uri = info.getRequestUriBuilder().build();
         result.forEach(r -> {
@@ -115,7 +115,7 @@ public class DataAccessRequestResource extends Resource {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
+                dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
             matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
@@ -270,7 +270,7 @@ public class DataAccessRequestResource extends Resource {
     }
 
     private Document savePartialDarRequest(Document dar) throws Exception{
-        dar.append("sortDate",new Date());
+        dar.append(DarConstants.SORT_DATE,new Date());
         return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
     }
 
