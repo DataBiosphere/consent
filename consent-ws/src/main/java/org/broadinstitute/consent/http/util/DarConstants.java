@@ -23,6 +23,8 @@ public class DarConstants {
 
     public static final String RESTRICTION = "restriction";
 
+    public static final String TRANSLATED_RESTRICTION = "translated_restriction";
+
     public static final String PARTIAL_DAR_CODE = "partial_dar_code";
 
     public static final String PARTIAL_DAR_CODE_COUNTER = "partial_dar_code_counter";
@@ -32,5 +34,7 @@ public class DarConstants {
     public static final Integer DEFAULT_AMOUNT_OF_DAYS = 7;
 
     public static final String DUOS_DEFAULT = "Default Duos";
+
+    public static final String SORT_DATE = "sortDate";
 
 }
