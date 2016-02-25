@@ -42,9 +42,11 @@ public class DataSetResource extends Resource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
+    @Path("/{userId}")
     public Response createDataSet(
             @FormDataParam("data") InputStream uploadedDataSet,
             @FormDataParam("data") FormDataBodyPart part,
+            @PathParam("userId") Integer userId,
             @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
 
         logger().debug("POSTing Data Set");
@@ -59,9 +61,9 @@ public class DataSetResource extends Resource {
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 ParseResult result;
                 if(overwrite) {
-                    result = api.overwrite(inputFile);
+                    result = api.overwrite(inputFile, userId);
                 }else{
-                    result = api.create(inputFile);
+                    result = api.create(inputFile, userId);
                 }
                 dataSets = result.getDatasets();
                 errors = result.getErrors();
@@ -136,7 +138,7 @@ public class DataSetResource extends Resource {
 
         JSONObject json = new JSONObject();
 
-        Collection<Dictionary> headers  =  api.describeDictionary();
+        Collection<Dictionary> headers  =  api.describeDictionaryByReceiveOrder();
 
         StringBuilder sb = new StringBuilder();
         for(Dictionary header : headers) {
@@ -151,7 +153,7 @@ public class DataSetResource extends Resource {
             return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
         }
 
-        Collection<DataSetDTO> rows = api.describeDataSets(idList);
+        Collection<DataSetDTO> rows = api.describeDataSetsByReceiveOrder(idList);
 
         for (DataSetDTO row : rows) {
             StringBuilder sbr = new StringBuilder();
@@ -192,7 +194,7 @@ public class DataSetResource extends Resource {
     @Path("/dictionary")
     @Produces("application/json")
     public Collection<Dictionary> describeDictionary(){
-        return api.describeDictionary();
+        return api.describeDictionaryByDisplayOrder();
     }
 
     @GET
