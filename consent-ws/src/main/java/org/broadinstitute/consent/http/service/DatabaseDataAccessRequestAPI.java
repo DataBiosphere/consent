@@ -297,6 +297,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return dar != null ? dar.get(field) : null;
     }
 
+    @Override
+    public boolean hasUseRestriction(String referenceId){
+        return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
+    }
+
+
     private void updateElection(Election access, Election rp) {
         if(access != null) {
             access.setStatus(ElectionStatus.CANCELED.getValue());

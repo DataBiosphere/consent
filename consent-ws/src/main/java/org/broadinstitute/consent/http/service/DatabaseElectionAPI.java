@@ -162,7 +162,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     while (itr.hasNext()) {
                         Document next = itr.next();
                         if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
-                            election.setReferenceId(next.get(DarConstants.DAR_CODE).toString());
+                            election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
                         }
                     }
                 } finally {
@@ -177,7 +177,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 elections.forEach(election -> {
                     List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
                             collect(Collectors.toList());
-                    election.setReferenceId(c.get(0).getName());
+                    election.setDisplayId(c.get(0).getName());
                 });
             }
         }
@@ -356,6 +356,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<Election> elections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
+
 
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
         for(Election e: elections){
