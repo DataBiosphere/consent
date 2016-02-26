@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface DataSetAuditDAO extends Transactional<DataSetAuditDAO> {
 
-    @SqlBatch("insert into dataset_audit_property (dataset_audit_id, dataSetId, propertyKey, propertyValue, date)" +
+    @SqlBatch("insert into dataset_audit_property (dataset_audit_id, dataSetId, propertyKey, propertyValue, modificationDate)" +
             " values (:dataSetAuditId, :dataSetId, :propertyKey, :propertyValue, :date)")
     void insertDataSetAuditProperties(@BindBean List<DataSetAuditProperty> dataSetPropertiesList);
 
-    @SqlUpdate("insert into dataset_audit (dataSetId, action, user, date, objectId, name, active) " +
+    @SqlUpdate("insert into dataset_audit (dataSetId, changeAction, modifiedByUser, modificationDate, objectId, name, active) " +
             " values (:dataSetId, :action, :user, :date, :objectId, :name, :active )")
     @GetGeneratedKeys
     Integer insertDataSetAudit(@BindBean DataSetAudit dataSets);

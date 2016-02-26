@@ -1,10 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.DataSetProperty;
-
 import java.util.Date;
-import java.util.Set;
 
 public class DataSetAudit {
 

@@ -13,13 +13,13 @@
             <column name="dataSetId" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="action" type="varchar(255)">
+            <column name="changeAction" type="varchar(255)">
                  <constraints nullable="false"/>
             </column>
-            <column name="user" type="bigint">
+            <column name="modifiedByUser" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="date" type="DATETIME">
+            <column name="modificationDate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="objectId" type="varchar(255)">
@@ -51,7 +51,7 @@
             <column name="propertyValue" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="date" type="DATETIME">
+            <column name="modificationDate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -64,7 +64,7 @@
                                  referencedTableName="dataset" referencesUniqueColumn="false"/>
     </changeSet>
     <changeSet author="vvicario" id="102">
-        <addForeignKeyConstraint baseColumnNames="user" baseTableName="dataset_audit"
+        <addForeignKeyConstraint baseColumnNames="modifiedByUser" baseTableName="dataset_audit"
                                  constraintName="fkUserDataSetAudit" deferrable="false" initiallyDeferred="false"
                                  onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacUserId"
                                  referencedTableName="dacuser" referencesUniqueColumn="false"/>
