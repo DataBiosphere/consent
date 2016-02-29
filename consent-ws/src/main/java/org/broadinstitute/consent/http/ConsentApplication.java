@@ -104,7 +104,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
+        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv );
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         // Mail Services

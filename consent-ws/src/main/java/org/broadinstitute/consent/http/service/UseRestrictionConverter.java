@@ -159,7 +159,7 @@ public class UseRestrictionConverter {
         return r;
     }
 
-    private Map<String, Object> parseAsMap(String str) {
+    public Map<String, Object> parseAsMap(String str) {
         ObjectReader reader = mapper.reader(Map.class);
         try {
             return reader.readValue(str);
