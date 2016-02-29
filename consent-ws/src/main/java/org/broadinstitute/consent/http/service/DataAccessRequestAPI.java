@@ -57,5 +57,7 @@ public interface DataAccessRequestAPI {
 
     List<DACUser> getUserEmailAndCancelElection(String referenceId);
 
+    boolean hasUseRestriction(String referenceId);
+
 }
 

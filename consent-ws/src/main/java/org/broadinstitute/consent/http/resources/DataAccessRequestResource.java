@@ -269,10 +269,6 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    private Document savePartialDarRequest(Document dar) throws Exception{
-        dar.append(DarConstants.SORT_DATE,new Date());
-        return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
-    }
 
     @PUT
     @Consumes("application/json")
@@ -314,17 +310,7 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
     }
 
-    private boolean requiresManualReview(Document dar) throws IOException {
-        Map<String, Object> form = parseAsMap(dar.toJson());
-        for (String field : fieldsForManualReview) {
-            if (form.containsKey(field)) {
-                if ((boolean) form.get(field)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+
 
     @PUT
     @Consumes("application/json")
@@ -345,8 +331,38 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    @GET
+    @Produces("application/json")
+    @Path("/hasUseRestriction/{referenceId}")
+    public Response hasUseRestriction(@PathParam("referenceId") String referenceId){
+        try{
+            return Response.ok("{\"hasUseRestriction\":"+dataAccessRequestAPI.hasUseRestriction(referenceId)+"}").build();
+        }catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+
     private Map<String, Object> parseAsMap(String str) throws IOException {
         ObjectReader reader = mapper.reader(Map.class);
         return reader.readValue(str);
+    }
+
+
+    private Document savePartialDarRequest(Document dar) throws Exception{
+        dar.append(DarConstants.SORT_DATE,new Date());
+        return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
+    }
+
+    private boolean requiresManualReview(Document dar) throws IOException {
+        Map<String, Object> form = parseAsMap(dar.toJson());
+        for (String field : fieldsForManualReview) {
+            if (form.containsKey(field)) {
+                if ((boolean) form.get(field)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

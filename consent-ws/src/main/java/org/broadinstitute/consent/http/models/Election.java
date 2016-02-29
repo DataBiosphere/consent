@@ -46,6 +46,9 @@ public class Election {
     @JsonProperty
     private Integer dataSetId;
 
+    @JsonProperty
+    private String displayId;
+
     public Election() {
     }
     public Election(Integer electionId, String electionType,
@@ -199,5 +202,13 @@ public class Election {
 
     public void setDataSetId(Integer dataSetId) {
         this.dataSetId = dataSetId;
+    }
+
+    public String getDisplayId() {
+        return displayId;
+    }
+
+    public void setDisplayId(String displayId) {
+        this.displayId = displayId;
     }
 }
