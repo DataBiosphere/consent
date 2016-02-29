@@ -1,24 +1,37 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
-import org.skife.jdbi.v2.sqlobject.*;
+import org.skife.jdbi.v2.sqlobject.Bind;
+import org.skife.jdbi.v2.sqlobject.BindBean;
+import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
+import org.skife.jdbi.v2.sqlobject.SqlBatch;
+import org.skife.jdbi.v2.sqlobject.SqlQuery;
+import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
-import java.util.Date;
-import java.util.List;
-
 @UseStringTemplate3StatementLocator
 @RegisterMapper({VoteMapper.class})
 public interface VoteDAO extends Transactional<VoteDAO> {
 
-
     @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and election.status = 'Open'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
+
+    @SqlQuery("select * from vote v where v.electionId IN (<electionIds>) and v.dacUserId = :dacUserId and v.vote is null")
+    List<Vote> findVotesByElectionsIdsAndUserId(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
+
+    // ALL VOTES, EVEN THE ONES NOT NULL
+    @SqlQuery("select * from vote v where v.electionId IN (<electionIds>) and v.dacUserId = :dacUserId")
+    List<Vote> findVotesByElectionsIdsAndUserIdIncludeMade(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
+
+    @SqlQuery("select * from vote v where v.electionId IN (<electionIds>) and v.dacUserId = :dacUserId and v.vote is null and v.has_concerns is false")
+    List<Vote> findDataOwnerVotesByElectionsIdsAndUserId(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId " +
             "where election.electionId = :electionId and v.type != 'CHAIRPERSON'")
@@ -42,7 +55,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select  *  from vote v where  v.electionId = :electionIds and v.type = :type")
     List<Vote> findVotesByElectionIdAndType(@Bind("electionIds") Integer electionIds, @Bind("type") String type);
 
-
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.vote is null and v.type = 'DAC'")
     List<Vote> findPendingVotesByElectionId(@Bind("electionId") Integer electionId);
 
@@ -58,18 +70,15 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.type = :type")
     Vote findVoteByElectionIdAndType(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
-
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.type = 'FINAL'")
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                                      @Bind("dacUserId") Integer dacUserId);
-
 
     @SqlQuery("select vote.voteId from vote  inner join election on election.electionId = vote.electionId  "
             + "where election.referenceId = :referenceId "
             + "and vote.voteId = :voteId")
     Integer checkVoteById(@Bind("referenceId") String referenceId,
                           @Bind("voteId") Integer voteId);
-
 
     @SqlUpdate("insert into vote (dacUserId, electionId, type, reminderSent) values " +
             "(:dacUserId,:electionId, :type, :reminderSent)")
@@ -104,7 +113,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select v.* from vote v where v.electionId = :electionId and v.type = :type")
     List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
-
     @SqlQuery("select count(*) from vote v inner join election e on v.electionId = e.electionId where e.electionType = :type and e.status = 'Closed' and "
             + " v.type = 'FINAL' and v.vote = :finalVote ")
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
@@ -118,7 +126,21 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                          @Bind("electionId") Integer electionId,
                          @Bind("type") String type);
 
+    @SqlBatch("insert into vote (voteId, vote, dacUserId, createDate, updateDate, electionId, rationale, type, reminderSent, has_concerns) values (:voteId, :vote, :dacUserId, :createDate, :updateDate, :electionId, :rationale, :type, :isReminderSent, hasConcerns)")
+    void batchVotesInsert(@BindBean("votes") List<Vote> dacUserIds);
+
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and (v.vote is null and  (v.has_concerns = false || v.has_concerns is null)) and v.type = :type")
     List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
+    @SqlUpdate("update vote set dacUserId = :dacUserId, vote = null, createDate = null where voteId IN (<voteIds>)")
+    void updateUserIdForVotes(@BindIn("voteIds")List<Integer> voteIds, @Bind("dacUserId")Integer dacUserId);
+
+    @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
+    void removeVotesById(@BindIn("voteIds")List<Integer> votesIds);
+
+    @SqlQuery("select * from vote v where v.electionId IN (<electionIds>) and v.vote is null and v.dacUserId = :dacUserId and v.type = 'DAC' group by v.electionId")
+    List<Vote> findVotesNotMadeForUser(@BindIn("electionIds")List<Integer> openElectionIdsForThisUser, @Bind("dacUserId")Integer dacUserI);
+
+    @SqlQuery("select count(*) from vote v where v.electionId IN (<electionIds>) and v.type = 'DAC' group by v.electionId")
+    List<Integer> findVoteCountForElections(@BindIn("electionIds")List<Integer> openElectionIdsForThisUser);
 }

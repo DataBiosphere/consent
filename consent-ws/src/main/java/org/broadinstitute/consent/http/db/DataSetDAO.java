@@ -25,7 +25,7 @@ import java.util.Set;
 @RegisterMapper({DataSetMapper.class})
 public interface DataSetDAO extends Transactional<DataSetDAO> {
 
-    final String CHAIRPERSON = "CHAIRPERSON";
+    String CHAIRPERSON = "CHAIRPERSON";
 
     @SqlQuery("select dataSetId from dataset where dataSetId = :dataSetId")
     Integer checkDataSetbyId(@Bind("dataSetId") Integer dataSetId);
@@ -36,10 +36,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
-
     @SqlQuery("select * from dataset where objectId in (<objectIdList>) and needs_approval = true")
     List<DataSet> findNeedsApprovalDataSetByObjectId(@BindIn("objectIdList") List<String> objectIdList);
-
 
     @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
     void insertAll(@BindBean Collection<DataSet> dataSets);

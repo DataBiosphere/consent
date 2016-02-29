@@ -1,6 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
@@ -11,11 +15,6 @@ import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({DACUserMapper.class})
@@ -41,14 +40,15 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Set<DACUser>  findDACUsersEnabledToVote();
 
     @Mapper(DACUserRoleMapper.class)
+    @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Member'")
+    Set<DACUser>  findDACMembersEnabledToVote();
+
+    @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where  u.dacUserId IN (<dacUserIds>)")
     Set<DACUser> findUsersWithRoles(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
     @SqlQuery("select * from dacuser where email = :email")
     DACUser findDACUserByEmail(@Bind("email") String email);
-
-    @SqlQuery("select du.email from dacuser du where du.dacUserId in (<dacUserIds>)")
-    Collection<String> describeUsersEmails(@BindIn("dacUserIds") List<Integer> dacUserIds);
 
     @SqlUpdate("insert into dacuser (email, displayName, createDate) values (:email, :displayName, :createDate)")
     @GetGeneratedKeys
@@ -75,9 +75,31 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.roleId where r.name = 'Admin'")
     Integer verifyAdminUsers();
 
-
     @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
+
+    @SqlQuery("Select * from dacuser d where d.dacUserId IN (select dacUserId from user_role r where r.dacUserId NOT IN (select dacUserId from user_role where roleId IN (<roleIds>))) group by d.dacUserId")
+    List<DACUser> findUsersWithoutRoles(@BindIn("roleIds") List<Integer> roles);
+
+    /*    @SqlQuery("SELECT * FROM dacuser du INNER JOIN user_role ur ON ur.dacUserId = du.dacUserId INNER JOIN roles r ON r.roleId = ur.roleId where du.dacUserId " +
+            "NOT IN(Select v.dacUserId From vote v Where v.electionId IN (Select e.electionId from election e where e.electionType != 'DataSet' and e.status = 'Open' " +
+            "or e.status = 'Final' and exists (Select * from vote v where v.electionId = e.electionId and v.dacUserId = 4))) AND r.name IN ('Member') group by du.dacUserId")*/
+    @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN (" +
+            "Select v.dacUserId from vote v Where v.electionId IN (" +
+            "Select e.electionId from election e where e.electionType != 'DataSet' and e.status != 'Closed'" +
+            " and exists (Select * from vote v where v.electionId = e.electionId and v.dacUserId = :dacUserId)" +
+            " and (select count(*) from vote v2 where v2.electionId = e.electionId  and v2.type = 'DAC') = 4)" +
+            " group by v.dacUserId)")
+    List<DACUser> getMembersApprovedToReplace(@Bind("dacUserId") Integer dacUserId);
+
+    @SqlQuery("SELECT * FROM dacuser du INNER JOIN user_role ur ON du.dacUserId = ur.dacUserId INNER JOIN roles r ON ur.roleId = r.roleId " +
+            "WHERE du.dacUserId NOT IN( " +
+            "Select v.dacUserId From vote v Where v.electionId IN ( " +
+            "Select e.electionId from election e where e.electionType = 'DataSet' and e.status != 'Closed' " +
+            "and exists (Select * from vote v where v.electionId = e.electionId and v.dacUserId = :dacUserId)) " +
+            "group by v.dacUserId) " +
+            "AND r.name = 'DataOwner'")
+    List<DACUser> getDataOwnersApprovedToReplace(@Bind("dacUserId") Integer dacUserId);
 
 }
 

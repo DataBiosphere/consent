@@ -1,10 +1,12 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.users;
 
-import org.broadinstitute.consent.http.models.DACUser;
-
-import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import javax.ws.rs.NotFoundException;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
+import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 public interface DACUserAPI {
 
@@ -16,12 +18,14 @@ public interface DACUserAPI {
 
     DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
 
-    DACUser updateDACUserById(DACUser rec, Integer userId) throws IllegalArgumentException, NotFoundException;
+    DACUser updateDACUserById(Map<String,DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException;
 
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
 
     void updateExistentChairPersonToAlumni(Integer dacUserID);
 
     Collection<DACUser> describeUsers();
+
+    ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role);
 
 }
