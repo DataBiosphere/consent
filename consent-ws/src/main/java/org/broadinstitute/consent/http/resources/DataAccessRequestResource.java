@@ -78,13 +78,15 @@ public class DataAccessRequestResource extends Resource {
         List<Document> result;
         UseRestriction useRestriction;
         try {
-            if (!requiresManualReview(dar)) {
+            Boolean needsManualReview = requiresManualReview(dar);
+            if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
-        } catch (IOException ex) {
+            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
+
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
         }
         dar.append(DarConstants.SORT_DATE, new Date());
@@ -111,12 +113,13 @@ public class DataAccessRequestResource extends Resource {
             if (dar.containsKey(DarConstants.RESTRICTION)) {
                 dar.remove(DarConstants.RESTRICTION);
             }
-            if (!requiresManualReview(dar)) {
+            Boolean needsManualReview = requiresManualReview(dar);
+            if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
             }
+            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
             matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();

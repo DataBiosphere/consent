@@ -73,7 +73,6 @@ public class DACUserResource extends Resource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
         }
-
     }
 
     @DELETE
