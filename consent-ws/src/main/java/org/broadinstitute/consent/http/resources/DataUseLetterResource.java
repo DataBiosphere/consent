@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.util.UUID;
 
 @Path("{api : (api/)?}consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
@@ -55,7 +56,8 @@ public class DataUseLetterResource extends Resource {
 
         try {
             deletePreviousStorageFile(consentId);
-            String dulUrl = store.postStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(), getFileExtension(part.getContentDisposition().getFileName()));
+            String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
+            String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             return api.updateConsentDul(consentId, dulUrl, part.getContentDisposition().getFileName());
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -78,7 +80,8 @@ public class DataUseLetterResource extends Resource {
         logger().debug(msg);
         try {
             deletePreviousStorageFile(consentId);
-            String dulUrl = store.putStorageDocument(consentId, uploadedDUL, part.getMediaType().toString(), getFileExtension(part.getContentDisposition().getFileName()));
+            String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
+            String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             return api.updateConsentDul(consentId,dulUrl,part.getContentDisposition().getFileName());
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));

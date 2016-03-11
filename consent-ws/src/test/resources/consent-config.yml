@@ -54,3 +54,10 @@ googleAuthentication:
 basicAuthentication:
   user: testuser
   password: dGVzdHBhc3N3b3Jk
+storeOntology:
+  bucketSubdirectory:   bucket
+  configurationFileName: configuration
+elasticSearch:
+    clusterName: cName
+    servers: [localhost]
+    indexName: iName

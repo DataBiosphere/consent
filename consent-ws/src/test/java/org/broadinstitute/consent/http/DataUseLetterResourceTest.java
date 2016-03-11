@@ -64,7 +64,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         String id = setupConsent(null);
         File fileToUpload = File.createTempFile("temp","pdf");
         fileToUpload.deleteOnExit();
-        when(storage.postStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).
+        when(storage.postStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
                 thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
         //noinspection ResultOfMethodCallIgnored
@@ -84,7 +84,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         String id = setupConsent(null);
         File fileToUpload = File.createTempFile("temp","pdf");
         fileToUpload.deleteOnExit();
-        when(storage.putStorageDocument(anyString(), any(InputStream.class), eq("application/pdf"), eq("pdf"))).
+        when(storage.putStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
                 thenReturn(consentDulPath(id));
         when(ct.getFileName()).thenReturn("temp.pdf");
         //noinspection ResultOfMethodCallIgnored

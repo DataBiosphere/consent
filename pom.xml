@@ -13,7 +13,7 @@
     <lucene.version>4.9.0</lucene.version>
     <hsqldb.version>2.3.3</hsqldb.version>
     <liquibase.version>3.1.1</liquibase.version>
-    <dropwizard.version>0.8.1</dropwizard.version>
+    <dropwizard.version>0.9.2</dropwizard.version>
     <jersey.version>2.19</jersey.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
