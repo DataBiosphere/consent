@@ -15,7 +15,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -345,6 +344,24 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/restriction")
+    public Response getUseRestrictionFromQuestions(Document dar) {
+        try{
+            Boolean needsManualReview = requiresManualReview(dar);
+            if (!needsManualReview){
+                UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
+                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
+                return Response.ok(useRestriction).build();
+            }else{
+                return Response.ok("{\"useRestriction\":\"Manual Review\"}").build();
+            }
+        }catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
 
     private Map<String, Object> parseAsMap(String str) throws IOException {
         ObjectReader reader = mapper.reader(Map.class);
@@ -361,7 +378,7 @@ public class DataAccessRequestResource extends Resource {
         Map<String, Object> form = parseAsMap(dar.toJson());
         for (String field : fieldsForManualReview) {
             if (form.containsKey(field)) {
-                if ((boolean) form.get(field)) {
+                if (Boolean.valueOf(form.get(field).toString())) {
                     return true;
                 }
             }
