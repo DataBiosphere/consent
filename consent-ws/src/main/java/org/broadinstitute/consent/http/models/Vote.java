@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Date;
 
 public class Vote {
 
@@ -33,11 +33,14 @@ public class Vote {
     @JsonProperty
     private Boolean isReminderSent;
 
+    @JsonProperty
+    private Boolean hasConcerns;
+
     public Vote() {
     }
 
     public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
-                Integer electionId, String rationale, String type, Boolean isReminderSent) {
+                Integer electionId, String rationale, String type, Boolean isReminderSent, Boolean hasConcerns) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;
@@ -47,6 +50,7 @@ public class Vote {
         this.rationale = rationale;
         this.type = type;
         this.isReminderSent = isReminderSent;
+        this.hasConcerns = hasConcerns;
     }
 
     public Integer getVoteId() {
@@ -128,4 +132,13 @@ public class Vote {
     public void setIsReminderSent(Boolean isReminderSent) {
         this.isReminderSent = isReminderSent;
     }
+
+    public Boolean getHasConcerns() {
+        return hasConcerns;
+    }
+
+    public void setHasConcerns(Boolean hasConcerns) {
+        this.hasConcerns = hasConcerns;
+    }
+
 }

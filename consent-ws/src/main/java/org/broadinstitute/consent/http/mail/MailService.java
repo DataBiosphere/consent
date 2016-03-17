@@ -22,6 +22,9 @@ public class MailService extends AbstractMailServiceAPI {
     private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
     private ReminderMessage reminderMessageCreator = new ReminderMessage();
     private DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
+    private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
+    private FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
+    private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -63,9 +66,9 @@ public class MailService extends AbstractMailServiceAPI {
         sendMessage(message, address);
     }
 
-    public void sendNewCaseMessages(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendNewCaseMessage(String userAddress, String referenceId, String type, Writer template) throws MessagingException {
         MimeMessage message = newCaseMessageCreator.newCaseMessage(getMailSession, template, referenceId, type);
-        sendMessages(message, usersAddress);
+        sendMessage(message, userAddress);
     }
 
     public void sendReminderMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
@@ -83,6 +86,24 @@ public class MailService extends AbstractMailServiceAPI {
     public void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
         MimeMessage message = newDARMessageCreator.newDARRequestMessage(getMailSession, template, referenceId, type);
         sendMessages(message, usersAddress);
+    }
+
+    @Override
+    public void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = darCancelMessageCreator.cancelDarMessage(getMailSession, template, dataAccessRequestId, type);
+        sendMessages(message, usersAddress);
+    }
+
+    @Override
+    public void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = closedDatasetElections.closedDatasetElectionMessgae(getMailSession, template, dataAccessRequestId, type);
+        sendMessages(message, usersAddress);
+    }
+
+    @Override
+    public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarMessage(getMailSession, template, dataAccessRequestId, type);
+        sendMessage(message, userAddress);
     }
 
 }

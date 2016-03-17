@@ -27,10 +27,11 @@ public class UseRestrictionConverter {
 
     // Fields to be parsed. We'll see if we can configure it with an external file.
     String[] typeOfResearch = {
-        "methods"
-        // this is regarding 2.4.4 in form, currently will no map to anything
-        // population support should be added when an open population ontology is ready
-        //, "population"
+        "methods",
+        // this is regarding 2.4.4 in form
+         "population",
+        // this is regarding 2.4.3 in form
+         "controls"
 
     };
 
@@ -65,7 +66,7 @@ public class UseRestrictionConverter {
         // 
         List<UseRestriction> methodsList = new ArrayList<>();
         for (String field : typeOfResearch) {
-                if ((boolean) form.getOrDefault(field, false)) {
+                if (Boolean.valueOf(form.getOrDefault(field, false).toString())) {
                     methodsList.add(createNamedRestriction(config.getValueByName(field)));
                 } else {
                     methodsList.add(new Not(createNamedRestriction(config.getValueByName(field))));
@@ -112,14 +113,14 @@ public class UseRestrictionConverter {
         List<UseRestriction> purposesList = new ArrayList<>();
 
         // check is forProfit is present in form
-        boolean forProfitOnly = (boolean) form.getOrDefault(researchPurposeStatement[COMMERCIAL_STATUS], false);
+        boolean forProfitOnly = Boolean.valueOf(form.getOrDefault(researchPurposeStatement[COMMERCIAL_STATUS], false).toString());
         url = forProfitOnly == true ? config.getProfit() : config.getNonProfit();
         purposesList.add(createNamedRestriction(url));
 
         // limited to one gender + children analysis
-        boolean oneGenderOnly = (boolean) form.getOrDefault(researchPurposeStatement[LIMITED_TO_ONE_GENDER], false);
+        boolean oneGenderOnly = Boolean.valueOf(form.getOrDefault(researchPurposeStatement[LIMITED_TO_ONE_GENDER], false).toString());
         String selectedGender = (String) form.getOrDefault("gender", "X");
-        boolean pediatricsOnly = (boolean) form.getOrDefault(researchPurposeStatement[PEDIATRIC_ONLY], false);
+        boolean pediatricsOnly =  Boolean.valueOf(form.getOrDefault(researchPurposeStatement[PEDIATRIC_ONLY], false).toString());
 
         if (oneGenderOnly) {
             if (selectedGender.equalsIgnoreCase("M")) 
@@ -158,7 +159,7 @@ public class UseRestrictionConverter {
         return r;
     }
 
-    private Map<String, Object> parseAsMap(String str) {
+    public Map<String, Object> parseAsMap(String str) {
         ObjectReader reader = mapper.reader(Map.class);
         try {
             return reader.readValue(str);

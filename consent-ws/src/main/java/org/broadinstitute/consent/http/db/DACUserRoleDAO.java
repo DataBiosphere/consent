@@ -2,10 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 
 import org.broadinstitute.consent.http.models.DACUserRole;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
+import org.skife.jdbi.v2.sqlobject.*;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
@@ -31,9 +28,9 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
     Integer findRoleIdByName(@Bind("roleName") String roleName);
 
 
-    @SqlBatch("insert into user_role (roleId, dacUserId) values (:roleId, :dacUserId)")
-    void insertUserRoles(@Bind("roleId") List<Integer> roleIds,
-                         @Bind("dacUserId") Integer userId);
+    @SqlBatch("insert into user_role (roleId, dacUserId, email_preference) values (:roleId, :dacUserId, :emailPreference)")
+    void insertUserRoles(@BindBean List<DACUserRole> roles, @Bind("dacUserId") Integer dacUserId);
+
 
     @SqlUpdate("update user_role set roleId = :newRoleId where dacUserId = :dacUserId and roleId = :existentRoleId")
     void updateUserRoles(@Bind("newRoleId") Integer newRoleId,
@@ -45,4 +42,5 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
 
     @SqlQuery("select  r.roleId from roles r inner join user_role du on du.roleId = r.roleId  where du.dacUserId = :userId and r.name = :name")
     Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
+
 }

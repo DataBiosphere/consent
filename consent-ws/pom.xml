@@ -348,5 +348,11 @@
             <version>1.18</version>
         </dependency>
 
+        <dependency>
+            <groupId>de.spinscale</groupId>
+            <artifactId>dropwizard-jobs-core</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
     </dependencies>
 </project>

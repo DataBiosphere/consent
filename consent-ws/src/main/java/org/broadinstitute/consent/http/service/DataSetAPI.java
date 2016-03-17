@@ -11,21 +11,32 @@ import java.util.Map;
 
 public interface DataSetAPI {
 
-    ParseResult create(File dataSetFile);
+    ParseResult create(File dataSetFile, Integer userId);
 
-    ParseResult overwrite(File dataSetFile);
+    ParseResult overwrite(File dataSetFile, Integer userId);
 
     Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
 
+    DataSet describeDataSetsByObjectId(String objectId) ;
+
     List<DataSet> getDataSetsForConsent(String consentId);
 
-    Collection<DataSetDTO> describeDataSets(List<String> objectIds) ;
+    DataSetDTO getDataSetDTO(String objectId ) ;
 
-    Collection<Dictionary> describeDictionary();
+    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) ;
+
+    Collection<Dictionary> describeDictionaryByDisplayOrder();
+
+    Collection<Dictionary> describeDictionaryByReceiveOrder();
 
     List<Map<String, String>> autoCompleteDataSets(String partial);
 
     void deleteDataset(String datasetObjectId);
 
     void disableDataset(String datasetObjectId, Boolean active);
+
+    DataSet updateNeedsReviewDataSets(String dataSetId, Boolean needsApproval);
+
+    List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList);
+
 }

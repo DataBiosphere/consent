@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+
 import java.util.List;
 
 
@@ -21,6 +21,12 @@ public class DataSetDTO {
 
     @JsonProperty
     private Boolean active;
+
+    @JsonProperty
+    private Boolean needsApproval;
+
+    @JsonProperty
+    private Boolean isAssociatedToDataOwners;
 
     public DataSetDTO() {
     }
@@ -67,5 +73,21 @@ public class DataSetDTO {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Boolean getNeedsApproval() {
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(Boolean needsApproval) {
+        this.needsApproval = needsApproval;
+    }
+
+    public Boolean getIsAssociatedToDataOwners() {
+        return isAssociatedToDataOwners;
+    }
+
+    public void setIsAssociatedToDataOwners(Boolean isAssociatedToDataOwners) {
+        this.isAssociatedToDataOwners = isAssociatedToDataOwners;
     }
 }

@@ -1,14 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.*;

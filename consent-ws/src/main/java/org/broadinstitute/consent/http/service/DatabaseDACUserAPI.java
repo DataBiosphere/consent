@@ -9,10 +9,10 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -52,7 +52,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
-        validateRequieredFields(dacUser);
+        validateRequiredFields(dacUser);
         Integer dacUserID;
         try {
             dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
@@ -79,14 +79,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser describeChairpersonUser() throws NotFoundException {
-        DACUser dacUser = dacUserDAO.findChairpersonUser();
-        return dacUser;
-    }
-
-    @Override
-    public Collection<DACUser> describeAdminUsers() throws NotFoundException {
-        return dacUserDAO.describeAdminUsers();
+    public List<DACUser> describeAdminUsersThatWantToReceiveMails() {
+        return dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
     }
 
     @Override
@@ -102,7 +96,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     @Override
     public DACUser updateDACUserById(DACUser rec,Integer id) throws IllegalArgumentException, NotFoundException {
         validateExistentUserById(id);
-        validateRequieredFields(rec);
+        validateRequiredFields(rec);
         if(rec.getRoles() != null && rec.getRoles().size() > 0){
             validateRoles(rec.getRoles(), id);
             updateRoles(rec, id);
@@ -149,18 +143,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         return dacUserDAO.findUsers();
     }
 
-    @Override
-    public Collection<String> describeUsersEmails(List<Integer> dacUserIds){
-        return dacUserDAO.describeUsersEmails(dacUserIds);
-    }
-
     private void validateExistentUser(String email) {
         if(dacUserDAO.findDACUserByEmail(email) == null){
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
     }
 
-    private void validateRequieredFields(DACUser newDac) {
+    private void validateRequiredFields(DACUser newDac) {
         if(StringUtils.isEmpty(newDac.getDisplayName())){
             throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
         }
@@ -182,14 +171,16 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         }
     }
 
+
     private void insertUserRoles(DACUser dacUser, Integer dacUserId){
         List<DACUserRole> roles = dacUser.getRoles();
-        List<String> rolesName = new ArrayList<>();
-        for(DACUserRole role : roles){
-            rolesName.add(role.getName());
-        }
-        List<Integer> rolesId = roleDAO.findRolesIdByName(rolesName);
-        roleDAO.insertUserRoles(rolesId, dacUserId);
+        roles.forEach(r -> {
+            r.setRoleId(roleDAO.findRoleIdByName(r.getName()));
+            if(Objects.isNull(r.getEmailPreference())){
+                r.setEmailPreference(true);
+            }
+        });
+        roleDAO.insertUserRoles(roles,dacUserId);
     }
 
 }

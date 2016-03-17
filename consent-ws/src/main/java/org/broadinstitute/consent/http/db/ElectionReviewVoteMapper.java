@@ -23,7 +23,8 @@ public class ElectionReviewVoteMapper implements ResultSetMapper<ElectionReviewV
                 r.getInt("electionId"),
                 r.getString("rationale"),
                 r.getString("type"),
-                (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent")
+                (r.getString("reminderSent") == null) ? null : r.getBoolean("reminderSent"),
+                (r.getString("has_concerns") == null) ? null : r.getBoolean("has_concerns")
         );
 
         return new ElectionReviewVote(

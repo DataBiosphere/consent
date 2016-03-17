@@ -1,15 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -19,6 +14,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Path("{api : (api/)?}consent/{consentId}/election")
@@ -41,8 +37,9 @@ public class ConsentElectionResource extends Resource {
         URI uri;
         try {
             Election election = api.createElection(rec, consentId, ElectionType.TRANSLATE_DUL);
-            List<Vote> votes  = voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL);
-            emailApi.sendNewCaseMessageToList(votes, election);
+            List<Vote> votes  = voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
+            List<Vote> dulVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
+            emailApi.sendNewCaseMessageToList(dulVotes, election);
             uri = info.getRequestUriBuilder().build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();

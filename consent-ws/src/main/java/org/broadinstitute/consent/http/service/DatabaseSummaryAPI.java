@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -76,18 +77,16 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     @Override
     public Summary describeConsentSummaryCases() {
-        String type = electionDAO.findElectionTypeByType(ElectionType.TRANSLATE_DUL.getValue());
-        return getSummaryCases(type);
+        return getSummaryCases(ElectionType.TRANSLATE_DUL.getValue());
     }
 
     @Override
     public Summary describeDataRequestSummaryCases(String electionType) {
-        String type = electionDAO.findElectionTypeByType(electionType);
         Summary summary;
         if(electionType.equals(ElectionType.DATA_ACCESS.getValue())){
-            summary = getAccessSummaryCases(type);
+            summary = getAccessSummaryCases(electionType);
         }else{
-            summary = getSummaryCases(type);
+            summary = getSummaryCases(electionType);
         }
         return summary;
     }
@@ -101,8 +100,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private List<Summary> getMatchSummaryCases() {
         List<Summary> summaryList = new ArrayList<>();
-        summaryList.add(createSummary(0,matchDAO.countMatchesByResult(Boolean.TRUE),matchDAO.countMatchesByResult(Boolean.FALSE)));
-        List<Election> latestElections = electionDAO.findLastElectionsByType("1");
+        summaryList.add(createSummary(0, matchDAO.countMatchesByResult(Boolean.TRUE), matchDAO.countMatchesByResult(Boolean.FALSE)));
+        List<Election> latestElections = electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> reviewedElections = null;
         if(!CollectionUtils.isEmpty(latestElections)){
             reviewedElections = latestElections.stream().filter(le -> le.getStatus().equals(ElectionStatus.CLOSED.getValue())).collect(Collectors.toList());
@@ -111,10 +110,12 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
             List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
             List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
             List<Vote> agreementVotes = votes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(Collectors.toList());
-            Map<Boolean, List<Vote>> partition =
-                    agreementVotes.stream()
-                            .collect(Collectors.partitioningBy(v -> v.getVote()));
-            summaryList.add(createSummary(0, partition.get(Boolean.TRUE).size(), partition.get(Boolean.FALSE).size()));
+            if(CollectionUtils.isNotEmpty(agreementVotes)){
+                Map<Boolean, List<Vote>> partition =
+                        agreementVotes.stream()
+                                .collect(Collectors.partitioningBy(v -> v.getVote()));
+                summaryList.add(createSummary(0, partition.get(Boolean.TRUE).size(), partition.get(Boolean.FALSE).size()));
+            }
         }else{
             summaryList.add(createSummary(0,0,0));
         }
@@ -124,7 +125,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private Summary getSummaryCases(String type) {
         List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, status);
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), true);
         Integer totalNegativeCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), false);
@@ -133,7 +134,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private Summary getAccessSummaryCases(String type) {
         List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> openElections = electionDAO.findElectionsByTypeAndStatus(type, status);
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, true);
         Integer totalNegativeCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, false);
@@ -155,9 +156,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("2", ElectionStatus.CLOSED.getValue());
-                    if (!CollectionUtils.isEmpty(reviewedElections)) {
-                        List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.CLOSED.getValue());
+                if (!CollectionUtils.isEmpty(reviewedElections)) {
+                    List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
                     setSummaryHeader(summaryWriter, maxNumberOfDACMembers);
@@ -211,24 +212,27 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("DAR_summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> reviewedElections = electionDAO.findElectionsByTypeAndStatus("1", ElectionStatus.CLOSED.getValue());
-                List<Election> reviewedRPElections = electionDAO.findElectionsByTypeAndStatus("3", ElectionStatus.CLOSED.getValue());
-                if (!CollectionUtils.isEmpty(reviewedElections) && !CollectionUtils.isEmpty(reviewedRPElections)) {
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue());
+                List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
+                if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> objectIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     FindIterable<Document> dataAccessRequests = findDataAccessRequests(objectIds);
-                    List<String> associationObjectIds = new ArrayList<>();
+                    HashSet<String> associationObjectIds = new HashSet<>();
                     dataAccessRequests.forEach((Block<Document>) dar -> {
-                        associationObjectIds.addAll(dar.get("datasetId", List.class));
+                        associationObjectIds.addAll(dar.get(DarConstants.DATASET_ID, List.class));
                     });
-                    List<Association> associations = datasetDAO.getAssociationsForObjectIdList(associationObjectIds);
+                    List<Association> associations = datasetDAO.getAssociationsForObjectIdList(new ArrayList<String>(associationObjectIds));
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
-                    List<Election> reviewedConsentElections = electionDAO.findLastElectionsByReferenceIdsTypeAndStatus(associatedConsentIds, 2, ElectionStatus.CLOSED.getValue());
+                    List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
                     List<Integer> darElectionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
-                    List<Integer> rpElectionIds = reviewedRPElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
                     List<Integer> consentElectionIds = reviewedConsentElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
                     List<AccessRP> accessRPList = electionDAO.findAccessRPbyElectionAccessId(darElectionIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(darElectionIds);
-                    List<Vote> rpVotes = voteDAO.findVotesByElectionIds(rpElectionIds);
+                    List<Integer> rpElectionIds = reviewedRPElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
+                    List<Vote> rpVotes;
+                    if (CollectionUtils.isNotEmpty(rpElectionIds)){
+                        rpVotes =  voteDAO.findVotesByElectionIds(rpElectionIds);
+                    } else rpVotes = null;
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
                     List<Match> matchList = matchDAO.findMatchesPurposeId(objectIds);
                     Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
@@ -240,12 +244,19 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equals("DAC")).map(e -> e.getDacUserId()).collect(Collectors.toList());
                         Collection<DACUser> electionDacUsers = dacUsers.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
-                        Vote agreementVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(singletonCollector());
+
                         Vote finalVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.FINAL.getValue())).collect(singletonCollector());
                         Vote chairPersonVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
-                        AccessRP accessRP =  accessRPList.stream().filter(arp -> arp.getElectionAccessId().equals(election.getElectionId())).collect(singletonCollector());
-                        List<Vote> electionRPVotes = rpVotes.stream().filter(ev -> ev.getElectionId().equals(accessRP.getElectionRPId())).collect(Collectors.toList());
-                        Vote chairPersonRPVote =  electionRPVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
+                        Vote  chairPersonRPVote = null;
+                        Vote agreementVote = null;
+                        if(CollectionUtils.isNotEmpty(reviewedRPElections) && CollectionUtils.isNotEmpty(accessRPList)) {
+                            agreementVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(singletonCollector());
+                            AccessRP accessRP =  accessRPList.stream().filter(arp -> arp.getElectionAccessId().equals(election.getElectionId())).collect(singletonCollector());
+                            if (Objects.nonNull(accessRP)) {
+                                List<Vote> electionRPVotes = rpVotes.stream().filter(ev -> ev.getElectionId().equals(accessRP.getElectionRPId())).collect(Collectors.toList());
+                                chairPersonRPVote = electionRPVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
+                            }
+                        }
                         DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
                         Match match;
                         try {
@@ -255,13 +266,13 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         }
                         Document dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
                         if ( !dar.isEmpty() ){
-                            List<String> datasetId =  dar.get("datasetId", List.class);
+                            List<String> datasetId =  dar.get(DarConstants.DATASET_ID, List.class);
                             if(CollectionUtils.isNotEmpty(datasetId)){
                                 Association association = associations.stream().filter((as) -> as.getObjectId().equals(datasetId.get(0))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
-                                summaryWriter.write(dar.get("dar_code") + SEPARATOR);
+                                summaryWriter.write(dar.get(DarConstants.DAR_CODE) + SEPARATOR);
                                 summaryWriter.write(formatTimeToDate(election.getCreateDate().getTime()) + SEPARATOR);
                                 summaryWriter.write(chairPerson.getDisplayName() + SEPARATOR);
                                 summaryWriter.write( booleanToString(finalVote.getVote()) + SEPARATOR);
@@ -271,11 +282,16 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }else{
                                     summaryWriter.write(MANUAL_REVIEW + SEPARATOR);
                                 }
-                                summaryWriter.write( booleanToString(agreementVote.getVote()) + SEPARATOR);
-                                summaryWriter.write( nullToString(agreementVote.getRationale())  + SEPARATOR);
-                                summaryWriter.write( dar.get("investigator")  + SEPARATOR);
-                                summaryWriter.write( dar.get("projectTitle")  + SEPARATOR);
-                                summaryWriter.write( dar.get("datasetId")  + SEPARATOR);summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
+                                if(agreementVote != null){
+                                    summaryWriter.write( booleanToString(agreementVote.getVote()) + SEPARATOR);
+                                    summaryWriter.write( nullToString(agreementVote.getRationale())  + SEPARATOR);
+                                }else{
+                                    summaryWriter.write("-" + SEPARATOR);
+                                    summaryWriter.write("-"  + SEPARATOR);
+                                }
+                                summaryWriter.write( dar.get(DarConstants.INVESTIGATOR)  + SEPARATOR);
+                                summaryWriter.write( dar.get(DarConstants.PROJECT_TITLE)  + SEPARATOR);
+                                summaryWriter.write( dar.get(DarConstants.DATASET_ID)  + SEPARATOR);summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
                                 for (DACUser dacUser : electionDacUsers){
                                     summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
 
@@ -284,15 +300,22 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                     summaryWriter.write(
                                             SEPARATOR);
                                 }
-                                summaryWriter.write( booleanToString(!dar.containsKey("restriction"))+ SEPARATOR);
+                                summaryWriter.write( booleanToString(!dar.containsKey(DarConstants.RESTRICTION))+ SEPARATOR);
                                 summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(chairPersonVote.getRationale())+ SEPARATOR);
-                                summaryWriter.write(booleanToString(chairPersonRPVote.getVote()) + SEPARATOR);
-                                summaryWriter.write(nullToString(chairPersonRPVote.getRationale()) + SEPARATOR);
+
+                                if(Objects.nonNull(chairPersonRPVote)){
+                                    summaryWriter.write(booleanToString(chairPersonRPVote.getVote()) + SEPARATOR);
+                                    summaryWriter.write(nullToString(chairPersonRPVote.getRationale()) + SEPARATOR);
+                                }else{
+                                    summaryWriter.write(nullToString(null) + SEPARATOR);
+                                    summaryWriter.write(nullToString(null) + SEPARATOR);
+                                }
+
                                 summaryWriter.write(booleanToString(chairPersonConsentVote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(chairPersonConsentVote.getRationale())+ SEPARATOR);
                             }
-                         }
+                        }
                         summaryWriter.write(END_OF_LINE);
                     }
                 }else file = null;
@@ -305,6 +328,84 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return file;
     }
 
+    @Override
+    public File describeDataSetElectionsVotesForDar(String darId) {
+        File file = null;
+        try {
+            file = File.createTempFile("dar"+darId+"DatasetElectionsDetail", ".txt");
+            try (FileWriter summaryWriter = new FileWriter(file)) {
+                List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(darId, ElectionType.DATA_SET.getValue());
+                Map<Integer, List<Vote>> electionsData = new HashMap<>();
+                int maxNumberOfVotes = 0;
+                for(Election e: elections){
+                    List<Vote> votes = voteDAO.findVoteByTypeAndElectionId(e.getElectionId(), VoteType.DATA_OWNER.getValue());
+                    electionsData.put(e.getElectionId(), votes);
+                    if(votes.size() > maxNumberOfVotes){
+                        maxNumberOfVotes = votes.size();
+                    }
+                }
+                setDatasetElectionsHeader(summaryWriter, maxNumberOfVotes);
+
+                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(darId));
+                String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
+                String dar_election_result;
+                try{
+                    dar_election_result = (electionDAO.findLastElectionByReferenceIdAndType(darId, ElectionType.DATA_ACCESS.getValue())).getFinalAccessVote() ? "Approved" : "Denied";
+                } catch (NullPointerException e){
+                    dar_election_result = "Pending";
+                }
+                for (Election election : elections) {
+                    summaryWriter.write( dar_code + SEPARATOR);
+                    summaryWriter.write( dar_election_result + SEPARATOR);
+                    DataSet dataset = datasetDAO.findDataSetById(electionDAO.getDatasetIdByElectionId(election.getElectionId()));
+                    summaryWriter.write( dataset.getObjectId() + SEPARATOR);
+                    summaryWriter.write( dataset.getName() + SEPARATOR);
+                    summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
+                    List<Vote> votes = electionsData.get(election.getElectionId());
+                    for(Vote datasetVote : votes){
+                        DACUser dacUser = dacUserDAO.findDACUserById(datasetVote.getDacUserId());
+                        summaryWriter.write(dacUser.getDisplayName() + COMMA_SEPARATOR);
+                        summaryWriter.write(dacUser.getEmail() + COMMA_SEPARATOR);
+                        summaryWriter.write(datasetVoteResult(datasetVote) + COMMA_SEPARATOR);
+                        summaryWriter.write(datasetVote.getRationale() == null ? "None" : datasetVote.getRationale());
+                        summaryWriter.write(SEPARATOR);
+                    }
+                   summaryWriter.write(END_OF_LINE);
+                }
+            }
+            return file;
+        } catch (Exception ignored) {
+            logger.error("There is an error trying to create resume of dataset votes file, error: "+ ignored.getMessage());
+        }
+        return file;
+    }
+
+    private String electionResult(Boolean result){
+        try{
+            if(result){
+                return "Approved";
+            } else {
+                return "Denied";
+            }
+        } catch( NullPointerException e) {
+            return "Pending";
+        }
+    }
+
+    private String datasetVoteResult(Vote vote){
+        try{
+            if(vote.getVote()){
+                return "Approved";
+            } else {
+                return "Denied";
+            }
+        } catch( NullPointerException e) {
+            if(vote.getHasConcerns()){
+                return "Denied";
+            }
+            return "Pending";
+        }
+    }
 
     private void setSummaryHeader(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
         summaryWriter.write(
@@ -320,6 +421,23 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         }
         summaryWriter.write(
                 HeaderSummary.USER_VOTE_RATIONALE.getValue() + END_OF_LINE);
+    }
+
+    private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
+        summaryWriter.write(
+                HeaderSummary.DATA_REQUEST_ID.getValue() + SEPARATOR +
+                        HeaderSummary.FINAL_DECISION_DAR.getValue() + SEPARATOR +
+                        HeaderSummary.DATASET_ID.getValue() + SEPARATOR +
+                        HeaderSummary.DATASET_NAME.getValue() + SEPARATOR +
+                        HeaderSummary.DATASET_FINAL_STATUS.getValue() + SEPARATOR);
+        for (int i = 0; i < maxNumberOfVotes; i++) {
+            summaryWriter.write(
+                    HeaderSummary.DATA_OWNER_NAME.getValue() + COMMA_SEPARATOR +
+                            HeaderSummary.DATA_OWNER_EMAIL.getValue() + COMMA_SEPARATOR +
+                            HeaderSummary.DATA_OWNER_VOTE.getValue() + COMMA_SEPARATOR +
+                            HeaderSummary.DATA_OWNER_COMMENT.getValue() + SEPARATOR);
+        }
+        summaryWriter.write(END_OF_LINE);
     }
 
     private void setSummaryHeaderDataAccessRequest(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
@@ -353,6 +471,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return Collectors.collectingAndThen(
                 Collectors.toList(),
                 list -> {
+                    if(CollectionUtils.isEmpty(list)){
+                        return null;
+                    }
                     if (list.size() != 1) {
                         throw new IllegalStateException();
                     }
@@ -367,7 +488,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             while(itr.hasNext()){
                 Document next = itr.next();
-                if(next.get("_id").toString().equals(referenceId)){
+                if(next.get(DarConstants.ID).toString().equals(referenceId)){
                     dar = next;
                 }
             }
@@ -383,7 +504,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         for(int i=0;i<objectIds.size();i++)
             objarray[i] = new ObjectId(objectIds.get(i));
         BasicDBObject in = new BasicDBObject("$in", objarray);
-        BasicDBObject q = new BasicDBObject("_id", in);
+        BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
         return  mongo.getDataAccessRequestCollection().find(q);
     }
 

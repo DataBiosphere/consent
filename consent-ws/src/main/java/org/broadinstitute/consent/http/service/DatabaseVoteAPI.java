@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -24,6 +25,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
     private ElectionDAO electionDAO;
+    private DataSetAssociationDAO dataSetAssociationDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -35,8 +37,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO) {
-        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, dacUserDAO, electionDAO));
+    public static void initInstance(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
+        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, dacUserDAO, electionDAO, dataSetAssociationDAO));
 
     }
 
@@ -46,10 +48,11 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseVoteAPI(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO) {
+    private DatabaseVoteAPI(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
         this.voteDAO = dao;
         this.dacUserDAO = dacUserDAO;
         this.electionDAO = electionDAO;
+        this.dataSetAssociationDAO = dataSetAssociationDAO;
     }
 
     @Override
@@ -57,7 +60,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         Vote vote = voteDAO.findVoteById(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
-        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, false, electionId, new Date());
+        voteDAO.updateVote(rec.getVote(), rationale, null, voteId, false, electionId, new Date(), rec.getHasConcerns());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -69,7 +72,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         Vote vote = voteDAO.findVoteById(voteId);
         Date updateDate = rec.getVote() == null ? null : new Date();
         String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false,  getElectionId(referenceId), vote.getCreateDate());
+        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false,  getElectionId(referenceId), vote.getCreateDate(), rec.getHasConcerns());
         return voteDAO.findVoteById(voteId);
     }
 
@@ -116,7 +119,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     @Override
     public void deleteVotes(String referenceId)
             throws IllegalArgumentException, UnknownIdentifierException {
-        if (electionDAO.findElectionsByReferenceId(referenceId) == null) {
+        if (electionDAO.findElectionsWithFinalVoteByReferenceId(referenceId) == null) {
             throw new IllegalArgumentException();
         }
         voteDAO.deleteVotes(referenceId);
@@ -125,7 +128,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
 
     @Override
-    public List<Vote> createVotes(Integer electionId, ElectionType electionType) {
+    public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
         Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
         if (dacUserList != null) {
@@ -139,8 +142,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
                 if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
                     id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
-                    votes.add(voteDAO.findVoteById(id));
+                    if(!isManualReview){
+                        id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
+                        votes.add(voteDAO.findVoteById(id));
+                    }
                 }
              }
         }
@@ -158,10 +163,26 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
+    public List<Vote> createDataOwnersReviewVotes(Election election) {
+        List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
+        voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
+        return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
+    }
+
+    @Override
+    public Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException {
+        Vote vote = voteDAO.findVotesByReferenceIdTypeAndUser(requestId, dataOwnerId, VoteType.DATA_OWNER.getValue());
+        if(vote == null) {
+            throw new NotFoundException("Vote doesn't exist for the specified dataOwnerId");
+        }
+        return vote;
+    }
+
+    @Override
     public void createVotesForElections(List<Election> elections, Boolean isConsent){
         if(elections != null){
             for(Election election : elections){
-                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL);
+                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
             }
         }
     }

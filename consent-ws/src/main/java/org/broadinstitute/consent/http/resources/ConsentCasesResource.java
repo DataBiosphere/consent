@@ -1,13 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.PendingCaseAPI;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -63,7 +58,7 @@ public class ConsentCasesResource extends Resource {
     @Path("/closed")
     @Produces("application/json")
     public List<Election> describeClosedElections() {
-        return electionApi.describeClosedElectionsByType("2");
+        return electionApi.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue());
     }
 
 }

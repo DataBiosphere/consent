@@ -13,7 +13,10 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({ConsentMapper.class})
@@ -73,6 +76,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlUpdate("update consents set active=false where consentId = :consentId")
     void logicalDeleteConsent(@Bind("consentId") String consentId);
+
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
             "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, name = :name, " +

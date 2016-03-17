@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.PendingCaseAPI;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.*;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,6 +33,17 @@ public class DataRequestCasesResource extends Resource {
     }
 
     @GET
+    @Path("/pending/dataOwner/{dataOwnerId}")
+    public Response getDataOwnerPendingCases(@PathParam("dataOwnerId") Integer dataOwnerId) {
+        try{
+            return Response.ok(api.describeDataOwnerPendingCases(dataOwnerId)).build();
+        }catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+
+    }
+
+    @GET
     @Path("/summary/{type}")
     public Response getDataRequestSummaryCases(@PathParam("type") String type) {
         return Response.ok(summaryApi.describeDataRequestSummaryCases(type))
@@ -55,7 +63,7 @@ public class DataRequestCasesResource extends Resource {
     @Path("/closed")
     @Produces("application/json")
     public List<Election> describeClosedElections() {
-        return electionApi.describeClosedElectionsByType("1");
+        return electionApi.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue());
     }
 
 }

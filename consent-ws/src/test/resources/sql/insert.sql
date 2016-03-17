@@ -20,5 +20,7 @@ insert into user_role(roleId, dacUserId) values(1,2);
 insert into user_role(roleId, dacUserId) values(1,3);
 insert into user_role(roleId, dacUserId) values(1,4);
 insert into user_role(roleId, dacUserId) values(4,4);
+insert into user_role(roleId, dacUserId) values(6,1);
+insert into user_role(roleId, dacUserId) values(6,2);
 
 

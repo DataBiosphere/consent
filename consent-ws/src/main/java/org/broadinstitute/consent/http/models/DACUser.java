@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.util.Date;
 import java.util.List;
@@ -80,5 +81,23 @@ public class DACUser {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    @Override
+    public int hashCode(){
+        return  dacUserId;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+
+        DACUser other = (DACUser) obj;
+        return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
     }
 }

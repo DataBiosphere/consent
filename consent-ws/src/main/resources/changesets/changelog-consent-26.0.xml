@@ -1,0 +1,51 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+
+    <changeSet author="vvicario" id="96">
+        <createTable tableName="approval_expiration_time">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="create_date" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="update_date" type="varchar(255)"/>
+            <column name="amount_of_days" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="vvicario" id="97">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="approval_expiration_time"
+                                 constraintName="fkUserApproval" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacUserId"
+                                 referencedTableName="dacuser" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="98">
+       <addColumn tableName="dictionary">
+           <column name="receiveOrder" type="int">
+           </column>
+       </addColumn>
+
+        <sql dbms="hsql, mysql">
+            update dictionary d set displayOrder = 0, receiveOrder = 0 where d.key = "Dataset Name";
+            update dictionary d set displayOrder = 1, receiveOrder = 9 where d.key = "Dataset ID";
+            update dictionary d set displayOrder = 2, receiveOrder = 1 where d.key = "Data Type";
+            update dictionary d set displayOrder = 3, receiveOrder = 2 where d.key = "Species";
+            update dictionary d set displayOrder = 4, receiveOrder = 3 where d.key = "Phenotype/Indication";
+            update dictionary d set displayOrder = 5, receiveOrder = 4 where d.key = "# of participants";
+            update dictionary d set displayOrder = 6, receiveOrder = 5 where d.key = "Description";
+            update dictionary d set displayOrder = 7, receiveOrder = 6 where d.key = "dbGAP";
+            update dictionary d set displayOrder = 8, receiveOrder = 7 where d.key =  "Data Depositor";
+            update dictionary d set displayOrder = 9, receiveOrder = 8 where d.key =  "Principal Investigator(PI)";
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

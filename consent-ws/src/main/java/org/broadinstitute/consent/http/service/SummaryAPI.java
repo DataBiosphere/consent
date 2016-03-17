@@ -17,5 +17,6 @@ public interface SummaryAPI {
 
     List<Summary> describeMatchSummaryCases();
 
+    File describeDataSetElectionsVotesForDar(String darId);
 
 }

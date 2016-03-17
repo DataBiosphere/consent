@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.client.JerseyClientBuilder;
@@ -81,32 +82,35 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
         final DataRequestDAO requestDAO = jdbi.onDemand(DataRequestDAO.class);
         final DataSetDAO dataSetDAO = jdbi.onDemand(DataSetDAO.class);
+        final DataSetAssociationDAO dataSetAssociationDAO = jdbi.onDemand(DataSetAssociationDAO.class);
         final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
         final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
-
+        final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
+        final DataSetAuditDAO dataSetAuditDAO = jdbi.onDemand(DataSetAuditDAO.class);
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
-        DatabaseDataSetAPI.initInstance(dataSetDAO, electionDAO, dacUserRoleDAO , consentDAO);
+        DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO, dataSetAuditDAO);
+        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO );
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance );
-        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance);
+        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance, dataSetDAO);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO);
-        DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO);
+        DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration());
+        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv );
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
-        //env.healthChecks().register("mongo", new MongoHealthCheck(mongoClient));
+        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
-            EmailNotifierService.initInstance(voteDAO, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
+            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
         } catch (IOException e) {
             LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
         }
@@ -133,6 +137,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // How register our resources.
         env.jersey().register(DataAccessRequestResource.class);
         env.jersey().register(DataSetResource.class);
+        env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentsResource.class);
         env.jersey().register(ConsentAssociationResource.class);
@@ -152,6 +157,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(MatchResource.class);
         env.jersey().register(EmailNotifierResource.class);
         env.jersey().register(HelpReportResource.class);
+        env.jersey().register(ApprovalExpirationTimeResource.class);
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
@@ -167,6 +173,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractVoteAPI.clearInstance();
                 AbstractPendingCaseAPI.clearInstance();
                 AbstractDataRequestAPI.clearInstance();
+                AbstractDataSetAssociationAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();
                 AbstractReviewResultsAPI.clearInstance();
@@ -178,6 +185,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractMailServiceAPI.clearInstance();
                 AbstractEmailNotifierAPI.clearInstance();
                 AbstractHelpReportAPI.clearInstance();
+                AbstractApprovalExpirationTimeAPI.clearInstance();
                 super.lifeCycleStopped(event);
             }
         });
@@ -195,5 +203,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             }
         });
         bootstrap.addBundle(new DBIExceptionsBundle());
+        bootstrap.addBundle(new JobsBundle());
     }
 }

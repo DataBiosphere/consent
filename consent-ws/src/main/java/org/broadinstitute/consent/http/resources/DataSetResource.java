@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ParseResult;
@@ -41,25 +42,28 @@ public class DataSetResource extends Resource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
+    @Path("/{userId}")
     public Response createDataSet(
             @FormDataParam("data") InputStream uploadedDataSet,
             @FormDataParam("data") FormDataBodyPart part,
+            @PathParam("userId") Integer userId,
             @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
 
         logger().debug("POSTing Data Set");
         List<DataSet> dataSets;
         List<String> errors = new ArrayList<>();
-        if (part.getMediaType().toString().equals("text/tab-separated-values")
-                || part.getMediaType().toString().equals("text/plain")) {
+        if (part.getMediaType().getType().equals("text") && 
+                (part.getMediaType().getSubtype().equals("tab-separated-values") 
+                || part.getMediaType().getSubtype().equals("plain") )) {
             File inputFile = null;
             try {
                 inputFile = new File(UUID.randomUUID().toString());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 ParseResult result;
                 if(overwrite) {
-                    result = api.overwrite(inputFile);
+                    result = api.overwrite(inputFile, userId);
                 }else{
-                    result = api.create(inputFile);
+                    result = api.create(inputFile, userId);
                 }
                 dataSets = result.getDatasets();
                 errors = result.getErrors();
@@ -97,6 +101,18 @@ public class DataSetResource extends Resource {
     }
 
     @GET
+    @Path("/{datasetId}")
+    @Produces("application/json")
+    public Response describeDataSet( @PathParam("datasetId") String datasetId){
+        try {
+            return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
+        } catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }
+    }
+
+
+    @GET
     @Path("/sample")
     public Response getDataSetSample() {
         String msg = "GETting Data Set Sample";
@@ -122,7 +138,7 @@ public class DataSetResource extends Resource {
 
         JSONObject json = new JSONObject();
 
-        Collection<Dictionary> headers  =  api.describeDictionary();
+        Collection<Dictionary> headers  =  api.describeDictionaryByReceiveOrder();
 
         StringBuilder sb = new StringBuilder();
         for(Dictionary header : headers) {
@@ -137,7 +153,7 @@ public class DataSetResource extends Resource {
             return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
         }
 
-        Collection<DataSetDTO> rows = api.describeDataSets(idList);
+        Collection<DataSetDTO> rows = api.describeDataSetsByReceiveOrder(idList);
 
         for (DataSetDTO row : rows) {
             StringBuilder sbr = new StringBuilder();
@@ -178,7 +194,7 @@ public class DataSetResource extends Resource {
     @Path("/dictionary")
     @Produces("application/json")
     public Collection<Dictionary> describeDictionary(){
-        return api.describeDictionary();
+        return api.describeDictionaryByDisplayOrder();
     }
 
     @GET
@@ -187,6 +203,17 @@ public class DataSetResource extends Resource {
     public Response datasetAutocomplete(@PathParam("partial") String partial){
         List<Map<String, String>> j = api.autoCompleteDataSets(partial);
         return Response.ok(j, MediaType.APPLICATION_JSON).build();
+    }
+
+    @PUT
+    @Produces("application/json")
+    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") String dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
+        try{
+            DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
+            return Response.ok().entity(dataSet).build();
+        }catch (NotFoundException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }
     }
 
     @Override

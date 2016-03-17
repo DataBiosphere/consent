@@ -30,8 +30,8 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Chairperson'")
     DACUser findChairpersonUser();
 
-    @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Admin'")
-    Collection<DACUser> describeAdminUsers();
+    @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = :roleName")
+    List<DACUser> describeUsersByRole(@Bind("roleName") String roleName );
 
     @SqlQuery("select u.dacUserId from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where u.dacUserId = :dacUserId and r.name = 'Chairperson'")
     Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
@@ -39,6 +39,10 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Chairperson' or r.name = 'Member'")
     Set<DACUser>  findDACUsersEnabledToVote();
+
+    @Mapper(DACUserRoleMapper.class)
+    @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where  u.dacUserId IN (<dacUserIds>)")
+    Set<DACUser> findUsersWithRoles(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
     @SqlQuery("select * from dacuser where email = :email")
     DACUser findDACUserByEmail(@Bind("email") String email);
@@ -70,6 +74,11 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.roleId where r.name = 'Admin'")
     Integer verifyAdminUsers();
+
+
+    @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = :roleName and du.email_preference = :emailPreference")
+    List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
+
 }
 
 

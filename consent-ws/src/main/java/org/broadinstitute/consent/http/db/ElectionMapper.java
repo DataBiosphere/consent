@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.skife.jdbi.v2.StatementContext;
@@ -8,13 +9,14 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class ElectionMapper implements ResultSetMapper<Election> {
 
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         UseRestriction useRestriction = null;
 
-        if (r.getString("translatedUseRestriction") != null){
+        if (StringUtils.isNoneBlank((r.getString("useRestriction")))){
             try {
                 useRestriction = UseRestriction.parse(r.getString("useRestriction"));
             } catch (IOException e) {

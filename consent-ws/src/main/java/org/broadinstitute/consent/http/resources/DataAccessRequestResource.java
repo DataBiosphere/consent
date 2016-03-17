@@ -2,16 +2,40 @@ package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import freemarker.template.TemplateException;
+import java.util.ArrayList;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.TranslateServiceAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
-import javax.ws.rs.*;
+import javax.mail.MessagingException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,6 +58,7 @@ public class DataAccessRequestResource extends Resource {
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
+    private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
 
     public DataAccessRequestResource() {
@@ -52,24 +77,26 @@ public class DataAccessRequestResource extends Resource {
         List<Document> result;
         UseRestriction useRestriction;
         try {
-            if (!requiresManualReview(dar)) {
+            Boolean needsManualReview = requiresManualReview(dar);
+            if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append("restriction", Document.parse(useRestriction.toString()));
-                dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
+                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
             }
-        } catch (IOException ex) {
+            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
+
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
         }
-        dar.append("sortDate", new Date());
+        dar.append(DarConstants.SORT_DATE, new Date());
         result = dataAccessRequestAPI.createDataAccessRequest(dar);
         uri = info.getRequestUriBuilder().build();
         result.forEach(r -> {
             try {
-                matchProcessAPI.processMatchesForPurpose(r.get("_id").toString());
-                emailApi.sendNewDARRequestMessage(r.getString("dar_code"));
+                matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
+                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE));
             } catch (Exception e) {
-                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id " + r.getString("dar_code") + ". Error caused by:", e);
+                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id " + r.getString(DarConstants.DAR_CODE) + ". Error caused by:", e);
             }
         });
         return Response.created(uri).build();
@@ -82,17 +109,18 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     public Response updateDataAccessRequest(@Context UriInfo info, Document dar, @PathParam("id") String id) {
         try {
-            if (dar.containsKey("restriction")) {
-                dar.remove("restriction");
+            if (dar.containsKey(DarConstants.RESTRICTION)) {
+                dar.remove(DarConstants.RESTRICTION);
             }
-            if (!requiresManualReview(dar)) {
+            Boolean needsManualReview = requiresManualReview(dar);
+            if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append("restriction", Document.parse(useRestriction.toString()));
-                dar.append("translated_restriction", translateServiceAPI.translate(TranslateType.PURPOSE.getValue(), useRestriction));
+                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
             }
+            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
-            matchProcessAPI.processMatchesForPurpose(dar.get("_id").toString());
+            matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -151,7 +179,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/find/{id}/consent")
     @Produces("application/json")
     public Consent describeConsentForDAR(@PathParam("id") String id) {
-        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList("datasetId"))).get("datasetId", List.class);
+        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
         Consent c;
         if (CollectionUtils.isNotEmpty(datasetId)) {
             c = consentAPI.getConsentFromDatasetID(datasetId.get(0));
@@ -212,9 +240,8 @@ public class DataAccessRequestResource extends Resource {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
         try {
-            dar.append("sortDate",new Date());
-            result = dataAccessRequestAPI.createPartialDataAccessRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.get("_id"));
+            result = savePartialDarRequest(dar);
+            uri = info.getRequestUriBuilder().path("{id}").build(result.get(DarConstants.ID));
             return Response.created(uri).entity(result).build();
         }
         catch (Exception e) {
@@ -222,6 +249,28 @@ public class DataAccessRequestResource extends Resource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/partial/datasetCatalog")
+    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<String> datasetIds) {
+        Document dar = new Document();
+        dar.append(DarConstants.USER_ID, userId);
+        try {
+            List<Map<String, String>> datasets = new ArrayList<>();
+            for(String datasetId: datasetIds){
+                List<Map<String, String>> ds = dataSetAPI.autoCompleteDataSets(datasetId);
+                datasets.add(ds.get(0));
+            }
+            dar.append(DarConstants.DATASET_ID, datasets);
+            return Response.ok().entity(dar).build();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, " while fetching dataset details to export to DAR formulary. UserId: " + userId + ", datasets: " + datasetIds.toString()+". Cause: "+ e.getLocalizedMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal Server Error when fetching datasets. Please contact Support.", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
 
     @PUT
     @Consumes("application/json")
@@ -263,20 +312,77 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
     }
 
-    private boolean requiresManualReview(Document dar) throws IOException {
-        Map<String, Object> form = parseAsMap(dar.toJson());
-        for (String field : fieldsForManualReview) {
-            if (form.containsKey(field)) {
-                if ((boolean) form.get(field)) {
-                    return true;
-                }
+
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/cancel/{referenceId}")
+    public Response cancelDataAccessRequest(@Context UriInfo info, @PathParam("referenceId") String referenceId) {
+        try {
+            List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
+            Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
+            if(CollectionUtils.isNotEmpty(usersToNotify)) {
+                emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
             }
+            return Response.ok().entity(dar).build();
+        } catch (MessagingException | TemplateException | IOException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal server error on delete. Please try again later. ", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
-        return false;
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/hasUseRestriction/{referenceId}")
+    public Response hasUseRestriction(@PathParam("referenceId") String referenceId){
+        try{
+            return Response.ok("{\"hasUseRestriction\":"+dataAccessRequestAPI.hasUseRestriction(referenceId)+"}").build();
+        }catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/restriction")
+    public Response getUseRestrictionFromQuestions(Document dar) {
+        try{
+            Boolean needsManualReview = requiresManualReview(dar);
+            if (!needsManualReview){
+                UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
+                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
+                return Response.ok(useRestriction).build();
+            }else{
+                return Response.ok("{\"useRestriction\":\"Manual Review\"}").build();
+            }
+        }catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     private Map<String, Object> parseAsMap(String str) throws IOException {
         ObjectReader reader = mapper.reader(Map.class);
         return reader.readValue(str);
+    }
+
+
+    private Document savePartialDarRequest(Document dar) throws Exception{
+        dar.append(DarConstants.SORT_DATE,new Date());
+        return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
+    }
+
+    private boolean requiresManualReview(Document dar) throws IOException {
+        Map<String, Object> form = parseAsMap(dar.toJson());
+        for (String field : fieldsForManualReview) {
+            if (form.containsKey(field)) {
+                if (Boolean.valueOf(form.get(field).toString())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
