@@ -59,6 +59,14 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
+    @Valid
+    @NotNull
+    private GoogleConfiguration googleConfiguration = new GoogleConfiguration();
+
+    @Valid
+    @NotNull
+    private UserConfiguration userConfiguration = new UserConfiguration();
+
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
@@ -91,4 +99,10 @@ public class ConsentConfiguration extends Configuration {
     public FreeMarkerConfiguration getFreeMarkerConfiguration() {
         return freeMarkerConfiguration;
     }
+
+    public GoogleConfiguration getGoogleConfiguration() {
+        return googleConfiguration;
+    }
+
+    public UserConfiguration getUserConfiguration() {return userConfiguration; }
 }

@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http;
 
 import com.google.common.io.Resources;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.apache.http.Header;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.eclipse.jetty.http.HttpHeader;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -42,7 +44,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
         WebTarget webTarget = client.target(postDataSetFile(false, 1));
         MultiPart mp = createFormData("wrongExt", "pdf");
 
-        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        Response response = webTarget.request(MediaType.APPLICATION_JSON).header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION).post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
@@ -57,7 +59,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
         WebTarget webTarget = client.target(postDataSetFile(false, 1));
         MultiPart mp = createFormData("missingHeader", "txt");
 
-        Response response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(mp, mp.getMediaType()));
+        Response response = webTarget.request(MediaType.APPLICATION_JSON).header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION).post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
@@ -71,7 +73,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
                 .register(MultiPartFeature.class).build();
         WebTarget webTarget = client.target(postDataSetFile(true, 1));
         MultiPart mp = createFormData("correctFile", "txt");
-        Response response = webTarget.request(MediaType.APPLICATION_JSON)
+        Response response = webTarget.request(MediaType.APPLICATION_JSON).header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
         assertTrue(response.getStatus() == (OK));
