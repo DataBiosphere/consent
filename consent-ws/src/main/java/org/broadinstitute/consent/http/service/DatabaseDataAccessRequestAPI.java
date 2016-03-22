@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.MongoException;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.dto.InvalidRestriction;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -300,6 +302,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public boolean hasUseRestriction(String referenceId){
         return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
+    }
+
+    @Override
+    public List<InvalidRestriction> getInvalidDataAccessRequest() {
+      List<Document> darList = new ArrayList<>();
+      darList.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.VALID_RESTRICTION, false)).into(new ArrayList<>()));
+      List<InvalidRestriction> invalidRestrictions = new ArrayList<>();
+      darList.forEach(c->{
+          invalidRestrictions.add(new InvalidRestriction(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
+      });
+      return invalidRestrictions;
     }
 
 

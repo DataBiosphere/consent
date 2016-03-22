@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.google.gson.Gson;
 import freemarker.template.TemplateException;
 import java.util.ArrayList;
 import javax.ws.rs.Consumes;
@@ -20,18 +21,9 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
-import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
-import org.broadinstitute.consent.http.service.MatchProcessAPI;
-import org.broadinstitute.consent.http.service.TranslateServiceAPI;
+import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -60,12 +52,14 @@ public class DataAccessRequestResource extends Resource {
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
+    private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
 
     public DataAccessRequestResource() {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
+        this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
     }
 
     @POST
@@ -82,10 +76,15 @@ public class DataAccessRequestResource extends Resource {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
+                useRestrictionValidatorAPI.validateUseRestriction(useRestriction.toString());
+                dar.append(DarConstants.VALID_RESTRICTION, true);
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
 
-        } catch (Exception ex) {
+        }catch (IllegalArgumentException ex) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
+        }
+        catch (Exception ex) {
             logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
         }
         dar.append(DarConstants.SORT_DATE, new Date());
@@ -134,6 +133,18 @@ public class DataAccessRequestResource extends Resource {
     public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         return new DARModalDetailsDTO(dar);
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/invalid")
+    public Response getInvalidDataAccessRequest() {
+        try{
+            return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
+        }catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+
     }
 
     @GET

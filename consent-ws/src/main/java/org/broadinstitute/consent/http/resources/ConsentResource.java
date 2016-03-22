@@ -1,17 +1,36 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.enumeration.TranslateType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.*;
-
-import javax.ws.rs.*;
+import com.google.gson.Gson;
+import java.io.IOException;
+import java.net.URI;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
+import org.broadinstitute.consent.http.enumeration.TranslateType;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.MatchAPI;
+import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.TranslateServiceAPI;
+import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 
 @Path("{api : (api/)?}consent")
 public class ConsentResource extends Resource {
@@ -20,6 +39,7 @@ public class ConsentResource extends Resource {
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
+    private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
 
 
     @Path("{id}")
@@ -34,12 +54,26 @@ public class ConsentResource extends Resource {
         }
     }
 
+    @Path("invalid")
+    @GET
+    @Produces("application/json")
+    public Response describeInvalidConsents() {
+        try {
+            return Response.ok(api.getInvalidConsents()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage().toString(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }
+    }
+
     @POST
     @Consumes("application/json")
     public Response createConsent(@Context UriInfo info, Consent rec) {
         try {
             if (rec.getTranslatedUseRestriction() == null) {
                 rec.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),rec.getUseRestriction()));
+            }
+            if(rec.getUseRestriction() != null){
+                useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
             Consent consent = api.create(rec);
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
@@ -64,12 +98,17 @@ public class ConsentResource extends Resource {
             if (updated.getTranslatedUseRestriction() == null) {
                 updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
             }
+            if(updated.getUseRestriction() != null) {
+                useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(updated.getUseRestriction()));
+            }
             updated = api.update(id, updated);
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s to update", id), Response.Status.NOT_FOUND.getStatusCode())).build();
         } catch (IOException ie) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }catch (IllegalArgumentException ie) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
@@ -109,7 +148,7 @@ public class ConsentResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
-        
+
         String id;
         try {
             id = api.getByName(name);
@@ -132,6 +171,7 @@ public class ConsentResource extends Resource {
         this.api = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();
+        this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
     }
 
 }

@@ -30,6 +30,8 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.resources.*;
 import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.skife.jdbi.v2.DBI;
@@ -114,6 +116,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         GoogleAuthenticationAPI googleAuthentication = new GoogleAuthentication(config.getGoogleAuthentication());
         BasicAuthenticationAPI basicAuthentication = new BasicAuthentication(config.getBasicAuthentication());       // Mail Services
+        UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
+        // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
             EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
@@ -193,6 +197,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractEmailNotifierAPI.clearInstance();
                 AbstractHelpReportAPI.clearInstance();
                 AbstractApprovalExpirationTimeAPI.clearInstance();
+                AbstractUseRestrictionValidatorAPI.clearInstance();
                 super.lifeCycleStopped(event);
             }
         });

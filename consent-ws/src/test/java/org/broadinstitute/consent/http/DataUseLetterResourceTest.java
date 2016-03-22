@@ -56,6 +56,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         MockitoAnnotations.initMocks(this);
         dulResource = new DataUseLetterResource(storage);
         mockTranslateResponse();
+        mockValidateResponse();
     }
 
     @Test

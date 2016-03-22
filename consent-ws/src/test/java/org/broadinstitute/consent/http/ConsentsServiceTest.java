@@ -42,6 +42,7 @@ public class ConsentsServiceTest extends AbstractTest {
     @Before
     public void setup() throws Exception {
         mockTranslateResponse();
+        mockValidateResponse();
     }
 
     //@Test
