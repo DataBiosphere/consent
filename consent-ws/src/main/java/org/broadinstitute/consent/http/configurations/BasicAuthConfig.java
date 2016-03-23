@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.configurations;
 
 import javax.validation.constraints.NotNull;
 
-public class UserConfiguration {
+public class BasicAuthConfig {
 
     @NotNull
     public String user;

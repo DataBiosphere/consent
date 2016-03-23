@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.configurations;
 
 import javax.validation.constraints.NotNull;
 
-public class GoogleConfiguration {
+public class GoogleOAuth2Config {
 
     @NotNull
     public String clientId;

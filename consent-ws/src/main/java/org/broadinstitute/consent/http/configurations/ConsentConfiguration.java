@@ -61,11 +61,11 @@ public class ConsentConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    private GoogleConfiguration googleConfiguration = new GoogleConfiguration();
+    private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
 
     @Valid
     @NotNull
-    private UserConfiguration userConfiguration = new UserConfiguration();
+    private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
 
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
@@ -100,9 +100,19 @@ public class ConsentConfiguration extends Configuration {
         return freeMarkerConfiguration;
     }
 
-    public GoogleConfiguration getGoogleConfiguration() {
-        return googleConfiguration;
+    public BasicAuthConfig getBasicAuthentication() {
+        return basicAuthentication;
     }
 
-    public UserConfiguration getUserConfiguration() {return userConfiguration; }
+    public void setBasicAuthentication(BasicAuthConfig basicAuthentication) {
+        this.basicAuthentication = basicAuthentication;
+    }
+
+    public GoogleOAuth2Config getGoogleAuthentication() {
+        return googleAuthentication;
+    }
+
+    public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
+        this.googleAuthentication = googleAuthentication;
+    }
 }

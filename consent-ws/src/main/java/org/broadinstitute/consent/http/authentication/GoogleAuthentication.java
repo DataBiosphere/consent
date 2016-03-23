@@ -1,50 +1,58 @@
 package org.broadinstitute.consent.http.authentication;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClients;
+import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.oauth2.Oauth2;
-import com.google.api.services.oauth2.model.Tokeninfo;
-import org.broadinstitute.consent.http.configurations.GoogleConfiguration;
+import java.io.InputStream;
+import java.util.HashMap;
 
 public class GoogleAuthentication implements GoogleAuthenticationAPI {
 
-    private GoogleConfiguration config;
+    private GoogleOAuth2Config config;
+    private final String tokenInfoUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
 
-    public GoogleAuthentication(GoogleConfiguration config) {
+    public GoogleAuthentication(GoogleOAuth2Config config) {
         this.config = config;
     }
-
-
 
     @Override
     public void validateAccessToken(String authHeader) throws Exception {
         String accessToken;
         accessToken = authHeader.substring(7).trim();
-        Credential credential = authorize(accessToken);
-        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        Oauth2 oauth2 = new Oauth2.Builder(
-                httpTransport,
-                JacksonFactory.getDefaultInstance(), credential)
-                .build();
-        Tokeninfo tokenInfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
-        if (tokenInfo == null || !tokenInfo.getAudience().equals(config.getClientId())) {
+        HashMap<String,Object> tokenInfo = validateToken(accessToken);
+        try{
+            String clientId = tokenInfo.containsKey("aud") ? tokenInfo.get("aud").toString() : tokenInfo.get("audience").toString();
+            if (clientId == null || !clientId.equals(config.getClientId())){
+                unauthorized(accessToken);
+            }
+        }catch (Exception e){
             unauthorized(accessToken);
         }
     }
 
-    private Credential authorize(String accessToken) {
-        GoogleCredential credential =
-                new GoogleCredential.Builder()
-                        .setTransport(new NetHttpTransport())
-                        .setJsonFactory(JacksonFactory.getDefaultInstance())
-                        .setClientSecrets(config.getClientId(), config.getClientSecret()).build();
-        credential.setAccessToken(accessToken);
-        return credential;
+    private HashMap<String,Object> validateToken(String accessToken) throws Exception {
+        HttpClient httpclient = HttpClients.createDefault();
+        HashMap<String,Object> tokenInfo = null;
+        HttpPost httppost = new HttpPost(tokenInfoUrl + accessToken);
+        HttpResponse response = httpclient.execute(httppost);
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            InputStream tokenInfoStream = entity.getContent();
+            try {
+                String result = IOUtils.toString(tokenInfoStream);
+                tokenInfo =  new ObjectMapper().readValue(result, HashMap.class);
+
+            } finally {
+                tokenInfoStream.close();
+            }
+        }
+        return tokenInfo;
     }
 
     private void unauthorized(String accessToken) throws Exception {

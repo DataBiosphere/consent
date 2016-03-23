@@ -112,8 +112,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv );
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
-        GoogleAuthenticationAPI googleAuthentication = new GoogleAuthentication(config.getGoogleConfiguration());
-        BasicAuthenticationAPI basicAuthentication = new BasicAuthentication(config.getUserConfiguration());       // Mail Services
+        GoogleAuthenticationAPI googleAuthentication = new GoogleAuthentication(config.getGoogleAuthentication());
+        BasicAuthenticationAPI basicAuthentication = new BasicAuthentication(config.getBasicAuthentication());       // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
             EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());

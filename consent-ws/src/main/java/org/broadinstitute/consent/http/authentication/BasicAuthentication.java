@@ -1,15 +1,15 @@
 package org.broadinstitute.consent.http.authentication;
 
 import java.util.Base64;
-import org.broadinstitute.consent.http.configurations.UserConfiguration;
 import java.nio.charset.StandardCharsets;
+import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
 
-public class BasicAuthentication implements BasicAuthenticationAPI{
+public class BasicAuthentication implements BasicAuthenticationAPI {
 
-    UserConfiguration userConfiguration;
+    BasicAuthConfig basicAuthentication;
 
-    public BasicAuthentication(UserConfiguration userConfiguration){
-        this.userConfiguration = userConfiguration;
+    public BasicAuthentication(BasicAuthConfig basicAuthentication) {
+        this.basicAuthentication = basicAuthentication;
     }
 
     @Override
@@ -17,7 +17,7 @@ public class BasicAuthentication implements BasicAuthenticationAPI{
         String credential = authHeader.substring(6);
         String[] userPassword = decodeCredential(credential);
         String password = Base64.getEncoder().encodeToString(userPassword[1].getBytes(StandardCharsets.UTF_8));
-        if(!(userPassword[0].equals(userConfiguration.getUser()) && password.equals(userConfiguration.getPassword()))){
+        if(!(userPassword[0].equals(basicAuthentication.getUser()) && password.equals(basicAuthentication.getPassword()))) {
             unauthorized(credential);
         }
 
@@ -33,5 +33,4 @@ public class BasicAuthentication implements BasicAuthenticationAPI{
     private void unauthorized(String credential) throws Exception {
         throw new Exception("Provided user credential is either null or empty or does not have permissions to access this resource." + credential);
     }
-
 }

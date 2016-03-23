@@ -49,9 +49,9 @@ mailConfiguration:
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
-googleConfiguration:
+googleAuthentication:
  clientId:
  clientSecret:
-userConfiguration:
-  user: orspuser
-  password: b3JzcHBhc3N3b3Jk
+basicAuthentication:
+  user: testuser
+  password: dGVzdHBhc3N3b3Jk

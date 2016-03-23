@@ -19,7 +19,6 @@ public class AuthorizationFilter implements Filter {
 
     private GoogleAuthenticationAPI googleAuthenticationAPI;
     private BasicAuthenticationAPI basicAuthenticationAPI;
-    private  final String AUTHENTICATE_URL = "/authenticate/";
 
 
     public AuthorizationFilter(GoogleAuthenticationAPI googleAuthenticationAPI, BasicAuthenticationAPI basicAuthenticationAPI) {

@@ -33,7 +33,8 @@ abstract public class AbstractTest extends ResourcedTest {
     public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
     public static final int UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode();
-    public static final String BASIC_AUTHENTICATION = "Basic b3JzcHVzZXI6b3JzcHBhc3N3b3Jk";
+    //testuser
+    public static final String BASIC_AUTHENTICATION = "Basic dGVzdHVzZXI6dGVzdHBhc3N3b3Jk";
 
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
 
