@@ -14,11 +14,16 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.broadinstitute.consent.http.authentication.BasicAuthentication;
+import org.broadinstitute.consent.http.authentication.BasicAuthenticationAPI;
+import org.broadinstitute.consent.http.authentication.GoogleAuthentication;
+import org.broadinstitute.consent.http.authentication.GoogleAuthenticationAPI;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.filter.AuthorizationFilter;
 import org.broadinstitute.consent.http.filter.CORSFilter;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
@@ -60,20 +65,20 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 .build(getName());
         // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
         // with singletons and JDBI (see AbstractConsentAPI).
-        
+
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient;
-        
+
         if (mongoConfiguration.isTestMode()) {
             Fongo fongo = new Fongo("TestServer");
             mongoClient =  fongo.getMongo();
         } else {
             mongoClient = new MongoClient(new MongoClientURI(mongoConfiguration.getUri()));
         }
-       
+
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient, mongoConfiguration.getDbName());
         mongoInstance.configureMongo();
-                
+
         final DBIFactory factory = new DBIFactory();
         final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
         final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
@@ -107,18 +112,20 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv );
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
-        // Mail Services
+        GoogleAuthenticationAPI googleAuthentication = new GoogleAuthentication(config.getGoogleAuthentication());
+        BasicAuthenticationAPI basicAuthentication = new BasicAuthentication(config.getBasicAuthentication());       // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
             EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
         } catch (IOException e) {
             LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
         }
+
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
+        env.servlets().addFilter("authorizationFilter", new AuthorizationFilter(googleAuthentication, basicAuthentication)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
-
         // Configure CORS parameters
         cors.setInitParameter(CORSFilter.ALLOWED_ORIGINS_PARAM, "*");
         cors.setInitParameter(CORSFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization");

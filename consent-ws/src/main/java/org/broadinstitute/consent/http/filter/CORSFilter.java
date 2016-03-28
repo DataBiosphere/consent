@@ -20,5 +20,7 @@ public class CORSFilter extends CrossOriginFilter {
 
     private void handleCORS(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
         response.setHeader(ACCESS_CONTROL_ALLOW_METHODS_HEADER, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+        response.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+        response.setHeader(ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "X-Requested-With,Content-Type,Accept,Origin,Authorization");
     }
 }

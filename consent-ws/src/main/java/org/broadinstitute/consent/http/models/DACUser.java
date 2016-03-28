@@ -23,6 +23,10 @@ public class DACUser {
     @JsonProperty
     private List<DACUserRole> roles;
 
+    @JsonProperty
+    private String accessToken;
+
+
     public DACUser() {
     }
 
@@ -81,6 +85,14 @@ public class DACUser {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
     @Override

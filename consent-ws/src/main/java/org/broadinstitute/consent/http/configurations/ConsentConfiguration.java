@@ -59,6 +59,14 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
+    @Valid
+    @NotNull
+    private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
+
+    @Valid
+    @NotNull
+    private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
+
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
@@ -90,5 +98,21 @@ public class ConsentConfiguration extends Configuration {
 
     public FreeMarkerConfiguration getFreeMarkerConfiguration() {
         return freeMarkerConfiguration;
+    }
+
+    public BasicAuthConfig getBasicAuthentication() {
+        return basicAuthentication;
+    }
+
+    public void setBasicAuthentication(BasicAuthConfig basicAuthentication) {
+        this.basicAuthentication = basicAuthentication;
+    }
+
+    public GoogleOAuth2Config getGoogleAuthentication() {
+        return googleAuthentication;
+    }
+
+    public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
+        this.googleAuthentication = googleAuthentication;
     }
 }
