@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
 
@@ -57,6 +56,10 @@ public class DataSetDTO {
 
     public void setDeletable(Boolean deletable) {
         this.deletable = deletable;
+    }
+
+    public String getPropertyValue(String propertyName){
+        return properties.get(properties.indexOf(new DataSetPropertyDTO(propertyName, ""))).getPropertyValue();
     }
 
     public List<DataSetPropertyDTO> getProperties() {
