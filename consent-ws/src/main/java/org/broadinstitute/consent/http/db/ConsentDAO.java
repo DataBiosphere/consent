@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.dto.InvalidRestriction;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -56,8 +57,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction)")
+            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -66,7 +67,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("dulName") String dulName,
                        @Bind("createDate") Date createDate,
                        @Bind("sortDate") Date sortDate,
-                       @Bind("translatedUseRestriction") String translatedUseRestriction);
+                       @Bind("translatedUseRestriction") String translatedUseRestriction,
+                       @Bind("valid_restriction") Boolean validRestriction);
 
 
 
@@ -159,4 +161,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select ca.consentId from consentassociations ca  where ca.objectId IN (<objectIdList>) ")
     List<String> getAssociationsConsentIdfromObjectIds(@BindIn("objectIdList") List<String> objectIdList);
 
+    @Mapper(InvalidRestrictionMapper.class)
+    @SqlQuery("select name, useRestriction from consents where valid_restriction = false ")
+    List<InvalidRestriction> findInvalidRestrictions();
 }

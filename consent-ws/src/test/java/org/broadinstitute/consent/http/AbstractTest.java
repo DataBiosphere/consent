@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.http.client.methods.HttpHead;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
 import org.eclipse.jetty.http.HttpHeader;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -14,10 +16,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import org.broadinstitute.consent.http.models.validate.ValidateResponse;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,7 +32,6 @@ abstract public class AbstractTest extends ResourcedTest {
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
-    public static final int UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode();
     //testuser
     public static final String BASIC_AUTHENTICATION = "Basic dGVzdHVzZXI6dGVzdHBhc3N3b3Jk";
 
@@ -131,5 +130,23 @@ abstract public class AbstractTest extends ResourcedTest {
         Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
         Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
         DatabaseTranslateServiceAPI.getInstance().setClient(clientMock);
+    }
+
+    public void mockValidateResponse(){
+        final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
+        final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
+        ValidateResponse entity = new ValidateResponse(true, "mockedValidatedRestriction");
+
+
+        final Response responseMock = Mockito.mock(Response.class);
+        Mockito.when(responseMock.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
+        Mockito.when(responseMock.readEntity(ValidateResponse.class)).thenReturn(entity);
+
+        Mockito.when(builderMock.post(Entity.json(Mockito.anyString()))).thenReturn(responseMock);
+        Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
+        final Client clientMock= Mockito.mock(Client.class);
+        Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
+        Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
+        UseRestrictionValidator.getInstance().setClient(clientMock);
     }
 }

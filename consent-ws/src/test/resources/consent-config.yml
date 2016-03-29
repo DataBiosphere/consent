@@ -35,9 +35,8 @@ logging:
     ConsentModule: ALL
     DatabaseResearchPurposeAPI: ALL
 services:
-    matchURL:
+    ontologyURL:
     localURL: http://localhost:8000/#/
-    translateURL:
 mailConfiguration:
   activateEmailNotifications: false
   smtpPort: 587

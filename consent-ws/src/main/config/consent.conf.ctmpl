@@ -37,9 +37,8 @@ mongo:
   password: {{.Data.mongodb_password}}
   testMode: false
 services:
-  matchURL: {{.Data.services_match_url}}
   localURL: {{.Data.services_local_url}}
-  translateURL: {{.Data.services_translate_url}}
+  ontologyURL: {{.Data.services_ontology_url}}
 mailConfiguration:
   activateEmailNotifications: {{.Data.mailconfig_activate_notifications}}
   smtpPort: {{.Data.mailconfig_smtp_port}}
