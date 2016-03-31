@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
-import org.broadinstitute.consent.http.models.dto.InvalidRestriction;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -399,7 +399,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public List<InvalidRestriction> getInvalidConsents() {
+    public List<UseRestrictionDTO> getInvalidConsents() {
         return consentDAO.findInvalidRestrictions();
     }
 

@@ -2,7 +2,10 @@ package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class InvalidRestriction {
+public class UseRestrictionDTO {
+
+    @JsonProperty
+    private String id;
 
     @JsonProperty
     private String name;
@@ -10,12 +13,18 @@ public class InvalidRestriction {
     @JsonProperty
     private String useRestriction;
 
-    public InvalidRestriction(){
+    public UseRestrictionDTO(){
     }
 
-    public InvalidRestriction(String name, String useRestriction){
+    public UseRestrictionDTO(String name, String useRestriction){
         this.name = name;
         this.useRestriction = useRestriction;
+    }
+
+    public UseRestrictionDTO(String name, String useRestriction, String id){
+        this.name = name;
+        this.useRestriction = useRestriction;
+        this.id = id;
     }
 
     public String getName() {
@@ -32,5 +41,13 @@ public class InvalidRestriction {
 
     public void setUseRestriction(String useRestriction) {
         this.useRestriction = useRestriction;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
