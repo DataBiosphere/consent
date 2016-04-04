@@ -63,6 +63,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final String NEEDS_APPROVAL = "Needs Approval";
 
+    private final String APPROVED = "Approved";
+
+    private final String DENIED = "Denied";
+
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -316,13 +320,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public List<UseRestrictionDTO> getInvalidDataAccessRequest() {
-      List<Document> darList = new ArrayList<>();
-      darList.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.VALID_RESTRICTION, false)).into(new ArrayList<>()));
-      List<UseRestrictionDTO> invalidRestrictions = new ArrayList<>();
-      darList.forEach(c->{
-          invalidRestrictions.add(new UseRestrictionDTO(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
-      });
-      return invalidRestrictions;
+        List<Document> darList = new ArrayList<>();
+        darList.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.VALID_RESTRICTION, false)).into(new ArrayList<>()));
+        List<UseRestrictionDTO> invalidRestrictions = new ArrayList<>();
+        darList.forEach(c->{
+            invalidRestrictions.add(new UseRestrictionDTO(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
+        });
+        return invalidRestrictions;
     }
 
     @Override
@@ -392,7 +396,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setSortDate(dar.getDate("sortDate"));
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
+
             darManage.setDataSetElectionResult(darManage.getNeedsApproval()? NEEDS_APPROVAL:"");
+
             if (election == null) {
                 darManage.setElectionStatus(UN_REVIEWED);
             } else {
@@ -415,16 +421,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private String consolidateDataSetElectionsResult(List<Election> datasetElections) {
-        try {
+        if(CollectionUtils.isNotEmpty(datasetElections)) {
             for (Election election : datasetElections) {
                 if (!election.getFinalAccessVote()) {
-                    return "Denied";
+                    return DENIED;
                 }
             }
-            return "Approved";
-        } catch (NullPointerException e){
-            return NEEDS_APPROVAL;
+            return APPROVED;
         }
+        return NEEDS_APPROVAL;
     }
 
     private List getRequestIds(FindIterable<Document> access) {
