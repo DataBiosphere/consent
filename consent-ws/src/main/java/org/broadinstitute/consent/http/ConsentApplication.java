@@ -116,7 +116,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         GoogleAuthenticationAPI googleAuthentication = new GoogleAuthentication(config.getGoogleAuthentication());
         BasicAuthenticationAPI basicAuthentication = new BasicAuthentication(config.getBasicAuthentication());       // Mail Services
-        UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
+        UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
         // Mail Services
         try {
             MailService.initInstance(config.getMailConfiguration());
