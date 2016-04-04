@@ -1,25 +1,29 @@
 package org.broadinstitute.consent.http.service.users.handler;
 
-public abstract class AbstractUserRolesHandler implements UserHandlerAPI{
+public abstract class AbstractUserRolesHandler implements UserHandlerAPI {
 
     protected static class UserHandlerAPIHolder {
+
         private static UserHandlerAPI theInstance = null;
 
         public static void setInstance(UserHandlerAPI api) {
-            if (theInstance != null)
+            if (theInstance != null) {
                 throw new IllegalStateException();
+            }
             theInstance = api;
         }
 
         public static UserHandlerAPI getInstance() {
-            if (theInstance == null)
+            if (theInstance == null) {
                 throw new IllegalStateException();
+            }
             return theInstance;
         }
 
         public static void clearInstance() {
-            if (theInstance == null)
+            if (theInstance == null) {
                 throw new IllegalStateException();
+            }
             theInstance = null;
         }
 

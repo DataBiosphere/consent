@@ -87,7 +87,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public List<Vote> describeUserVotesByElectionsId(List<Integer> electionIds, Integer userId) {
-        return voteDAO.findVotesByElectionsIdsAndUserId(electionIds, userId);
+        return voteDAO.findPendingVotesByElectionsIdsAndUserId(electionIds, userId);
     }
 
     @Override

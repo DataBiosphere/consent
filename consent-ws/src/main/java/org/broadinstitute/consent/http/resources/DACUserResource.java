@@ -17,7 +17,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -39,7 +38,7 @@ public class DACUserResource extends Resource {
     private final ElectionAPI electionAPI;
     private final VoteAPI voteAPI;
 
-    public DACUserResource(){
+    public DACUserResource() {
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
@@ -47,12 +46,12 @@ public class DACUserResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    public Response createdDACUser(@Context UriInfo info, DACUser dac)  {
+    public Response createdDACUser(@Context UriInfo info, DACUser dac) {
         URI uri;
         DACUser dacUser;
         try {
             dacUser = dacUserAPI.createDACUser(dac);
-            if(isChairPerson(dacUser.getRoles())){
+            if (isChairPerson(dacUser.getRoles())) {
                 dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
                 voteAPI.createVotesForElections(elections, true);
@@ -81,14 +80,14 @@ public class DACUserResource extends Resource {
     @Path("/{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response update(@Context UriInfo info, Map<String,DACUser> dac, @PathParam("id") Integer id) {
+    public Response update(@Context UriInfo info, Map<String, DACUser> dac, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
             return Response.ok(uri).entity(dacUser).build();
         } catch (IllegalArgumentException | UserRoleHandlerException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch ( Exception e) {
+        } catch (Exception e) {
             return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
@@ -103,8 +102,8 @@ public class DACUserResource extends Resource {
 
     private boolean isChairPerson(List<DACUserRole> roles) {
         boolean isChairPerson = false;
-        for(DACUserRole role : roles){
-            if(role.getName().equals(DACUserRoles.CHAIRPERSON.getValue())){
+        for (DACUserRole role : roles) {
+            if (role.getName().equals(DACUserRoles.CHAIRPERSON.getValue())) {
                 isChairPerson = true;
                 break;
             }
@@ -116,7 +115,7 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/validateDelegation")
-    public Response validateDelegation(@QueryParam("role") String role,  DACUser dac)  {
+    public Response validateDelegation(@QueryParam("role") String role, DACUser dac) {
         DACUser dacUser;
         try {
             dacUser = dacUserAPI.describeDACUserByEmail(dac.getEmail());
