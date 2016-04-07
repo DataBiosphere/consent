@@ -72,6 +72,18 @@ public class ConsentConfiguration extends Configuration {
         return httpClient;
     }
 
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private final StoreOntologyConfiguration storeOntology = new StoreOntologyConfiguration();
+
+
     public DataSourceFactory getDataSourceFactory() {
         return database;
     }
@@ -114,5 +126,13 @@ public class ConsentConfiguration extends Configuration {
 
     public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
         this.googleAuthentication = googleAuthentication;
+    }
+
+    public ElasticSearchConfiguration getElasticSearchConfiguration() {
+        return elasticSearch;
+    }
+
+    public StoreOntologyConfiguration getStoreOntologyConfiguration() {
+        return storeOntology;
     }
 }

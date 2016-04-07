@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import com.github.fakemongo.Fongo;
+import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import de.spinscale.dropwizard.jobs.JobsBundle;
@@ -30,6 +31,10 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.resources.*;
 import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyService;
+import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
+import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerServiceImpl;
+import org.broadinstitute.consent.http.service.ontologyIndexer.StoreOntologyService;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
@@ -37,10 +42,13 @@ import org.eclipse.jetty.util.component.LifeCycle;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
@@ -54,6 +62,8 @@ import java.util.EnumSet;
 public class ConsentApplication extends Application<ConsentConfiguration> {
     public static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
+
+
     public static void main(String[] args) throws Exception {
         new ConsentApplication().run(args);
     }
@@ -63,7 +73,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         LOGGER.debug("ConsentApplication.run called.");
         // Client to consume another services
-        final Client client = new JerseyClientBuilder(env).using(config.getJerseyClientConfiguration())
+        final javax.ws.rs.client.Client client = new JerseyClientBuilder(env).using(config.getJerseyClientConfiguration())
                 .build(getName());
         // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
         // with singletons and JDBI (see AbstractConsentAPI).
@@ -81,6 +91,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient, mongoConfiguration.getDbName());
         mongoInstance.configureMongo();
 
+
+
         final DBIFactory factory = new DBIFactory();
         final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
         final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
@@ -97,9 +109,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         final DataSetAuditDAO dataSetAuditDAO = jdbi.onDemand(DataSetAuditDAO.class);
+
+
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
-        DatabaseConsentAPI.initInstance(jdbi, consentDAO ,electionDAO , mongoInstance);
+        DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, mongoInstance);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO, dataSetAuditDAO);
         DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO );
@@ -144,6 +158,27 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
             throw new IllegalStateException(e);
         }
+
+
+        //Manage Ontologies dependencies
+        final ElasticSearchConfiguration elasticConfiguration = config.getElasticSearchConfiguration();
+
+        TransportClient eSearchClient = new TransportClient(ImmutableSettings.settingsBuilder()
+                .put("cluster.name", elasticConfiguration.getClusterName()));
+        elasticConfiguration.getServers().stream().forEach((server) -> {
+            eSearchClient.addTransportAddress(new InetSocketTransportAddress(server, 9300));
+        });
+
+            final StoreOntologyService storeOntologyService =
+                new StoreOntologyService(googleStore,
+                        config.getStoreOntologyConfiguration().getBucketSubdirectory(),
+                        config.getStoreOntologyConfiguration().getConfigurationFileName());
+
+        final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient,config.getElasticSearchConfiguration().getIndexName());
+        final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService,indexOntologyService);
+        env.jersey().register(new IndexerResource(indexerService));
+
+
 
         // How register our resources.
         env.jersey().register(DataAccessRequestResource.class);
