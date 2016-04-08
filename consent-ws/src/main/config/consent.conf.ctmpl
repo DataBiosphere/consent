@@ -57,11 +57,11 @@ basicAuthentication:
   user: {{.Data.basic_auth_user}} 
   password: {{.Data.basic_auth_password}}
 storeOntology:
-  bucketSubdirectory: {{.Data.storeOntology.bucketSubdirectory}}
-  configurationFileName:  {{.Data.storeOntology.configurationFileName}}
+  bucketSubdirectory: {{.Data.storeOntology_bucketSubdirectory}}
+  configurationFileName:  {{.Data.storeOntology_configurationFileName}}
 elasticSearch:
-    clusterName: {{.Data.elasticSearch.clusterName}}
-    servers: {{.Data.elasticSearch.servers}}
-    indexName: {{.Data.elasticSearch.indexName}}
+    clusterName: {{.Data.elasticSearch_clusterName}}
+    servers: {{.Data.elasticSearch_servers}}
+    indexName: {{.Data.elasticSearch_indexName}}
 {{end}}
 {{end}}
