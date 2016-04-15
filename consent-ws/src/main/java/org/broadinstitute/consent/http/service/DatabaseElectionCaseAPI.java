@@ -167,12 +167,12 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
              pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
         }
         pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
-        pendingCase.setAlreadyVoted(vote.getVote() != null);
+        pendingCase.setAlreadyVoted(pendingCase.getAlreadyVoted() == null ? vote.getVote() != null : pendingCase.getAlreadyVoted());
         pendingCase.setStatus(vote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
         pendingCase.setVoteId(vote.getVoteId());
         pendingCase.setIsReminderSent(isReminderSent);
         pendingCase.setCreateDate(election.getCreateDate());
-        pendingCase.setElectionStatus(election.getStatus());
+        pendingCase.setElectionStatus(pendingCase.getElectionStatus() == null ? election.getStatus() : pendingCase.getElectionStatus());
         pendingCase.setElectionId(election.getElectionId());
         return pendingCase;
     }
