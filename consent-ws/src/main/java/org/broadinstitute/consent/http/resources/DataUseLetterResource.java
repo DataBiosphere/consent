@@ -94,6 +94,7 @@ public class DataUseLetterResource extends Resource {
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
@@ -105,6 +106,7 @@ public class DataUseLetterResource extends Resource {
             File targetFile = new File(fileName);
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
             return Response.ok(targetFile)
+                    .type(r.getContentType())
                     .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
                     .build();
         } catch (UnknownIdentifierException e) {
