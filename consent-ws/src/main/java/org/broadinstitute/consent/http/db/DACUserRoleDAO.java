@@ -45,7 +45,10 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
 
     @SqlBatch("insert into user_role (roleId, dacUserId, email_preference) values (:roleId, :dacUserId, :emailPreference)")
     void insertSingleUserRole(@BindBean DACUserRole role, @Bind("dacUserId") Integer dacUserId);
-    
+
+    @SqlUpdate("update user_role set email_preference = :emailPreference where roleId =:roleId and  dacUserId = :dacUserId")
+    void updateEmailPreferenceUserRole(@BindBean DACUserRole role, @Bind("dacUserId") Integer dacUserId);
+
     @SqlUpdate("delete from user_role where dacUserId = :dacUserId and roleId = :roleId")
     void removeSingleUserRole(@Bind("dacUserId") Integer dacUserId, @Bind("roleId") Integer roleId);
 

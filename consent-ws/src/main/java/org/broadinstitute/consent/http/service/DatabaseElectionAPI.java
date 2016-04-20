@@ -590,7 +590,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             vote.setVote(rec.getFinalVote());
             vote.setCreateDate(rec.getFinalVoteDate());
             vote.setRationale(rec.getFinalRationale());
-            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.isReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
+            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
         }
     }
 

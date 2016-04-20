@@ -40,7 +40,7 @@ public class Vote {
     }
 
     public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
-            Integer electionId, String rationale, String type, Boolean isReminderSent, Boolean hasConcerns) {
+                Integer electionId, String rationale, String type, Boolean isReminderSent, Boolean hasConcerns) {
         this.voteId = voteId;
         this.vote = vote;
         this.dacUserId = dacUserId;
@@ -54,13 +54,14 @@ public class Vote {
     }
 
     public void initVote(Integer dacUserId, Date createDate, Date updateDate,
-            String rationale, Boolean isReminderSent, Boolean hasConcerns) {
+                         String rationale, Boolean isReminderSent, Boolean hasConcerns, Boolean vote) {
         this.dacUserId = dacUserId;
         this.createDate = createDate;
         this.updateDate = updateDate;
         this.rationale = rationale;
         this.isReminderSent = isReminderSent;
         this.hasConcerns = hasConcerns;
+        this.vote = vote;
     }
 
     public Integer getVoteId() {
@@ -69,14 +70,6 @@ public class Vote {
 
     public void setVoteId(Integer voteId) {
         this.voteId = voteId;
-    }
-
-    public Boolean isReminderSent() {
-        return isReminderSent;
-    }
-
-    public void setReminderSent(Boolean reminderSent) {
-        this.isReminderSent = reminderSent;
     }
 
     public Boolean getVote() {

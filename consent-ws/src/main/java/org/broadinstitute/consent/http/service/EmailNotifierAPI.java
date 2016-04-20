@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.mail.MessagingException;
+import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -30,4 +31,6 @@ public interface EmailNotifierAPI {
     void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException;
 
     void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException;
+
+    void sendUserDelegateResponsibilitiesMessage(DACUser newUser, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException;
 }

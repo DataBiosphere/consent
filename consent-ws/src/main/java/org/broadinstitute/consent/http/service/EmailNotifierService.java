@@ -12,17 +12,21 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.MailServiceAPI;
 import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -43,12 +47,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
     private DACUserDAO dacUserDAO;
+    private MailServiceDAO mailServiceDAO;
     private ConsentAPI consentAPI;
     private DataAccessRequestAPI dataAccessAPI;
     private FreeMarkerTemplateHelper templateHelper;
     private MailServiceAPI mailService;
     private MailMessageDAO emailDAO;
-    private DACUserAPI dacUserAPI;
     private MongoConsentDB mongo;
     private String SERVERURL;
     private boolean isServiceActive;
@@ -59,6 +63,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private static final String COLLECT_VOTE_ACCESS_URL = "access_review_results";
     private static final String COLLECT_VOTE_DUL_URL = "dul_review_results";
     private static final String DATA_OWNER_CONSOLE_URL = "data_owner_console";
+    private static final String CHAIR_CONSOLE_URL = "chair_console";
+    private static final String MEMBER_CONSOLE_URL = "user_console";
 
 
     public enum ElectionTypeString {
@@ -87,17 +93,17 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    public static void initInstance(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
-        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(voteDAO, mongo, electionDAO, dacUserDAO, emailDAO, helper, serverUrl, serviceActive));
+    public static void initInstance(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
+        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(voteDAO, mongo, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, helper, serverUrl, serviceActive));
     }
 
-    public EmailNotifierService(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive){
+    public EmailNotifierService(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive){
         this.dacUserDAO = dacUserDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.templateHelper = helper;
         this.emailDAO = emailDAO;
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.mailServiceDAO = mailServiceDAO;
         this.dataAccessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.mailService = MailService.getInstance();
@@ -110,7 +116,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
-            List<DACUser> users =  dacUserAPI.describeAdminUsersThatWantToReceiveMails();
+            List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isEmpty(users)) return;
             List<String> addresses = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
@@ -152,7 +158,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             String entityId = election.getReferenceId();
             String entityName = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
             for(Vote vote: votes){
-                DACUser user = dacUserAPI.describeDACUserById(vote.getDacUserId());
+                DACUser user = describeDACUserById(vote.getDacUserId());
                 if(electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
                     rpVoteId = findRpVoteId(election.getElectionId(), user.getDacUserId());
                 }
@@ -190,7 +196,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
                 reviewedDatasets.put(dar_code, dsElections);
             }
-            List<DACUser> users = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
+            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
             Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVERURL);
             List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             mailService.sendClosedDatasetElectionsMessage(usersEmail, "", "", template);
@@ -217,6 +223,42 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             }
         }
     }
+
+    @Override
+    public void sendUserDelegateResponsibilitiesMessage(DACUser user, Integer oldUser,  String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            String delegateURL = SERVERURL + delegateURL(newRole);
+            List<VoteAndElectionModel> votesInformation = mailServiceDAO.findVotesDelegationInfo(delegatedVotes.stream().map(vote -> vote.getElectionId()).collect(Collectors.toList()), oldUser);
+            Writer template =  getUserDelegateResponsibilitiesTemplate(user, newRole, votesInformation, delegateURL);
+            mailService.sendDelegateResponsibilitiesMessage(user.getEmail(), template);
+        }
+    }
+
+    private DACUser describeDACUserById(Integer id) throws IllegalArgumentException {
+        DACUser dacUser = dacUserDAO.findDACUserById(id);
+        if (dacUser == null) {
+            throw new NotFoundException("Could not find dacUser for specified id : " + id);
+        }
+        return dacUser;
+    }
+
+    private String delegateURL(String newUserRole) {
+        switch (newUserRole) {
+            case "MEMBER":
+                return MEMBER_CONSOLE_URL;
+            case "CHAIRPERSON":
+                return CHAIR_CONSOLE_URL;
+            case "DATAOWNER":
+                return DATA_OWNER_CONSOLE_URL;
+            default:
+                return "";
+        }
+    }
+
+    private Writer getUserDelegateResponsibilitiesTemplate(DACUser user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
+        return templateHelper.getUserDelegateResponsibilitiesTemplate(user.getDisplayName(), delegatedVotes, newRole, URL);
+    }
+
 
     private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, DACUser user, int daysToApprove, String URL) throws IOException, TemplateException {
         List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
@@ -283,7 +325,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private Map<String, String> retrieveForVote(Integer voteId){
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-        DACUser user = dacUserAPI.describeDACUserById(vote.getDacUserId());
+        DACUser user = describeDACUserById(vote.getDacUserId());
 
         Map<String, String> dataMap = new HashMap();
         dataMap.put("userName", user.getDisplayName());

@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -27,6 +28,8 @@ public interface DataAccessRequestAPI {
     List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId);
 
     List<Document> describeDataAccessRequests();
+
+    Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds);
 
     UseRestriction createStructuredResearchPurpose(Document document);
 

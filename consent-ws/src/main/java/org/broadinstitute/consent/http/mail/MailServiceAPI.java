@@ -22,4 +22,6 @@ public interface MailServiceAPI {
 
     void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
+    void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException;
+
 }

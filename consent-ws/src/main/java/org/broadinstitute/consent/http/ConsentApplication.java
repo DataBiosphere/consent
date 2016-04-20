@@ -19,6 +19,7 @@ import java.security.GeneralSecurityException;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.BasicAuthentication;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticationAPI;
 import org.broadinstitute.consent.http.authentication.GoogleAuthentication;
@@ -37,6 +38,7 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearchPurposeDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -47,6 +49,7 @@ import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.resources.*;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerServiceImpl;
@@ -181,22 +184,32 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         final DataSetAuditDAO dataSetAuditDAO = jdbi.onDemand(DataSetAuditDAO.class);
+        final MailServiceDAO mailServiceDAO = jdbi.onDemand(MailServiceDAO.class);
 
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
+
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, mongoInstance);
-        DACUserRolesHandler.initInstance(mongoInstance, dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
 
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
-        DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO, dataSetAuditDAO);
+        DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO, dataSetAuditDAO, electionDAO);
         DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO );
+
+        try {
+            MailService.initInstance(config.getMailConfiguration());
+            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
+        } catch (IOException e) {
+            LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
+        }
+
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance );
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance, dataSetDAO);
-        DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO);
+        DACUserRolesHandler.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
+        DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv );
@@ -206,12 +219,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         BasicAuthenticationAPI basicAuthentication = new BasicAuthentication(config.getBasicAuthentication());       // Mail Services
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
         // Mail Services
-        try {
-            MailService.initInstance(config.getMailConfiguration());
-            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
-        } catch (IOException e) {
-            LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
-        }
 
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
@@ -244,7 +251,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             eSearchClient.addTransportAddress(new InetSocketTransportAddress(server, 9300));
         });
 
-            final StoreOntologyService storeOntologyService =
+        final StoreOntologyService storeOntologyService =
                 new StoreOntologyService(googleStore,
                         config.getStoreOntologyConfiguration().getBucketSubdirectory(),
                         config.getStoreOntologyConfiguration().getConfigurationFileName());

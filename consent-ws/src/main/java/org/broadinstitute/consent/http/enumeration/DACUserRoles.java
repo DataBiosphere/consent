@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.enumeration;
 
 public enum DACUserRoles {
 
-    MEMBER("MEMBER"), CHAIRPERSON("CHAIRPERSON"), ALUMNI("ALUMNI"), ADMIN("ADMIN"), RESEARCHER("RESEARCHER"), DATA_OWNER("DATAOWNER");
+    MEMBER("MEMBER"), CHAIRPERSON("CHAIRPERSON"), ALUMNI("ALUMNI"), ADMIN("ADMIN"), RESEARCHER("RESEARCHER"), DATAOWNER("DATAOWNER");
 
     private String value;
 
