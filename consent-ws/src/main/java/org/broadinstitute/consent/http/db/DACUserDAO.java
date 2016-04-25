@@ -39,10 +39,6 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Set<DACUser> findDACUsersEnabledToVote();
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = 'Member'")
-    Set<DACUser> findDACMembersEnabledToVote();
-
-    @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select u.*,r.roleId, r.name from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where  u.dacUserId IN (<dacUserIds>)")
     Set<DACUser> findUsersWithRoles(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
@@ -76,13 +72,6 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
-
-    @SqlQuery("Select * from dacuser d where d.dacUserId IN (select dacUserId from user_role r where r.dacUserId NOT IN (select dacUserId from user_role where roleId IN (<roleIds>))) group by d.dacUserId")
-    List<DACUser> findUsersWithoutRoles(@BindIn("roleIds") List<Integer> roles);
-
-    /*    @SqlQuery("SELECT * FROM dacuser du INNER JOIN user_role ur ON ur.dacUserId = du.dacUserId INNER JOIN roles r ON r.roleId = ur.roleId where du.dacUserId " +
-            "NOT IN(Select v.dacUserId From vote v Where v.electionId IN (Select e.electionId from election e where e.electionType != 'DataSet' and e.status = 'Open' " +
-            "or e.status = 'Final' and exists (Select * from vote v where v.electionId = e.electionId and v.dacUserId = 4))) AND r.name IN ('Member') group by du.dacUserId")*/
 
     @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN "
             + "("

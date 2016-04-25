@@ -19,7 +19,6 @@ import java.security.GeneralSecurityException;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.BasicAuthentication;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticationAPI;
 import org.broadinstitute.consent.http.authentication.GoogleAuthentication;

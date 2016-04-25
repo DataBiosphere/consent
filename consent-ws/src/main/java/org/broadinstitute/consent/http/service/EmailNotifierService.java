@@ -228,10 +228,32 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     public void sendUserDelegateResponsibilitiesMessage(DACUser user, Integer oldUser,  String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             String delegateURL = SERVERURL + delegateURL(newRole);
-            List<VoteAndElectionModel> votesInformation = mailServiceDAO.findVotesDelegationInfo(delegatedVotes.stream().map(vote -> vote.getElectionId()).collect(Collectors.toList()), oldUser);
+            List<VoteAndElectionModel> votesInformation = findVotesDelegationInfo(delegatedVotes.stream().map(vote -> vote.getVoteId()).collect(Collectors.toList()), oldUser);
             Writer template =  getUserDelegateResponsibilitiesTemplate(user, newRole, votesInformation, delegateURL);
             mailService.sendDelegateResponsibilitiesMessage(user.getEmail(), template);
         }
+    }
+
+    private List<VoteAndElectionModel> findVotesDelegationInfo(List<Integer> voteIds, Integer oldUserId){
+        if(CollectionUtils.isNotEmpty(voteIds)) {
+            List<VoteAndElectionModel> votesInformation = mailServiceDAO.findVotesDelegationInfo(voteIds, oldUserId);
+            votesInformation.stream().forEach(voteInfo -> {
+                if (voteInfo.getElectionType().equals(ElectionType.TRANSLATE_DUL.getValue())) {
+                    try {
+                        voteInfo.setElectionNumber(consentAPI.retrieve(voteInfo.getReferenceId()).getName());
+                    } catch (UnknownIdentifierException e) {
+                        logger.severe("Could not find Consent related to ID " + voteInfo.getReferenceId() + " for delegation email sending. Cause " + e.getMessage());
+                    }
+                } else {
+                    BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(voteInfo.getReferenceId()));
+                    Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+                    voteInfo.setElectionNumber(dar.getString(DarConstants.DAR_CODE));
+                }
+                voteInfo.setElectionType(retrieveElectionTypeString(voteInfo.getElectionType()));
+            });
+            return votesInformation;
+        }
+        return new ArrayList<>();
     }
 
     private DACUser describeDACUserById(Integer id) throws IllegalArgumentException {

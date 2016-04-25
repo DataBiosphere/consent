@@ -9,14 +9,7 @@ import java.sql.SQLException;
 
 public class DatabaseElectionMapper implements ResultSetMapper<Election> {
 
-    /**
-     *
-     * @param index
-     * @param r
-     * @param ctx
-     * @return
-     * @throws SQLException
-     */
+
     @Override
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         return new Election(

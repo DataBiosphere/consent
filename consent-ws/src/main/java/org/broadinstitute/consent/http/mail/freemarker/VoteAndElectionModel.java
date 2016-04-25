@@ -2,22 +2,32 @@ package org.broadinstitute.consent.http.mail.freemarker;
 
 public class VoteAndElectionModel {
 
-    private String electionNumber;
+    private String electionIdentifier;
+    private String referenceId;
     private String electionType;
     private String voteType;
 
-    public VoteAndElectionModel(String electionNumber, String electionType, String voteType) {
-        this.electionNumber = electionNumber;
+    public VoteAndElectionModel(String electionIdentifier, String referenceId, String electionType, String voteType) {
+        this.electionIdentifier = electionIdentifier;
+        this.referenceId = referenceId;
         this.electionType = electionType;
         this.voteType = voteType;
     }
 
-    public String getElectionNumber() {
-        return electionNumber;
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    public void setElectionNumber(String electionNumber) {
-        this.electionNumber = electionNumber;
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public String getElectionIdentifier() {
+        return electionIdentifier;
+    }
+
+    public void setElectionNumber(String electionIdentifier) {
+        this.electionIdentifier = electionIdentifier;
     }
 
     public String getElectionType() {

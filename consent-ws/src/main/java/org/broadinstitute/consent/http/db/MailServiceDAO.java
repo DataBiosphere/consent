@@ -13,7 +13,7 @@ import org.skife.jdbi.v2.unstable.BindIn;
 public interface MailServiceDAO extends Transactional<MailServiceDAO> {
 
     @Mapper(VoteAndElectionModelMapper.class)
-    @SqlQuery("SELECT v.electionId, e.electionType, v.type FROM vote v inner join election e ON e.electionId = v.electionId where v.electionId IN (<electionIds>) AND v.dacUserId = :dacUserId")
-    List<VoteAndElectionModel> findVotesDelegationInfo(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
+    @SqlQuery("SELECT v.electionId, e.referenceId, e.electionType, v.type FROM vote v inner join election e ON e.electionId = v.electionId where v.voteId IN (<voteIds>) AND v.dacUserId = :dacUserId")
+    List<VoteAndElectionModel> findVotesDelegationInfo(@BindIn("voteIds") List<Integer> voteIds, @Bind("dacUserId") Integer dacUserId);
 
 }

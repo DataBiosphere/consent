@@ -20,7 +20,6 @@ import org.skife.jdbi.v2.unstable.BindIn;
 @RegisterMapper({RoleMapper.class})
 public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
 
-
     @SqlQuery("select * from roles r inner join user_role du on du.roleId = r.roleId  where du.dacUserId = :userId")
     List<DACUserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
@@ -43,8 +42,8 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
     void removeUserRoles(@Bind("dacUserId") Integer dacUserId,
                          @BindIn("existentRoles") List<Integer> existentRoles);
 
-    @SqlBatch("insert into user_role (roleId, dacUserId, email_preference) values (:roleId, :dacUserId, :emailPreference)")
-    void insertSingleUserRole(@BindBean DACUserRole role, @Bind("dacUserId") Integer dacUserId);
+    @SqlUpdate("insert into user_role (roleId, dacUserId, email_preference) values (:roleId, :dacUserId, :emailPreference)")
+    void insertSingleUserRole(@Bind("roleId") Integer roleId, @Bind("dacUserId") Integer dacUserId, @Bind("emailPreference") Boolean emailPreference);
 
     @SqlUpdate("update user_role set email_preference = :emailPreference where roleId =:roleId and  dacUserId = :dacUserId")
     void updateEmailPreferenceUserRole(@BindBean DACUserRole role, @Bind("dacUserId") Integer dacUserId);

@@ -9,6 +9,6 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 public class VoteAndElectionModelMapper implements ResultSetMapper<VoteAndElectionModel> {
     @Override
     public VoteAndElectionModel map(int i, ResultSet r, StatementContext statementContext) throws SQLException {
-        return new VoteAndElectionModel(Integer.toString(r.getInt("electionId")), r.getString("electionType"), r.getString("type"));
+        return new VoteAndElectionModel(Integer.toString(r.getInt("electionId")), r.getString("referenceId"), r.getString("electionType"), r.getString("type"));
     }
 }

@@ -149,7 +149,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate(" update vote v set v.dacUserId = :toDacUserId, v.vote = null, v.createDate = null, v.updateDate = null "
             + " where v.dacUserId = :fromDacUserId "
             + " and v.electionId IN (select e.electionId from election e where e.electionType != '"+ DATASET +"' "
-            + " and (e.status = '" + CLOSED +"' OR e.status = '"+ FINAL +"'))")
+            + " and (e.status = '" + OPEN +"' OR e.status = '"+ FINAL +"'))")
     void delegateChairPersonOpenElectionsVotes(@Bind("fromDacUserId") Integer fromDacUserId, @Bind("toDacUserId") Integer toDacUserId);
 
     @SqlUpdate(" update vote v set v.dacUserId = :toDOUserId, v.vote = null, v.createDate = null, v.updateDate = null"

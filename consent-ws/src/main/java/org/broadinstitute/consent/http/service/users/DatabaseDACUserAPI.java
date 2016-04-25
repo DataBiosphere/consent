@@ -188,7 +188,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (electionDAO.verifyOpenElections() == 0) {
             return false;
         }
-        return false;
+        return true;
     }
 
     /**

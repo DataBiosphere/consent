@@ -187,15 +187,15 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
 
     private void updateAdminEmailPreference(List<DACUserRole> originalRoles, List<DACUserRole> updatedRoles, Integer dacUserId) throws UserRoleHandlerException {
        try{
-        boolean a = originalRoles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(ADMIN));
-        List<DACUserRole> d =  updatedRoles.stream().filter(r -> r.getName().equalsIgnoreCase(ADMIN)).collect(Collectors.toList());
-        if (d.size() != 1) {
-             return;
-        }
-        DACUserRole updatedAdminRole = d.get(0);
-        if(a && Objects.nonNull(updatedAdminRole) ){
-           userRoleDAO.updateEmailPreferenceUserRole(updatedAdminRole, dacUserId);
-        }
+            boolean isAdminRole = originalRoles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(ADMIN));
+            List<DACUserRole> newAdminRole =  updatedRoles.stream().filter(r -> r.getName().equalsIgnoreCase(ADMIN)).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(newAdminRole)) {
+                 return;
+            }
+            DACUserRole updatedAdminRole = newAdminRole.get(0);
+            if(isAdminRole){
+               userRoleDAO.updateEmailPreferenceUserRole(updatedAdminRole, dacUserId);
+            }
        } catch (Exception e){
            throw new UserRoleHandlerException("Problem occurred while updating the user email preference.");
        }
@@ -272,9 +272,12 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
 
     private void addChairPerson(DACUser newChairperson) throws UserRoleHandlerException {
         DACUser currentChairPerson = dacUserDAO.findChairpersonUser();
-        removeRole(currentChairPerson.getDacUserId(), CHAIRPERSON);
-        addRole(newChairperson.getDacUserId(), new DACUserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON, true));
-        delegateChairPersonVotes(currentChairPerson.getDacUserId(), newChairperson.getDacUserId());
+        if(currentChairPerson != null){
+            removeRole(currentChairPerson.getDacUserId(), CHAIRPERSON);
+            addRole(currentChairPerson.getDacUserId(), new DACUserRole(roleIdMap.get(ALUMNI), ALUMNI, true));
+            addRole(newChairperson.getDacUserId(), new DACUserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON, true));
+            delegateChairPersonVotes(currentChairPerson.getDacUserId(), newChairperson.getDacUserId());
+        }
     }
 
     /**
@@ -367,7 +370,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                         .collect(Collectors.toList());
                 insertNewChairPersonVotes(newChairPerson, cpVotes);
                 insertNewChairPersonVotes(newChairPerson, dacVotesToInclude);
-                emailNotifierAPI.sendUserDelegateResponsibilitiesMessage(newChairPerson, oldChairPerson.getDacUserId(), CHAIRPERSON, ListUtils.union(cpVotes, dacVotesToInclude));
+                emailNotifierAPI.sendUserDelegateResponsibilitiesMessage(newChairPerson, oldChairPerson.getDacUserId(), CHAIRPERSON, dacVotes);
             }
             if (containsAnyRole(newChairPerson.getRoles(), new String[]{ALUMNI})) {
                 removeAlumni(newChairPerson);
@@ -422,12 +425,12 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                 if (rpElectionId != null) {
                     loadDelegateAndRemoveVoteElection(electionsToDelegate, electionsToRemove, election, rpElectionId);
                 }
+                loadDelegateAndRemoveVoteElection(electionsToDelegate, electionsToRemove, election, election.getElectionId());
             } else {
                 Integer accessElectionId = electionDAO.findAccessElectionByElectionRPId(election.getElectionId());
                 if (accessElectionId != null) {
                     loadDelegateAndRemoveVoteElection(electionsToDelegate, electionsToRemove, election, accessElectionId);
                 }
-
             }
         });
         removeVotes(oldMember, electionsToRemove);
@@ -467,7 +470,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     }
 
     private void addRole(Integer dacUserId, DACUserRole role) {
-        userRoleDAO.insertSingleUserRole(role, dacUserId);
+        userRoleDAO.insertSingleUserRole(role.getRoleId(), dacUserId, role.getEmailPreference());
     }
 
     public boolean containsRole(Collection<DACUserRole> roles, String role) {
