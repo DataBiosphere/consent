@@ -61,6 +61,7 @@
                             <url>${url}</url>
                             <username>${username}</username>
                             <password>${password}</password>
+                            <logging>warning</logging>
                         </configuration>
                         <goals>
                             <goal>update</goal>
