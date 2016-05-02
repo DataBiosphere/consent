@@ -22,15 +22,9 @@ import org.bson.types.ObjectId;
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.Map;
-import java.util.Date;
-import java.util.Arrays;
 
 import static com.mongodb.client.model.Filters.ne;
 import static com.mongodb.client.model.Filters.eq;
@@ -185,6 +179,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
 
+    @Override
+    public Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds) {
+        Collection<String> datasetIds = new HashSet<>();
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(DarConstants.DATASET_ID,true);
+        for (String darId : dataAccessRequestIds) {
+            datasetIds.addAll((ArrayList) mongo.getDataAccessRequestCollection()
+                    .find(eq(DarConstants.ID, new ObjectId(darId))).projection(projection).first().get(DarConstants.DATASET_ID));
+        }
+        return datasetIds;
+    }
 
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {

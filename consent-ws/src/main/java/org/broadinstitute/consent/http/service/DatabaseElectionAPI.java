@@ -357,6 +357,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
+    @Override
+    public List<Election> getOpenElections(String electionType){
+        return electionDAO.getOpenElections(electionType);
+    }
+
 
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
         for(Election e: elections){
@@ -585,7 +590,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             vote.setVote(rec.getFinalVote());
             vote.setCreateDate(rec.getFinalVoteDate());
             vote.setRationale(rec.getFinalRationale());
-            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.isReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
+            voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
         }
     }
+
+
 }

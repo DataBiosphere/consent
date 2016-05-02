@@ -17,6 +17,8 @@ public interface VoteAPI {
 
     List<Vote> describeVotes(String referenceId);
 
+    List<Vote> describeUserVotesByElectionsId(List<Integer> electionIds, Integer userId);
+
     Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
 
     Vote describeVoteFinalAccessVoteById(Integer requestId) throws NotFoundException;
@@ -34,4 +36,8 @@ public interface VoteAPI {
     List<Vote> createDataOwnersReviewVotes(Election electionId);
 
     Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException;
+
+    void updateUserIdForVotes(List<Integer> voteIds, Integer dacUserId);
+
+    void removeVotesById(List<Integer> votesId);
 }

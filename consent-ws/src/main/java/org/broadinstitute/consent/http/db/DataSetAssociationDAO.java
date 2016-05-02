@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mongo.DatasetAssociationMapper;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.skife.jdbi.v2.sqlobject.*;
@@ -35,4 +36,22 @@ public interface DataSetAssociationDAO extends Transactional<DataSetAssociationD
 
     @SqlQuery("select ds.dacuserId from dataset_user_association ds where ds.datasetId = :datasetId")
     List<Integer> getDataOwnersOfDataSet(@Bind("datasetId") Integer datasetId);
+
+    @SqlQuery("SELECT dua.dataSetId FROM consent.dataset_user_association dua inner join dataset ds on  ds.datasetId = dua.datasetId and " +
+              " dua.dacUserId = :dacuserId and ds.needs_approval = true")
+    List<Integer> getDataSetsIdOfDataOwnerNeedsApproval(@Bind("dacuserId") Integer dacuserId);
+
+    @SqlQuery("select count(*) from dataset_user_association where dataSetId in (<dataSetIdList>)")
+    List<Integer> getCountOfDataOwnersPerDataSet(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
+
+    @SqlQuery("select * from dataset_user_association ds where ds.dacuserId = :dacUserId")
+    List<DatasetAssociation> findAllDatasetAssociationsByOwnerId(@Bind("dacUserId") Integer dacUserId);
+
+    @SqlUpdate("delete from dataset_user_association where dacuserId = :ownerId")
+    void deleteDatasetRelationshipsForUser(@Bind("ownerId") Integer ownerId);
+    
+    @SqlBatch("update dataset_user_association set dacuserId = : toDataOwnerId, createDate = now() " +
+            " where dacUserId = :fromDataOwnerId")
+    void changeDatasetUserAssociation(@Bind("fromDataOwnerId") Integer fromDataOwnerId, @Bind("toDataOwnerId") Integer tDataOwnerId) throws UnableToExecuteStatementException;
+
 }

@@ -49,4 +49,6 @@ public interface ElectionAPI {
 
     boolean isDataSetElectionOpen();
 
+    List<Election> getOpenElections(String electionType);
+
 }

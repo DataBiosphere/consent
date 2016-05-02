@@ -53,10 +53,12 @@ public class DACUserRole {
         this.emailPreference = emailPreference;
     }
 
+    @Override
     public int hashCode() {
         return Objects.hashCode(this.roleId, this.name);
     }
 
+    @Override
     public boolean equals(Object o) {
         if(!(o instanceof DACUserRole)) { return false; }
         DACUserRole otherConsent = (DACUserRole) o;

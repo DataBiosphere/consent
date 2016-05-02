@@ -2,16 +2,17 @@ package org.broadinstitute.consent.http;
 
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import java.util.HashMap;
+import java.util.Map;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,7 +99,9 @@ public class DACUserTest extends DACUserServiceTest {
     public void testUpdateDACUser() {
         Client client = ClientBuilder.newClient();
         DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
-        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), user));
+        Map<String, Object> updateUserMap = new HashMap<>();
+        updateUserMap.put("updatedUser",user);
+        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), updateUserMap));
         user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(DACUser.class);
         assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
     }

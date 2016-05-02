@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.users;
 
 /**
  * Implement a skeleton for ConsentAPI interface that implements the singleton

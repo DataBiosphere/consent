@@ -1,10 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-
 import java.util.Date;
 import java.util.List;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class DACUser {
 
@@ -25,7 +24,6 @@ public class DACUser {
 
     @JsonProperty
     private String accessToken;
-
 
     public DACUser() {
     }
