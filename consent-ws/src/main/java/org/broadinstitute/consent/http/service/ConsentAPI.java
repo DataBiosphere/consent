@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
@@ -71,4 +72,5 @@ public interface ConsentAPI {
 
     Integer getUnReviewedConsents();
 
+    List<UseRestrictionDTO> getInvalidConsents();
 }

@@ -19,6 +19,8 @@ googleStore:
   type: GCS
 mongo:
   uri: mongodb://localhost:27017
+  host1:
+  host2:
   dbName: consent
   username:
   password:
@@ -26,18 +28,17 @@ mongo:
 # Logging settings
 logging:
   # default logging level
-  # level: TRACE
+  level: WARN
   # logger specific levels
   loggers:
-    ConsentAssociationResource: ALL
-    AllAssociationsResource: ALL
-    ConsentApplication: ALL
-    ConsentModule: ALL
-    DatabaseResearchPurposeAPI: ALL
+    ConsentAssociationResource: WARN
+    AllAssociationsResource: WARN
+    ConsentApplication: WARN
+    ConsentModule: WARN
+    DatabaseResearchPurposeAPI: WARN
 services:
-    matchURL:
+    ontologyURL:
     localURL: http://localhost:8000/#/
-    translateURL:
 mailConfiguration:
   activateEmailNotifications: false
   smtpPort: 587
@@ -49,3 +50,16 @@ mailConfiguration:
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
+googleAuthentication:
+ clientId:
+ clientSecret:
+basicAuthentication:
+  user: testuser
+  password: dGVzdHBhc3N3b3Jk
+storeOntology:
+  bucketSubdirectory:   bucket
+  configurationFileName: configuration
+elasticSearch:
+    clusterName: cName
+    servers: [localhost]
+    indexName: iName

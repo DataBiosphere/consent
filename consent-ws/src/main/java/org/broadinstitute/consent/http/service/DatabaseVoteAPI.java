@@ -86,6 +86,11 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
+    public List<Vote> describeUserVotesByElectionsId(List<Integer> electionIds, Integer userId) {
+        return voteDAO.findPendingVotesByElectionsIdsAndUserId(electionIds, userId);
+    }
+
+    @Override
     public Vote describeVoteById(Integer voteId, String referenceId)
             throws IllegalArgumentException {
         Vote vote = voteDAO.findVoteById(voteId);
@@ -176,6 +181,16 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
             throw new NotFoundException("Vote doesn't exist for the specified dataOwnerId");
         }
         return vote;
+    }
+
+    @Override
+    public void updateUserIdForVotes(List<Integer> voteIds, Integer dacUserId) {
+        voteDAO.updateUserIdForVotes(voteIds, dacUserId);
+    }
+
+    @Override
+    public void removeVotesById(List<Integer> votesId){
+        voteDAO.removeVotesById(votesId);
     }
 
     @Override

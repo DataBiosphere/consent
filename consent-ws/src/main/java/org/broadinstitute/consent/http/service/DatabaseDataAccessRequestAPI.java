@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -11,6 +13,7 @@ import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -18,13 +21,14 @@ import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.ne;
-
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * Implementation class for DatabaseDataAccessRequestAPI.
@@ -50,6 +54,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final DACUserDAO dacUserDAO;
 
     private final DataSetDAO dataSetDAO;
+
+    private final String NEEDS_APPROVAL = "Needs Approval";
+
+    private final String APPROVED = "Approved";
+
+    private final String DENIED = "Denied";
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -169,6 +179,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
 
+    @Override
+    public Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds) {
+        Collection<String> datasetIds = new HashSet<>();
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(DarConstants.DATASET_ID,true);
+        for (String darId : dataAccessRequestIds) {
+            datasetIds.addAll((ArrayList) mongo.getDataAccessRequestCollection()
+                    .find(eq(DarConstants.ID, new ObjectId(darId))).projection(projection).first().get(DarConstants.DATASET_ID));
+        }
+        return datasetIds;
+    }
 
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
@@ -302,6 +323,31 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
     }
 
+    @Override
+    public List<UseRestrictionDTO> getInvalidDataAccessRequest() {
+        List<Document> darList = new ArrayList<>();
+        darList.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.VALID_RESTRICTION, false)).into(new ArrayList<>()));
+        List<UseRestrictionDTO> invalidRestrictions = new ArrayList<>();
+        darList.forEach(c->{
+            invalidRestrictions.add(new UseRestrictionDTO(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
+        });
+        return invalidRestrictions;
+    }
+
+    @Override
+    public void updateDARUseRestrictionValidation(List<String> darCodes, Boolean validUseRestriction){
+        BasicDBObject updateFields = new BasicDBObject();
+        updateFields.append(DarConstants.VALID_RESTRICTION, validUseRestriction);
+        BasicDBObject setQuery = new BasicDBObject();
+        setQuery.append("$set", updateFields);
+
+        mongo.getDataAccessRequestCollection().updateMany(in(DarConstants.DAR_CODE, darCodes), setQuery);
+    }
+
+    @Override
+    public FindIterable<Document> findDARUseRestrictions(){
+        return mongo.getDataAccessRequestCollection().find(ne(DarConstants.RESTRICTION, null)).projection(Projections.include(DarConstants.DAR_CODE, DarConstants.RESTRICTION));
+    }
 
     private void updateElection(Election access, Election rp) {
         if(access != null) {
@@ -355,7 +401,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setSortDate(dar.getDate("sortDate"));
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
-            darManage.setDataSetElectionResult(darManage.getNeedsApproval()? "Needs Approval":"");
+
+            darManage.setDataSetElectionResult(darManage.getNeedsApproval()? NEEDS_APPROVAL:"");
+
             if (election == null) {
                 darManage.setElectionStatus(UN_REVIEWED);
             } else {
@@ -378,16 +426,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private String consolidateDataSetElectionsResult(List<Election> datasetElections) {
-        try {
+        if(CollectionUtils.isNotEmpty(datasetElections)) {
             for (Election election : datasetElections) {
                 if (!election.getFinalAccessVote()) {
-                    return "Denied";
+                    return DENIED;
                 }
             }
-            return "Approved";
-        } catch (NullPointerException e){
-            return "Needs Approval";
+            return APPROVED;
         }
+        return NEEDS_APPROVAL;
     }
 
     private List getRequestIds(FindIterable<Document> access) {
@@ -424,8 +471,5 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);
         return dataAccess;
     }
-
-
-
 
 }

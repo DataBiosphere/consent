@@ -1,10 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-
 import java.util.Date;
 import java.util.List;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class DACUser {
 
@@ -22,6 +21,9 @@ public class DACUser {
 
     @JsonProperty
     private List<DACUserRole> roles;
+
+    @JsonProperty
+    private String accessToken;
 
     public DACUser() {
     }
@@ -81,6 +83,14 @@ public class DACUser {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
     @Override

@@ -13,7 +13,7 @@
     <lucene.version>4.9.0</lucene.version>
     <hsqldb.version>2.3.3</hsqldb.version>
     <liquibase.version>3.1.1</liquibase.version>
-    <dropwizard.version>0.8.1</dropwizard.version>
+    <dropwizard.version>0.9.2</dropwizard.version>
     <jersey.version>2.19</jersey.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -34,6 +34,28 @@
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.7</version>
+        <configuration>
+          <format>xml</format>
+          <maxmem>256m</maxmem>
+          <!-- aggregated reports for multi-module projects -->
+          <aggregate>true</aggregate>
+            <check/>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.eluder.coveralls</groupId>
+        <artifactId>coveralls-maven-plugin</artifactId>
+        <version>4.1.0</version>
+        <configuration>
+          <repoToken>${env.coveralls_repo_token}</repoToken>
         </configuration>
       </plugin>
 
@@ -92,7 +114,7 @@
         <artifactId>xercesImpl</artifactId>
         <version>2.11.0</version>
       </dependency>
-      
+
       <dependency>
         <groupId>com.github.ansell.pellet</groupId>
         <artifactId>pellet-owlapiv3</artifactId>

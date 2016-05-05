@@ -9,6 +9,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 

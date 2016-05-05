@@ -17,6 +17,8 @@ public class DarConstants {
 
     public static final String DAR_CODE = "dar_code";
 
+    public static final String VALID_RESTRICTION = "valid_restriction";
+
     public static final String RUS = "rus";
 
     public static final String ID = "_id";

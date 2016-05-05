@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -12,7 +13,6 @@ import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
-
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -56,8 +56,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction)")
+            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -66,7 +66,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("dulName") String dulName,
                        @Bind("createDate") Date createDate,
                        @Bind("sortDate") Date sortDate,
-                       @Bind("translatedUseRestriction") String translatedUseRestriction);
+                       @Bind("translatedUseRestriction") String translatedUseRestriction,
+                       @Bind("valid_restriction") Boolean validRestriction);
 
 
 
@@ -158,5 +159,17 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select ca.consentId from consentassociations ca  where ca.objectId IN (<objectIdList>) ")
     List<String> getAssociationsConsentIdfromObjectIds(@BindIn("objectIdList") List<String> objectIdList);
+
+    @Mapper(UseRestrictionMapper.class)
+    @SqlQuery("select consentId, name, useRestriction from consents where valid_restriction = false ")
+    List<UseRestrictionDTO> findInvalidRestrictions();
+
+    @Mapper(UseRestrictionMapper.class)
+    @SqlQuery("select consentId, useRestriction, name from consents ")
+    List<UseRestrictionDTO> findConsentUseRestrictions();
+
+    @SqlUpdate("update consents set  valid_restriction = :valid_restriction where consentId in (<consentId>) ")
+    void updateConsentValidUseRestriction(@BindIn("consentId") List<String> consentId,
+                                   @Bind("valid_restriction") Boolean validRestriction);
 
 }

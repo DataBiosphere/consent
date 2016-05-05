@@ -32,14 +32,15 @@ googleStore:
   type: GCS
 mongo:
   uri: {{.Data.mongodb_uri}}
+  host1: {{.Data.mongodb_host1}}
+  host2: {{.Data.mongodb_host2}}
   dbName: {{.Data.mongodb_name}}
   username: {{.Data.mongodb_user}}
   password: {{.Data.mongodb_password}}
   testMode: false
 services:
-    matchURL: {{.Data.services_match_url}}
-    localURL: {{.Data.services_local_url}}
-    translateURL: {{.Data.services_translate_url}}
+  localURL: {{.Data.services_local_url}}
+  ontologyURL: {{.Data.services_ontology_url}}
 mailConfiguration:
   activateEmailNotifications: {{.Data.mailconfig_activate_notifications}}
   smtpPort: {{.Data.mailconfig_smtp_port}}
@@ -51,6 +52,18 @@ mailConfiguration:
 freeMarkerConfiguration:
   templateDirectory: {{.Data.freemarker_template_directory}}
   defaultEncoding: {{.Data.freemarker_default_encoding}}
-
+googleAuthentication:
+  clientId: {{.Data.oauth2_client_id}}
+  clientSecret: {{.Data.oauth2_client_secret}}
+basicAuthentication:
+  user: {{.Data.basic_auth_user}} 
+  password: {{.Data.basic_auth_password}}
+storeOntology:
+  bucketSubdirectory: {{.Data.storeOntology_bucketSubdirectory}}
+  configurationFileName:  {{.Data.storeOntology_configurationFileName}}
+elasticSearch:
+    clusterName: {{.Data.elasticSearch_clusterName}}
+    servers: {{.Data.elasticSearch_servers}}
+    indexName: {{.Data.elasticSearch_indexName}}
 {{end}}
 {{end}}

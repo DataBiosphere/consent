@@ -61,6 +61,7 @@
                             <url>${url}</url>
                             <username>${username}</username>
                             <password>${password}</password>
+                            <logging>warning</logging>
                         </configuration>
                         <goals>
                             <goal>update</goal>
@@ -276,10 +277,18 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client</artifactId>
-            <version>1.20.0</version>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client-appengine</artifactId>
+            <version>1.21.0</version>
         </dependency>
+
+
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-oauth2</artifactId>
+            <version>v2-rev106-1.21.0</version>
+        </dependency>
+
 
         <dependency>
             <groupId>junit</groupId>
@@ -319,13 +328,13 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
-            <version>3.0.3</version>
+            <version>3.2.2</version>
         </dependency>
         
         <dependency>
             <groupId>com.github.fakemongo</groupId>
             <artifactId>fongo</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.6</version>
             <type>jar</type>
         </dependency>
 
@@ -352,6 +361,16 @@
             <groupId>de.spinscale</groupId>
             <artifactId>dropwizard-jobs-core</artifactId>
             <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-distribution</artifactId>
         </dependency>
 
     </dependencies>
