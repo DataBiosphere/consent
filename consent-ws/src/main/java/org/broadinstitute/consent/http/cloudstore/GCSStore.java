@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -12,6 +13,9 @@ import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.FileWriter;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
@@ -43,20 +47,27 @@ public class GCSStore implements CloudStore {
      * Authorizes the installed application to access user's protected data.
      */
     private GoogleCredential authorize() {
-        GoogleCredential localCredential = new GoogleCredential();
-        File file = new File(sConfig.getPassword());
+        GoogleCredential credential = new GoogleCredential();
         try {
-            localCredential = new GoogleCredential.Builder()
+            InputStream inputStream = new FileInputStream(sConfig.getPassword());
+            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(inputStream));
+            String privateKeyPem = (String) clientSecrets.get("private_key");
+            String clientEmail = (String) clientSecrets.get("client_email");
+            String privateKeyId = (String) clientSecrets.get("private_key_id");
+            File privateKeyPemFile = createKeyPemFile(privateKeyPem);
+            credential = new GoogleCredential.Builder()
                     .setTransport(HTTP_TRANSPORT)
                     .setJsonFactory(JSON_FACTORY)
-                    .setServiceAccountId(sConfig.getUsername())
+                    .setServiceAccountId(clientEmail)
                     .setServiceAccountScopes(Collections.singletonList(StorageScopes.DEVSTORAGE_FULL_CONTROL))
-                    .setServiceAccountPrivateKeyFromP12File(file)
+                    .setServiceAccountPrivateKeyFromPemFile(privateKeyPemFile)
+                    .setServiceAccountPrivateKeyId(privateKeyId)
                     .build();
+
         } catch (Exception e) {
             logger().error("Error on GCS Store initialization. Service won't work: " + e);
         }
-        return localCredential;
+        return credential;
     }
 
     private HttpRequest buildHttpDeleteRequest(GenericUrl url) throws IOException, GeneralSecurityException {
@@ -144,5 +155,14 @@ public class GCSStore implements CloudStore {
             }
         }
         return url.toString();
+    }
+
+    private File createKeyPemFile(String privateKeyPem) throws IOException {
+        File privateKeyPemFile = File.createTempFile("privateKeyPem", "txt");
+        FileWriter fileWriter = new FileWriter(privateKeyPemFile);
+        fileWriter.write(privateKeyPem);
+        fileWriter.flush();
+        fileWriter.close();
+        return privateKeyPemFile;
     }
 }
