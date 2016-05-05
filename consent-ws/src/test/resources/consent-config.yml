@@ -28,14 +28,14 @@ mongo:
 # Logging settings
 logging:
   # default logging level
-  # level: TRACE
+  level: WARN
   # logger specific levels
   loggers:
-    ConsentAssociationResource: ALL
-    AllAssociationsResource: ALL
-    ConsentApplication: ALL
-    ConsentModule: ALL
-    DatabaseResearchPurposeAPI: ALL
+    ConsentAssociationResource: WARN
+    AllAssociationsResource: WARN
+    ConsentApplication: WARN
+    ConsentModule: WARN
+    DatabaseResearchPurposeAPI: WARN
 services:
     ontologyURL:
     localURL: http://localhost:8000/#/
