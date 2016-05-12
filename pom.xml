@@ -56,6 +56,7 @@
         <version>4.1.0</version>
         <configuration>
           <repoToken>${env.coveralls_repo_token}</repoToken>
+          <serviceName>travis-pro</serviceName>
         </configuration>
       </plugin>
 
