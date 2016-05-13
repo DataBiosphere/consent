@@ -52,7 +52,6 @@ freeMarkerConfiguration:
   defaultEncoding: UTF-8
 googleAuthentication:
  clientId:
- clientSecret:
 basicAuthentication:
   user: testuser
   password: dGVzdHBhc3N3b3Jk
