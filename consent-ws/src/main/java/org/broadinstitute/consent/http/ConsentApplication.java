@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.db.DataRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -39,7 +38,6 @@ import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.ResearchPurposeDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.filter.AuthorizationFilter;
@@ -66,7 +64,6 @@ import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
 import org.broadinstitute.consent.http.resources.DataRequestElectionResource;
-import org.broadinstitute.consent.http.resources.DataRequestResource;
 import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
 import org.broadinstitute.consent.http.resources.DataSetAssociationsResource;
 import org.broadinstitute.consent.http.resources.DataSetResource;
@@ -79,7 +76,6 @@ import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -96,7 +92,6 @@ import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DatabaseDataRequestAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataSetAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
@@ -173,10 +168,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
         final HelpReportDAO helpReportDAO = jdbi.onDemand(HelpReportDAO.class);
         final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
-        final DataRequestDAO requestDAO = jdbi.onDemand(DataRequestDAO.class);
         final DataSetDAO dataSetDAO = jdbi.onDemand(DataSetDAO.class);
         final DataSetAssociationDAO dataSetAssociationDAO = jdbi.onDemand(DataSetAssociationDAO.class);
-        final ResearchPurposeDAO purposeDAO = jdbi.onDemand(ResearchPurposeDAO.class);
         final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
         final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
@@ -204,7 +197,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
-        DatabaseDataRequestAPI.initInstance(requestDAO, dataSetDAO, purposeDAO);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance );
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance, dataSetDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
@@ -257,7 +249,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient,config.getElasticSearchConfiguration().getIndexName());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService,indexOntologyService);
-        env.jersey().register(new IndexerResource(indexerService));
+        env.jersey().register(new IndexerResource(indexerService, googleStore));
 
 
 
@@ -276,7 +268,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestVoteResource.class);
         env.jersey().register(ConsentCasesResource.class);
         env.jersey().register(DataRequestCasesResource.class);
-        env.jersey().register(DataRequestResource.class);
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
@@ -299,7 +290,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();
                 AbstractPendingCaseAPI.clearInstance();
-                AbstractDataRequestAPI.clearInstance();
                 AbstractDataSetAssociationAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();

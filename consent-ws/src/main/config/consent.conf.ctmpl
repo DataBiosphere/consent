@@ -54,7 +54,6 @@ freeMarkerConfiguration:
   defaultEncoding: {{.Data.freemarker_default_encoding}}
 googleAuthentication:
   clientId: {{.Data.oauth2_client_id}}
-  clientSecret: {{.Data.oauth2_client_secret}}
 basicAuthentication:
   user: {{.Data.basic_auth_user}} 
   password: {{.Data.basic_auth_password}}
