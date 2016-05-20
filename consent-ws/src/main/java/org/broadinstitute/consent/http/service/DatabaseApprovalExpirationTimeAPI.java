@@ -22,7 +22,7 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseApprovalExpirationTimeAPI(ApprovalExpirationTimeDAO dao, DACUserDAO dacUserDAO) {
+    protected DatabaseApprovalExpirationTimeAPI(ApprovalExpirationTimeDAO dao, DACUserDAO dacUserDAO) {
         this.approvalExpirationTimeDAO = dao;
         this.dacUserDAO = dacUserDAO;
     }
@@ -86,7 +86,6 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
     }
 
     private void validateRequiredFields(ApprovalExpirationTime approvalExpirationTime) {
-
         if(approvalExpirationTime.getAmountOfDays() == null){
             throw new IllegalArgumentException("Amount of days is required");
         }

@@ -23,31 +23,16 @@ public class NewCaseTemplate {
         return electionType;
     }
 
-    public void setElectionType(String electionType) {
-        this.electionType = electionType;
-    }
-
     public String getEntityName() {
         return entityName;
-    }
-
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
     }
 
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
-
     public String getUserName() {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
 }

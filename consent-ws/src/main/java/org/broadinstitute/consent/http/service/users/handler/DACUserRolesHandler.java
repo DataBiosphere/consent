@@ -48,18 +48,18 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final EmailNotifierAPI emailNotifierAPI;
 
 
-    public DACUserRolesHandler(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO) {
+    public DACUserRolesHandler(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI) {
         this.dacUserDAO = userDao;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
         this.voteDAO = voteDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.roleIdMap = createRoleMap(userRoleDAO.findRoles());
-        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
+        this.emailNotifierAPI = emailNotifierAPI;
     }
 
-    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO) {
-        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO));
+    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI) {
+        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierAPI));
     }
 
     private Map<String, Integer> createRoleMap(List<Role> roles) {
@@ -159,8 +159,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                         }
                         break;
                     case ADMIN:
-                        assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(ADMIN), ADMIN,
-                                 role.getEmailPreference() == null ? true : role.getEmailPreference()));
+                        assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(ADMIN), ADMIN, role.getEmailPreference() == null ? true : role.getEmailPreference()));
                         break;
                     case RESEARCHER:
                         if (containsAnyRole(updatedRoles, new String[]{MEMBER, CHAIRPERSON})) {
