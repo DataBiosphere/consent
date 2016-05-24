@@ -25,11 +25,9 @@ database:
   maxSize: 128
   validationQuery: SELECT 1
 googleStore:
-  username: {{.Data.gce_user}}
   password: {{.Data.gce_password}}
   endpoint: {{.Data.gce_endpoint}}
   bucket: {{.Data.gce_bucket}}
-  type: GCS
 mongo:
   uri: {{.Data.mongodb_uri}}
   host1: {{.Data.mongodb_host1}}

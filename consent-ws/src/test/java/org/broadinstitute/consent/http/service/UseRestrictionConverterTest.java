@@ -10,7 +10,7 @@ public class UseRestrictionConverterTest {
     UseRestriction femaleRestriction = new And(
             new And(
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
             ),
             new And(
@@ -22,7 +22,7 @@ public class UseRestrictionConverterTest {
     UseRestriction allDataRestriction = new And(
             new And(
                     new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure"),
                     new Named("http://www.broadinstitute.org/ontologies/DURPO/control")
             ),
             new Or(
@@ -37,7 +37,7 @@ public class UseRestrictionConverterTest {
     UseRestriction maleRestriction = new And(
             new And(
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
             ),
             new And(
@@ -49,7 +49,7 @@ public class UseRestrictionConverterTest {
     UseRestriction boysRestriction = new And(
             new And(
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
             ),
             new And(
@@ -62,7 +62,7 @@ public class UseRestrictionConverterTest {
     UseRestriction girlsRestriction = new And(
             new And(
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
             ),
             new And(
@@ -75,7 +75,7 @@ public class UseRestrictionConverterTest {
     UseRestriction childrenRestriction = new And(
             new And(
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
             ),
             new And(
@@ -87,7 +87,7 @@ public class UseRestrictionConverterTest {
     UseRestriction controlsPopulationRestriction = new And(
             new And(
                     new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population"),
+                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure"),
                     new Named("http://www.broadinstitute.org/ontologies/DURPO/control")
             ),
             new Named("http://www.broadinstitute.org/ontologies/DURPO/Non_profit")
@@ -359,7 +359,7 @@ public class UseRestrictionConverterTest {
         
     String methods = "http://www.broadinstitute.org/ontologies/DURPO/methods_research";
     String aggregate = "http://www.broadinstitute.org/ontologies/DURPO/aggregate_analysis";
-    String population = "http://www.broadinstitute.org/ontologies/DURPO/population";
+    String population = "http://www.broadinstitute.org/ontologies/DURPO/population_structure";
     String men = "http://www.broadinstitute.org/ontologies/DURPO/male";
     String women = "http://www.broadinstitute.org/ontologies/DURPO/female";
     String profit = "http://www.broadinstitute.org/ontologies/DURPO/For_profit";
