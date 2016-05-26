@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.eclipse.jetty.http.HttpHeader;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -23,6 +24,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Ignore
 public class ConsentsServiceTest extends AbstractTest {
 
     private static final int N = 5;

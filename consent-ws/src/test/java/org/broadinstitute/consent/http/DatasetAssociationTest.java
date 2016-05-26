@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -15,6 +16,7 @@ import java.util.List;
  * <p/>
  * Created by egolin on 9/16/14.
  */
+@Ignore
 public class DatasetAssociationTest extends DatasetAssociationServiceTest {
 
     private static final String DATASET_OBJECTID = "SC-20660";

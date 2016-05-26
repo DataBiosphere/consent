@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.fail;
  * <p/>
  * Created by egolin on 9/15/14.
  */
+@Ignore
 public class AssociationTest extends ConsentServiceTest {
 
     @ClassRule
