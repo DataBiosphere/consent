@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -83,8 +84,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             throw new IllegalArgumentException("Consent for the specified name already exist");
         }
         Date createDate = new Date();
-
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.dulName, createDate, createDate, rec.getTranslatedUseRestriction());
+        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.dulName, createDate, createDate, rec.getTranslatedUseRestriction(), true);
         return consentDAO.findConsentById(id);
     }
 
@@ -396,6 +396,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             unreviewedCases = consents.size();
         }
         return unreviewedCases;
+    }
+
+    @Override
+    public List<UseRestrictionDTO> getInvalidConsents() {
+        return consentDAO.findInvalidRestrictions();
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents, String status) {

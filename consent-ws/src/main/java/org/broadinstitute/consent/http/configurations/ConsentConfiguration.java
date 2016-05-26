@@ -22,7 +22,7 @@ public class ConsentConfiguration extends Configuration {
         "http://www.broadinstitute.org/ontologies/DURPO/methods_research",
         "http://www.broadinstitute.org/ontologies/DURPO/aggregate_analysis",
         "http://www.broadinstitute.org/ontologies/DURPO/control",
-        "http://www.broadinstitute.org/ontologies/DURPO/population",
+        "http://www.broadinstitute.org/ontologies/DURPO/population_structure",
         "http://www.broadinstitute.org/ontologies/DURPO/male",
         "http://www.broadinstitute.org/ontologies/DURPO/female",
         "http://www.broadinstitute.org/ontologies/DURPO/For_profit",
@@ -59,10 +59,30 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
+    @Valid
+    @NotNull
+    private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
+
+    @Valid
+    @NotNull
+    private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
+
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
     }
+
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private final StoreOntologyConfiguration storeOntology = new StoreOntologyConfiguration();
+
 
     public DataSourceFactory getDataSourceFactory() {
         return database;
@@ -90,5 +110,29 @@ public class ConsentConfiguration extends Configuration {
 
     public FreeMarkerConfiguration getFreeMarkerConfiguration() {
         return freeMarkerConfiguration;
+    }
+
+    public BasicAuthConfig getBasicAuthentication() {
+        return basicAuthentication;
+    }
+
+    public void setBasicAuthentication(BasicAuthConfig basicAuthentication) {
+        this.basicAuthentication = basicAuthentication;
+    }
+
+    public GoogleOAuth2Config getGoogleAuthentication() {
+        return googleAuthentication;
+    }
+
+    public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
+        this.googleAuthentication = googleAuthentication;
+    }
+
+    public ElasticSearchConfiguration getElasticSearchConfiguration() {
+        return elasticSearch;
+    }
+
+    public StoreOntologyConfiguration getStoreOntologyConfiguration() {
+        return storeOntology;
     }
 }

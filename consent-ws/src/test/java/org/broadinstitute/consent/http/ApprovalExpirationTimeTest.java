@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Ignore
 public class ApprovalExpirationTimeTest extends ApprovalExpirationTimeServiceTest {
 
     public static final int CREATED = Response.Status.CREATED

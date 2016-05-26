@@ -3,24 +3,21 @@ package org.broadinstitute.consent.http.cloudstore;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.storage.StorageScopes;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.UUID;
 
 public class GCSStore implements CloudStore {
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+
     private final static HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
-    private StoreConfiguration sConfig;
+    private final StoreConfiguration sConfig;
     HttpRequestFactory requestFactory;
     GoogleCredential credential;
 
@@ -34,26 +31,23 @@ public class GCSStore implements CloudStore {
         requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
     }
 
-    private GenericUrl generateURLForDocument(String ext) {
-        return new GenericUrl(sConfig.getEndpoint() + sConfig.getBucket() + "/" + UUID.randomUUID() + "." + ext);
+    @Override
+    public GenericUrl generateURLForDocument(String fileName) {
+        return new GenericUrl(sConfig.getEndpoint() + sConfig.getBucket() + "/" + fileName);
     }
 
     /**
      * Authorizes the installed application to access user's protected data.
      */
     private GoogleCredential authorize() {
-        GoogleCredential credential = new GoogleCredential();
-        File file = new File(sConfig.getPassword());
+        GoogleCredential credential;
         try {
-            credential = new GoogleCredential.Builder()
-                    .setTransport(HTTP_TRANSPORT)
-                    .setJsonFactory(JSON_FACTORY)
-                    .setServiceAccountId(sConfig.getUsername())
-                    .setServiceAccountScopes(Collections.singletonList(StorageScopes.DEVSTORAGE_FULL_CONTROL))
-                    .setServiceAccountPrivateKeyFromP12File(file)
-                    .build();
+            credential = GoogleCredential.
+                    fromStream(new FileInputStream(sConfig.getPassword())).
+                    createScoped(Collections.singletonList(StorageScopes.DEVSTORAGE_FULL_CONTROL));
         } catch (Exception e) {
             logger().error("Error on GCS Store initialization. Service won't work: " + e);
+            throw new RuntimeException(e);
         }
         return credential;
     }
@@ -82,8 +76,7 @@ public class GCSStore implements CloudStore {
     }
 
     private HttpRequest buildHttpGetRequest(GenericUrl url) throws IOException, GeneralSecurityException {
-        HttpRequest request = requestFactory.buildGetRequest(url);
-        return request;
+        return requestFactory.buildGetRequest(url);
     }
 
     @Override
@@ -100,8 +93,8 @@ public class GCSStore implements CloudStore {
     }
 
     @Override
-    public String postStorageDocument(String documentID, InputStream stream, String type, String ext) throws IOException, GeneralSecurityException {
-        GenericUrl url = generateURLForDocument(ext);
+    public String postStorageDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException {
+        GenericUrl url = generateURLForDocument(fileName);
         HttpResponse response = null;
         try {
             HttpContent content = new InputStreamContent(type, stream);
@@ -123,8 +116,8 @@ public class GCSStore implements CloudStore {
     }
 
     @Override
-    public String putStorageDocument(String documentID, InputStream stream, String type, String ext) throws IOException, GeneralSecurityException {
-        GenericUrl url = generateURLForDocument(ext);
+    public String putStorageDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException {
+        GenericUrl url = generateURLForDocument(fileName);
         HttpResponse response = null;
         try {
             HttpContent content = new InputStreamContent(type, stream);
@@ -141,8 +134,8 @@ public class GCSStore implements CloudStore {
                     logger().error("Error disconnecting response.", e);
                 }
             }
-
         }
         return url.toString();
     }
+
 }

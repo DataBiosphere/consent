@@ -1,14 +1,25 @@
 package org.broadinstitute.consent.http.mail;
 
-import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.mail.message.*;
-
-import javax.mail.*;
-import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.MimeMessage;
+import org.broadinstitute.consent.http.configurations.MailConfiguration;
+import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
+import org.broadinstitute.consent.http.mail.message.CollectMessage;
+import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
+import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
+import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
+import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 
 public class MailService extends AbstractMailServiceAPI {
 
@@ -25,6 +36,7 @@ public class MailService extends AbstractMailServiceAPI {
     private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
     private FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
     private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
+    private DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
 
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
@@ -103,6 +115,12 @@ public class MailService extends AbstractMailServiceAPI {
     @Override
     public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         MimeMessage message = adminApprovedDarMessageCreator.flaggedDarMessage(getMailSession, template, dataAccessRequestId, type);
+        sendMessage(message, userAddress);
+    }
+
+    @Override
+    public void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException {
+        MimeMessage message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(getMailSession, template);
         sendMessage(message, userAddress);
     }
 

@@ -1,31 +1,22 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
-import org.broadinstitute.consent.http.DataSetAudit;
-import org.broadinstitute.consent.http.models.DataSetProperty;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.DataSetAuditProperty;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-
-import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
+import org.broadinstitute.consent.http.DataSetAudit;
+import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.enumeration.*;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.util.DarConstants;
 
+import org.bson.Document;
 /**
  * Implementation class for DataSetAPI database support.
  */
@@ -38,31 +29,36 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
     private DataSetAuditDAO dataSetAuditDAO;
+    private  ElectionDAO electionDAO;
+
     public static final String DATA_SET_ID = "Dataset ID";
 
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
     private final String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
     private final String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
+    private final String DATASETID_PROPERTY_NAME = "Dataset ID";
     private final String CREATE = "CREATE";
     private final String UPDATE = "UPDATE";
+    private final String DELETE = "DELETE";
 
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO,  dsRoleDAO, consentDAO, dataSetAuditDAO));
+    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO,  dsRoleDAO, consentDAO, dataSetAuditDAO, electionDAO));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO,DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.dsRoleDAO = dsRoleDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAuditDAO = dataSetAuditDAO;
+        this.electionDAO = electionDAO;
     }
 
 
@@ -117,6 +113,22 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         if (userIs(DACUserRoles.RESEARCHER.getValue(), dacUserId)) {
             dataSetDTOList = dsDAO.findDataSetsForResearcher();
         } else {
+
+            /*
+            *  This three collections defined below are used to determine if "Associate Dataset with Data Owners"
+            *  functionality must be enabled or disabled for each dataset.
+            *  This restriction depends on the status of DataAccess elections and is represented by
+            *  DataSetDTO.updateAssociationToDataOwnerAllowed.
+            */
+
+            Collection<Election> dataOwnerOpenElections;
+            Collection<String> dataAccessElectionsReferenceId;
+            Collection<String> datasetsAssociatedToOpenElections = new HashSet<>();
+            dataOwnerOpenElections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(),ElectionStatus.OPEN.getValue());
+            if(CollectionUtils.isNotEmpty(dataOwnerOpenElections)){
+                dataAccessElectionsReferenceId= dataOwnerOpenElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toSet());
+                datasetsAssociatedToOpenElections = accessAPI.getDatasetsInDARs(dataAccessElectionsReferenceId);
+            }
             dataSetDTOList = dsDAO.findDataSets();
             if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
@@ -131,9 +143,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                                 DataSet::getDataSetId));
                 Set<String> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<String>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
-                    String datasetObjectId  = dataSetDTO.getProperties().get(9).getPropertyValue();
+                    String datasetObjectId = dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME);
                     Map<String,String> dataSetProperties = dataSetDTO.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName,DataSetPropertyDTO::getPropertyValue));
                     String dataSetObjectId = dataSetProperties.get(DATA_SET_ID);
+                    if(CollectionUtils.isNotEmpty(datasetsAssociatedToOpenElections) &&
+                            datasetsAssociatedToOpenElections.contains(dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME))){
+                        dataSetDTO.setUpdateAssociationToDataOwnerAllowed(false);
+                    }else{
+                        dataSetDTO.setUpdateAssociationToDataOwnerAllowed(true);
+                    }
                     if(CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(dataSetObjectId)))){
                         dataSetDTO.setIsAssociatedToDataOwners(false);
                     }else{
@@ -145,7 +163,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                         } else {
                             dataSetDTO.setDeletable(true);
                         }
-
                     }else {
                         dataSetDTO.setDeletable(true);
                     }
@@ -188,12 +205,31 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public void deleteDataset(String datasetObjectId) {
-        DataSet dataset = dsDAO.findDataSetByObjectId(datasetObjectId);
-        Collection<Integer> dataSetId = new ArrayList<>();
-        dataSetId.add(dataset.getDataSetId());
-        dsDAO.deleteDataSetsProperties(dataSetId);
-        dsDAO.deleteDataSets(dataSetId);
+    public void deleteDataset(String datasetObjectId, Integer dacUserId) throws IllegalStateException{
+        try {
+            dsDAO.begin();
+            dataSetAuditDAO.begin();
+            DataSet dataset = dsDAO.findDataSetByObjectId(datasetObjectId);
+            Collection<Integer> dataSetId = new ArrayList<>();
+            dataSetId.add(dataset.getDataSetId());
+            if(checkDatasetExistence(dataset.getDataSetId())){
+                DataSetAudit dsAudit = new DataSetAudit(dataset.getDataSetId(), dataset.getObjectId(), dataset.getName(), new Date(), true, dacUserId, DELETE);
+                dataSetAuditDAO.insertDataSetAudit(dsAudit);
+            }
+            dataSetAssociationDAO.delete(dataset.getDataSetId());
+            dsDAO.deleteDataSetsProperties(dataSetId);
+            dsDAO.deleteDataSets(dataSetId);
+            dsDAO.commit();
+            dataSetAuditDAO.commit();
+        }catch (Exception e){
+            dsDAO.rollback();
+            dataSetAuditDAO.rollback();
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    private boolean checkDatasetExistence(Integer dataSetId) {
+        return dsDAO.findDataSetById(dataSetId) != null ? true: false;
     }
 
     @Override

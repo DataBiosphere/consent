@@ -1,6 +1,30 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.common.io.Resources;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -16,17 +40,6 @@ import org.broadinstitute.consent.http.service.ParseResult;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
 
 @Path("{api : (api/)?}dataset")
 public class DataSetResource extends Resource {
@@ -52,9 +65,9 @@ public class DataSetResource extends Resource {
         logger().debug("POSTing Data Set");
         List<DataSet> dataSets;
         List<String> errors = new ArrayList<>();
-        if (part.getMediaType().getType().equals("text") && 
-                (part.getMediaType().getSubtype().equals("tab-separated-values") 
-                || part.getMediaType().getSubtype().equals("plain") )) {
+        if (part.getMediaType().getType().equals("text") &&
+                (part.getMediaType().getSubtype().equals("tab-separated-values")
+                        || part.getMediaType().getSubtype().equals("plain") )) {
             File inputFile = null;
             try {
                 inputFile = new File(UUID.randomUUID().toString());
@@ -176,10 +189,14 @@ public class DataSetResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{datasetObjectId}")
-    public Response delete(@PathParam("datasetObjectId") String datasetObjectId, @Context UriInfo info) {
-        api.deleteDataset(datasetObjectId);
-        return Response.ok().build();
+    @Path("/{datasetObjectId}/{dacUserId}")
+    public Response delete(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
+        try{
+            api.deleteDataset(datasetObjectId, dacUserId);
+            return Response.ok().build();
+        }catch (Exception e){
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     @DELETE

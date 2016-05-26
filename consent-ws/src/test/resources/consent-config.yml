@@ -12,11 +12,9 @@ database:
   url: jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
 googleStore:
-  username:
   password:
   bucket:
   endpoint:
-  type: GCS
 mongo:
   uri: mongodb://localhost:27017
   host1:
@@ -28,18 +26,23 @@ mongo:
 # Logging settings
 logging:
   # default logging level
-  # level: TRACE
+  level: WARN
   # logger specific levels
   loggers:
-    ConsentAssociationResource: ALL
-    AllAssociationsResource: ALL
-    ConsentApplication: ALL
-    ConsentModule: ALL
-    DatabaseResearchPurposeAPI: ALL
+    ConsentAssociationResource: WARN
+    AllAssociationsResource: WARN
+    ConsentApplication: WARN
+    ConsentModule: WARN
+    DatabaseResearchPurposeAPI: WARN
+    "org.semanticweb": ERROR
+    "net.sourceforge": ERROR
+    "org.reflections": ERROR
+    "de.spinscale": ERROR
+    "org.mongodb": ERROR
+    "org.liquibase": ERROR
 services:
-    matchURL:
+    ontologyURL:
     localURL: http://localhost:8000/#/
-    translateURL:
 mailConfiguration:
   activateEmailNotifications: false
   smtpPort: 587
@@ -51,3 +54,15 @@ mailConfiguration:
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
+googleAuthentication:
+ clientId:
+basicAuthentication:
+  user: testuser
+  password: dGVzdHBhc3N3b3Jk
+storeOntology:
+  bucketSubdirectory:   bucket
+  configurationFileName: configuration
+elasticSearch:
+    clusterName: cName
+    servers: [localhost]
+    indexName: iName

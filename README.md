@@ -1,6 +1,8 @@
 Consent Services v1
 ===================
 
+[![Build Status](https://travis-ci.com/broadinstitute/consent.svg?token=3ve6QNemvC5zpJzsoKzf&branch=develop)](https://travis-ci.com/broadinstitute/consent) [![Coverage Status](https://coveralls.io/repos/github/broadinstitute/consent/badge.svg?branch=develop&t=ThluHs)](https://coveralls.io/github/broadinstitute/consent?branch=develop)
+
 First version of "consent-related" services.  
 
 There are three separate deliverables here: 
