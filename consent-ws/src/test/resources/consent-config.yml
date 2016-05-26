@@ -34,6 +34,12 @@ logging:
     ConsentApplication: WARN
     ConsentModule: WARN
     DatabaseResearchPurposeAPI: WARN
+    "org.semanticweb": ERROR
+    "net.sourceforge": ERROR
+    "org.reflections": ERROR
+    "de.spinscale": ERROR
+    "org.mongodb": ERROR
+    "org.liquibase": ERROR
 services:
     ontologyURL:
     localURL: http://localhost:8000/#/
