@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.authentication.GoogleAuthenticationAPI;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MongoConfiguration;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
@@ -131,8 +132,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 public class ConsentApplication extends Application<ConsentConfiguration> {
     public static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
-
-
     public static void main(String[] args) throws Exception {
         new ConsentApplication().run(args);
     }
@@ -149,6 +148,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient;
+        GCSStore googleStore;
 
         if (mongoConfiguration.isTestMode()) {
             Fongo fongo = new Fongo("TestServer");
@@ -224,13 +224,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Add URL mapping
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        GCSStore googleStore;
-        try {
-            googleStore = new GCSStore(config.getCloudStoreConfiguration());
-        } catch (GeneralSecurityException | IOException e) {
-            LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
-            throw new IllegalStateException(e);
-        }
+        googleStore = getGoogleStore(config.getCloudStoreConfiguration());
 
 
         //Manage Ontologies dependencies
@@ -308,6 +302,17 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 super.lifeCycleStopped(event);
             }
         });
+    }
+
+    private GCSStore getGoogleStore(StoreConfiguration config){
+        GCSStore googleStore;
+        try {
+            googleStore = new GCSStore(config);
+        } catch (GeneralSecurityException | IOException e) {
+            LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
+            throw new IllegalStateException(e);
+        }
+        return googleStore;
     }
 
     @Override

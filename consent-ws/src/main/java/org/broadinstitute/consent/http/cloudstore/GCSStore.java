@@ -25,10 +25,17 @@ public class GCSStore implements CloudStore {
         return Logger.getLogger("GCSStore");
     }
 
+    private void initializeCloudStore(){
+        if(credential == null){
+            credential = authorize();
+            requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
+        }
+    }
+
     public GCSStore(StoreConfiguration config) throws GeneralSecurityException, IOException {
         sConfig = config;
-        credential = authorize();
-        requestFactory = HTTP_TRANSPORT.createRequestFactory(credential);
+        credential = null;
+        requestFactory = null;
     }
 
     @Override
@@ -61,6 +68,7 @@ public class GCSStore implements CloudStore {
     public boolean deleteStorageDocument(String documentUrl) throws IOException, GeneralSecurityException {
         HttpResponse response = null;
         try {
+            initializeCloudStore();
             HttpRequest request = buildHttpDeleteRequest(new GenericUrl(documentUrl));
             response = request.execute();
             return true;
@@ -82,6 +90,7 @@ public class GCSStore implements CloudStore {
     @Override
     public HttpResponse getStorageDocument(String documentUrl) throws IOException, GeneralSecurityException {
         HttpResponse response;
+        initializeCloudStore();
         HttpRequest request = buildHttpGetRequest(new GenericUrl(documentUrl));
         response = request.execute();
         return response;
@@ -97,6 +106,7 @@ public class GCSStore implements CloudStore {
         GenericUrl url = generateURLForDocument(fileName);
         HttpResponse response = null;
         try {
+            initializeCloudStore();
             HttpContent content = new InputStreamContent(type, stream);
             HttpRequest request = buildHttpPutRequest(url, content);
             response = request.execute();
@@ -120,6 +130,7 @@ public class GCSStore implements CloudStore {
         GenericUrl url = generateURLForDocument(fileName);
         HttpResponse response = null;
         try {
+            initializeCloudStore();
             HttpContent content = new InputStreamContent(type, stream);
             HttpRequest request = buildHttpPutRequest(url, content);
             response = request.execute();
