@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
 
 public class BasicAuthentication implements BasicAuthenticationAPI {
 
-    BasicAuthConfig basicAuthentication;
+    private BasicAuthConfig basicAuthentication;
 
     public BasicAuthentication(BasicAuthConfig basicAuthentication) {
         this.basicAuthentication = basicAuthentication;
@@ -17,7 +17,7 @@ public class BasicAuthentication implements BasicAuthenticationAPI {
         String credential = authHeader.substring(6);
         String[] userPassword = decodeCredential(credential);
         String password = Base64.getEncoder().encodeToString(userPassword[1].getBytes(StandardCharsets.UTF_8));
-        if(!(userPassword[0].equals(basicAuthentication.getUser()) && password.equals(basicAuthentication.getPassword()))) {
+        if(!(userPassword[0].equals(basicAuthentication.getUser()) || !password.equals(basicAuthentication.getPassword()))) {
             unauthorized(credential);
         }
 
@@ -26,8 +26,7 @@ public class BasicAuthentication implements BasicAuthenticationAPI {
     private static String[] decodeCredential(String encodedCredential) {
         final byte[] decodedBytes = Base64.getDecoder().decode(encodedCredential.getBytes());
         final String pair = new String(decodedBytes);
-        final String[] userDetails = pair.split(":", 2);
-        return userDetails;
+        return pair.split(":", 2);
     }
 
     private void unauthorized(String credential) throws Exception {
