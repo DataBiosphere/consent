@@ -16,8 +16,7 @@ public class BasicAuthentication implements BasicAuthenticationAPI {
     public void validateUser(String authHeader) throws Exception{
         String credential = authHeader.substring(6);
         String[] userPassword = decodeCredential(credential);
-        String password = Base64.getEncoder().encodeToString(userPassword[1].getBytes(StandardCharsets.UTF_8));
-        if(!(userPassword[0].equals(basicAuthentication.getUser()) || !password.equals(basicAuthentication.getPassword()))) {
+        if(!(userPassword[0].equals(basicAuthentication.getUser()) && userPassword[1].equals(basicAuthentication.getPassword()))) {
             unauthorized(credential);
         }
 
