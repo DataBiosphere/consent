@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.resources.*;
-import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerServiceImpl;
@@ -213,7 +212,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
         final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
-        env.servlets().addFilter("authorizationFilter", new AuthorizationFilter(googleAuthentication, basicAuthentication)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/*");
+        env.servlets().addFilter("authorizationFilter", new AuthorizationFilter(googleAuthentication, basicAuthentication)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/api/*");
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
         // Configure CORS parameters

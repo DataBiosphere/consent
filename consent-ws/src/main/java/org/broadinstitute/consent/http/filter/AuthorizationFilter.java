@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.filter;
 
 
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticationAPI;
 import org.broadinstitute.consent.http.authentication.GoogleAuthenticationAPI;
 import org.broadinstitute.consent.http.enumeration.AuthenticationType;
+
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,13 +46,13 @@ public class AuthorizationFilter implements Filter {
                     if (authHeader.startsWith(AuthenticationType.BEARER.getValue())) {
                         googleAuthenticationAPI.validateAccessToken(authHeader);
                         chain.doFilter(request, response);
-                    }
-                    else if (authHeader.startsWith(AuthenticationType.BASIC.getValue())) {
+                    } else if (authHeader.startsWith(AuthenticationType.BASIC.getValue())) {
                         basicAuthenticationAPI.validateUser(authHeader);
                         chain.doFilter(request, response);
+                    } else {
+                        // Header Authentication does not match the mapped ones. Exception -> Unauthorized
+                        throw new Exception();
                     }
-                }else{
-                    throw new Exception();
                 }
             } else {
                 chain.doFilter(request, response);
