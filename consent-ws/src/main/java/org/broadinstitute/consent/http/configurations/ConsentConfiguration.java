@@ -20,7 +20,7 @@ public class ConsentConfiguration extends Configuration {
 
     private final UseRestrictionConfig ontology = new UseRestrictionConfig(
         "http://www.broadinstitute.org/ontologies/DURPO/methods_research",
-        "http://www.broadinstitute.org/ontologies/DURPO/aggregate_analysis",
+        "http://www.broadinstitute.org/ontologies/DURPO/aggregate_research",
         "http://www.broadinstitute.org/ontologies/DURPO/control",
         "http://www.broadinstitute.org/ontologies/DURPO/population_structure",
         "http://www.broadinstitute.org/ontologies/DURPO/male",
