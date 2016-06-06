@@ -33,7 +33,7 @@ abstract public class AbstractTest extends ResourcedTest {
     public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
     //testuser
-    public static final String BASIC_AUTHENTICATION = "Basic dGVzdHVzZXI6dGVzdHBhc3N3b3Jk";
+    //public static final String BASIC_AUTHENTICATION = "Basic dGVzdHVzZXI6dGVzdHBhc3N3b3Jk";
 
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
 
@@ -50,7 +50,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("REMOTE_USER", user)
-                .header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
+                //.header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
                 .post(Entity.json(value), Response.class);
     }
 
@@ -63,7 +63,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("REMOTE_USER", user)
-                .header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
+                //.header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
                 .put(Entity.json(value), Response.class);
     }
 
@@ -76,7 +76,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("REMOTE_USER", user)
-                .header("Authorization", BASIC_AUTHENTICATION)
+                //.header("Authorization", BASIC_AUTHENTICATION)
                 .delete(Response.class);
     }
 
@@ -92,7 +92,7 @@ abstract public class AbstractTest extends ResourcedTest {
         return client.target(path)
                 .request(mediaType)
                 .header("REMOTE_USER", "testuser")
-                .header("Authorization", BASIC_AUTHENTICATION)
+                //.header("Authorization", BASIC_AUTHENTICATION)
                 .get(Response.class);
     }
 

@@ -100,10 +100,10 @@ public class ConsentsServiceTest extends AbstractTest {
 
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/sample"));
-        Response response = webTarget.
-                request(MediaType.APPLICATION_JSON_TYPE).
-                header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION).
-                get(Response.class);
+        Response response = webTarget
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                //.header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
+                .get(Response.class);
         assertThat(response.getStatus() == OK);
 
         List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});

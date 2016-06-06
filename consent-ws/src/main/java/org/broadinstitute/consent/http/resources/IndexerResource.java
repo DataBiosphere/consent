@@ -8,6 +8,8 @@ import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -36,6 +38,7 @@ public class IndexerResource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response saveAndIndex( FormDataMultiPart formParams)   {
         try {
             List<StreamRec> fileCompList =  elasticSearchHelper.filesCompBuilder(formParams);
@@ -50,6 +53,7 @@ public class IndexerResource {
 
     @GET
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response getIndexedFiles(){
         try {
             indexerService.getIndexedFiles();
@@ -62,12 +66,14 @@ public class IndexerResource {
     @GET
     @Produces("application/json")
     @Path("types")
+    @PermitAll
     public Response getOntologyTypes(){
        return  Response.ok().entity(OntologyTypes.values()).build();
     }
 
     @PUT
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response deleteIndexedFile(String fileURL) {
         try {
            return indexerService.deleteOntologiesByType(fileURL);
@@ -79,6 +85,7 @@ public class IndexerResource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("file")
+    @PermitAll
     public Response getFile(@QueryParam("fileUrl") String fileUrl, @QueryParam("fileName") String fileName) {
         try {
             String url = URLDecoder.decode(fileUrl, "UTF-8");

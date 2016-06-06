@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.*;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -25,6 +26,7 @@ public class ConsentCasesResource extends Resource {
 
     @GET
     @Path("/pending/{dacUserId}")
+    @PermitAll
     public Response getConsentPendingCases(@PathParam("dacUserId") Integer dacUserId) {
         return Response.ok(api.describeConsentPendingCases(dacUserId))
                 .build();
@@ -32,6 +34,7 @@ public class ConsentCasesResource extends Resource {
 
     @GET
     @Path("/summary")
+    @PermitAll
     public Response getConsentSummaryCases() {
         return Response.ok(summaryApi.describeConsentSummaryCases())
                     .build();
@@ -40,6 +43,7 @@ public class ConsentCasesResource extends Resource {
     @GET
     @Path("/summary/file")
     @Produces("text/plain")
+    @PermitAll
     public Response getConsentSummaryDetailFile(@QueryParam("fileType") String fileType) {
         ResponseBuilder response;
         File fileToSend = null;
@@ -57,6 +61,7 @@ public class ConsentCasesResource extends Resource {
     @GET
     @Path("/closed")
     @Produces("application/json")
+    @PermitAll
     public List<Election> describeClosedElections() {
         return electionApi.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue());
     }

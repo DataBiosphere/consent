@@ -5,6 +5,8 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -25,7 +27,8 @@ public class ElectionResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    public Response updateElection(@Context UriInfo info, Election rec, @PathParam("id") Integer id) {
+    @RolesAllowed({"ADMIN", "DATAOWNER"})
+    public Response updateElection(Election rec, @PathParam("id") Integer id) {
         try {
             return Response.ok().entity(api.updateElectionById(rec, id)).build();
         } catch (IllegalArgumentException e) {
@@ -37,7 +40,8 @@ public class ElectionResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    public Response describeElectionById(@Context UriInfo info, @PathParam("id") Integer id) {
+    @PermitAll
+    public Response describeElectionById(@PathParam("id") Integer id) {
         try {
             return Response.ok().entity(api.describeElectionById(id)).build();
         } catch (IllegalArgumentException e) {
@@ -49,6 +53,7 @@ public class ElectionResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/checkdataset")
+    @PermitAll
     public Response isDataSetElectionOpen(@Context UriInfo info) {
         try {
             return Response.ok().entity("{ \"open\" : " + api.isDataSetElectionOpen() + " }").build();

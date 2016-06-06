@@ -13,6 +13,8 @@ import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,7 +24,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.UUID;
 
-@Path("{api : (api/)?}consent/{id}/dul")
+@Path("{auth: (basic/|api/)?}consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;
@@ -47,6 +49,7 @@ public class DataUseLetterResource extends Resource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Consent createDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
@@ -72,6 +75,7 @@ public class DataUseLetterResource extends Resource {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Consent updateDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
@@ -95,6 +99,7 @@ public class DataUseLetterResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @PermitAll
     public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
@@ -121,6 +126,7 @@ public class DataUseLetterResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Consent deleteDUL(@PathParam("id") String consentId) {
         String msg = String.format("DELETEing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);

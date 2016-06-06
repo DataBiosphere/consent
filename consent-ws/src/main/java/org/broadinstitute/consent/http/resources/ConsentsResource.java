@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
 import java.util.*;
 
@@ -24,6 +25,7 @@ public class ConsentsResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public Collection<Consent> findByIds(@QueryParam("ids") Optional<String> ids) {
         if (ids.isPresent()) {
             List<String> splitIds = new ArrayList<>();
@@ -65,6 +67,7 @@ public class ConsentsResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("{associationType}")
+    @PermitAll
     public Collection<Consent> findByAssociationType(@PathParam("associationType") String associationType) {
         if (associationType != null) {
             Collection<Consent> consents = api.findConsentsByAssociationType(associationType);

@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -46,6 +48,7 @@ public class DACUserResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    @RolesAllowed("ADMIN")
     public Response createdDACUser(@Context UriInfo info, DACUser dac) {
         URI uri;
         DACUser dacUser;
@@ -65,6 +68,7 @@ public class DACUserResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public Collection<DACUser> describeAllUsers() {
         return dacUserAPI.describeUsers();
     }
@@ -72,6 +76,7 @@ public class DACUserResource extends Resource {
     @GET
     @Path("/{email}")
     @Produces("application/json")
+    @PermitAll
     public DACUser describe(@PathParam("email") String email) {
         return dacUserAPI.describeDACUserByEmail(email);
     }
@@ -80,6 +85,7 @@ public class DACUserResource extends Resource {
     @Path("/{id}")
     @Consumes("application/json")
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response update(@Context UriInfo info, Map<String, DACUser> dac, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
@@ -95,26 +101,18 @@ public class DACUserResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{email}")
+    @RolesAllowed("ADMIN")
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
         dacUserAPI.deleteDACUser(email);
         return Response.ok().entity("User was deleted").build();
     }
 
-    private boolean isChairPerson(List<DACUserRole> roles) {
-        boolean isChairPerson = false;
-        for (DACUserRole role : roles) {
-            if (role.getName().equals(DACUserRoles.CHAIRPERSON.getValue())) {
-                isChairPerson = true;
-                break;
-            }
-        }
-        return isChairPerson;
-    }
 
     @POST
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/validateDelegation")
+    @PermitAll
     public Response validateDelegation(@QueryParam("role") String role, DACUser dac) {
         DACUser dacUser;
         try {
@@ -126,4 +124,15 @@ public class DACUserResource extends Resource {
         }
     }
 
+
+    private boolean isChairPerson(List<DACUserRole> roles) {
+        boolean isChairPerson = false;
+        for (DACUserRole role : roles) {
+            if (role.getName().equals(DACUserRoles.CHAIRPERSON.getValue())) {
+                isChairPerson = true;
+                break;
+            }
+        }
+        return isChairPerson;
+    }
 }

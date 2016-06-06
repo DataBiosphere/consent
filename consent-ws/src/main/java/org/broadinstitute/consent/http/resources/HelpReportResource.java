@@ -4,6 +4,8 @@ import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
 import org.broadinstitute.consent.http.service.HelpReportAPI;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -23,6 +25,7 @@ public class HelpReportResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    @PermitAll
     public Response createdHelpReport(@Context UriInfo info, HelpReport helpReport) {
         try {
             helpReport = helpReportAPI.create(helpReport);
@@ -36,6 +39,7 @@ public class HelpReportResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response delete(@PathParam("id") Integer id) {
         helpReportAPI.deleteHelpReportById(id);
         return Response.ok().entity("Report was deleted").build();
@@ -44,6 +48,7 @@ public class HelpReportResource extends Resource {
     @GET
     @Path("/{id}")
     @Produces("application/json")
+    @PermitAll
     public Response describe(@PathParam("id") Integer id) {
         try{
             return Response.ok().entity(helpReportAPI.findHelpReportById(id)).build();
@@ -56,6 +61,7 @@ public class HelpReportResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/user/{userId}")
+    @PermitAll
     public List<HelpReport> describeAllReportsByUser(@PathParam("userId") Integer id) {
         return helpReportAPI.findHelpReportsByUserId(id);
     }

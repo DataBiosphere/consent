@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.URI;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -32,7 +34,7 @@ import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 
-@Path("{api : (api/)?}consent")
+@Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
 
     private final ConsentAPI api;
@@ -45,6 +47,7 @@ public class ConsentResource extends Resource {
     @Path("{id}")
     @GET
     @Produces("application/json")
+    @PermitAll
     public Response describe(@PathParam("id") String id) {
         try {
             return Response.ok(populateFromApi(id))
@@ -57,6 +60,7 @@ public class ConsentResource extends Resource {
     @Path("invalid")
     @GET
     @Produces("application/json")
+    @PermitAll
     public Response describeInvalidConsents() {
         try {
             return Response.ok(api.getInvalidConsents()).build();
@@ -67,6 +71,7 @@ public class ConsentResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    @RolesAllowed("ADMIN")
     public Response createConsent(@Context UriInfo info, Consent rec) {
         try {
             if (rec.getTranslatedUseRestriction() == null) {
@@ -93,6 +98,7 @@ public class ConsentResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response update(@PathParam("id") String id, Consent updated) {
         try {
             if (updated.getTranslatedUseRestriction() == null) {
@@ -119,6 +125,7 @@ public class ConsentResource extends Resource {
     @DELETE
     @Produces("application/json")
     @Path("{id}")
+    @RolesAllowed("ADMIN")
     public Response delete(@PathParam("id") String consentId) {
         try {
             api.delete(consentId);
@@ -136,6 +143,7 @@ public class ConsentResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}/matches")
+    @PermitAll
     public Response getMatches(@PathParam("id") String purposeId, @Context UriInfo info) {
         try {
             return Response.status(Response.Status.OK).entity(matchAPI.findMatchByConsentId(purposeId)).build();
@@ -147,8 +155,8 @@ public class ConsentResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @PermitAll
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
-
         String id;
         try {
             id = api.getByName(name);

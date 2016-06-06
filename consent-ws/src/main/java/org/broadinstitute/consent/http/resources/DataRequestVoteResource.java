@@ -3,10 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -14,6 +11,8 @@ import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -57,6 +56,7 @@ public class DataRequestVoteResource extends Resource {
     @POST
     @Consumes("application/json")
     @Path("/{id}")
+    @RolesAllowed({"MEMBER", "CHAIRPERSON"})
     public Response createDataRequestVote(@Context UriInfo info, Vote rec,
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
@@ -71,9 +71,9 @@ public class DataRequestVoteResource extends Resource {
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", voteId));
+        } catch (NotFoundException e) {
+            return Response.status(Status.NOT_FOUND)
+                    .entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
@@ -82,7 +82,8 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}/final")
-    public Response updateFinalAccessVote(@Context UriInfo info, Vote rec,
+    @RolesAllowed("CHAIRPERSON")
+    public Response updateFinalAccessVote(Vote rec,
                                                  @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.firstVoteUpdate(rec, id);
@@ -112,7 +113,8 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    public Response updateDataRequestVote(@Context UriInfo info, Vote rec,
+    @RolesAllowed({"MEMBER", "CHAIRPERSON"})
+    public Response updateDataRequestVote(Vote rec,
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             Vote vote = api.updateVote(rec, id, requestId);
@@ -129,6 +131,7 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/{id}")
+    @PermitAll
     public Vote describe(@PathParam("requestId") String requestId,
                          @PathParam("id") Integer id) {
         return api.describeVoteById(id, requestId);
@@ -137,6 +140,7 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/final")
+    @PermitAll
     public Vote describeFinalAccessVote(@PathParam("requestId") Integer requestId){
         return api.describeVoteFinalAccessVoteById(requestId);
 
@@ -145,6 +149,7 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/dataOwner/{dataOwnerId}")
+    @PermitAll
     public Response describeDataOwnerVote(@PathParam("requestId") String requestId, @PathParam("dataOwnerId") Integer dataOwnerId){
         try{
             return Response.ok(api.describeDataOwnerVote(requestId,dataOwnerId)).build();
@@ -157,6 +162,7 @@ public class DataRequestVoteResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public List<Vote> describeAllVotes(@PathParam("requestId") String requestId) {
         return api.describeVotes(requestId);
 
@@ -165,6 +171,7 @@ public class DataRequestVoteResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response deleteVote(@PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             api.deleteVote(id, requestId);
@@ -177,6 +184,7 @@ public class DataRequestVoteResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Response deleteVotes(@PathParam("requestId") String requestId) {
         try {
             if (requestId == null)
