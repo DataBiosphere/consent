@@ -18,10 +18,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
-import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
-import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
-import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
-import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
+import org.broadinstitute.consent.http.authentication.*;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
@@ -187,8 +184,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService,indexOntologyService);
         env.jersey().register(new IndexerResource(indexerService, googleStore));
 
-
-
         // How register our resources.
         env.jersey().register(DataAccessRequestResource.class);
         env.jersey().register(DataSetResource.class);
@@ -213,14 +208,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(HelpReportResource.class);
         env.jersey().register(ApprovalExpirationTimeResource.class);
 
-        //TODO review urls /api and /basic
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
                 .buildAuthFilter();
 
-        List<AuthFilter> filters = Lists.newArrayList(defaultAuthFilter, new BasicCustomAuthFilter(config.getBasicAuthentication()), new OAuthCustomAuthFilter(config.getGoogleAuthentication(), dacUserRoleDAO));
+        List<AuthFilter> filters = Lists.newArrayList(defaultAuthFilter, new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())), new OAuthCustomAuthFilter(new OAuthAuthenticator(config.getGoogleAuthentication()), dacUserRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));

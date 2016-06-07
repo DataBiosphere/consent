@@ -60,7 +60,7 @@ public class ConsentResource extends Resource {
     @Path("invalid")
     @GET
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed({"ADMIN"})
     public Response describeInvalidConsents() {
         try {
             return Response.ok(api.getInvalidConsents()).build();
@@ -136,7 +136,7 @@ public class ConsentResource extends Resource {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-      }
+        }
     }
 
 
@@ -163,16 +163,16 @@ public class ConsentResource extends Resource {
             if (id == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Requested name = %s not found on consents", name), Response.Status.NOT_FOUND.getStatusCode())).build();
             }
-            return Response.status(Response.Status.OK).entity(id).build();            
+            return Response.status(Response.Status.OK).entity(id).build();
         } catch(Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
-    
 
-   private Consent populateFromApi(String id) throws UnknownIdentifierException {
-      return api.retrieve(id);
-   }
+
+    private Consent populateFromApi(String id) throws UnknownIdentifierException {
+        return api.retrieve(id);
+    }
 
 
     public ConsentResource() {

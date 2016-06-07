@@ -68,7 +68,7 @@ public class DACUserResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Collection<DACUser> describeAllUsers() {
         return dacUserAPI.describeUsers();
     }
@@ -135,4 +135,6 @@ public class DACUserResource extends Resource {
         }
         return isChairPerson;
     }
+
 }
+

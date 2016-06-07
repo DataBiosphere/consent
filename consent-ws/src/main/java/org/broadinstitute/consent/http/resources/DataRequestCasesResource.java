@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -29,14 +30,14 @@ public class DataRequestCasesResource extends Resource {
 
     @GET
     @Path("/pending/{dacUserId}")
-    @PermitAll
+    @RolesAllowed({"CHAIRPERSON", "MEMBER"})
     public List<PendingCase> getDataRequestPendingCases(@PathParam("dacUserId") Integer dacUserId) {
         return api.describeDataRequestPendingCases(dacUserId);
     }
 
     @GET
     @Path("/pending/dataOwner/{dataOwnerId}")
-    @PermitAll
+    @RolesAllowed({"CHAIRPERSON", "DATAOWNER"})
     public Response getDataOwnerPendingCases(@PathParam("dataOwnerId") Integer dataOwnerId) {
         try{
             return Response.ok(api.describeDataOwnerPendingCases(dataOwnerId)).build();
@@ -60,14 +61,14 @@ public class DataRequestCasesResource extends Resource {
     @PermitAll
     public Response getMatchSummaryCases() {
         return Response.ok(summaryApi.describeMatchSummaryCases())
-              .build();
+                .build();
     }
 
 
     @GET
     @Path("/closed")
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed({"CHAIRPERSON", "MEMBER","ALUMNI","ADMIN"})
     public List<Election> describeClosedElections() {
         return electionApi.describeClosedElectionsByType(ElectionType.DATA_ACCESS.getValue());
     }

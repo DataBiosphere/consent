@@ -141,7 +141,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/invalid")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response getInvalidDataAccessRequest() {
         try{
             return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
@@ -216,7 +216,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage")
-    @PermitAll
+    @RolesAllowed({"RESEARCHER", "ADMIN"})
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage(userId)).build();
     }
@@ -224,7 +224,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("cases/unreviewed")
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response getTotalUnReviewedDAR() {
         return Response.ok("{\"darUnReviewedCases\":" + dataAccessRequestAPI.getTotalUnReviewedDAR() + "}").build();
     }
@@ -234,7 +234,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partials")
-    @PermitAll
+    @RolesAllowed("RESEARCHER")
     public List<Document> describePartialDataAccessRequests() {
         return dataAccessRequestAPI.describePartialDataAccessRequests();
     }
@@ -301,7 +301,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partial/{id}")
-    @PermitAll
+    @RolesAllowed("RESEARCHER")
     public Document describePartialDar(@PathParam("id") String id) {
         return dataAccessRequestAPI.describePartialDataAccessRequestById(id);
     }
@@ -323,7 +323,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partials/manage")
-    @PermitAll
+    @RolesAllowed("RESEARCHER")
     public Response describePartialManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
     }

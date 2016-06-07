@@ -12,6 +12,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.models.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -21,6 +24,7 @@ public class OAuthAuthenticator implements Authenticator<String, User> {
 
     private GoogleOAuth2Config config;
     private final String tokenInfoUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
+    private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
 
     public OAuthAuthenticator(GoogleOAuth2Config config) {
         this.config = config;
@@ -33,6 +37,7 @@ public class OAuthAuthenticator implements Authenticator<String, User> {
             User user = new User(email);
             return Optional.of(user);
         }catch (Exception e){
+            logger.error("Error authenticating credentials.");
             return Optional.absent();
         }
 

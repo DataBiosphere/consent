@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.*;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -26,7 +27,7 @@ public class ConsentCasesResource extends Resource {
 
     @GET
     @Path("/pending/{dacUserId}")
-    @PermitAll
+    @RolesAllowed({"MEMBER", "CHAIRPERSON"})
     public Response getConsentPendingCases(@PathParam("dacUserId") Integer dacUserId) {
         return Response.ok(api.describeConsentPendingCases(dacUserId))
                 .build();
@@ -37,7 +38,7 @@ public class ConsentCasesResource extends Resource {
     @PermitAll
     public Response getConsentSummaryCases() {
         return Response.ok(summaryApi.describeConsentSummaryCases())
-                    .build();
+                .build();
     }
 
     @GET
@@ -48,20 +49,20 @@ public class ConsentCasesResource extends Resource {
         ResponseBuilder response;
         File fileToSend = null;
         if (fileType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-             fileToSend = summaryApi.describeConsentSummaryDetail();
+            fileToSend = summaryApi.describeConsentSummaryDetail();
         }else if (fileType.equals(ElectionType.DATA_ACCESS.getValue())){
-             fileToSend = summaryApi.describeDataAccessRequestSummaryDetail();
+            fileToSend = summaryApi.describeDataAccessRequestSummaryDetail();
         }
         if ((fileToSend != null)) {
             response = Response.ok(fileToSend);
         } else response = Response.ok();
-       return response.build();
+        return response.build();
     }
 
     @GET
     @Path("/closed")
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed({"MEMBER", "CHAIRPERSON", "ALUMNI", "ADMIN"})
     public List<Election> describeClosedElections() {
         return electionApi.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue());
     }

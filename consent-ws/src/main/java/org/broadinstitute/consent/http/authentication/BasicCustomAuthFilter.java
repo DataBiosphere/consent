@@ -1,28 +1,22 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
-import io.dropwizard.auth.DefaultUnauthorizedHandler;
-import io.dropwizard.auth.UnauthorizedHandler;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
-import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
 import org.broadinstitute.consent.http.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.naming.AuthenticationException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
 import java.security.Principal;
 
 public class BasicCustomAuthFilter<P extends Principal> extends AuthFilter<String, P>  {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultAuthFilter.class);
-    private AuthFilter filter;
-    private UnauthorizedHandler unauthorizedHandler = new DefaultUnauthorizedHandler();
 
-    public BasicCustomAuthFilter(BasicAuthConfig config){
+    private static final Logger logger = LoggerFactory.getLogger(BasicCustomAuthFilter.class);
+    private AuthFilter filter;
+
+    public BasicCustomAuthFilter(BasicAuthenticator authenticator){
         filter = new BasicCredentialAuthFilter.Builder<User>()
-                .setAuthenticator(new BasicAuthenticator(config))
+                .setAuthenticator(authenticator)
                 .setPrefix("Basic")
                 .setRealm("BASIC-AUTH")
                 .buildAuthFilter();
@@ -30,18 +24,11 @@ public class BasicCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        String header = requestContext.getHeaders().getFirst("Authorization");
         String path = requestContext.getUriInfo().getPath();
         boolean match = path.matches("^(basic/).*");
-        try{
-            if(header != null && match){
-                filter.filter(requestContext);
-            } else {
-                throw new AuthenticationException("Authentication header is not empty, you tried to access an authenticated endpoint without credentials.");
-            }
-        }catch(Exception e){
-            LOGGER.error("Error authenticating basic credentials: " + header + " for path: " + path);
-            throw new WebApplicationException(this.unauthorizedHandler.buildResponse(this.prefix, this.realm));
+        if(match){
+            logger.info("basic authentication");
+            filter.filter(requestContext);
         }
     }
 

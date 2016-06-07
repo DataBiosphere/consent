@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 
-import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -19,7 +19,7 @@ public class ConsentManageResource extends Resource {
 
     @GET
     @Path("/manage")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response getConsentManage() {
         return Response.ok(api.describeConsentManage())
                 .build();
@@ -27,7 +27,7 @@ public class ConsentManageResource extends Resource {
 
     @GET
     @Path("/unreviewed")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response getTotalUnreviewedConsent() {
         return Response.ok("{\"dulUnReviewedCases\":"+api.getUnReviewedConsents()+"}").build();
     }

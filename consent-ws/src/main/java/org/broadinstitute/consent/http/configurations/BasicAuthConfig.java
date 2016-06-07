@@ -1,28 +1,21 @@
 package org.broadinstitute.consent.http.configurations;
 
+import org.broadinstitute.consent.http.authentication.BasicUser;
+
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 public class BasicAuthConfig {
 
-    @NotNull
-    public String user;
 
     @NotNull
-    public String password;
+    public List<BasicUser> users;
 
-    public String getUser() {
-        return user;
+    public List<BasicUser> getUsers() {
+        return users;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public void setUsers(List<BasicUser> users) {
+        this.users = users;
     }
 }

@@ -25,7 +25,7 @@ public class HelpReportResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @PermitAll
+    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI","RESEARCHER","DATAOWNER"})
     public Response createdHelpReport(@Context UriInfo info, HelpReport helpReport) {
         try {
             helpReport = helpReportAPI.create(helpReport);
@@ -34,7 +34,7 @@ public class HelpReportResource extends Resource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
         }
-   }
+    }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)

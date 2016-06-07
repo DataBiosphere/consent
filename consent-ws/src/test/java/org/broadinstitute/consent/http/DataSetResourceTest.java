@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.google.common.io.Resources;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.http.Header;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.eclipse.jetty.http.HttpHeader;
@@ -46,7 +45,6 @@ public class DataSetResourceTest extends DataSetServiceTest {
 
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON)
-                //.header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
@@ -64,7 +62,6 @@ public class DataSetResourceTest extends DataSetServiceTest {
 
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON)
-                //.header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
@@ -81,7 +78,6 @@ public class DataSetResourceTest extends DataSetServiceTest {
         MultiPart mp = createFormData("correctFile", "txt");
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON)
-                //.header(HttpHeader.AUTHORIZATION.asString(), BASIC_AUTHENTICATION)
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
         assertTrue(response.getStatus() == (OK));

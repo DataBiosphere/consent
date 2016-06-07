@@ -19,7 +19,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("{api : (api/)?}consent/associations/{associationType}/{id}")
+@Path("{auth: (basic/|api/)?}consent/associations/{associationType}/{id}")
 public class AllAssociationsResource extends Resource {
     private final ConsentAPI api;
 

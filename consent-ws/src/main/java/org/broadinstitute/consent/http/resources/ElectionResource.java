@@ -27,7 +27,7 @@ public class ElectionResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed({"ADMIN", "DATAOWNER"})
+    @RolesAllowed({"ADMIN", "DATAOWNER","CHAIRPERSON","MEMBER"})
     public Response updateElection(Election rec, @PathParam("id") Integer id) {
         try {
             return Response.ok().entity(api.updateElectionById(rec, id)).build();

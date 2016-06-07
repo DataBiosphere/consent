@@ -99,7 +99,7 @@ public class DataUseLetterResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @PermitAll
+    @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER"})
     public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);

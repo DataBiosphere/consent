@@ -2,9 +2,9 @@ package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
 
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -19,7 +19,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
 
     public ApprovalExpirationTimeResource(){
-      this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
+        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
     }
 
     @POST
@@ -38,7 +38,7 @@ public class ApprovalExpirationTimeResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response describeApprovalExpirationTime() {
         try{
             return Response.ok().entity(approvalExpirationTimeAPI.findApprovalExpirationTime()).build();
@@ -51,7 +51,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     @GET
     @Path("/{id}")
     @Produces("application/json")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response describe(@PathParam("id") Integer id) {
         try{
             return Response.ok().entity(approvalExpirationTimeAPI.findApprovalExpirationTimeById(id)).build();

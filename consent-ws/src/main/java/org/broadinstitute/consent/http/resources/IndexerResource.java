@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.models.dto.Error;
 /**
  * Created by SantiagoSaucedo on 3/11/2016.
  */
-@Path("ontology/")
+@Path("{api : (api/)?}ontology/")
 public class IndexerResource {
 
     private final IndexerService indexerService;
@@ -57,7 +57,7 @@ public class IndexerResource {
     public Response getIndexedFiles(){
         try {
             indexerService.getIndexedFiles();
-           return Response.ok().entity(indexerService.getIndexedFiles()).build();
+            return Response.ok().entity(indexerService.getIndexedFiles()).build();
         } catch(Exception e){
             return Response.serverError().build();
         }
@@ -66,9 +66,9 @@ public class IndexerResource {
     @GET
     @Produces("application/json")
     @Path("types")
-    @PermitAll
+    @RolesAllowed("ADMIN")
     public Response getOntologyTypes(){
-       return  Response.ok().entity(OntologyTypes.values()).build();
+        return  Response.ok().entity(OntologyTypes.values()).build();
     }
 
     @PUT
@@ -76,7 +76,7 @@ public class IndexerResource {
     @RolesAllowed("ADMIN")
     public Response deleteIndexedFile(String fileURL) {
         try {
-           return indexerService.deleteOntologiesByType(fileURL);
+            return indexerService.deleteOntologiesByType(fileURL);
         }catch (Exception e){
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
@@ -102,5 +102,4 @@ public class IndexerResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
- }
-
+}

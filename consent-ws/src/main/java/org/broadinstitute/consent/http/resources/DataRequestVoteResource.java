@@ -56,7 +56,7 @@ public class DataRequestVoteResource extends Resource {
     @POST
     @Consumes("application/json")
     @Path("/{id}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON"})
+    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
     public Response createDataRequestVote(@Context UriInfo info, Vote rec,
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
@@ -113,7 +113,7 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON"})
+    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
     public Response updateDataRequestVote(Vote rec,
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
