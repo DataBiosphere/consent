@@ -95,7 +95,7 @@ public class MongoConfiguration {
     }
 
     public MongoClient getMongoClient() {
-        if (getHost1() == null || getHost2() == null) {
+        if (getHost1().isEmpty() || getHost2().isEmpty()) {
             return new MongoClient(new MongoClientURI(getUri()));
         } else if (getHost1() != null && getHost2() != null) {
             List<ServerAddress> seeds = new ArrayList<>();
