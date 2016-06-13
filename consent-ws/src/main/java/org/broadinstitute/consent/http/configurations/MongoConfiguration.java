@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 public class MongoConfiguration {
 
@@ -95,7 +96,7 @@ public class MongoConfiguration {
     }
 
     public MongoClient getMongoClient() {
-        if (getHost1().isEmpty() || getHost2().isEmpty()) {
+        if ( StringUtils.isBlank(getHost1())  || StringUtils.isBlank(getHost2()) ) {
             return new MongoClient(new MongoClientURI(getUri()));
         } else if (getHost1() != null && getHost2() != null) {
             List<ServerAddress> seeds = new ArrayList<>();
