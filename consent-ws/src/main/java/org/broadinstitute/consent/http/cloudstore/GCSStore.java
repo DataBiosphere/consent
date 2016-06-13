@@ -10,12 +10,10 @@ import com.google.api.services.storage.model.StorageObject;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileInputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -163,25 +161,14 @@ public class GCSStore implements CloudStore {
         InputStreamContent contentStream = new InputStreamContent(type, stream);
         StorageObject objectMetadata = new StorageObject()
                 .setCacheControl("private")
-                // Set the destination object name
-                .setName(fileName);
-                        // Set the access control list to publicly read-only
-/*                .setAcl(Arrays.asList(
-                        new ObjectAccessControl().setEntity("allUsers").setRole("READER")));*/
-
-
-        // Do the insert
+                .setName(fileName)
+                .setAcl(Arrays.asList(new ObjectAccessControl().setEntity("allUsers").setRole("READER")));
         Storage client = StorageFactory.getService(sConfig.getPassword());
         Storage.Objects.Insert insertRequest = client.objects().insert(
                 sConfig.getBucket(), objectMetadata, contentStream);
         insertRequest.getRequestHeaders().setCacheControl("private");
-        insertRequest.setPredefinedAcl("publicRead");
         insertRequest.execute();
-
-        GenericUrl url = generateURLForDocument(fileName);
-
-        logger().info("URL to File: " + url.toString());
-        return url.toString();
+        return generateURLForDocument(fileName).toString();
     }
 
 }

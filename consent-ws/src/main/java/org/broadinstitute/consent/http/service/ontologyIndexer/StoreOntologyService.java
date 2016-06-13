@@ -2,10 +2,10 @@ package org.broadinstitute.consent.http.service.ontologyIndexer;
 
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
-import com.google.inject.Inject;
 import org.broadinstitute.consent.http.cloudstore.CloudStore;
 import org.broadinstitute.consent.http.enumeration.OntologyTypes;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
+
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;

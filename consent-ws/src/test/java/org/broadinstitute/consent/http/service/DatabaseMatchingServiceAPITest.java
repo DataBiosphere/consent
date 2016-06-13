@@ -63,16 +63,16 @@ public class DatabaseMatchingServiceAPITest {
     @BeforeClass
     public static void setUpClass() throws IOException {
         sampleUseRestriction1 = new And(
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
         );
         sampleUseRestriction2 = new And(
-                new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
-                new Named("http://www.broadinstitute.org/ontologies/DURPO/female")
+                new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+                new Named("http://www.broadinstitute.org/ontologies/DUOS/female")
         );
         sampleUsePurpose1 = new And(
-                new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit")
+                new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit")
         );
         sampleConsent1 = new Consent(false, sampleUseRestriction1, "A data use letter", "sampleConsent1", null, null, null);
         sampleConsent1.setConsentId("CONS-1");
@@ -233,7 +233,7 @@ public class DatabaseMatchingServiceAPITest {
             "\t\t\"type\": \"and\",\n" +
             "\t\t\"operands\": [{\n" +
             "\t\t\t\"type\": \"named\",\n" +
-            "\t\t\t\"name\": \"http://www.broadinstitute.org/ontologies/DURPO/For_profit\"\n" +
+            "\t\t\t\"name\": \"http://www.broadinstitute.org/ontologies/DUOS/For_profit\"\n" +
             "\t\t}]\n" +
             "\t},\n" +
             "\t\"datasetId\": [\n" +

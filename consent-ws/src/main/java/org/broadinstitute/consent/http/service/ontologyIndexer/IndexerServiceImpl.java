@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.api.client.http.HttpResponse;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 
