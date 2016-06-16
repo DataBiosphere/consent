@@ -72,7 +72,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id);
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp.pdf");
         assertEquals(c.consentId, id);
         assertEquals(c.getDataUseLetter(), consentDulPath(id));
         assertFalse(c.getRequiresManualReview());
