@@ -58,6 +58,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     @Override
     public Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException {
         Vote vote = voteDAO.findVoteById(voteId);
+        if(vote == null) notFoundException(voteId);
         Integer electionId = setGeneralFields(rec, vote.getElectionId());
         String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
         voteDAO.updateVote(rec.getVote(), rationale, null, voteId, false, electionId, new Date(), rec.getHasConcerns());
@@ -65,10 +66,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     }
 
     @Override
-    public Vote updateVote(Vote rec, Integer voteId, String referenceId) {
-        if (voteDAO.checkVoteById(referenceId, voteId) == null) {
-            throw new NotFoundException("Could not find vote for specified vote id. Vote id: " + voteId);
-        }
+    public Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException {
+        if (voteDAO.checkVoteById(referenceId, voteId) == null) notFoundException(voteId);
         Vote vote = voteDAO.findVoteById(voteId);
         Date updateDate = rec.getVote() == null ? null : new Date();
         String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
@@ -226,5 +225,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return electionId;
     }
 
+    private void notFoundException(Integer voteId){
+        throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
+    }
 
 }

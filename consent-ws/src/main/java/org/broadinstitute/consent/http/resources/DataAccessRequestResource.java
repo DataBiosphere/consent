@@ -2,9 +2,10 @@ package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.google.gson.Gson;
 import freemarker.template.TemplateException;
 import java.util.ArrayList;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -65,8 +66,8 @@ public class DataAccessRequestResource extends Resource {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
+    @RolesAllowed("RESEARCHER")
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
-
         URI uri;
         List<Document> result;
         UseRestriction useRestriction;
@@ -106,7 +107,8 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    public Response updateDataAccessRequest(@Context UriInfo info, Document dar, @PathParam("id") String id) {
+    @RolesAllowed("RESEARCHER")
+    public Response updateDataAccessRequest(Document dar, @PathParam("id") String id) {
         try {
             if (dar.containsKey(DarConstants.RESTRICTION)) {
                 dar.remove(DarConstants.RESTRICTION);
@@ -130,6 +132,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/modalSummary/{id}")
+    @PermitAll
     public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         return new DARModalDetailsDTO(dar);
@@ -138,6 +141,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/invalid")
+    @RolesAllowed("ADMIN")
     public Response getInvalidDataAccessRequest() {
         try{
             return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
@@ -149,6 +153,7 @@ public class DataAccessRequestResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public List<Document> describeDataAccessRequests() {
         return dataAccessRequestAPI.describeDataAccessRequests();
     }
@@ -156,6 +161,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("/{id}")
     @Produces("application/json")
+    @PermitAll
     public Document describe(@PathParam("id") String id) {
         return dataAccessRequestAPI.describeDataAccessRequestById(id);
     }
@@ -164,7 +170,8 @@ public class DataAccessRequestResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    public Response delete(@PathParam("id") String id, @Context UriInfo info) {
+    @RolesAllowed({"RESEARCHER", "ADMIN"})
+    public Response delete(@PathParam("id") String id) {
         try {
             dataAccessRequestAPI.deleteDataAccessRequestById(id);
             matchProcessAPI.removeMatchesForPurpose(id);
@@ -177,6 +184,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("/find/{id}")
     @Produces("application/json")
+    @PermitAll
     public Document describeSpecificFields(@PathParam("id") String id, @QueryParam("fields") List<String> fields) {
         if (CollectionUtils.isNotEmpty(fields)) {
             List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
@@ -189,6 +197,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("/find/{id}/consent")
     @Produces("application/json")
+    @PermitAll
     public Consent describeConsentForDAR(@PathParam("id") String id) {
         List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
         Consent c;
@@ -207,6 +216,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage")
+    @RolesAllowed({"RESEARCHER", "ADMIN"})
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage(userId)).build();
     }
@@ -214,28 +224,17 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("cases/unreviewed")
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response getTotalUnReviewedDAR() {
         return Response.ok("{\"darUnReviewedCases\":" + dataAccessRequestAPI.getTotalUnReviewedDAR() + "}").build();
     }
-
-    // Fields that trigger manual review flag.
-    String[] fieldsForManualReview = {
-            "other",
-            "illegalbehave",
-            "addiction",
-            "sexualdiseases",
-            "stigmatizediseases",
-            "vulnerablepop",
-            "popmigration",
-            "psychtraits",
-            "nothealth"
-    };
 
     // Partial Data Access Requests Methods
 
     @GET
     @Produces("application/json")
     @Path("/partials")
+    @RolesAllowed("RESEARCHER")
     public List<Document> describePartialDataAccessRequests() {
         return dataAccessRequestAPI.describePartialDataAccessRequests();
     }
@@ -244,6 +243,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/partial")
+    @RolesAllowed("RESEARCHER")
     public Response createPartialDataAccessRequest(@Context UriInfo info, Document dar) {
         URI uri;
         Document result = null;
@@ -265,6 +265,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/partial/datasetCatalog")
+    @RolesAllowed("RESEARCHER")
     public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<String> datasetIds) {
         Document dar = new Document();
         dar.append(DarConstants.USER_ID, userId);
@@ -287,6 +288,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/partial")
+    @RolesAllowed("RESEARCHER")
     public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
         try {
             dar = dataAccessRequestAPI.updatePartialDataAccessRequest(dar);
@@ -299,6 +301,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partial/{id}")
+    @RolesAllowed("RESEARCHER")
     public Document describePartialDar(@PathParam("id") String id) {
         return dataAccessRequestAPI.describePartialDataAccessRequestById(id);
     }
@@ -307,6 +310,7 @@ public class DataAccessRequestResource extends Resource {
     @DELETE
     @Produces("application/json")
     @Path("/partial/{id}")
+    @RolesAllowed("RESEARCHER")
     public Response deletePartialDar(@PathParam("id") String id, @Context UriInfo info) {
         try {
             dataAccessRequestAPI.deletePartialDataAccessRequestById(id);
@@ -319,6 +323,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partials/manage")
+    @RolesAllowed("RESEARCHER")
     public Response describePartialManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
     }
@@ -329,7 +334,8 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/cancel/{referenceId}")
-    public Response cancelDataAccessRequest(@Context UriInfo info, @PathParam("referenceId") String referenceId) {
+    @RolesAllowed("RESEARCHER")
+    public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
         try {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
@@ -347,6 +353,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/hasUseRestriction/{referenceId}")
+    @PermitAll
     public Response hasUseRestriction(@PathParam("referenceId") String referenceId){
         try{
             return Response.ok("{\"hasUseRestriction\":"+dataAccessRequestAPI.hasUseRestriction(referenceId)+"}").build();
@@ -359,6 +366,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/restriction")
+    @PermitAll
     public Response getUseRestrictionFromQuestions(Document dar) {
         try{
             Boolean needsManualReview = requiresManualReview(dar);
@@ -396,4 +404,17 @@ public class DataAccessRequestResource extends Resource {
         }
         return false;
     }
+
+    // Fields that trigger manual review flag.
+    String[] fieldsForManualReview = {
+            "other",
+            "illegalbehave",
+            "addiction",
+            "sexualdiseases",
+            "stigmatizediseases",
+            "vulnerablepop",
+            "popmigration",
+            "psychtraits",
+            "nothealth"
+    };
 }

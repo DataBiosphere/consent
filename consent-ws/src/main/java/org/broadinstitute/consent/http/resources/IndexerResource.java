@@ -8,6 +8,8 @@ import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -21,7 +23,7 @@ import org.broadinstitute.consent.http.models.dto.Error;
 /**
  * Created by SantiagoSaucedo on 3/11/2016.
  */
-@Path("ontology/")
+@Path("{api : (api/)?}ontology/")
 public class IndexerResource {
 
     private final IndexerService indexerService;
@@ -36,6 +38,7 @@ public class IndexerResource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response saveAndIndex( FormDataMultiPart formParams)   {
         try {
             List<StreamRec> fileCompList =  elasticSearchHelper.filesCompBuilder(formParams);
@@ -50,10 +53,11 @@ public class IndexerResource {
 
     @GET
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response getIndexedFiles(){
         try {
             indexerService.getIndexedFiles();
-           return Response.ok().entity(indexerService.getIndexedFiles()).build();
+            return Response.ok().entity(indexerService.getIndexedFiles()).build();
         } catch(Exception e){
             return Response.serverError().build();
         }
@@ -62,15 +66,17 @@ public class IndexerResource {
     @GET
     @Produces("application/json")
     @Path("types")
+    @RolesAllowed("ADMIN")
     public Response getOntologyTypes(){
-       return  Response.ok().entity(OntologyTypes.values()).build();
+        return  Response.ok().entity(OntologyTypes.values()).build();
     }
 
     @PUT
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response deleteIndexedFile(String fileURL) {
         try {
-           return indexerService.deleteOntologiesByType(fileURL);
+            return indexerService.deleteOntologiesByType(fileURL);
         }catch (Exception e){
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
@@ -79,6 +85,7 @@ public class IndexerResource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("file")
+    @PermitAll
     public Response getFile(@QueryParam("fileUrl") String fileUrl, @QueryParam("fileName") String fileName) {
         try {
             String url = URLDecoder.decode(fileUrl, "UTF-8");
@@ -95,5 +102,4 @@ public class IndexerResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
- }
-
+}

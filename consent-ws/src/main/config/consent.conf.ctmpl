@@ -53,11 +53,12 @@ freeMarkerConfiguration:
 googleAuthentication:
   clientId: {{.Data.oauth2_client_id}}
 basicAuthentication:
-  user: {{.Data.basic_auth_user}} 
-  password: {{.Data.basic_auth_password}}
+  users:
+    - user: {{.Data.basic_auth_user}}
+      password: {{.Data.basic_auth_password}}
 storeOntology:
   bucketSubdirectory: {{.Data.storeOntology_bucketSubdirectory}}
-  configurationFileName:  {{.Data.storeOntology_configurationFileName}}
+  configurationFileName: {{.Data.storeOntology_configurationFileName}}
 elasticSearch:
     clusterName: {{.Data.elasticSearch_clusterName}}
     servers: {{.Data.elasticSearch_servers}}

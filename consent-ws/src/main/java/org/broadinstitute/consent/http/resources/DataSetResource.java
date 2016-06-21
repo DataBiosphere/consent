@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -56,6 +58,7 @@ public class DataSetResource extends Resource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
     @Path("/{userId}")
+    @RolesAllowed("ADMIN")
     public Response createDataSet(
             @FormDataParam("data") InputStream uploadedDataSet,
             @FormDataParam("data") FormDataBodyPart part,
@@ -104,6 +107,7 @@ public class DataSetResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -116,6 +120,7 @@ public class DataSetResource extends Resource {
     @GET
     @Path("/{datasetId}")
     @Produces("application/json")
+    @PermitAll
     public Response describeDataSet( @PathParam("datasetId") String datasetId){
         try {
             return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
@@ -127,6 +132,7 @@ public class DataSetResource extends Resource {
 
     @GET
     @Path("/sample")
+    @PermitAll
     public Response getDataSetSample() {
         String msg = "GETting Data Set Sample";
         logger().debug(msg);
@@ -145,6 +151,7 @@ public class DataSetResource extends Resource {
     @Path("/download")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @PermitAll
     public Response downloadDataSets(List<String> idList) {
         String msg = "GETing DataSets to download";
         logger().debug(msg);
@@ -190,6 +197,7 @@ public class DataSetResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{datasetObjectId}/{dacUserId}")
+    @RolesAllowed("ADMIN")
     public Response delete(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
         try{
             api.deleteDataset(datasetObjectId, dacUserId);
@@ -202,6 +210,7 @@ public class DataSetResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/disable/{datasetObjectId}/{active}")
+    @RolesAllowed("ADMIN")
     public Response disableDataSet(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("active") Boolean active, @Context UriInfo info) {
         api.disableDataset(datasetObjectId, active);
         return Response.ok().build();
@@ -210,6 +219,7 @@ public class DataSetResource extends Resource {
     @GET
     @Path("/dictionary")
     @Produces("application/json")
+    @PermitAll
     public Collection<Dictionary> describeDictionary(){
         return api.describeDictionaryByDisplayOrder();
     }
@@ -217,6 +227,7 @@ public class DataSetResource extends Resource {
     @GET
     @Path("/autocomplete/{partial}")
     @Produces("application/json")
+    @PermitAll
     public Response datasetAutocomplete(@PathParam("partial") String partial){
         List<Map<String, String>> j = api.autoCompleteDataSets(partial);
         return Response.ok(j, MediaType.APPLICATION_JSON).build();
@@ -224,6 +235,7 @@ public class DataSetResource extends Resource {
 
     @PUT
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") String dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
             DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
