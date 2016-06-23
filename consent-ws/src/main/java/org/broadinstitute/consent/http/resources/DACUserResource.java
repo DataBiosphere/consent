@@ -128,7 +128,7 @@ public class DACUserResource extends Resource {
     private boolean isChairPerson(List<DACUserRole> roles) {
         boolean isChairPerson = false;
         for (DACUserRole role : roles) {
-            if (role.getName().equals(DACUserRoles.CHAIRPERSON.getValue())) {
+            if (role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue())) {
                 isChairPerson = true;
                 break;
             }
