@@ -6,6 +6,8 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -14,7 +16,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-@Path("{api : (api/)?}consent/{id}/association")
+@Path("{auth: (basic/|api/)?}consent/{id}/association")
 public class ConsentAssociationResource extends Resource {
 
     private final ConsentAPI api;
@@ -26,6 +28,7 @@ public class ConsentAssociationResource extends Resource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Response createAssociation(@PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
@@ -49,6 +52,7 @@ public class ConsentAssociationResource extends Resource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Response updateAssociation(@PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
@@ -67,6 +71,7 @@ public class ConsentAssociationResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @PermitAll
     public Response getAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
         try {
             String msg = String.format("GETing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));
@@ -83,6 +88,7 @@ public class ConsentAssociationResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
     public Response deleteAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
         try {
             String msg = String.format("DELETEing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));

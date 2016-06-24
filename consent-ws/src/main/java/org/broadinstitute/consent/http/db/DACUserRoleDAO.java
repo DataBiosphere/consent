@@ -23,6 +23,10 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
     @SqlQuery("select * from roles r inner join user_role du on du.roleId = r.roleId  where du.dacUserId = :userId")
     List<DACUserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
+    @SqlQuery("select * from roles r inner join user_role du on du.roleId = r.roleId  " +
+              "inner join dacuser u on u.dacUserId = du.dacUserId where u.email = :email")
+    List<DACUserRole> findRolesByUserEmail(@Bind("email") String email);
+
     @Mapper(DatabaseRoleMapper.class)
     @SqlQuery("select * from roles")
     List<Role> findRoles();

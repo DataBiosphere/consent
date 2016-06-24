@@ -6,6 +6,8 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -32,6 +34,7 @@ public class ConsentElectionResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    @RolesAllowed("ADMIN")
     public Response createConsentElection(@Context UriInfo info, Election rec,
                                           @PathParam("consentId") String consentId) {
         URI uri;
@@ -53,6 +56,7 @@ public class ConsentElectionResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public Response describe(@PathParam("consentId") String consentId) {
         try {
             return Response.status(Status.OK).entity(api.describeConsentElection(consentId)).build();
@@ -64,6 +68,7 @@ public class ConsentElectionResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info, @PathParam("id") Integer id) {
         try {
             api.deleteElection(consentId, id);

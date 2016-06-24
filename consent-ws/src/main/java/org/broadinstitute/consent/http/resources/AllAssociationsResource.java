@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -18,7 +19,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("{api : (api/)?}consent/associations/{associationType}/{id}")
+@Path("{auth: (basic/|api/)?}consent/associations/{associationType}/{id}")
 public class AllAssociationsResource extends Resource {
     private final ConsentAPI api;
 
@@ -31,6 +32,7 @@ public class AllAssociationsResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @PermitAll
     public Response getConsentsForAssociation(@PathParam("associationType") String atype, @PathParam("id") String objectId) {
         try {
             String msg = String.format("GETing all consents with associations of type='%s' for object '%s'.", (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));

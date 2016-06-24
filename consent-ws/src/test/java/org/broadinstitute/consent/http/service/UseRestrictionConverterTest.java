@@ -358,7 +358,7 @@ public class UseRestrictionConverterTest {
 
         
     String methods = "http://www.broadinstitute.org/ontologies/DURPO/methods_research";
-    String aggregate = "http://www.broadinstitute.org/ontologies/DURPO/aggregate_analysis";
+    String aggregate = "http://www.broadinstitute.org/ontologies/DURPO/aggregate_research";
     String population = "http://www.broadinstitute.org/ontologies/DURPO/population_structure";
     String men = "http://www.broadinstitute.org/ontologies/DURPO/male";
     String women = "http://www.broadinstitute.org/ontologies/DURPO/female";

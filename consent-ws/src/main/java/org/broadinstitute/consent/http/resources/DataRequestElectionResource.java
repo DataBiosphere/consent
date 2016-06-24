@@ -7,6 +7,8 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.util.DarConstants;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -38,6 +40,7 @@ public class DataRequestElectionResource extends Resource {
 
     @POST
     @Consumes("application/json")
+    @RolesAllowed("ADMIN")
     public Response createDataRequestElection(@Context UriInfo info, Election rec,
                                               @PathParam("requestId") String requestId) {
         URI uri;
@@ -69,6 +72,7 @@ public class DataRequestElectionResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @PermitAll
     public Response describe(@PathParam("requestId") String requestId) {
         try {
             return  Response.status(Status.OK).entity(api.describeDataRequestElection(requestId)).build();
@@ -80,6 +84,7 @@ public class DataRequestElectionResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response deleteElection(@PathParam("requestId") String requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
             api.deleteElection(requestId, id);
@@ -92,6 +97,7 @@ public class DataRequestElectionResource extends Resource {
     @GET
     @Produces("text/plain")
     @Path("/dataSetVotes")
+    @PermitAll
     public Response describeDataSetVotes(@PathParam("requestId") String id) {
         Response.ResponseBuilder response;
         try {

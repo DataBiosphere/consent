@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -17,11 +19,12 @@ public class ApprovalExpirationTimeResource extends Resource {
     private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
 
     public ApprovalExpirationTimeResource(){
-      this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
+        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
     }
 
     @POST
     @Consumes("application/json")
+    @RolesAllowed("ADMIN")
     public Response createdApprovalExpirationTime(@Context UriInfo info, ApprovalExpirationTime approvalExpirationTime)  {
         URI uri;
         try {
@@ -35,6 +38,7 @@ public class ApprovalExpirationTimeResource extends Resource {
 
     @GET
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response describeApprovalExpirationTime() {
         try{
             return Response.ok().entity(approvalExpirationTimeAPI.findApprovalExpirationTime()).build();
@@ -47,6 +51,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     @GET
     @Path("/{id}")
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response describe(@PathParam("id") Integer id) {
         try{
             return Response.ok().entity(approvalExpirationTimeAPI.findApprovalExpirationTimeById(id)).build();
@@ -59,6 +64,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     @Path("/{id}")
     @Consumes("application/json")
     @Produces("application/json")
+    @RolesAllowed("ADMIN")
     public Response update(@Context UriInfo info, ApprovalExpirationTime approvalExpirationTime, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
@@ -75,6 +81,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response delete(@PathParam("id") Integer id) {
         approvalExpirationTimeAPI.deleteApprovalExpirationTime(id);
         return Response.ok().entity("Approval expiration time was deleted").build();

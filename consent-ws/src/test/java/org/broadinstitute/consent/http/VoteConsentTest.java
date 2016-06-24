@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
+
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;

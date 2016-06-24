@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -21,6 +22,7 @@ public class MatchResource extends Resource {
 
     @GET
     @Path("/{consentId}/{purposeId}")
+    @PermitAll
     public Response getMatchByConsentAndPurpose(@PathParam("consentId") String consentId, @PathParam("purposeId") String purposeId) {
             return Response.ok(api.findMatchByConsentIdAndPurposeId(consentId, purposeId))
                     .build();

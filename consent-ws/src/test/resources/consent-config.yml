@@ -55,10 +55,13 @@ freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
 googleAuthentication:
- clientId:
+  clientId:
 basicAuthentication:
-  user: testuser
-  password: dGVzdHBhc3N3b3Jk
+  users:
+    - user: testuser
+      password: testpassword
+    - user: testuser2
+      password: testpassword2
 storeOntology:
   bucketSubdirectory:   bucket
   configurationFileName: configuration
