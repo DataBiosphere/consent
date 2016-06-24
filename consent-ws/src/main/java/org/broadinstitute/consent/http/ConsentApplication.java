@@ -281,11 +281,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     private void configureCors(Environment environment) {
         Dynamic filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        filter.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
-        filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-        filter.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+        filter.setInitParameter("allowedOrigins", "*");
+        filter.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD,PATCH");
         filter.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires");
+        filter.setInitParameter("exposeHeaders", "Content-Type,Pragma,Cache-Control,Expires");
         filter.setInitParameter("allowCredentials", "true");
-
     }
 }
