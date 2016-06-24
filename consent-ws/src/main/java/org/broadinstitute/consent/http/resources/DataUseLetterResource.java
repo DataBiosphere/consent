@@ -53,15 +53,16 @@ public class DataUseLetterResource extends Resource {
     public Consent createDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
-            @PathParam("id") String consentId) {
+            @PathParam("id") String consentId,
+            @QueryParam("fileName") String fileName) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
-
         try {
+            String name = StringUtils.isNotEmpty(fileName) ? fileName : part.getContentDisposition().getFileName();
             deletePreviousStorageFile(consentId);
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
-            return api.updateConsentDul(consentId, dulUrl, part.getContentDisposition().getFileName());
+            return api.updateConsentDul(consentId, dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {
@@ -79,14 +80,16 @@ public class DataUseLetterResource extends Resource {
     public Consent updateDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
-            @PathParam("id") String consentId) {
+            @PathParam("id") String consentId,
+            @QueryParam("fileName") String fileName) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
+            String name = StringUtils.isNotEmpty(fileName) ? fileName : part.getContentDisposition().getFileName();
             deletePreviousStorageFile(consentId);
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
-            return api.updateConsentDul(consentId,dulUrl,part.getContentDisposition().getFileName());
+            return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {
