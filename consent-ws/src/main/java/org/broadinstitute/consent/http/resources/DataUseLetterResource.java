@@ -12,8 +12,6 @@ import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -102,7 +100,7 @@ public class DataUseLetterResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER"})
+    @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER","DATAOWNER"})
     public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
