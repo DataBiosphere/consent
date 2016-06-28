@@ -15,12 +15,10 @@ import org.bson.Document;
 import org.glassfish.jersey.client.ClientProperties;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,7 +27,6 @@ import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
-    Client client;
     ConsentAPI consentAPI;
     DataAccessRequestAPI dataAccessAPI;
     DataSetAPI dsAPI;
@@ -40,14 +37,13 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     public static void initInstance(Client client, ServicesConfiguration config) {
-        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config));
+        MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), AbstractDataSetAPI.getInstance()));
     }
 
-    private DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config){
-        this.client = ClientBuilder.newClient();
-        this.dataAccessAPI = AbstractDataAccessRequestAPI.getInstance();
-        this.consentAPI = AbstractConsentAPI.getInstance();
-        this.dsAPI = AbstractDataSetAPI.getInstance();
+    protected DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DataSetAPI dsAPI){
+        this.dataAccessAPI = darAPI;
+        this.consentAPI = consentAPI;
+        this.dsAPI = dsAPI;
         client.property(ClientProperties.CONNECT_TIMEOUT, 10000);
         client.property(ClientProperties.READ_TIMEOUT,    10000);
         target = client.target(config.getMatchURL());
@@ -108,7 +104,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return matches;
     }
 
-    private Match singleEntitiesMatch(Consent consent, Document dar) throws IOException, UnknownIdentifierException {
+    private Match singleEntitiesMatch(Consent consent, Document dar) throws Exception {
         if(consent != null && dar != null){
             Match match = createMatch(consent.getConsentId(), dar.get(DarConstants.ID).toString(), false, false);
             RequestMatchingObject requestObject = createRequestObject(consent, dar);
@@ -158,8 +154,14 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return dataAccessAPI.describeDataAccessWithDataSetId(dataSetIds);
     }
 
-    private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws UnknownIdentifierException, IOException {
-        String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
+    private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws Exception {
+        String restriction;
+        if(dar.containsKey(DarConstants.RESTRICTION)){
+            restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
+        } else {
+            logger().error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
+            throw new Exception("Data Access Request: " + dar.getString(DarConstants.DAR_CODE) + " cannot be matched. Missing Use Restriction field.");
+        }
         return new RequestMatchingObject(consent.getUseRestriction(), UseRestriction.parse(restriction));
     }
 }
