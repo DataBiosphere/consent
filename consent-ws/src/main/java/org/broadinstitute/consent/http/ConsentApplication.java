@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.filter.CORSFilter;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -59,7 +58,8 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
 import java.util.List;
-
+import javax.servlet.FilterRegistration.Dynamic;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 /**
  * Top-level entry point to the entire application.
@@ -68,6 +68,7 @@ import java.util.List;
  * https://dropwizard.github.io/dropwizard/manual/core.html
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
+
     public static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
     public static void main(String[] args) throws Exception {
@@ -90,15 +91,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         if (mongoConfiguration.isTestMode()) {
             Fongo fongo = new Fongo("TestServer");
-            mongoClient =  fongo.getMongo();
+            mongoClient = fongo.getMongo();
         } else {
             mongoClient = mongoConfiguration.getMongoClient();
         }
 
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient, mongoConfiguration.getDbName());
         mongoInstance.configureMongo();
-
-
 
         final DBIFactory factory = new DBIFactory();
         final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
@@ -116,7 +115,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DataSetAuditDAO dataSetAuditDAO = jdbi.onDemand(DataSetAuditDAO.class);
         final MailServiceDAO mailServiceDAO = jdbi.onDemand(MailServiceDAO.class);
 
-
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
 
@@ -124,7 +122,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO, dataSetAuditDAO, electionDAO);
-        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO );
+        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO);
 
         try {
             MailService.initInstance(config.getMailConfiguration());
@@ -135,36 +133,37 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
-        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance );
-        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO,consentDAO, mongoInstance, dataSetDAO);
+        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO, mongoInstance);
+        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO, consentDAO, mongoInstance, dataSetDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv );
+        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
-
 
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
 
         // Mail Services
-
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
-        final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequsts", CORSFilter.class);
+//        final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequests", CrossOriginFilter.class);
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-        cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
-        // Configure CORS parameters
-        cors.setInitParameter(CORSFilter.ALLOWED_ORIGINS_PARAM, "*");
-        cors.setInitParameter(CORSFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers");
-        cors.setInitParameter(CORSFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+//        cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
 
+        // Configure CORS parameters
+//        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+//        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires");
+//        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+//        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+//        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+//        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Expires,Pragma,Cache-Control");
 
         // Add URL mapping
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+//        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+        configureCors(env);
         googleStore = getGoogleStore(config.getCloudStoreConfiguration());
-
 
         //Manage Ontologies dependencies
         final ElasticSearchConfiguration elasticConfiguration = config.getElasticSearchConfiguration();
@@ -175,13 +174,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             eSearchClient.addTransportAddress(new InetSocketTransportAddress(server, 9300));
         });
 
-        final StoreOntologyService storeOntologyService =
-                new StoreOntologyService(googleStore,
+        final StoreOntologyService storeOntologyService
+                = new StoreOntologyService(googleStore,
                         config.getStoreOntologyConfiguration().getBucketSubdirectory(),
                         config.getStoreOntologyConfiguration().getConfigurationFileName());
 
-        final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient,config.getElasticSearchConfiguration().getIndexName());
-        final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService,indexOntologyService);
+        final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient, config.getElasticSearchConfiguration().getIndexName());
+        final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         env.jersey().register(new IndexerResource(indexerService, googleStore));
 
         // How register our resources.
@@ -253,7 +252,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         });
     }
 
-    private GCSStore getGoogleStore(StoreConfiguration config){
+    private GCSStore getGoogleStore(StoreConfiguration config) {
         GCSStore googleStore;
         try {
             googleStore = new GCSStore(config);
@@ -277,5 +276,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         });
         bootstrap.addBundle(new DBIExceptionsBundle());
         bootstrap.addBundle(new JobsBundle());
+    }
+
+    private void configureCors(Environment environment) {
+        Dynamic filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+        filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+        filter.setInitParameter("allowedOrigins", "*");
+        filter.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD,PATCH");
+        filter.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires");
+        filter.setInitParameter("exposeHeaders", "Content-Type,Pragma,Cache-Control,Expires");
+        filter.setInitParameter("allowCredentials", "true");
     }
 }

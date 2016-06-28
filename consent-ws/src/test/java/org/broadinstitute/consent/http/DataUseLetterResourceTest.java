@@ -74,11 +74,43 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id);
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp.pdf");
         assertEquals(c.consentId, id);
         assertEquals(c.getDataUseLetter(), consentDulPath(id));
         assertFalse(c.getRequiresManualReview());
         assertEquals(c.getUseRestriction(), new Everything());
+    }
+
+    @Test
+    public void testAssociateDULWithNullFileName() throws Exception {
+        String id = setupConsent(null);
+        File fileToUpload = File.createTempFile("temp","pdf");
+        fileToUpload.deleteOnExit();
+        when(storage.postStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
+                thenReturn(consentDulPath(id));
+        when(ct.getFileName()).thenReturn("temp.pdf");
+        fileToUpload.createNewFile();
+        FormDataBodyPart bodyPart = new FormDataBodyPart();
+        bodyPart.setContentDisposition(ct);
+        bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, null);
+        assertEquals(c.getDulName(), "temp.pdf");
+    }
+
+    @Test
+    public void testAssociateDULWithDifferentFileName() throws Exception {
+        String id = setupConsent(null);
+        File fileToUpload = File.createTempFile("temp","pdf");
+        fileToUpload.deleteOnExit();
+        when(storage.postStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
+                thenReturn(consentDulPath(id));
+        when(ct.getFileName()).thenReturn("temp.pdf");
+        fileToUpload.createNewFile();
+        FormDataBodyPart bodyPart = new FormDataBodyPart();
+        bodyPart.setContentDisposition(ct);
+        bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "test.pdf");
+        assertEquals(c.getDulName(), "test.pdf");
     }
 
     @Test
@@ -94,12 +126,45 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id);
+        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp");
         assertEquals(c.consentId, id);
         assertEquals(c.getDataUseLetter(), consentDulPath(id));
         assertFalse(c.getRequiresManualReview());
         assertEquals(c.getUseRestriction(), new Everything());
 
+    }
+
+    @Test
+    public void testUpdateAssociatedDULWithNullFileName() throws Exception {
+        String id = setupConsent(null);
+        String  dulName = "temp.pdf";
+        File fileToUpload = File.createTempFile("temp","pdf");
+        fileToUpload.deleteOnExit();
+        when(storage.putStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
+                thenReturn(consentDulPath(id));
+        when(ct.getFileName()).thenReturn(dulName);
+        fileToUpload.createNewFile();
+        FormDataBodyPart bodyPart = new FormDataBodyPart();
+        bodyPart.setContentDisposition(ct);
+        bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
+        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, null);
+        assertEquals(c.getDulName(), dulName);
+    }
+
+    @Test
+    public void testUpdateAssociatedDULWithDifferentFileName() throws Exception {
+        String id = setupConsent(null);
+        File fileToUpload = File.createTempFile("temp","pdf");
+        fileToUpload.deleteOnExit();
+        when(storage.putStorageDocument(any(InputStream.class), eq("application/pdf"), anyString())).
+                thenReturn(consentDulPath(id));
+        when(ct.getFileName()).thenReturn("temp.pdf");
+        fileToUpload.createNewFile();
+        FormDataBodyPart bodyPart = new FormDataBodyPart();
+        bodyPart.setContentDisposition(ct);
+        bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
+        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, "test.pdf");
+        assertEquals(c.getDulName(), "test.pdf");
     }
 
     @Test

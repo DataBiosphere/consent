@@ -12,8 +12,6 @@ import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -53,15 +51,16 @@ public class DataUseLetterResource extends Resource {
     public Consent createDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
-            @PathParam("id") String consentId) {
+            @PathParam("id") String consentId,
+            @QueryParam("fileName") String fileName) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
-
         try {
+            String name = StringUtils.isNotEmpty(fileName) ? fileName : part.getContentDisposition().getFileName();
             deletePreviousStorageFile(consentId);
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
-            return api.updateConsentDul(consentId, dulUrl, part.getContentDisposition().getFileName());
+            return api.updateConsentDul(consentId, dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {
@@ -79,14 +78,16 @@ public class DataUseLetterResource extends Resource {
     public Consent updateDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
-            @PathParam("id") String consentId) {
+            @PathParam("id") String consentId,
+            @QueryParam("fileName") String fileName) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
+            String name = StringUtils.isNotEmpty(fileName) ? fileName : part.getContentDisposition().getFileName();
             deletePreviousStorageFile(consentId);
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
-            return api.updateConsentDul(consentId,dulUrl,part.getContentDisposition().getFileName());
+            return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
         } catch (IOException e) {
@@ -99,7 +100,7 @@ public class DataUseLetterResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER"})
+    @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER","DATAOWNER"})
     public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
