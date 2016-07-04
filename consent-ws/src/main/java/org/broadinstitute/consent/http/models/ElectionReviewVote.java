@@ -13,6 +13,8 @@ public class ElectionReviewVote {
     @JsonProperty
     private String email;
 
+    public ElectionReviewVote(){}
+
     public ElectionReviewVote(Vote vote, String displayName, String email){
         this.vote = vote;
         this.displayName = displayName;

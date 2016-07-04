@@ -16,23 +16,12 @@ public class ClosedDatasetElectionModel {
         return darId;
     }
 
-    public void setDarId(String darId) {
-        this.darId = darId;
-    }
-
     public String getNumberOfDatasets() {
         return numberOfDatasets;
-    }
-
-    public void setNumberOfDatasets(String numberOfDatasets) {
-        this.numberOfDatasets = numberOfDatasets;
     }
 
     public String getDsElectionResult() {
         return dsElectionResult;
     }
 
-    public void setDsElectionResult(String dsElectionResult) {
-        this.dsElectionResult = dsElectionResult;
-    }
 }

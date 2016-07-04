@@ -311,6 +311,9 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     private String generateDiseasesString(List<String> dsList){
+        if(CollectionUtils.isEmpty(dsList)){
+            return "";
+        }
         String diseases = new String();
         for(String ds: dsList){
             diseases = diseases.concat(ds+", ");

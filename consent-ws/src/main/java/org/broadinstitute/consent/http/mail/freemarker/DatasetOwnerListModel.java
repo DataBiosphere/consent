@@ -16,23 +16,12 @@ public class DatasetOwnerListModel {
         return ownerName;
     }
 
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
-    }
-
     public String getDatasetName() {
         return datasetName;
-    }
-
-    public void setDatasetName(String datasetName) {
-        this.datasetName = datasetName;
     }
 
     public String getDatasetId() {
         return datasetId;
     }
 
-    public void setDatasetId(String datasetId) {
-        this.datasetId = datasetId;
-    }
 }

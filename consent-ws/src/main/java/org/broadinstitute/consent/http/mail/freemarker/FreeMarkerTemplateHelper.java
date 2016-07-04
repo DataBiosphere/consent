@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 
 public class FreeMarkerTemplateHelper {
 
+
     Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
 

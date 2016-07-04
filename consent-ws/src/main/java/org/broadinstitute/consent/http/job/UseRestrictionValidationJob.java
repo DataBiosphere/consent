@@ -15,15 +15,26 @@ import org.slf4j.LoggerFactory;
 public class UseRestrictionValidationJob  extends Job {
 
     private static final Logger logger = LoggerFactory.getLogger(UseRestrictionValidationJob.class);
-    private UseRestrictionValidatorAPI useRestrictionValidator = AbstractUseRestrictionValidatorAPI.getInstance();
+    private UseRestrictionValidatorAPI useRestrictionValidator;
 
 
     @Override
     public void doJob() {
         logger.info("validating consent use restrictions");
-        useRestrictionValidator.validateConsentUseRestriction();
+        getUseRestrictionValidator().validateConsentUseRestriction();
         logger.info("validating dar use restrictions");
-        useRestrictionValidator.validateDARUseRestriction();
+        getUseRestrictionValidator().validateDARUseRestriction();
+    }
+
+    protected void setUseRestrictionValidator(UseRestrictionValidatorAPI useRestrictionValidator){
+        this.useRestrictionValidator = useRestrictionValidator;
+    }
+
+    protected  UseRestrictionValidatorAPI getUseRestrictionValidator(){
+        if(this.useRestrictionValidator == null){
+            this.useRestrictionValidator = AbstractUseRestrictionValidatorAPI.getInstance();
+        }
+        return this.useRestrictionValidator;
     }
 
 }

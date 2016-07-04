@@ -30,32 +30,16 @@ public class AdminDarApprovedModel {
         return userName;
     }
 
-    public void setUserName(String user) {
-        this.userName = user;
-    }
-
     public String getReferenceId() {
         return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
     }
 
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
-
     public List<DatasetOwnerListModel> getDol() {
         return dol;
-    }
-
-    public void setDol(List<DatasetOwnerListModel> dol) {
-        this.dol = dol;
     }
 
     private List<DatasetOwnerListModel> ownersMapToTemplateList(Map<DACUser, List<DataSet>> dataOwnersDataSets){

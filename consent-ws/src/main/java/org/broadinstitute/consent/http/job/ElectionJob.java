@@ -20,18 +20,30 @@ import java.util.List;
 public class ElectionJob extends Job {
 
     private static final Logger logger = LoggerFactory.getLogger("ElectionJob");
-    private ElectionAPI electionAPI = AbstractElectionAPI.getInstance();
-
-
+    private ElectionAPI electionAPI;
 
     @Override
     public void doJob() {
+        getElectionAPI();
         List<Election> electionList = electionAPI.findExpiredElections(ElectionType.DATA_SET.getValue());
-        if(CollectionUtils.isNotEmpty(electionList)){
+        if (CollectionUtils.isNotEmpty(electionList)) {
             logger.info("closing elections..");
             electionList.stream().forEach(election -> {
-                electionAPI.closeDataOwnerApprovalElection(election.getElectionId());
+                getElectionAPI().closeDataOwnerApprovalElection(election.getElectionId());
             });
         }
     }
+
+    protected void setElectionAPI(ElectionAPI electionAPI) {
+        this.electionAPI = electionAPI;
+    }
+
+    protected ElectionAPI getElectionAPI() {
+        if (electionAPI == null) {
+            electionAPI = AbstractElectionAPI.getInstance();
+        }
+        return electionAPI;
+    }
+
+
 }
