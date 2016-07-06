@@ -10,6 +10,7 @@ import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 
@@ -47,10 +48,10 @@ public class StoreOntologyService   {
             if (srec.getAtLeastOneOntologyIndexed()) {
                 try {
                     String url_suffix = bucketSubdirectory + "/" + OntologyTypes.getValue(srec.getOntologyType()) + "/" + srec.getFileName();
-                    srec.setUrl(store.postStorageDocument(srec.getStream(),
+                    srec.setUrl(store.postOntologyDocument(srec.getStream(),
                             srec.getFileType(),
                             url_suffix));
-                }catch (IOException | GeneralSecurityException e) {
+                }catch (IOException | URISyntaxException | GeneralSecurityException e) {
                     throw new InternalServerErrorException("Problem with storage service.");
                 }
             }
