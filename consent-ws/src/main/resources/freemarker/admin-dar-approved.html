@@ -18,16 +18,16 @@
             <td width="600" align="center" style="border-collapse: collapse; font-family: 'Roboto', sans-serif; font-size: 26px; color: #777777; text-align: center; line-height: 21px; font-weight: bold; padding: 30px;">Broad Data Use Oversight System</td>
         </tr>
         <tr align="center" style="font-family: 'Roboto', sans-serif ; padding-top: 20px; margin-top: 20px;">
-            <td align="left" style="border-collapse: collapse; font-family: 'Roboto', sans-serif ; font-size: 22px; color: #777777; text-align: left; line-height: 21px; display: block; font-weight: 500; padding: 25px 30px 20px 30px;">Hello ${userName}!</td>
+            <td id="userName" align="left" style="border-collapse: collapse; font-family: 'Roboto', sans-serif ; font-size: 22px; color: #777777; text-align: left; line-height: 21px; display: block; font-weight: 500; padding: 25px 30px 20px 30px;">Hello ${userName}!</td>
         </tr>
         <tr width="600" style="font-family: 'Roboto', sans-serif ;">
             <td align="left" style="border-collapse: collapse; font-family: 'Roboto', sans-serif ; font-size: 16px; color: #777777; text-align: left; line-height: 25px; padding: 0px 30px 20px 30px;">
                 <p>${referenceId} was approved and needs the consent of the following Data Owners. An email was sent to them.</p>
                 <table width="600"  style="margin: 15px 0 10px 0; border-collapse: collapse;">
                     <tr>
-                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size; 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Data Owner</th>
-                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size; 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Dataset Name</th>
-                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size; 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Dataset ID</th>
+                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Data Owner</th>
+                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Dataset Name</th>
+                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Dataset ID</th>
                     </tr>
                     <#list dol>
                         <#items as owner>

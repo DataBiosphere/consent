@@ -23,31 +23,16 @@ public class TemplateModel {
         return userName;
     }
 
-    public void setUserName(String user) {
-        this.userName = user;
-    }
-
     public String getElectionType() {
         return electionType;
-    }
-
-    public void setElectionType(String electionType) {
-        this.electionType = electionType;
     }
 
     public String getEntityName() {
         return entityName;
     }
 
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
-    }
-
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
 }

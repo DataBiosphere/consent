@@ -18,10 +18,6 @@ public class VoteAndElectionModel {
         return referenceId;
     }
 
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
     public String getElectionIdentifier() {
         return electionIdentifier;
     }

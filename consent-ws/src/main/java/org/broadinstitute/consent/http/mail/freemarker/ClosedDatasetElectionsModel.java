@@ -16,15 +16,8 @@ public class ClosedDatasetElectionsModel {
         return closedElections;
     }
 
-    public void setClosedElections(List<ClosedDatasetElectionModel> closedElections) {
-        this.closedElections = closedElections;
-    }
-
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
 }

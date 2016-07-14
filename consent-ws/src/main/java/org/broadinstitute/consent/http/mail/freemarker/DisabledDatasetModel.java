@@ -23,31 +23,16 @@ public class DisabledDatasetModel {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public List<String> getDisabledDatasets() {
         return disabledDatasets;
-    }
-
-    public void setDisabledDatasets(List<String> disabledDatasets) {
-        this.disabledDatasets = disabledDatasets;
     }
 
     public String getEntityId() {
         return entityId;
     }
 
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
-    }
-
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
 }

@@ -20,31 +20,16 @@ public class DelegateResponsibilitiesModel {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public String getNewRole() {
         return newRole;
-    }
-
-    public void setNewRole(String newRole) {
-        this.newRole = newRole;
     }
 
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
-
     public List<VoteAndElectionModel> getDelegatedVotes() {
         return delegatedVotes;
     }
 
-    public void setDelegatedVotes(List<VoteAndElectionModel> delegatedVotes) {
-        this.delegatedVotes = delegatedVotes;
-    }
 }

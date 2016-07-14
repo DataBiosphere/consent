@@ -35,7 +35,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         DataSetAssociationAPIHolder.setInstance(new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, dacUserDAO));
     }
 
-    private DatabaseDataSetAssociationAPI(DataSetDAO dsDAO,DataSetAssociationDAO dsAssociationDAO,DACUserDAO dacUserDAO) {
+    protected DatabaseDataSetAssociationAPI(DataSetDAO dsDAO,DataSetAssociationDAO dsAssociationDAO,DACUserDAO dacUserDAO) {
         this.dsAssociationDAO = dsAssociationDAO;
         this.dacUserDAO = dacUserDAO;
         this.dsDAO = dsDAO;
