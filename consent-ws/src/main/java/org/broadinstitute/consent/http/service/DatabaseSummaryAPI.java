@@ -64,7 +64,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO ,MongoConsentDB mongo) {
+    protected DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO ,MongoConsentDB mongo) {
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
         this.dacUserDAO = dacUserDAO;
@@ -95,7 +95,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     @Override
     public List<Summary> describeMatchSummaryCases() {
         return getMatchSummaryCases();
-
     }
 
     private List<Summary> getMatchSummaryCases() {
@@ -123,7 +122,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
 
-    private Summary getSummaryCases(String type) {
+    protected Summary getSummaryCases(String type) {
         List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
@@ -132,7 +131,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return createSummary(totalPendingCases, totalPositiveCases, totalNegativeCases);
     }
 
-    private Summary getAccessSummaryCases(String type) {
+    protected Summary getAccessSummaryCases(String type) {
         List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
@@ -467,6 +466,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         HeaderSummary.FINAL_DECISION_DUL.getValue() + SEPARATOR +
                         HeaderSummary.FINAL_RATIONALE_DUL.getValue() + END_OF_LINE);
     }
+
     public static <T> Collector<T, ?, T> singletonCollector() {
         return Collectors.collectingAndThen(
                 Collectors.toList(),
@@ -515,6 +515,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private String nullToString(String b) {
         return b != null && !b.isEmpty()  ? b : "-";
     }
+
     public String formatTimeToDate(long time) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(time);

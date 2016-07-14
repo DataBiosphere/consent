@@ -20,23 +20,12 @@ public class CancelledDarModel {
         return userType;
     }
 
-    public void setUserType(String userType) {
-        this.userType = userType;
-    }
-
     public String getEntityId() {
         return entityId;
-    }
-
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
     }
 
     public String getServerUrl() {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
 }

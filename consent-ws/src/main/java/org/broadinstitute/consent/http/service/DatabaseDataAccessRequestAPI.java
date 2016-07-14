@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
+import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
@@ -26,9 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.mongodb.client.model.Filters.ne;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * Implementation class for DatabaseDataAccessRequestAPI.
@@ -150,11 +149,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return result;
     }
 
+    /**
+     * Find DARS related to the datasets sent as a parameter. Only dars with the use restriction
+     * field present will be returned. DARs that require Manual Review wont be matched.
+     * @param dataSetIds
+     * @return A list of Data Access Requests.
+     */
     @Override
     public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds) {
         List<Document> response = new ArrayList<>();
         for (String datasetId : dataSetIds) {
-            response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, datasetId)).into(new ArrayList<>()));
+            response.addAll(mongo.getDataAccessRequestCollection().find(and(eq(DarConstants.DATASET_ID, datasetId), eq(DarConstants.RESTRICTION, new BasicDBObject("$exists", true)))).into(new ArrayList<>()));
         }
         return response;
     }

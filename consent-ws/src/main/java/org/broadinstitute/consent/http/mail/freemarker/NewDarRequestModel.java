@@ -14,7 +14,4 @@ public class NewDarRequestModel {
         return serverUrl;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
 }
