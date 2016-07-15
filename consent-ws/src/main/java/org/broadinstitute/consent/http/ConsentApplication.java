@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.filter.CORSFilter;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;

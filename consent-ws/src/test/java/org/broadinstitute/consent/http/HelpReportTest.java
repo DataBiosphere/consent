@@ -4,7 +4,6 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.HelpReport;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -16,7 +15,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Ignore
 public class HelpReportTest  extends AbstractTest {
 
     public static final int CREATED = Response.Status.CREATED.getStatusCode();

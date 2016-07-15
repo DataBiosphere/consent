@@ -11,11 +11,13 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Ignore
 public class DACUserTest extends DACUserServiceTest {
 
     public static final int CREATED = Response.Status.CREATED

@@ -12,7 +12,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
 
-@Ignore
 public class DataUseLetterResourceTest extends ConsentServiceTest {
 
     @Mock

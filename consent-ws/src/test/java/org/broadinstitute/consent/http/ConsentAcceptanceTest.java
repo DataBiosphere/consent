@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -25,7 +24,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Ignore
 public class ConsentAcceptanceTest extends ConsentServiceTest {
 
     Timestamp createDate = new Timestamp(new Date().getTime());
