@@ -4,6 +4,7 @@ import com.google.api.client.http.HttpResponse;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.OntologyTypes;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -17,8 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
-
-import org.broadinstitute.consent.http.models.dto.Error;
 
 /**
  * Created by SantiagoSaucedo on 3/11/2016.
