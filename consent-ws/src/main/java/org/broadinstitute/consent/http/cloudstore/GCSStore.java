@@ -3,14 +3,19 @@ package org.broadinstitute.consent.http.cloudstore;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.StorageScopes;
+import com.google.api.services.storage.model.ObjectAccessControl;
+import com.google.api.services.storage.model.StorageObject;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileInputStream;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class GCSStore implements CloudStore {
@@ -109,6 +114,7 @@ public class GCSStore implements CloudStore {
             initializeCloudStore();
             HttpContent content = new InputStreamContent(type, stream);
             HttpRequest request = buildHttpPutRequest(url, content);
+            request.getHeaders().setCacheControl("private");
             response = request.execute();
             if (response.getStatusCode() != 200) {
                 logger().error("Error storing contents: " + response.getStatusMessage());
@@ -133,6 +139,7 @@ public class GCSStore implements CloudStore {
             initializeCloudStore();
             HttpContent content = new InputStreamContent(type, stream);
             HttpRequest request = buildHttpPutRequest(url, content);
+            request.getHeaders().setCacheControl("private");
             response = request.execute();
             if (response.getStatusCode() != 200) {
                 logger().error("Error storing contents: " + response.getStatusMessage());
@@ -147,6 +154,21 @@ public class GCSStore implements CloudStore {
             }
         }
         return url.toString();
+    }
+
+    @Override
+    public String postOntologyDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException, URISyntaxException {
+        InputStreamContent contentStream = new InputStreamContent(type, stream);
+        StorageObject objectMetadata = new StorageObject()
+                .setCacheControl("private")
+                .setName(fileName)
+                .setAcl(Arrays.asList(new ObjectAccessControl().setEntity("allUsers").setRole("READER")));
+        Storage client = StorageFactory.getService(sConfig.getPassword());
+        Storage.Objects.Insert insertRequest = client.objects().insert(
+                sConfig.getBucket(), objectMetadata, contentStream);
+        insertRequest.getRequestHeaders().setCacheControl("private");
+        insertRequest.execute();
+        return generateURLForDocument(fileName).toString();
     }
 
 }
