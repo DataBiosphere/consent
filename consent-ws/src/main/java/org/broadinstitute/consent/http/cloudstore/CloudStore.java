@@ -5,6 +5,7 @@ import com.google.api.client.http.HttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
 public interface CloudStore {
@@ -17,6 +18,8 @@ public interface CloudStore {
 
     String postStorageDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException;
 
-     GenericUrl generateURLForDocument(String fileName);
+    GenericUrl generateURLForDocument(String fileName);
+
+    String postOntologyDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException, URISyntaxException;
 
     }

@@ -9,21 +9,21 @@ public class UseRestrictionConverterTest {
 
     UseRestriction femaleRestriction = new And(
             new And(
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
             ),
             new And(
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/female")
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/female")
             )
     );
 
     UseRestriction allDataRestriction = new And(
             new And(
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/control")
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/control")
             ),
             new Or(
                     new Named("http://purl.obolibrary.org/obo/DOID_4023"),
@@ -31,66 +31,66 @@ public class UseRestrictionConverterTest {
                     new Named("http://purl.obolibrary.org/obo/DOID_0050738")
 
             ),
-            new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit")
+            new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit")
     );
 
     UseRestriction maleRestriction = new And(
             new And(
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
             ),
             new And(
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/male")
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/male")
             )
     );
 
     UseRestriction boysRestriction = new And(
             new And(
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
             ),
             new And(
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/male"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/children")
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/male"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/children")
             )
     );
 
     UseRestriction girlsRestriction = new And(
             new And(
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
             ),
             new And(
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/female"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/children")
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/female"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/children")
             )
     );
 
     UseRestriction childrenRestriction = new And(
             new And(
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure")),
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/control"))
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
             ),
             new And(
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/For_profit"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/children")
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/children")
             )
     );
 
     UseRestriction controlsPopulationRestriction = new And(
             new And(
-                    new Not(new Named("http://www.broadinstitute.org/ontologies/DURPO/methods_research")),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/population_structure"),
-                    new Named("http://www.broadinstitute.org/ontologies/DURPO/control")
+                    new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure"),
+                    new Named("http://www.broadinstitute.org/ontologies/DUOS/control")
             ),
-            new Named("http://www.broadinstitute.org/ontologies/DURPO/Non_profit")
+            new Named("http://www.broadinstitute.org/ontologies/DUOS/Non_profit")
     );
 
 
@@ -354,22 +354,17 @@ public class UseRestrictionConverterTest {
             + "}";
 
 
-
-
-        
-    String methods = "http://www.broadinstitute.org/ontologies/DURPO/methods_research";
-    String aggregate = "http://www.broadinstitute.org/ontologies/DURPO/aggregate_research";
-    String population = "http://www.broadinstitute.org/ontologies/DURPO/population_structure";
-    String men = "http://www.broadinstitute.org/ontologies/DURPO/male";
-    String women = "http://www.broadinstitute.org/ontologies/DURPO/female";
-    String profit = "http://www.broadinstitute.org/ontologies/DURPO/For_profit";
-    String nonProfit = "http://www.broadinstitute.org/ontologies/DURPO/Non_profit";
-    String pediatric = "http://www.broadinstitute.org/ontologies/DURPO/children";
-    String girls = "http://www.broadinstitute.org/ontologies/DURPO/girls";
-    String boys = "http://www.broadinstitute.org/ontologies/DURPO/boys";
-    String controls = "http://www.broadinstitute.org/ontologies/DURPO/control";
-
-
+    String methods = "http://www.broadinstitute.org/ontologies/DUOS/methods_research";
+    String aggregate = "http://www.broadinstitute.org/ontologies/DUOS/aggregate_research";
+    String population = "http://www.broadinstitute.org/ontologies/DUOS/population_structure";
+    String men = "http://www.broadinstitute.org/ontologies/DUOS/male";
+    String women = "http://www.broadinstitute.org/ontologies/DUOS/female";
+    String profit = "http://www.broadinstitute.org/ontologies/DUOS/For_profit";
+    String nonProfit = "http://www.broadinstitute.org/ontologies/DUOS/Non_profit";
+    String pediatric = "http://www.broadinstitute.org/ontologies/DUOS/children";
+    String girls = "http://www.broadinstitute.org/ontologies/DUOS/girls";
+    String boys = "http://www.broadinstitute.org/ontologies/DUOS/boys";
+    String controls = "http://www.broadinstitute.org/ontologies/DUOS/control";
 
     public UseRestrictionConfig config() {
         UseRestrictionConfig config = new UseRestrictionConfig();
