@@ -56,6 +56,8 @@ basicAuthentication:
   users:
     - user: {{.Data.basic_auth_user}}
       password: {{.Data.basic_auth_password}}
+    - user: {{.Data.basic_auth_workbench_user}}
+      password: {{.Data.basic_auth_workbench_password}}
 storeOntology:
   bucketSubdirectory: {{.Data.storeOntology_bucketSubdirectory}}
   configurationFileName: {{.Data.storeOntology_configurationFileName}}
