@@ -83,6 +83,12 @@
         <groupId>net.sourceforge.owlapi</groupId>
         <artifactId>owlapi-distribution</artifactId>
         <version>3.4.10</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-contract</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
