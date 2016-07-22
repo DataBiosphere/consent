@@ -21,7 +21,6 @@
   </properties>
 
   <modules>
-    <module>consent-indexer</module>
     <module>consent-ws</module>
   </modules>
 
