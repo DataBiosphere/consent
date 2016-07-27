@@ -1,6 +1,9 @@
 language: java
 jdk:
   - oraclejdk8
+sudo: true
+before_script:
+  - source data-use-check.sh
 script: mvn clean verify
 after_success:
   - mvn clean test jacoco:report coveralls:report
