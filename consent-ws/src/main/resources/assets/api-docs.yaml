@@ -1,0 +1,2267 @@
+swagger: '2.0'
+info:
+  title: Consent WS
+  description: A set of web-services containing methods for ingesting and retrieving expressions representing data use restrictions found within consent forms.
+  version: 0.0.1
+  license:
+    name: BSD
+    url: 'http://opensource.org/licenses/BSD-3-Clause'
+  termsOfService: 'https://github.com/broadinstitute/consent'
+host: consent.dsde-consent-dev.broadinstitute.org
+schemes:
+  - https
+basePath: /api
+securityDefinitions:
+  consent_auth:
+    type: oauth2
+    authorizationUrl: 'https://accounts.google.com/o/oauth2/auth'
+    flow: implicit
+    scopes:
+      profile: profile
+      email: email
+paths:
+  '/consent/associations/{associationType}/{id}':
+    get:
+      summary: getConsentsForAssociation
+      description: Returns a List with the Consent IDs that are related to the specified association
+      parameters:
+        - name: associationType
+          in: path
+          description: The association type
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: The id of the association
+          required: true
+          type: string
+      tags:
+        - Consent
+        - Association
+      responses:
+        '200':
+          description: A list of Consent IDs
+          schema:
+            type: array
+            items:
+              type: string
+        '400':
+          description: Required parameter is null
+        default:
+          description: Unexpected error
+  '/consent/{consentId}/association':
+    get:
+      summary: getAssociation
+      description: Returns the associations identified by the parameters.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: associationType
+          in: query
+          description: "Association's type"
+          required: true
+          type: string
+        - name: id
+          in: query
+          description: Object ID of the requested association
+          required: true
+          type: string
+      tags:
+        - Consent
+        - Association
+      responses:
+        '200':
+          description: An array of Consent Associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentAssociation'
+        '400':
+          description: Required parameter is null
+        default:
+          description: Unexpected error
+    post:
+      summary: createAssociation
+      description: Create the associations sent as parameters.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Associations to be created
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentAssociation'
+      tags:
+        - Consent
+        - Association
+      responses:
+        '200':
+          description: An array of created consent associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentAssociation'
+        default:
+          description: Unexpected error
+    put:
+      summary: updateAssociation
+      description: Update the association identified by the parameters
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Associations to be updated
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentAssociation'
+      tags:
+        - Consent
+        - Association
+      responses:
+        '200':
+          description: An array with the updated consent associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentAssociation'
+        default:
+          description: Unexpected error
+    delete:
+      summary: deleteAssociation
+      description: Deletes the association identified by the parameters
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: associationType
+          in: query
+          description: "Association's type"
+          required: true
+          type: string
+        - name: id
+          in: query
+          description: Object ID of the requested association
+          required: true
+          type: string
+      tags:
+        - Consent
+        - Association
+      responses:
+        '200':
+          description: An array with the deleted consent associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentAssociation'
+        default:
+          description: Unexpected error
+  '/consent/cases/pending/{dacUserId}':
+    get:
+      summary: getConsentPendingCases
+      description: Describes the cases that the user has without logging his vote.
+      parameters:
+        - name: dacUserId
+          in: path
+          description: User ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Pending Case
+      responses:
+        '200':
+          description: An array of products
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PendingCase'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /consent/cases/summary:
+    get:
+      summary: getConsentSummaryCases
+      description: Returns number of denied, approved and pending cases.
+      tags:
+        - Consent Summary
+      responses:
+        '200':
+          description: Returns the summary of cases.
+          schema:
+            $ref: '#/definitions/Summary'
+  /consent/cases/summary/file:
+      get:
+        summary: getConsentSummaryDetailFile
+        description: Returns a file with the detail of the reviewed cases whose type will be specified by fileType param.
+        produces:
+        - text/plain
+        parameters:
+         - name: fileType
+           in: query
+           description: DataAccess / TranslateDUL , defines the type of the reviewed cases info required.
+           required: true
+           type: string
+        tags:
+          - Summary File
+        responses:
+          '200':
+            schema:
+              type: file
+            description: Export data to a txt file.
+  /consent/cases/closed:
+    get:
+      summary: describeClosedElections
+      description: Returns number of denied, approved and pending cases.
+      tags:
+        - Election
+        - Consent
+      responses:
+        '200':
+          description: Returns the list of closed consent cases.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Election'
+        '404':
+          description: unexpected error
+          schema:
+           $ref: '#/definitions/ErrorResponse'
+  '/consent/{consentId}/election':
+    post:
+      summary: createConsentElection
+      description: Creates an election for the consent ID sent as parameter.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: rec
+          in: body
+          description: Election to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Election'
+      tags:
+        - Election
+        - Consent
+      responses:
+        '201':
+          description: Returns the URI to access the newly created object.
+        '400':
+          description: There is an existent Open election for that consent.
+        '404':
+          description: The consent sent as a parameter doesn't exist.
+    get:
+       summary: describe
+       description: Returns the election for the consent sent as a parameter.
+       parameters:
+         - name: consentId
+           in: path
+           description: Consent ID.
+           required: true
+           type: string
+       tags:
+         - Election
+         - Consent
+       responses:
+         '200':
+           description: Returns the election.
+           schema:
+             $ref: '#/definitions/Election'
+         default:
+           description: "Error"
+           schema:
+             $ref: '#/definitions/ErrorResponse'
+  '/consent/{consentId}/election/{id}':
+    put:
+      summary: updateConsentElection
+      description: Updates the election for the consent ID sent as parameter.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Election ID
+          required: true
+          type: integer
+          format: int32
+        - name: rec
+          in: body
+          description: Election to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Election'
+      tags:
+        - Election
+        - Consent
+      responses:
+        '200':
+          description: Returns the updated election.
+          schema:
+            $ref: '#/definitions/Election'
+        '404':
+          description: "The Election/Consent doesn't exist."
+    delete:
+      summary: deleteElection
+      description: Deletes the election identified by the IDs.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Election ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Election
+        - Consent
+      responses:
+        '200':
+          description: The election was deleted.
+        '404':
+          description: "The Election/Consent doesn't exist."
+  /consent/manage:
+    get:
+      summary: describe
+      description: Returns the list of consents available to be managed.
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: The list of consents available to be managed.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConsentManage'
+  /consent:
+    post:
+      summary: createConsent
+      description: Creates the consent sent with the request.
+      parameters:
+        - name: rec
+          in: body
+          description: Object that represents a Consent
+          required: true
+          schema:
+            $ref: '#/definitions/Consent'
+      tags:
+        - Consent
+      responses:
+        '201':
+          description: Returns the URL to find the created consent.
+        '500':
+          description: Internal Server Error.
+  '/consent/{id}':
+    get:
+      summary: describe
+      description: Returns the consent identified by the ID.
+      parameters:
+        - name: id
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: Returns the requested consent.
+          schema:
+            $ref: '#/definitions/Consent'
+        '404':
+          description: The consent associated with the ID couldn't be found.
+    put:
+      summary: update
+      description: Updates the consent identified by the ID.
+      parameters:
+        - name: id
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: updated
+          in: body
+          description: Object that represents the consent to be updated
+          required: true
+          schema:
+            $ref: '#/definitions/Consent'
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: Returns the requested consent.
+          schema:
+            $ref: '#/definitions/Consent'
+        '404':
+          description: The consent associated with the ID couldn't be found.
+        '500':
+          description: Internal server error
+  '/consent/{id}/matches':
+    get:
+      summary: getMatches
+      description: Returns the matches that are related to this consent.
+      parameters:
+        - name: id
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+      tags:
+        - Match
+        - Consent
+      responses:
+        '200':
+          description: Returns a list of matches.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Match'
+        '404':
+          description: The consent for the id couldn't be found.
+  /consents:
+    get:
+      summary: findByIds
+      description: Returns the consents required in the parameter list
+      parameters:
+        - name: ids
+          in: query
+          description: List of consent IDs
+          required: true
+          type: array
+          items:
+            type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: Returns the list of found consents.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Consent'
+        '404':
+          description: The consent IDs list wasn't send, or some consents couldn't be found.
+  '/consents/{associationType}':
+    get:
+      summary: findByAssociationType
+      description: Returns the consents that have associated a record in consentassociation that matches the requested association type.
+      parameters:
+        - name: associationType
+          in: path
+          description: Association Type.
+          required: true
+          type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: Returns the list of found consents.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Consent'
+        '404':
+          description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
+  '/consent/{consentId}/vote/{id}':
+    post:
+      summary: firstVoteUpdate
+      description: Returns the created vote.
+      parameters:
+        - name: consentId
+          in: path
+          description: The consent ID.
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: The vote ID.
+          required: true
+          type: integer
+          format: int32
+        - name: rec
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Vote'
+      tags:
+        - Vote
+      responses:
+        '200':
+          description: Returns the created vote.
+          schema:
+            $ref: '#/definitions/Vote'
+        '400':
+          description: 'Bad request, malformed entity, etc'
+        '404':
+          description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
+    put:
+      summary: updateConsentVote
+      description: Returns the updated vote.
+      parameters:
+        - name: consentId
+          in: path
+          description: The consent ID.
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: The vote ID.
+          required: true
+          type: integer
+          format: int32
+        - name: rec
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Vote'
+      tags:
+        - Vote
+      responses:
+        '200':
+          description: Returns the created vote.
+          schema:
+            $ref: '#/definitions/Vote'
+        '400':
+          description: Bad request, malformed entity, etc.
+    get:
+      summary: describe
+      description: Returns the required vote.
+      parameters:
+        - name: consentId
+          in: path
+          description: The consent ID.
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: The vote ID.
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+      responses:
+        '200':
+          description: Returns the required vote.
+          schema:
+            $ref: '#/definitions/Vote'
+    delete:
+      summary: deleteVote
+      description: Deletes the required vote.
+      parameters:
+        - name: consentId
+          in: path
+          description: The consent ID.
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: The vote ID.
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+      responses:
+        '200':
+          description: Response = Vote was deleted
+          schema:
+            type: string
+        '404':
+          description: The vote couldn't be found
+  '/consent/{consentId}/vote':
+    delete:
+      summary: deleteVotes
+      description: Deletes the votes present for the consent sent as a parameter.
+      parameters:
+        - name: consentId
+          in: path
+          description: The consent ID.
+          required: true
+          type: string
+      tags:
+        - Vote
+        - Consent
+      responses:
+        '200':
+          description: Response = Votes for specified consent have been deleted
+          schema:
+            type: string
+        '404':
+          description: The votes for the consent ID couldn't be found
+    get:
+      summary: describeAllVotes
+      description: Returns all the votes related to this consent.
+      parameters:
+        - name: consentId
+          in: path
+          description: The consent ID.
+          required: true
+          type: string
+      tags:
+        - Vote
+        - Consent
+      responses:
+        '200':
+          description: Returns the list of found votes.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Vote'
+  /dacuser:
+    post:
+      summary: createdDACUser
+      description: Creates a DAC User
+      parameters:
+        - name: dac
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/DACUser'
+      tags:
+        - Roles
+        - DACUser
+      responses:
+        '200':
+          description: Returns the created user.
+          schema:
+            $ref: '#/definitions/DACUser'
+        '400':
+          description: Malformed user entity.
+    get:
+      summary: describeAllUsers
+      description: Returns all the users
+      tags:
+        - Roles
+        - DACUser
+      responses:
+        '200':
+          description: Returns the collection of all the users and their permissions.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DACUser'
+  '/dacuser/{email}':
+    get:
+      summary: describe
+      description: Returns the user identified by the email.
+      parameters:
+        - name: email
+          in: path
+          description: The email of the user.
+          required: true
+          type: string
+      tags:
+        - DACUser
+        - Roles
+      responses:
+        '200':
+          description: Returns the user.
+          schema:
+            $ref: '#/definitions/DACUser'
+    delete:
+      summary: delete
+      description: Deletes the user identified by the email.
+      parameters:
+        - name: email
+          in: path
+          description: The email of the user.
+          required: true
+          type: string
+      tags:
+        - DACUser
+        - Roles
+      responses:
+        '200':
+          description: Response = User was deleted
+          schema:
+            type: string
+    put:
+      summary: update
+      description: Updates the user identified by the ID.
+      parameters:
+        - name: email
+          in: path
+          description: The email of the user.
+          required: true
+          type: string
+        - name: dac
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/DACUser'
+      tags:
+        - DACUser
+        - Roles
+      responses:
+        '200':
+          description: Returns the updated user.
+          schema:
+            $ref: '#/definitions/DACUser'
+        '400':
+          description: Malformed entity.
+  /dar:
+    post:
+      summary: createdDataAccessRequest
+      description: Creates a Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: The fields that represent a DAR, json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        '200':
+          description: Returns the created Data Access Request, json file.
+        '500':
+          description: Internal Server Error.
+    get:
+      summary: describeDataAccessRequests
+      description: Retrieves all the existent DARs
+      tags:
+        - Data Access Request
+      responses:
+        '200':
+          description: Returns the DAR collection
+  '/dar/{id}':
+    get:
+      summary: describe
+      description: Retrieves the DAR identified by the ID
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        '200':
+          description: Returns the DAR collection, an array where each field is a json object that represents a DAR.
+    put:
+          summary: updateDataAccessRequest
+          description: Updates the DAR identified by the dar_code.
+          parameters:
+            - name: id
+              in: path
+              description: dar_code that identifies univocally
+              required: true
+              type: string
+            - name: dataAccessRequest
+              in: body
+              description: The fields that represent a DAR, json format.
+              schema:
+                type: string
+          tags:
+            - Data Access Request
+          responses:
+            '200':
+              description: Returns the updated DAR.
+            '400':
+              description: Bad request.
+    delete:
+      summary: delete
+      description: Deletes the DAR identified by the ID
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        '200':
+          description: Response = Research Purpose was deleted
+          schema:
+            type: string
+        '404':
+          description: The requested DAR couldn't be found.
+  '/dar/modalSummary/{id}':
+        get:
+          summary: getDataAcessRequestModalSummary
+          description: Retrieves a DARModalDetailsDTO.
+          parameters:
+            - name: id
+              in: path
+              description: The id of the DAR
+              required: true
+              type: string
+          tags:
+            - Data Access Request
+          responses:
+            '200':
+              description: 'Returns a DARModalDetailsDTO initialized with the DAR associated with the provided Id.'
+  '/dar/find/{id}':
+    get:
+      summary: describeSpecificFields
+      description: Returns the requested fields present in the DAR identified by the ID
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+        - name: fields
+          in: query
+          description: The name of the required fields
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        '200':
+          description: A JSON with the requested fields or the whole DAR if there wasn't any requested fields in the parameter.
+          schema:
+            type: file
+        '404':
+          description: The requested DAR couldn't be found.
+  '/dar/find/{id}/consent':
+    get:
+      summary: describeConsentForDAR
+      description: Returns the consent related to this DAR.
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+        - Consent
+      responses:
+        '200':
+          description: Returns the Consent.
+          schema:
+            $ref: '#/definitions/Consent'
+        '404':
+          description: The requested couldn't be found or the DAR doesn't exist.
+  /dar/manage:
+      get:
+        summary: describeManageDataAccessRequests
+        description: Returns all the elections created for Data Access Requests
+        tags:
+          - Data Access Request
+        responses:
+          '200':
+            description: A list of DAR elections.
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/DataAccessRequestManage'
+  '/dar/cases/unreviewed':
+      get:
+        summary: getTotalUnReviewedDAR
+        description: Retrieves the amount of unreviewed DAR.
+        tags:
+          - Data Access Request
+        responses:
+         '200':
+           description: 'Returns an integer corresponding to the amount of unreviwed DAR.'
+  '/dataRequest/cases/pending/{dacUserId}':
+    get:
+      summary: getDataRequestPendingCases
+      description: Retrieves the election the user has with votes pending.
+      parameters:
+        - name: dacUserId
+          in: path
+          description: The id of the user
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+        - Pending Case
+      responses:
+        '200':
+          description: A list of Pending Cases.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PendingCase'
+  /dataRequest/cases/summary/DataAccess:
+    get:
+      summary: getConsentSummaryCases
+      description: Retrieves the Summary of DAR cases
+      tags:
+        - Summary
+        - Data Access Request
+      responses:
+        '200':
+          description: A summary of cases
+          schema:
+            $ref: '#/definitions/Summary'
+  /dataRequest/cases/summary/RP:
+    get:
+      summary: getConsentSummaryCases
+      description: Retrieves the Summary of Research Purposes cases
+      tags:
+        - Summary
+        - Research Purpose
+      responses:
+        '200':
+          description: A summary of cases
+          schema:
+            $ref: '#/definitions/Summary'
+  /dataRequest/cases/closed:
+    get:
+      summary: describeClosedElections
+      description: Retrieves the closed DAR elections
+      tags:
+        - Data Access Request
+        - Election
+      responses:
+        '200':
+          description: A list of closed DAR elections.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Election'
+        '404':
+          description: Election was not found.
+  '/dataRequest/{requestId}/election':
+    get:
+      summary: describe
+      description: Returns the election for the sent DAR, if it exists.
+      parameters:
+        - name: requestId
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+        - Election
+      responses:
+        '200':
+          description: Returns the requested election
+          schema:
+            $ref: '#/definitions/Election'
+        '404':
+          description: The election or the DAR couldn't be found.
+    post:
+      summary: createDataRequestElection
+      description: Creates an Election for the DAR identified by the ID.
+      parameters:
+        - name: requestId
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+        - name: rec
+          in: body
+          description: The election to be created
+          schema:
+            $ref: '#/definitions/Election'
+      tags:
+        - Data Access Request
+        - Election
+      responses:
+        '200':
+          description: The created election
+          schema:
+            $ref: '#/definitions/Election'
+        '400':
+          description: Bad request.
+        '404':
+          description: The DAR couldn't be found.
+  '/dataRequest/{requestId}/election/{id}':
+    delete:
+      summary: deleteElection
+      description: Deletes the election identified by the id.
+      parameters:
+        - name: requestId
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: The id of the election
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+        - Election
+      responses:
+        '200':
+          description: Response = Election was deleted
+          schema:
+            type: string
+        '404':
+          description: The DAR or the election couldn't be found.
+  '/consent/{id}/dul':
+    get:
+      summary: getDUL
+      description: Returns Data Use Letter file specified by consentId.
+      parameters:
+        - name: id
+          in: path
+          description: Id of the consent at which belongs the Data Use Letter.
+          required: true
+          type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: Data Use Letter file
+          schema:
+            type: file
+          headers:
+            Content-Disposition:
+              type: string
+              description: attachment; filename= targetFile name
+        '404':
+          description: Could not find consent with the specified Id
+    post:
+      summary: createDUL
+      description: Persists the loaded file in the CloudStorage and update the related Consent.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: data
+          in: formData
+          description: Data Use Letter file.
+          required: true
+          type: file
+        - name: id
+          in: path
+          description: Id of the consent at which belongs the Data Use Letter.
+          required: true
+          type: string
+        - name: fileName
+          in: query
+          description: File name.
+          required: false
+          type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: The modified Consent with dataUseLetter field empty
+          schema:
+            $ref: '#/definitions/Consent'
+        '404':
+          description: Could not find consent with the specified Id
+    put:
+      summary: updateDUL
+      description: Updates the Consent's Data Use Letter in the CloudStorage and the related Consent.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: data
+          in: formData
+          description: new Data Use Letter file.
+          required: true
+          type: file
+        - name: id
+          in: path
+          description: Id of the consent at which belongs the Data Use Letter.
+          required: true
+          type: string
+        - name: fileName
+          in: query
+          description: File name.
+          required: false
+          type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: The updated Consent
+          schema:
+            $ref: '#/definitions/Consent'
+        '404':
+          description: Could not find consent with the specified Id
+    delete:
+      summary: deleteDUL
+      description: Deletes the Data Use Letter of the Consent specified by Id and updates the Consent's dataUseLetter property.
+      parameters:
+        - name: id
+          in: path
+          description: Id of the consent at which belongs the Data Use Letter.
+          required: true
+          type: string
+      tags:
+        - Consent
+      responses:
+        '200':
+          description: The updated Consent with empty dataUseLetter property.
+          schema:
+            $ref: '#/definitions/Consent'
+        '404':
+          description: Could not find consent with the specified Id
+  '/dataRequest/{requestId}/vote':
+    get:
+      summary: describeAllVotes
+      description: Returns the votes of the election with the specified referenceId.
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Votes
+          required: true
+          type: string
+      tags:
+        - Votes
+        - DataRequest
+      responses:
+        '200':
+          description: Returns the DataRequest.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Vote'
+    delete:
+      summary: deleteVotes
+      description: Deletes the votes of the election with the specified reference Id
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the Votes
+          required: true
+          type: string
+      tags:
+        - Votes
+        - DataRequest
+      responses:
+        '200':
+          description: The Votes were deleted.
+        '404':
+          description: The Election doesn't exist.
+  '/dataRequest/{requestId}/vote/{id}':
+    get:
+      summary: describe
+      description: Returns the Vote with the specified Id.
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote ( this value is not used in the search , its only to complete the path)
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+        - DataRequest
+      responses:
+        '200':
+          description: Returns the requested Vote.
+          schema:
+            $ref: '#/definitions/Vote'
+        '404':
+          description: The Vote doesn't exist.
+    post:
+      summary: createDataRequestVote
+      description: update a Vote specified by VoteId of a DataRequest Election.
+      parameters:
+        - name: rec
+          in: body
+          description: Vote to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Vote'
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+        - DataRequest
+      responses:
+        '201':
+          description: Returns the updated Vote.
+        '400':
+          description: Required parameter is null
+        '404':
+          description: The \"to update\" vote doesn't exist.
+    put:
+      summary: updateDataRequestVote
+      description: update an edited Vote specified by VoteId of a DataRequest Election.
+      parameters:
+        - name: rec
+          in: body
+          description: Vote to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Vote'
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+        - DataRequest
+      responses:
+        '201':
+          description: Returns the updated Vote.
+        '400':
+          description: Required parameter is null
+        '404':
+          description: The \"to update\" vote doesn't exist.
+    delete:
+      summary: deleteVote
+      description: Deletes the vote specified by the requestId and the VoteId.
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election at which the vote belongs.
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+        - DataRequest
+      responses:
+        '200':
+          description: The Vote was deleted.
+        '404':
+          description: Could not find vote with this Vote ID.
+  '/dataRequest/{requestId}/vote/{id}/final':
+    post:
+      summary: updateFinalAccessConsentVote
+      description: update a the FinalAccessVote specified by VoteId of a DataRequest Election and set finalAccessVote Election property to TRUE.
+      parameters:
+        - name: rec
+          in: body
+          description: Vote to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Vote'
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote ( this value is not used in the process , its only to complete the path)
+          required: true
+          type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+        - DataRequest
+      responses:
+        '200':
+          description: Returns the updated Vote.
+          schema:
+            $ref: '#/definitions/Vote'
+        '400':
+          description: Required parameter is null
+        '404':
+          description: Election for specified id does not exist
+  '/dataRequest/{requestId}/vote/final':
+    get:
+      summary: describeFinalAccessVote
+      description: Returns the Vote with isfinalAccessVote property  = TRUE with the specified Id.
+      parameters:
+        - name: requestId
+          in: path
+          description: Vote ID
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Vote
+        - DataRequest
+      responses:
+        '200':
+          description: Returns the requested Vote.
+          schema:
+            $ref: '#/definitions/Vote'
+        '404':
+          description: Could not find a vote with this id.
+  /dataset:
+    get:
+      summary: describeDatasets
+      description: Returns Dataset list filtering by Role.
+      parameters:
+        - name: dacUserId
+          in: query
+          description: UserId used to retrieve the user's roles
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: An array of DatasetDTO
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DatasetDTO'
+        '404':
+          description: Required parameter is null.
+    post:
+      summary: createDataSet
+      description: Creates the Datasets defined in the input .TSV /.txt file.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: data
+          in: formData
+          description: File that contains one ore more Datasets.
+          required: true
+          type: file
+        - name: overwrite
+          in: query
+          description: Describes if the API has to overwrite a DataSet that is already defined.
+          required: false
+          type: boolean
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: An array of created Datasets
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DatasetDTO'
+        '400':
+          description: Array of the errors found with a brief description of each one.
+          schema:
+            type: array
+            items:
+              type: string
+  /dataset/sample:
+    get:
+      summary: getDataSetSample
+      description: Returns a Dataset sample .tsv file.
+      produces:
+        - text/plain
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: .tsv sample
+          schema:
+            type: file
+          headers:
+            Content-type:
+              type: string
+              description: text/plain
+            Content-Disposition:
+              type: string
+              description: attachment; filename=DataSetSample.tsv
+        '500':
+          description: Server error.
+  /dataset/dictionary:
+    get:
+      summary: describeDictionary
+      description: Return all the values that compound the dictionary , this values are the attributes of a Dataset.
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: An array of the existent dictionaries
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Dictionary'
+        '500':
+          description: Server error.
+  '/dataset/{datasetObjectId}':
+    delete:
+      summary: delete
+      description: Deletes Dataset and DatasetProperties of the Dataset specified by datasetObjectId .
+      parameters:
+        - name: datasetObjectId
+          in: path
+          description: ObjectId of the Dataset
+          required: true
+          type: string
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: The Dataset was deleted.
+        '500':
+          description: Server error.
+  /dataset/download:
+    post:
+      summary: downloadDataSets
+      description: Returns the dataset Properties of the datasets whose Ids are in the idList
+      parameters:
+        - name: idList
+          in: body
+          description: List of DatasetIds.
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: The Dataset was deleted.
+        '500':
+          description: Server error.
+  '/dataset/autocomplete/{partial}':
+    get:
+      summary: datasetAutocomplete
+      description: Returns Dataset list with the Datasets whose objectsIds matches with the partial string.
+      parameters:
+        - name: partial
+          in: path
+          description: the value to autocomplete.
+          required: true
+          type: string
+      tags:
+        - Datasets
+      responses:
+        '200':
+          description: An array of Dataset objectIds
+          schema:
+            type: array
+            items:
+              type: string
+        '500':
+          description: Server error.
+  '/dataset/disable/{datasetObjectId}/{active}':
+        delete:
+          summary: disableDataSet
+          description: 'Updates the Active status of the Dataset specified by datasetObjectId'
+          parameters:
+            - name: datasetObjectId
+              in: path
+              description: the Id of the Dataset to Update.
+              required: true
+              type: string
+            - name: active
+              in: path
+              required: true
+              type: boolean
+          tags:
+            - Datasets
+          responses:
+            '200':
+              description: An array of Dataset objectIds
+              schema:
+                type: array
+                items:
+                  type: string
+            '500':
+              description: Server error.
+  '/election/{id}':
+    get:
+      summary: describeElectionById
+      description: Returns the Election identified by Id.
+      parameters:
+        - name: id
+          in: path
+          description: Election Id
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Election
+      responses:
+        '200':
+          description: Election
+          schema:
+            $ref: '#/definitions/Election'
+        '400':
+          description: Could not find Election with the specified Id
+    put:
+      summary: updateElection
+      description: "Updates the election specified by Id."
+      parameters:
+        - name: id
+          in: path
+          description: Id of the Election to Update
+          required: true
+          type: integer
+          format: int32
+        - name: rec
+          in: body
+          description: Updated Election.
+          required: true
+          schema:
+            $ref: '#/definitions/Election'
+      tags:
+        - Election
+      responses:
+        '200':
+          description: updated Election
+          schema:
+            $ref: '#/definitions/Election'
+        '400':
+          description: Illegal Argument Exception
+  /electionReview:
+    get:
+      summary: getCollectElectionReview
+      description: Returns the ElectionReview from an Open Election identified by reference Id.
+      parameters:
+        - name: referenceId
+          in: query
+          description: referenceId of the Election
+          required: true
+          type: string
+      tags:
+        - ElectionReview
+      responses:
+        '200':
+          description: ElectionReview
+          schema:
+            $ref: '#/definitions/ElectionReview'
+  /electionReview/openElection:
+    get:
+      summary: describeElectionById
+      description: Endpoint to verify the existence of Open elections.
+      tags:
+        - Election
+      responses:
+        '200':
+          description: Returns TRUE if there is at least one Open election otherwise return FALSE.
+          schema:
+            type: string
+  '/electionReview/{electionId}':
+    get:
+      summary: describeElectionReviewByElectionId
+      description: "Returns the ElectionReview from an Election identified by ElectionId. This endpoint doesn't filter votes by isFinalAccess attribute so the reviewVote array of the retrieved ElectionReview will contain the isFinalAccess = TRUE Vote."
+      parameters:
+        - name: electionId
+          in: path
+          description: Election Id
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - ElectionReview
+      responses:
+        '200':
+          description: ElectionReview
+          schema:
+            $ref: '#/definitions/ElectionReview'
+  '/electionReview/access/{electionId}':
+    get:
+      summary: describeElectionById
+      description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for DataAccess elections.
+      parameters:
+        - name: electionId
+          in: path
+          description: Election Id
+          required: true
+          type: integer
+          format: int32
+        - name: isFinalAccess
+          in: query
+          description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - ElectionReview
+      responses:
+        '200':
+          description: ElectionReview
+          schema:
+            $ref: '#/definitions/ElectionReview'
+  '/electionReview/last/{referenceId}':
+    get:
+      summary: getElectionReviewByReferenceId
+      description: Returns the ElectionReview from an Election identified by referenceId with ElectionStatus = CLOSED and the most recent CreateDate.
+      parameters:
+        - name: referenceId
+          in: path
+          description: referenceId of the Election
+          required: true
+          type: string
+      tags:
+        - ElectionReview
+      responses:
+        '200':
+          description: ElectionReview
+          schema:
+            $ref: '#/definitions/ElectionReview'
+  /report:
+      post:
+        summary: createdHelpReport
+        description: Creates a HelpReport
+        parameters:
+          - name: helpReport
+            in: body
+            description: HelpReport to be created
+            required: true
+            schema:
+               $ref: '#/definitions/HelpReport'
+        tags:
+          - Report
+        responses:
+          '200':
+            description: HelpReport
+            schema:
+              $ref: '#/definitions/HelpReport'
+          '400':
+            description: Bad Request
+  '/report/{id}':
+      get:
+        summary: describe
+        description: Returns the HelpReport identified by Id.
+        parameters:
+          - name: id
+            in: path
+            description: HelpReport Id
+            required: true
+            type: integer
+            format: int32
+        tags:
+          - Report
+        responses:
+           '200':
+              description: HelpReport
+              schema:
+                $ref: '#/definitions/HelpReport'
+           '400':
+              description: HelpReport not found.
+      delete:
+        summary: delete
+        description: Deletes the HelpReport identified by Id.
+        parameters:
+           - name: id
+             in: path
+             description: HelpReport Id
+             required: true
+             type: integer
+             format: int32
+        tags:
+            - Report
+        responses:
+          '200':
+            description: Report was deleted
+  '/report/user/{userId}':
+        get:
+          summary: describeAllReportsByUser
+          description: Returns a collection of the HelpReports made by the specified user.
+          parameters:
+            - name: userId
+              in: path
+              description: UserId
+              required: true
+              type: integer
+              format: int32
+          tags:
+            - Report
+          responses:
+             '200':
+                description: An array of the HelpReports made by the user.
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/definitions/HelpReport'
+  /user:
+    post:
+      summary: createdUser
+      description: Create a user. Only allows for the roles of RESEARCHER and DATAOWNER so that a new user can set themselves up from within a workspace.
+      parameters:
+        - name: dac
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/DACUser'
+      tags:
+        - User
+      responses:
+        '200':
+          description: Returns the created user.
+          schema:
+            $ref: '#/definitions/DACUser'
+        '400':
+          description: Malformed user entity.
+        '409':
+          description: Email should be unique.
+    put:
+      summary: updatedUser
+      description: Update a user. Only allows for the roles of RESEARCHER and DATAOWNER. It will update the current google authenticated user
+      parameters:
+        - name: dac
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/DACUser'
+      tags:
+        - User
+      responses:
+        '200':
+          description: Returns the updated user.
+          schema:
+            $ref: '#/definitions/DACUser'
+        '400':
+          description: Malformed user entity.
+        '401':
+          description: Unauthorized.
+        '409':
+          description: Conflict with specified roles.
+    patch:
+      summary: partialUpdateUser
+      description: Partial Update user. Only allows for the roles of RESEARCHER and DATAOWNER. It will update the current google authenticated user
+      parameters:
+        - name: patch
+          in: body
+          required: true
+          type: array
+          schema:
+            $ref: '#/definitions/PatchOperation'
+      tags:
+        - User
+      responses:
+        '200':
+          description: Returns the updated user.
+          schema:
+            $ref: '#/definitions/DACUser'
+        '400':
+          description: Malformed user entity.
+        '401':
+          description: Unauthorized.
+        '409':
+          description: Conflict with specified roles.
+definitions:
+  ConsentAssociation:
+    type: object
+    properties:
+      associationType:
+        type: string
+        description: 'Defines the type of the association. Possible values: sample, sampleSet.'
+      elements:
+        type: array
+        items:
+          type: string
+        description: Elements, in a hash set, to avoid duplicates.
+  Consent:
+    type: object
+    properties:
+      consentId:
+        type: string
+        description: The ID of the entity.
+      requiresManualReview:
+        type: boolean
+        description: Describes if this consent has to be reviewed manually.
+      dataUseLetter:
+        type: string
+        description: The URL of the saved file.
+      useRestriction:
+        type: string
+        description: The UseRestriction of this consent. Used to match against another entities.
+      name:
+        type: string
+        description: Name to identify the consent.
+      dulName:
+        type: string
+        description: Name that identifies the Data Use Letter file.
+      createDate:
+        type: string
+        format: date
+        description: Creation Date.
+      lastUpdate:
+        type: string
+        format: date
+        description: Date of the last update.
+      sortDate:
+        type: string
+        format: date
+        description: The lastest modification date.
+  Vote:
+    type: object
+    properties:
+      voteId:
+        type: integer
+        format: int32
+        description: Describes the id of the vote.
+      vote:
+        type: boolean
+        description: Describe the Positive or negative value of the vote
+      dacUserId:
+        type: integer
+        format: int32
+        description: Describes the id of the voter.
+      createDate:
+        type: string
+        format: date
+        description: Describes the date the vote was created.
+      updateDate:
+        type: string
+        format: date
+        description: Describes the date the vote was last modified.
+      electionId:
+        type: integer
+        format: int32
+        description: Describes the id of the election the election at which the vote belongs.
+      rationale:
+        type: string
+        description: If the final vote is NO, the voter can specify why in this field.
+      isFinalAccessVote:
+        type: boolean
+        description: Specifies if the Vote is a finalAccessVote, only For Data Access Request elections.
+      isReminderSent:
+        type: boolean
+        description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+  Match:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: The ID of the entity.
+      consent:
+        type: string
+        description: The matched consent.
+      purpose:
+        type: string
+        description: The matched research purpose.
+      match:
+        type: boolean
+        description: True if the entities match, false otherwise.
+      failed:
+        type: boolean
+        description: True if the matching process failed, for any reason.
+  PendingCase:
+    type: object
+    properties:
+      referenceId:
+        type: string
+        description: The reference ID that identifies the case
+      logged:
+        type: string
+        description: Describes the logged votes vs. total votes required.
+      alreadyVoted:
+        type: boolean
+        description: Describes if the user already voted on this case
+      isReminderSent:
+        type: boolean
+        description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+      isFinalVote:
+        type: boolean
+        description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
+      status:
+        type: string
+        description: Status of the vote. Pending or editable.
+      electionStatus:
+        type: string
+        description: Describes the status of the election related to this pending case. Open, closed or cancelled.
+      electionId:
+        type: integer
+        format: int32
+        description: Describes the id of the election related to this pending  case.
+      voteId:
+        type: integer
+        format: int32
+        description: Describes the id of the users vote, related to this particular pending case.
+      createDate:
+        type: string
+        format: date
+        description: 'Defines the type of the association. Possible values: sample, sampleSet.'
+      totalVotes:
+        type: integer
+        format: int32
+        description: Describes the total votes(users) required to vote for this election.
+      votesLogged:
+        type: integer
+        format: int32
+        description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
+  Summary:
+    type: object
+    properties:
+      reviewedPositiveCases:
+        type: integer
+        format: int32
+        description: Describes the number of cases that were denied.
+      reviewedNegativeCases:
+        type: integer
+        format: int32
+        description: Describes the number of cases that were approved.
+      pendingCases:
+        type: integer
+        format: int32
+        description: Describes the number of cases that are opened and have to be reviewed.
+  Election:
+    type: object
+    properties:
+      electionId:
+        type: integer
+        format: int32
+        description: Describes the id of the election.
+      electionType:
+        type: string
+        description: Describes the type of the election.
+      finalVote:
+        type: boolean
+        description: Describes the chairperson final vote, if the election is closed.
+      status:
+        type: string
+        description: Describes the status of the election. Open, Closed or Cancelled.
+      createDate:
+        type: string
+        format: date
+        description: Describes the date the election was created.
+      lastUpdate:
+        type: string
+        format: date
+        description: Describes the date the election was last modified.
+      finalVoteDate:
+        type: string
+        format: date
+        description: Describes the date the chaiperson made the final vote.
+      referenceId:
+        type: string
+        description: Describes the id of the consent/data access request the election is related to.
+      finalRationale:
+        type: string
+        description: If the final vote is NO, the chairperson can specify why in this field.
+      finalAccessVote:
+        type: boolean
+        description: For Data Access Request only. Final vote that determines if the request is approved or denied.
+  ConsentManage:
+    type: object
+    properties:
+      consentId:
+        type: string
+        description: The consent ID of the case.
+      consentName:
+        type: string
+        description: The consent name of the case.
+      electionStatus:
+        type: string
+        description: The status of the election related to the consent.
+      electionId:
+        type: integer
+        description: The electionId of the election related to the consent.
+      createDate:
+        type: string
+        format: date-time
+        description: The datetime the election was created.
+      sortDate:
+        type: string
+        format: date-time
+        description: The datetime the election was created/updated (the last updated).
+  DataAccessRequest:
+    type: object
+    properties:
+      investigator:
+        type: string
+        description: 'Describes the name of the Principal Investigator.'
+      institution:
+        type: string
+        description: 'Describes the name of Institution.'
+      department:
+        type: string
+        description: 'Describes the name of the Institution Department.'
+      division:
+        type: string
+        description: 'Describes the name of the Division.'
+      address1:
+        type: string
+        description: 'Describes the principal address.'
+      address2:
+        type: string
+        description: 'Describes the secondary address. Optional.'
+      city:
+        type: string
+        description: 'Describes the name of the City.'
+      state:
+        type: string
+        description: 'Describes the name of the State.'
+      zipcode:
+        type: string
+        description: 'Describes the Zip Code number.'
+      country:
+        type: string
+        description: 'Describes the name of the Country.'
+      projectTitle:
+        type: string
+        description: 'Describes the Project Title.'
+      datasetId:
+        type: array
+        items:
+          type: string
+        description: 'Array of Dataset Ids.'
+      rus:
+        type: string
+        description: 'Describes the Research Use Statement.'
+      non_tech_rus:
+        type: string
+        description: 'Describes the Non Technical Summary.'
+      diseases:
+        type: boolean
+        description: 'Defines if the purpose of the study is disease-related.'
+      methods:
+        type: boolean
+        description: 'Defines if the purpose of the study is for Methods development.'
+      controls:
+        type: boolean
+        description: 'Defines if the purpose of the study is to increase the number of controls available for a comparison group.'
+      population:
+        type: boolean
+        description: 'Defines if the purpose of the study is to understand variation in the general population.'
+      other:
+        type: boolean
+        description: 'Defines if the purpose of the study is other than the above. If TRUE, triggers MANUAL REVIEW.'
+      othertext:
+        type: string
+        description: 'Describes above field.'
+      ontologies:
+        type: array
+        items:
+          type: string
+        description: 'Array of Ontologies.'
+      forProfit:
+        type: boolean
+        description: 'Describes if data will be used for commercial purposes.'
+      oneGender:
+        type: boolean
+        description: 'Describes if study is gender specific.'
+      pediatric:
+        type: boolean
+        description: 'Describes if study is restricted to a pediatric population.'
+      illegalbehave:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      addiction:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      sexualdiseases:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      stigmatizediseases:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      vulnerablepop:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      popmigration:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      psychtraits:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      nothealth:
+        type: boolean
+        description: 'If TRUE, triggers MANUAL REVIEW.'
+      userId:
+        type: integer
+        format: int32
+        description: 'Describes the id of the User (Researcher).'
+  DataAccessRequestManage:
+    type: object
+    properties:
+      electionStatus:
+        type: string
+        description: The status of the election.
+      rus:
+        type: string
+        description: The rus of the Data Access Request.
+      dataRequestId:
+        type: string
+        description: The ID of the Data Access Request.
+      projectTitle:
+        type: string
+        description: The title of the project, in the Data Access Request
+      electionId:
+        type: integer
+        format: int32
+        description: The ID of the election related to the DAR.
+      createDate:
+        type: string
+        format: date-time
+        description: The Date the election was created.
+      sortDate:
+        type: string
+        format: date
+        description: The datetime the election was created/updated (the last one).
+  DatasetDTO:
+    type: object
+    properties:
+      consentId:
+        type: string
+        description: Describes the id of the vote.
+      useRestriction:
+        type: string
+        description: The UseRestriction of this consent. Used to match against another entities.
+      deletable:
+        type: boolean
+        description: Describes if this DataSet can be deleted (This information is only given to the Admin).
+      properties:
+        type: array
+        items:
+          $ref: '#/definitions/DatasetPropertyDTO'
+  DatasetPropertyDTO:
+    type: object
+    properties:
+      propertyName:
+        type: string
+        description: Name of the Property.
+      propertyValue:
+        type: string
+        description: Value of the Property.
+  Dictionary:
+    type: object
+    properties:
+      keyId:
+        type: integer
+        format: int32
+        description: Id of the key.
+      key:
+        type: integer
+        format: int32
+        description: Value of the key.
+      required:
+        type: boolean
+        description: Defines if this attribute is required to create a Dataset
+      displayOrder:
+        type: integer
+        format: int32
+        description: Defines the position of the attribute in the .tsv file
+      createDate:
+        type: string
+        format: date
+        description: Describes the date the Dictionary was created.
+  ElectionReview:
+    type: object
+    properties:
+      reviewVote:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ElectionReviewVote'
+        description: Votes related to the Election.
+      election:
+        $ref: '#/definitions/Election'
+      consent:
+        $ref: '#/definitions/Consent'
+        description: Consent related to the election.
+  ElectionReviewVote:
+    type: object
+    properties:
+      Vote:
+        type: object
+        $ref: '#/definitions/Vote'
+      displayName:
+        type: string
+        description: Name of the voter.
+      email:
+        type: string
+        description: Email of the voter.
+  DACUser:
+    type: object
+    properties:
+      dacUserId:
+        type: integer
+        description: ID of the user
+      email:
+        type: string
+        description: Email of the user
+      displayName:
+        type: string
+        description: Name of the user
+      createDate:
+        type: string
+        format: date
+        description: Describes the date the User was created.
+      roles:
+        type: array
+        items:
+          $ref: '#/definitions/DACUserRole'
+  DACUserRole:
+    type: object
+    properties:
+      roleId:
+        type: integer
+        format: int32
+        description: ID of the role
+      name:
+        type: string
+        description: Name of the role
+  ErrorResponse:
+    required:
+      - "message"
+    properties:
+      message:
+        type: string
+  HelpReport:
+      type: object
+      properties:
+        reportId:
+          type: integer
+          format: int32
+          description: ID of the report.
+        userName:
+          type: string
+          description: Name of user that made the report.
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the Report was created.
+        subject:
+           type: string
+           description: Subject of the report.
+        description:
+           type: string
+           description: Content of the report.
+        userId:
+           type: integer
+           format: int32
+           description: ID of user that made the report.
+  PatchOperation:
+    type: object
+    properties:
+      op:
+        type: string
+        description: The patch operations supported are “add”, “remove” and “replace”.
+      value:
+        type: string
+        description: Value to be used for the specified operation. Multiples roles should be separated by commas.
+      path:
+        type: string
+        description: Field to be updated. Available values are displayName or roles.
