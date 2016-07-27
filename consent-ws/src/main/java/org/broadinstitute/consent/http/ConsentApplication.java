@@ -251,9 +251,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     @Override
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
-
+        bootstrap.addBundle(new AssetsBundle("/swagger", "/swagger", "index.html"));
         bootstrap.addBundle(new MultiPartBundle());
-        bootstrap.addBundle(new AssetsBundle("/assets/", "/site"));
         bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
             @Override
             public DataSourceFactory getDataSourceFactory(ConsentConfiguration configuration) {
