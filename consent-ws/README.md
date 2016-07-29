@@ -9,7 +9,7 @@ docs/ConsentServicesAPIv1.pdf
 
 # Endpoints:
 
-https://consent-ui.dsde-dev.broadinstitute.org/swagger/ [Update with Prod URL]
+https://consent.dsde-consent-dev.broadinstitute.org/swagger/ [Update with Prod URL]
 
 # Configuration
 
