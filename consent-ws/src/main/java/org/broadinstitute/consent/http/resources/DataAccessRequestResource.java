@@ -407,6 +407,7 @@ public class DataAccessRequestResource extends Resource {
 
     // Fields that trigger manual review flag.
     String[] fieldsForManualReview = {
+            "population",
             "other",
             "illegalbehave",
             "addiction",
