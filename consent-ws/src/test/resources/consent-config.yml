@@ -12,9 +12,9 @@ database:
   url: jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true
   validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
 googleStore:
-  password:
-  bucket:
-  endpoint:
+  password: password
+  bucket: bucket
+  endpoint: endpoint
 mongo:
   uri: mongodb://localhost:27017
   host1:
@@ -41,7 +41,7 @@ logging:
     "org.mongodb": ERROR
     "org.liquibase": ERROR
 services:
-    ontologyURL:
+    ontologyURL: http://localhost:8180/
     localURL: http://localhost:8000/#/
 mailConfiguration:
   activateEmailNotifications: false
@@ -49,13 +49,13 @@ mailConfiguration:
   smtpAuth: true
   host: smtp.gmail.com
   smtpStartTlsEnable: true
-  googleAccount:
-  accountPassword:
+  googleAccount: test@gmail.com
+  accountPassword: password
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
 googleAuthentication:
-  clientId:
+  clientId: clientId
 basicAuthentication:
   users:
     - user: testuser

@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthFilter;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,6 +15,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
+
+import java.util.Optional;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.when;
@@ -33,26 +35,27 @@ public class OAuthCustomAuthFilterTest {
     OAuthAuthenticator authenticator;
     @Mock
     DACUserRoleDAO dacUserRoleDAO;
-    @Mock
+
     Optional principal;
 
     AuthFilter filter;
+
+    User user;
 
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
         when(requestContext.getHeaders()).thenReturn(headers);
-        when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
-        when(principal.isPresent()).thenReturn(true);
-        when(principal.get()).thenReturn("Testing principal");
+        when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
         filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, dacUserRoleDAO));
-
+        user = new User("test@gmail.com");
     }
 
     @Test
     public void testFilterSuccessful() throws Exception {
+        principal = Optional.of(user);
         when(uriInfo.getPath()).thenReturn("api/something");
         when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
         filter.filter(requestContext);
@@ -61,8 +64,9 @@ public class OAuthCustomAuthFilterTest {
 
     @Test
     public void testFilterExceptionBadCredentials() throws Exception {
+        principal = Optional.empty();
         when(uriInfo.getPath()).thenReturn("api/something");
-        when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal.absent());
+        when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
         expectedEx.expect(WebApplicationException.class);
         expectedEx.expectMessage("HTTP 401 Unauthorized");
         filter.filter(requestContext);
