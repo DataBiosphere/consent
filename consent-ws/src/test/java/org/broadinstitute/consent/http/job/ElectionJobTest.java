@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.job;
 
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.junit.Before;
 import org.junit.Test;

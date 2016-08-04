@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.common.base.Optional;
-import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.basic.BasicCredentials;
 import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
 import org.broadinstitute.consent.http.models.User;
@@ -14,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
