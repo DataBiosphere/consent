@@ -133,6 +133,7 @@ public class DARModalDetailsDTO {
         }
         if(darDocument.containsKey("population") && darDocument.getBoolean("population")){
             researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL));
+            manualReviewIsTrue();
         }
         if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
             researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString("othertext")));
