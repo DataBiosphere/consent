@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import org.apache.commons.io.IOUtils;
@@ -18,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Optional;
 
 
 public class OAuthAuthenticator implements Authenticator<String, User> {
@@ -38,7 +38,7 @@ public class OAuthAuthenticator implements Authenticator<String, User> {
             return Optional.of(user);
         }catch (Exception e){
             logger.error("Error authenticating credentials.");
-            return Optional.absent();
+            return Optional.empty();
         }
 
     }

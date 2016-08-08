@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.ConsentApplication;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -12,7 +11,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,7 +31,6 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
 
-@Ignore
 public class DataUseLetterResourceTest extends ConsentServiceTest {
 
     @Mock

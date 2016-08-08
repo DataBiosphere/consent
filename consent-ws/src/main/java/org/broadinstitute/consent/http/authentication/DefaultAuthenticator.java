@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import org.broadinstitute.consent.http.models.User;
+
+import java.util.Optional;
 
 public class DefaultAuthenticator implements Authenticator<String, User> {
 

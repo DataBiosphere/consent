@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.filter.CORSFilter;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -148,21 +147,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Mail Services
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
-//        final FilterRegistration.Dynamic cors = env.servlets().addFilter("crossOriginRequests", CrossOriginFilter.class);
-
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-//        cors.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, env.getApplicationContext().getContextPath() + "/*");
-
-        // Configure CORS parameters
-//        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-//        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires");
-//        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
-//        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
-//        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
-//        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Expires,Pragma,Cache-Control");
-
-        // Add URL mapping
-//        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         configureCors(env);
         googleStore = getGoogleStore(config.getCloudStoreConfiguration());
 

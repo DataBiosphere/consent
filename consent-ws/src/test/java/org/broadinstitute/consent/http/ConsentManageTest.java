@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -17,7 +16,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import java.util.List;
 
-@Ignore
 public class ConsentManageTest extends ElectionVoteServiceTest {
 
     private static final String CONSENT_ID = "testId";

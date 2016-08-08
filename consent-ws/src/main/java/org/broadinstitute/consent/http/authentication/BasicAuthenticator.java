@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
@@ -10,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -32,7 +32,7 @@ public class BasicAuthenticator implements Authenticator<BasicCredentials, User>
                 users.get(credentials.getUsername()).equals(credentials.getPassword())) {
             return Optional.of(new User(credentials.getUsername()));
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
 }

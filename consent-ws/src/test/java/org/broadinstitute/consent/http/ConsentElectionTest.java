@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -18,7 +17,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Ignore
 public class ConsentElectionTest extends ElectionVoteServiceTest {
 
     public static final int CREATED = Response.Status.CREATED

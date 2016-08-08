@@ -210,7 +210,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (CollectionUtils.isNotEmpty(newIds)) {
             newIds.stream().forEach(objectId -> {
                 if(StringUtils.isEmpty(objectId)){
-                    throw new IllegalArgumentException("Elements are requiered");
+                    throw new IllegalArgumentException("Elements are required");
                 }
             });
         }

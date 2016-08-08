@@ -1,4 +1,0 @@
-clusterName: elasticsearch_ci
-servers:     [50.17.73.156]
-indexName:   ontology
-

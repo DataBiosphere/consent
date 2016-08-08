@@ -9,7 +9,6 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class DataSetResourceTest extends DataSetServiceTest {
 
     @ClassRule

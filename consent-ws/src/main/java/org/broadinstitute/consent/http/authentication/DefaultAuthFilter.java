@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +10,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.Optional;
 
 @Priority(1000)
 public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P> {

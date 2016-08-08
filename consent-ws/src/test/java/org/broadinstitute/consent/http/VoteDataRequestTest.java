@@ -19,7 +19,10 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -30,7 +33,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Ignore
 public class VoteDataRequestTest extends ElectionVoteServiceTest {
 
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
