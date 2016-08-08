@@ -1,0 +1,41 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="109" author="lforconesi">
+        <createTable tableName="researcher_property">
+            <column name="propertyId" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="userId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="propertyKey" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="propertyValue" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="110" author="lforconesi">
+        <addForeignKeyConstraint baseColumnNames="userId" baseTableName="researcher_property"
+                                 constraintName="fkUserIdDacuserId" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacUserId"
+                                 referencedTableName="dacuser" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet id="111" author="lforconesi">
+        <addColumn tableName="user_role">
+            <column name="status" type="int" defaultValue="0"/>
+        </addColumn>
+        <addColumn tableName="user_role">
+            <column name="rationale" type="text"/>
+        </addColumn>
+    </changeSet>
+
+
+</databaseChangeLog>
