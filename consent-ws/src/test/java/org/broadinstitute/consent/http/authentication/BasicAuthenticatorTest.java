@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -18,9 +17,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class BasicAuthenticatorTest {
-
-    @Rule
-    public ExpectedException expectedEx = ExpectedException.none();
 
     @Mock
     BasicAuthConfig basicAuths;

@@ -62,7 +62,7 @@ public class DACUserRole {
     public boolean equals(Object o) {
         if(!(o instanceof DACUserRole)) { return false; }
         DACUserRole otherConsent = (DACUserRole) o;
-        return Objects.equal(this.getName(), otherConsent.getName());
+        return Objects.equal(this.getRoleId(), otherConsent.getRoleId());
     }
 
 

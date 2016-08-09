@@ -36,10 +36,12 @@ import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyServ
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerServiceImpl;
 import org.broadinstitute.consent.http.service.ontologyIndexer.StoreOntologyService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.AbstractUserRolesHandler;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
+import org.broadinstitute.consent.http.service.users.UserAPI;
+import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
@@ -53,7 +55,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
@@ -136,7 +137,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance);
         DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, dacUserRoleDAO, consentDAO, mongoInstance, dataSetDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractEmailNotifierAPI.getInstance());
-        DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO);
+        DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance());
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv);
@@ -167,9 +168,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient, config.getElasticSearchConfiguration().getIndexName());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        env.jersey().register(new IndexerResource(indexerService, googleStore));
+        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance);
 
         // How register our resources.
+        env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(DataAccessRequestResource.class);
         env.jersey().register(DataSetResource.class);
         env.jersey().register(DataSetAssociationsResource.class);
@@ -192,6 +194,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(EmailNotifierResource.class);
         env.jersey().register(HelpReportResource.class);
         env.jersey().register(ApprovalExpirationTimeResource.class);
+        env.jersey().register(new UserResource(userAPI));
 
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
