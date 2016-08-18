@@ -203,14 +203,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
 
         //Authentication filters
-        AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
-                .setAuthenticator(new DefaultAuthenticator())
-                .setRealm(" ")
-                .buildAuthFilter();
 
-        List<AuthFilter> filters = Lists.newArrayList(defaultAuthFilter, new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())), new OAuthCustomAuthFilter(new OAuthAuthenticator(config.getGoogleAuthentication()), dacUserRoleDAO));
-        env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
-        env.jersey().register(RolesAllowedDynamicFeature.class);
+        if(!mongoConfiguration.isTestMode()){
+            List<AuthFilter> filters = Lists.newArrayList(new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())), new OAuthCustomAuthFilter(new OAuthAuthenticator(config.getGoogleAuthentication()), dacUserRoleDAO));
+            env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
+            env.jersey().register(RolesAllowedDynamicFeature.class);
+        }
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
 
         // Register a listener to catch an application stop and clear out the API instance created above.
