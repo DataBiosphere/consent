@@ -179,6 +179,16 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
+    public List<String> describeDataAccessIdsForOwner(Integer userId) {
+        List<String> referenceIds = new ArrayList<>();
+        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
+        for(Document doc: accessList){
+            referenceIds.add(doc.get(DarConstants.ID).toString());
+        }
+        return referenceIds;
+    }
+
+    @Override
     public List<Document> describeDataAccessRequests() {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }

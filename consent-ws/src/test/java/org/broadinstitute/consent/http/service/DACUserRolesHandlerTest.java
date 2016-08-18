@@ -40,6 +40,8 @@ public class DACUserRolesHandlerTest {
     private DataSetAssociationDAO datasetAssociationDAO;
     @Mock
     private EmailNotifierService emailService;
+    @Mock
+    private DataAccessRequestAPI dataAccessRequestAPI;
 
     DACUserRolesHandler handler;
 
@@ -47,7 +49,7 @@ public class DACUserRolesHandlerTest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        handler = new DACUserRolesHandler(dacUserDAO, userRoleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailService);
+        handler = new DACUserRolesHandler(dacUserDAO, userRoleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailService, dataAccessRequestAPI);
     }
 
     @Test
