@@ -41,6 +41,8 @@ public interface DataAccessRequestAPI {
 
     Integer getTotalUnReviewedDAR();
 
+    List<String> describeDataAccessIdsForOwner(Integer userId);
+
     // Partial Data Access Requests
     Document createPartialDataAccessRequest(Document dataAccessRequest) throws MongoException;
 
