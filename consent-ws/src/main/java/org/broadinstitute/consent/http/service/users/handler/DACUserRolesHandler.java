@@ -29,6 +29,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 
 public class DACUserRolesHandler extends AbstractUserRolesHandler {
@@ -46,9 +48,10 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final String ALUMNI = DACUserRoles.ALUMNI.getValue();
     private final Map<String, Integer> roleIdMap;
     private final EmailNotifierAPI emailNotifierAPI;
+    private final DataAccessRequestAPI dataAccessRequestAPI;
 
 
-    public DACUserRolesHandler(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI) {
+    public DACUserRolesHandler(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
         this.dacUserDAO = userDao;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
@@ -56,10 +59,11 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.roleIdMap = createRoleMap(userRoleDAO.findRoles());
         this.emailNotifierAPI = emailNotifierAPI;
+        this.dataAccessRequestAPI = dataAccessRequestAPI;
     }
 
-    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI) {
-        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierAPI));
+    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
+        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierAPI, dataAccessRequestAPI));
     }
 
     private Map<String, Integer> createRoleMap(List<Role> roles) {
@@ -305,7 +309,16 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
      *
      * @param updatedUser The user to update
      */
-    private void removeResearcher(DACUser updatedUser) {removeRole(updatedUser.getDacUserId(), RESEARCHER); }
+    private void removeResearcher(DACUser updatedUser) {
+        // Find list of related dars
+        List<String> referenceIds = dataAccessRequestAPI.describeDataAccessIdsForOwner(updatedUser.getDacUserId());
+        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.DATA_ACCESS.getValue(), referenceIds);
+        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.RP.getValue(), referenceIds);
+        for(String referenceId: referenceIds){
+            dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
+        }
+        removeRole(updatedUser.getDacUserId(), RESEARCHER);
+    }
 
     /**
      * Assigns userToAssignRole the role sent as a parameter, if he does not

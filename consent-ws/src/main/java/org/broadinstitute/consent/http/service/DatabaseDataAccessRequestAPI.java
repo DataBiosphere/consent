@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
-import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
@@ -177,6 +176,16 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.addAll(createAccessRequestManage(accessList, electionAccessMap));
         }
         return darManage;
+    }
+
+    @Override
+    public List<String> describeDataAccessIdsForOwner(Integer userId) {
+        List<String> referenceIds = new ArrayList<>();
+        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find(new BasicDBObject("userId", userId)).sort(new BasicDBObject("sortDate", -1));
+        for(Document doc: accessList){
+            referenceIds.add(doc.get(DarConstants.ID).toString());
+        }
+        return referenceIds;
     }
 
     @Override

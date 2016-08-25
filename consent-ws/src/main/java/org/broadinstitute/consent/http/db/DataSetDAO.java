@@ -115,12 +115,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
-    @SqlQuery("SELECT d.objectId as id, CONCAT_WS('   ',d.objectId,d.name) as concatenation FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId and d.active = true" +
+    @SqlQuery("SELECT DISTINCT d.objectId as id, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId and d.active = true" +
             " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
+            " inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +
             "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM" +
             " election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId " +
-            " and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%') order by d.dataSetId")
+            " and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%') or dsp.propertyValue like concat('%',:partial,'%')" +
+            " order by d.dataSetId")
     List< Map<String, String>> getObjectIdsbyPartial(@Bind("partial") String partial);
 
 }
