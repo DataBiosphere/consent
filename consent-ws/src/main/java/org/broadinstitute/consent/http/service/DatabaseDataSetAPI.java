@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
+
+import freemarker.ext.beans.HashAdapter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
@@ -200,8 +202,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public  List< Map<String, String>> autoCompleteDataSets(String partial) {
-        List<Map<String, String>> map =  dsDAO.getObjectIdsbyPartial(partial);
-        return map;
+        return dsDAO.getObjectIdsbyPartial(partial);
     }
 
     @Override
