@@ -22,6 +22,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     String FINAL = "FINAL";
     String DATASET = "DataSet";
     String OPEN = "Open";
+    String CANCELED = "Canceled";
 
     @SqlQuery("select electionId from election  where referenceId = :referenceId and status = '"+ OPEN +"'")
     Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
@@ -69,6 +70,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("update election set lastUpdate = :lastUpdate where electionId in (<electionsId>) ")
     void bulkUpdateElectionLastUpdate(@BindIn("electionsId") List<Integer> electionsId,
                                       @Bind("lastUpdate") Date lastUpdate);
+
+    @SqlUpdate("update election set status = '"+ CANCELED +"' where referenceId in (<referenceId>) and status = '" + OPEN +"' and electiontype = :electionType")
+    void bulkCancelOpenElectionByReferenceIdAndType(@Bind("electionType") String electionType,
+                                                    @BindIn("referenceId") List<String> referenceId);
 
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             +  "e.lastUpdate, e.finalAccessVote, e.electionType  from election e"

@@ -235,6 +235,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
+    public void bulkCancelOpenElectionsByReferenceId(List<String> referenceIds, String electionType) throws Exception{
+        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(electionType, referenceIds);
+    }
+
+    @Override
     public Integer findRPElectionByElectionAccessId(Integer electionId) {
         return electionDAO.findRPElectionByElectionAccessId(electionId);
     }

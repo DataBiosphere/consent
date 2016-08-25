@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.*;
@@ -23,20 +24,19 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
-import org.broadinstitute.consent.http.service.users.handler.AbstractUserRolesHandler;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 /**
- * Implementation class for VoteAPI on top of ElectionDAO database support.
+ * Implementation class for DACUserAPI on top of DACUserDAO database support.
  */
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
-    private final DACUserDAO dacUserDAO;
-    private final DACUserRoleDAO roleDAO;
+    protected final DACUserDAO dacUserDAO;
+    protected final DACUserRoleDAO roleDAO;
     private final UserHandlerAPI rolesHandler;
-    private final Map<String, Integer> roleIdMap;
+    protected final Map<String, Integer> roleIdMap;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
@@ -44,8 +44,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     private final String RESEARCHER = DACUserRoles.RESEARCHER.getValue();
     private final Integer MINIMUM_DAC_USERS = 3;
 
-    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO));
+    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI));
     }
 
     protected org.apache.log4j.Logger logger() {
@@ -58,12 +58,12 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    private DatabaseDACUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO) {
+    protected DatabaseDACUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI) {
         this.dacUserDAO = userDAO;
         this.roleDAO = roleDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
-        this.rolesHandler = AbstractUserRolesHandler.getInstance();
+        this.rolesHandler = userHandlerAPI;
         this.roleIdMap = createRoleMap(roleDAO.findRoles());
         this.dataSetAssociationDAO = dataSetAssociationDAO;
     }
@@ -75,7 +75,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         try {
             dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email shoud be unique.");
+            throw new IllegalArgumentException("Email should be unique.", e);
         }
         if (dacUser.getRoles() != null) {
             insertUserRoles(dacUser, dacUserID);
@@ -143,6 +143,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
 
+
+
+
+
     private List<DACUser> findDacUserReplacementCandidates(DACUser user) {
         List<DACUser> dacUserList = new ArrayList<>();
         List<Integer> candidateRoles = Arrays.asList(roleIdMap.get(RESEARCHER), roleIdMap.get(CHAIRPERSON));
@@ -197,19 +201,31 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      * votes, it' doesn't matter.
      */
     private boolean dataOwnerMustDelegate(DACUser updatedUser) {
+        // verify if it's the only data owner associeted to a data set
+        if (hasDataSetAssociation(updatedUser)) return true;
+        // verify if exist an open election for this data owner
+        if (hasOpenElections(updatedUser)) return true;
+
+        return false;
+    }
+
+    protected boolean hasOpenElections(DACUser updatedUser) {
+        List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
+        if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
+            List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
+            if (voteCount.stream().anyMatch((votes) -> ((votes) == 1))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean hasDataSetAssociation(DACUser updatedUser) {
         List<Integer> associatedDataSetId = dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(updatedUser.getDacUserId());
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
             List<Integer> dataOwnersPerDataSet = dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId);
             if(dataOwnersPerDataSet.stream().anyMatch((dataOwners) -> (dataOwners == 1))){
-                return true;
-            }
-        }
-        // verify if exist an open election for this data owner
-        List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
-        if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
-            List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
-            if (voteCount.stream().anyMatch((votes) -> ((votes) == 1))) {
                 return true;
             }
         }
