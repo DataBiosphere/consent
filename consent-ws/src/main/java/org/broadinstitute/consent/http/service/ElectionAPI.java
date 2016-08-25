@@ -49,6 +49,8 @@ public interface ElectionAPI {
 
     boolean isDataSetElectionOpen();
 
+    void bulkCancelOpenElectionsByReferenceId(List<String> referenceIds, String electionType) throws Exception;
+
     List<Election> getOpenElections(String electionType);
 
 }
