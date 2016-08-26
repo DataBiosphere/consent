@@ -1,11 +1,19 @@
 package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import javax.ws.rs.client.Client;
@@ -38,30 +46,36 @@ abstract public class AbstractTest extends ResourcedTest {
      * Some utility methods for interacting with HTTP-services.
      */
 
-    public <T> Response post(Client client, String path, T value) {
+    public <T> Response post(Client client, String path, T value) throws IOException {
+        mockValidateTokenResponse();
         return post(client, path, "testuser", value);
     }
 
-    public <T> Response post(Client client, String path, String user, T value) {
+    public <T> Response post(Client client, String path, String user, T value) throws IOException {
+        mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer api_token")
                 .post(Entity.json(value), Response.class);
     }
 
-    public <T> Response put(Client client, String path, T value) {
+    public <T> Response put(Client client, String path, T value) throws IOException {
+        mockValidateTokenResponse();
         return put(client, path, "testuser", value);
     }
 
-    public <T> Response put(Client client, String path, String user, T value) {
+    public <T> Response put(Client client, String path, String user, T value) throws IOException {
+        mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
-                .header("REMOTE_USER", user)
+                .header("Authorization", "Bearer api_token")
                 .put(Entity.json(value), Response.class);
     }
 
-    public Response delete(Client client, String path) {
+    public Response delete(Client client, String path) throws IOException {
+        mockValidateTokenResponse();
         return delete(client, path, "testuser");
     }
 
@@ -69,11 +83,12 @@ abstract public class AbstractTest extends ResourcedTest {
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
-                .header("REMOTE_USER", user)
+                .header("Authorization", "Bearer api_token")
                 .delete(Response.class);
     }
 
-    public Response getJson(Client client, String path) {
+    public Response getJson(Client client, String path) throws IOException {
+        mockValidateTokenResponse();
         return getWithMediaType(client, path, MediaType.APPLICATION_JSON_TYPE);
     }
 
@@ -84,16 +99,18 @@ abstract public class AbstractTest extends ResourcedTest {
     private Response getWithMediaType(Client client, String path, MediaType mediaType) {
         return client.target(path)
                 .request(mediaType)
-                .header("REMOTE_USER", "testuser")
+                .header("Authorization", "Bearer api_token")
                 .get(Response.class);
     }
 
-    public Response check200(Response response) {
+    public Response check200(Response response) throws IOException {
         return checkStatus(200, response);
     }
 
-    public Response checkStatus(int status, Response response) {
+    public Response checkStatus(int status, Response response) throws IOException {
+
         assertThat(response.getStatus()).isEqualTo(status);
+
         return response;
     }
 
@@ -140,5 +157,28 @@ abstract public class AbstractTest extends ResourcedTest {
         Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
         Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
         UseRestrictionValidator.getInstance().setClient(clientMock);
+    }
+
+
+    public void mockValidateTokenResponse() throws IOException {
+        String result = "{ " +
+                "\"azp\": \"1234564ko.apps.googleusercontent.com\", " +
+                "\"aud\": \"clientId\", " +
+                "\"sub\": \"1234564\", " +
+                "\"scope\": \"https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/plus.me\", " +
+                "\"exp\": \"1472235144\", " +
+                "\"expires_in\": \"3567\", " +
+                "\"email\": \"oauthuser@broadinstitute.org\", " +
+                "\"email_verified\": \"true\", " +
+                "\"access_type\": \"online\" " +
+                " }";
+        InputStream inputStream = IOUtils.toInputStream(result);
+        HttpClient client = Mockito.mock(HttpClient.class);
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        HttpEntity entity = Mockito.mock(HttpEntity.class);
+        Mockito.when(client.execute(Mockito.any())).thenReturn(mockResponse);
+        Mockito.when(mockResponse.getEntity()).thenReturn(entity);
+        Mockito.when(entity.getContent()).thenReturn(inputStream);
+        OAuthAuthenticator.getInstance().setHttpClient(client);
     }
 }

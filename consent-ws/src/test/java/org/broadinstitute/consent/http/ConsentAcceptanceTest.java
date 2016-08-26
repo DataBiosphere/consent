@@ -18,6 +18,7 @@ import org.junit.Test;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
@@ -27,8 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ConsentAcceptanceTest extends ConsentServiceTest {
 
     Timestamp createDate = new Timestamp(new Date().getTime());
-
-
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
@@ -48,18 +47,19 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    public void testCreateConsent() {
+    public void testCreateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(true,  new Everything(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
         assertValidConsentResource(client, rec);
     }
 
     @Test
-    public void testUpdateConsent() {
+    public void testUpdateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(true,  new Everything(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
+        mockValidateTokenResponse();
         Consent created = retrieveConsent(client, createdLocation);
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
@@ -72,7 +72,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    public void testDeleteConsent() {
+    public void testDeleteConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(true,  new Everything(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
@@ -82,7 +82,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
 
     @Test
-    public void testOnlyOrNamedConsent() {
+    public void testOnlyOrNamedConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new Only("http://broadinstitute.org/ontology/consent/research_on", new Or(new Named("DOID:1"), new Named("DOID:2"))),
                                   null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
@@ -90,28 +90,28 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    public void testAndConsent() {
+    public void testAndConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new And(new Named("DOID:1"), new Named("DOID:2")), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
         assertValidConsentResource(client, rec);
     }
 
     @Test
-    public void testNotConsent() {
+    public void testNotConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false, new Not(new Named("DOID:1")),  null, UUID.randomUUID().toString(), createDate, createDate, createDate);
         assertValidConsentResource(client, rec);
     }
 
     @Test
-    public void testNothingConsent() {
+    public void testNothingConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false,  new Nothing(),  null, UUID.randomUUID().toString(), createDate, createDate, createDate);
         assertValidConsentResource(client, rec);
     }
 
     @Test
-    public void testSomeConsent() {
+    public void testSomeConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = new Consent(false,  new Some(
                 "http://broadinstitute.org/ontology/consent/research_on",
@@ -120,9 +120,10 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
 
-    private void assertValidConsentResource(Client client, Consent rec) {
+    private void assertValidConsentResource(Client client, Consent rec) throws IOException {
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
+        mockValidateTokenResponse();
         Consent created = retrieveConsent(client, createdLocation);
 
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);

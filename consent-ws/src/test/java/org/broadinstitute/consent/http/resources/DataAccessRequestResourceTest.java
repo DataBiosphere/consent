@@ -137,7 +137,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
     }
 
 
-    private List<Document> retrieveDars(Client client, String url) {
+    private List<Document> retrieveDars(Client client, String url) throws IOException {
         return getJson(client, url).readEntity(new GenericType<List<Document>>(){});
     }
 

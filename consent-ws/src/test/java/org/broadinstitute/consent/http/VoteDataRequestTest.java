@@ -28,6 +28,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,8 +95,9 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testCreateDataRequestVote() {
+    public void testCreateDataRequestVote() throws IOException {
         // should exist an election for specified data request
+        mockValidateTokenResponse();
         Integer electionId = createElection();
         Client client = ClientBuilder.newClient();
         List<Vote> votes = getJson(client, voteDataRequestPath(DATA_REQUEST_ID)).readEntity(new GenericType<List<Vote>>() {
@@ -105,6 +107,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         vote.setRationale(RATIONALE);
         checkStatus(OK,
                 post(client, voteDataRequestIdPath(DATA_REQUEST_ID, votes.get(0).getVoteId()), vote));
+        mockValidateTokenResponse();
         //describe vote
         Vote created = retrieveVote(client, voteDataRequestIdPath(DATA_REQUEST_ID, votes.get(0).getVoteId()));
         assertThat(created.getElectionId()).isEqualTo(electionId);
@@ -119,7 +122,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
 
-    public void deleteVotes(List<Vote> votes) {
+    public void deleteVotes(List<Vote> votes) throws IOException {
         Client client = ClientBuilder.newClient();
         for (Vote vote : votes) {
             checkStatus(OK,
@@ -127,19 +130,20 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         }
     }
 
-    public void updateVote(Integer id, Vote vote) {
+    public void updateVote(Integer id, Vote vote) throws IOException {
         Client client = ClientBuilder.newClient();
         vote.setVote(true);
         vote.setRationale(null);
         checkStatus(OK,
                 put(client, voteDataRequestIdPath(DATA_REQUEST_ID, id), vote));
+        mockValidateTokenResponse();
         vote = retrieveVote(client, voteDataRequestIdPath(DATA_REQUEST_ID, id));
         assertThat(vote.getRationale()).isNull();
         assertThat(vote.getUpdateDate()).isNotNull();
         assertThat(vote.getVote()).isTrue();
     }
 
-    private Integer createElection() {
+    private Integer createElection() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -151,17 +155,17 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
 
-    public void testDataRequestPendingCase(Integer dacUserId) {
+    public void testDataRequestPendingCase(Integer dacUserId) throws IOException {
         Client client = ClientBuilder.newClient();
         List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isNotNull();
-        assertThat(pendingCases.size()).isEqualTo(1);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/4");
+        assertThat(pendingCases.size()).isEqualTo(2);
+        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/5");
         assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(DATA_REQUEST_ID);
     }
 
     @Test
-    public void testDataRequestPendingCaseWithInvalidUser() {
+    public void testDataRequestPendingCaseWithInvalidUser() throws IOException {
         Client client = ClientBuilder.newClient();
         List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(789)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isEmpty();

@@ -14,6 +14,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
     @Test
-    public void testGetElectionsReviewEmpty() {
+    public void testGetElectionsReviewEmpty() throws IOException {
         Client client = ClientBuilder.newClient();
         ElectionReview electionReview = getJson(client, electionReviewPath(CONSENT_ID, ElectionType.TRANSLATE_DUL.getValue())).readEntity(new GenericType<ElectionReview>() {
         });
@@ -42,7 +43,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
     @Test
-    public void testGetElectionReview(){
+    public void testGetElectionReview() throws IOException {
         Client client = ClientBuilder.newClient();
         createElection();
         ElectionReview electionReview = getJson(client, electionReviewPath(CONSENT_ID, ElectionType.TRANSLATE_DUL.getValue())).readEntity(new GenericType<ElectionReview>() {
@@ -55,14 +56,14 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
     @Test
-    public void testVerifyOpenElectionsWithoutElections(){
+    public void testVerifyOpenElectionsWithoutElections() throws IOException {
         Client client = ClientBuilder.newClient();
         HashMap openElections = getJson(client, openElectionReviewPath()).readEntity(HashMap.class);
         assertThat(openElections.get("open").equals(Boolean.FALSE));
     }
 
     @Test
-    public void testVerifyOpenElectionsWithExistentElections(){
+    public void testVerifyOpenElectionsWithExistentElections() throws IOException {
         Client client = ClientBuilder.newClient();
         createElection();
         HashMap openElections = getJson(client, openElectionReviewPath()).readEntity(HashMap.class);
@@ -71,7 +72,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
     @Test
-    public void testGetElectionReviewByNonExistentElectionId(){
+    public void testGetElectionReviewByNonExistentElectionId() throws IOException {
         Client client = ClientBuilder.newClient();
         ElectionReview electionReview = getJson(client, electionReviewByElectionIdPath(123)).readEntity(new GenericType<ElectionReview>() {
         });
@@ -79,7 +80,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
     @Test
-    public void testGetElectionReviewByExistentElectionId(){
+    public void testGetElectionReviewByExistentElectionId() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = createElection();
         ElectionReview electionReview = getJson(client, electionReviewByElectionIdPath(election.getElectionId())).readEntity(new GenericType<ElectionReview>() {
@@ -92,8 +93,9 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
     @Test
-    public void testGetLastClosedElectionReviewByReferenceId(){
+    public void testGetLastClosedElectionReviewByReferenceId() throws IOException {
         Client client = ClientBuilder.newClient();
+        mockValidateTokenResponse();
         Election election = createElection();
         ElectionReview electionReview = getJson(client, lastElectionReviewPath(CONSENT_ID)).readEntity(new GenericType<ElectionReview>() {
         });
@@ -102,7 +104,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     }
 
 
-    private Election createElection() {
+    private Election createElection() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
@@ -114,8 +116,9 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
         return created;
     }
 
-    public void deleteElection() {
+    public void deleteElection() throws IOException {
         Client client = ClientBuilder.newClient();
+        mockValidateTokenResponse();
         List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() {
         });
         Integer electionId = votes.get(0).getElectionId();

@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,14 +32,13 @@ public class DatasetAssociationTest extends DatasetAssociationServiceTest {
     }
 
     @Test
-    public void testCreateDatasetAssociation() {
+    public void testCreateDatasetAssociation() throws IOException {
         Client client = ClientBuilder.newClient();
         List<Integer> dataOwnerIds = new ArrayList();
         dataOwnerIds.add(1);
         dataOwnerIds.add(2);
         List<Integer> nonOwnerIds = new ArrayList();
         nonOwnerIds.add(3);
-
         //test Create
         checkStatus(CREATED, post(client, datasetAssociationPath(DATASET_OBJECTID),dataOwnerIds));
         //test Duplicated association

@@ -14,6 +14,7 @@ import org.junit.Test;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
+import java.io.IOException;
 import java.util.List;
 
 public class ConsentManageTest extends ElectionVoteServiceTest {
@@ -31,7 +32,7 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testConsentManage() {
+    public void testConsentManage() throws IOException {
         Integer electionId = createElection(CONSENT_ID);
         Client client = ClientBuilder.newClient();
         List<ConsentManage> consentManage = getJson(client, consentManagePath()).readEntity(new GenericType<List<ConsentManage>>() { });
@@ -60,15 +61,19 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
     public void deleteVotes(List<Vote> votes, String consentId) {
         Client client = ClientBuilder.newClient();
         votes.stream().forEach((vote) -> {
-            checkStatus(
-                    OK,
-                    delete(client,
-                            voteConsentIdPath(consentId, vote.getVoteId())));
+            try {
+                checkStatus(
+                        OK,
+                        delete(client,
+                                voteConsentIdPath(consentId, vote.getVoteId())));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
 
     }
 
-    private Integer createElection(String consentId) {
+    private Integer createElection(String consentId) throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());

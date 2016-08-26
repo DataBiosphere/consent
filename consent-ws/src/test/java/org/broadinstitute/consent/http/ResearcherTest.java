@@ -9,6 +9,7 @@ import org.junit.Test;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ public class ResearcherTest extends AbstractTest {
      * Invalid user
      */
     @Test
-    public void testRegisterResearcherInvalidUser() {
+    public void testRegisterResearcherInvalidUser() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, 8531, false)), createResearcherPropertiesRequiredFields()));
     }
@@ -60,7 +61,7 @@ public class ResearcherTest extends AbstractTest {
      * Invalid properties
      */
     @Test
-    public void testRegisterResearcherWithInvalidProperties(){
+    public void testRegisterResearcherWithInvalidProperties() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(BAD_REQUEST, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, false)), createResearcherPropertiesInvalidProperties()));
     }
@@ -69,7 +70,7 @@ public class ResearcherTest extends AbstractTest {
      * Incomplete fields
      */
     @Test
-    public void testRegisterResearcherIncompleteData(){
+    public void testRegisterResearcherIncompleteData() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(BAD_REQUEST, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), createResearcherPropertiesIncomplete()));
     }
@@ -78,7 +79,7 @@ public class ResearcherTest extends AbstractTest {
      * Register researcher with required fields
      */
     @Test
-    public void testRegisterResearcherRequiredFields(){
+    public void testRegisterResearcherRequiredFields() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(CREATED, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), createResearcherPropertiesRequiredFields()));
         check200(delete(client,  path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true))));
@@ -89,7 +90,7 @@ public class ResearcherTest extends AbstractTest {
      * Register researcher with all fields
      */
     @Test
-    public void testRegisterResearcherAllFields(){
+    public void testRegisterResearcherAllFields() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(CREATED, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), createResearcherPropertiesWithAllFields()));
         check200(delete(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true))));
@@ -100,7 +101,7 @@ public class ResearcherTest extends AbstractTest {
      * Invalid properties
      */
     @Test
-    public void testUpdateResearcherWithInvalidProperties(){
+    public void testUpdateResearcherWithInvalidProperties() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(BAD_REQUEST, put(client,path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, false)), createResearcherPropertiesInvalidProperties()));
     }
@@ -109,7 +110,7 @@ public class ResearcherTest extends AbstractTest {
      * Incomplete fields
      */
     @Test
-    public void testUpdateResearcherIncompleteData(){
+    public void testUpdateResearcherIncompleteData() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(BAD_REQUEST, put(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), createResearcherPropertiesIncomplete()));
     }
@@ -118,14 +119,14 @@ public class ResearcherTest extends AbstractTest {
      * Invalid user
      */
     @Test
-    public void testUpdateResearcherInvalidUser() {
+    public void testUpdateResearcherInvalidUser() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND, put(client,  path2Url(String.format(RESEARCHER_REGISTER_URL, 8531, true)), createResearcherPropertiesRequiredFields()));
     }
 
 
     @Test
-    public void testGetResearcherPropertiesForDAR() {
+    public void testGetResearcherPropertiesForDAR() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(CREATED, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), createResearcherPropertiesWithAllFields()));
         Response response = checkStatus(OK, getJson(client, path2Url(String.format(RESEARCHER_DAR_URL, USER_ID))));
@@ -194,7 +195,4 @@ public class ResearcherTest extends AbstractTest {
         properties.put(ResearcherFields.PI_eRA_COMMONS_ID.getValue(), ERA_COMMONS_ID);
         return properties;
     }
-
-
-
 }

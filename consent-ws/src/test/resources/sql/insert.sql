@@ -10,6 +10,7 @@ insert into dacuser(dacUserId,email,displayName,createDate) values(1,'test@broad
 insert into dacuser(dacUserId,email,displayName,createDate) values(2,'test2@broad.com','testUser1','2015-08-05 13:58:50');
 insert into dacuser(dacUserId,email,displayName,createDate) values(3,'test3@broad.com','testUser2','2015-08-05 13:58:50');
 insert into dacuser(dacUserId,email,displayName,createDate) values(4,'test4@broad.com','testUser3','2015-08-05 13:58:50');
+insert into dacuser(dacUserId,email,displayName,createDate) values(5,'oauthuser@broadinstitute.org','oauth','2015-08-05 13:58:50');
 insert into election(electionId, electionType, status, createDate, referenceId) values (130, '2', 'Closed', '2015-11-06 17:52:18', 'testId4');
 INSERT INTO vote(voteId, vote, dacUserId, createDate, electionId, rationale, reminderSent, type) VALUES (2000, 1, 1, '2015-08-05 13:58:50', 130, 'Empty', 0, 'CHAIRPERSON');
 insert into researchpurpose (purposeId,purpose) values(1,'General Use');
@@ -22,5 +23,8 @@ insert into user_role(roleId, dacUserId) values(1,4);
 insert into user_role(roleId, dacUserId) values(4,4);
 insert into user_role(roleId, dacUserId) values(6,1);
 insert into user_role(roleId, dacUserId) values(6,2);
-
+insert into user_role(roleId, dacUserId) values(6,5);
+insert into user_role(roleId, dacUserId) values(5,5);
+insert into user_role(roleId, dacUserId) values(4,5);
+insert into user_role(roleId, dacUserId) values(2,5);
 
