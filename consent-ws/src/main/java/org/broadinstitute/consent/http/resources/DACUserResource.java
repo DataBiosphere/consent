@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.models.dto.UserRoleStatusDTO;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
@@ -121,6 +122,21 @@ public class DACUserResource extends Resource {
             return Response.ok().entity(delegationResponse).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        }
+    }
+
+    @PUT
+    @Path("/status/{userId}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed("ADMIN")
+    public Response updateStatus(@PathParam("userId") Integer userId, UserRoleStatusDTO roleStatusDTO) {
+        try {
+            return Response.ok(dacUserAPI.updateRoleStatus(roleStatusDTO, userId)).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 

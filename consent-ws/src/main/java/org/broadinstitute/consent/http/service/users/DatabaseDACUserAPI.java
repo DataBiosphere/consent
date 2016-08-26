@@ -19,10 +19,12 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.dto.UserRoleStatusDTO;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -142,10 +144,19 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         return response;
     }
 
-
-
-
-
+    @Override
+    public DACUser updateRoleStatus(UserRoleStatusDTO roleStatusDTO, Integer userId) {
+        Integer statusId = RoleStatus.getValueByStatus(roleStatusDTO.getStatus());
+        Integer roleId = roleIdMap.get(roleStatusDTO.getRole().toUpperCase());
+        if(statusId == null){
+            throw new IllegalArgumentException(roleStatusDTO.getStatus() + " is not a valid status.");
+        }
+        if(roleId == null){
+            throw new IllegalArgumentException(roleStatusDTO.getRole() + " is not a valid role.");
+        }
+        roleDAO.updateUserRoleStatus(userId, roleIdMap.get(roleStatusDTO.getRole().toUpperCase()), statusId, roleStatusDTO.getRationale());
+        return describeDACUserById(userId);
+    }
 
     private List<DACUser> findDacUserReplacementCandidates(DACUser user) {
         List<DACUser> dacUserList = new ArrayList<>();

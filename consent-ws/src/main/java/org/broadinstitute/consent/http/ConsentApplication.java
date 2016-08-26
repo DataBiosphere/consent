@@ -42,6 +42,8 @@ import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
+import org.broadinstitute.consent.http.service.users.handler.DatabaseResearcherAPI;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
@@ -115,6 +117,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         final DataSetAuditDAO dataSetAuditDAO = jdbi.onDemand(DataSetAuditDAO.class);
         final MailServiceDAO mailServiceDAO = jdbi.onDemand(MailServiceDAO.class);
+        final ResearcherPropertyDAO  researcherPropertyDAO = jdbi.onDemand(ResearcherPropertyDAO.class);
 
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(config.getUseRestrictionConfiguration());
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
@@ -168,6 +171,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient, config.getElasticSearchConfiguration().getIndexName());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
+        final ResearcherAPI researcherAPI = new DatabaseResearcherAPI(researcherPropertyDAO, dacUserDAO);
         final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance);
 
         // How register our resources.
@@ -195,6 +199,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(HelpReportResource.class);
         env.jersey().register(ApprovalExpirationTimeResource.class);
         env.jersey().register(new UserResource(userAPI));
+        env.jersey().register(new ResearcherResource(researcherAPI));
+
 
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
