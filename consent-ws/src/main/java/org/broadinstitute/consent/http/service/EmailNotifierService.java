@@ -56,6 +56,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private static final String DATA_OWNER_CONSOLE_URL = "data_owner_console";
     private static final String CHAIR_CONSOLE_URL = "chair_console";
     private static final String MEMBER_CONSOLE_URL = "user_console";
+    private static final String REVIEW_RESEARCHER_URL = "researcher_review";
+
 
 
     public enum ElectionTypeString {
@@ -225,6 +227,20 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
+    @Override
+    public void sendNewResearcherCreatedMessage(Integer researcherId) throws IOException, TemplateException, MessagingException {
+        DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
+        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+        if(isServiceActive){
+            String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
+            for(DACUser admin: admins){
+                Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL);
+                mailService.sendNewResearcherCreatedMessage(admin.getEmail(), template);
+            }
+        }
+    }
+
+
     private List<VoteAndElectionModel> findVotesDelegationInfo(List<Integer> voteIds, Integer oldUserId){
         if(CollectionUtils.isNotEmpty(voteIds)) {
             List<VoteAndElectionModel> votesInformation = mailServiceDAO.findVotesDelegationInfo(voteIds, oldUserId);
@@ -267,6 +283,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 return "";
         }
     }
+
+    private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL) throws IOException, TemplateException {
+        return templateHelper.getNewRearcherCreatedTemplate(admin, researcherName, URL);
+    }
+
 
     private Writer getUserDelegateResponsibilitiesTemplate(DACUser user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
         return templateHelper.getUserDelegateResponsibilitiesTemplate(user.getDisplayName(), delegatedVotes, newRole, URL);

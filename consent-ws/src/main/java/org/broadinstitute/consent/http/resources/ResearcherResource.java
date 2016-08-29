@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.models.dto.Error;
 import javax.annotation.security.RolesAllowed;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class ResearcherResource {
 
     private ResearcherAPI researcherAPI;
+    private final EmailNotifierAPI emailApi;
 
-    public ResearcherResource(ResearcherAPI researcherAPI){
+    public ResearcherResource(ResearcherAPI researcherAPI, EmailNotifierAPI notifierAPI){
         this.researcherAPI = researcherAPI;
+        this.emailApi = notifierAPI;
     }
 
     @POST
@@ -26,6 +29,7 @@ public class ResearcherResource {
     public Response registerResearcher(@QueryParam("validate") Boolean validate, @Context UriInfo info, @PathParam("userId") Integer userId, Map<String,String> researcherPropertiesMap) {
         try{
             researcherAPI.registerResearcher(researcherPropertiesMap, userId, validate);
+            emailApi.sendNewResearcherCreatedMessage(userId);
             return Response.created(info.getRequestUriBuilder().build()).build();
         }catch (IllegalArgumentException e){
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();

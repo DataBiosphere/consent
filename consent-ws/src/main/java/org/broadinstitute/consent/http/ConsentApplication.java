@@ -199,7 +199,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(HelpReportResource.class);
         env.jersey().register(ApprovalExpirationTimeResource.class);
         env.jersey().register(new UserResource(userAPI));
-        env.jersey().register(new ResearcherResource(researcherAPI));
+        env.jersey().register(new ResearcherResource(researcherAPI, AbstractEmailNotifierAPI.getInstance()));
 
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
