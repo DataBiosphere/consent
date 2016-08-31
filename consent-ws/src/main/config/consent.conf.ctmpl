@@ -8,13 +8,14 @@ server:
       port: 8180
 logging:
   level: {{.Data.logging_level}}
-#  appenders:
-#   - type: file
-#      currentLogFilename: /opt/consent.log
-#      threshold: ALL
-#      archive: true
-#      archivedLogFilenamePattern: /opt/consent-%d.log
-#      archivedFileCount: 5
+  loggers:
+    "io.dropwizard": INFO
+    "org.eclipse.jetty": INFO
+    "org.elasticsearch": INFO
+    "org.hibernate": INFO
+    "org.mongodb": INFO
+    "org.quartz": INFO
+    "org.reflections.Reflections": ERROR
 database:
   driverClass: com.mysql.jdbc.Driver
   user: {{.Data.db_user}}
