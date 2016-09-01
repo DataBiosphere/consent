@@ -17,6 +17,12 @@ public class UserRoleStatusDTO {
 
     }
 
+    public UserRoleStatusDTO(String status, String role, String rationale){
+        this.status = status;
+        this.role = role;
+        this.rationale = rationale;
+    }
+
     public String getStatus() {
         return status;
     }

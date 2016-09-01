@@ -17,6 +17,7 @@ insert into researchpurpose (purposeId,purpose) values(1,'General Use');
 insert into dataset (dataSetId,name,createDate, objectId, active) values(1,'test','2015-08-05 13:58:50','SC-20660', true);
 insert into dataset (dataSetId,name,createDate) values(2,'test','2015-08-05 13:58:50');
 insert into user_role(roleId, dacUserId) values(2,1);
+insert into user_role(roleId, dacUserId, status) values(5,1,0);
 insert into user_role(roleId, dacUserId) values(1,2);
 insert into user_role(roleId, dacUserId) values(1,3);
 insert into user_role(roleId, dacUserId) values(1,4);

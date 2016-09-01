@@ -10,6 +10,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.junit.After;
@@ -127,6 +128,35 @@ public class DACUserTest extends DACUserServiceTest {
         List<DACUser> dacUsers = (List<DACUser>)response.get("delegateCandidates");
         assertThat(dacUsers).isEmpty();
         assertThat(needsDelegation).isFalse();
+    }
+
+    @Test
+    public void testGetUserStatusWithInvalidId() throws IOException {
+        Client client = ClientBuilder.newClient();
+        checkStatus(NOT_FOUND, getJson(client, statusValue(42525)));
+    }
+
+    @Test
+    public void testGetUserStatusSuccess() throws IOException {
+        Client client = ClientBuilder.newClient();
+        Response response = getJson(client, statusValue(1));
+        DACUserRole userRole = response.readEntity(DACUserRole.class);
+        assertThat(userRole.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
+    }
+
+    @Test
+    public void testUpdateStatus() throws IOException {
+        Client client = ClientBuilder.newClient();
+        DACUserRole role = new DACUserRole();
+        role.setRoleId(5);
+        role.setStatus(RoleStatus.APPROVED.name());
+        Response response = put(client, statusValue(1), role);
+        checkStatus(OK, response);
+        DACUser user  = response.readEntity(DACUser.class);
+        DACUserRole researcher = user.getRoles().stream().filter(userRole ->
+                userRole.getName().equalsIgnoreCase(DACUserRoles.RESEARCHER.getValue()))
+                .findFirst().get();
+        assertThat(researcher.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
     }
 
 }

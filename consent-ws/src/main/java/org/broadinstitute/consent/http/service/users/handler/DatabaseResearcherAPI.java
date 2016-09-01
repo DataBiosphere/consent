@@ -1,23 +1,38 @@
 package org.broadinstitute.consent.http.service.users.handler;
 
+import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 
+import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DatabaseResearcherAPI implements ResearcherAPI{
 
     private ResearcherPropertyDAO researcherPropertyDAO;
     private DACUserDAO dacUserDAO;
+    private final EmailNotifierAPI emailApi;
 
-    public DatabaseResearcherAPI(ResearcherPropertyDAO researcherPropertyDAO, DACUserDAO dacUserDAO) {
+    protected org.apache.log4j.Logger logger() {
+        return org.apache.log4j.Logger.getLogger("DatabaseResearcherAPI");
+    }
+
+    public DatabaseResearcherAPI(ResearcherPropertyDAO researcherPropertyDAO, DACUserDAO dacUserDAO, EmailNotifierAPI emailApi) {
         this.researcherPropertyDAO = researcherPropertyDAO;
         this.dacUserDAO = dacUserDAO;
+        this.emailApi = emailApi;
     }
 
     @Override
@@ -29,6 +44,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         validateExistentFields(researcherPropertiesMap);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId, new Date(), null);
         researcherPropertyDAO.insertAll(properties);
+        notifyAdmins(userId);
         return describeResearcherProperties(userId);
     }
 
@@ -41,7 +57,19 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId, null, new Date());
         researcherPropertyDAO.deleteAllPropertiesByUser(userId);
         researcherPropertyDAO.insertAll(properties);
+        notifyAdmins(userId);
         return describeResearcherProperties(userId);
+    }
+
+    private void notifyAdmins(Integer userId){
+        Boolean completed = researcherPropertyDAO.isProfileCompleted(userId);
+        if(completed != null && completed){
+            try {
+                emailApi.sendNewResearcherCreatedMessage(userId);
+            } catch (IOException | TemplateException | MessagingException e) {
+                logger().error("Error when notifying the admin(s) about the new researcher creation: " + dacUserDAO.findDACUserById(userId).getDisplayName());
+            }
+        }
     }
 
     @Override
@@ -73,6 +101,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.STATE.getValue(), properties.containsKey(ResearcherFields.STATE.getValue()) ? properties.get(ResearcherFields.STATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.STREET_ADDRESS_2.getValue(), properties.containsKey(ResearcherFields.STREET_ADDRESS_2.getValue()) ? properties.get(ResearcherFields.STREET_ADDRESS_2.getValue()) : null);
         rpForDAR.put(ResearcherFields.DIVISION.getValue(), properties.containsKey(ResearcherFields.DIVISION.getValue()) ? properties.get(ResearcherFields.DIVISION.getValue()) : null);
+        rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
         return rpForDAR;
     }
 

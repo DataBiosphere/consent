@@ -7,13 +7,24 @@ import com.mongodb.client.MongoCursor;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -24,7 +35,14 @@ import org.slf4j.LoggerFactory;
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -334,6 +352,26 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             closeElection = CollectionUtils.isEmpty(pendingVotes) ? true : false;
         }
         return closeElection;
+    }
+
+    @Override
+    public String darDatasetElectionStatus(String darReferenceId){
+        List<String> dataSets = describeDataAccessRequestById(darReferenceId).get(DarConstants.DATASET_ID, List.class);
+        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
+        if(CollectionUtils.isEmpty(dsForApproval)) {
+            return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
+        } else {
+            List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
+            for(Election e: dsElectionsToVoteOn){
+                if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
+                    return DataSetElectionStatus.DS_PENDING.getValue();
+                } else if(!e.getFinalAccessVote()){
+                    return DataSetElectionStatus.DS_DENIED.getValue();
+                }
+            }
+            return DataSetElectionStatus.DS_APPROVED.getValue();
+        }
+
     }
 
     @Override

@@ -20,6 +20,10 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     @SqlQuery("select * from researcher_property where userId = :userId")
     List<ResearcherProperty> findResearcherPropertiesByUser(@Bind("userId") Integer userId);
 
+    @SqlQuery("select propertyValue from researcher_property where userId = :userId and propertyKey = 'completed'")
+    Boolean isProfileCompleted(@Bind("userId") Integer userId);
+
+
     @SqlBatch("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, :propertyKey, :propertyValue)")
     void insertAll(@BindBean Collection<ResearcherProperty> researcherProperties);
 

@@ -10,6 +10,7 @@ import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -100,10 +101,10 @@ public class DatabaseDataSetAssociationAPITest {
     DataSet ds1 = new DataSet(1, "DS-001", "DS-001", new Date(), true);
     DataSet ds2 = new DataSet(2, "DS-002", "DS-002", new Date(), true);
 
-    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList());
-    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList());
-    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());
-    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());
+    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), chairpersonList());
+    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList());
+    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList());
+    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList());
 
     private List<DACUserRole> chairpersonList(){
         return Arrays.asList(getChairpersonRole());
