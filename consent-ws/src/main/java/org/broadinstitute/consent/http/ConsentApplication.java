@@ -146,8 +146,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
-
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
+        OAuthAuthenticator.initInstance(config.getGoogleAuthentication());
 
         // Mail Services
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
@@ -201,14 +201,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new UserResource(userAPI));
         env.jersey().register(new ResearcherResource(researcherAPI));
 
-
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
                 .buildAuthFilter();
-
-        List<AuthFilter> filters = Lists.newArrayList(defaultAuthFilter, new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())), new OAuthCustomAuthFilter(new OAuthAuthenticator(config.getGoogleAuthentication()), dacUserRoleDAO));
+        List<AuthFilter> filters = Lists.newArrayList(defaultAuthFilter, new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())), new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
@@ -242,6 +240,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractApprovalExpirationTimeAPI.clearInstance();
                 AbstractUseRestrictionValidatorAPI.clearInstance();
                 AbstractUserRolesHandler.clearInstance();
+                AbstractOAuthAuthenticator.clearInstance();
                 super.lifeCycleStopped(event);
             }
         });

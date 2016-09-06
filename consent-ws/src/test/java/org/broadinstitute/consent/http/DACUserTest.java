@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
+import java.io.IOException;
 import java.util.*;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -32,11 +33,11 @@ public class DACUserTest extends DACUserServiceTest {
     private static final String CHAIRPERSON = "CHAIRPERSON";
     private static final String DACMEMBER = "DACMEMBER";
     private static String DACMEMBERMAIL;
-    private static String CONSENT_ID = "testId";
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
             ConsentApplication.class, resourceFilePath("consent-config.yml"));
+
 
     @Override
     public DropwizardAppRule<ConsentConfiguration> rule() {
@@ -51,7 +52,7 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Before
-    public void initialize() {
+    public void initialize() throws Exception{
         DACUser chairperson = testCreate(createDacUser("Chair Person", CHAIR_USER_EMAIL, CHAIRPERSON));
         DACUser dacmember = testCreate(createDacUser("DAC Member", DAC_USER_EMAIL, DACMEMBER));
 
@@ -65,19 +66,20 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Override
-    public DACUser retrieveDacUser(Client client, String url) {
+    public DACUser retrieveDacUser(Client client, String url) throws IOException {
+        mockValidateTokenResponse();
         return super.retrieveDacUser(client, url);
     }
 
     @After
-    public void removeTestData() {
+    public void removeTestData() throws IOException {
         Client client = ClientBuilder.newClient();
         delete(client, dacUserPathByEmail(CHAIR_USER_EMAIL));
         delete(client, dacUserPathByEmail(DAC_USER_EMAIL));
         delete(client, dacUserPathByEmail(CHAIR_2_USER_EMAIL));
     }
 
-    public DACUser testCreate(DACUser dacuser) {
+    public DACUser testCreate(DACUser dacuser) throws IOException {
         Client client = ClientBuilder.newClient();
         Response response = checkStatus(CREATED, post(client, dacUserPath(), dacuser));
         String createdLocation = checkHeader(response, "Location");
@@ -85,7 +87,7 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Test
-    public void deleteUser() {
+    public void deleteUser() throws IOException {
         Client client = ClientBuilder.newClient();
         DACUser user = getJson(client, dacUserPathByEmail(DACMEMBERMAIL)).readEntity(DACUser.class);
         checkStatus(OK, delete(client, dacUserPathByEmail(user.getEmail())));
@@ -93,14 +95,15 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Test
-    public void retrieveDACUserWithInvalidEmail() {
+    public void retrieveDACUserWithInvalidEmail() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND, getJson(client, dacUserPathByEmail(INVALID_USER_EMAIL)));
     }
 
     @Test
-    public void testUpdateDACUser() {
+    public void testUpdateDACUser() throws IOException {
         Client client = ClientBuilder.newClient();
+        mockValidateTokenResponse();
         DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
         Map<String, Object> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser",user);
@@ -110,7 +113,7 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Test
-    public void testValidateDacUserDelegationNotNeeded() {
+    public void testValidateDacUserDelegationNotNeeded() throws IOException {
         Client client = ClientBuilder.newClient();
         DACUser user = getJson(client, dacUserPathByEmail(DAC_USER_EMAIL)).readEntity(DACUser.class);
         user.setEmail(DAC_USER_EMAIL);

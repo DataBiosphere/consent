@@ -9,7 +9,6 @@ import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -29,6 +28,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +42,6 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     private static String DATA_REQUEST_ID_2;
     private static final String INVALID_DATA_REQUEST_ID = "55fb15569a434c232c5d50a9";
     private static final String INVALID_STATUS = "testStatus";
-    private static final String FINAL_RATIONALE = "Test";
     private static final String TEST_DATABASE_NAME = "TestConsent";
     private MongodExecutable mongodExe;
     private MongodProcess mongod;
@@ -97,7 +96,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testCreateDataRequestElection() {
+    public void testCreateDataRequestElection() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -106,6 +105,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         Response response = checkStatus(CREATED,
                 post(client, electionDataRequestPath(DATA_REQUEST_ID), election));
         String createdLocation = checkHeader(response, "Location");
+        mockValidateTokenResponse();
         Election created = retrieveElection(client, createdLocation);
         assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
         assertThat(created.getStatus()).isEqualTo(ElectionStatus.OPEN.getValue());
@@ -120,9 +120,10 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         deleteElection(created.getElectionId());
     }
 
-    public void testUpdateDataRequestElection(Election created) {
+    public void testUpdateDataRequestElection(Election created) throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
+        mockValidateTokenResponse();
         created = retrieveElection(client, electionDataRequestPath(DATA_REQUEST_ID));
         assertThat(created.getElectionType()).isEqualTo(ElectionType.DATA_ACCESS.getValue());
         assertThat(created.getReferenceId()).isEqualTo(DATA_REQUEST_ID);
@@ -130,11 +131,12 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getElectionId()).isNotNull();
     }
 
-    public void deleteElection(Integer electionId) {
+    public void deleteElection(Integer electionId) throws IOException {
         Client client = ClientBuilder.newClient();
         List<Vote> votes = getJson(client, voteDataRequestPath(DATA_REQUEST_ID)).readEntity(new GenericType<List<Vote>>() {
         });
         for (Vote vote : votes) {
+            mockValidateTokenResponse();
             checkStatus(OK,
                     delete(client, voteConsentIdPath(DATA_REQUEST_ID, vote.getVoteId())));
         }
@@ -144,14 +146,14 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void retrieveElectionWithInvalidDataRequestId() {
+    public void retrieveElectionWithInvalidDataRequestId() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND,
                 getJson(client, electionDataRequestPath(INVALID_DATA_REQUEST_ID)));
     }
 
     @Test
-    public void testDataRequestElectionWithInvalidDataRequest() {
+    public void testDataRequestElectionWithInvalidDataRequest() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -162,7 +164,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testUpdateDataRequestElectionWithId() {
+    public void testUpdateDataRequestElectionWithId() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         // should return 400 bad request because the election id does not exist
@@ -171,7 +173,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testCreateDataRequestElectionWithInvalidStatus() {
+    public void testCreateDataRequestElectionWithInvalidStatus() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.DATA_ACCESS.getValue());

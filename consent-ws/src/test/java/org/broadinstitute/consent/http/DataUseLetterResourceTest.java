@@ -21,6 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -175,7 +176,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         assertEquals(c.getUseRestriction(), new Everything());
     }
 
-    private String setupConsent(String dul) {
+    private String setupConsent(String dul) throws IOException {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         Timestamp createDate = new Timestamp(new Date().getTime());
         Consent rec = new Consent(false, new Everything(), dul, UUID.randomUUID().toString(), createDate, createDate, createDate);

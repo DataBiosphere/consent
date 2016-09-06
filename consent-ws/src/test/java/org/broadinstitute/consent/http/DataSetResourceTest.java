@@ -42,9 +42,10 @@ public class DataSetResourceTest extends DataSetServiceTest {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         WebTarget webTarget = client.target(postDataSetFile(false, 1));
         MultiPart mp = createFormData("wrongExt", "pdf");
-
+        mockValidateTokenResponse();
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer access_token")
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
@@ -59,9 +60,10 @@ public class DataSetResourceTest extends DataSetServiceTest {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         WebTarget webTarget = client.target(postDataSetFile(false, 1));
         MultiPart mp = createFormData("missingHeader", "txt");
-
+        mockValidateTokenResponse();
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer access_token")
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
@@ -76,8 +78,10 @@ public class DataSetResourceTest extends DataSetServiceTest {
                 .register(MultiPartFeature.class).build();
         WebTarget webTarget = client.target(postDataSetFile(true, 1));
         MultiPart mp = createFormData("correctFile", "txt");
+        mockValidateTokenResponse();
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer access_token")
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
         assertTrue(response.getStatus() == (OK));

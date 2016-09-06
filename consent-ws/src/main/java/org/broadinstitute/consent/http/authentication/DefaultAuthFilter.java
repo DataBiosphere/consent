@@ -7,10 +7,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Priority;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Optional;
 
 @Priority(1000)
 public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P> {
@@ -27,25 +25,7 @@ public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P
         boolean match = path.matches("^(basic/|api/).*");
         try{
             if(!match){
-                Optional user = this.authenticator.authenticate("Anonymous User");
-                requestContext.setSecurityContext(new SecurityContext() {
-                    public Principal getUserPrincipal() {
-                        return (Principal)user.get();
-                    }
-
-                    public boolean isUserInRole(String role) {
-                        return true;
-                    }
-
-                    public boolean isSecure() {
-                        return requestContext.getSecurityContext().isSecure();
-                    }
-
-                    public String getAuthenticationScheme() {
-                        return "DEFAULT";
-                    }
-                });
-                return;
+                throw new WebApplicationException(401);
             }
         }catch(Exception e){
             logger.error("Error authenticating credentials.");
@@ -62,4 +42,3 @@ public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P
     }
 
 }
-

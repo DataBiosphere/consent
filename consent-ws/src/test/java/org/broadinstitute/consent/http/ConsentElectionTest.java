@@ -13,6 +13,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,7 +41,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testCreateConsentElection() {
+    public void testCreateConsentElection() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
@@ -48,6 +49,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         Response response = checkStatus(CREATED,
                 post(client, electionConsentPath(CONSENT_ID), election));
         String createdLocation = checkHeader(response, "Location");
+        mockValidateTokenResponse();
         Election created = retrieveElection(client, createdLocation);
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
@@ -63,11 +65,12 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         deleteElection(created.getElectionId());
     }
 
-    public void testUpdateConsentElection(Election created) {
+    public void testUpdateConsentElection(Election created) throws IOException {
         Client client = ClientBuilder.newClient();
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
+        //mockValidateTokenResponse();
         created = retrieveElection(client, electionPathById(created.getElectionId()));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
@@ -76,7 +79,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getElectionId()).isNotNull();
     }
 
-    public void deleteElection(Integer electionId) {
+    public void deleteElection(Integer electionId) throws IOException {
         Client client = ClientBuilder.newClient();
         List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() {
         });
@@ -90,14 +93,14 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void retrieveElectionWithInvalidConsentId() {
+    public void retrieveElectionWithInvalidConsentId() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND,
                 getJson(client, electionConsentPath(INVALID_CONSENT_ID)));
     }
 
     @Test
-    public void testCreateConsentElectionWithInvalidConsent() {
+    public void testCreateConsentElectionWithInvalidConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
@@ -108,7 +111,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testUpdateConsentElectionWithInvalidId() {
+    public void testUpdateConsentElectionWithInvalidId() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         // should return 400 bad request because the election id does not exist
@@ -117,7 +120,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    public void testCreateConsentElectionWithInvalidStatus() {
+    public void testCreateConsentElectionWithInvalidStatus() throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
