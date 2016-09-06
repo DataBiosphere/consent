@@ -10,6 +10,7 @@ import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -23,10 +24,8 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     @SqlQuery("select propertyValue from researcher_property where userId = :userId and propertyKey = 'completed'")
     Boolean isProfileCompleted(@Bind("userId") Integer userId);
 
-
     @SqlBatch("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, :propertyKey, :propertyValue)")
     void insertAll(@BindBean Collection<ResearcherProperty> researcherProperties);
-
 
     @SqlBatch("update researcher_property set propertyValue = :propertyValue where userId = :userId and propertyKey = :propertyKey")
     void updateAll(@BindBean Collection<ResearcherProperty> researcherProperties);

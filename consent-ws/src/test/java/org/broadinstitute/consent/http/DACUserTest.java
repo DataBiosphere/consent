@@ -2,12 +2,6 @@ package org.broadinstitute.consent.http;
 
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
-import java.io.IOException;
-import java.util.*;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
@@ -17,6 +11,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -152,11 +156,30 @@ public class DACUserTest extends DACUserServiceTest {
         role.setStatus(RoleStatus.APPROVED.name());
         Response response = put(client, statusValue(1), role);
         checkStatus(OK, response);
-        DACUser user  = response.readEntity(DACUser.class);
+        DACUser user = response.readEntity(DACUser.class);
         DACUserRole researcher = user.getRoles().stream().filter(userRole ->
                 userRole.getName().equalsIgnoreCase(DACUserRoles.RESEARCHER.getValue()))
                 .findFirst().get();
         assertThat(researcher.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
+    }
+
+    @Test
+    public void testUpdateStatusUsrNotFound() throws IOException {
+        Client client = ClientBuilder.newClient();
+        DACUserRole role = new DACUserRole();
+        role.setStatus(RoleStatus.REJECTED.name());
+        Response response = put(client, statusValue(10), role);
+        checkStatus(NOT_FOUND, response);
+    }
+
+    @Test
+    public void testUpdateStatusBadRequest() throws IOException {
+        Client client = ClientBuilder.newClient();
+        DACUserRole role = new DACUserRole();
+        role.setRoleId(11);
+        role.setStatus("Test");
+        Response response = put(client, statusValue(4), role);
+        checkStatus(BAD_REQUEST, response);
     }
 
 }

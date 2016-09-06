@@ -23,7 +23,7 @@ public enum RoleStatus {
              }
          }
      }
-     return RoleStatus.PENDING.value;
+     return null;
     }
 
     public static String getStatusByValue(Integer value){
@@ -34,6 +34,6 @@ public enum RoleStatus {
                 }
             }
         }
-        return RoleStatus.PENDING.status;
+        return null;
     }
 }

@@ -362,16 +362,19 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
             List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
-            for(Election e: dsElectionsToVoteOn){
-                if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
-                    return DataSetElectionStatus.DS_PENDING.getValue();
-                } else if(!e.getFinalAccessVote()){
-                    return DataSetElectionStatus.DS_DENIED.getValue();
+            if(CollectionUtils.isEmpty(dsElectionsToVoteOn)){
+                return DataSetElectionStatus.DS_PENDING.getValue();
+            } else {
+                for(Election e: dsElectionsToVoteOn){
+                    if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
+                        return DataSetElectionStatus.DS_PENDING.getValue();
+                    } else if(!e.getFinalAccessVote()){
+                        return DataSetElectionStatus.DS_DENIED.getValue();
+                    }
                 }
             }
             return DataSetElectionStatus.DS_APPROVED.getValue();
         }
-
     }
 
     @Override

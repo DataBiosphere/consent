@@ -12,6 +12,7 @@ import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -54,10 +55,13 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if(validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
+        boolean adminNotificationSent = researcherPropertyDAO.findResearcherPropertiesByUser(userId).stream().anyMatch(p -> p.getPropertyKey().equals("email notification sent"));
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId, null, new Date());
         researcherPropertyDAO.deleteAllPropertiesByUser(userId);
         researcherPropertyDAO.insertAll(properties);
-        notifyAdmins(userId);
+        if(!adminNotificationSent){
+            notifyAdmins(userId);
+        }
         return describeResearcherProperties(userId);
     }
 
@@ -66,6 +70,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         if(completed != null && completed){
             try {
                 emailApi.sendNewResearcherCreatedMessage(userId);
+                researcherPropertyDAO.insertAll(Arrays.asList(new ResearcherProperty(userId, ResearcherFields.NOTIFICATION_SENT.getValue(), "true")));
             } catch (IOException | TemplateException | MessagingException e) {
                 logger().error("Error when notifying the admin(s) about the new researcher creation: " + dacUserDAO.findDACUserById(userId).getDisplayName());
             }
@@ -75,7 +80,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     @Override
     public Map<String, String> describeResearcherPropertiesMap(Integer userId) throws NotFoundException {
         return describeResearcherProperties(userId).stream().collect(Collectors.toMap(ResearcherProperty::getPropertyKey,
-                        ResearcherProperty::getPropertyValue));
+                ResearcherProperty::getPropertyValue));
     }
 
     @Override
@@ -127,9 +132,9 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
 
     private void validateExistentFields(Map<String, String> properties){
         properties.forEach((propertyKey, propertyValue) -> {
-          if(!ResearcherFields.containsValue(propertyKey)){
-            throw new IllegalArgumentException(propertyKey + " is not a valid property.");
-          }
+            if(!ResearcherFields.containsValue(propertyKey)){
+                throw new IllegalArgumentException(propertyKey + " is not a valid property.");
+            }
         });
     }
 

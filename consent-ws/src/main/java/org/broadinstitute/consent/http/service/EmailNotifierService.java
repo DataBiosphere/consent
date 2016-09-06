@@ -293,7 +293,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL) throws IOException, TemplateException {
-        return templateHelper.getNewRearcherCreatedTemplate(admin, researcherName, URL);
+        return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL);
     }
 
 
