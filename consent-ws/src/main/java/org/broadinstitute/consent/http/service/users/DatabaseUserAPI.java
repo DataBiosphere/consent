@@ -30,8 +30,8 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
     private final String ROLES = "roles";
 
-    public DatabaseUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, MongoConsentDB mongo) {
-        super(userDAO, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI);
+    public DatabaseUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, MongoConsentDB mongo,  ResearcherPropertyDAO  researcherPropertyDAO) {
+        super(userDAO, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, researcherPropertyDAO);
         this.mongo = mongo;
     }
 

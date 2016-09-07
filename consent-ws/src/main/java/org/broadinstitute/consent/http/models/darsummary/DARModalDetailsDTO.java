@@ -1,18 +1,22 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 public class DARModalDetailsDTO {
 
     private String darCode;
     private String principalInvestigator;
+    private String researcherName = "";
     private String institutionName;
     private String projectTitle;
     private List<SummaryItem> researchType;
@@ -25,6 +29,13 @@ public class DARModalDetailsDTO {
 
     @JsonProperty
     private Map<String, String> datasetDetail;
+    private String needDOApproval = "";
+
+    public DARModalDetailsDTO(Document darDocument, DACUser owner, ElectionAPI electionAPI){
+        this(darDocument);
+        setNeedDOApproval(electionAPI.darDatasetElectionStatus((darDocument.get(DarConstants.ID).toString())));
+        setResearcherName(owner, darDocument.getString(DarConstants.INVESTIGATOR));
+    }
 
     public DARModalDetailsDTO(Document darDocument){
         setDarCode(darDocument.getString(DarConstants.DAR_CODE));
@@ -37,6 +48,26 @@ public class DARModalDetailsDTO {
         setDiseases(generateDiseasesSummary(darDocument));
         setPurposeStatements(generatePurposeStatementsSummary(darDocument));
         setDatasetDetail((ArrayList<Document>) darDocument.get(DarConstants.DATASET_DETAIL));
+    }
+
+    public String getNeedDOApproval() {
+        return needDOApproval;
+    }
+
+    public void setNeedDOApproval(String needDOApproval) {
+        this.needDOApproval = needDOApproval;
+    }
+
+    public String getResearcherName() {
+        return researcherName;
+    }
+
+    public void setResearcherName(DACUser owner, String principalInvestigator) {
+        if(owner.getDisplayName().equals(principalInvestigator)){
+            researcherName = principalInvestigator;
+        } else {
+            researcherName = owner.getDisplayName();
+        }
     }
 
     public boolean isRequiresManualReview() {

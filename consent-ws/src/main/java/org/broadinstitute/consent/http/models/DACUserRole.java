@@ -20,6 +20,10 @@ public class DACUserRole {
     @JsonProperty
     private String rationale;
 
+    @JsonProperty
+    private Boolean profileCompleted;
+
+
     public DACUserRole(){
     }
 
@@ -81,6 +85,14 @@ public class DACUserRole {
 
     public void setRationale(String rationale) {
         this.rationale = rationale;
+    }
+
+    public Boolean getProfileCompleted() {
+        return profileCompleted;
+    }
+
+    public void setProfileCompleted(Boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
     }
 
     @Override

@@ -58,7 +58,9 @@ public interface DACUserRoleDAO extends Transactional<DACUserRoleDAO> {
     @SqlQuery("select  r.roleId from roles r inner join user_role du on du.roleId = r.roleId  where du.dacUserId = :userId and r.name = :name")
     Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
 
-    @SqlUpdate("update user_role set status = :status, rationale = :rationale where dacUserId = :userId and roleId = :existentRoleId")
+    @SqlUpdate("update user_role set status = :status, rationale = :rationale where dacUserId = :userId and roleId = :roleId")
     void updateUserRoleStatus(@Bind("userId") Integer userId, @Bind("roleId") Integer roleId, @Bind("status") Integer status, @Bind("rationale") String rationale);
 
+    @SqlQuery("select * from  user_role ur  inner join roles r on r.roleId = ur.roleId where ur.dacUserId = :userId and ur.roleId = :roleId")
+    DACUserRole findRoleByUserIdAndRoleId(@Bind("userId") Integer userId, @Bind("roleId") Integer roleId);
 }

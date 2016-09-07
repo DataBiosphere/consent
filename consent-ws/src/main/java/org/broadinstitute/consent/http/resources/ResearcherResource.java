@@ -1,13 +1,22 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
+
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.Map;
 
 
@@ -55,7 +64,7 @@ public class ResearcherResource {
 
     @GET
     @Produces("application/json")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed({"ADMIN","RESEARCHER"})
     public Response describeAllResearcherProperties(@PathParam("userId") Integer userId) {
         try{
             return Response.ok(researcherAPI.describeResearcherPropertiesMap(userId)).build();
@@ -79,7 +88,7 @@ public class ResearcherResource {
     @GET
     @Path("/dar")
     @Produces("application/json")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed({"ADMIN","RESEARCHER"})
     public Response getResearcherPropertiesForDAR(@PathParam("userId") Integer userId) {
         try{
             return Response.ok(researcherAPI.describeResearcherPropertiesForDAR(userId)).build();

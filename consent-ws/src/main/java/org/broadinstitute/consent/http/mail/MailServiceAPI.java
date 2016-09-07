@@ -1,6 +1,10 @@
 package org.broadinstitute.consent.http.mail;
 
+import freemarker.template.TemplateException;
+import org.broadinstitute.consent.http.models.DACUser;
+
 import javax.mail.MessagingException;
+import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
@@ -24,4 +28,5 @@ public interface MailServiceAPI {
 
     void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException;
 
+    void sendNewResearcherCreatedMessage(String admin, Writer template) throws IOException, TemplateException, MessagingException;
 }

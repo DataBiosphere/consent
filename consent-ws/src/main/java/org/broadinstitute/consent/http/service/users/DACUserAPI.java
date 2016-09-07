@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.dto.UserRoleStatusDTO;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -32,6 +33,8 @@ public interface DACUserAPI {
 
     ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role);
 
-    DACUser updateRoleStatus(UserRoleStatusDTO roleStatusDTO, Integer userId);
+    DACUser updateRoleStatus(DACUserRole dACUserRole, Integer userId);
+
+    DACUserRole getRoleStatus(Integer userId);
 
 }
