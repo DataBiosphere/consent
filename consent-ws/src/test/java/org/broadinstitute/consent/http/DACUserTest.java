@@ -182,4 +182,38 @@ public class DACUserTest extends DACUserServiceTest {
         checkStatus(BAD_REQUEST, response);
     }
 
+    @Test
+    public void testUpdateDisplayNameSuccess() throws IOException {
+        final String displayName = "Test";
+        Client client = ClientBuilder.newClient();
+        DACUser user = new DACUser();
+        user.setDisplayName(displayName);
+        user.setDacUserId(4);
+        Response response = put(client, dacUserPath()+ "/name/4", user);
+        checkStatus(OK, response);
+        DACUser dacUser = response.readEntity(DACUser.class);
+        assertThat(dacUser.getDisplayName().equals(displayName));
+    }
+
+    @Test
+    public void testUpdateDisplayNameWithInvalidUser() throws IOException {
+        final String displayName = "Test";
+        Client client = ClientBuilder.newClient();
+        DACUser user = new DACUser();
+        user.setDisplayName(displayName);
+        user.setDacUserId(4);
+        Response response = put(client, dacUserPath()+ "/name/99", user);
+        checkStatus(NOT_FOUND, response);
+    }
+
+
+    @Test
+    public void testUpdateDisplayNameWithEmptyName() throws IOException {
+        Client client = ClientBuilder.newClient();
+        DACUser user = new DACUser();
+        user.setDacUserId(4);
+        Response response = put(client, dacUserPath() + "/name/4", user);
+        checkStatus(BAD_REQUEST, response);
+    }
+
 }

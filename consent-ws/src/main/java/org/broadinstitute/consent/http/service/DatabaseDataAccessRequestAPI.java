@@ -419,7 +419,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darManage.setDataRequestId(id.toString());
             darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
             darManage.setSortDate(dar.getDate("sortDate"));
-            darManage.setOwnerUser(getOwnerUser(dar.getInteger("userId")));
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
@@ -433,6 +432,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 List<String> referenceList = Arrays.asList(election.getReferenceId());
                 List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
                 darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
+            }
+            try{
+                darManage.setOwnerUser(getOwnerUser(dar.getInteger("userId")));
+            }catch (Exception e){
+                darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString("userId"))));
             }
             requestsManage.add(darManage);
         });
