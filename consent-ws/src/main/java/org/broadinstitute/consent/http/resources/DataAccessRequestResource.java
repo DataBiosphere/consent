@@ -6,6 +6,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -152,7 +153,9 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
-        return new DARModalDetailsDTO(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI);
+        Integer userId = obtainUserId(dar);
+        DACUserRole role = dacUserAPI.getRoleStatus(userId);
+        return new DARModalDetailsDTO(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role.getStatus(), role.getRationale());
     }
 
     @GET
@@ -422,7 +425,15 @@ public class DataAccessRequestResource extends Resource {
         return false;
     }
 
-    // Fields that trigger manual review flag.
+    private Integer obtainUserId (Document dar) {
+        try{
+            return dar.getInteger("userId");
+        }catch (Exception e) {
+            return Integer.valueOf(dar.getString("userId"));
+        }
+    }
+
+// Fields that trigger manual review flag.
     String[] fieldsForManualReview = {
             "population",
             "other",
