@@ -37,4 +37,5 @@ public interface DACUserAPI {
 
     DACUserRole getRoleStatus(Integer userId);
 
+    DACUser updateNameById(DACUser user, Integer id);
 }

@@ -150,6 +150,16 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
+    public DACUser updateNameById(DACUser user, Integer id) {
+        validateExistentUserById(id);
+        if (StringUtils.isEmpty(user.getDisplayName())) {
+            throw new IllegalArgumentException();
+        }
+        dacUserDAO.updateDACUser(user.getDisplayName(), id);
+        return describeDACUserById(id);
+    }
+
+    @Override
     public DACUserRole getRoleStatus(Integer userId) {
         validateExistentUserById(userId);
         Integer roleId = roleIdMap.get(DACUserRoles.RESEARCHER.getValue());

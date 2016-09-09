@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
-
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -160,6 +159,23 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @PUT
+    @Path("/name/{id}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({"ADMIN","RESEARCHER"})
+    public Response updateName(DACUser user, @PathParam("id") Integer id) {
+        try {
+            DACUser dacUser = dacUserAPI.updateNameById(user, id);
+            return Response.ok().entity(dacUser).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
 
     private boolean isChairPerson(List<DACUserRole> roles) {
         boolean isChairPerson = false;
