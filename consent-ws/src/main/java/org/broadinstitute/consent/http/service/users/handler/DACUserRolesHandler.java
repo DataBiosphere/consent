@@ -189,19 +189,19 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     }
 
     private void updateAdminEmailPreference(List<DACUserRole> originalRoles, List<DACUserRole> updatedRoles, Integer dacUserId) throws UserRoleHandlerException {
-       try{
+        try{
             boolean isAdminRole = originalRoles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(ADMIN));
             List<DACUserRole> newAdminRole =  updatedRoles.stream().filter(r -> r.getName().equalsIgnoreCase(ADMIN)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(newAdminRole)) {
-                 return;
+                return;
             }
             DACUserRole updatedAdminRole = newAdminRole.get(0);
             if(isAdminRole){
-               userRoleDAO.updateEmailPreferenceUserRole(updatedAdminRole, dacUserId);
+                userRoleDAO.updateEmailPreferenceUserRole(updatedAdminRole, dacUserId);
             }
-       } catch (Exception e){
-           throw new UserRoleHandlerException("Problem occurred while updating the user email preference.");
-       }
+        } catch (Exception e){
+            throw new UserRoleHandlerException("Problem occurred while updating the user email preference.");
+        }
     }
 
 
@@ -312,8 +312,10 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private void removeResearcher(DACUser updatedUser) {
         // Find list of related dars
         List<String> referenceIds = dataAccessRequestAPI.describeDataAccessIdsForOwner(updatedUser.getDacUserId());
-        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.DATA_ACCESS.getValue(), referenceIds);
-        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.RP.getValue(), referenceIds);
+        if(!CollectionUtils.isEmpty(referenceIds)){
+            electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.DATA_ACCESS.getValue(), referenceIds);
+            electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.RP.getValue(), referenceIds);
+        }
         for(String referenceId: referenceIds){
             dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
         }
