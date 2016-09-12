@@ -45,7 +45,7 @@ public class ConsentsServiceTest extends AbstractTest {
         mockValidateResponse();
     }
 
-    //@Test
+    @Test
     public void testFindConsents() throws IOException {
         Collection<String> ids = populateConsents();
         assertThat(ids.size() == N);

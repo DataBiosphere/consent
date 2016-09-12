@@ -5,11 +5,13 @@ public class NewResearcherModel {
     String adminName;
     String researcherName;
     String redirectToURL;
+    String action;
 
-    public NewResearcherModel(String adminName, String researcherName, String redirectToURL) {
+    public NewResearcherModel(String adminName, String researcherName, String redirectToURL, String action) {
         this.adminName = adminName;
         this.researcherName = researcherName;
         this.redirectToURL = redirectToURL;
+        this.action = action;
     }
 
     public String getAdminName() {
@@ -34,5 +36,13 @@ public class NewResearcherModel {
 
     public void setRedirectToURL(String redirectToURL) {
         this.redirectToURL = redirectToURL;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 }

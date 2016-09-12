@@ -135,12 +135,12 @@ public class FreeMarkerTemplateHelperTest {
 
     @Test
     public void testGetNewResearcherCreatedTemplate() throws Exception {
-        Writer template = helper.getNewResearcherCreatedTemplate("Administrator", "Researcher Name", "localhost:1234");
+        Writer template = helper.getNewResearcherCreatedTemplate("Administrator", "Researcher Name", "localhost:1234", "registered");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Researcher Notification"));
         assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Administrator!"));
-        assertTrue(parsedTemplate.getElementById("researcherName").text().equals("A new Researcher, Researcher Name, has been registered in DUOS. Please click on the following link to review the user profile and classify him as Bonafide"));
+        assertTrue(parsedTemplate.getElementById("researcherName").text().equals("A Researcher, Researcher Name, has been registered in DUOS. Please click on the following link to review the user profile and classify him as Bonafide"));
     }
 
     /* Helper methods */

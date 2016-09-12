@@ -34,5 +34,5 @@ public interface EmailNotifierAPI {
 
     void sendUserDelegateResponsibilitiesMessage(DACUser newUser, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException;
 
-    void sendNewResearcherCreatedMessage(Integer researcherId) throws IOException, TemplateException, MessagingException;
+    void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException;
 }

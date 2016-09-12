@@ -24,6 +24,6 @@ public class NewResearcherCreatedTest extends SessionHolder{
     @Test
     public void testMessageSubject() throws MessagingException {
         MimeMessage message = new NewResearcherCreatedMessage().newResearcherCreatedMessage(getSession(), template, "SomeReferenceId", "Some Type") ;
-        assertTrue(message.getSubject().equals("Review new Researcher Profile."));
+        assertTrue(message.getSubject().equals("Review Researcher Profile."));
     }
 }

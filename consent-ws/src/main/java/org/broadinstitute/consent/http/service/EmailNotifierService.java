@@ -236,13 +236,13 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendNewResearcherCreatedMessage(Integer researcherId) throws IOException, TemplateException, MessagingException {
+    public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
         DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
         List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
         if(isServiceActive){
             String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
             for(DACUser admin: admins){
-                Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL);
+                Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
                 mailService.sendNewResearcherCreatedMessage(admin.getEmail(), template);
             }
         }
@@ -292,8 +292,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL) throws IOException, TemplateException {
-        return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL);
+    private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL, String action) throws IOException, TemplateException {
+        return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL, action);
     }
 
 
