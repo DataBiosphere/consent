@@ -1752,7 +1752,6 @@ paths:
         - name: patch
           in: body
           required: true
-          type: array
           schema:
             $ref: '#/definitions/PatchOperation'
       tags:
@@ -1768,7 +1767,161 @@ paths:
           description: Unauthorized.
         '409':
           description: Conflict with specified roles.
+  /researcher/{userId}:
+    post:
+      summary: Create researcher.
+      description: Creates a researcher user.
+      parameters:
+        - name: validate
+          in: query
+          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
+          required: true
+          type: boolean
+        - name: userId
+          in: path
+          description: description
+          required: true
+          type: integer
+          format: int32
+        - name: researcherProperties
+          in: body
+          required: true
+          description: Map<String, String> for user properties.
+          schema:
+            $ref: '#/definitions/UserProperties'
+      tags:
+        - User
+        - Researcher
+      responses:
+        '201':
+          description: The researcher was created.
+        '400':
+          description: Malformed researcher entity.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '409':
+          description: Unsupported operation.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    put:
+      summary: Update researcher.
+      description: Updates a researcher user.
+      parameters:
+        - name: validate
+          in: query
+          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
+          required: true
+          type: boolean
+        - name: userId
+          in: path
+          required: true
+          type: integer
+          format: int32
+        - name: researcherProperties
+          in: body
+          required: true
+          description: Map<String, String> for user properties.
+          schema:
+            $ref: '#/definitions/UserProperties'
+      tags:
+        - User
+        - Researcher
+      responses:
+        '200':
+          description: The researcher was updated, and returns the properties.
+          schema:
+            $ref: '#/definitions/UserProperties'
+        '400':
+          description: Malformed researcher entity.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '404':
+          description: The requested user doesn't exist in the system.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    get:
+      summary: Return researcher properties.
+      description: Describes all the properties for a reseacher user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - User
+        - Researcher
+      responses:
+        '200':
+          description: Returns the user properties. Map<String, String> format.
+          schema:
+            $ref: '#/definitions/UserProperties'
+        '404':
+          description: The requested user doesn't exist in the system.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    delete:
+      summary: Delete Researcher properties
+      description: Deletes all the properties for the related user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - User
+        - Researcher
+      responses:
+        '200':
+          description: The properties were deleted. No response object, just 200 response.
+        '404':
+          description: The requested user doesn't exist in the system
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  '/researcher/{userId}/dar':
+    get:
+      summary: Returns the researcher properties that are part of a Data Access Request
+      description: Describes all the properties that are taken from the researcher information to fill automatically a DAR request.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - User
+        - Researcher
+      responses:
+        '200':
+          description: Returns the user properties. Map<String, String> format
+          schema:
+            $ref: '#/definitions/UserProperties'
+        '404':
+          description: The requested user doesnt exist in the system
+          schema:
+            $ref: '#/definitions/ErrorResponse'
 definitions:
+  UserProperties:
+    type: array
+    items:
+      type: object
+      $ref: '#/definitions/UserProperties'
+  Property:
+    type: object
+    properties:
+      propertyName:
+        type: string
+      propertyValue:
+        type: string
   ConsentAssociation:
     type: object
     properties:
@@ -1813,6 +1966,10 @@ definitions:
         type: string
         format: date
         description: The lastest modification date.
+      translatedUseRestriction:
+        type: string
+        format: date
+        description: The translated use restriction of the consent.
   Vote:
     type: object
     properties:
@@ -1842,12 +1999,15 @@ definitions:
       rationale:
         type: string
         description: If the final vote is NO, the voter can specify why in this field.
-      isFinalAccessVote:
-        type: boolean
-        description: Specifies if the Vote is a finalAccessVote, only For Data Access Request elections.
+      type:
+        type: string
+        description: Specifies the type of the vote (DAC, CHAIRPERSON, AGREEMENT, FINAL)
       isReminderSent:
         type: boolean
         description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+      hasConcerns:
+        type: boolean
+        description: For Dataset elections, it is a flag for DataSet owners concerns.
   Match:
     type: object
     properties:
@@ -1867,12 +2027,19 @@ definitions:
       failed:
         type: boolean
         description: True if the matching process failed, for any reason.
+      createDate:
+        type: string
+        format: date
+        description: Describes the date the match was created.
   PendingCase:
     type: object
     properties:
       referenceId:
         type: string
         description: The reference ID that identifies the case
+      frontEndId:
+        type: string
+        description: The front end ID for the case
       logged:
         type: string
         description: Describes the logged votes vs. total votes required.
@@ -1911,6 +2078,14 @@ definitions:
         type: integer
         format: int32
         description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
+      rpElectionId:
+        type: integer
+        format: int32
+        description: Describes the id of the research purpose election related to this pending case, if it exists
+      rpVoteId:
+        type: integer
+        format: int32
+        description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
   Summary:
     type: object
     properties:
@@ -1963,6 +2138,18 @@ definitions:
       finalAccessVote:
         type: boolean
         description: For Data Access Request only. Final vote that determines if the request is approved or denied.
+      useRestriction:
+        type: string
+        description: The use restriction related to the election.
+      translatedUseRestriction:
+        type: string
+        description: The translated use restriction related to the election.
+      dataSetId:
+        type: integer
+        description: The dataSetId related to the election.
+      displayId:
+        type: string
+        description: The ID for display.
   ConsentManage:
     type: object
     properties:
@@ -1972,6 +2159,9 @@ definitions:
       consentName:
         type: string
         description: The consent name of the case.
+      editable:
+        type: boolean
+        description: If the consent manage is editable.
       electionStatus:
         type: string
         description: The status of the election related to the consent.
@@ -2108,6 +2298,9 @@ definitions:
       projectTitle:
         type: string
         description: The title of the project, in the Data Access Request
+      frontEndId:
+        type: string
+        description: The front end ID for the case
       electionId:
         type: integer
         format: int32
@@ -2120,15 +2313,32 @@ definitions:
         type: string
         format: date
         description: The datetime the election was created/updated (the last one).
+      electionVote:
+        type: boolean
+        description: Result of the election
+      isCanceled:
+        type: boolean
+        description: The DAR is canceled
+      needsApproval:
+        type: boolean
+        description: The DAR requires Data Owners approval
+      dataSetElectionResult:
+        type: string
+        description: Result of the Data Owners elections.
+      ownerUser:
+        description: The owner of the DAR
+        type: object
+        items:
+          $ref: '#/definitions/DACUser'
   DatasetDTO:
     type: object
     properties:
       consentId:
         type: string
         description: Describes the id of the vote.
-      useRestriction:
+      translatedUseRestriction:
         type: string
-        description: The UseRestriction of this consent. Used to match against another entities.
+        description: The Use Restriction, readable type
       deletable:
         type: boolean
         description: Describes if this DataSet can be deleted (This information is only given to the Admin).
@@ -2136,6 +2346,18 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/DatasetPropertyDTO'
+      active:
+        type: boolean
+        description: The Dataset is active
+      needsApproval:
+        type: boolean
+        description: The Dataset need Data Owners approval
+      isAssociatedToDataOwners:
+        type: boolean
+        description: The Dataset is associated to a data owner
+      updateAssociationToDataOwnerAllowed:
+        type: boolean
+        description: You can update the data owners of this Dataset
   DatasetPropertyDTO:
     type: object
     properties:
@@ -2167,6 +2389,10 @@ definitions:
         type: string
         format: date
         description: Describes the date the Dictionary was created.
+      receiveOrder:
+        type: integer
+        format: int32
+        description: The display order of the properties.
   ElectionReview:
     type: object
     properties:
@@ -2181,6 +2407,13 @@ definitions:
       consent:
         $ref: '#/definitions/Consent'
         description: Consent related to the election.
+      voteAgreement:
+        $ref: '#/definitions/Vote'
+      finalVote:
+        $ref: '#/definitions/Vote'
+      rpElectionId:
+        type: integer
+        description: The research purpose ID.
   ElectionReviewVote:
     type: object
     properties:
@@ -2223,6 +2456,18 @@ definitions:
       name:
         type: string
         description: Name of the role
+      emailPreference:
+        type: boolean
+        description: The user wants email notifications
+      status:
+        type: string
+        description: Status of the role, approved or not.
+      rationale:
+        type: string
+        description: Reason why the role was not approved.
+      profileCompleted:
+        type: boolean
+        description: The profile is completed. Researchers only.
   ErrorResponse:
     required:
       - "message"
@@ -2265,3 +2510,5 @@ definitions:
       path:
         type: string
         description: Field to be updated. Available values are displayName or roles.
+        
+        
