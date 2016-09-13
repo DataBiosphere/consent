@@ -3,14 +3,18 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
@@ -93,7 +97,50 @@ public class ResearcherTest extends AbstractTest {
     public void testRegisterResearcherAllFields() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(CREATED, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), createResearcherPropertiesWithAllFields()));
+        testUpdateInstitutionName();
         check200(delete(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true))));
+    }
+
+
+    private void testUpdateInstitutionName() throws IOException {
+        Client client = ClientBuilder.newClient();
+        Map<String, String> researcher = createResearcherPropertiesWithAllFields();
+        researcher.put(ResearcherFields.INSTITUTION.getValue(), "test");
+        Response response = put(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), researcher);
+        checkStatus(OK, response);
+        List<ResearcherProperty> researcherProperties = response.readEntity(new GenericType<List<ResearcherProperty>>() {});
+        ResearcherProperty property = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.INSTITUTION.getValue())).findAny()
+                .orElse(null);
+        assertTrue(property.getPropertyValue().equals("test"));
+    }
+
+    @Test
+    public void testRegisterResearcherIncompleteAndUpdate() throws IOException {
+        Client client = ClientBuilder.newClient();
+        Map<String,String> properties = createResearcherPropertiesRequiredFields();
+        properties.remove(ResearcherFields.STREET_ADDRESS_1.getValue());
+        properties.put(ResearcherFields.COMPLETED.getValue(), "false");
+        checkStatus(CREATED, post(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, false)), properties));
+        updateAndCompleteResearcherProfile(properties);
+        check200(delete(client,  path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true))));
+    }
+
+    private void updateAndCompleteResearcherProfile(Map<String, String> properties) throws IOException {
+        Client client = ClientBuilder.newClient();
+        properties.put(ResearcherFields.STREET_ADDRESS_1.getValue(), "street 1");
+        properties.put(ResearcherFields.COMPLETED.getValue(), "true");
+        Response response = put(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), properties);
+        checkStatus(OK, response);
+        List<ResearcherProperty> researcherProperties = response.readEntity(new GenericType<List<ResearcherProperty>>() {});
+        ResearcherProperty property = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.STREET_ADDRESS_1.getValue())).findAny()
+                .orElse(null);
+        assertTrue(property.getPropertyValue().equals("street 1"));
+        properties.put(ResearcherFields.SCIENTIFIC_URL.getValue(), "www.test.com.ar");
+        response = put(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), properties);
+        checkStatus(OK, response);
+        properties.put(ResearcherFields.SCIENTIFIC_URL.getValue(), "www.test23.com.ar");
+        response = put(client, path2Url(String.format(RESEARCHER_REGISTER_URL, USER_ID, true)), properties);
+        checkStatus(OK, response);
     }
 
 

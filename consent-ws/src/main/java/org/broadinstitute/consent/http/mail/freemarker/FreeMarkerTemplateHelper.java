@@ -165,9 +165,9 @@ public class FreeMarkerTemplateHelper {
                 return out;
     }
 
-    public Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String url) throws IOException, TemplateException {
+    public Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String url, String action) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-researcher.html");
-        NewResearcherModel model = new NewResearcherModel(admin, researcherName, url);
+        NewResearcherModel model = new NewResearcherModel(admin, researcherName, url, action);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

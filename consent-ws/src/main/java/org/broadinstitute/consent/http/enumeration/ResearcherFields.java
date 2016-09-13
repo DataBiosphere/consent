@@ -25,8 +25,7 @@ public enum ResearcherFields {
     PI_EMAIL("piEmail", false),
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
-    INVESTIGATOR("investigator", false),
-    NOTIFICATION_SENT("email notification sent", false);
+    INVESTIGATOR("investigator", false);
 
 
     private String value;

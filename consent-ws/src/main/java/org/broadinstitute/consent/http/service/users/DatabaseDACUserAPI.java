@@ -292,7 +292,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         users.stream().forEach(user -> {
             for(DACUserRole role : user.getRoles()){
                 if (role.getRoleId() == 5) {
-                    role.setProfileCompleted(researcherPropertyDAO.isProfileCompleted(user.getDacUserId()));
+                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
+                    role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
                 }
             }
         });
