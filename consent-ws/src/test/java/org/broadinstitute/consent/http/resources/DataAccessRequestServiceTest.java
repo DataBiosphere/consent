@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.AbstractTest;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-
-import javax.ws.rs.client.Client;
 
 public abstract class DataAccessRequestServiceTest extends AbstractTest{
 

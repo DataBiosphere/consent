@@ -19,6 +19,8 @@ public class DARModalDetailsDTO {
     private String researcherName = "";
     private String institutionName;
     private String projectTitle;
+    private String status;
+    private String rationale;
     private List<SummaryItem> researchType;
     private List<String> diseases;
     private List<SummaryItem> purposeStatements;
@@ -31,10 +33,12 @@ public class DARModalDetailsDTO {
     private Map<String, String> datasetDetail;
     private String needDOApproval = "";
 
-    public DARModalDetailsDTO(Document darDocument, DACUser owner, ElectionAPI electionAPI){
+    public DARModalDetailsDTO(Document darDocument, DACUser owner, ElectionAPI electionAPI, String status, String rationale){
         this(darDocument);
         setNeedDOApproval(electionAPI.darDatasetElectionStatus((darDocument.get(DarConstants.ID).toString())));
         setResearcherName(owner, darDocument.getString(DarConstants.INVESTIGATOR));
+        setStatus(status);
+        setRationale(rationale);
     }
 
     public DARModalDetailsDTO(Document darDocument){
@@ -249,6 +253,21 @@ public class DARModalDetailsDTO {
         Map<String, String> datasetDetailMap = new HashMap<>();
         datasetDetail.forEach((doc) -> datasetDetailMap.put(doc.getString(DarConstants.DATASET_ID),doc.getString("name")));
         this.datasetDetail = datasetDetailMap;
+    }
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getRationale() {
+        return rationale;
+    }
+
+    public void setRationale(String rationale) {
+        this.rationale = rationale;
     }
 }
 
