@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.AuthenticationException;
-import io.dropwizard.auth.Authenticator;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,14 +19,25 @@ import java.util.HashMap;
 import java.util.Optional;
 
 
-public class OAuthAuthenticator implements Authenticator<String, User> {
+public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
 
     private GoogleOAuth2Config config;
     private final String tokenInfoUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
     private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
+    private static HttpClient httpClient;
 
-    public OAuthAuthenticator(GoogleOAuth2Config config) {
+
+    public static void initInstance(GoogleOAuth2Config config) {
+        AuthenticatorAPIHolder.setInstance(new OAuthAuthenticator(config));
+    }
+
+    private OAuthAuthenticator(GoogleOAuth2Config config) {
         this.config = config;
+        this.httpClient = HttpClients.createDefault();
+    }
+
+    public void setHttpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
     }
 
     @Override
@@ -57,11 +67,10 @@ public class OAuthAuthenticator implements Authenticator<String, User> {
     }
 
     private HashMap<String, Object> validateToken(String accessToken) throws AuthenticationException {
-        HttpClient httpclient = HttpClients.createDefault();
         HashMap<String, Object> tokenInfo = null;
         HttpPost httppost = new HttpPost(tokenInfoUrl + accessToken);
         try {
-            HttpResponse response = httpclient.execute(httppost);
+            HttpResponse response = httpClient.execute(httppost);
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 InputStream tokenInfoStream = entity.getContent();

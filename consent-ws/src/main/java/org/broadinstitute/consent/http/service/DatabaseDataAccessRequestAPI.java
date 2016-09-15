@@ -399,34 +399,45 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
     }
 
+    private DACUser getOwnerUser(Integer dacUserId){
+        List<DACUser> users = new ArrayList<>();
+        users.addAll(dacUserDAO.findUsersWithRoles(new ArrayList<>(Arrays.asList(dacUserId))));
+        return users.get(0);
+    }
+
     private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         documents.forEach((Block<Document>) dar -> {
-                    DataAccessRequestManage darManage = new DataAccessRequestManage();
-                    ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-                    List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-                    List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
-                    Election election = electionList.get(id.toString());
-                    darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
-                    darManage.setRus(dar.getString(DarConstants.RUS));
-                    darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
-                    darManage.setDataRequestId(id.toString());
-                    darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
-                    darManage.setSortDate(dar.getDate("sortDate"));
-                    darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
-                    darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
-                    darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
-                    darManage.setElectionStatus(election == null ? UN_REVIEWED : election.getStatus());
-                    darManage.setElectionId(election != null ? election.getElectionId() : null);
-                    darManage.setElectionVote(election != null ? election.getFinalVote() : null);
-                    if (election != null && !CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))) {
-                        darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
-                    }
-                    else if (CollectionUtils.isNotEmpty(dataSetsToApprove) && election != null && election.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
-                       List<String> referenceList = Arrays.asList(election.getReferenceId());
-                       List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
-                       darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
-                    }
+            DataAccessRequestManage darManage = new DataAccessRequestManage();
+            ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
+            List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
+            Election election = electionList.get(id.toString());
+            darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
+            darManage.setRus(dar.getString(DarConstants.RUS));
+            darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
+            darManage.setDataRequestId(id.toString());
+            darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
+            darManage.setSortDate(dar.getDate("sortDate"));
+            darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
+            darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
+            darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
+            darManage.setElectionStatus(election == null ? UN_REVIEWED : election.getStatus());
+            darManage.setElectionId(election != null ? election.getElectionId() : null);
+            darManage.setElectionVote(election != null ? election.getFinalVote() : null);
+            if (election != null && !CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))) {
+                darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
+            }
+            else if (CollectionUtils.isNotEmpty(dataSetsToApprove) && election != null && election.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
+                List<String> referenceList = Arrays.asList(election.getReferenceId());
+                List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
+                darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
+            }
+            try{
+                darManage.setOwnerUser(getOwnerUser(dar.getInteger("userId")));
+            }catch (Exception e){
+                darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString("userId"))));
+            }
             requestsManage.add(darManage);
         });
         return requestsManage;

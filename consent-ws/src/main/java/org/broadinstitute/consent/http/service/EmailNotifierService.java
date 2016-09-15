@@ -3,7 +3,11 @@ package org.broadinstitute.consent.http.service;
 import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.MailServiceDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -29,7 +33,11 @@ import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -56,6 +64,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private static final String DATA_OWNER_CONSOLE_URL = "data_owner_console";
     private static final String CHAIR_CONSOLE_URL = "chair_console";
     private static final String MEMBER_CONSOLE_URL = "user_console";
+    private static final String REVIEW_RESEARCHER_URL = "researcher_review";
+
 
 
     public enum ElectionTypeString {
@@ -225,6 +235,20 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
+    @Override
+    public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
+        DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
+        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+        if(isServiceActive){
+            String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
+            for(DACUser admin: admins){
+                Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
+                mailService.sendNewResearcherCreatedMessage(admin.getEmail(), template);
+            }
+        }
+    }
+
+
     private List<VoteAndElectionModel> findVotesDelegationInfo(List<Integer> voteIds, Integer oldUserId){
         if(CollectionUtils.isNotEmpty(voteIds)) {
             List<VoteAndElectionModel> votesInformation = mailServiceDAO.findVotesDelegationInfo(voteIds, oldUserId);
@@ -267,6 +291,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 return "";
         }
     }
+
+    private Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String URL, String action) throws IOException, TemplateException {
+        return templateHelper.getNewResearcherCreatedTemplate(admin, researcherName, URL, action);
+    }
+
 
     private Writer getUserDelegateResponsibilitiesTemplate(DACUser user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
         return templateHelper.getUserDelegateResponsibilitiesTemplate(user.getDisplayName(), delegatedVotes, newRole, URL);

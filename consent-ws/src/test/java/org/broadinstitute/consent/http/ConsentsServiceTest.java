@@ -17,6 +17,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -44,8 +45,8 @@ public class ConsentsServiceTest extends AbstractTest {
         mockValidateResponse();
     }
 
-    //@Test
-    public void testFindConsents() {
+    @Test
+    public void testFindConsents() throws IOException {
         Collection<String> ids = populateConsents();
         assertThat(ids.size() == N);
 
@@ -53,37 +54,40 @@ public class ConsentsServiceTest extends AbstractTest {
         WebTarget webTarget = client.
                 target(path2Url("/consents")).
                 queryParam("ids", StringUtils.join(ids, ","));
+        mockValidateTokenResponse();
         Response response = webTarget.
                 request(MediaType.APPLICATION_JSON_TYPE).
-                header("REMOTE_USER", "testuser").
+                header("Authorization", "Bearer access-token").
                 get(Response.class);
         assertThat(response.getStatus() == OK);
-
+        mockValidateTokenResponse();
         List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
         assertThat(consents.size() == N);
     }
 
     @Test
-    public void testFindNoConsents() {
+    public void testFindNoConsents() throws IOException {
         Client client = ClientBuilder.newClient();
+        mockValidateTokenResponse();
         WebTarget webTarget = client.target(path2Url("/consents"));
         Response response = webTarget.
                 request(MediaType.APPLICATION_JSON_TYPE).
-                header("REMOTE_USER", "testuser").
+                header("Authorization", "Bearer access-token").
                 get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
     @Test
-    public void testFindMissingConsents() {
+    public void testFindMissingConsents() throws IOException {
         Collection<String> ids = Arrays.asList("missing-id1", "missing-id2", UUID.randomUUID().toString());
         Client client = ClientBuilder.newClient();
+        mockValidateTokenResponse();
         WebTarget webTarget = client.
                 target(path2Url("/consents")).
                 queryParam("ids", StringUtils.join(ids, ","));
         Response response = webTarget.
                 request(MediaType.APPLICATION_JSON_TYPE).
-                header("REMOTE_USER", "testuser").
+                header("Authorization", "Bearer access-token").
                 get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
@@ -93,50 +97,50 @@ public class ConsentsServiceTest extends AbstractTest {
      * Then find the associations that were just created.
      */
     @Test
-    public void testFindConsentsBySampleAssociation() {
+    public void testFindConsentsBySampleAssociation() throws IOException {
         Collection<String> ids = populateConsentAssociations();
         assertThat(ids.size() == N);
-
+        mockValidateTokenResponse();
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/sample"));
         Response response = webTarget
                 .request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
                 .get(Response.class);
         assertThat(response.getStatus() == OK);
-
         List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
         assertThat(consents.size() == N);
     }
 
     @Test
-    public void testFindConsentsByBadAssociation() {
+    public void testFindConsentsByBadAssociation() throws IOException {
         Collection<String> ids = populateConsentAssociations();
         assertThat(ids.size() == N);
-
+        mockValidateTokenResponse();
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/nothing"));
         Response response = webTarget.
                 request(MediaType.APPLICATION_JSON_TYPE).
-                header("REMOTE_USER", "testuser").
+                header("Authorization", "Bearer access-token").
                 get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
     @Test
-    public void testFindConsentsWithoutAssociation() {
+    public void testFindConsentsWithoutAssociation() throws IOException {
         Collection<String> ids = populateConsentAssociations();
         assertThat(ids.size() == N);
-
+        mockValidateTokenResponse();
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/"));
         Response response = webTarget.
                 request(MediaType.APPLICATION_JSON_TYPE).
-                header("REMOTE_USER", "testuser").
+                header("Authorization", "Bearer access-token").
                 get(Response.class);
         assertThat(response.getStatus() == NOT_FOUND);
     }
 
-    private Collection<String> populateConsentAssociations() {
+    private Collection<String> populateConsentAssociations() throws IOException {
         Collection<String> ids = populateConsents();
         Client client = ClientBuilder.newClient();
         for (String id : ids) {
@@ -146,12 +150,13 @@ public class ConsentsServiceTest extends AbstractTest {
             String element2 = "SM- "+Math.random();
             String element3 = "SM- "+Math.random();
             ca.setElements(Arrays.asList(element1,element2,element3));
+            mockValidateTokenResponse();
             post(client, path2Url("/consent/") + id + "/association", Collections.singletonList(ca));
         }
         return ids;
     }
 
-    private Collection<String> populateConsents() {
+    private Collection<String> populateConsents() throws IOException {
         Collection<String> ids = new ArrayList<>();
         Client client = ClientBuilder.newClient();
         for (int i = 1; i <= N; i++) {
@@ -160,7 +165,7 @@ public class ConsentsServiceTest extends AbstractTest {
         return ids;
     }
 
-    private String postConsent(Client client) {
+    private String postConsent(Client client) throws IOException {
         String consentPath = path2Url("/consent");
         Consent consent = new Consent();
         consent.requiresManualReview = true;

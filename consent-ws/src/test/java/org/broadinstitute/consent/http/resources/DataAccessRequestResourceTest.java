@@ -113,9 +113,10 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         Client client = ClientBuilder.newClient();
         Document sampleDar = DataRequestSamplesHolder.getSampleDar();
         checkStatus(CREATED, post(client, darPath(), sampleDar));
-        List<DataAccessRequestManage> manageDars = getJson(client, darManagePath("3333")).readEntity(new GenericType<List<DataAccessRequestManage>>() {
+        List<DataAccessRequestManage> manageDars = getJson(client, darManagePath("1")).readEntity(new GenericType<List<DataAccessRequestManage>>() {
         });
         assertTrue(manageDars.size() == 1);
+
     }
 
     @Test
@@ -123,7 +124,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         Client client = ClientBuilder.newClient();
         Document partialDar = DataRequestSamplesHolder.getSampleDar();
         checkStatus(CREATED, post(client, partialPath(), partialDar));
-        List<Document> manageDars = getJson(client, partialsManagePath("3333")).readEntity(new GenericType<List<Document>>() {
+        List<Document> manageDars = getJson(client, partialsManagePath("1")).readEntity(new GenericType<List<Document>>() {
         });
         assertTrue(manageDars.size() == 1);
     }
@@ -137,7 +138,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
     }
 
 
-    private List<Document> retrieveDars(Client client, String url) {
+    private List<Document> retrieveDars(Client client, String url) throws IOException {
         return getJson(client, url).readEntity(new GenericType<List<Document>>(){});
     }
 

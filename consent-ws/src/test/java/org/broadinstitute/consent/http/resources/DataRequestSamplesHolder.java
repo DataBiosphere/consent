@@ -34,7 +34,7 @@ public class DataRequestSamplesHolder {
             "    \"vulnerablepop\" : false,\n" +
             "    \"psychtraits\" : true,\n" +
             "    \"nothealth\" : true,\n" +
-            "    \"userId\" : 3333,\n" +
+            "    \"userId\" : 1,\n" +
             "    \"addiction\" : false,\n" +
             "    \"translated_restriction\" : \"Samples will be used under the following conditions:<br>Needs Manual Review.<br>Data will be used for health/medical/biomedical research [HMB(CC)]<br>Data will be used as a control sample set [NCTRL=0]<br>Data will not be used for commercial purpose<br>Data will be used to study ONLY a pediatric population [RS-[PEDIATRIC]]<br>\",\n" +
             "    \"datasetId\" : [ \n" +

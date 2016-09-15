@@ -3,9 +3,35 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import freemarker.template.TemplateException;
-import java.util.ArrayList;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.TranslateServiceAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -16,25 +42,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.service.*;
-import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-
-import javax.mail.MessagingException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -54,13 +68,17 @@ public class DataAccessRequestResource extends Resource {
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
+    private final DACUserAPI dacUserAPI;
+    private final ElectionAPI electionAPI;
 
-    public DataAccessRequestResource() {
+    public DataAccessRequestResource(DACUserAPI dacUserAPI, ElectionAPI electionAPI) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
+        this.dacUserAPI = dacUserAPI;
+        this.electionAPI = electionAPI;
     }
 
     @POST
@@ -135,7 +153,9 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
-        return new DARModalDetailsDTO(dar);
+        Integer userId = obtainUserId(dar);
+        DACUserRole role = dacUserAPI.getRoleStatus(userId);
+        return new DARModalDetailsDTO(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role.getStatus(), role.getRationale());
     }
 
     @GET
@@ -405,7 +425,15 @@ public class DataAccessRequestResource extends Resource {
         return false;
     }
 
-    // Fields that trigger manual review flag.
+    private Integer obtainUserId (Document dar) {
+        try{
+            return dar.getInteger("userId");
+        }catch (Exception e) {
+            return Integer.valueOf(dar.getString("userId"));
+        }
+    }
+
+// Fields that trigger manual review flag.
     String[] fieldsForManualReview = {
             "population",
             "other",

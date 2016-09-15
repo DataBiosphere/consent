@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import javax.ws.rs.client.Client;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -18,7 +19,7 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
         }
     }
 
-    public Election retrieveElection(Client client, String url) {
+    public Election retrieveElection(Client client, String url) throws IOException {
         return getJson(client, url).readEntity(Election.class);
     }
 
@@ -63,7 +64,7 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
         }
     }
 
-    public Vote retrieveVote(Client client, String url) {
+    public Vote retrieveVote(Client client, String url) throws IOException {
         return getJson(client, url).readEntity(Vote.class);
     }
 

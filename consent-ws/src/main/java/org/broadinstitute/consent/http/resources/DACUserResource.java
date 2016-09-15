@@ -1,24 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -32,6 +13,26 @@ import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Path("{api : (api/)?}dacuser")
 public class DACUserResource extends Resource {
@@ -124,6 +125,57 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @PUT
+    @Path("/status/{userId}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed("ADMIN")
+    public Response updateStatus(@PathParam("userId") Integer userId, DACUserRole dACUserRole) {
+        try {
+            return Response.ok(dacUserAPI.updateRoleStatus(dACUserRole, userId)).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+    @GET
+    @Path("/status/{userId}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed("ADMIN")
+    public Response getUserStatus(@PathParam("userId") Integer userId) {
+        try {
+            return Response.ok(dacUserAPI.getRoleStatus(userId)).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+    @PUT
+    @Path("/name/{id}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @RolesAllowed({"ADMIN","RESEARCHER"})
+    public Response updateName(DACUser user, @PathParam("id") Integer id) {
+        try {
+            DACUser dacUser = dacUserAPI.updateNameById(user, id);
+            return Response.ok().entity(dacUser).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e) {
+            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
 
     private boolean isChairPerson(List<DACUserRole> roles) {
         boolean isChairPerson = false;

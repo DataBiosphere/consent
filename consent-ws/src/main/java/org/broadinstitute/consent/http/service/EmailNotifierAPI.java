@@ -33,4 +33,6 @@ public interface EmailNotifierAPI {
     void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException;
 
     void sendUserDelegateResponsibilitiesMessage(DACUser newUser, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException;
+
+    void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException;
 }

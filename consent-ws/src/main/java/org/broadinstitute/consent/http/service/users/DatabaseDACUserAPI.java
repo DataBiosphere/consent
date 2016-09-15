@@ -2,23 +2,11 @@ package org.broadinstitute.consent.http.service.users;
 
 
 import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -27,6 +15,12 @@ import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
+
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Implementation class for DACUserAPI on top of DACUserDAO database support.
@@ -40,12 +34,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
+    private final ResearcherPropertyDAO researcherPropertyDAO;
     private final String CHAIRPERSON = DACUserRoles.CHAIRPERSON.getValue();
     private final String RESEARCHER = DACUserRoles.RESEARCHER.getValue();
     private final Integer MINIMUM_DAC_USERS = 3;
 
-    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI));
+    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, researcherPropertyDAO));
     }
 
     protected org.apache.log4j.Logger logger() {
@@ -58,7 +53,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    protected DatabaseDACUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI) {
+    protected DatabaseDACUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
         this.dacUserDAO = userDAO;
         this.roleDAO = roleDAO;
         this.electionDAO = electionDAO;
@@ -66,6 +61,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         this.rolesHandler = userHandlerAPI;
         this.roleIdMap = createRoleMap(roleDAO.findRoles());
         this.dataSetAssociationDAO = dataSetAssociationDAO;
+        this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
     @Override
@@ -142,10 +138,33 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         return response;
     }
 
+    @Override
+    public DACUser updateRoleStatus(DACUserRole userRole, Integer userId) {
+        Integer statusId = RoleStatus.getValueByStatus(userRole.getStatus());
+        validateExistentUserById(userId);
+        if (statusId == null) {
+            throw new IllegalArgumentException(userRole.getStatus() + " is not a valid status.");
+        }
+        roleDAO.updateUserRoleStatus(userId, userRole.getRoleId(), statusId, userRole.getRationale());
+        return describeDACUserById(userId);
+    }
 
+    @Override
+    public DACUser updateNameById(DACUser user, Integer id) {
+        validateExistentUserById(id);
+        if (StringUtils.isEmpty(user.getDisplayName())) {
+            throw new IllegalArgumentException();
+        }
+        dacUserDAO.updateDACUser(user.getDisplayName(), id);
+        return describeDACUserById(id);
+    }
 
-
-
+    @Override
+    public DACUserRole getRoleStatus(Integer userId) {
+        validateExistentUserById(userId);
+        Integer roleId = roleIdMap.get(DACUserRoles.RESEARCHER.getValue());
+        return roleDAO.findRoleByUserIdAndRoleId(userId, roleId);
+    }
 
     private List<DACUser> findDacUserReplacementCandidates(DACUser user) {
         List<DACUser> dacUserList = new ArrayList<>();
@@ -225,7 +244,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
             List<Integer> dataOwnersPerDataSet = dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId);
-            if(dataOwnersPerDataSet.stream().anyMatch((dataOwners) -> (dataOwners == 1))){
+            if (dataOwnersPerDataSet.stream().anyMatch((dataOwners) -> (dataOwners == 1))) {
                 return true;
             }
         }
@@ -269,8 +288,18 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public Collection<DACUser> describeUsers() {
-        return dacUserDAO.findUsers();
+        Collection<DACUser> users = dacUserDAO.findUsers();
+        users.stream().forEach(user -> {
+            for(DACUserRole role : user.getRoles()){
+                if (role.getRoleId() == 5) {
+                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
+                    role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
+                }
+            }
+        });
+        return users;
     }
+
     /**
      * This method generates a map with the current role Ids, loaded from the
      * database on class initialization. Entry: Role name (UPPERCASE) -> Role ID

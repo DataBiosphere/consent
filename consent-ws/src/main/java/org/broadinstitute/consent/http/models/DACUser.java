@@ -25,8 +25,7 @@ public class DACUser {
     public DACUser() {
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName,
-                   Date createDate) {
+    public DACUser(Integer dacUserId, String email, String displayName, Date createDate) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
@@ -34,7 +33,7 @@ public class DACUser {
     }
 
     public DACUser(Integer dacUserId, String email, String displayName,
-                   Date createDate, List<DACUserRole> roles) {
+                   String isApproved, Date createDate, List<DACUserRole> roles) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;

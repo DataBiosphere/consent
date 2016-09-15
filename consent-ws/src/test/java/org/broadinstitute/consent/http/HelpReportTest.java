@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.HelpReport;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -11,6 +12,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,8 +38,13 @@ public class HelpReportTest  extends AbstractTest {
         return RULE;
     }
 
+    @Before
+    public void setUp() throws IOException {
+        mockValidateTokenResponse();
+    }
+
     @Test
-    public void createHelpReport() {
+    public void createHelpReport() throws IOException {
         HelpReport adminHelpReport = createHelpReport(USER_ADMIN_ID, SUBJECT, DESCRIPTION);
         HelpReport helpReport1 = createHelpReport(USER_ID, SUBJECT, DESCRIPTION);
         HelpReport helpReport2 = createHelpReport(USER_ID, SUBJECT+1, DESCRIPTION+1);
@@ -52,13 +59,13 @@ public class HelpReportTest  extends AbstractTest {
         removeReports();
     }
 
-    private void testRetrieveAllReportsByAdminUser(){
+    private void testRetrieveAllReportsByAdminUser() throws IOException {
         Client client = ClientBuilder.newClient();
         List<HelpReport> reports = getJson(client,  path2Url(HELP_REPORT_USER_URL + USER_ADMIN_ID)).readEntity(new GenericType<List<HelpReport>>() {});
         assertThat(reports.size() == 4);
     }
 
-    private void testRetrieveAllReportsByNotAdminUser(){
+    private void testRetrieveAllReportsByNotAdminUser() throws IOException {
         Client client = ClientBuilder.newClient();
         List<HelpReport> reports = getJson(client,  path2Url(HELP_REPORT_USER_URL + USER_ID)).readEntity(new GenericType<List<HelpReport>>() {});
         assertThat(reports.size() == 3);
@@ -73,13 +80,18 @@ public class HelpReportTest  extends AbstractTest {
 
     }
 
-    private void removeReports(){
+    private void removeReports() throws IOException {
         Client client = ClientBuilder.newClient();
         List<HelpReport> reports = getJson(client,  path2Url(HELP_REPORT_USER_URL + USER_ADMIN_ID)).readEntity(new GenericType<List<HelpReport>>() {
         });
         reports.stream().forEach(r -> {
-                    checkStatus(OK,
-                            delete(client, path2Url(HELP_REPORT_URL+"/"+r.getReportId())));
+                    try {
+                        checkStatus(OK,
+                                delete(client, path2Url(HELP_REPORT_URL+"/"+r.getReportId())));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
         );
     }
