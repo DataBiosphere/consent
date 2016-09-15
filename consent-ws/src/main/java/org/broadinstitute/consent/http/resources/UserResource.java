@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.UserAPI;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
@@ -19,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @Path("{api : (api/)?}user")
-public class UserResource {
+public class UserResource extends Resource {
 
     private final UserAPI userAPI;
 
@@ -41,10 +40,10 @@ public class UserResource {
             if(e.getMessage().contains("Email should be unique.")) {
                 return Response.status(Response.Status.CONFLICT).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build();
             }
-           return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-         } catch (Exception e){
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-         }
+        }
     }
 
     @PUT
@@ -55,16 +54,8 @@ public class UserResource {
         try {
             validateUser(user);
             return Response.ok().entity(userAPI.updateUser(userToUpdate, user.getName())).build();
-        } catch (UserRoleHandlerException e){
-            return Response.status(Response.Status.CONFLICT).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotAuthorizedException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(new Error(e.getMessage(), Response.Status.UNAUTHORIZED.getStatusCode())).build();
-        }catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (Exception e) {
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 
@@ -76,16 +67,8 @@ public class UserResource {
         try {
             validateUser(user);
             return Response.ok().entity(userAPI.updatePartialUser(patchOperations, user.getName())).build();
-        } catch (UserRoleHandlerException e){
-            return Response.status(Response.Status.CONFLICT).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotAuthorizedException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(new Error(e.getMessage(), Response.Status.UNAUTHORIZED.getStatusCode())).build();
-        }catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (Exception e) {
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 
@@ -94,6 +77,5 @@ public class UserResource {
             throw new NotAuthorizedException("Invalid user");
         }
     }
-
 
 }
