@@ -50,7 +50,7 @@ public class IndexerHelper {
 
     private Map<String, LinkedHashMap> parseAsMap(String str) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.reader(Map.class);
+        ObjectReader reader = mapper.readerFor(Map.class);
         return reader.readValue(str);
     }
 }

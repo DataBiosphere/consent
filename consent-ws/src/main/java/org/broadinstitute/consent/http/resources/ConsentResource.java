@@ -1,14 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
-import java.io.IOException;
 import java.net.URI;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -84,13 +82,8 @@ public class ConsentResource extends Resource {
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
-        }  catch (IOException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }
-        catch (Exception e){
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }  catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -110,14 +103,8 @@ public class ConsentResource extends Resource {
             updated = api.update(id, updated);
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s to update", id), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (IOException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }catch (IllegalArgumentException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -130,12 +117,9 @@ public class ConsentResource extends Resource {
         try {
             api.delete(consentId);
             return Response.ok().build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        }catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e) {
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+        catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 

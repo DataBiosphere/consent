@@ -83,6 +83,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if(consentDAO.getIdByName(rec.getName()) != null){
             throw new IllegalArgumentException("Consent for the specified name already exist");
         }
+        if(StringUtils.isNotEmpty(rec.consentId) && consentDAO.checkConsentbyId(rec.consentId) != null){
+            throw new IllegalArgumentException("Consent for the specified id already exist");
+        }
         Date createDate = new Date();
         consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.dulName, createDate, createDate, rec.getTranslatedUseRestriction(), true);
         return consentDAO.findConsentById(id);
@@ -277,16 +280,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent getConsentFromDatasetID(String datasetId) {
         return consentDAO.findConsentFromDatasetID(datasetId);
-    }
-
-    @Override
-    public Collection<Consent> getConsentsFromDatasetIDs(List<String> datasetIds) {
-        return consentDAO.findConsentsFromDatasetIDs(datasetIds);
-    }
-
-    @Override
-    public Set<ConsentDataSet> getConsentIdAndDataSets(List<String> datasetIds) {
-        return consentDAO.getConsentIdAndDataSets(datasetIds);
     }
 
     @Override

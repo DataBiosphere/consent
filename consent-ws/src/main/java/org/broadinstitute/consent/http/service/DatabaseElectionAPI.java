@@ -252,10 +252,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return openElections(openElections);
     }
 
-    @Override
-    public void bulkCancelOpenElectionsByReferenceId(List<String> referenceIds, String electionType) throws Exception{
-        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(electionType, referenceIds);
-    }
 
     @Override
     public Integer findRPElectionByElectionAccessId(Integer electionId) {
@@ -402,11 +398,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public boolean isDataSetElectionOpen() {
         List<Election> elections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
         return CollectionUtils.isNotEmpty(elections) ? true : false;
-    }
-
-    @Override
-    public List<Election> getOpenElections(String electionType){
-        return electionDAO.getOpenElections(electionType);
     }
 
 

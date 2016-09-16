@@ -91,10 +91,6 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
        return matchDAO.findMatchByPurposeId(purposeId);
     }
 
-    @Override
-    public void deleteMatch(Integer id) {
-        matchDAO.deleteMatch(id);
-    }
 
     private void validateConsent(String consentId) {
         if (StringUtils.isEmpty(consentDAO.checkConsentbyId(consentId))) {

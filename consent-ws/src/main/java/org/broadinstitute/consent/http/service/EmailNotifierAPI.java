@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.mail.MessagingException;
-import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;

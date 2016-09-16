@@ -56,11 +56,6 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     @SqlUpdate("delete from match_entity where matchId = :id")
     void deleteMatch(@Bind("id") Integer matchId);
 
-    @SqlQuery("delete match_entity where name in (<matchIds>)")
-    List<Integer> matchBulkDeleteByIds(@BindIn("matchIds") List<String> matchIds);
-
     @SqlQuery("SELECT COUNT(*) FROM match_entity where matchEntity = :matchEntity and failed ='FALSE' ")
     Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
-
-
 }

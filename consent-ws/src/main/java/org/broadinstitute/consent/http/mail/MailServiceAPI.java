@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.mail;
 
 import freemarker.template.TemplateException;
-import org.broadinstitute.consent.http.models.DACUser;
-
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;

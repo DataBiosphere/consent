@@ -10,7 +10,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 @Path("{api : (api/)?}emailNotifier")
-public class EmailNotifierResource {
+public class EmailNotifierResource extends Resource {
 
     EmailNotifierAPI emailApi;
 
@@ -26,7 +26,7 @@ public class EmailNotifierResource {
             emailApi.sendReminderMessage(Integer.valueOf(voteId));
             return Response.ok().build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            return createExceptionResponse(e);
         }
     }
 }

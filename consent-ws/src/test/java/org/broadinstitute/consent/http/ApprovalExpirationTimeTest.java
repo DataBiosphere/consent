@@ -1,24 +1,16 @@
 package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
-
-
 import java.io.IOException;
-import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

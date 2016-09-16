@@ -6,7 +6,6 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;

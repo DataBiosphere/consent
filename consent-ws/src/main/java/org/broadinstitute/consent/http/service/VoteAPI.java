@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
-
 import javax.ws.rs.NotFoundException;
 import java.util.List;
 
@@ -17,8 +16,6 @@ public interface VoteAPI {
 
     List<Vote> describeVotes(String referenceId);
 
-    List<Vote> describeUserVotesByElectionsId(List<Integer> electionIds, Integer userId);
-
     Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
 
     Vote describeVoteFinalAccessVoteById(Integer requestId) throws NotFoundException;
@@ -29,15 +26,10 @@ public interface VoteAPI {
 
     void createVotesForElections(List<Election> elections, Boolean isConsent);
 
-    void setReminderFlag(Integer voteId);
-
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 
     List<Vote> createDataOwnersReviewVotes(Election electionId);
 
     Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException;
 
-    void updateUserIdForVotes(List<Integer> voteIds, Integer dacUserId);
-
-    void removeVotesById(List<Integer> votesId);
 }

@@ -7,9 +7,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
-import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;

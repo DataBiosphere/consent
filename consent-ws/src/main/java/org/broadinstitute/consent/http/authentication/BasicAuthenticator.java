@@ -5,9 +5,6 @@ import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
 import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
 import org.broadinstitute.consent.http.models.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,8 +13,6 @@ import java.util.stream.Collectors;
 public class BasicAuthenticator implements Authenticator<BasicCredentials, User>  {
 
     BasicAuthConfig basicAuthentication;
-
-    private static final Logger logger = LoggerFactory.getLogger(BasicAuthenticator.class);
 
     public BasicAuthenticator(BasicAuthConfig basicAuthentication) {
         this.basicAuthentication = basicAuthentication;

@@ -84,10 +84,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return resultVotes;
     }
 
-    @Override
-    public List<Vote> describeUserVotesByElectionsId(List<Integer> electionIds, Integer userId) {
-        return voteDAO.findPendingVotesByElectionsIdsAndUserId(electionIds, userId);
-    }
 
     @Override
     public Vote describeVoteById(Integer voteId, String referenceId)
@@ -156,10 +152,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return votes;
     }
 
-    @Override
-    public void setReminderFlag(Integer voteId){
-
-    }
 
     @Override
     public List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId) {
@@ -182,15 +174,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         return vote;
     }
 
-    @Override
-    public void updateUserIdForVotes(List<Integer> voteIds, Integer dacUserId) {
-        voteDAO.updateUserIdForVotes(voteIds, dacUserId);
-    }
-
-    @Override
-    public void removeVotesById(List<Integer> votesId){
-        voteDAO.removeVotesById(votesId);
-    }
 
     @Override
     public void createVotesForElections(List<Election> elections, Boolean isConsent){

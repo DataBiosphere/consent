@@ -52,7 +52,6 @@ public class UserResource extends Resource {
     @PermitAll
     public Response update(DACUser userToUpdate, @Auth User user) {
         try {
-            validateUser(user);
             return Response.ok().entity(userAPI.updateUser(userToUpdate, user.getName())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
@@ -65,16 +64,9 @@ public class UserResource extends Resource {
     @PermitAll
     public Response partialUpdate(List<PatchOperation> patchOperations, @Auth User user) {
         try {
-            validateUser(user);
             return Response.ok().entity(userAPI.updatePartialUser(patchOperations, user.getName())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
-        }
-    }
-
-    private void validateUser(User user){
-        if(user.getName().equalsIgnoreCase("Anonymous")){
-            throw new NotAuthorizedException("Invalid user");
         }
     }
 
