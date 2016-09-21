@@ -81,12 +81,6 @@ public class DataRequestSamplesHolder {
         return document;
     }
 
-    public static Document getSamplePartialDar() throws IOException {
-        Document document = new Document();
-        document.putAll(jsonAsMap(partialDarJson));
-        return document;
-    }
-
     private static HashMap<String,Object> jsonAsMap(String jsonSource) throws IOException {
         HashMap<String,Object> result = new ObjectMapper().readValue(jsonSource, HashMap.class);
         return result;

@@ -70,10 +70,8 @@ public class ApprovalExpirationTimeResource extends Resource {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             approvalExpirationTime = approvalExpirationTimeAPI.update(approvalExpirationTime, id);
             return Response.ok(uri).entity(approvalExpirationTime).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e) {
+           return createExceptionResponse(e);
         }
 
     }

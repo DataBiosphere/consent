@@ -44,12 +44,8 @@ public class ConsentElectionResource extends Resource {
             List<Vote> dulVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
             emailApi.sendNewCaseMessageToList(dulVotes, election);
             uri = info.getRequestUriBuilder().build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotFoundException e){
-            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
-        } catch (Exception e){
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(),Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }catch (Exception e) {
+            return createExceptionResponse(e);
         }
         return Response.created(uri).build();
     }

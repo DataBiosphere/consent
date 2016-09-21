@@ -31,8 +31,8 @@ public class HelpReportResource extends Resource {
             helpReport = helpReportAPI.create(helpReport);
             URI uri = info.getRequestUriBuilder().path("{id}").build(helpReport.getReportId());
             return Response.created(uri).entity(helpReport).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -52,8 +52,8 @@ public class HelpReportResource extends Resource {
     public Response describe(@PathParam("id") Integer id) {
         try{
             return Response.ok().entity(helpReportAPI.findHelpReportById(id)).build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(e).build();
+        }catch (Exception e){
+            return createExceptionResponse(e);
         }
 
     }

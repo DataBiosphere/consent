@@ -166,7 +166,7 @@ public class DataAccessRequestResource extends Resource {
         try{
             return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
         }catch (Exception e){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            return createExceptionResponse(e);
         }
 
     }
@@ -196,8 +196,8 @@ public class DataAccessRequestResource extends Resource {
             dataAccessRequestAPI.deleteDataAccessRequestById(id);
             matchProcessAPI.removeMatchesForPurpose(id);
             return Response.status(Response.Status.OK).entity("Research Purpose was deleted").build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -277,7 +277,7 @@ public class DataAccessRequestResource extends Resource {
         }
         catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -299,7 +299,7 @@ public class DataAccessRequestResource extends Resource {
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
             logger.log(Level.SEVERE, " while fetching dataset details to export to DAR formulary. UserId: " + userId + ", datasets: " + datasetIds.toString()+". Cause: "+ e.getLocalizedMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal Server Error when fetching datasets. Please contact Support.", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -335,8 +335,8 @@ public class DataAccessRequestResource extends Resource {
         try {
             dataAccessRequestAPI.deletePartialDataAccessRequestById(id);
             return Response.ok().build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -403,7 +403,7 @@ public class DataAccessRequestResource extends Resource {
     }
 
     private Map<String, Object> parseAsMap(String str) throws IOException {
-        ObjectReader reader = mapper.reader(Map.class);
+        ObjectReader reader = mapper.readerFor(Map.class);
         return reader.readValue(str);
     }
 

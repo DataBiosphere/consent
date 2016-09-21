@@ -110,7 +110,7 @@ public class IndexerServiceImpl implements IndexerService {
     }
 
      private Map<String, HashMap> parseAsMap(String str) throws IOException {
-            ObjectReader reader = mapper.reader(Map.class);
+            ObjectReader reader = mapper.readerFor(Map.class);
             return reader.readValue(str);
     }
 

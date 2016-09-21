@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.configurations.UseRestrictionConfig;
 import org.broadinstitute.consent.http.models.grammar.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -160,7 +159,7 @@ public class UseRestrictionConverter {
     }
 
     public Map<String, Object> parseAsMap(String str) {
-        ObjectReader reader = mapper.reader(Map.class);
+        ObjectReader reader = mapper.readerFor(Map.class);
         try {
             return reader.readValue(str);
         } catch (IOException e) {

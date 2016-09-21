@@ -4,7 +4,6 @@ import io.dropwizard.auth.basic.BasicCredentials;
 import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

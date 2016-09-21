@@ -1,13 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -21,7 +19,7 @@ import java.util.Map;
 
 
 @Path("{api : (api/)?}researcher/{userId}")
-public class ResearcherResource {
+public class ResearcherResource extends Resource{
 
     private ResearcherAPI researcherAPI;
 
@@ -36,14 +34,8 @@ public class ResearcherResource {
         try{
             researcherAPI.registerResearcher(researcherPropertiesMap, userId, validate);
             return Response.created(info.getRequestUriBuilder().build()).build();
-        }catch (IllegalArgumentException e){
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        }catch (UnsupportedOperationException e){
-            return Response.status(Response.Status.CONFLICT).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build();
         }catch (Exception e){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -53,12 +45,8 @@ public class ResearcherResource {
     public Response updateResearcher(@QueryParam("validate") Boolean validate, @PathParam("userId") Integer userId, Map<String, String> researcherProperties) {
         try{
             return Response.ok(researcherAPI.updateResearcher(researcherProperties, userId, validate)).build();
-        }catch (IllegalArgumentException e){
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }catch (Exception e){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -68,8 +56,8 @@ public class ResearcherResource {
     public Response describeAllResearcherProperties(@PathParam("userId") Integer userId) {
         try{
             return Response.ok(researcherAPI.describeResearcherPropertiesMap(userId)).build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 
@@ -80,8 +68,8 @@ public class ResearcherResource {
         try{
             researcherAPI.deleteResearcherProperties(userId);
             return Response.ok().build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 
@@ -92,8 +80,8 @@ public class ResearcherResource {
     public Response getResearcherPropertiesForDAR(@PathParam("userId") Integer userId) {
         try{
             return Response.ok(researcherAPI.describeResearcherPropertiesForDAR(userId)).build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 

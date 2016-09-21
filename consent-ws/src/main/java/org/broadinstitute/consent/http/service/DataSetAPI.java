@@ -17,8 +17,6 @@ public interface DataSetAPI {
 
     Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
 
-    DataSet describeDataSetsByObjectId(String objectId) ;
-
     List<DataSet> getDataSetsForConsent(String consentId);
 
     DataSetDTO getDataSetDTO(String objectId ) ;

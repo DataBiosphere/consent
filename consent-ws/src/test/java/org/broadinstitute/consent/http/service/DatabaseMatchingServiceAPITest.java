@@ -190,12 +190,6 @@ public class DatabaseMatchingServiceAPITest {
         return document;
     }
 
-    public static Document getFailingDar() throws IOException {
-        Document document = new Document();
-        document.putAll(jsonAsMap(sampleDar2));
-        return document;
-    }
-
     private static HashMap<String,Object> jsonAsMap(String jsonSource) throws IOException {
         HashMap<String,Object> result = new ObjectMapper().readValue(jsonSource, HashMap.class);
         return result;
@@ -247,9 +241,4 @@ public class DatabaseMatchingServiceAPITest {
             "\t\"valid_restriction\": true\n" +
             "}";
 
-    private static String sampleDar2 = "{\n" +
-            "\t\"_id\": \"5771763734064d282c6600ed\",\n" +
-            "\t\"dar_code\": \"DAR-6\",\n" +
-            "\t\"valid_restriction\": true\n" +
-            "}";
 }

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -51,9 +50,4 @@ public interface ElectionAPI {
     boolean isDataSetElectionOpen();
 
     String darDatasetElectionStatus(String darReferenceId);
-
-    void bulkCancelOpenElectionsByReferenceId(List<String> referenceIds, String electionType) throws Exception;
-
-    List<Election> getOpenElections(String electionType);
-
 }

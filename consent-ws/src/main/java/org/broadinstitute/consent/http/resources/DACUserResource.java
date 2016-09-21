@@ -18,7 +18,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -92,10 +91,10 @@ public class DACUserResource extends Resource {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
             return Response.ok(uri).entity(dacUser).build();
-        } catch (IllegalArgumentException | UserRoleHandlerException e) {
+        } catch (UserRoleHandlerException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -121,7 +120,7 @@ public class DACUserResource extends Resource {
             ValidateDelegationResponse delegationResponse = dacUserAPI.validateNeedsDelegation(dacUser, role);
             return Response.ok().entity(delegationResponse).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -133,12 +132,8 @@ public class DACUserResource extends Resource {
     public Response updateStatus(@PathParam("userId") Integer userId, DACUserRole dACUserRole) {
         try {
             return Response.ok(dacUserAPI.updateRoleStatus(dACUserRole, userId)).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (Exception e) {
-            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -150,12 +145,8 @@ public class DACUserResource extends Resource {
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
             return Response.ok(dacUserAPI.getRoleStatus(userId)).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -168,12 +159,8 @@ public class DACUserResource extends Resource {
         try {
             DACUser dacUser = dacUserAPI.updateNameById(user, id);
             return Response.ok().entity(dacUser).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.serverError().entity(new Error(null, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 

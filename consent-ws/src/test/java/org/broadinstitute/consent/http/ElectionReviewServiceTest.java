@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
-
 import javax.ws.rs.client.Client;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -23,16 +21,8 @@ public abstract class ElectionReviewServiceTest extends AbstractTest {
         return path2Url(String.format("electionReview/%s", id));
     }
 
-    public String accessElectionDataRequestPath(String id) {
-        return path2Url(String.format("electionReview/access/%s", id));
-    }
-
     public String lastElectionReviewPath(String id) {
         return path2Url(String.format("electionReview/last/%s", id));
-    }
-
-    public ElectionReview retrieveVote(Client client, String url) throws IOException {
-        return getJson(client, url).readEntity(ElectionReview.class);
     }
 
     public String electionConsentPath(String id) {

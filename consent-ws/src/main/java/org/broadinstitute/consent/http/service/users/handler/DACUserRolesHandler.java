@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.mail.MessagingException;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.ListUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
@@ -28,9 +27,7 @@ import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 
 public class DACUserRolesHandler extends AbstractUserRolesHandler {

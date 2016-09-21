@@ -14,6 +14,4 @@ public interface MatchProcessAPI {
     void removeMatchesForPurpose(String consentId);
 
     void removeMatchesForConsent(String consentId);
-    
-    void setMongoDBInstance(MongoConsentDB mongo);
 }

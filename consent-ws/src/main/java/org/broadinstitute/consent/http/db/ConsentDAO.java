@@ -34,11 +34,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select * from consents  where consentId in (<consentIds>)")
     Collection<Consent> findConsentsFromConsentsIDs(@BindIn("consentIds") List<String> consentIds);
 
-    @SqlQuery("SELECT * " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
-            "WHERE cs.objectId IN (<datasetId>)")
-    Collection<Consent> findConsentsFromDatasetIDs(@BindIn("datasetId") List<String> datasetId);
-
     @Mapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.objectId, ds.name " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
@@ -115,11 +110,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlBatch("insert into consentassociations (consentId, associationType, objectId) values (:consentId, :associationType, :objectId)")
     void insertAssociations(@Bind("consentId") String consentId,
-                            @Bind("associationType") String associationType,
-                            @Bind("objectId") List<String> ids);
-
-    @SqlBatch("delete from consentassociations where consentId = :consentId and associationType = :associationType and objectId =: objectId")
-    void deleteAssociations(@Bind("consentId") String consentId,
                             @Bind("associationType") String associationType,
                             @Bind("objectId") List<String> ids);
 

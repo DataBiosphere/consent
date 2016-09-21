@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

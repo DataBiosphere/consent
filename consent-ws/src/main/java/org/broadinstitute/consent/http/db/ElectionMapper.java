@@ -9,7 +9,6 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 public class ElectionMapper implements ResultSetMapper<Election> {
 

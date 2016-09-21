@@ -36,12 +36,8 @@ public class ConsentAssociationResource extends Resource {
             List<ConsentAssociation> result = api.createAssociation(consentId, body);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
-        }catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -60,12 +56,8 @@ public class ConsentAssociationResource extends Resource {
             List<ConsentAssociation> result = api.updateAssociation(consentId, body);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        }  catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -98,10 +90,8 @@ public class ConsentAssociationResource extends Resource {
             List<ConsentAssociation> result = api.deleteAssociation(consentId, atype, objectId);
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s", consentId), Response.Status.NOT_FOUND.getStatusCode())).build();
         }catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
