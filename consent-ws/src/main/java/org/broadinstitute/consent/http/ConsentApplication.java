@@ -18,7 +18,13 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
-import org.broadinstitute.consent.http.authentication.*;
+import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
+import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
+import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
+import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
+import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
+import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
+import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
@@ -68,6 +74,7 @@ import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.ResearcherResource;
 import org.broadinstitute.consent.http.resources.UserResource;
+import org.broadinstitute.consent.http.resources.WorkspaceResource;
 import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
@@ -269,6 +276,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ApprovalExpirationTimeResource.class);
         env.jersey().register(new UserResource(userAPI));
         env.jersey().register(new ResearcherResource(researcherAPI));
+        env.jersey().register(WorkspaceResource.class);
 
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()

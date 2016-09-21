@@ -5,16 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -22,6 +12,16 @@ import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -201,9 +201,7 @@ public class AssociationTest extends ConsentServiceTest {
     @Test
     public void testDeleteAssociationAll() throws IOException {
         final String consentId = setupConsent();
-
         Client client = ClientBuilder.newClient();
-
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SE-1234", "SE-5678"));
         assoc_list1.add(buildConsentAssociation("sampleSet", "SE-9571"));

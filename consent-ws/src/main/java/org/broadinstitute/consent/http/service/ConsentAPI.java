@@ -67,4 +67,6 @@ public interface ConsentAPI {
     Integer getUnReviewedConsents();
 
     List<UseRestrictionDTO> getInvalidConsents();
+
+    Consent getConsentFromObjectIdAndType(String objectId, String associationType);
 }

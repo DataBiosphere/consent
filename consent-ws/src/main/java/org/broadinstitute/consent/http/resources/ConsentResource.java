@@ -91,7 +91,7 @@ public class ConsentResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
     public Response update(@PathParam("id") String id, Consent updated) {
         try {
             if (updated.getTranslatedUseRestriction() == null) {

@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ConsentMapper;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
@@ -394,6 +395,15 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public List<UseRestrictionDTO> getInvalidConsents() {
         return consentDAO.findInvalidRestrictions();
+    }
+
+    @Override
+    public Consent getConsentFromObjectIdAndType(String objectId, String associationType) {
+        Consent consent = consentDAO.findConsentByAssociationAndObjectId(associationType, objectId);
+        if(consent == null){
+            throw new NotFoundException("The specified id does not exists.");
+        }
+        return consent;
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents, String status) {

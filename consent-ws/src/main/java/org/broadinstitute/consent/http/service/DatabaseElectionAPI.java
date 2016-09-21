@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -372,6 +373,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             }
             return DataSetElectionStatus.DS_APPROVED.getValue();
         }
+    }
+
+    @Override
+    public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
+       List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
+       List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
+       if(CollectionUtils.isNotEmpty(elections)){
+           elections.stream().forEach(election -> electionStatusDTOs.add(new ElectionStatusDTO(election.getCreateDate(), election.getStatus())));
+       }
+       return electionStatusDTOs;
     }
 
     @Override

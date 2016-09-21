@@ -133,6 +133,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     List<String> findConsentsForAssociation(@Bind("associationType") String associationType,
                                             @Bind("objectId") String objectId);
 
+    @SqlQuery("select c.* from consentassociations ca inner join consents c on c.consentId = ca.consentId where associationType = :associationType and objectId= :objectId")
+    Consent findConsentByAssociationAndObjectId(@Bind("associationType") String associationType,
+                                            @Bind("objectId") String objectId);
 
     @SqlQuery("select * from consents where consentId not in (select c.consentId from consents c  inner join election e on e.referenceId = c.consentId )")
     List<Consent> findUnreviewedConsents();

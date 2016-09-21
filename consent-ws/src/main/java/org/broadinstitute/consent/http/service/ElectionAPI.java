@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 
 import javax.ws.rs.NotFoundException;
 import java.util.List;
@@ -50,4 +51,7 @@ public interface ElectionAPI {
     boolean isDataSetElectionOpen();
 
     String darDatasetElectionStatus(String darReferenceId);
+
+    List<ElectionStatusDTO> describeElectionsByConsentId(String consentId);
+
 }
