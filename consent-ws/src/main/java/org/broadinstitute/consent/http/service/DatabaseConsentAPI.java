@@ -7,20 +7,28 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ConsentMapper;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
+import org.skife.jdbi.v2.PreparedBatch;
+import org.skife.jdbi.v2.util.LongColumnMapper;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
@@ -29,7 +37,14 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -37,8 +52,10 @@ import java.util.stream.Collectors;
  */
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
+    private final AuditServiceAPI auditServiceAPI;
     private final ConsentDAO consentDAO;
     private final ElectionDAO electionDAO;
+    private final AssociationDAO associationDAO;
     private final DBI jdbi;
     private final Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
@@ -49,9 +66,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, MongoConsentDB mongo, DBI jdbi) {
+    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, DBI jdbi) {
+        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.consentDAO = dao;
         this.electionDAO = electionDAO;
+        this.associationDAO = associationDAO;
         this.mongo = mongo;
         this.jdbi = jdbi;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
@@ -67,8 +86,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, MongoConsentDB mongo) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, mongo, jdbi));
+    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, mongo, jdbi));
     }
 
     // Consent Methods
@@ -156,7 +175,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     // Create new associations for a consent.  For each ConsentAssociation specified, remove the previous
     // association and create the new one.
     @Override
-    public List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations) {
+    public List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations, String createdByUserEmail) {
         logger.trace(String.format("createAssociation consentId='%s' %d associations supplied",
                 consentId, new_associations.size()));
         checkConsentExists(consentId);
@@ -166,12 +185,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                     association.getAssociationType(), association.getElements().size()));
             validateElements(association.getElements());
             try {
-                consentDAO.begin();
                 consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
-                consentDAO.insertAssociations(consentId, association.getAssociationType(), association.getElements());
-                consentDAO.commit();
+                List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
+                auditServiceAPI.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.CREATE.getValue(), createdByUserEmail);
             } catch (Exception e) {
-                consentDAO.rollback();
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
             }
         }
@@ -182,7 +199,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     // Update associations for a consent by adding new associations.  For each ConsentAssociation specified, all
     // the objects specified are added as consent associations.
     @Override
-    public List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations) {
+    public List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations, String modifiedByUserEmail) {
         logger.trace(String.format("updateAssociation consentId='%s' associations(%d)= '%s'",
                 consentId, new_associations.size(), new_associations.toString()));
         checkConsentExists(consentId);
@@ -200,14 +217,30 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             new_ids.removeAll(old_ids);
             // and add the new associations
             try {
-                consentDAO.insertAssociations(consentId, atype, new_ids);
+                if (new_ids.size() > 0) {
+                    List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
+                    auditServiceAPI.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
+                }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
             }
 
         }
-
         return getAllAssociationsForConsent(consentId);
+    }
+
+    /** Can't add this to the DAO interface =( **/
+    private List<String> updateAssociations(String consentId, String associationType, List<String> ids){
+        Handle h = jdbi.open();
+        PreparedBatch insertBatch = h.prepareBatch("insert into consentassociations (consentId, associationType, objectId) values (?, ?, ?)");
+        for(String id: ids){
+            insertBatch.add(consentId, associationType, id);
+        }
+        List<Long> insertedIds = insertBatch.executeAndGenerateKeys(LongColumnMapper.PRIMITIVE).list();
+        h.close();
+        List<String> stringsList = new ArrayList<>();
+        stringsList.addAll(insertedIds.stream().map(Object::toString).collect(Collectors.toList()));
+        return stringsList;
     }
 
     private void validateElements(List<String> newIds) {
@@ -395,6 +428,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public List<UseRestrictionDTO> getInvalidConsents() {
         return consentDAO.findInvalidRestrictions();
+    }
+
+    @Override
+    public boolean hasWorkspaceAssociation(String workspaceId){
+        return !Objects.isNull(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId));
     }
 
     @Override

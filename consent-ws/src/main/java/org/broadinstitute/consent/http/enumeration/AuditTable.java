@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.enumeration;
 
-public enum AssociationType {
+public enum AuditTable {
 
-    SAMPLE("sample"), SAMPLESET("sampleSet"), WORKSPACE("workspace");
+    CONSENT_ASSOCIATIONS("consentassociations"), CONSENT("consents");
 
     private String value;
 
-    AssociationType(String value) {
+    AuditTable(String value) {
         this.value = value;
     }
 
     public String getValue() {
         return value;
     }
-    
 }

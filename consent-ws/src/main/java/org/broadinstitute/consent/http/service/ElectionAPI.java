@@ -7,8 +7,10 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
+import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -54,4 +56,5 @@ public interface ElectionAPI {
 
     List<ElectionStatusDTO> describeElectionsByConsentId(String consentId);
 
+    List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList);
 }

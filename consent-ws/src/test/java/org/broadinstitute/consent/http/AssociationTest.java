@@ -6,8 +6,13 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.WorkspaceAssociationDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -15,9 +20,13 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -25,6 +34,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -201,7 +211,9 @@ public class AssociationTest extends ConsentServiceTest {
     @Test
     public void testDeleteAssociationAll() throws IOException {
         final String consentId = setupConsent();
+
         Client client = ClientBuilder.newClient();
+
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
         assoc_list1.add(buildConsentAssociation("sample", "SE-1234", "SE-5678"));
         assoc_list1.add(buildConsentAssociation("sampleSet", "SE-9571"));
@@ -270,14 +282,65 @@ public class AssociationTest extends ConsentServiceTest {
         location = checkHeader(response, "Location");
         System.out.println(String.format("*** testQueryByAssociation(2) - returned location '%s'", location));
         // check that we got back no consents
-       checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
-       // check that we got back no consents
+        checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
+        // check that we got back no consents
         checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sampleSet", s2)));
+    }
+
+    private static String WORKSPACE_TYPE = "workspace";
+    private static String NON_EXISTENT_WORKSPACE = UUID.randomUUID().toString();
+    private static String TO_UPDATE_WORKSPACE = UUID.randomUUID().toString();
+    private static String TO_CREATE_CONSENT = "testId2";
+    private static String TO_UPDATE_CONSENT = "testId3";
+
+    private static String WORKSPACE_URL = "workspace/%s";
+
+    @Test
+    public void testPostWorkspaceAssociation() throws IOException {
+        Client client = ClientBuilder.newClient();
+        final ConsentAssociation consent_association = buildConsentAssociation(WORKSPACE_TYPE, NON_EXISTENT_WORKSPACE);
+        checkStatus(OK, post(client, associationPath(TO_CREATE_CONSENT), Arrays.asList(consent_association)));
+        testGetWorkspaceAssociation(NON_EXISTENT_WORKSPACE, TO_CREATE_CONSENT);
+        testGetWorkspaceAssociationWithElections(NON_EXISTENT_WORKSPACE, TO_CREATE_CONSENT);
+        checkStatus(CONFLICT, post(client, associationPath(TO_CREATE_CONSENT), Arrays.asList(consent_association)));
+    }
+
+    /** Workspace associations can't be updated, no matter the association values! **/
+    @Test
+    public void testPutWorkspaceAssociation() throws IOException {
+        Client client = ClientBuilder.newClient();
+        final ConsentAssociation consent_association = buildConsentAssociation(WORKSPACE_TYPE, TO_UPDATE_WORKSPACE);
+        checkStatus(CONFLICT, put(client, associationPath(TO_UPDATE_CONSENT), Arrays.asList(consent_association)));
+        List<ConsentAssociation> created = retrieveAssociations(client, associationPath(TO_UPDATE_CONSENT));
+        System.out.println(created.toString());
     }
 
     //
     //  HELPER METHODS
     //
+
+    private void testGetWorkspaceAssociation(String workspaceId, String consentId) throws IOException {
+        Client client = ClientBuilder.newClient();
+        Response response = checkStatus(OK, getJson(client, path2Url(String.format(WORKSPACE_URL, workspaceId))));
+        WorkspaceAssociationDTO workspaceAssociation = response.readEntity(WorkspaceAssociationDTO.class);
+        assertTrue(workspaceAssociation.getConsent() != null);
+        assertTrue(workspaceAssociation.getConsent().getConsentId().equals(consentId));
+    }
+
+    private void testGetWorkspaceAssociationWithElections(String workspaceId, String consentId) throws IOException {
+        Election election = createElection(consentId);
+        Client client = ClientBuilder.newClient();
+        Response response = checkStatus(OK, getJson(client, path2Url(String.format(WORKSPACE_URL, workspaceId))));
+        WorkspaceAssociationDTO workspaceAssociation = response.readEntity(WorkspaceAssociationDTO.class);
+        assertTrue(workspaceAssociation.getConsent() != null);
+        assertTrue(workspaceAssociation.getConsent().getConsentId().equals(consentId));
+        assertTrue(workspaceAssociation.getElectionStatus().get(1).getElectionStatus().equals(ElectionStatus.OPEN.getValue()));
+        deleteElection(election.getElectionId(), consentId);
+    }
+
+    private List<ConsentAssociation> retrieveAssociations(Client client, String url) throws IOException {
+        return getJson(client, url).readEntity(new GenericType<List<ConsentAssociation>>(){});
+    }
 
     private static ConsentAssociation buildConsentAssociation(String atype, String... elements) {
         final ArrayList<String> elem_list = new ArrayList<>();
@@ -350,4 +413,70 @@ public class AssociationTest extends ConsentServiceTest {
         System.out.println(String.format("setupConsent created consent with id '%s' at location '%s'", createdLocation, consent_id));
         return consent_id;
     }
+
+    // Create elections - Workspace associations related code
+
+    public Election createElection(String consentId) throws IOException {
+        Client client = ClientBuilder.newClient();
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        Response response = checkStatus(CREATED, post(client, electionConsentPath(consentId), election));
+        String createdLocation = checkHeader(response, "Location");
+        return retrieveElection(client, createdLocation);
+    }
+
+    public String electionConsentPath(String id) {
+        try {
+            return path2Url(String.format("consent/%s/election", URLEncoder.encode(id, "UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/election", id);
+        }
+    }
+
+    public Election retrieveElection(Client client, String url) throws IOException {
+        return getJson(client, url).readEntity(Election.class);
+    }
+
+    public void deleteElection(Integer electionId, String consentId) throws IOException {
+        Client client = ClientBuilder.newClient();
+        List<Vote> votes = getJson(client, voteConsentPath(consentId)).readEntity(new GenericType<List<Vote>>() {
+        });
+        for (Vote vote : votes) {
+            checkStatus(OK,
+                    delete(client, voteConsentIdPath(consentId, vote.getVoteId())));
+        }
+        checkStatus(OK,
+                delete(client, electionConsentPathById(consentId, electionId)));
+
+    }
+
+    public String voteConsentPath(String consentId) {
+        try {
+            return path2Url(String.format("consent/%s/vote", URLEncoder.encode(consentId, "UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/vote", consentId);
+        }
+    }
+
+    public String voteConsentIdPath(String consentId, Integer voteId) {
+        try {
+            return path2Url(String.format("consent/%s/vote/%s", URLEncoder.encode(consentId, "UTF-8"), voteId));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/vote/%s", consentId, voteId);
+        }
+    }
+
+    public String electionConsentPathById(String referenceId, Integer electionId) {
+        try {
+            return path2Url(String.format("consent/%s/election/%s", URLEncoder.encode(referenceId, "UTF-8"), electionId));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/election/%s", referenceId, electionId);
+        }
+    }
+
 }

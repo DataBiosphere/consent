@@ -43,14 +43,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     @Test
     public void testCreateConsentElection() throws IOException {
         Client client = ClientBuilder.newClient();
-        Election election = new Election();
-        election.setStatus(ElectionStatus.OPEN.getValue());
-        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-        Response response = checkStatus(CREATED,
-                post(client, electionConsentPath(CONSENT_ID), election));
-        String createdLocation = checkHeader(response, "Location");
-        mockValidateTokenResponse();
-        Election created = retrieveElection(client, createdLocation);
+        Election created = createElection(CONSENT_ID);
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
         assertThat(created.getStatus()).isEqualTo(ElectionStatus.OPEN.getValue());
@@ -60,9 +53,9 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getFinalRationale()).isNull();
         // try to create other election for the same consent
         checkStatus(BADREQUEST,
-                post(client, electionConsentPath(CONSENT_ID), election));
+                post(client, electionConsentPath(CONSENT_ID), created));
         testUpdateConsentElection(created);
-        deleteElection(created.getElectionId());
+        deleteElection(created.getElectionId(), CONSENT_ID);
     }
 
     public void testUpdateConsentElection(Election created) throws IOException {
@@ -70,7 +63,6 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         created.setFinalVote(true);
         created.setFinalRationale(FINAL_RATIONALE);
         checkStatus(OK, put(client, electionPathById(created.getElectionId()), created));
-        //mockValidateTokenResponse();
         created = retrieveElection(client, electionPathById(created.getElectionId()));
         assertThat(created.getElectionType()).isEqualTo(
                 ElectionType.TRANSLATE_DUL.getValue());
@@ -79,16 +71,16 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         assertThat(created.getElectionId()).isNotNull();
     }
 
-    public void deleteElection(Integer electionId) throws IOException {
+    public void deleteElection(Integer electionId, String consentId) throws IOException {
         Client client = ClientBuilder.newClient();
-        List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() {
+        List<Vote> votes = getJson(client, voteConsentPath(consentId)).readEntity(new GenericType<List<Vote>>() {
         });
         for (Vote vote : votes) {
             checkStatus(OK,
-                    delete(client, voteConsentIdPath(CONSENT_ID, vote.getVoteId())));
+                    delete(client, voteConsentIdPath(consentId, vote.getVoteId())));
         }
         checkStatus(OK,
-                delete(client, electionConsentPathById(CONSENT_ID, electionId)));
+                delete(client, electionConsentPathById(consentId, electionId)));
 
     }
 
@@ -128,6 +120,17 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         // should return 400 bad request because status is invalid
         checkStatus(BAD_REQUEST,
                 post(client, electionConsentPath(CONSENT_ID_2), election));
+    }
+
+    public Election createElection(String consentId) throws IOException {
+        Client client = ClientBuilder.newClient();
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        Response response = checkStatus(CREATED,
+                post(client, electionConsentPath(consentId), election));
+        String createdLocation = checkHeader(response, "Location");
+        return retrieveElection(client, createdLocation);
     }
 
 }

@@ -1,14 +1,36 @@
 package org.broadinstitute.consent.http.resources;
 
+import io.dropwizard.auth.Auth;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AuditServiceAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -20,20 +42,28 @@ import java.util.List;
 public class ConsentAssociationResource extends Resource {
 
     private final ConsentAPI api;
+    private final DACUserAPI dacUserAPI;
 
     public ConsentAssociationResource() {
         this.api = AbstractConsentAPI.getInstance();
+        this.dacUserAPI = AbstractDACUserAPI.getInstance();
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
-    public Response createAssociation(@PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    @RolesAllowed({"RESEARCHER", "DATAOWNER", "ADMIN"})
+    public Response createAssociation(@Auth User user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
+            for (ConsentAssociation association : body) {
+                if(association.getAssociationType().equals(AssociationType.WORKSPACE.getValue()) && api.hasWorkspaceAssociation(association.getElements().get(0))){
+                    return Response.status(Response.Status.CONFLICT).entity(new Error("Workspace associations can only be created once.", Response.Status.CONFLICT.getStatusCode())).build();
+                }
+            }
             logger().debug(msg);
-            List<ConsentAssociation> result = api.createAssociation(consentId, body);
+            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            List<ConsentAssociation> result = api.createAssociation(consentId, body, dacUser.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {
@@ -48,12 +78,17 @@ public class ConsentAssociationResource extends Resource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
-    public Response updateAssociation(@PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    @RolesAllowed({"RESEARCHER", "DATAOWNER", "ADMIN"})
+    public Response updateAssociation(@Auth User user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
+            for (ConsentAssociation association : body) {
+                if(association.getAssociationType().equals(AssociationType.WORKSPACE.getValue())){
+                    return Response.status(Response.Status.CONFLICT).entity(new Error("Workspace associations can't be updated.", Response.Status.CONFLICT.getStatusCode())).build();
+                }
+            }
             logger().debug(msg);
-            List<ConsentAssociation> result = api.updateAssociation(consentId, body);
+            List<ConsentAssociation> result = api.updateAssociation(consentId, body, user.getName());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {

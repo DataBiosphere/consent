@@ -155,7 +155,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private List<Document> findRelatedDars(List<String> dataSetIds){
-        return dataAccessAPI.describeDataAccessWithDataSetId(dataSetIds);
+        return dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dataSetIds);
     }
 
     private RequestMatchingObject createRequestObject(Consent consent, Document dar) throws Exception {

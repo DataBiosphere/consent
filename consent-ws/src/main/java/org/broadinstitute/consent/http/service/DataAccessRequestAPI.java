@@ -21,7 +21,7 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
-    List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
+    List<Document> describeDataAccessWithDataSetIdAndRestriction(List<String> dataSetIds);
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
 
@@ -71,5 +71,7 @@ public interface DataAccessRequestAPI {
     void updateDARUseRestrictionValidation(List<String> darCodes, Boolean validUseRestriction);
 
     FindIterable<Document> findDARUseRestrictions();
+
+    List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 }
 

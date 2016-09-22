@@ -12,3 +12,5 @@ DELETE FROM dataset_user_association WHERE datasetId IN (1, 2);
 DELETE FROM dataset WHERE datasetId IN (1, 2);
 DELETE FROM dataset WHERE objectId IN ('SC-20657', 'SC-20659', 'SC-20658', 'SC-20660');
 DELETE FROM approval_expiration_time;
+DELETE FROM consentassociations;
+DELETE FROM workspace_audit;

@@ -170,7 +170,7 @@ public class DatabaseMatchingServiceAPITest {
         List<DataSet> dsList = new ArrayList<>(Arrays.asList(ds));
         when(dsAPI.getDataSetsForConsent("CONS-1")).thenReturn(dsList);
         when(dsAPI.getDataSetsForConsent("CONS-2")).thenReturn(dsList);
-        when(dataAccessAPI.describeDataAccessWithDataSetId(dsList.stream().map(DataSet::getObjectId).collect(Collectors.toList()))).thenReturn(new ArrayList<>(Arrays.asList(getSampleDar())));
+        when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getObjectId).collect(Collectors.toList()))).thenReturn(new ArrayList<>(Arrays.asList(getSampleDar())));
         List<Match> matches = matchApi.findMatchesForConsent("CONS-1");
         assertTrue(matches.size() == 1);
         assertTrue(matches.get(0).getFailed() == false);
@@ -179,7 +179,7 @@ public class DatabaseMatchingServiceAPITest {
         assertTrue(matches.size() == 1);
         assertTrue(matches.get(0).getFailed() == true);
         assertTrue(matches.get(0).getMatch() == false);
-        when(dataAccessAPI.describeDataAccessWithDataSetId(dsList.stream().map(DataSet::getObjectId).collect(Collectors.toList()))).thenReturn(new ArrayList<>());
+        when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getObjectId).collect(Collectors.toList()))).thenReturn(new ArrayList<>());
         matches = matchApi.findMatchesForConsent("CONS-1");
         assertTrue(matches.size() == 0);
     }

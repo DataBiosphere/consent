@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 abstract public class AbstractTest extends ResourcedTest {
 
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
+    public static final int CONFLICT = Response.Status.CONFLICT.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();

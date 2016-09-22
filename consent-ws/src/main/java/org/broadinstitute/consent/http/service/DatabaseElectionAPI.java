@@ -63,6 +63,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private EmailNotifierAPI emailNotifierAPI;
     private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
     private ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+    private final String DATA_USE_LIMITATION = "Data Use Limitation";
+    private final String DATA_ACCESS_REQUEST = "Data Access Request";
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -379,10 +381,29 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
        List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
-       if(CollectionUtils.isNotEmpty(elections)){
-           elections.stream().forEach(election -> electionStatusDTOs.add(new ElectionStatusDTO(election.getCreateDate(), election.getStatus())));
-       }
-       return electionStatusDTOs;
+        getElectionStatusDTO(electionStatusDTOs, elections, DATA_USE_LIMITATION);
+        return electionStatusDTOs;
+    }
+
+    @Override
+    public List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList) {
+        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(darList)){
+            List<String> darIds = new ArrayList<>();
+            darList.stream().forEach(dar -> {
+                darIds.add(dar.get(DarConstants.ID).toString());
+                dar.put(DarConstants.ID,dar.get(DarConstants.ID).toString());
+            });
+            List<Election> elections = electionDAO.findRequestElectionsByReferenceIds(darIds);
+            getElectionStatusDTO(electionStatusDTOs, elections, DATA_ACCESS_REQUEST);
+        }
+        return electionStatusDTOs;
+    }
+
+    private void getElectionStatusDTO(List<ElectionStatusDTO> electionStatusDTOs, List<Election> elections, String type) {
+        if(CollectionUtils.isNotEmpty(elections)){
+            elections.stream().forEach(election -> electionStatusDTOs.add(new ElectionStatusDTO(election.getCreateDate(), election.getStatus(), type)));
+        }
     }
 
     @Override

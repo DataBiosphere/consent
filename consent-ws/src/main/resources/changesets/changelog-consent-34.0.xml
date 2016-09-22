@@ -1,0 +1,30 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="aracioppi" id="112">
+        <createTable tableName="workspace_audit">
+            <column name="workspace_audit_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="modifiedObjectId" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modifiedTable" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changeAction" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modifiedByUserId" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modificationDate" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -37,9 +37,9 @@ public interface ConsentAPI {
 
     // ConsentAssociation methods
 
-    List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations);
+    List<ConsentAssociation> createAssociation(String consentId, List<ConsentAssociation> new_associations, String modifiedByUserEmail);
 
-    List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations);
+    List<ConsentAssociation> updateAssociation(String consentId, List<ConsentAssociation> new_associations, String modifiedByUserEmail);
 
     List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
 
@@ -69,4 +69,12 @@ public interface ConsentAPI {
     List<UseRestrictionDTO> getInvalidConsents();
 
     Consent getConsentFromObjectIdAndType(String objectId, String associationType);
+
+    /**
+     * Method to check if a workspace is already associated with a consentId
+     * @param workspaceId
+     * @return
+     */
+    boolean hasWorkspaceAssociation(String workspaceId);
+
 }

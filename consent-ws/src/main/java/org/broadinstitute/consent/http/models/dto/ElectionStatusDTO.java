@@ -13,12 +13,16 @@ public class ElectionStatusDTO {
     @JsonProperty
     private String electionStatus;
 
+    @JsonProperty
+    private String type;
+
     public ElectionStatusDTO() {
     }
 
-    public ElectionStatusDTO(Date createDate, String electionStatus) {
+    public ElectionStatusDTO(Date createDate, String electionStatus, String type) {
         this.createDate = createDate;
         this.electionStatus = electionStatus;
+        this.type = type;
     }
 
     public Date getCreateDate() {
@@ -35,5 +39,13 @@ public class ElectionStatusDTO {
 
     public void setElectionStatus(String electionStatus) {
         this.electionStatus = electionStatus;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
