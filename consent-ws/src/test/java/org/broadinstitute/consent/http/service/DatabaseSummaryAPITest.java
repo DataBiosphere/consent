@@ -8,6 +8,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -26,7 +27,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.when;
 
@@ -119,6 +122,15 @@ public class DatabaseSummaryAPITest {
         Calendar myCalendar = new GregorianCalendar(2016, 2, 11);
         String getAsString = databaseSummaryAPI.formatTimeToDate(myCalendar.getTimeInMillis());
         assertTrue(getAsString + " is the same date string for March 3, 2016 ", getAsString.equals("3/11/2016"));
+    }
+
+    @Test
+    public void testDelimiterCheck(){
+        String testString = "\"Samples\" Restricted for use with \"cancer\" [DOID_162(CC)]\bFuture use \"\"\\\" for methods" +
+                " research (analytic/software/technology development) is prohibited [NMDS]\bNotes:\bFuture use as a" +
+                " control set for\"' diseases other\' than\" those specified is not prohibited\n\"";
+        int count = StringUtils.countMatches(databaseSummaryAPI.delimiterCheck(testString), "\"");
+        assertThat(count, is(2));
     }
 
     /** Private methods for mocking **/
