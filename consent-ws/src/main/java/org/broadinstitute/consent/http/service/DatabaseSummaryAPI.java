@@ -37,7 +37,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private MatchDAO matchDAO;
     private final MongoConsentDB mongo;
     private static final String SEPARATOR = "\t";
-    private static final String COMMA_SEPARATOR = ",";
+    private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
     private static final String MANUAL_REVIEW = "Manual Review";
     private static final Logger logger = Logger.getLogger(DatabaseSummaryAPI.class.getName());
@@ -173,9 +173,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals("CHAIRPERSON")).collect(singletonCollector());
                         DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
-                        summaryWriter.write(electionConsent.getName() + SEPARATOR);
-                        summaryWriter.write(nullToString(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
-
+                        summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
+                        summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
                         summaryWriter.write(formatTimeToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
                         summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
@@ -183,8 +182,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         if (electionDACVotes != null && electionDACVotes.size() > 0) {
                             for (Vote vote : electionDACVotes) {
                                 List<DACUser> dacUser = electionDacUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
-                                summaryWriter.write( dacUser.get(0).getDisplayName() + COMMA_SEPARATOR);
-                                summaryWriter.write( booleanToString(vote.getVote()) + COMMA_SEPARATOR);
+                                summaryWriter.write( dacUser.get(0).getDisplayName() + SEPARATOR);
+                                summaryWriter.write( booleanToString(vote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(vote.getRationale())+ SEPARATOR);
                             }
                             for (int i = 0; i < (maxNumberOfDACMembers - electionVotes.size()); i++) {
@@ -203,7 +202,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         }
         return file;
     }
-
 
     @Override
     public File describeDataAccessRequestSummaryDetail() {
@@ -363,9 +361,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     List<Vote> votes = electionsData.get(election.getElectionId());
                     for(Vote datasetVote : votes){
                         DACUser dacUser = dacUserDAO.findDACUserById(datasetVote.getDacUserId());
-                        summaryWriter.write(dacUser.getDisplayName() + COMMA_SEPARATOR);
-                        summaryWriter.write(dacUser.getEmail() + COMMA_SEPARATOR);
-                        summaryWriter.write(datasetVoteResult(datasetVote) + COMMA_SEPARATOR);
+                        summaryWriter.write(dacUser.getDisplayName() + SEPARATOR);
+                        summaryWriter.write(dacUser.getEmail() + SEPARATOR);
+                        summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);
                         summaryWriter.write(datasetVote.getRationale() == null ? "None" : datasetVote.getRationale());
                         summaryWriter.write(SEPARATOR);
                     }
@@ -416,10 +414,14 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         HeaderSummary.FINAL_DECISION_RATIONALE.getValue() + SEPARATOR);
         for (int i = 1; i < maxNumberOfDACMembers; i++) {
             summaryWriter.write(
-                    HeaderSummary.USER_VOTE_RATIONALE.getValue() + SEPARATOR);
+                    HeaderSummary.USER.getValue() + SEPARATOR +
+                    HeaderSummary.VOTE.getValue() + SEPARATOR +
+                    HeaderSummary.RATIONALE.getValue() + SEPARATOR);
         }
         summaryWriter.write(
-                HeaderSummary.USER_VOTE_RATIONALE.getValue() + END_OF_LINE);
+                HeaderSummary.USER.getValue() + SEPARATOR +
+                HeaderSummary.VOTE.getValue() + SEPARATOR +
+                HeaderSummary.RATIONALE.getValue()+ END_OF_LINE);
     }
 
     private void setDatasetElectionsHeader(FileWriter summaryWriter , Integer maxNumberOfVotes) throws IOException {
@@ -431,9 +433,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         HeaderSummary.DATASET_FINAL_STATUS.getValue() + SEPARATOR);
         for (int i = 0; i < maxNumberOfVotes; i++) {
             summaryWriter.write(
-                    HeaderSummary.DATA_OWNER_NAME.getValue() + COMMA_SEPARATOR +
-                            HeaderSummary.DATA_OWNER_EMAIL.getValue() + COMMA_SEPARATOR +
-                            HeaderSummary.DATA_OWNER_VOTE.getValue() + COMMA_SEPARATOR +
+                    HeaderSummary.DATA_OWNER_NAME.getValue() + SEPARATOR +
+                            HeaderSummary.DATA_OWNER_EMAIL.getValue() + SEPARATOR +
+                            HeaderSummary.DATA_OWNER_VOTE.getValue() + SEPARATOR +
                             HeaderSummary.DATA_OWNER_COMMENT.getValue() + SEPARATOR);
         }
         summaryWriter.write(END_OF_LINE);
@@ -526,5 +528,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return date;
     }
 
+    public String delimiterCheck(String delimitatedString){
+        return TEXT_DELIMITER +
+               delimitatedString.replaceAll(TEXT_DELIMITER,"\'") + TEXT_DELIMITER;
+    }
 
 }

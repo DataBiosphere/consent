@@ -10,7 +10,9 @@ public enum HeaderSummary {
     CHAIRPERSON("Chairperson"),
     FINAL_DECISION("Final Decision"),
     FINAL_DECISION_RATIONALE("Final Decision Rationale / Comments"),
-    USER_VOTE_RATIONALE("User, Vote , Rationale / Comments"),
+    USER("User"),
+    VOTE("Vote"),
+    RATIONALE("Rationale / Comments"),
 
     DATA_REQUEST_ID("Data Request ID"),
     VAULT_DECISION("Vault Decision"),
