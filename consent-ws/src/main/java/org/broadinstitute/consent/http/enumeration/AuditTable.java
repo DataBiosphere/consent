@@ -1,18 +1,16 @@
 package org.broadinstitute.consent.http.enumeration;
 
+public enum AuditTable {
 
-public enum Actions {
-
-    REPLACE("replace"), ADD("add"), REMOVE("remove"), CREATE("create");
+    CONSENT_ASSOCIATIONS("consentassociations"), CONSENT("consents");
 
     private String value;
 
-    Actions(String value) {
+    AuditTable(String value) {
         this.value = value;
     }
 
     public String getValue() {
         return value;
     }
-
 }

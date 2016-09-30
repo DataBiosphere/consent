@@ -1,18 +1,17 @@
 package org.broadinstitute.consent.http.enumeration;
 
+public enum AssociationType {
 
-public enum Actions {
-
-    REPLACE("replace"), ADD("add"), REMOVE("remove"), CREATE("create");
+    SAMPLE("sample"), SAMPLESET("sampleSet"), WORKSPACE("workspace");
 
     private String value;
 
-    Actions(String value) {
+    AssociationType(String value) {
         this.value = value;
     }
 
     public String getValue() {
         return value;
     }
-
+    
 }
