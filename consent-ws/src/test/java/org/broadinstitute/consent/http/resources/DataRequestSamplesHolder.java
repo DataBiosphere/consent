@@ -49,41 +49,9 @@ public class DataRequestSamplesHolder {
             "    \"dar_code\" : \"DAR-1\"\n" +
             "}";
 
-    private static final String partialDarJson = "{\n" +
-            "    \"investigator\" : \"Someone\",\n" +
-            "    \"institution\" : \"divre\",\n" +
-            "    \"department\" : \"nnl\",\n" +
-            "    \"division\" : \"ml\",\n" +
-            "    \"address1\" : \"n\",\n" +
-            "    \"address2\" : \"n\",\n" +
-            "    \"city\" : \"n\",\n" +
-            "    \"state\" : \"ln\",\n" +
-            "    \"zipcode\" : \"ln\",\n" +
-            "    \"country\" : \"lknlknlknl\",\n" +
-            "    \"projectTitle\" : \"nlnlnl\",\n" +
-            "    \"datasetId\" : [ \n" +
-            "        {\n" +
-            "            \"concatenation\" : \"SC-20660   test\",\n" +
-            "            \"id\" : \"SC-20660\"\n" +
-            "        }\n" +
-            "    ],\n" +
-            "    \"rus\" : \"dwefwef\",\n" +
-            "    \"non_tech_rus\" : \"cefer\",\n" +
-            "    \"diseases\" : true,\n" +
-            "    \"controls\" : true,\n" +
-            "    \"userId\" : 3333,\n" +
-            "    \"partial_dar_code\" : \"temp_DAR0\"\n" +
-            "}";
-
     public static Document getSampleDar() throws IOException {
         Document document = new Document();
         document.putAll(jsonAsMap(completeDARJson));
-        return document;
-    }
-
-    public static Document getSamplePartialDar() throws IOException {
-        Document document = new Document();
-        document.putAll(jsonAsMap(partialDarJson));
         return document;
     }
 

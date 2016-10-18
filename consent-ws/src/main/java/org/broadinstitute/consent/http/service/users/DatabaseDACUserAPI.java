@@ -251,6 +251,11 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         return false;
     }
 
+    @Override
+    public boolean hasUserRole(String userRole, DACUser user) {
+        return user.getRoles().stream().filter(role -> role.getName().equalsIgnoreCase(userRole)).findAny().isPresent();
+    }
+
 
     @Override
     public DACUser updateDACUserById(Map<String, DACUser> dac, Integer id) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException {

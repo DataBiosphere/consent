@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.eclipse.jetty.http.HttpHeader;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

@@ -81,9 +81,4 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
         return ids;
     }
 
-    @Override
-    public void setMongoDBInstance(MongoConsentDB mongo) {
-        this.mongo = mongo;
-    }
-
 }

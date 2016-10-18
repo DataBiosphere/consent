@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
-
-import freemarker.ext.beans.HashAdapter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
@@ -175,10 +173,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return orderByDataSetId(dataSetDTOList);
     }
 
-    @Override
-    public DataSet describeDataSetsByObjectId(String objectId) {
-        return dsDAO.getDataSetsByObjectId(objectId);
-    }
 
     @Override
     public List<DataSet> getDataSetsForConsent(String consentId) {

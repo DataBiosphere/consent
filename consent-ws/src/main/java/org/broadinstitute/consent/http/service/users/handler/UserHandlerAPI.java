@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.models.DACUser;
 
 public interface UserHandlerAPI {
 
-
     void updateRoles(Map<String, DACUser> rec) throws UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
 }

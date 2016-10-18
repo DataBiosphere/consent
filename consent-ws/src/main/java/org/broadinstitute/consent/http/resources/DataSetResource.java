@@ -16,7 +16,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -124,8 +123,8 @@ public class DataSetResource extends Resource {
     public Response describeDataSet( @PathParam("datasetId") String datasetId){
         try {
             return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
-        } catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 
@@ -240,8 +239,8 @@ public class DataSetResource extends Resource {
         try{
             DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
+        }catch (Exception e){
+            return createExceptionResponse(e);
         }
     }
 

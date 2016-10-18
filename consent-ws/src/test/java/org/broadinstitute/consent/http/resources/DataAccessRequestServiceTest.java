@@ -8,10 +8,6 @@ public abstract class DataAccessRequestServiceTest extends AbstractTest{
         return path2Url("/dar");
     }
 
-    public String darPathById(String id) {
-        return path2Url(String.format("/%s", id));
-    }
-
     public String invalidDarsPath() {
         return path2Url(String.format("/dar/invalid"));
     }

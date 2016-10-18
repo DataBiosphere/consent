@@ -4,7 +4,6 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.*;
-import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -18,7 +17,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
@@ -68,12 +66,8 @@ public class DataRequestVoteResource extends Resource {
             }
             URI uri = info.getRequestUriBuilder().path("{id}").build(vote.getVoteId());
             return Response.ok(uri).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (NotFoundException e) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -99,12 +93,8 @@ public class DataRequestVoteResource extends Resource {
             }
             createDataOwnerElection(requestId, vote, access, dataSets);
             return Response.ok(vote).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (MessagingException | IOException | TemplateException e){
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error("Error sending Email to Admin/Data Owners", Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-        } catch (Exception e){
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -122,8 +112,8 @@ public class DataRequestVoteResource extends Resource {
                 electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
             }
             return Response.ok(vote).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).entity(new Error(e.getMessage(), Status.BAD_REQUEST.getStatusCode())).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -153,10 +143,8 @@ public class DataRequestVoteResource extends Resource {
     public Response describeDataOwnerVote(@PathParam("requestId") String requestId, @PathParam("dataOwnerId") Integer dataOwnerId){
         try{
             return Response.ok(api.describeDataOwnerVote(requestId,dataOwnerId)).build();
-        }catch (NotFoundException e){
-            return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }catch (Exception e){
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -165,7 +153,6 @@ public class DataRequestVoteResource extends Resource {
     @PermitAll
     public List<Vote> describeAllVotes(@PathParam("requestId") String requestId) {
         return api.describeVotes(requestId);
-
     }
 
     @DELETE
@@ -177,8 +164,7 @@ public class DataRequestVoteResource extends Resource {
             api.deleteVote(id, requestId);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
         } catch (Exception e) {
-            throw new NotFoundException(String.format(
-                    "Could not find vote with id %s", id));
+            return createExceptionResponse(e);
         }
     }
 
@@ -192,7 +178,7 @@ public class DataRequestVoteResource extends Resource {
             api.deleteVotes(requestId);
             return Response.ok().entity("Votes for specified id have been deleted").build();
         } catch (Exception e) {
-            throw new NotFoundException();
+            return createExceptionResponse(e);
         }
     }
 

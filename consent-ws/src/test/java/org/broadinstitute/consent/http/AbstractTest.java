@@ -7,9 +7,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
-import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
@@ -36,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 abstract public class AbstractTest extends ResourcedTest {
 
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
+    public static final int CONFLICT = Response.Status.CONFLICT.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();

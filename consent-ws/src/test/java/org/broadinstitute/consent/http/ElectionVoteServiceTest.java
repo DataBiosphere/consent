@@ -103,10 +103,6 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
         return path2Url(String.format("dataRequest/cases/pending/%s", userId));
     }
 
-    public String consentSummaryPath() {
-        return path2Url("consent/cases/summary/file");
-    }
-    
     public String consentManagePath() {
         return path2Url("consent/manage");
     }

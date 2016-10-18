@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.BindBean;

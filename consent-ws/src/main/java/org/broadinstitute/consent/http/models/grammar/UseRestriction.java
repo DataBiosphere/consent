@@ -29,7 +29,7 @@ public abstract class UseRestriction {
 
     public static UseRestriction parse(String str) throws IOException {
         try {
-            ObjectReader reader = mapper.reader(UseRestriction.class);
+            ObjectReader reader = mapper.readerFor(UseRestriction.class);
             return reader.readValue(str);
 
         } catch (IOException e) {

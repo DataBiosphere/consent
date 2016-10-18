@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http;
 
-import com.google.gson.Gson;
+
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.Not;
 import org.broadinstitute.consent.http.models.grammar.Nothing;
@@ -12,9 +12,6 @@ import org.broadinstitute.consent.http.models.grammar.Only;
 import org.broadinstitute.consent.http.models.grammar.Or;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Test for valid json formats for each of the various grammar cases.

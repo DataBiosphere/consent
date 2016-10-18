@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
@@ -13,6 +12,7 @@ import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -33,11 +33,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents  where consentId in (<consentIds>)")
     Collection<Consent> findConsentsFromConsentsIDs(@BindIn("consentIds") List<String> consentIds);
-
-    @SqlQuery("SELECT * " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
-            "WHERE cs.objectId IN (<datasetId>)")
-    Collection<Consent> findConsentsFromDatasetIDs(@BindIn("datasetId") List<String> datasetId);
 
     @Mapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.objectId, ds.name " +
@@ -113,16 +108,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                                       @Bind("associationType") String associationType,
                                       @Bind("objectId") String objectId);
 
-    @SqlBatch("insert into consentassociations (consentId, associationType, objectId) values (:consentId, :associationType, :objectId)")
-    void insertAssociations(@Bind("consentId") String consentId,
-                            @Bind("associationType") String associationType,
-                            @Bind("objectId") List<String> ids);
-
-    @SqlBatch("delete from consentassociations where consentId = :consentId and associationType = :associationType and objectId =: objectId")
-    void deleteAssociations(@Bind("consentId") String consentId,
-                            @Bind("associationType") String associationType,
-                            @Bind("objectId") List<String> ids);
-
     @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType and objectId = :objectId")
     void deleteOneAssociation(@Bind("consentId") String consentId,
                               @Bind("associationType") String associationType,
@@ -143,6 +128,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     List<String> findConsentsForAssociation(@Bind("associationType") String associationType,
                                             @Bind("objectId") String objectId);
 
+    @SqlQuery("select c.* from consentassociations ca inner join consents c on c.consentId = ca.consentId where associationType = :associationType and objectId= :objectId")
+    Consent findConsentByAssociationAndObjectId(@Bind("associationType") String associationType,
+                                            @Bind("objectId") String objectId);
 
     @SqlQuery("select * from consents where consentId not in (select c.consentId from consents c  inner join election e on e.referenceId = c.consentId )")
     List<Consent> findUnreviewedConsents();

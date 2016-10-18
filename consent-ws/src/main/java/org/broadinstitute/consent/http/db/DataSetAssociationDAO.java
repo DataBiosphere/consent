@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mongo.DatasetAssociationMapper;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.skife.jdbi.v2.sqlobject.*;
@@ -49,9 +48,5 @@ public interface DataSetAssociationDAO extends Transactional<DataSetAssociationD
 
     @SqlUpdate("delete from dataset_user_association where dacuserId = :ownerId")
     void deleteDatasetRelationshipsForUser(@Bind("ownerId") Integer ownerId);
-    
-    @SqlBatch("update dataset_user_association set dacuserId = : toDataOwnerId, createDate = now() " +
-            " where dacUserId = :fromDataOwnerId")
-    void changeDatasetUserAssociation(@Bind("fromDataOwnerId") Integer fromDataOwnerId, @Bind("toDataOwnerId") Integer tDataOwnerId) throws UnableToExecuteStatementException;
 
 }

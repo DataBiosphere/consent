@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -62,6 +63,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private EmailNotifierAPI emailNotifierAPI;
     private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
     private ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+    private final String DATA_USE_LIMITATION = "Data Use Limitation";
+    private final String DATA_ACCESS_REQUEST = "Data Access Request";
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -252,10 +255,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return openElections(openElections);
     }
 
-    @Override
-    public void bulkCancelOpenElectionsByReferenceId(List<String> referenceIds, String electionType) throws Exception{
-        electionDAO.bulkCancelOpenElectionByReferenceIdAndType(electionType, referenceIds);
-    }
 
     @Override
     public Integer findRPElectionByElectionAccessId(Integer electionId) {
@@ -361,8 +360,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
+            Election darElection = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(darReferenceId, ElectionType.DATA_ACCESS.getValue());
             List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
-            if(CollectionUtils.isEmpty(dsElectionsToVoteOn)){
+            if((!(Objects.isNull(darElection)) && darElection.getStatus().equals(ElectionStatus.OPEN.getValue())) || CollectionUtils.isEmpty(dsElectionsToVoteOn)){
                 return DataSetElectionStatus.DS_PENDING.getValue();
             } else {
                 for(Election e: dsElectionsToVoteOn){
@@ -374,6 +374,35 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 }
             }
             return DataSetElectionStatus.DS_APPROVED.getValue();
+        }
+    }
+
+    @Override
+    public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
+       List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
+       List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
+        getElectionStatusDTO(electionStatusDTOs, elections, DATA_USE_LIMITATION);
+        return electionStatusDTOs;
+    }
+
+    @Override
+    public List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList) {
+        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(darList)){
+            List<String> darIds = new ArrayList<>();
+            darList.stream().forEach(dar -> {
+                darIds.add(dar.get(DarConstants.ID).toString());
+                dar.put(DarConstants.ID,dar.get(DarConstants.ID).toString());
+            });
+            List<Election> elections = electionDAO.findRequestElectionsByReferenceIds(darIds);
+            getElectionStatusDTO(electionStatusDTOs, elections, DATA_ACCESS_REQUEST);
+        }
+        return electionStatusDTOs;
+    }
+
+    private void getElectionStatusDTO(List<ElectionStatusDTO> electionStatusDTOs, List<Election> elections, String type) {
+        if(CollectionUtils.isNotEmpty(elections)){
+            elections.stream().forEach(election -> electionStatusDTOs.add(new ElectionStatusDTO(election.getCreateDate(), election.getStatus(), type)));
         }
     }
 
@@ -401,11 +430,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public boolean isDataSetElectionOpen() {
         List<Election> elections = electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue());
         return CollectionUtils.isNotEmpty(elections) ? true : false;
-    }
-
-    @Override
-    public List<Election> getOpenElections(String electionType){
-        return electionDAO.getOpenElections(electionType);
     }
 
 

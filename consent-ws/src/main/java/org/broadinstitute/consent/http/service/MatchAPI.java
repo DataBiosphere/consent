@@ -18,8 +18,6 @@ public interface MatchAPI {
 
     List<Match> findMatchByPurposeId(String purposeId);
 
-    void deleteMatch(Integer id);
-
     void deleteMatches(List<Integer> ids);
 
     void createMatches(List<Match> matches);

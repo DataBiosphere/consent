@@ -1,19 +1,16 @@
 package org.broadinstitute.consent.http.enumeration;
 
-public enum AuthenticationType {
+public enum AuditTable {
 
-    BASIC("Basic"), BEARER("Bearer");
+    CONSENT_ASSOCIATIONS("consentassociations"), CONSENT("consents");
 
     private String value;
 
-    AuthenticationType(String value) {
+    AuditTable(String value) {
         this.value = value;
     }
 
     public String getValue() {
         return value;
     }
-
-
-
 }

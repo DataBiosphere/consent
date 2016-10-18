@@ -241,4 +241,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             " and e.status = '" + OPEN +"' and v.vote is null and v.dacUserId = :dacUserId")
     List<Election> findAccessRpOpenElectionIds(@Bind("dacUserId")Integer dacUserId);
 
+    @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
+            "e.lastUpdate, e.finalAccessVote, e.electionType from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 'DataAccess' "+
+            " and v.type = 'FINAL'  and e.referenceId in (<darIds>) order by e.createDate asc")
+    List<Election> findRequestElectionsByReferenceIds(@BindIn("darIds") List<String> darIds);
+
 }

@@ -1,14 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
-import java.io.IOException;
 import java.net.URI;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -19,18 +17,30 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.AuditServiceAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateServiceAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 
@@ -38,10 +48,13 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 public class ConsentResource extends Resource {
 
     private final ConsentAPI api;
+    private final DACUserAPI dacUserAPI;
+    private final AuditServiceAPI auditServiceAPI;
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
+
 
 
     @Path("{id}")
@@ -71,8 +84,8 @@ public class ConsentResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed("ADMIN")
-    public Response createConsent(@Context UriInfo info, Consent rec) {
+    @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
+    public Response createConsent(@Context UriInfo info, Consent rec, @Auth User user) {
         try {
             if (rec.getTranslatedUseRestriction() == null) {
                 rec.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),rec.getUseRestriction()));
@@ -81,16 +94,13 @@ public class ConsentResource extends Resource {
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
             Consent consent = api.create(rec);
+            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
-        }  catch (IOException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }
-        catch (Exception e){
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }  catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -98,8 +108,8 @@ public class ConsentResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
-    public Response update(@PathParam("id") String id, Consent updated) {
+    @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
+    public Response update(@PathParam("id") String id, Consent updated, @Auth User user) {
         try {
             if (updated.getTranslatedUseRestriction() == null) {
                 updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
@@ -107,17 +117,13 @@ public class ConsentResource extends Resource {
             if(updated.getUseRestriction() != null) {
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(updated.getUseRestriction()));
             }
+            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             updated = api.update(id, updated);
+            auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
-        } catch (NotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Could not find consent with id %s to update", id), Response.Status.NOT_FOUND.getStatusCode())).build();
-        } catch (IOException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }catch (IllegalArgumentException ie) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(ie.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 
@@ -130,12 +136,9 @@ public class ConsentResource extends Resource {
         try {
             api.delete(consentId);
             return Response.ok().build();
-        }catch (NotFoundException e){
-            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
-        }catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e) {
-            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+        catch (Exception e) {
+            return createExceptionResponse(e);
         }
     }
 
@@ -180,6 +183,8 @@ public class ConsentResource extends Resource {
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
+        this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
     }
 
 }

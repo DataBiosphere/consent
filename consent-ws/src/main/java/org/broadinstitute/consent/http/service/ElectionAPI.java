@@ -1,14 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
+import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +54,7 @@ public interface ElectionAPI {
 
     String darDatasetElectionStatus(String darReferenceId);
 
-    void bulkCancelOpenElectionsByReferenceId(List<String> referenceIds, String electionType) throws Exception;
+    List<ElectionStatusDTO> describeElectionsByConsentId(String consentId);
 
-    List<Election> getOpenElections(String electionType);
-
+    List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList);
 }
