@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail;
 
+import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
@@ -41,6 +42,10 @@ public class MailService extends AbstractMailServiceAPI {
     private DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
 
+    private Logger logger() {
+        return Logger.getLogger("MailService");
+    }
+
     public static void initInstance(MailConfiguration config) throws IOException {
         MailServiceAPIHolder.setInstance(new MailService(config));
     }
@@ -56,12 +61,20 @@ public class MailService extends AbstractMailServiceAPI {
         mailServerProperties.put("mail.smtp.port", config.getSmtpPort());
         mailServerProperties.put("mail.smtp.auth", config.getSmtpAuth());
         mailServerProperties.put("mail.smtp.starttls.enable", config.getSmtpStartTlsEnable());
+        logger().info("mail.smtp.host: " + mailServerProperties.get("mail.smtp.host"));
+        logger().info("mail.smtp.socketFactory.port: " + mailServerProperties.get("mail.smtp.socketFactory.port"));
+        logger().info("mail.smtp.socketFactory.class: " + mailServerProperties.get("mail.smtp.socketFactory.class"));
+        logger().info("mail.smtp.port: " + mailServerProperties.get("mail.smtp.port"));
+        logger().info("mail.smtp.auth: " + mailServerProperties.get("mail.smtp.auth"));
+        logger().info("mail.smtp.starttls.enable: " + mailServerProperties.get("mail.smtp.starttls.enable"));
         getMailSession = Session.getDefaultInstance(mailServerProperties,
                 new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
                         return new PasswordAuthentication(USERNAME, PASSWORD);
                     }
                 });
+        getMailSession.setDebug(true);
+        logger().info("getMailSession: " + getMailSession.getProperties());
     }
 
     private void sendMessage(MimeMessage message, String address) throws MessagingException {
