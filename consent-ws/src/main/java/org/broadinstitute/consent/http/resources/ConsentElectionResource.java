@@ -40,11 +40,23 @@ public class ConsentElectionResource extends Resource {
         URI uri;
         try {
             Election election = api.createElection(rec, consentId, ElectionType.TRANSLATE_DUL);
+            logger().info("Election ID: " + election.getElectionId());
             List<Vote> votes  = voteAPI.createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
+            votes.forEach(vote -> {
+                logger().info("Translate Vote ID: " + vote.getVoteId());
+            });
             List<Vote> dulVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
-            emailApi.sendNewCaseMessageToList(dulVotes, election);
+            dulVotes.forEach(vote -> {
+                logger().info("DAC Vote ID: " + vote.getVoteId());
+            });
+            try {
+                emailApi.sendNewCaseMessageToList(dulVotes, election);
+            } catch (NullPointerException e) {
+                logger().error("Email API is null");
+                throw e;
+            }
             uri = info.getRequestUriBuilder().build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
         return Response.created(uri).build();
