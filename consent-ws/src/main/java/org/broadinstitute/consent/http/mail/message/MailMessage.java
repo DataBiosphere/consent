@@ -1,29 +1,20 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import javax.mail.BodyPart;
+import com.sendgrid.Content;
+import com.sendgrid.Email;
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 import java.io.Writer;
 
-public abstract class MailMessage{
+public abstract class MailMessage {
 
-    public MimeMessage createMessage(Session session) {
-        return new MimeMessage(session);
-    }
-
-    protected MimeMessage generateEmailMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        MimeMessage m = createMessage(session);
-        MimeMultipart multipart = new MimeMultipart();
-        m.setSubject(assignSubject(referenceId, type));
-        BodyPart messageBodyPart = new MimeBodyPart();
-        messageBodyPart.setContent(template.toString(), "text/html");
-        multipart.addBodyPart(messageBodyPart);
-        m.setContent(multipart);
-        return m;
+    protected Mail generateEmailMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        Content content = new Content("text/html", template.toString());
+        String subject = assignSubject(referenceId, type);
+        return new Mail(new Email(fromAddress), subject, new Email(toAddress), content);
     }
 
     abstract String assignSubject(String referenceId, String type);
+
 }

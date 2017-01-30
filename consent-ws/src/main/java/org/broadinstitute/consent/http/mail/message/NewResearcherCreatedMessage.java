@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
 
 public class NewResearcherCreatedMessage extends MailMessage{
 
     private final String NEW_RESEARCHER_CREATED = "Review Researcher Profile.";
 
-    public MimeMessage newResearcherCreatedMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(session, template, referenceId, type);
+    public Mail newResearcherCreatedMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 
     @Override

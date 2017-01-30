@@ -2,28 +2,17 @@ package org.broadinstitute.consent.http.configurations;
 
 import javax.validation.constraints.NotNull;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class MailConfiguration {
 
     @NotNull
-    public String host;
+    boolean activateEmailNotifications;
 
     @NotNull
-    public boolean activateEmailNotifications;
+    String googleAccount;
 
     @NotNull
-    public String smtpPort;
-
-    @NotNull
-    public String smtpAuth;
-
-    @NotNull
-    public String googleAccount;
-
-    @NotNull
-    public String accountPassword;
-
-    @NotNull
-    public String smtpStartTlsEnable;
+    String sendGridApiKey;
 
     public boolean isActivateEmailNotifications() {
         return activateEmailNotifications;
@@ -31,30 +20,6 @@ public class MailConfiguration {
 
     public void setActivateEmailNotifications(boolean activateEmailNotifications) {
         this.activateEmailNotifications = activateEmailNotifications;
-    }
-
-    public String getSmtpPort() {
-        return smtpPort;
-    }
-
-    public void setSmtpPort(String smtpPort) {
-        this.smtpPort = smtpPort;
-    }
-
-    public String getSmtpAuth() {
-        return smtpAuth;
-    }
-
-    public void setSmtpAuth(String smtpAuth) {
-        this.smtpAuth = smtpAuth;
-    }
-
-    public String getSmtpStartTlsEnable() {
-        return smtpStartTlsEnable;
-    }
-
-    public void setSmtpStartTlsEnable(String smtpStartTlsEnable) {
-        this.smtpStartTlsEnable = smtpStartTlsEnable;
     }
 
     public String getGoogleAccount() {
@@ -65,19 +30,11 @@ public class MailConfiguration {
         this.googleAccount = googleAccount;
     }
 
-    public String getAccountPassword() {
-        return accountPassword;
+    public String getSendGridApiKey() {
+        return sendGridApiKey;
     }
 
-    public void setAccountPassword(String accountPassword) {
-        this.accountPassword = accountPassword;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
+    public void setSendGridApiKey(String sendGridApiKey) {
+        this.sendGridApiKey = sendGridApiKey;
     }
 }

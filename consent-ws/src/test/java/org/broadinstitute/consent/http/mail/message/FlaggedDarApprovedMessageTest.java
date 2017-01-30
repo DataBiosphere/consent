@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -23,7 +24,7 @@ public class FlaggedDarApprovedMessageTest extends SessionHolder{
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        MimeMessage message = new FlaggedDarApprovedMessage().flaggedDarMessage(getSession(), template, "DS-123", "SomeType");
+        Mail message = new FlaggedDarApprovedMessage().flaggedDarMessage("to@address.com", "from@address.com", template, "DS-123", "SomeType");
         assertTrue(message.getSubject().equals("DS-123 that requires data owners reviewing approved."));
     }
 

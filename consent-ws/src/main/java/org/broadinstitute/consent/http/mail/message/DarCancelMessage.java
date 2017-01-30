@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
 
 public class DarCancelMessage extends MailMessage {
 
     private final String CANCEL_DAR = "The Data Access Request with ID %s has been cancelled.";
 
-    public MimeMessage cancelDarMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(session, template, referenceId, type);
+    public Mail cancelDarMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 
     @Override
