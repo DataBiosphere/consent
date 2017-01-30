@@ -64,7 +64,5 @@ storeOntology:
 elasticSearch:
   clusterName: cName
   servers:
-    - server1
-    - server2
-    - server3
+    - localhost
   indexName: iName
