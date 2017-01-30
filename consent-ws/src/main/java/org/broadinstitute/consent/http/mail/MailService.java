@@ -40,97 +40,81 @@ public class MailService extends AbstractMailServiceAPI {
 
     private void sendMessage(Mail message) throws MessagingException {
         try {
+            // See https://github.com/sendgrid/sendgrid-java/issues/163
+            // for what actually works as compared to the documentation - which doesn't.
             Request request = new Request();
+            request.setMethod(Method.POST);
             request.setBody(message.build());
-            logger().debug(request.toString());
-            Response response = sendGrid.api(request);
-            logger().debug("Sendgrid Response Status" + response.statusCode);
-            logger().debug("Sendgrid Response Body" + response.body);
-            logger().debug("Sendgrid Response Headers" + response.headers);
+            // make request
+            request.setBaseUri(sendGrid.getHost());
+            request.setEndpoint("/" + sendGrid.getVersion() + "/mail/send");
+            for (String key : sendGrid.getRequestHeaders().keySet())
+                request.addHeader(key, sendGrid.getRequestHeaders().get(key));
+            // send
+            Response response = sendGrid.makeCall(request);
+            logger().debug("status code: " + response.statusCode);
+            logger().debug("body: " + response.body);
+            logger().debug("headers: " + response.headers);
         } catch (IOException ex) {
             logger().error("Exception sending email: " + ex.getMessage());
             throw new MessagingException(ex.getMessage());
         }
     }
 
-    public void sendCollectMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = collectMessageCreator.collectMessage(address, fromAccount, template, referenceId, type);
+    public void sendCollectMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = collectMessageCreator.collectMessage(toAddress, fromAccount, template, referenceId, type);
         sendMessage(message);
     }
 
-    public void sendNewCaseMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = newCaseMessageCreator.newCaseMessage(address, fromAccount, template, referenceId, type);
+    public void sendNewCaseMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
         sendMessage(message);
     }
 
-    public void sendReminderMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = reminderMessageCreator.reminderMessage(address, fromAccount, template, referenceId, type);
-        sendMessage(message);
-    }
-
-    @Override
-    public void sendDisabledDatasetMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = disabledDatasetCreator.disabledDatasetMessage(address, fromAccount, template, referenceId, type);
+    public void sendReminderMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = reminderMessageCreator.reminderMessage(toAddress, fromAccount, template, referenceId, type);
         sendMessage(message);
     }
 
     @Override
-    public void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
-        usersAddress.forEach(
-            address -> {
-                try {
-                    Mail message = newDARMessageCreator.newDARRequestMessage(address, fromAccount, template, referenceId, type);
-                    sendMessage(message);
-                } catch (MessagingException e) {
-                    logger().error(e);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        usersAddress.forEach(
-            address -> {
-                try {
-                    Mail message = darCancelMessageCreator.cancelDarMessage(address, fromAccount, template, dataAccessRequestId, type);
-                    sendMessage(message);
-                } catch (MessagingException e) {
-                    logger().error(e);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        usersAddress.forEach(
-            address -> {
-                try {
-                    Mail message = closedDatasetElections.closedDatasetElectionMessgae(address, fromAccount, template, dataAccessRequestId, type);
-                    sendMessage(message);
-                } catch (MessagingException e) {
-                    logger().error(e);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void sendFlaggedDarAdminApprovedMessage(String address, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        Mail message = adminApprovedDarMessageCreator.flaggedDarMessage(address, fromAccount, template, dataAccessRequestId, type);
+    public void sendDisabledDatasetMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = disabledDatasetCreator.disabledDatasetMessage(toAddress, fromAccount, template, referenceId, type);
         sendMessage(message);
     }
 
     @Override
-    public void sendDelegateResponsibilitiesMessage(String address, Writer template) throws MessagingException {
-        Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(address, fromAccount, template);
+    public void sendNewDARRequests(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = newDARMessageCreator.newDARRequestMessage(toAddresses, fromAccount, template, referenceId, type);
         sendMessage(message);
     }
 
     @Override
-    public void sendNewResearcherCreatedMessage(String address, Writer template) throws MessagingException {
-        Mail message = researcherCreatedMessage.newResearcherCreatedMessage(address, fromAccount, template, "", "");
+    public void sendCancelDARRequestMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        Mail message = darCancelMessageCreator.cancelDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendClosedDatasetElectionsMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        Mail message = closedDatasetElections.closedDatasetElectionMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendFlaggedDarAdminApprovedMessage(String toAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        Mail message = adminApprovedDarMessageCreator.flaggedDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendDelegateResponsibilitiesMessage(String toAddress, Writer template) throws MessagingException {
+        Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendNewResearcherCreatedMessage(String toAddress, Writer template) throws MessagingException {
+        Mail message = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
         sendMessage(message);
     }
 

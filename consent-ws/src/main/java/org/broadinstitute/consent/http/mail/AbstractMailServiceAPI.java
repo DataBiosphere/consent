@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.mail;
 
 
-public abstract class AbstractMailServiceAPI implements MailServiceAPI{
+public abstract class AbstractMailServiceAPI implements MailServiceAPI {
 
 /**
  * Inner class to hold onto the singleton instance.  This has delayed initialization, and the subclass

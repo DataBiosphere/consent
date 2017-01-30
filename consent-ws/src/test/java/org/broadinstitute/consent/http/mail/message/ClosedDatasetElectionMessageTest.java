@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
+import java.util.Collections;
 
 import static org.junit.Assert.assertTrue;
 
@@ -23,7 +24,7 @@ public class ClosedDatasetElectionMessageTest extends SessionHolder{
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Mail message = new ClosedDatasetElectionMessage().closedDatasetElectionMessgae("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type");
+        Mail message = new ClosedDatasetElectionMessage().closedDatasetElectionMessage(Collections.singletonList("to@address.com"), "from@address.com", template, "SomeReferenceId", "Some Type");
         assertTrue(message.getSubject().equals("Report of closed Dataset elections."));
     }
 

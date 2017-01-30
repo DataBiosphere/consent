@@ -62,6 +62,9 @@ storeOntology:
   bucketSubdirectory:   bucket
   configurationFileName: configuration
 elasticSearch:
-    clusterName: cName
-    servers: [localhost]
-    indexName: iName
+  clusterName: cName
+  servers:
+    - server1
+    - server2
+    - server3
+  indexName: iName
