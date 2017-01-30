@@ -3,10 +3,10 @@ package org.broadinstitute.consent.http.mail.message;
 import com.sendgrid.Content;
 import com.sendgrid.Email;
 import com.sendgrid.Mail;
-import com.sendgrid.Personalization;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,16 +24,8 @@ public abstract class MailMessage {
         Content content = new Content("text/html", template.toString());
         String subject = assignSubject(referenceId, type);
         return toAddresses.stream().map(
-            address -> {
-                Mail mail = new Mail();
-                mail.setFrom(new Email(fromAddress));
-                mail.setSubject(subject);
-                mail.addContent(content);
-                Personalization personalization = new Personalization();
-                personalization.addTo(new Email(address));
-                mail.addPersonalization(personalization);
-                return mail;
-            }).collect(Collectors.toList());
+                address -> new Mail(new Email(fromAddress), subject, new Email(address), content)
+            ).collect(Collectors.toList());
     }
 
     abstract String assignSubject(String referenceId, String type);
