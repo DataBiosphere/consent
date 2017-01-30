@@ -6,7 +6,6 @@ import com.sendgrid.Mail;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
