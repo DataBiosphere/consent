@@ -58,10 +58,7 @@ public class MailService extends AbstractMailServiceAPI {
             for (String key : sendGrid.getRequestHeaders().keySet())
                 request.addHeader(key, sendGrid.getRequestHeaders().get(key));
             // send
-            Response response = sendGrid.makeCall(request);
-            logger().debug("status code: " + response.statusCode);
-            logger().debug("body: " + response.body);
-            logger().debug("headers: " + response.headers);
+            sendGrid.makeCall(request);
         } catch (IOException ex) {
             logger().error("Exception sending email: " + ex.getMessage());
             throw new MessagingException(ex.getMessage());
