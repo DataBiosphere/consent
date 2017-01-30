@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.mail.message.*;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.List;
 
 public class MailService extends AbstractMailServiceAPI {
@@ -36,6 +37,12 @@ public class MailService extends AbstractMailServiceAPI {
     private MailService(MailConfiguration config) throws IOException {
         this.fromAccount = config.getGoogleAccount();
         this.sendGrid = new SendGrid(config.getSendGridApiKey());
+    }
+
+    private void sendMessages(Collection<Mail> messages) throws MessagingException {
+        for (Mail message: messages) {
+            sendMessage(message);
+        }
     }
 
     private void sendMessage(Mail message) throws MessagingException {
@@ -84,20 +91,20 @@ public class MailService extends AbstractMailServiceAPI {
 
     @Override
     public void sendNewDARRequests(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = newDARMessageCreator.newDARRequestMessage(toAddresses, fromAccount, template, referenceId, type);
-        sendMessage(message);
+        Collection<Mail> messages = newDARMessageCreator.newDARRequestMessage(toAddresses, fromAccount, template, referenceId, type);
+        sendMessages(messages);
     }
 
     @Override
     public void sendCancelDARRequestMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        Mail message = darCancelMessageCreator.cancelDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
-        sendMessage(message);
+        Collection<Mail> messages = darCancelMessageCreator.cancelDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessages(messages);
     }
 
     @Override
     public void sendClosedDatasetElectionsMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        Mail message = closedDatasetElections.closedDatasetElectionMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
-        sendMessage(message);
+        Collection<Mail> messages = closedDatasetElections.closedDatasetElectionMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessages(messages);
     }
 
     @Override
