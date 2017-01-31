@@ -13,11 +13,8 @@ import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.io.Writer;
@@ -78,11 +75,15 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     private void sendMessage(MimeMessage message, String address) throws MessagingException {
+        Address[] fromAddresses = { new InternetAddress("broad.notifications@gmail.com") };
+        message.addFrom(fromAddresses);
         message.addRecipients(Message.RecipientType.TO, address);
         Transport.send(message);
     }
 
     private void sendMessages(MimeMessage message, List<String> address) throws MessagingException {
+        Address[] fromAddresses = { new InternetAddress("broad.notifications@gmail.com") };
+        message.addFrom(fromAddresses);
         for (String userAddress : address) {
             message.addRecipients(Message.RecipientType.BCC, userAddress);
         }
