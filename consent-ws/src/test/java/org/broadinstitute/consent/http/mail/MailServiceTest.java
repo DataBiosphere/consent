@@ -5,10 +5,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collections;
 
@@ -17,22 +16,19 @@ public class MailServiceTest {
     private static String TO = "to@broadinstitute.org";
     private static String ID = "DUL-123";
     private static String TYPE = "Data Use Limitations";
-
-    @Mock
     private MailServiceAPI mailService;
-
-    @Mock
-    Writer template;
+    private Writer template;
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
         MailConfiguration config = new MailConfiguration();
         config.setSendGridApiKey("test");
         config.setGoogleAccount("from@broadinstitute.org");
         config.setActivateEmailNotifications(false);
         MailService.initInstance(config);
         mailService = AbstractMailServiceAPI.MailServiceAPIHolder.getInstance();
+        template = new StringWriter();
+        template.write("Email Content");
     }
 
     @After
