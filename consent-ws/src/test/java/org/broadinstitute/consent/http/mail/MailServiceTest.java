@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.Collections;
 
@@ -37,6 +38,19 @@ public class MailServiceTest {
     @After
     public void tearDown() {
         MailService.clearInstance();
+    }
+
+    @Test(expected=MessagingException.class)
+    public void testCollectMessageFailure() throws Exception {
+        MailService.clearInstance();
+        MailConfiguration config = new MailConfiguration();
+        config.setSendGridApiKey("test");
+        config.setGoogleAccount("from@broadinstitute.org");
+        config.setActivateEmailNotifications(true);
+        MailService.initInstance(config);
+        mailService = AbstractMailServiceAPI.MailServiceAPIHolder.getInstance();
+        Assert.assertNotNull(mailService);
+        mailService.sendCollectMessage(TO, ID, TYPE, template);
     }
 
     @Test
