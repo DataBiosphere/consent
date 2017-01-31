@@ -13,7 +13,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertTrue;
 
-public class ClosedDatasetElectionMessageTest extends SessionHolder{
+public class ClosedDatasetElectionMessageTest {
 
     @Mock
     Writer template;

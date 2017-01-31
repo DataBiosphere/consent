@@ -11,7 +11,7 @@ import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class DisabledDatasetMessageTest extends SessionHolder{
+public class DisabledDatasetMessageTest {
 
     @Mock
     Writer template;

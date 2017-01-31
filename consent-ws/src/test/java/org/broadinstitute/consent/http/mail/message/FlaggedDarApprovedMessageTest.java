@@ -12,7 +12,7 @@ import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class FlaggedDarApprovedMessageTest extends SessionHolder{
+public class FlaggedDarApprovedMessageTest {
 
     @Mock
     Writer template;

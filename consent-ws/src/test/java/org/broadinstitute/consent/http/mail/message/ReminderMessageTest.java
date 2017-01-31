@@ -11,7 +11,7 @@ import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class ReminderMessageTest extends SessionHolder{
+public class ReminderMessageTest {
 
     @Mock
     Writer template;

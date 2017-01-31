@@ -13,7 +13,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertTrue;
 
-public class DarCancelMessageTest extends SessionHolder{
+public class DarCancelMessageTest {
 
     @Mock
     Writer template;

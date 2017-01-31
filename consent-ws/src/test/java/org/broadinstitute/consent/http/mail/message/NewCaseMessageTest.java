@@ -12,7 +12,7 @@ import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class NewCaseMessageTest extends SessionHolder{
+public class NewCaseMessageTest {
 
     @Mock
     Writer template;

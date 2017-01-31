@@ -11,7 +11,7 @@ import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class DelegateResponsibilitiesMessageTest extends SessionHolder{
+public class DelegateResponsibilitiesMessageTest {
 
     @Mock
     Writer template;

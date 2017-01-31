@@ -15,6 +15,7 @@ public class MailService extends AbstractMailServiceAPI {
 
     private String fromAccount;
     private SendGrid sendGrid;
+    private Boolean activateEmailNotifications;
     private CollectMessage collectMessageCreator = new CollectMessage();
     private NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
     private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
@@ -37,6 +38,7 @@ public class MailService extends AbstractMailServiceAPI {
     private MailService(MailConfiguration config) throws IOException {
         this.fromAccount = config.getGoogleAccount();
         this.sendGrid = new SendGrid(config.getSendGridApiKey());
+        this.activateEmailNotifications = config.isActivateEmailNotifications();
     }
 
     private void sendMessages(Collection<Mail> messages) throws MessagingException {
@@ -46,22 +48,26 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     private void sendMessage(Mail message) throws MessagingException {
-        try {
-            // See https://github.com/sendgrid/sendgrid-java/issues/163
-            // for what actually works as compared to the documentation - which doesn't.
-            Request request = new Request();
-            request.setMethod(Method.POST);
-            request.setBody(message.build());
-            // make request
-            request.setBaseUri(sendGrid.getHost());
-            request.setEndpoint("/" + sendGrid.getVersion() + "/mail/send");
-            for (String key : sendGrid.getRequestHeaders().keySet())
-                request.addHeader(key, sendGrid.getRequestHeaders().get(key));
-            // send
-            sendGrid.makeCall(request);
-        } catch (IOException ex) {
-            logger().error("Exception sending email: " + ex.getMessage());
-            throw new MessagingException(ex.getMessage());
+        if (activateEmailNotifications) {
+            try {
+                // See https://github.com/sendgrid/sendgrid-java/issues/163
+                // for what actually works as compared to the documentation - which doesn't.
+                Request request = new Request();
+                request.setMethod(Method.POST);
+                request.setBody(message.build());
+                // make request
+                request.setBaseUri(sendGrid.getHost());
+                request.setEndpoint("/" + sendGrid.getVersion() + "/mail/send");
+                for (String key : sendGrid.getRequestHeaders().keySet())
+                    request.addHeader(key, sendGrid.getRequestHeaders().get(key));
+                // send
+                sendGrid.makeCall(request);
+            } catch (IOException ex) {
+                logger().error("Exception sending email: " + ex.getMessage());
+                throw new MessagingException(ex.getMessage());
+            }
+        } else {
+            logger().debug("Not configured to send email");
         }
     }
 
