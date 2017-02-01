@@ -1,16 +1,18 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
+import java.util.Collection;
+import java.util.List;
 
 public class NewDARRequestMessage extends MailMessage{
 
     private final String NEW_DAR_REQUEST = "Create an election for Data Access Request id: %s.";
 
-    public MimeMessage newDARRequestMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(session, template, referenceId, type);
+    public Collection<Mail> newDARRequestMessage(List<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessage(toAddresses, fromAddress, template, referenceId, type);
     }
 
     @Override

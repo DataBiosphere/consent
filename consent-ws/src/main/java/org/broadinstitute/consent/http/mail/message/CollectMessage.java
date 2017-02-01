@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
 
 public class CollectMessage extends MailMessage {
@@ -10,8 +10,8 @@ public class CollectMessage extends MailMessage {
     private final String COLLECT_DUL = "Ready for vote collection on Data Use Limitations case id: %s.";
     private final String COLLECT_DAR = "Ready for votes collection on Data Access Request case id: %s.";
 
-    public MimeMessage collectMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(session, template, referenceId, type);
+    public Mail collectMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
     }
 
     @Override

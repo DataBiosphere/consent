@@ -1,17 +1,17 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class DelegateResponsibilitiesMessageTest extends SessionHolder{
+public class DelegateResponsibilitiesMessageTest {
 
     @Mock
     Writer template;
@@ -23,7 +23,7 @@ public class DelegateResponsibilitiesMessageTest extends SessionHolder{
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        MimeMessage message = new DelegateResponsibilitiesMessage().delegateResponsibilitiesMessage(getSession(), template);
+        Mail message = new DelegateResponsibilitiesMessage().delegateResponsibilitiesMessage("to@address.com", "from@address.com", template);
         assertTrue(message.getSubject().equals("You have been assigned a New Role in DUOS."));
     }
 

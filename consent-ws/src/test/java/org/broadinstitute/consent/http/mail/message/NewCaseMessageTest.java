@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -11,7 +12,7 @@ import java.io.Writer;
 
 import static org.junit.Assert.assertTrue;
 
-public class NewCaseMessageTest extends SessionHolder{
+public class NewCaseMessageTest {
 
     @Mock
     Writer template;
@@ -23,9 +24,9 @@ public class NewCaseMessageTest extends SessionHolder{
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        MimeMessage message = new NewCaseMessage().newCaseMessage(getSession(), template, "DUL-123", "Data Use Limitations");
+        Mail message = new NewCaseMessage().newCaseMessage("to@address.com", "from@address.com", template, "DUL-123", "Data Use Limitations");
         assertTrue(message.getSubject().equals("Log vote on Data Use Limitations case id: DUL-123."));
-        message = new NewCaseMessage().newCaseMessage(getSession(), template, "DAR-123", "Data Access");
+        message = new NewCaseMessage().newCaseMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Access");
         assertTrue(message.getSubject().equals("Log votes on Data Access Request case id: DAR-123."));
     }
 

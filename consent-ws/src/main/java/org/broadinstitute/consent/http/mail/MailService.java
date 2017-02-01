@@ -1,33 +1,21 @@
 package org.broadinstitute.consent.http.mail;
 
+import com.sendgrid.*;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
-import org.broadinstitute.consent.http.mail.message.CollectMessage;
-import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
-import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
-import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
-import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
-import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
-import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
-import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
-import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.*;
 
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 
 public class MailService extends AbstractMailServiceAPI {
 
-    private Properties mailServerProperties;
-    private Session getMailSession;
-    MailConfiguration config;
-    private String USERNAME;
-    private String PASSWORD;
+    private String fromAccount;
+    private SendGrid sendGrid;
+    private Boolean activateEmailNotifications;
     private CollectMessage collectMessageCreator = new CollectMessage();
     private NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
     private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
@@ -47,104 +35,97 @@ public class MailService extends AbstractMailServiceAPI {
         MailServiceAPIHolder.setInstance(new MailService(config));
     }
 
-    public MailService(MailConfiguration config) throws IOException {
-        mailServerProperties = System.getProperties();
-        this.config = config;
-        this.USERNAME = config.getGoogleAccount();
-        this.PASSWORD = config.getAccountPassword();
-        mailServerProperties.put("mail.smtp.host", config.getHost());
-        mailServerProperties.put("mail.smtp.socketFactory.port", config.getSmtpPort());
-        mailServerProperties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        mailServerProperties.put("mail.smtp.port", config.getSmtpPort());
-        mailServerProperties.put("mail.smtp.auth", config.getSmtpAuth());
-        mailServerProperties.put("mail.smtp.starttls.enable", config.getSmtpStartTlsEnable());
-        logger().info("mail.smtp.host: " + mailServerProperties.get("mail.smtp.host"));
-        logger().info("mail.smtp.socketFactory.port: " + mailServerProperties.get("mail.smtp.socketFactory.port"));
-        logger().info("mail.smtp.socketFactory.class: " + mailServerProperties.get("mail.smtp.socketFactory.class"));
-        logger().info("mail.smtp.port: " + mailServerProperties.get("mail.smtp.port"));
-        logger().info("mail.smtp.auth: " + mailServerProperties.get("mail.smtp.auth"));
-        logger().info("mail.smtp.starttls.enable: " + mailServerProperties.get("mail.smtp.starttls.enable"));
-        getMailSession = Session.getDefaultInstance(mailServerProperties,
-                new javax.mail.Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(USERNAME, PASSWORD);
-                    }
-                });
-        getMailSession.setDebug(true);
-        logger().info("getMailSession: " + getMailSession.getProperties());
+    private MailService(MailConfiguration config) throws IOException {
+        this.fromAccount = config.getGoogleAccount();
+        this.sendGrid = new SendGrid(config.getSendGridApiKey());
+        this.activateEmailNotifications = config.isActivateEmailNotifications();
     }
 
-    private void sendMessage(MimeMessage message, String address) throws MessagingException {
-        Address[] fromAddresses = { new InternetAddress("broad.notifications@gmail.com") };
-        message.addFrom(fromAddresses);
-        message.addRecipients(Message.RecipientType.TO, address);
-        Transport.send(message);
-    }
-
-    private void sendMessages(MimeMessage message, List<String> address) throws MessagingException {
-        Address[] fromAddresses = { new InternetAddress("broad.notifications@gmail.com") };
-        message.addFrom(fromAddresses);
-        for (String userAddress : address) {
-            message.addRecipients(Message.RecipientType.BCC, userAddress);
+    private void sendMessages(Collection<Mail> messages) throws MessagingException {
+        for (Mail message: messages) {
+            sendMessage(message);
         }
-        Transport.send(message, message.getRecipients(Message.RecipientType.BCC));
     }
 
-    public void sendCollectMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = collectMessageCreator.collectMessage(getMailSession, template, referenceId, type);
-        sendMessage(message, address);
+    private void sendMessage(Mail message) throws MessagingException {
+        if (activateEmailNotifications) {
+            try {
+                // See https://github.com/sendgrid/sendgrid-java/issues/163
+                // for what actually works as compared to the documentation - which doesn't.
+                Request request = new Request();
+                request.setMethod(Method.POST);
+                request.setBody(message.build());
+                // make request
+                request.setBaseUri(sendGrid.getHost());
+                request.setEndpoint("/" + sendGrid.getVersion() + "/mail/send");
+                for (String key : sendGrid.getRequestHeaders().keySet())
+                    request.addHeader(key, sendGrid.getRequestHeaders().get(key));
+                // send
+                sendGrid.makeCall(request);
+            } catch (IOException ex) {
+                logger().error("Exception sending email: " + ex.getMessage());
+                throw new MessagingException(ex.getMessage());
+            }
+        } else {
+            logger().debug("Not configured to send email");
+        }
     }
 
-    public void sendNewCaseMessage(String userAddress, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = newCaseMessageCreator.newCaseMessage(getMailSession, template, referenceId, type);
-        sendMessage(message, userAddress);
+    public void sendCollectMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = collectMessageCreator.collectMessage(toAddress, fromAccount, template, referenceId, type);
+        sendMessage(message);
     }
 
-    public void sendReminderMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = reminderMessageCreator.reminderMessage(getMailSession, template, referenceId, type);
-        sendMessage(message, address);
+    public void sendNewCaseMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
+        sendMessage(message);
     }
 
-    @Override
-    public void sendDisabledDatasetMessage(String address, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = disabledDatasetCreator.disabledDatasetMessage(getMailSession, template, referenceId, type);
-        sendMessage(message, address);
-    }
-
-    @Override
-    public void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException {
-        MimeMessage message = newDARMessageCreator.newDARRequestMessage(getMailSession, template, referenceId, type);
-        sendMessages(message, usersAddress);
-    }
-
-    @Override
-    public void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = darCancelMessageCreator.cancelDarMessage(getMailSession, template, dataAccessRequestId, type);
-        sendMessages(message, usersAddress);
-    }
-
-    @Override
-    public void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = closedDatasetElections.closedDatasetElectionMessgae(getMailSession, template, dataAccessRequestId, type);
-        sendMessages(message, usersAddress);
-    }
-
-    @Override
-    public void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        MimeMessage message = adminApprovedDarMessageCreator.flaggedDarMessage(getMailSession, template, dataAccessRequestId, type);
-        sendMessage(message, userAddress);
+    public void sendReminderMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = reminderMessageCreator.reminderMessage(toAddress, fromAccount, template, referenceId, type);
+        sendMessage(message);
     }
 
     @Override
-    public void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException {
-        MimeMessage message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(getMailSession, template);
-        sendMessage(message, userAddress);
+    public void sendDisabledDatasetMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        Mail message = disabledDatasetCreator.disabledDatasetMessage(toAddress, fromAccount, template, referenceId, type);
+        sendMessage(message);
     }
 
     @Override
-    public void sendNewResearcherCreatedMessage(String userAddress, Writer template) throws MessagingException {
-        MimeMessage message = researcherCreatedMessage.newResearcherCreatedMessage(getMailSession, template, "", "");
-        sendMessage(message, userAddress);
+    public void sendNewDARRequests(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+        Collection<Mail> messages = newDARMessageCreator.newDARRequestMessage(toAddresses, fromAccount, template, referenceId, type);
+        sendMessages(messages);
+    }
+
+    @Override
+    public void sendCancelDARRequestMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        Collection<Mail> messages = darCancelMessageCreator.cancelDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessages(messages);
+    }
+
+    @Override
+    public void sendClosedDatasetElectionsMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        Collection<Mail> messages = closedDatasetElections.closedDatasetElectionMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessages(messages);
+    }
+
+    @Override
+    public void sendFlaggedDarAdminApprovedMessage(String toAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        Mail message = adminApprovedDarMessageCreator.flaggedDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendDelegateResponsibilitiesMessage(String toAddress, Writer template) throws MessagingException {
+        Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendNewResearcherCreatedMessage(String toAddress, Writer template) throws MessagingException {
+        Mail message = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
+        sendMessage(message);
     }
 
 }

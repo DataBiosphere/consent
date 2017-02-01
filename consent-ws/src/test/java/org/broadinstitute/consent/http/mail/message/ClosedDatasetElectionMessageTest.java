@@ -1,17 +1,19 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
+import java.util.Collection;
+import java.util.Collections;
 
 import static org.junit.Assert.assertTrue;
 
-public class ClosedDatasetElectionMessageTest extends SessionHolder{
+public class ClosedDatasetElectionMessageTest {
 
     @Mock
     Writer template;
@@ -23,8 +25,10 @@ public class ClosedDatasetElectionMessageTest extends SessionHolder{
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        MimeMessage message = new ClosedDatasetElectionMessage().closedDatasetElectionMessgae(getSession(), template, "SomeReferenceId", "Some Type");
-        assertTrue(message.getSubject().equals("Report of closed Dataset elections."));
+        Collection<Mail> messages = new ClosedDatasetElectionMessage().closedDatasetElectionMessage(Collections.singletonList("to@address.com"), "from@address.com", template, "SomeReferenceId", "Some Type");
+        for (Mail message: messages) {
+            assertTrue(message.getSubject().equals("Report of closed Dataset elections."));
+        }
     }
 
 }

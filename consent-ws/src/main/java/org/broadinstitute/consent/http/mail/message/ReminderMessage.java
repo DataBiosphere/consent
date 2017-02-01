@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
 import java.io.Writer;
 
 public class ReminderMessage extends MailMessage {
@@ -11,8 +11,8 @@ public class ReminderMessage extends MailMessage {
     private final String REMINDER_DAR = "Urgent: Log votes on Data Access Request case id: %s.";
     private final String REMINDER_RP = "Urgent: Log votes on Research Purpose Review case id: %s.";
 
-    public MimeMessage reminderMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(session, template, referenceId, type);
+    public Mail reminderMessage(String address, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessage(address, fromAddress, template, referenceId, type);
     }
 
     @Override

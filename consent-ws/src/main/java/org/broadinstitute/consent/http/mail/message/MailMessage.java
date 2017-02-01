@@ -1,29 +1,32 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import javax.mail.BodyPart;
+import com.sendgrid.Content;
+import com.sendgrid.Email;
+import com.sendgrid.Mail;
+
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public abstract class MailMessage{
+public abstract class MailMessage {
 
-    public MimeMessage createMessage(Session session) {
-        return new MimeMessage(session);
+    protected Mail generateEmailMessage(String toAddress, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessage(Collections.singletonList(toAddress), fromAddress, template, referenceId, type).get(0);
     }
 
-    protected MimeMessage generateEmailMessage(Session session, Writer template, String referenceId, String type) throws MessagingException {
-        MimeMessage m = createMessage(session);
-        MimeMultipart multipart = new MimeMultipart();
-        m.setSubject(assignSubject(referenceId, type));
-        BodyPart messageBodyPart = new MimeBodyPart();
-        messageBodyPart.setContent(template.toString(), "text/html");
-        multipart.addBodyPart(messageBodyPart);
-        m.setContent(multipart);
-        return m;
+    protected List<Mail> generateEmailMessage(List<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        if (toAddresses == null || toAddresses.isEmpty()) {
+            throw new MessagingException("List of to-addresses cannot be empty");
+        }
+        Content content = new Content("text/html", template.toString());
+        String subject = assignSubject(referenceId, type);
+        return toAddresses.stream().map(
+                address -> new Mail(new Email(fromAddress), subject, new Email(address), content)
+            ).collect(Collectors.toList());
     }
 
     abstract String assignSubject(String referenceId, String type);
+
 }
