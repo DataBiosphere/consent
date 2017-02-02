@@ -150,3 +150,4 @@ hs_err_pid*
 ### OSX ###
 .DS_STORE
 /config/
+/consent-ws/127.0.0.1/

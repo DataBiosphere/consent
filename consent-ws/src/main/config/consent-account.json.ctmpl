@@ -1,1 +1,0 @@
-{{with $environment := env "ENVIRONMENT"}}{{$keyname := printf "secret/dsde/consent/%s/consent/consent-account.json" $environment}}{{with vault $keyname}}{{.Data.value}}{{end}}{{end}}
