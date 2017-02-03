@@ -1,6 +1,0 @@
-{{with $environment := env "ENVIRONMENT"}}{{$keyname := printf "secret/dsde/consent/%s/consent/consent.conf" $environment}}{{with vault $keyname}}
-{
-  "clientId": "{{.Data.oauth2_client_id}}"
-}
-{{end}}
-{{end}}
