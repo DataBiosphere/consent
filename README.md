@@ -16,7 +16,7 @@ git clone git@github.com:broadinstitute/consent.git
 Build and render Configs:
 ```bash
 cd consent
-mvn clean package
+mvn clean compile
 APP_NAME=consent ENV=local OUTPUT_DIR=config ./configure.rb
 ```
 
