@@ -150,3 +150,14 @@ hs_err_pid*
 ### OSX ###
 .DS_STORE
 /config/
+/consent-ws/127.0.0.1/
+
+/consent-ws/src/main/resources/assets/swagger-ui.js
+/consent-ws/src/main/resources/assets/o2c.html
+/consent-ws/src/main/resources/assets/css/
+/consent-ws/src/main/resources/assets/lang/
+/consent-ws/src/main/resources/assets/fonts/
+/consent-ws/src/main/resources/assets/lib/
+/consent-ws/src/main/resources/assets/images/
+/consent-ws/src/main/resources/assets/swagger-config.json
+/consent-ws/src/main/resources/assets/swagger-ui.min.js
