@@ -51,32 +51,7 @@ import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.resources.AllAssociationsResource;
-import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
-import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
-import org.broadinstitute.consent.http.resources.ConsentCasesResource;
-import org.broadinstitute.consent.http.resources.ConsentElectionResource;
-import org.broadinstitute.consent.http.resources.ConsentManageResource;
-import org.broadinstitute.consent.http.resources.ConsentResource;
-import org.broadinstitute.consent.http.resources.ConsentVoteResource;
-import org.broadinstitute.consent.http.resources.ConsentsResource;
-import org.broadinstitute.consent.http.resources.DACUserResource;
-import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
-import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
-import org.broadinstitute.consent.http.resources.DataRequestElectionResource;
-import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
-import org.broadinstitute.consent.http.resources.DataSetAssociationsResource;
-import org.broadinstitute.consent.http.resources.DataSetResource;
-import org.broadinstitute.consent.http.resources.DataUseLetterResource;
-import org.broadinstitute.consent.http.resources.ElectionResource;
-import org.broadinstitute.consent.http.resources.ElectionReviewResource;
-import org.broadinstitute.consent.http.resources.EmailNotifierResource;
-import org.broadinstitute.consent.http.resources.HelpReportResource;
-import org.broadinstitute.consent.http.resources.IndexerResource;
-import org.broadinstitute.consent.http.resources.MatchResource;
-import org.broadinstitute.consent.http.resources.ResearcherResource;
-import org.broadinstitute.consent.http.resources.UserResource;
-import org.broadinstitute.consent.http.resources.WorkspaceResource;
+import org.broadinstitute.consent.http.resources.*;
 import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -284,13 +259,17 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new UserResource(userAPI));
         env.jersey().register(new ResearcherResource(researcherAPI));
         env.jersey().register(WorkspaceResource.class);
+        env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
 
         //Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
                 .buildAuthFilter();
-        List<AuthFilter> filters = Lists.newArrayList(defaultAuthFilter, new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())), new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
+        List<AuthFilter> filters = Lists.newArrayList(
+            defaultAuthFilter,
+            new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
+            new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
@@ -344,7 +323,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     @Override
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/assets/", "/swagger", "index.html"));
         bootstrap.addBundle(new MultiPartBundle());
         bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
             @Override

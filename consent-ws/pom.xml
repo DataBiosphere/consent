@@ -211,59 +211,17 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.googlecode.maven-download-plugin</groupId>
-                <artifactId>download-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <executions>
-                    <execution>
-                        <id>swagger-ui</id>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>https://github.com/swagger-api/swagger-ui/archive/v${swagger.ui.version}.tar.gz</url>
-                            <unpack>true</unpack>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.6</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources-to-src</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${basedir}/src/main/resources/assets</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.build.directory}/swagger-ui-${swagger.ui.version}/dist</directory>
-                                    <filtering>true</filtering>
-                                    <excludes>
-                                        <exclude>index.html</exclude>
-                                    </excludes>
-                                </resource>
-                                <resource>
-                                    <directory>${project.parent.basedir}/config</directory>
-                                    <includes>
-                                        <include>swagger-config.json</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <dependencies>
+
+        <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
+        <dependency>
+            <groupId>org.parboiled</groupId>
+            <artifactId>parboiled-java</artifactId>
+            <version>1.1.8</version>
+        </dependency>
 
         <!-- Used for hot reloading during local development -->
         <dependency>
