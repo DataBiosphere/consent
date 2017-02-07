@@ -18,13 +18,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
-import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
-import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
-import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
-import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
-import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
-import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
-import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
+import org.broadinstitute.consent.http.authentication.*;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
@@ -261,7 +255,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
 
-        //Authentication filters
+        // Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
@@ -269,7 +263,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         List<AuthFilter> filters = Lists.newArrayList(
             defaultAuthFilter,
             new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
-            new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
+            new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO),
+            new SwaggerAuthFilter());
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
@@ -323,6 +318,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     @Override
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
+        bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
         bootstrap.addBundle(new MultiPartBundle());
         bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
             @Override
