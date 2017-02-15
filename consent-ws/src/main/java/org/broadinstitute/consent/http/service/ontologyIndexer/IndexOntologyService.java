@@ -3,170 +3,95 @@ package org.broadinstitute.consent.http.service.ontologyIndexer;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
-import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.client.Client;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.InternalServerErrorException;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Created by SantiagoSaucedo on 3/11/2016.
- */
 public class IndexOntologyService {
 
+    static final String FIELD_DEFINITION_PROPERTY = "IAO_0000115";
+    static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
+    static final String FIELD_LABEL_PROPERTY = "label";
+    static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
     private final Client client;
     private final String indexName;
-
-
+    private IndexerUtils utils = new IndexerUtils();
 
     public IndexOntologyService(Client client, String indexName) {
         this.client = client;
         this.indexName = indexName;
     }
 
-    private static final String FIELD_DEFINITION_CLASS = "IAO_0000115";
+    public String getIndexName() {
+        return indexName;
+    }
 
+    /**
+     * For each input stream, parse and upload ontology terms to the configured index.
+     *
+     * @param streamRecList List of StreamRec objects
+     * @throws IOException The exception
+     */
+    public void indexOntologies(List<StreamRec> streamRecList) throws IOException {
 
-    public void indexOntologies(List<StreamRec> fileCompList) throws IOException {
+        utils.validateIndexExists(client, indexName);
 
-        int count = 0;
-        BulkRequestBuilder bulk = client.prepareBulk();
-
-       /*
-       * This block checks the existence of an index with name @indexName, if not creates one.
-       */
-        IndicesExistsRequest existsRequest = new IndicesExistsRequest(indexName);
-        if(!client.admin().indices().exists(existsRequest).actionGet().isExists()){
-        CreateIndexRequest indexRequest = new CreateIndexRequest(indexName);
         try {
-            client.admin().indices().create(indexRequest).actionGet();
-        } catch(Exception e){
-                throw new InternalServerErrorException();
+            for (StreamRec streamRec : streamRecList) {
+
+                // Remove any terms that already exist for this type. Type in this context refers to "Disease" or "Organization", etc.
+                utils.deleteByOntologyType(client, indexName, streamRec.getOntologyType());
+
+                OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+                OWLOntology ontology = manager.loadOntologyFromOntologyDocument(streamRec.getStream());
+
+                OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
+                OWLReasoner reasoner = reasonerFactory.createNonBufferingReasoner(ontology);
+
+                HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
+                ontology.getAnnotationPropertiesInSignature().forEach((property) ->
+                    annotationProperties.put(property.getIRI().getFragment(), property));
+
+                // Some assertions to ensure we're not dealing with a problematic ontology file:
+                assert annotationProperties.get(FIELD_HAS_EXACT_SYNONYM_PROPERTY) != null : "Need hasExactSynonym annotation property.";
+                assert annotationProperties.get(FIELD_LABEL_PROPERTY) != null : "Need label annotation property";
+                assert annotationProperties.get(FIELD_DEFINITION_PROPERTY) != null : "Need definition annotation property";
+                assert annotationProperties.get(FIELD_DEPRECATED_PROPERTY) != null : "Need deprecated annotation property";
+
+                Set<OWLClass> owlClasses = ontology.getClassesInSignature();
+                Collection<Term> terms = owlClasses.stream().map(
+                    (o) -> utils.generateTerm(o, streamRec.getOntologyType(), ontology, annotationProperties, reasoner)
+                ).collect(Collectors.toList());
+
+                utils.bulkUploadTerms(client, indexName, terms);
+
             }
-        }
-        try{
-        for (StreamRec streamRec : fileCompList) {
-            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-
-            //Just to be capable of read Inputstream multiple times
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            org.apache.commons.io.IOUtils.copy(streamRec.getStream(), baos);
-            byte[] bytes = baos.toByteArray();
-
-            OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(bytes));
-            streamRec.setStream(new ByteArrayInputStream(bytes));
-
-            HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
-            ontology.getAnnotationPropertiesInSignature().stream().forEach((property) -> {
-                annotationProperties.put(property.getIRI().getFragment(), property);
-            });
-            OWLAnnotationProperty hasExactSynonym = annotationProperties.get("hasExactSynonym");
-            assert hasExactSynonym != null : "Need hasExactSynonym annotation property.";
-            OWLAnnotationProperty label = annotationProperties.get("label");
-            assert label != null : "Need label annotation property";
-            OWLAnnotationProperty def = annotationProperties.get(FIELD_DEFINITION_CLASS);
-            assert def != null : "Need def annotation property";
-            OWLAnnotationProperty deprecated = annotationProperties.get("deprecated");
-            assert deprecated != null : "Need deprecated annotation property";
-
-            Set<String> ontologyIdList = ontology.getClassesInSignature().stream().map(s -> s.toStringID()).collect(Collectors.toSet());
-            MultiGetResponse multiGetItemResponses = client.prepareMultiGet().add(indexName,null,ontologyIdList).get();
-            Boolean alreadyIndexedOntology = Arrays.asList(multiGetItemResponses.getResponses()).stream().anyMatch(r -> r.getResponse().isExists());
-            if(alreadyIndexedOntology ){
-                throw new BadRequestException("Ontologies already indexed, please delete the related file before upload the new file.");
-            }
-            for (OWLClass owlClass : ontology.getClassesInSignature()) {
-                OWLAnnotationValueVisitorEx<String> visitor = new OWLAnnotationValueVisitorEx<String>() {
-                    @Override
-                    public String visit(IRI iri) {
-                        return iri.toString();
-                    }
-
-                    @Override
-                    public String visit(OWLAnonymousIndividual owlAnonymousIndividual) {
-                        return owlAnonymousIndividual.toStringID();
-                    }
-
-                    @Override
-                    public String visit(OWLLiteral owlLiteral) {
-                        return owlLiteral.getLiteral();
-                    }
-                };
-
-                Term term = new Term(owlClass.toStringID(), streamRec.getOntologyType());
-                if (!owlClass.getAnnotations(ontology, deprecated).isEmpty()) {
-                    term.setUsable(false);
-                }
-
-                owlClass.getAnnotations(ontology, hasExactSynonym).stream().forEach((synonyms) -> {
-                    term.addSynonym(synonyms.getValue().accept(visitor));
-                });
-
-                Set<OWLAnnotation> labels = owlClass.getAnnotations(ontology, label);
-                assert labels.size() <= 1 : "Exactly 0 or 1 labels allowed per class";
-                if (labels.size() == 1) {
-                    term.addLabel(labels.iterator().next().getValue().accept(visitor));
-                }
-
-                // Only index those terms whose IDs begin with the specified prefix
-                Set<OWLAnnotation> ids = owlClass.getAnnotations(ontology, annotationProperties.get("id"));
-                if (ids.size() != 1 || !ids.iterator().next().getValue().accept(visitor).startsWith(streamRec.getPrefix())) {
-                    continue;
-                }else{
-                    streamRec.setAtLeastOneOntologyIndexed(true);
-                }
-
-                Set<OWLAnnotation> defs = owlClass.getAnnotations(ontology, def);
-                assert defs.size() <= 1 : "Exactly 0 or 1 definitions allowed per class";
-                if (defs.size() == 1) {
-                    term.addDefinition(defs.iterator().next().getValue().accept(visitor));
-                }
-                    bulk.add(client.prepareIndex(indexName, "ontology_term")
-                                    .setSource(term.document())
-                                    .setId(owlClass.toStringID())
-                    );
-                if (count++ > 1000) {
-                    bulk.execute().actionGet();
-                    bulk = client.prepareBulk();
-                    count = 0;
-                }
-            }
+        } catch (OWLOntologyCreationException e) {
+            throw new BadRequestException("Problem with OWL file.");
         }
 
-        if (count > 0) {
-            bulk.execute().actionGet();
-        }
-        } catch (OWLOntologyCreationException e){
-            throw  new BadRequestException("Problem with OWL file.");
-        }
+    }
 
+    Boolean deleteOntologiesByFile(InputStream fileStream, String prefix) {
 
-      }
-
-
-    public Boolean deleteOntologiesByFile(InputStream fileStream, String prefix) {
-
-        Boolean atLeastOneDeletion = false;
         List<String> toDeleteIds = new ArrayList<>();
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         try {
             OWLOntology ontology = manager.loadOntologyFromOntologyDocument(fileStream);
             HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
-            ontology.getAnnotationPropertiesInSignature().stream().forEach((property) -> {
-                annotationProperties.put(property.getIRI().getFragment(), property);
-            });
+            ontology.getAnnotationPropertiesInSignature().forEach((property) ->
+                annotationProperties.put(property.getIRI().getFragment(), property));
             for (OWLClass owlClass : ontology.getClassesInSignature()) {
                 OWLAnnotationValueVisitorEx<String> visitor = new OWLAnnotationValueVisitorEx<String>() {
                     @Override
@@ -191,18 +116,17 @@ public class IndexOntologyService {
                 }
                 toDeleteIds.add(owlClass.toStringID());
             }
-            if (CollectionUtils.isEmpty(toDeleteIds)) return atLeastOneDeletion;
+            if (CollectionUtils.isEmpty(toDeleteIds)) return false;
 
             BulkRequestBuilder bulk = client.prepareBulk();
             for (String id : toDeleteIds) {
                 DeleteRequestBuilder deleteRequestBuilder =
-                        client.prepareDelete(indexName, "ontology_term", id);
+                    client.prepareDelete(indexName, "ontology_term", id);
                 bulk.add(deleteRequestBuilder);
             }
 
             bulk.execute().actionGet();
-            atLeastOneDeletion = true;
-            return atLeastOneDeletion;
+            return true;
 
         } catch (OWLOntologyCreationException e) {
             throw new BadRequestException("Problem with OWL file.");
