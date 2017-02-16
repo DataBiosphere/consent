@@ -8,7 +8,9 @@ import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerUtils;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 public class IndexOntologyServiceTest {
 
+    private static final String INDEX_NAME = "test-index";
     private IndexOntologyService ontologyService;
     private IndexerUtils indexUtils = new IndexerUtils();
     private Node node;
@@ -31,14 +34,10 @@ public class IndexOntologyServiceTest {
     public void setUp() throws Exception {
         // Mocks an in-memory elastic-search node
         node = NodeBuilder.nodeBuilder().node();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> node.close()));
+        node.start();
         client = node.client();
-        this.ontologyService = new IndexOntologyService(client, "test-index");
-    }
-
-    @After
-    public void shutDown() {
-        client.close();
-        node.close();
+        this.ontologyService = new IndexOntologyService(client, INDEX_NAME);
     }
 
     @Test
@@ -72,25 +71,16 @@ public class IndexOntologyServiceTest {
     }
 
     @Test
-    public void testValidateIndexExists() {
+    public void testDeleteByType() {
         try {
-            indexUtils.validateIndexExists(client, "test-index");
+            indexUtils.validateIndexExists(client, INDEX_NAME);
+            indexUtils.deleteByOntologyType(client, INDEX_NAME, "Test");
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
     }
 
     @Test
-    public void testDeleteByType() {
-        try {
-            indexUtils.deleteByOntologyType(client, "test-index", "Test");
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-//    TODO: Failing through mvn test, but works locally
-//    @Test
     public void testReIndexOntology() {
         try {
             URL url = Resources.getResource("diseases.owl");
@@ -116,8 +106,7 @@ public class IndexOntologyServiceTest {
         }
     }
 
-//    TODO: Failing through mvn test, but works locally
-//    @Test
+    @Test
     public void testBulkUploadTerms() {
         try {
             Collection<Term> terms = getTerms();

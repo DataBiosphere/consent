@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.broadinstitute.consent.http.models.ontology.Term;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder;
@@ -25,6 +26,7 @@ import java.util.stream.Stream;
  */
 public class IndexerUtils {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(IndexerUtils.class);
     // Parents and children may contain these unhelpful nodes:
     private static OWLDataFactory owlDataFactory = new OWLDataFactoryImpl();
     private static final OWLClass THING = owlDataFactory.getOWLThing();
@@ -43,6 +45,7 @@ public class IndexerUtils {
             try {
                 client.admin().indices().create(indexRequest).actionGet();
             } catch (Exception e) {
+                logger.error(e.getMessage());
                 throw new InternalServerErrorException();
             }
         }
@@ -54,6 +57,7 @@ public class IndexerUtils {
      * @param type The type
      */
     public void deleteByOntologyType(Client client, String indexName, String type) {
+        validateIndexExists(client, indexName);
         DeleteByQueryRequestBuilder deleteByQuery = client.prepareDeleteByQuery(indexName);
         QueryBuilder queryBuilder = QueryBuilders.matchQuery(Term.FIELD_ONTOLOGY_TYPE, type);
         deleteByQuery.setQuery(queryBuilder);
@@ -155,8 +159,8 @@ public class IndexerUtils {
      * @throws IOException The exception
      */
     public void bulkUploadTerms(Client client, String indexName, Collection<Term> terms) throws IOException {
-        // Setting the partition small so we can fail fast for incremental uploads
-        List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 1000);
+        // Setting the partition relatively small so we can fail fast for incremental uploads
+        List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 100);
         for (List<Term> termList: termLists) {
             BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
             for (Term term: termList) {
@@ -167,6 +171,9 @@ public class IndexerUtils {
             }
             BulkResponse response = bulkRequestBuilder.execute().actionGet();
             if (response.hasFailures()) {
+                for (BulkItemResponse r : response.getItems()) {
+                    logger.error(r.getFailureMessage());
+                }
                 throw new IOException("Bulk Upload has failures: " + response.buildFailureMessage());
             }
             client.prepareBulk();
