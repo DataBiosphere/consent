@@ -2606,10 +2606,3 @@ definitions:
       ontology_file:
         type: object
         $ref: '#/definitions/OntologyFileMetaData'
-#      prefix:
-#        type: string
-#        description: The prefix of the ontology file, i.e. "DUOS", "DOID", etc.
-#      type:
-#        type: string
-#        description: The allowed type of ontology file, i.e. "Organization" or "Disease"
-
