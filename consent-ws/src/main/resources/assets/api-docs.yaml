@@ -57,7 +57,7 @@ paths:
         400:
           description: There was a problem indexing the file and the results were not uploaded or indexed
     put:
-      summary: Delete Indexe File
+      summary: Delete Indexed File
       description: Delete an indexed ontology file.
       tags:
         - Ontology
@@ -68,7 +68,7 @@ paths:
           description: There was a problem deleting the file.
       parameters:
         - name: fileURL
-          in: formData
+          in: query
           description: Storage URL of the file to delete.
           required: true
           type: string
@@ -76,14 +76,16 @@ paths:
     get:
       summary: Get Ontology File
       description: Get the specified ontology file by storage url
+      produces:
+        - "application/octet-stream"
       parameters:
         - name: fileUrl
-          in: formData
+          in: query
           description: File URL
           required: true
           type: string
         - name: fileName
-          in: formData
+          in: query
           description: File Name
           required: true
           type: string
@@ -91,7 +93,7 @@ paths:
         - Ontology
       responses:
         200:
-          description: List of allowed types.
+          description: Specified file.
   /ontology/types:
     get:
       summary: Get Ontology Types
