@@ -21,7 +21,7 @@ import java.util.List;
  * Created by SantiagoSaucedo on 3/11/2016.
  */
 @Path("{api : (api/)?}ontology/")
-public class IndexerResource extends Resource{
+public class IndexerResource extends Resource {
 
     private final IndexerService indexerService;
     private final IndexerHelper elasticSearchHelper = new IndexerHelper();
@@ -32,38 +32,29 @@ public class IndexerResource extends Resource{
         this.store = store;
     }
 
+    @GET
+    @Produces("application/json")
+    @RolesAllowed("ADMIN")
+    public Response getIndexedFiles() {
+        try {
+            indexerService.getIndexedFiles();
+            return Response.ok().entity(indexerService.getIndexedFiles()).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response saveAndIndex( FormDataMultiPart formParams)   {
+    public Response saveAndIndex(FormDataMultiPart formParams) {
         try {
-            List<StreamRec> fileCompList =  elasticSearchHelper.filesCompBuilder(formParams);
+            List<StreamRec> fileCompList = elasticSearchHelper.filesCompBuilder(formParams);
             return indexerService.saveAndIndex(fileCompList);
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
-    }
-
-
-    @GET
-    @Produces("application/json")
-    @RolesAllowed("ADMIN")
-    public Response getIndexedFiles(){
-        try {
-            indexerService.getIndexedFiles();
-            return Response.ok().entity(indexerService.getIndexedFiles()).build();
-        } catch(Exception e){
-            return createExceptionResponse(e);
-        }
-    }
-
-    @GET
-    @Produces("application/json")
-    @Path("types")
-    @RolesAllowed("ADMIN")
-    public Response getOntologyTypes(){
-        return  Response.ok().entity(OntologyTypes.values()).build();
     }
 
     @PUT
@@ -72,7 +63,7 @@ public class IndexerResource extends Resource{
     public Response deleteIndexedFile(String fileURL) {
         try {
             return indexerService.deleteOntologiesByType(fileURL);
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -88,11 +79,20 @@ public class IndexerResource extends Resource{
             File targetFile = new File(fileName);
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
             return Response.ok(targetFile)
-                    .type(r.getContentType())
-                    .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
-                    .build();
+                .type(r.getContentType())
+                .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                .build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
+
+    @GET
+    @Produces("application/json")
+    @Path("types")
+    @RolesAllowed("ADMIN")
+    public Response getOntologyTypes() {
+        return Response.ok().entity(OntologyTypes.values()).build();
+    }
+
 }

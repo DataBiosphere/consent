@@ -59,7 +59,7 @@ public class IndexerUtils {
     public void deleteByOntologyType(Client client, String indexName, String type) {
         validateIndexExists(client, indexName);
         DeleteByQueryRequestBuilder deleteByQuery = client.prepareDeleteByQuery(indexName);
-        QueryBuilder queryBuilder = QueryBuilders.matchQuery(Term.FIELD_ONTOLOGY_TYPE, type);
+        QueryBuilder queryBuilder = QueryBuilders.termQuery(Term.FIELD_ONTOLOGY_TYPE, type);
         deleteByQuery.setQuery(queryBuilder);
         deleteByQuery.execute().actionGet();
     }
