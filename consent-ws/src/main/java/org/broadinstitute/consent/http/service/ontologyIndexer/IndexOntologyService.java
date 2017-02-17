@@ -85,6 +85,7 @@ public class IndexOntologyService {
 
     Boolean deleteOntologiesByFile(InputStream fileStream, String prefix) {
 
+        Boolean atLeastOneDeletion = false;
         List<String> toDeleteIds = new ArrayList<>();
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         try {
@@ -116,7 +117,7 @@ public class IndexOntologyService {
                 }
                 toDeleteIds.add(owlClass.toStringID());
             }
-            if (CollectionUtils.isEmpty(toDeleteIds)) return false;
+            if (CollectionUtils.isEmpty(toDeleteIds)) return atLeastOneDeletion;
 
             BulkRequestBuilder bulk = client.prepareBulk();
             for (String id : toDeleteIds) {
@@ -126,7 +127,8 @@ public class IndexOntologyService {
             }
 
             bulk.execute().actionGet();
-            return true;
+            atLeastOneDeletion = true;
+            return atLeastOneDeletion;
 
         } catch (OWLOntologyCreationException e) {
             throw new BadRequestException("Problem with OWL file.");
