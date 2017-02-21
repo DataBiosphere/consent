@@ -156,9 +156,10 @@ public class IndexerUtils {
      * @param client The ES client
      * @param indexName The index
      * @param terms Collection of Terms that will be populated
+     * @return True if there are no errors, false otherwise
      * @throws IOException The exception
      */
-    public void bulkUploadTerms(Client client, String indexName, Collection<Term> terms) throws IOException {
+    public Boolean bulkUploadTerms(Client client, String indexName, Collection<Term> terms) throws IOException {
         // Setting the partition relatively small so we can fail fast for incremental uploads
         List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 100);
         for (List<Term> termList: termLists) {
@@ -174,10 +175,11 @@ public class IndexerUtils {
                 for (BulkItemResponse r : response.getItems()) {
                     logger.error(r.getFailureMessage());
                 }
-                throw new IOException("Bulk Upload has failures: " + response.buildFailureMessage());
+                return false;
             }
             client.prepareBulk();
         }
+        return true;
     }
 
 

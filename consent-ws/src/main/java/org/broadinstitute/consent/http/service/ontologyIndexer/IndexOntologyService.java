@@ -74,7 +74,8 @@ public class IndexOntologyService {
                     (o) -> utils.generateTerm(o, streamRec.getOntologyType(), ontology, annotationProperties, reasoner)
                 ).collect(Collectors.toList());
 
-                utils.bulkUploadTerms(client, indexName, terms);
+                Boolean successfulUpload = utils.bulkUploadTerms(client, indexName, terms);
+                streamRec.setAtLeastOneOntologyIndexed(successfulUpload);
 
             }
         } catch (OWLOntologyCreationException e) {
