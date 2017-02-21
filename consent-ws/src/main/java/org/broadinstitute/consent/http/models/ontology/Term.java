@@ -15,7 +15,7 @@ public class Term {
     public static String FIELD_ONTOLOGY_TYPE = "ontology";
     private static String FIELD_LABEL = "label";
     private static String FIELD_DEFINITION = "definition";
-    private static String FIELD_SYNONYM = "synonym";
+    private static String FIELD_SYNONYM = "synonyms";
     private static String FIELD_USABLE = "usable";
     private static String FIELD_PARENTS = "parents";
 
