@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.ontologyIndexer;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -13,6 +14,8 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 
 import javax.ws.rs.BadRequestException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -53,8 +56,15 @@ public class IndexOntologyService {
                 // Remove any terms that already exist for this type. Type in this context refers to "Disease" or "Organization", etc.
                 utils.deleteByOntologyType(client, indexName, streamRec.getOntologyType());
 
+                //Just to be capable of read InputStream multiple times
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                IOUtils.copy(streamRec.getStream(), baos);
+                byte[] bytes = baos.toByteArray();
+
                 OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-                OWLOntology ontology = manager.loadOntologyFromOntologyDocument(streamRec.getStream());
+                OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(bytes));
+                // Reset stream so it can be re-read by the storage service
+                streamRec.setStream(new ByteArrayInputStream(bytes));
 
                 OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
                 OWLReasoner reasoner = reasonerFactory.createNonBufferingReasoner(ontology);
