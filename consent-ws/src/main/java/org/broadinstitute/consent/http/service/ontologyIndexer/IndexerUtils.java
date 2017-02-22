@@ -213,7 +213,9 @@ public class IndexerUtils {
             BulkResponse response = bulkRequestBuilder.execute().actionGet();
             if (response.hasFailures()) {
                 for (BulkItemResponse r : response.getItems()) {
-                    logger.error(r.getFailureMessage());
+                    if (r.isFailed()) {
+                        logger.error(r.getFailureMessage());
+                    }
                 }
                 return false;
             }
