@@ -147,12 +147,16 @@ public class IndexerUtils {
         List<Set<OWLClass>> filteredSets = new ArrayList<>();
         List<String> owlClassCache = new ArrayList<>();
         for (Set<OWLClass> classSet : parentSets) {
-            Collection<String> classSetIds = classSet.stream().map(OWLClass::toStringID).collect(Collectors.toList());
-            boolean disjoint = Collections.disjoint(owlClassCache, classSetIds);
-            if (disjoint) {
-                filteredSets.add(classSet);
+            // For any nodes in this set that have not been seen, create a new node set for adding
+            Set<OWLClass> filteredParentSet = classSet.stream().
+                filter(oc -> !owlClassCache.contains(oc.toStringID())).
+                collect(Collectors.toSet());
+            // Make sure all new nodes have their IDs added to the cache for future cache checking
+            owlClassCache.addAll(filteredParentSet.stream().map(OWLClass::toStringID).collect(Collectors.toList()));
+            // Finally, if we have a non-empty node, make sure it gets back into the queue
+            if (!filteredParentSet.isEmpty()) {
+                filteredSets.add(filteredParentSet);
             }
-            owlClassCache.addAll(classSetIds);
         }
         Collections.reverse(filteredSets);
         return filteredSets;
