@@ -26,7 +26,7 @@ public class Term {
     private String label;
     private String definition;
     private Boolean usable;
-    private List<Pair<String, Object>> parents;
+    private List<Pair<String, Integer>> parents;
 
     public Term(String id, String ontologyType) {
         this.id = id;
@@ -70,7 +70,7 @@ public class Term {
 
         if (!parents.isEmpty()) {
             builder.startArray(FIELD_PARENTS);
-            for (Pair<String, Object> pair : parents) {
+            for (Pair<String, Integer> pair : parents) {
                 builder.startObject();
                 builder.field(FIELD_ID, pair.getKey());
                 builder.field(FIELD_ORDER, pair.getValue());
