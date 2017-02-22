@@ -121,7 +121,7 @@ public class IndexerUtils {
         }
 
         int position = 0;
-        for (Set<OWLClass> parentSet : getParentSets(owlClass, reasoner)) {
+        for (Set<OWLClass> parentSet : getFilteredParentSets(owlClass, reasoner)) {
             position ++;
             for (OWLClass p : parentSet) {
                 term.addParent(p.toStringID(), position);
@@ -132,13 +132,40 @@ public class IndexerUtils {
     }
 
     /**
+     * We need to check for duplicate sets from the top down. For instance, if we have DOID_4 as the top-level node,
+     * we should filter it out of all lower level nodes. This happens when a class has two parents and each of those
+     * parents have a common ancestor, which is true in 100% of the cases. We need to keep the top-most node and filter
+     * out the duplicates lower down in the tree.
+     *
+     * @param owlClass The class to find parents for
+     * @param reasoner Reasoner required to make inferences.
+     * @return List of ordered OWLClass parents
+     */
+    public List<Set<OWLClass>> getFilteredParentSets(OWLClass owlClass, OWLReasoner reasoner) {
+        List<Set<OWLClass>> parentSets = getParentSets(owlClass, reasoner);
+        Collections.reverse(parentSets);
+        List<Set<OWLClass>> filteredSets = new ArrayList<>();
+        List<String> owlClassCache = new ArrayList<>();
+        for (Set<OWLClass> classSet : parentSets) {
+            Collection<String> classSetIds = classSet.stream().map(OWLClass::toStringID).collect(Collectors.toList());
+            boolean disjoint = Collections.disjoint(owlClassCache, classSetIds);
+            if (disjoint) {
+                filteredSets.add(classSet);
+            }
+            owlClassCache.addAll(classSetIds);
+        }
+        Collections.reverse(filteredSets);
+        return filteredSets;
+    }
+
+    /**
      * Recursively generate an ordered list of OWLClass Parent Sets.
      *
      * @param owlClass The class to find parents for
      * @param reasoner Reasoner required to make inferences.
      * @return List of ordered OWLClass parents
      */
-    public List<Set<OWLClass>> getParentSets(OWLClass owlClass, OWLReasoner reasoner) {
+    private List<Set<OWLClass>> getParentSets(OWLClass owlClass, OWLReasoner reasoner) {
         List<Set<OWLClass>> parents = new ArrayList<>();
         Set<OWLClass> parentSet = reasoner.getSuperClasses(owlClass, true).getFlattened();
         Set<OWLClass> validParentSet = new HashSet<>();

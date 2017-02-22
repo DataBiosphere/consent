@@ -1,17 +1,18 @@
 package org.broadinstitute.consent.http.models.ontology;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class Term {
     private static String FIELD_ID = "id";
+    private static String FIELD_ORDER = "order";
     public static String FIELD_ONTOLOGY_TYPE = "ontology";
     private static String FIELD_LABEL = "label";
     private static String FIELD_DEFINITION = "definition";
@@ -25,14 +26,14 @@ public class Term {
     private String label;
     private String definition;
     private Boolean usable;
-    private Map<String, Object> parents;
+    private List<Pair<String, Object>> parents;
 
     public Term(String id, String ontologyType) {
         this.id = id;
         this.ontologyType = ontologyType;
         this.synonyms = new ArrayList<>();
         this.usable = true;
-        this.parents = new HashMap<>();
+        this.parents = new ArrayList<>();
     }
 
     public void addSynonym(String synonym) {
@@ -69,10 +70,10 @@ public class Term {
 
         if (!parents.isEmpty()) {
             builder.startArray(FIELD_PARENTS);
-            for (Map.Entry<String, Object> entry : parents.entrySet()) {
+            for (Pair<String, Object> pair : parents) {
                 builder.startObject();
-                builder.field(FIELD_ID, entry.getKey());
-                builder.field("order", entry.getValue());
+                builder.field(FIELD_ID, pair.getKey());
+                builder.field(FIELD_ORDER, pair.getValue());
                 builder.endObject();
             }
             builder.endArray();
@@ -84,7 +85,7 @@ public class Term {
     public String getId() { return id; }
 
     public void addParent(String parent, Integer position) {
-        parents.put(parent, position);
+        parents.add(new ImmutablePair<>(parent, position));
     }
 
     @Override
