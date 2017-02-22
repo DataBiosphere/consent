@@ -13,7 +13,6 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.io.IOException;
@@ -27,11 +26,13 @@ import java.util.stream.Stream;
 public class IndexerUtils {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(IndexerUtils.class);
-    // Parents and children may contain these unhelpful nodes:
-    private static OWLDataFactory owlDataFactory = new OWLDataFactoryImpl();
-    private static final OWLClass THING = owlDataFactory.getOWLThing();
-    private static final OWLClass NOTHING = owlDataFactory.getOWLNothing();
 
+    private Boolean isValidOWLClass(OWLClass owlClass) {
+        return owlClass != null &&
+            owlClass.isOWLClass() &&
+            !owlClass.isOWLThing() &&
+            !owlClass.isOWLNothing();
+    }
 
     /**
      * Check to see if the index exists and create it otherwise.
@@ -121,7 +122,7 @@ public class IndexerUtils {
 
         int position = 0;
         for (OWLClass parent : getParents(owlClass, reasoner)) {
-            if (parent.isOWLClass() && !parent.equals(THING) && !parent.equals(NOTHING)) {
+            if (isValidOWLClass(parent)) {
                 position ++;
                 term.addParent(parent.toStringID(), position);
             }
@@ -142,10 +143,10 @@ public class IndexerUtils {
         List<OWLClass> parents = new ArrayList<>();
         Set<OWLClass> parentSet = reasoner.getSuperClasses(owlClass, true).getFlattened();
         OWLClass parent = ((OWLClass) parentSet.toArray()[0]);
-        if (parent.isOWLClass() && !parent.equals(NOTHING) && !parent.equals(THING)) {
+        if (isValidOWLClass(parent)) {
             parents.add(parent);
         }
-        return (!parent.isOWLClass() || parent.equals(NOTHING) || parent.equals(THING))
+        return !isValidOWLClass(parent)
             ? parents
             : Stream.concat(parents.stream(), getParents(parent, reasoner).stream()).collect(Collectors.toList());
     }
