@@ -59,12 +59,18 @@ public class IndexOntologyServiceTest {
 
         for (OWLClass owlClass: ontology.getClassesInSignature()) {
             if (owlClass.toStringID().equals("http://purl.obolibrary.org/obo/DOID_4952")) {
-                List<OWLClass> parents = indexUtils.getParents(owlClass, reasoner);
+                List<Set<OWLClass>> parents = indexUtils.getParentSets(owlClass, reasoner);
                 Assert.assertTrue("'postpoliomyelitis syndrome' should have 4 parents.", parents.size() == 4);
             }
             if (owlClass.toStringID().equals("http://purl.obolibrary.org/obo/DOID_1749")) {
-                List<OWLClass> parents = indexUtils.getParents(owlClass, reasoner);
+                List<Set<OWLClass>> parents = indexUtils.getParentSets(owlClass, reasoner);
                 Assert.assertTrue("'squamous cell carcinoma' should have 5 parents.", parents.size() == 5);
+            }
+            // fetal alcohol spectrum disorder has 5 overall parents and two parents at level 1
+            if (owlClass.toStringID().equals("http://purl.obolibrary.org/obo/DOID_0050696")) {
+                List<Set<OWLClass>> parents = indexUtils.getParentSets(owlClass, reasoner);
+                Assert.assertTrue("'fetal alcohol spectrum disorder' should have 5 parents.", parents.size() == 5);
+                Assert.assertTrue("'fetal alcohol spectrum disorder' should have 2 first level parents.", parents.get(0).size() == 2);
             }
          }
 

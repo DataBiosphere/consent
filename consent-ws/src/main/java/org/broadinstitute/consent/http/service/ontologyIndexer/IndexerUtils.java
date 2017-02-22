@@ -121,34 +121,42 @@ public class IndexerUtils {
         }
 
         int position = 0;
-        for (OWLClass parent : getParents(owlClass, reasoner)) {
-            if (isValidOWLClass(parent)) {
-                position ++;
-                term.addParent(parent.toStringID(), position);
+        for (Set<OWLClass> parentSet : getParentSets(owlClass, reasoner)) {
+            position ++;
+            for (OWLClass p : parentSet) {
+                term.addParent(p.toStringID(), position);
             }
         }
-
         return term;
 
     }
 
     /**
-     * Recursively generate an ordered list of OWLClass Parents.
+     * Recursively generate an ordered list of OWLClass Parent Sets.
      *
      * @param owlClass The class to find parents for
      * @param reasoner Reasoner required to make inferences.
      * @return List of ordered OWLClass parents
      */
-    public List<OWLClass> getParents(OWLClass owlClass, OWLReasoner reasoner) {
-        List<OWLClass> parents = new ArrayList<>();
+    public List<Set<OWLClass>> getParentSets(OWLClass owlClass, OWLReasoner reasoner) {
+        List<Set<OWLClass>> parents = new ArrayList<>();
         Set<OWLClass> parentSet = reasoner.getSuperClasses(owlClass, true).getFlattened();
-        OWLClass parent = ((OWLClass) parentSet.toArray()[0]);
-        if (isValidOWLClass(parent)) {
-            parents.add(parent);
+        Set<OWLClass> validParentSet = new HashSet<>();
+        parentSet.forEach(p -> {
+            if (isValidOWLClass(p)) {
+                validParentSet.add(p);
+            }
+        });
+        if (!validParentSet.isEmpty()) {
+            parents.add(validParentSet);
         }
-        return !isValidOWLClass(parent)
+        return validParentSet.isEmpty()
             ? parents
-            : Stream.concat(parents.stream(), getParents(parent, reasoner).stream()).collect(Collectors.toList());
+            : Stream.concat(
+                parents.stream(),
+                // Apologies for this monstrosity of a call
+                validParentSet.stream().map(p -> getParentSets(p, reasoner)).collect(Collectors.toList()).stream().flatMap(List::stream).collect(Collectors.toList()).stream()
+            ).collect(Collectors.toList());
     }
 
     /**
