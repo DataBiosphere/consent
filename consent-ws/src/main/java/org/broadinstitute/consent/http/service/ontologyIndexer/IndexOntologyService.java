@@ -53,9 +53,6 @@ public class IndexOntologyService {
         try {
             for (StreamRec streamRec : streamRecList) {
 
-                // Remove any terms that already exist for this type. Type in this context refers to "Disease" or "Organization", etc.
-                utils.deleteByOntologyType(client, indexName, streamRec.getOntologyType());
-
                 //Just to be capable of read InputStream multiple times
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 IOUtils.copy(streamRec.getStream(), baos);
