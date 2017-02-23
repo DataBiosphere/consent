@@ -185,8 +185,7 @@ public class IndexerUtils {
             ? parents
             : Stream.concat(
                 parents.stream(),
-                // Apologies for this monstrosity of a call
-                validParentSet.stream().map(p -> getParentSets(p, reasoner)).collect(Collectors.toList()).stream().flatMap(List::stream).collect(Collectors.toList()).stream()
+                validParentSet.stream().map(p -> getParentSets(p, reasoner)).flatMap(List::stream)
             ).collect(Collectors.toList());
     }
 
