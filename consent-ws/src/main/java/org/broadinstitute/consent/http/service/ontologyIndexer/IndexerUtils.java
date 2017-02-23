@@ -167,7 +167,7 @@ public class IndexerUtils {
      *
      * @param owlClass The class to find parents for
      * @param reasoner Reasoner required to make inferences.
-     * @return List of ordered OWLClass parents
+     * @return Ordered list of OWLClass parent sets
      */
     private List<Set<OWLClass>> getParentSets(OWLClass owlClass, OWLReasoner reasoner) {
         List<Set<OWLClass>> parents = new ArrayList<>();
