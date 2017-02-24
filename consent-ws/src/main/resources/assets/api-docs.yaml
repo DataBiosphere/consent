@@ -18,6 +18,91 @@ securityDefinitions:
       profile: profile
       email: email
 paths:
+  /ontology:
+    get:
+      summary: List Ontology Files
+      description: Returns description of the current ontology files that are indexed and stored.
+      tags:
+        - Ontology
+      responses:
+        200:
+          description: Returns the collection of current ontology file information.
+        400:
+          description: There was a problem retrieving the files
+    post:
+      summary: Upload Ontology File
+      description: Uploads and indexes an ontology file
+      consumes:
+        - multipart/form-data  # and/or application/x-www-form-urlencoded
+      parameters:
+        - name: metadata
+          type: object
+          in: formData
+          description: 'JSON object specifying the ontology file metadata. Prefix is "DUOS" or "DOID" and type is "Organization" or "Disease"'
+          required: true
+          schema:
+            $ref: '#/definitions/OntologyFile'
+        - name: ontology_file
+          type: file
+          in: formData
+          description: The uploaded ontology file
+          required: true
+      tags:
+        - Ontology
+      responses:
+        200:
+          description: Returns the result of the upload operation
+          schema:
+            $ref: '#/definitions/OntologyFile'
+        400:
+          description: There was a problem indexing the file and the results were not uploaded or indexed
+    put:
+      summary: Delete Indexed File
+      description: Delete an indexed ontology file.
+      tags:
+        - Ontology
+      responses:
+        200:
+          description: Successful file deletion
+        400:
+          description: There was a problem deleting the file.
+      parameters:
+        - name: fileURL
+          in: query
+          description: Storage URL of the file to delete.
+          required: true
+          type: string
+  /ontology/file:
+    get:
+      summary: Get Ontology File
+      description: Get the specified ontology file by storage url
+      produces:
+        - "application/octet-stream"
+      parameters:
+        - name: fileUrl
+          in: query
+          description: File URL
+          required: true
+          type: string
+        - name: fileName
+          in: query
+          description: File Name
+          required: true
+          type: string
+      tags:
+        - Ontology
+      responses:
+        200:
+          description: Specified file.
+  /ontology/types:
+    get:
+      summary: Get Ontology Types
+      description: Get the allowed types for ontology file indexing purposes
+      tags:
+        - Ontology
+      responses:
+        200:
+          description: List of allowed types.
   '/consent/associations/{associationType}/{id}':
     get:
       summary: getConsentsForAssociation
@@ -2473,29 +2558,29 @@ definitions:
       message:
         type: string
   HelpReport:
-      type: object
-      properties:
-        reportId:
-          type: integer
-          format: int32
-          description: ID of the report.
-        userName:
-          type: string
-          description: Name of user that made the report.
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the Report was created.
-        subject:
-           type: string
-           description: Subject of the report.
-        description:
-           type: string
-           description: Content of the report.
-        userId:
-           type: integer
-           format: int32
-           description: ID of user that made the report.
+    type: object
+    properties:
+      reportId:
+        type: integer
+        format: int32
+        description: ID of the report.
+      userName:
+        type: string
+        description: Name of user that made the report.
+      createDate:
+        type: string
+        format: date
+        description: Describes the date the Report was created.
+      subject:
+         type: string
+         description: Subject of the report.
+      description:
+         type: string
+         description: Content of the report.
+      userId:
+         type: integer
+         format: int32
+         description: ID of user that made the report.
   PatchOperation:
     type: object
     properties:
@@ -2508,5 +2593,18 @@ definitions:
       path:
         type: string
         description: Field to be updated. Available values are displayName or roles.
-        
-        
+  OntologyFileMetaData:
+    type: object
+    properties:
+      prefix:
+        type: string
+        description: The prefix of the ontology file, i.e. "DUOS", "DOID", etc.
+      type_thing:
+        type: string
+        description: The allowed type of ontology file, i.e. "Organization" or "Disease"
+  OntologyFile:
+    type: object
+    properties:
+      ontology_file:
+        type: object
+        $ref: '#/definitions/OntologyFileMetaData'

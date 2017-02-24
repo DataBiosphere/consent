@@ -102,42 +102,16 @@
         <version>${jetty.version}</version>
       </dependency>
 
-      <!-- ElasticSearch -->
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>1.3.2</version>
-      </dependency>
-
       <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-core</artifactId>
         <version>${lucene.version}</version>
       </dependency>
 
-      <!-- Pellet -->
-      <dependency>
-        <groupId>com.github.ansell.pellet</groupId>
-        <artifactId>pellet-core</artifactId>
-        <version>2.3.3</version>
-        <exclusions>
-          <exclusion>
-            <groupId>xerces</groupId>
-            <artifactId>xercesImpl</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
       <dependency>
         <groupId>xerces</groupId>
         <artifactId>xercesImpl</artifactId>
         <version>2.11.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.github.ansell.pellet</groupId>
-        <artifactId>pellet-owlapiv3</artifactId>
-        <version>2.3.3</version>
       </dependency>
 
       <!-- Testing -->
