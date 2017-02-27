@@ -144,13 +144,13 @@ paths:
           type: string
         - name: associationType
           in: query
-          description: "Association's type"
+          description: "Association's type, 'sample', 'sampleSet', or 'workspace'"
           required: true
           type: string
         - name: id
           in: query
-          description: Object ID of the requested association
-          required: true
+          description: Optional ID of the requested association
+          required: false
           type: string
       tags:
         - Consent
@@ -2010,7 +2010,7 @@ definitions:
     properties:
       associationType:
         type: string
-        description: 'Defines the type of the association. Possible values: sample, sampleSet.'
+        description: 'Defines the type of the association. Possible values: sample, sampleSet, workspace.'
       elements:
         type: array
         items:
