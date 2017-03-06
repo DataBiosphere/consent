@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
@@ -140,15 +141,15 @@ public class ConsentResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @PermitAll
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
-        String id;
         try {
-            id = api.getByName(name);
+            String id = api.getByName(name);
             if (id == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Requested name = %s not found on consents", name), Response.Status.NOT_FOUND.getStatusCode())).build();
+                createExceptionResponse(new NotFoundException(String.format("Consent with a name of '%s' was not found.", name)));
             }
-            return Response.status(Response.Status.OK).entity(id).build();
-        } catch(Exception ex) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            ObjectMapper mapper = new ObjectMapper();
+            return Response.status(Response.Status.OK).entity(mapper.writeValueAsString(id)).build();
+        } catch (Exception ex) {
+            return createExceptionResponse(ex);
         }
     }
 
