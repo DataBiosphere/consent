@@ -144,7 +144,7 @@ public class ConsentResource extends Resource {
         try {
             String id = api.getByName(name);
             if (id == null) {
-                createExceptionResponse(new NotFoundException(String.format("Consent with a name of '%s' was not found.", name)));
+                return createExceptionResponse(new NotFoundException(String.format("Consent with a name of '%s' was not found.", name)));
             }
             ObjectMapper mapper = new ObjectMapper();
             return Response.status(Response.Status.OK).entity(mapper.writeValueAsString(id)).build();
