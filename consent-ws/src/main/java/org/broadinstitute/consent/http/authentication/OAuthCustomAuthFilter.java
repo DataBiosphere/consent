@@ -9,24 +9,24 @@ import javax.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
 import java.security.Principal;
 
-public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<String, P>  {
+public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<String, P> {
 
     private AuthFilter filter;
 
-    public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, DACUserRoleDAO dacUserRoleDAO){
+    public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, DACUserRoleDAO dacUserRoleDAO) {
         filter = new OAuthCredentialAuthFilter.Builder<User>()
-                .setAuthenticator(authenticator)
-                .setAuthorizer(new UserAuthorizer(dacUserRoleDAO))
-                .setPrefix("Bearer")
-                .setRealm("OAUTH-AUTH")
-                .buildAuthFilter();
+            .setAuthenticator(authenticator)
+            .setAuthorizer(new UserAuthorizer(dacUserRoleDAO))
+            .setPrefix("Bearer")
+            .setRealm("OAUTH-AUTH")
+            .buildAuthFilter();
     }
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         String path = requestContext.getUriInfo().getPath();
-        boolean match = path.matches("^(api/).*");
-        if(match) {
+        boolean match = path.matches("^((swagger|api)/).*");
+        if (match) {
             filter.filter(requestContext);
         }
     }

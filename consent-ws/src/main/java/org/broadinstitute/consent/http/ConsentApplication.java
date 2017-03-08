@@ -263,8 +263,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         List<AuthFilter> filters = Lists.newArrayList(
             defaultAuthFilter,
             new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
-            new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO),
-            new SwaggerAuthFilter());
+            new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
