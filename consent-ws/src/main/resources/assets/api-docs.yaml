@@ -443,6 +443,24 @@ paths:
             items:
               $ref: '#/definitions/ConsentManage'
   /consent:
+    get:
+      summary: Find consent ID by name
+      description: Returns the Consent ID identified by the name.
+      produces:
+        - application/json
+      parameters:
+        - name: name
+          in: query
+          description: Consent Name
+          required: true
+          type: string
+      tags:
+        - Consent
+      responses:
+        200:
+          description: Returns the ID of the requested consent.
+        404:
+          description: The consent associated with the provided name could not be found.
     post:
       summary: createConsent
       description: Creates the consent sent with the request.
