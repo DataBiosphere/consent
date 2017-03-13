@@ -461,6 +461,8 @@ paths:
           description: Returns the requested consent.
           schema:
             $ref: '#/definitions/Consent'
+        400:
+          description: The consent associated with the provided name has not been approved.
         404:
           description: The consent associated with the provided name could not be found.
     post:

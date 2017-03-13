@@ -44,6 +44,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     String checkConsentbyId(@Bind("consentId") String consentId);
 
+    @SqlQuery("select consentId from consents where name = :name")
+    String getIdByName(@Bind("name") String name);
+
     @SqlQuery("select * from consents where name = :name and active=true")
     Consent findConsentByName(@Bind("name") String name);
     

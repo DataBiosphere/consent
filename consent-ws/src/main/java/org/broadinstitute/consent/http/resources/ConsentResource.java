@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
@@ -35,7 +36,7 @@ public class ConsentResource extends Resource {
     private final MatchAPI matchAPI;
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
-
+    private final ElectionAPI electionAPI;
 
 
     @Path("{id}")
@@ -143,9 +144,18 @@ public class ConsentResource extends Resource {
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
         try {
             Consent consent = api.getByName(name);
-            return Response.ok(consent).build();
+            Election election = electionAPI.describeConsentElection(consent.consentId);
+            if (election.getFinalVote() != null && election.getFinalVote()) {
+                return Response.ok(consent).build();
+            } else {
+                // electionAPI.describeConsentElection will throw NotFoundException if no election exists, and we catch
+                // that below. Here, we have an existing-but-failed election. Let's send it to the same catch clause.
+                throw new NotFoundException();
+            }
         } catch (UnknownIdentifierException ex) {
             return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Consent with a name of '%s' was not found.", name), Response.Status.NOT_FOUND.getStatusCode())).build();
+        } catch (NotFoundException nfe) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(String.format("Consent with a name of '%s' is not approved.", name), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
     }
 
@@ -162,6 +172,7 @@ public class ConsentResource extends Resource {
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
+        this.electionAPI = AbstractElectionAPI.getInstance();
     }
 
 }
