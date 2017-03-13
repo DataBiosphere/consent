@@ -142,14 +142,10 @@ public class ConsentResource extends Resource {
     @PermitAll
     public Response getByName(@QueryParam("name") String name, @Context UriInfo info) {
         try {
-            String id = api.getByName(name);
-            if (id == null) {
-                return createExceptionResponse(new NotFoundException(String.format("Consent with a name of '%s' was not found.", name)));
-            }
-            ObjectMapper mapper = new ObjectMapper();
-            return Response.status(Response.Status.OK).entity(mapper.writeValueAsString(id)).build();
-        } catch (Exception ex) {
-            return createExceptionResponse(ex);
+            Consent consent = api.getByName(name);
+            return Response.ok(consent).build();
+        } catch (UnknownIdentifierException ex) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(String.format("Consent with a name of '%s' was not found.", name), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 

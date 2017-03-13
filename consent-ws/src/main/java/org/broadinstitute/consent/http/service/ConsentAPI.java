@@ -19,7 +19,7 @@ public interface ConsentAPI {
 
     Collection<Consent> retrieve(List<String> ids);
     
-    String getByName(String name);
+    Consent getByName(String name) throws UnknownIdentifierException;
 
     Consent update(String id, Consent rec) throws UnknownIdentifierException;
 
