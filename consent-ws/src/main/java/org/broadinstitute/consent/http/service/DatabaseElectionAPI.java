@@ -158,7 +158,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (consentDAO.checkConsentbyId(consentId) == null) {
             throw new NotFoundException("Invalid ConsentId");
         }
-        Election election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
+        Election election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
         if (election == null) {
             throw new NotFoundException("Election was not found");
         }

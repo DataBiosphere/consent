@@ -444,8 +444,8 @@ paths:
               $ref: '#/definitions/ConsentManage'
   /consent:
     get:
-      summary: Find consent ID by name
-      description: Returns the Consent ID identified by the name.
+      summary: Find consent by name
+      description: Returns the Consent identified by the name.
       produces:
         - application/json
       parameters:
@@ -458,7 +458,11 @@ paths:
         - Consent
       responses:
         200:
-          description: Returns the ID of the requested consent.
+          description: Returns the requested consent.
+          schema:
+            $ref: '#/definitions/Consent'
+        400:
+          description: The consent associated with the provided name has not been approved.
         404:
           description: The consent associated with the provided name could not be found.
     post:

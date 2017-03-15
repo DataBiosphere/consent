@@ -459,9 +459,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public String getByName(String name) {
-        String id = consentDAO.getIdByName(name);
-        return id;
+    public Consent getByName(String name) throws UnknownIdentifierException {
+        Consent consent = consentDAO.findConsentByName(name);
+        if (consent == null) {
+            throw new UnknownIdentifierException("Consent does not exist");
+        }
+        return consent;
     }
 
 }

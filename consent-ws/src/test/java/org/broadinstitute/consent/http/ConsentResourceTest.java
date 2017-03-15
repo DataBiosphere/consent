@@ -1,10 +1,17 @@
 package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.VoteAPI;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -17,14 +24,16 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ConsentResourceTest extends AbstractTest {
 
     private String name;
+
+    private ElectionAPI electionAPI = AbstractElectionAPI.getInstance();
+    private VoteAPI voteAPI = AbstractVoteAPI.getInstance();
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
@@ -54,14 +63,34 @@ public class ConsentResourceTest extends AbstractTest {
         WebTarget webTarget = client.target(path2Url("/consent")).queryParam("name", name);
         mockValidateTokenResponse();
         Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE).
-            header("Authorization", "Bearer access-token").get(Response.class);
-        String entity = StringUtils.strip(response.readEntity(String.class), "\"");
+                header("Authorization", "Bearer access-token").get(Response.class);
 
-        // Make sure we have a response ...
-        assertThat(response.getStatus() == OK);
-        assertNotNull(entity);
-        // And that the location (ID) is the same as the cleaned up ID returned from findByName
-        assertTrue(location.equals(entity));
+        // It should not be returned at this point, because there's no election for it
+        assertEquals("should be a bad request when no election", BAD_REQUEST, response.getStatus());
+
+        // insert an open election - not approved yet
+        Election election = createElection(location);
+
+        // re-query, should still be BAD_REQUEST
+        mockValidateTokenResponse();
+        Response response2 = webTarget.request(MediaType.APPLICATION_JSON_TYPE).
+                header("Authorization", "Bearer access-token").get(Response.class);
+        assertEquals("should be a bad request when election is still open", BAD_REQUEST, response2.getStatus());
+
+        // update election to be closed/approved
+        updateElection(location, election.getElectionId());
+
+        // re-query, should be OK
+        mockValidateTokenResponse();
+        Response response3 = webTarget.request(MediaType.APPLICATION_JSON_TYPE).
+                header("Authorization", "Bearer access-token").get(Response.class);
+        assertEquals("should be OK once election is final and approved", OK, response3.getStatus());
+
+        Consent consent = response3.readEntity(Consent.class);
+        assertNotNull(consent);
+        // And that the location (ID) and name are what we expect
+        assertTrue(location.equals(consent.consentId));
+        assertEquals(name, consent.name);
     }
 
     private String createConsent(Client client) throws IOException {
@@ -80,6 +109,44 @@ public class ConsentResourceTest extends AbstractTest {
         Response response = checkStatus(CREATED, post(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");
         return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
+    }
+
+    // drop to the apis for the create/update election methods.
+    // we are testing consent-by-name, not election/vote updates
+    private Election createElection(String consentId) throws Exception {
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        election.setReferenceId(consentId);
+
+        Election created = electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
+        assertNotNull("API should create election", created);
+        return created;
+    }
+
+    private Election updateElection(String consentId, Integer electionId) throws IOException {
+        Election election = electionAPI.describeElectionById(electionId);
+        assertNotNull("existing election should exist", election);
+
+        voteAPI.createVotes(electionId, ElectionType.TRANSLATE_DUL, false);
+
+        List<Vote> votes = voteAPI.describeVotes(consentId);
+        assertFalse("existing votes should exist", votes.isEmpty());
+        for (Vote vote : votes) {
+            vote.setHasConcerns(false);
+            vote.setVote(true);
+            vote.setRationale("unit test");
+            voteAPI.updateVote(vote, vote.getVoteId(), consentId);
+        }
+
+        election.setFinalRationale("unit test");
+        election.setFinalVote(true);
+        election.setFinalAccessVote(true);
+        election.setStatus(ElectionStatus.CLOSED.getValue());
+        Election updated = electionAPI.updateElectionById(election, election.getElectionId());
+        assertNotNull("API should update election", updated);
+
+        return updated;
     }
 
 }
