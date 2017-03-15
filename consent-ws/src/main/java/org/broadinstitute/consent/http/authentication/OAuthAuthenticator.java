@@ -41,17 +41,29 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
     }
 
     @Override
-    public Optional<User> authenticate(String bearer) {
-        try {
-            HashMap<String, Object> tokenInfo = validateToken(bearer);
-            String email = tokenInfo.get("email").toString();
+    public Optional<User> authenticate(String bearer){
+        try{
+            String email = validateAccessToken(bearer);
             User user = new User(email);
             return Optional.of(user);
-        } catch (AuthenticationException e) {
+        }catch (Exception e){
             logger.error("Error authenticating credentials.");
             return Optional.empty();
         }
 
+    }
+
+    public String validateAccessToken(String bearer) throws AuthenticationException {
+        HashMap<String, Object> tokenInfo = validateToken(bearer);
+        try {
+            String clientId = tokenInfo.containsKey("aud") ? tokenInfo.get("aud").toString() : tokenInfo.get("audience").toString();
+            if (clientId == null || !config.getAuthorizedServiceAccounts().contains(clientId)) {
+                unauthorized(bearer);
+            }
+        } catch (AuthenticationException e) {
+            unauthorized(bearer);
+        }
+        return tokenInfo.get("email").toString();
     }
 
     private HashMap<String, Object> validateToken(String accessToken) throws AuthenticationException {
