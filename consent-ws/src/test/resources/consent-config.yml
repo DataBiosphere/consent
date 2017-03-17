@@ -52,6 +52,8 @@ freeMarkerConfiguration:
   defaultEncoding: UTF-8
 googleAuthentication:
   clientId: clientId
+  authorizedAccounts:
+    - authorizedServiceAccountId
 basicAuthentication:
   users:
     - user: testuser
@@ -59,7 +61,7 @@ basicAuthentication:
     - user: testuser2
       password: testpassword2
 storeOntology:
-  bucketSubdirectory:   bucket
+  bucketSubdirectory: bucket
   configurationFileName: configuration
 elasticSearch:
   clusterName: cName
