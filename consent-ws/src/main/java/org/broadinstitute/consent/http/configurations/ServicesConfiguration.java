@@ -45,6 +45,10 @@ public class ServicesConfiguration {
         return getOntologyURL() + VALIDATE_USE_RESTRICTION;
     }
 
+    public String getDARTranslateUrl() {
+        return getOntologyURL() + "schemas/data-use/dar/translate";
+    }
+
 
 
 }
