@@ -99,7 +99,7 @@ abstract public class AbstractTest extends ResourcedTest {
         if (path.startsWith("/")) {
             path = path.substring(1, path.length());
         }
-        return String.format("http://localhost:%d/%s", rule().getLocalPort(), path);
+        return String.format("http://localhost:%d/api/%s", rule().getLocalPort(), path);
     }
 
 
