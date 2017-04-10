@@ -30,6 +30,34 @@ public class UseRestrictionConverterTest {
         mockServer = startClientAndServer(port);
     }
 
+    private void mockSuccess() {
+        mockServer.reset();
+        mockServer.when(
+            request()
+                .withMethod("POST")
+                .withPath("/schemas/data-use/dar/translate")
+        ).respond(
+            response()
+                .withStatusCode(200)
+                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                .withBody("{ \"type\": \"everything\" }")
+        );
+    }
+
+    private void mockFailure() {
+        mockServer.reset();
+        mockServer.when(
+            request()
+                .withMethod("POST")
+                .withPath("/schemas/data-use/dar/translate")
+        ).respond(
+            response()
+                .withStatusCode(500)
+                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                .withBody("Exception")
+        );
+    }
+
     @After
     public void tearDown() {
         mockServer.stop();
@@ -47,17 +75,8 @@ public class UseRestrictionConverterTest {
      */
     @Test
     public void testUseRestrictionConverterConnection() {
-        mockServer.reset();
-        mockServer.when(
-            request()
-                .withMethod("POST")
-                .withPath("/schemas/data-use/dar/translate")
-        ).respond(
-            response()
-                .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("{ \"type\": \"everything\" }")
-        );
+        mockSuccess();
+
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         UseRestriction restriction = converter.parseJsonFormulary("{  }");
@@ -70,22 +89,44 @@ public class UseRestrictionConverterTest {
      */
     @Test
     public void testFailedUseRestrictionConverterConnection() {
-        mockServer.reset();
-        mockServer.when(
-            request()
-                .withMethod("POST")
-                .withPath("/schemas/data-use/dar/translate")
-        ).respond(
-            response()
-                .withStatusCode(500)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("Exception")
-        );
+        mockFailure();
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         UseRestriction restriction = converter.parseJsonFormulary("{  }");
         assertNull(restriction);
+    }
+
+    /*
+     * Testing a fleshed out DTO. This should hit some low-coverage areas of UseRestrictionConverter.
+     */
+    @Test
+    public void testDataUseDTO() {
+        mockSuccess();
+        String dto = "{ " +
+            "\"methods\":true, " +
+            "\"population\":true, " +
+            "\"controls\":true, " +
+            " \"ontologies\":[  " +
+            "      {  " +
+            "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\"," +
+            "         \"label\":\"linitis-plastica\"," +
+            "         \"definition\":null," +
+            "         \"synonyms\":[  " +
+            "            \"Linitis plastica (morphologic abnormality)\"," +
+            "            \"Leather-bottle stomach\"" +
+            "         ]" +
+            "      }" +
+            "]," +
+            "\"onegender\":true," +
+            "\"gender\":\"F\"" +
+        "}";
+
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        UseRestriction restriction = converter.parseJsonFormulary(dto);
+        assertNotNull(restriction);
+        assertTrue(restriction.equals(new Everything()));
     }
 
 
