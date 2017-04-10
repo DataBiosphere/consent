@@ -14,6 +14,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
@@ -27,16 +28,6 @@ public class UseRestrictionConverterTest {
     @Before
     public void startUp() {
         mockServer = startClientAndServer(port);
-        mockServer.when(
-            request()
-                .withMethod("POST")
-                .withPath("/schemas/data-use/dar/translate")
-        ).respond(
-            response()
-                .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("{ \"type\": \"everything\" }")
-        );
     }
 
     @After
@@ -56,11 +47,45 @@ public class UseRestrictionConverterTest {
      */
     @Test
     public void testUseRestrictionConverterConnection() {
+        mockServer.reset();
+        mockServer.when(
+            request()
+                .withMethod("POST")
+                .withPath("/schemas/data-use/dar/translate")
+        ).respond(
+            response()
+                .withStatusCode(200)
+                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                .withBody("{ \"type\": \"everything\" }")
+        );
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         UseRestriction restriction = converter.parseJsonFormulary("{  }");
         assertNotNull(restriction);
         assertTrue(restriction.equals(new Everything()));
+    }
+
+    /*
+     * Test that when the UseRestrictionConverter makes a failed call to the ontology service, a null is returned.
+     */
+    @Test
+    public void testFailedUseRestrictionConverterConnection() {
+        mockServer.reset();
+        mockServer.when(
+            request()
+                .withMethod("POST")
+                .withPath("/schemas/data-use/dar/translate")
+        ).respond(
+            response()
+                .withStatusCode(500)
+                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                .withBody("Exception")
+        );
+
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        UseRestriction restriction = converter.parseJsonFormulary("{  }");
+        assertNull(restriction);
     }
 
 
