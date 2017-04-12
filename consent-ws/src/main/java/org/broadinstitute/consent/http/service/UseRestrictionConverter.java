@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("WeakerAccess")
 public class UseRestrictionConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("UseRestrictionConverter");
@@ -33,7 +34,7 @@ public class UseRestrictionConverter {
     }
 
     @SuppressWarnings("unchecked")
-    public UseRestriction parseJsonFormulary(String json) {
+    public DataUseDTO parseDataUseDto(String json) {
         Map<String, Object> form = parseAsMap(json);
         DataUseDTO dataUseDTO = new DataUseDTO();
 
@@ -87,9 +88,12 @@ public class UseRestrictionConverter {
         if (pediatricsOnly) {
             dataUseDTO.setPediatric(true);
         }
+        return dataUseDTO;
+    }
 
+    public UseRestriction parseUseRestriction(DataUseDTO dto) {
         WebTarget target = client.target(servicesConfiguration.getDARTranslateUrl());
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUseDTO.toString()));
+        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dto.toString()));
         if (response.getStatus() == 200) {
             try {
                 return response.readEntity(UseRestriction.class);

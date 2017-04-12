@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.After;
@@ -28,6 +29,11 @@ public class UseRestrictionConverterTest {
     @Before
     public void startUp() {
         mockServer = startClientAndServer(port);
+    }
+
+    @After
+    public void tearDown() {
+        mockServer.stop();
     }
 
     private void mockSuccess() {
@@ -58,11 +64,6 @@ public class UseRestrictionConverterTest {
         );
     }
 
-    @After
-    public void tearDown() {
-        mockServer.stop();
-    }
-
     public ServicesConfiguration config() {
         ServicesConfiguration config = new ServicesConfiguration();
         config.setLocalURL("http://localhost:8180/");
@@ -79,7 +80,8 @@ public class UseRestrictionConverterTest {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        UseRestriction restriction = converter.parseJsonFormulary("{  }");
+        DataUseDTO dto = converter.parseDataUseDto("{  }");
+        UseRestriction restriction = converter.parseUseRestriction(dto);
         assertNotNull(restriction);
         assertTrue(restriction.equals(new Everything()));
     }
@@ -93,21 +95,21 @@ public class UseRestrictionConverterTest {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        UseRestriction restriction = converter.parseJsonFormulary("{  }");
+        DataUseDTO dto = converter.parseDataUseDto("{  }");
+        UseRestriction restriction = converter.parseUseRestriction(dto);
         assertNull(restriction);
     }
 
     /*
-     * Testing a fleshed out DTO. This should hit some low-coverage areas of UseRestrictionConverter.
+     * Testing a fleshed out DTO.
      */
     @Test
-    public void testDataUseDTO() {
-        mockSuccess();
-        String dto = "{ " +
+    public void testParseDataUseDTO() {
+        String json = "{ " +
             "\"methods\":true, " +
             "\"population\":true, " +
             "\"controls\":true, " +
-            " \"ontologies\":[  " +
+            "\"ontologies\":[  " +
             "      {  " +
             "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\"," +
             "         \"label\":\"linitis-plastica\"," +
@@ -118,16 +120,23 @@ public class UseRestrictionConverterTest {
             "         ]" +
             "      }" +
             "]," +
+            "\"forProfit\":true," +
             "\"onegender\":true," +
+            "\"pediatric\":true," +
             "\"gender\":\"F\"" +
         "}";
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        UseRestriction restriction = converter.parseJsonFormulary(dto);
-        assertNotNull(restriction);
-        assertTrue(restriction.equals(new Everything()));
+        DataUseDTO dto = converter.parseDataUseDto(json);
+        assertNotNull(dto);
+        assertTrue(dto.getMethodsResearch());
+        assertTrue(dto.getPopulationStructure());
+        assertTrue(dto.getControlSetOption().equalsIgnoreCase("Yes"));
+        assertTrue(dto.getDiseaseRestrictions().contains("http://purl.obolibrary.org/obo/DOID_4023"));
+        assertTrue(dto.getCommercialUse());
+        assertTrue(dto.getPediatric());
+        assertTrue(dto.getGender().equalsIgnoreCase("Female"));
     }
-
 
 }
