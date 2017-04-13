@@ -216,7 +216,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
-        return converter.parseJsonFormulary(document.toJson());
+        DataUseDTO dto = converter.parseDataUseDto(document.toJson());
+        return converter.parseUseRestriction(dto);
     }
 
     @Override

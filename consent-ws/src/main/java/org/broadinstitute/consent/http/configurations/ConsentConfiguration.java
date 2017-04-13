@@ -18,21 +18,6 @@ public class ConsentConfiguration extends Configuration {
     @JsonProperty
     private final DataSourceFactory database = new DataSourceFactory();
 
-    private final UseRestrictionConfig ontology = new UseRestrictionConfig(
-        "http://www.broadinstitute.org/ontologies/DUOS/methods_research",
-        "http://www.broadinstitute.org/ontologies/DUOS/aggregate_research",
-        "http://www.broadinstitute.org/ontologies/DUOS/control",
-        "http://www.broadinstitute.org/ontologies/DUOS/population_structure",
-        "http://www.broadinstitute.org/ontologies/DUOS/male",
-        "http://www.broadinstitute.org/ontologies/DUOS/female",
-        "http://www.broadinstitute.org/ontologies/DUOS/For_profit",
-        "http://www.broadinstitute.org/ontologies/DUOS/Non_profit",
-        "http://www.broadinstitute.org/ontologies/DUOS/boys",
-        "http://www.broadinstitute.org/ontologies/DUOS/girls",
-        "http://www.broadinstitute.org/ontologies/DUOS/children"
-
-    );
-
     @Valid
     @NotNull
     @JsonProperty
@@ -91,10 +76,6 @@ public class ConsentConfiguration extends Configuration {
 
     public StoreConfiguration getCloudStoreConfiguration() {
         return googleStore;
-    }
-
-    public UseRestrictionConfig getUseRestrictionConfiguration() {
-        return ontology;
     }
 
     public MongoConfiguration getMongoConfiguration() {
