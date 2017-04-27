@@ -1127,6 +1127,8 @@ paths:
     get:
       summary: getDUL
       description: Returns Data Use Letter file specified by consentId.
+      produces:
+        - "application/octet-stream"
       parameters:
         - name: id
           in: path
