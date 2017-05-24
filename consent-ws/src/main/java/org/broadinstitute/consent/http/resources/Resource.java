@@ -24,7 +24,12 @@ abstract public class Resource {
     }
 
     protected Response createExceptionResponse(Exception e) {
-        return dispatch.get(e.getClass()).handle(e);
+        try {
+            return dispatch.get(e.getClass()).handle(e);
+        } catch (Throwable t) {
+            logger().error(t.getMessage());
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     private interface ExceptionHandler {
