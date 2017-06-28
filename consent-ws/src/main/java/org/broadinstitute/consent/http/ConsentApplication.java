@@ -81,10 +81,7 @@ import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
-import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyService;
-import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
-import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerServiceImpl;
-import org.broadinstitute.consent.http.service.ontologyIndexer.StoreOntologyService;
+import org.broadinstitute.consent.http.service.ontologyIndexer.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
@@ -151,8 +148,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient, mongoConfiguration.getDbName());
         mongoInstance.configureMongo();
 
+        env.healthChecks().register("mongodb", new MongoHealthCheck(mongoClient, mongoConfiguration.getDbName()));
+
         final DBIFactory factory = new DBIFactory();
-        final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "db");
+        final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "mysql"); // display name for health checks
         final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
         final ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
         final HelpReportDAO helpReportDAO = jdbi.onDemand(HelpReportDAO.class);
@@ -215,6 +214,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         elasticConfiguration.getServers().stream().forEach((server) -> {
             eSearchClient.addTransportAddress(new InetSocketTransportAddress(server, 9300));
         });
+
+        env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(eSearchClient, config.getElasticSearchConfiguration().getIndexName()));
 
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,
