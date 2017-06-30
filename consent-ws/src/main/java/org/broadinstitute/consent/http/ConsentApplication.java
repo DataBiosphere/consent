@@ -19,6 +19,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
 import org.broadinstitute.consent.http.authentication.*;
+import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
@@ -136,7 +137,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient;
-        GCSStore googleStore;
 
         if (mongoConfiguration.isTestMode()) {
             Fongo fongo = new Fongo("TestServer");
@@ -204,7 +204,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
-        googleStore = getGoogleStore(config.getCloudStoreConfiguration());
 
         //Manage Ontologies dependencies
         final ElasticSearchConfiguration elasticConfiguration = config.getElasticSearchConfiguration();
@@ -217,10 +216,17 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(eSearchClient, config.getElasticSearchConfiguration().getIndexName()));
 
+
+        GCSStore googleStore;
+        googleStore = getGoogleStore(config.getCloudStoreConfiguration());
+
+        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
+
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,
                         config.getStoreOntologyConfiguration().getBucketSubdirectory(),
                         config.getStoreOntologyConfiguration().getConfigurationFileName());
+
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient, config.getElasticSearchConfiguration().getIndexName());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
