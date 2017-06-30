@@ -17,7 +17,7 @@ public class GCSHealthCheck extends HealthCheck {
 
         // Attempt to read the root of the bucket; returns file list
         try {
-            HttpResponse response = store.getStorageDocument(store.generateURLForDocument("").toString());
+            store.getStorageDocument(store.generateURLForDocument("").toString());
         } catch (Exception e) {
             return Result.unhealthy("GCS bucket unreachable: " + e.getMessage());
         }
