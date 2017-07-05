@@ -1,8 +1,7 @@
 package org.broadinstitute.consent.http.cloudstore;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.api.client.http.HttpResponse;
-import org.apache.commons.io.IOUtils;
+import com.google.api.services.storage.model.Bucket;
 
 public class GCSHealthCheck extends HealthCheck {
 
@@ -15,14 +14,15 @@ public class GCSHealthCheck extends HealthCheck {
     @Override
     protected Result check() throws Exception {
 
-        // Attempt to read the root of the bucket; returns file list
+        Bucket bucket;
+
         try {
-            store.getStorageDocument(store.generateURLForDocument("").toString());
+            bucket = store.getBucketMetadata();
         } catch (Exception e) {
-            return Result.unhealthy("GCS bucket unreachable: " + e.getMessage());
+            return Result.unhealthy("GCS bucket unreachable or does not exist: " + e.getMessage());
         }
 
-        return Result.healthy();
+        return (bucket != null) ? Result.healthy() : Result.unhealthy("GCS bucket unreachable or does not exist.");
     }
 
 }
