@@ -5,6 +5,7 @@ import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.StorageScopes;
+import com.google.api.services.storage.model.Bucket;
 import com.google.api.services.storage.model.ObjectAccessControl;
 import com.google.api.services.storage.model.StorageObject;
 import org.apache.log4j.Logger;
@@ -154,6 +155,13 @@ public class GCSStore implements CloudStore {
             }
         }
         return url.toString();
+    }
+
+    public Bucket getBucketMetadata() throws IOException, GeneralSecurityException {
+        Storage client = StorageFactory.getService(sConfig.getPassword());
+
+        // com.google.api.services.storage.Storage.Buckets.get()
+        return client.buckets().get(sConfig.getBucket()).execute();
     }
 
     @Override
