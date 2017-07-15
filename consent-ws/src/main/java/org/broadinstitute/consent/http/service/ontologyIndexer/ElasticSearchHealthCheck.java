@@ -15,22 +15,23 @@ public class ElasticSearchHealthCheck extends HealthCheck {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
     private ElasticSearchConfiguration configuration;
+    private JsonParser parser = new JsonParser();
     public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
         this.configuration = config;
     }
     private RestClient getRestClient() {
-        return ElasticSearchRestClient.getRestClient(this.configuration);
+        return ElasticSearchSupport.getRestClient(this.configuration);
     }
 
     @Override
     protected Result check() throws Exception {
         try(RestClient client = getRestClient()) {
-            Response esResponse = client.performRequest("GET", "/_cluster/health/" + this.configuration.getIndexName());
+            Response esResponse = client.performRequest("GET",
+                ElasticSearchSupport.getClusterHealthPath(configuration.getIndexName()));
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid health check request: " + esResponse.getStatusLine().getReasonPhrase());
                 throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
             }
-            JsonParser parser = new JsonParser();
             String stringResponse = IOUtils.toString(esResponse.getEntity().getContent());
             JsonObject jsonResponse = parser.parse(stringResponse).getAsJsonObject();
             String status = jsonResponse.get("status").getAsString();

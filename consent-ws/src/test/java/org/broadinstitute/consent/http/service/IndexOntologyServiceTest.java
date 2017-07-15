@@ -4,7 +4,7 @@ import com.google.common.io.Resources;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
-import org.broadinstitute.consent.http.service.ontologyIndexer.ElasticSearchRestClient;
+import org.broadinstitute.consent.http.service.ontologyIndexer.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerUtils;
 import org.elasticsearch.client.RestClient;
@@ -41,7 +41,7 @@ public class IndexOntologyServiceTest {
         ElasticSearchConfiguration configuration = new ElasticSearchConfiguration();
         configuration.setIndexName(INDEX_NAME);
         configuration.setServers(Collections.singletonList("localhost"));
-        client = ElasticSearchRestClient.getRestClient(configuration);
+        client = ElasticSearchSupport.getRestClient(configuration);
         this.ontologyService = new IndexOntologyService(configuration);
         server = startClientAndServer(9200);
         server.when(request()).respond(response().withStatusCode(200));

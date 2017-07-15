@@ -20,7 +20,10 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("WeakerAccess")
 public class IndexOntologyService {
+
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(IndexOntologyService.class);
 
     static final String FIELD_DEFINITION_PROPERTY = "IAO_0000115";
     static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
@@ -36,7 +39,7 @@ public class IndexOntologyService {
     }
 
     private RestClient getRestClient() {
-        return ElasticSearchRestClient.getRestClient(this.configuration);
+        return ElasticSearchSupport.getRestClient(this.configuration);
     }
 
     /**
@@ -68,10 +71,18 @@ public class IndexOntologyService {
                     annotationProperties.put(property.getIRI().getFragment(), property));
 
                 // Some assertions to ensure we're not dealing with a problematic ontology file:
-                assert annotationProperties.get(FIELD_HAS_EXACT_SYNONYM_PROPERTY) != null : "Need hasExactSynonym annotation property.";
-                assert annotationProperties.get(FIELD_LABEL_PROPERTY) != null : "Need label annotation property";
-                assert annotationProperties.get(FIELD_DEFINITION_PROPERTY) != null : "Need definition annotation property";
-                assert annotationProperties.get(FIELD_DEPRECATED_PROPERTY) != null : "Need deprecated annotation property";
+                if (!annotationProperties.containsKey(FIELD_HAS_EXACT_SYNONYM_PROPERTY)) {
+                    logger.warn("Need hasExactSynonym annotation property.");
+                }
+                if (!annotationProperties.containsKey(FIELD_LABEL_PROPERTY)) {
+                    logger.warn("Need label annotation property");
+                }
+                if (!annotationProperties.containsKey(FIELD_DEFINITION_PROPERTY)) {
+                    logger.warn("Need definition annotation property");
+                }
+                if (!annotationProperties.containsKey(FIELD_DEPRECATED_PROPERTY)) {
+                    logger.warn("Need deprecated annotation property");
+                }
 
                 Set<OWLClass> owlClasses = ontology.getClassesInSignature();
                 Collection<Term> terms = owlClasses.stream().map(

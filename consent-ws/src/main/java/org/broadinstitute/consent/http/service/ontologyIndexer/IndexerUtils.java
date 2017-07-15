@@ -14,7 +14,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,7 +39,7 @@ public class IndexerUtils {
      */
     public void validateIndexExists(RestClient client, String indexName) throws InternalServerErrorException {
         try {
-            Response esResponse = client.performRequest("GET", indexName);
+            Response esResponse = client.performRequest("GET", ElasticSearchSupport.getIndexPath(indexName));
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid index request: " + esResponse.getStatusLine().getReasonPhrase());
                 throw new InternalServerErrorException();
@@ -87,23 +86,29 @@ public class IndexerUtils {
         };
 
         Term term = new Term(owlClass.toStringID(), ontologyType);
-        if (!owlClass.getAnnotations(ontology, deprecated).isEmpty()) {
+        if (deprecated != null && !owlClass.getAnnotations(ontology, deprecated).isEmpty()) {
             term.setUsable(false);
         }
 
-        owlClass.getAnnotations(ontology, hasExactSynonym).forEach((synonyms) ->
-            term.addSynonym(synonyms.getValue().accept(visitor)));
-
-        Set<OWLAnnotation> labels = owlClass.getAnnotations(ontology, label);
-        assert labels.size() <= 1 : "Exactly 0 or 1 labels allowed per class";
-        if (labels.size() == 1) {
-            term.addLabel(labels.iterator().next().getValue().accept(visitor));
+        if (hasExactSynonym != null) {
+            owlClass.getAnnotations(ontology, hasExactSynonym).forEach((synonyms) ->
+                term.addSynonym(synonyms.getValue().accept(visitor)));
         }
 
-        Set<OWLAnnotation> definitions = owlClass.getAnnotations(ontology, definition);
-        assert definitions.size() <= 1 : "Exactly 0 or 1 definitions allowed per class";
-        if (definitions.size() == 1) {
-            term.addDefinition(definitions.iterator().next().getValue().accept(visitor));
+        if (label != null) {
+            Set<OWLAnnotation> labels = owlClass.getAnnotations(ontology, label);
+            assert labels.size() <= 1 : "Exactly 0 or 1 labels allowed per class";
+            if (labels.size() == 1) {
+                term.addLabel(labels.iterator().next().getValue().accept(visitor));
+            }
+        }
+
+        if (definition != null) {
+            Set<OWLAnnotation> definitions = owlClass.getAnnotations(ontology, definition);
+            assert definitions.size() <= 1 : "Exactly 0 or 1 definitions allowed per class";
+            if (definitions.size() == 1) {
+                term.addDefinition(definitions.iterator().next().getValue().accept(visitor));
+            }
         }
 
         int position = 0;
@@ -194,7 +199,7 @@ public class IndexerUtils {
                     term.toString(),
                     ContentType.APPLICATION_JSON);
                 client.performRequestAsync("PUT",
-                    "/" + indexName + "/ontology_term/" + URLEncoder.encode(term.getId(), "UTF-8"),
+                    ElasticSearchSupport.getTermIdPath(indexName, term.getId()),
                     Collections.emptyMap(),
                     entity,
                     new ResponseListener() {
@@ -232,7 +237,7 @@ public class IndexerUtils {
         final CountDownLatch latch = new CountDownLatch(termIds.size());
         for (String id : termIds) {
             client.performRequestAsync("DELETE",
-                "/" + indexName + "/ontology_term/" + URLEncoder.encode(id, "UTF-8"),
+                ElasticSearchSupport.getTermIdPath(indexName, id),
                 Collections.emptyMap(),
                 new ResponseListener() {
                     @Override
