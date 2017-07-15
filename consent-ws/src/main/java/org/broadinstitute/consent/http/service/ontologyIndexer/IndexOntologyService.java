@@ -2,11 +2,10 @@ package org.broadinstitute.consent.http.service.ontologyIndexer;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.RestClient;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -27,17 +26,17 @@ public class IndexOntologyService {
     static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
     static final String FIELD_LABEL_PROPERTY = "label";
     static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
-    private final Client client;
     private final String indexName;
     private IndexerUtils utils = new IndexerUtils();
+    private final ElasticSearchConfiguration configuration;
 
-    public IndexOntologyService(Client client, String indexName) {
-        this.client = client;
-        this.indexName = indexName;
+    public IndexOntologyService(ElasticSearchConfiguration config) {
+        this.configuration = config;
+        this.indexName = config.getIndexName();
     }
 
-    public String getIndexName() {
-        return indexName;
+    private RestClient getRestClient() {
+        return ElasticSearchRestClient.getRestClient(this.configuration);
     }
 
     /**
@@ -47,10 +46,8 @@ public class IndexOntologyService {
      * @throws IOException The exception
      */
     public void indexOntologies(List<StreamRec> streamRecList) throws IOException {
-
-        utils.validateIndexExists(client, indexName);
-
-        try {
+        try(RestClient client = getRestClient()) {
+            utils.validateIndexExists(client, indexName);
             for (StreamRec streamRec : streamRecList) {
 
                 //Just to be capable of read InputStream multiple times
@@ -91,12 +88,10 @@ public class IndexOntologyService {
 
     }
 
-    Boolean deleteOntologiesByFile(InputStream fileStream, String prefix) {
-
-        Boolean atLeastOneDeletion = false;
+    public Boolean deleteOntologiesByFile(InputStream fileStream, String prefix) throws IOException {
         List<String> toDeleteIds = new ArrayList<>();
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-        try {
+        try (RestClient client = getRestClient()) {
             OWLOntology ontology = manager.loadOntologyFromOntologyDocument(fileStream);
             HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
             ontology.getAnnotationPropertiesInSignature().forEach((property) ->
@@ -125,19 +120,11 @@ public class IndexOntologyService {
                 }
                 toDeleteIds.add(owlClass.toStringID());
             }
-            if (CollectionUtils.isEmpty(toDeleteIds)) return atLeastOneDeletion;
+            // Nothing to delete, return.
+            if (CollectionUtils.isEmpty(toDeleteIds)) return true;
 
-            BulkRequestBuilder bulk = client.prepareBulk();
-            for (String id : toDeleteIds) {
-                DeleteRequestBuilder deleteRequestBuilder =
-                    client.prepareDelete(indexName, "ontology_term", id);
-                bulk.add(deleteRequestBuilder);
-            }
-
-            bulk.execute().actionGet();
-            atLeastOneDeletion = true;
-            return atLeastOneDeletion;
-
+            // Else, iterate over terms to remove from the index.
+            return utils.bulkDeleteTerms(client, indexName, toDeleteIds);
         } catch (OWLOntologyCreationException e) {
             throw new BadRequestException("Problem with OWL file.");
         }

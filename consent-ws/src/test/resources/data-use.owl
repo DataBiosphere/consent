@@ -1,0 +1,389 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+<rdf:RDF xmlns="http://www.broadinstitute.org/ontologies/DUOS#"
+     xml:base="http://www.broadinstitute.org/ontologies/DUOS"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+    <owl:Ontology rdf:about="http://www.broadinstitute.org/ontologies/DUOS">
+        <rdfs:label rdf:datatype="&xsd;string">Data-Use Restrictions and Research Purpose Ontology</rdfs:label>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/bornIn -->
+
+    <owl:ObjectProperty rdf:about="http://www.broadinstitute.org/ontologies/DUOS/bornIn"/>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/restrictedTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.broadinstitute.org/ontologies/DUOS/restrictedTo">
+        <rdfs:label>restrictedTo</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/research_type -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/research_type"/>
+    
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/methods_research -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/methods_research">
+        <rdfs:label rdf:datatype="&xsd;string">Methods Research</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/research_type"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000052</oboInOwl:id>
+    </owl:Class>
+
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/aggregate_research -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/aggregate_research">
+        <rdfs:label rdf:datatype="&xsd;string">Aggregate Research</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/research_type"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000051</oboInOwl:id>
+    </owl:Class>
+
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Africa -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Africa">
+        <rdfs:label rdf:datatype="&xsd;string">Africa</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/geography"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/African_American_population -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/African_American_population">
+        <rdfs:label rdf:datatype="&xsd;string">African-American population</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/ethnicity"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/bornIn"/>
+                <owl:allValuesFrom rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/United_States"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Asia -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Asia">
+        <rdfs:label rdf:datatype="&xsd;string">Asia</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/geography"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Broad -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Broad">
+        <rdfs:label rdf:datatype="&xsd;string">The Broad Institute</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Massachusetts"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Cardiff -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Cardiff">
+        <rdfs:label rdf:datatype="&xsd;string">Cardiff</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Wales"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Commercial_Status -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Commercial_Status">
+        <rdfs:label rdf:datatype="&xsd;string">Commercial Status</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/East_Asian_population -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/East_Asian_population">
+        <rdfs:label rdf:datatype="&xsd;string">East Asian population</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/ethnicity"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/bornIn"/>
+                <owl:allValuesFrom rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Asia"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Europe -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Europe">
+        <rdfs:label rdf:datatype="&xsd;string">Europe</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/geography"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/For_profit -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/For_profit">
+        <rdfs:label rdf:datatype="&xsd;string">Future use by for-profit entities is allowed</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Commercial_Status"/>
+        <owl:disjointWith rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Non_profit"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000042</oboInOwl:id>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Latin_American_population -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Latin_American_population">
+        <rdfs:label rdf:datatype="&xsd;string">Latin-American population</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/ethnicity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/MGH -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/MGH">
+        <rdfs:label rdf:datatype="&xsd;string">Massachusetts General Hospital</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Massachusetts"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Massachusetts -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Massachusetts">
+        <rdfs:label rdf:datatype="&xsd;string">Massachusetts</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/United_States"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Non_profit -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Non_profit">
+        <rdfs:label rdf:datatype="&xsd;string">Future use by for-profit entities is prohibited</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Commercial_Status"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000041</oboInOwl:id>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/North_America -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/North_America">
+        <rdfs:label rdf:datatype="&xsd;string">North America</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/geography"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/South_America -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/South_America">
+        <rdfs:label rdf:datatype="&xsd;string">South America</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/geography"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/UK -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/UK">
+        <rdfs:label rdf:datatype="&xsd;string">United Kingdom</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Europe"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/United_States -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/United_States">
+        <rdfs:label rdf:datatype="&xsd;string">United States</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/North_America"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/University_Cardiff -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/University_Cardiff">
+        <rdfs:label rdf:datatype="&xsd;string">University of Cardiff</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/Cardiff"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/Wales -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Wales">
+        <rdfs:label rdf:datatype="&xsd;string">Wales</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/UK"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/children -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/children">
+        <rdfs:label rdf:datatype="&xsd;string">children</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/population"/>
+        <rdfs:comment rdf:datatype="&xsd;string">&apos;children&apos; here means &apos;children under the age of 18&apos;.</rdfs:comment>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000031</oboInOwl:id>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/ethnicity -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/ethnicity">
+        <rdfs:label rdf:datatype="&xsd;string">ethnicity</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/population"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/bornIn"/>
+                <owl:allValuesFrom>
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/North_America"/>
+                            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/South_America"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                </owl:allValuesFrom>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/geography -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/geography">
+        <rdfs:label rdf:datatype="&xsd;string">geography</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/male -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/male">
+        <rdfs:label rdf:datatype="&xsd;string">male</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/population"/>
+        <owl:disjointWith rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/female"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000021</oboInOwl:id>
+    </owl:Class>
+    
+   <!-- http://www.broadinstitute.org/ontologies/DUOS/boys -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/boys">
+        <rdfs:label rdf:datatype="&xsd;string">boys under 18 years old</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/male"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000022</oboInOwl:id>
+    </owl:Class>
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/population -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/population"/>
+    
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/dataset_usage -->
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/dataset_usage"/>
+
+
+    <!-- http://www.broadinstitute.org/ontologies/DUOS/female -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/female">
+        <rdfs:label rdf:datatype="&xsd;string">female</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/population"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000023</oboInOwl:id>
+    </owl:Class>
+    
+   <!-- http://www.broadinstitute.org/ontologies/DUOS/girls -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/girls">
+        <rdfs:label rdf:datatype="&xsd;string">girls under 18 years old</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/female"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000024</oboInOwl:id>
+    </owl:Class>
+
+   <!-- http://www.broadinstitute.org/ontologies/DUOS/control -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/control">
+        <rdfs:label rdf:datatype="&xsd;string">be used as a control set</rdfs:label>
+       <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/dataset_usage"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000012</oboInOwl:id>
+    </owl:Class>
+
+   <!-- http://www.broadinstitute.org/ontologies/DUOS/population_structure -->
+
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/population_structure">
+        <rdfs:label rdf:datatype="&xsd;string">be used to study the genetic structure of a population or characterize the normal variation in the population</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/dataset_usage"/>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000011</oboInOwl:id>
+    </owl:Class>
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // General axioms
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <rdf:Description>
+        <rdf:type rdf:resource="&owl;AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Africa"/>
+            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Asia"/>
+            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/Europe"/>
+            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/North_America"/>
+            <rdf:Description rdf:about="http://www.broadinstitute.org/ontologies/DUOS/South_America"/>
+        </owl:members>
+    </rdf:Description>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.4.2) http://owlapi.sourceforge.net -->
+

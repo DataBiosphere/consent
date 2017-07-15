@@ -1,21 +1,20 @@
 package org.broadinstitute.consent.http.service.ontologyIndexer;
 
 import com.google.common.collect.Lists;
+import com.twitter.util.CountDownLatch;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.models.ontology.Term;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseListener;
+import org.elasticsearch.client.RestClient;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,30 +38,17 @@ public class IndexerUtils {
      *
      * @throws InternalServerErrorException The exception
      */
-    public void validateIndexExists(Client client, String indexName) throws InternalServerErrorException {
-        IndicesExistsRequest existsRequest = new IndicesExistsRequest(indexName);
-        if (!client.admin().indices().exists(existsRequest).actionGet().isExists()) {
-            CreateIndexRequest indexRequest = new CreateIndexRequest(indexName);
-            try {
-                client.admin().indices().create(indexRequest).actionGet();
-            } catch (Exception e) {
-                logger.error(e.getMessage());
+    public void validateIndexExists(RestClient client, String indexName) throws InternalServerErrorException {
+        try {
+            Response esResponse = client.performRequest("GET", indexName);
+            if (esResponse.getStatusLine().getStatusCode() != 200) {
+                logger.error("Invalid index request: " + esResponse.getStatusLine().getReasonPhrase());
                 throw new InternalServerErrorException();
             }
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+            throw new InternalServerErrorException();
         }
-    }
-
-    /**
-     * Delete all terms of a specific type (i.e. "Disease", "Organization")
-     *
-     * @param type The type
-     */
-    public void deleteByOntologyType(Client client, String indexName, String type) {
-        validateIndexExists(client, indexName);
-        DeleteByQueryRequestBuilder deleteByQuery = client.prepareDeleteByQuery(indexName);
-        QueryBuilder queryBuilder = QueryBuilders.termQuery(Term.FIELD_ONTOLOGY_TYPE, type);
-        deleteByQuery.setQuery(queryBuilder);
-        deleteByQuery.execute().actionGet();
     }
 
     /**
@@ -198,30 +184,75 @@ public class IndexerUtils {
      * @return True if there are no errors, false otherwise
      * @throws IOException The exception
      */
-    public Boolean bulkUploadTerms(Client client, String indexName, Collection<Term> terms) throws IOException {
+    public Boolean bulkUploadTerms(RestClient client, String indexName, Collection<Term> terms) throws IOException {
         // Setting the partition relatively small so we can fail fast for incremental uploads
         List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 100);
         for (List<Term> termList: termLists) {
-            BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+            final CountDownLatch latch = new CountDownLatch(termList.size());
             for (Term term: termList) {
-                bulkRequestBuilder.add(client.prepareIndex(indexName, "ontology_term")
-                    .setSource(term.document())
-                    .setId(term.getId())
-                );
+                HttpEntity entity = new NStringEntity(
+                    term.toString(),
+                    ContentType.APPLICATION_JSON);
+                client.performRequestAsync("PUT",
+                    "/" + indexName + "/ontology_term/" + URLEncoder.encode(term.getId(), "UTF-8"),
+                    Collections.emptyMap(),
+                    entity,
+                    new ResponseListener() {
+                        @Override
+                        public void onSuccess(Response response) {
+                            latch.countDown();
+                        }
+                        @Override
+                        public void onFailure(Exception exception) {
+                            logger.error(exception.getMessage());
+                            latch.countDown();
+                            try {
+                                throw new IOException(exception);
+                            } catch (IOException e) {
+                                logger.error(exception.getMessage());
+                            }
+                        }
+                    });
             }
-            BulkResponse response = bulkRequestBuilder.execute().actionGet();
-            if (response.hasFailures()) {
-                for (BulkItemResponse r : response.getItems()) {
-                    if (r.isFailed()) {
-                        logger.error(r.getFailureMessage());
-                    }
-                }
-                return false;
-            }
-            client.prepareBulk();
+            latch.await();
         }
         return true;
     }
 
+    /**
+     * Delete terms from the ES instance
+     *
+     * @param client The ES client
+     * @param indexName The index
+     * @param termIds Collection of Term IDs that will be deleted
+     * @return True if there are no errors, false otherwise
+     * @throws IOException The exception
+     */
+    public Boolean bulkDeleteTerms(RestClient client, String indexName, Collection<String> termIds) throws IOException {
+        final CountDownLatch latch = new CountDownLatch(termIds.size());
+        for (String id : termIds) {
+            client.performRequestAsync("DELETE",
+                "/" + indexName + "/ontology_term/" + URLEncoder.encode(id, "UTF-8"),
+                Collections.emptyMap(),
+                new ResponseListener() {
+                    @Override
+                    public void onSuccess(Response response) {
+                        latch.countDown();
+                    }
+                    @Override
+                    public void onFailure(Exception exception) {
+                        logger.error(exception.getMessage());
+                        latch.countDown();
+                        try {
+                            throw new IOException(exception);
+                        } catch (IOException e) {
+                            logger.error(exception.getMessage());
+                        }
+                    }
+                });
+        }
+        latch.await();
+        return true;
+    }
 
 }

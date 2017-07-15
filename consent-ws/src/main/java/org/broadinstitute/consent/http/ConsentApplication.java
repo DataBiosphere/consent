@@ -22,66 +22,16 @@ import org.broadinstitute.consent.http.authentication.*;
 import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
-import org.broadinstitute.consent.http.db.AssociationDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetAuditDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.HelpReportDAO;
-import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.resources.*;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
-import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.DatabaseAuditServiceAPI;
-import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
-import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DatabaseDataSetAPI;
-import org.broadinstitute.consent.http.service.DatabaseDataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
-import org.broadinstitute.consent.http.service.DatabaseElectionCaseAPI;
-import org.broadinstitute.consent.http.service.DatabaseHelpReportAPI;
-import org.broadinstitute.consent.http.service.DatabaseMatchAPI;
-import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
-import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
-import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
-import org.broadinstitute.consent.http.service.DatabaseSummaryAPI;
-import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
-import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.ontologyIndexer.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
@@ -96,9 +46,6 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
@@ -119,7 +66,7 @@ import java.util.List;
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
+    private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
     public static void main(String[] args) throws Exception {
         new ConsentApplication().run(args);
@@ -205,22 +152,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
-        //Manage Ontologies dependencies
-        final ElasticSearchConfiguration elasticConfiguration = config.getElasticSearchConfiguration();
-
-        TransportClient eSearchClient = new TransportClient(ImmutableSettings.settingsBuilder()
-                .put("cluster.name", elasticConfiguration.getClusterName()));
-        elasticConfiguration.getServers().stream().forEach((server) -> {
-            eSearchClient.addTransportAddress(new InetSocketTransportAddress(server, 9300));
-        });
-
-        env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(eSearchClient, config.getElasticSearchConfiguration().getIndexName()));
-
-
         GCSStore googleStore;
         googleStore = getGoogleStore(config.getCloudStoreConfiguration());
 
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
+        env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
 
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,
@@ -228,7 +164,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                         config.getStoreOntologyConfiguration().getConfigurationFileName());
 
 
-        final IndexOntologyService indexOntologyService = new IndexOntologyService(eSearchClient, config.getElasticSearchConfiguration().getIndexName());
+        final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherAPI researcherAPI = new DatabaseResearcherAPI(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
         final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance, researcherPropertyDAO);
