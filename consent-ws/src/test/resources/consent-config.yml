@@ -66,7 +66,6 @@ storeOntology:
   bucketSubdirectory: bucket
   configurationFileName: configuration
 elasticSearch:
-  clusterName: cName
   servers:
     - localhost
   indexName: iName

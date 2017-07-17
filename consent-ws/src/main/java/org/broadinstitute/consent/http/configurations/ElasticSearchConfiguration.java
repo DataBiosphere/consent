@@ -8,20 +8,20 @@ import java.util.List;
 public class ElasticSearchConfiguration {
 
     @NotEmpty
-    private String clusterName, indexName;
+    private String indexName;
 
     @NotEmpty
     private List<String> servers;
 
-    @JsonProperty
-    public String getClusterName() {
-        return clusterName;
-    }
-
-    public void setClusterName(String clusterName) {
-        this.clusterName = clusterName;
-    }
-
+//    @JsonProperty
+//    public String getClusterName() {
+//        return clusterName;
+//    }
+//
+//    public void setClusterName(String clusterName) {
+//        this.clusterName = clusterName;
+//    }
+//
     public List<String> getServers() {
         return servers;
     }

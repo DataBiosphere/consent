@@ -42,11 +42,11 @@ public class IndexerUtils {
             Response esResponse = client.performRequest("GET", ElasticSearchSupport.getIndexPath(indexName));
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid index request: " + esResponse.getStatusLine().getReasonPhrase());
-                throw new InternalServerErrorException();
+                throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
             }
         } catch (IOException e) {
             logger.error(e.getMessage());
-            throw new InternalServerErrorException();
+            throw new InternalServerErrorException(e.getMessage());
         }
     }
 
