@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service.ontologyIndexer;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.message.BasicHeader;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.elasticsearch.client.RestClient;
 
@@ -31,5 +33,7 @@ public class ElasticSearchSupport {
     public static String getClusterHealthPath(String index) {
         return "/_cluster/health/" + index;
     }
+
+    public static Header jsonHeader = new BasicHeader("Content-Type", "application/json");
 
 }

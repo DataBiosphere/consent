@@ -39,7 +39,7 @@ public class IndexerUtils {
      */
     public void validateIndexExists(RestClient client, String indexName) throws InternalServerErrorException {
         try {
-            Response esResponse = client.performRequest("GET", ElasticSearchSupport.getIndexPath(indexName));
+            Response esResponse = client.performRequest("GET", ElasticSearchSupport.getIndexPath(indexName), ElasticSearchSupport.jsonHeader);
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid index request: " + esResponse.getStatusLine().getReasonPhrase());
                 throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
@@ -217,7 +217,8 @@ public class IndexerUtils {
                                 logger.error(exception.getMessage());
                             }
                         }
-                    });
+                    },
+                    ElasticSearchSupport.jsonHeader);
             }
             latch.await();
         }
@@ -254,7 +255,8 @@ public class IndexerUtils {
                             logger.error(exception.getMessage());
                         }
                     }
-                });
+                },
+                ElasticSearchSupport.jsonHeader);
         }
         latch.await();
         return true;

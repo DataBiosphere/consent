@@ -27,7 +27,8 @@ public class ElasticSearchHealthCheck extends HealthCheck {
     protected Result check() throws Exception {
         try(RestClient client = getRestClient()) {
             Response esResponse = client.performRequest("GET",
-                ElasticSearchSupport.getClusterHealthPath(configuration.getIndexName()));
+                ElasticSearchSupport.getClusterHealthPath(configuration.getIndexName()),
+                ElasticSearchSupport.jsonHeader);
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid health check request: " + esResponse.getStatusLine().getReasonPhrase());
                 throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
