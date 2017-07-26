@@ -186,14 +186,15 @@ public class IndexerUtils {
      * @param client The ES client
      * @param indexName The index
      * @param terms Collection of Terms that will be populated
-     * @return True if there are no errors, false otherwise
+     * @return True if there are no errors, exception otherwise
      * @throws IOException The exception
      */
     public Boolean bulkUploadTerms(RestClient client, String indexName, Collection<Term> terms) throws IOException {
-        // Setting the partition relatively small so we can fail fast for incremental uploads
+        // Set the partition relatively small so we can fail fast for incremental uploads
         List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 100);
         for (List<Term> termList: termLists) {
             final CountDownLatch latch = new CountDownLatch(termList.size());
+            ResponseListener listener = createResponseListener(latch);
             for (Term term: termList) {
                 HttpEntity entity = new NStringEntity(
                     term.toString(),
@@ -202,22 +203,7 @@ public class IndexerUtils {
                     ElasticSearchSupport.getTermIdPath(indexName, term.getId()),
                     Collections.emptyMap(),
                     entity,
-                    new ResponseListener() {
-                        @Override
-                        public void onSuccess(Response response) {
-                            latch.countDown();
-                        }
-                        @Override
-                        public void onFailure(Exception exception) {
-                            logger.error(exception.getMessage());
-                            latch.countDown();
-                            try {
-                                throw new IOException(exception);
-                            } catch (IOException e) {
-                                logger.error(exception.getMessage());
-                            }
-                        }
-                    },
+                    listener,
                     ElasticSearchSupport.jsonHeader);
             }
             latch.await();
@@ -236,30 +222,41 @@ public class IndexerUtils {
      */
     public Boolean bulkDeleteTerms(RestClient client, String indexName, Collection<String> termIds) throws IOException {
         final CountDownLatch latch = new CountDownLatch(termIds.size());
+        ResponseListener listener = createResponseListener(latch);
         for (String id : termIds) {
             client.performRequestAsync("DELETE",
                 ElasticSearchSupport.getTermIdPath(indexName, id),
                 Collections.emptyMap(),
-                new ResponseListener() {
-                    @Override
-                    public void onSuccess(Response response) {
-                        latch.countDown();
-                    }
-                    @Override
-                    public void onFailure(Exception exception) {
-                        logger.error(exception.getMessage());
-                        latch.countDown();
-                        try {
-                            throw new IOException(exception);
-                        } catch (IOException e) {
-                            logger.error(exception.getMessage());
-                        }
-                    }
-                },
+                listener,
                 ElasticSearchSupport.jsonHeader);
         }
         latch.await();
         return true;
+    }
+
+    /**
+     * Create a response handler that will appropriately deal with the response from Elastic Search
+     *
+     * @param latch The countdown latch to decrement with each successful response
+     * @return The ResponseListener
+     */
+    private ResponseListener createResponseListener(CountDownLatch latch) {
+        return new ResponseListener() {
+            @Override
+            public void onSuccess(Response response) {
+                latch.countDown();
+            }
+            @Override
+            public void onFailure(Exception exception) {
+                logger.error(exception.getMessage());
+                latch.countDown();
+                try {
+                    throw new IOException(exception);
+                } catch (IOException e) {
+                    logger.error(exception.getMessage());
+                }
+            }
+        };
     }
 
 }

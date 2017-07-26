@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.configurations;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
@@ -13,15 +12,6 @@ public class ElasticSearchConfiguration {
     @NotEmpty
     private List<String> servers;
 
-//    @JsonProperty
-//    public String getClusterName() {
-//        return clusterName;
-//    }
-//
-//    public void setClusterName(String clusterName) {
-//        this.clusterName = clusterName;
-//    }
-//
     public List<String> getServers() {
         return servers;
     }

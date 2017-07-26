@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
 import java.io.ByteArrayInputStream;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("WeakerAccess")
 public class IndexOntologyService {
 
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(IndexOntologyService.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndexOntologyService.class);
 
     static final String FIELD_DEFINITION_PROPERTY = "IAO_0000115";
     static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
@@ -72,16 +73,16 @@ public class IndexOntologyService {
 
                 // Some assertions to ensure we're not dealing with a problematic ontology file:
                 if (!annotationProperties.containsKey(FIELD_HAS_EXACT_SYNONYM_PROPERTY)) {
-                    logger.warn("Need hasExactSynonym annotation property.");
+                    logger.warn(streamRec.getFileName() + " is missing hasExactSynonym annotation property.");
                 }
                 if (!annotationProperties.containsKey(FIELD_LABEL_PROPERTY)) {
-                    logger.warn("Need label annotation property");
+                    logger.warn(streamRec.getFileName() + " is missing label annotation property");
                 }
                 if (!annotationProperties.containsKey(FIELD_DEFINITION_PROPERTY)) {
-                    logger.warn("Need definition annotation property");
+                    logger.warn(streamRec.getFileName() + " is missing definition annotation property");
                 }
                 if (!annotationProperties.containsKey(FIELD_DEPRECATED_PROPERTY)) {
-                    logger.warn("Need deprecated annotation property");
+                    logger.warn(streamRec.getFileName() + " is missing deprecated annotation property");
                 }
 
                 Set<OWLClass> owlClasses = ontology.getClassesInSignature();
