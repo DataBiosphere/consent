@@ -33,7 +33,7 @@ public class IndexerUtils {
     }
 
     /**
-     * Check to see if the index exists and create it otherwise.
+     * Check to see if the index exists
      *
      * @throws InternalServerErrorException The exception
      */
