@@ -68,7 +68,7 @@ paths:
           description: There was a problem deleting the file.
       parameters:
         - name: fileURL
-          in: query
+          in: body
           description: Storage URL of the file to delete.
           required: true
           type: string

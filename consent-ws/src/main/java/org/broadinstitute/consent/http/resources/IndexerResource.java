@@ -61,8 +61,12 @@ public class IndexerResource extends Resource {
     @Produces("application/json")
     @RolesAllowed("ADMIN")
     public Response deleteIndexedFile(String fileURL) {
+        if (fileURL == null || fileURL.isEmpty()) {
+            return createExceptionResponse(new BadRequestException("Query Parameter 'fileURL' cannot be empty."));
+        }
         try {
-            return indexerService.deleteOntologiesByType(fileURL);
+            String url = URLDecoder.decode(fileURL, "UTF-8");
+            return indexerService.deleteOntologiesByType(url);
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
