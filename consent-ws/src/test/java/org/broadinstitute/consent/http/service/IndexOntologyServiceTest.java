@@ -129,10 +129,9 @@ public class IndexOntologyServiceTest {
     }
 
     @Test
-    public void testBulkDeleteTerms() {
+    public void testBulkDeprecateTerms() {
         try {
-            List<String> termIds = getTerms().stream().map(Term::getId).collect(Collectors.toList());
-            indexUtils.bulkDeleteTerms(client, INDEX_NAME, termIds);
+            indexUtils.bulkDeprecateTerms(client, INDEX_NAME, "organization");
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }

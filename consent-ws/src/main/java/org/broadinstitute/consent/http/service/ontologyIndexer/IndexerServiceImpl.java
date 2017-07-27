@@ -24,32 +24,31 @@ public class IndexerServiceImpl implements IndexerService {
     private static final ObjectMapper mapper = new ObjectMapper();
 
 
-    public IndexerServiceImpl(StoreOntologyService storeService, IndexOntologyService indexService)
-    {
+    public IndexerServiceImpl(StoreOntologyService storeService, IndexOntologyService indexService) {
         this.storeService = storeService;
         this.indexService = indexService;
     }
 
 
     @Override
-    public Response saveAndIndex(List<StreamRec> streamRecList) throws IOException{
+    public Response saveAndIndex(List<StreamRec> streamRecList) throws IOException {
         indexService.indexOntologies(streamRecList);
-        if(streamRecList.stream().anyMatch(s -> s.getAtLeastOneOntologyIndexed().equals(true))){
+        if (streamRecList.stream().anyMatch(s -> s.getAtLeastOneOntologyIndexed().equals(true))) {
             streamRecList = storeService.storeOntologies(streamRecList);
             String configString = storeService.retrieveConfigurationFile();
-            if(StringUtils.isEmpty(configString)){
-            InputStream indexedUrlFiles =  indexedOntologiesStreamBuilder(streamRecList);
-            storeService.storeOntologyConfigurationFile(indexedUrlFiles);
-            }else{
+            if (StringUtils.isEmpty(configString)) {
+                InputStream indexedUrlFiles = indexedOntologiesStreamBuilder(streamRecList);
+                storeService.storeOntologyConfigurationFile(indexedUrlFiles);
+            } else {
                 Map<String, HashMap> configMap = parseAsMap(configString);
-                streamRecList.stream().filter(sr -> sr.getAtLeastOneOntologyIndexed()).forEach(sr ->
+                streamRecList.stream().filter(StreamRec::getAtLeastOneOntologyIndexed).forEach(sr ->
                     addFileData(configMap, sr)
                 );
                 storeService.storeOntologyConfigurationFile(mapToStreamParser(configMap));
             }
             return okResponseBuilder(streamRecList);
-        }else{
-            return  Response.notModified().build();
+        } else {
+            return Response.notModified().build();
         }
 
     }
@@ -67,18 +66,17 @@ public class IndexerServiceImpl implements IndexerService {
 
 
     @Override
-    public Response deleteOntologiesByType(String fileURL) throws  IOException{
+    public Response deleteOntologiesByType(String fileURL) throws IOException {
         String configurationFileString = storeService.retrieveConfigurationFile();
-        if(StringUtils.isEmpty(configurationFileString)) return Response.status(Response.Status.BAD_REQUEST).build();
+        if (StringUtils.isEmpty(configurationFileString)) return Response.status(Response.Status.BAD_REQUEST).build();
         Map<String, HashMap> map = parseAsMap(configurationFileString);
         HttpResponse r = storeService.retrieveFile(fileURL);
 
-        //Delete ontologies from Index.
-        if(indexService.deleteOntologiesByFile( r.getContent(),
-                (String) map.get(fileURL).get("prefix"))){
-
+        // Deprecate ontology terms
+        Boolean deprecated = indexService.deprecateOntology((String) map.get(fileURL).get("ontologyType"));
+        if (deprecated) {
             //Update configuration file
-            deleteFileFromMap(map,fileURL);
+            deleteFileFromMap(map, fileURL);
             storeService.storeOntologyConfigurationFile(mapToStreamParser(map));
 
             //Delete file from CloudStorage

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service.ontologyIndexer;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
@@ -17,8 +16,10 @@ import javax.ws.rs.BadRequestException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("WeakerAccess")
@@ -53,6 +54,9 @@ public class IndexOntologyService {
         try(RestClient client = getRestClient()) {
             utils.validateIndexExists(client, indexName);
             for (StreamRec streamRec : streamRecList) {
+
+                // Deprecate everything that might already exist for this ontology file
+                utils.bulkDeprecateTerms(client, indexName, streamRec.getOntologyType());
 
                 //Just to be capable of read InputStream multiple times
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -100,46 +104,18 @@ public class IndexOntologyService {
 
     }
 
-    public Boolean deleteOntologiesByFile(InputStream fileStream, String prefix) throws IOException {
-        List<String> toDeleteIds = new ArrayList<>();
-        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    /**
+     * Deprecate any indexed terms for the specified type
+     *
+     * @param ontologyType The ontology type (e.g. "Disease", or "Organization") to mark as deprecated (i.e. usable=false)
+     * @return True if no errors, exception otherwise.
+     * @throws IOException The exception
+     */
+    public Boolean deprecateOntology(String ontologyType) throws IOException {
         try (RestClient client = getRestClient()) {
-            OWLOntology ontology = manager.loadOntologyFromOntologyDocument(fileStream);
-            HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
-            ontology.getAnnotationPropertiesInSignature().forEach((property) ->
-                annotationProperties.put(property.getIRI().getFragment(), property));
-            for (OWLClass owlClass : ontology.getClassesInSignature()) {
-                OWLAnnotationValueVisitorEx<String> visitor = new OWLAnnotationValueVisitorEx<String>() {
-                    @Override
-                    public String visit(IRI iri) {
-                        return iri.toString();
-                    }
-
-                    @Override
-                    public String visit(OWLAnonymousIndividual owlAnonymousIndividual) {
-                        return owlAnonymousIndividual.toStringID();
-                    }
-
-                    @Override
-                    public String visit(OWLLiteral owlLiteral) {
-                        return owlLiteral.getLiteral();
-                    }
-                };
-
-                Set<OWLAnnotation> ids = owlClass.getAnnotations(ontology, annotationProperties.get("id"));
-                if (ids.size() != 1 || !ids.iterator().next().getValue().accept(visitor).startsWith(prefix)) {
-                    continue;
-                }
-                toDeleteIds.add(owlClass.toStringID());
-            }
-            // Nothing to delete, return.
-            if (CollectionUtils.isEmpty(toDeleteIds)) return true;
-
-            // Else, iterate over terms to remove from the index.
-            return utils.bulkDeleteTerms(client, indexName, toDeleteIds);
-        } catch (OWLOntologyCreationException e) {
-            throw new BadRequestException("Problem with OWL file.");
+            utils.bulkDeprecateTerms(client, indexName, ontologyType);
         }
+        return true;
     }
 
 }

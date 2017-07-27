@@ -212,26 +212,35 @@ public class IndexerUtils {
     }
 
     /**
-     * Delete terms from the ES instance
+     * Set all terms of a particular ontology type to `usable=false`, thereby deprecating them.
      *
      * @param client The ES client
      * @param indexName The index
-     * @param termIds Collection of Term IDs that will be deleted
-     * @return True if there are no errors, false otherwise
-     * @throws IOException The exception
+     * @param ontologyType The ontology type (e.g. "Disease", or "Organization")
      */
-    public Boolean bulkDeleteTerms(RestClient client, String indexName, Collection<String> termIds) throws IOException {
-        final CountDownLatch latch = new CountDownLatch(termIds.size());
-        ResponseListener listener = createResponseListener(latch);
-        for (String id : termIds) {
-            client.performRequestAsync("DELETE",
-                ElasticSearchSupport.getTermIdPath(indexName, id),
-                Collections.emptyMap(),
-                listener,
-                ElasticSearchSupport.jsonHeader);
+    public void bulkDeprecateTerms(RestClient client, String indexName, String ontologyType) throws IOException, InternalServerErrorException {
+        String query = "{" +
+            "  \"script\": {" +
+            "    \"inline\": \"ctx._source.usable=false\"," +
+            "    \"lang\": \"painless\"" +
+            "  }," +
+            "  \"query\": {" +
+            "    \"term\": {" +
+            "      \"ontology\": \"" + ontologyType.toLowerCase() + "\"" +
+            "    }" +
+            "  }" +
+            "}";
+        String path = "/" + indexName + "/_update_by_query";
+        Response esResponse = client.performRequest(
+            "POST",
+            path,
+            Collections.emptyMap(),
+            new NStringEntity(query, ContentType.APPLICATION_JSON),
+            ElasticSearchSupport.jsonHeader);
+        if (esResponse.getStatusLine().getStatusCode() != 200) {
+            logger.error("Error in bulk deprecate response: " + esResponse.getStatusLine().getReasonPhrase());
+            throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
         }
-        latch.await();
-        return true;
     }
 
     /**
