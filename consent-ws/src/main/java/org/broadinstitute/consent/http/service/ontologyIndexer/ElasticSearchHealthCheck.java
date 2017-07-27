@@ -7,13 +7,15 @@ import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.io.IOException;
 
 public class ElasticSearchHealthCheck extends HealthCheck {
 
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
     private ElasticSearchConfiguration configuration;
     private JsonParser parser = new JsonParser();
     public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
