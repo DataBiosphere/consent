@@ -33,24 +33,6 @@ public class IndexerUtils {
     }
 
     /**
-     * Check to see if the index exists
-     *
-     * @throws InternalServerErrorException The exception
-     */
-    public void validateIndexExists(RestClient client, String indexName) throws InternalServerErrorException {
-        try {
-            Response esResponse = client.performRequest("GET", ElasticSearchSupport.getIndexPath(indexName), ElasticSearchSupport.jsonHeader);
-            if (esResponse.getStatusLine().getStatusCode() != 200) {
-                logger.error("Invalid index request: " + esResponse.getStatusLine().getReasonPhrase());
-                throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
-            }
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-            throw new InternalServerErrorException(e.getMessage());
-        }
-    }
-
-    /**
      * Generate a search Term that will be pushed to Elastic Search
      *
      * @param owlClass The OWLClass to generate Term content from

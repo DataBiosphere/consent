@@ -55,15 +55,6 @@ public class IndexOntologyServiceTest {
     }
 
     @Test
-    public void testValidateIndexExists() {
-        try {
-            indexUtils.validateIndexExists(client, INDEX_NAME);
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
     public void testReIndexOntology() {
         try {
             URL url = Resources.getResource("data-use.owl");

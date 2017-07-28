@@ -52,7 +52,6 @@ public class IndexOntologyService {
      */
     public void indexOntologies(List<StreamRec> streamRecList) throws IOException {
         try(RestClient client = getRestClient()) {
-            utils.validateIndexExists(client, indexName);
             for (StreamRec streamRec : streamRecList) {
 
                 // Deprecate everything that might already exist for this ontology file
