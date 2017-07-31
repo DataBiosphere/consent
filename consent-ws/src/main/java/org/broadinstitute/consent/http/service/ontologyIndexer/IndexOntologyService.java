@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.ontologyIndexer;
 
+import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
@@ -23,7 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("WeakerAccess")
-public class IndexOntologyService {
+public class IndexOntologyService implements Managed {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndexOntologyService.class);
 
@@ -33,15 +34,21 @@ public class IndexOntologyService {
     static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
     private final String indexName;
     private IndexerUtils utils = new IndexerUtils();
-    private final ElasticSearchConfiguration configuration;
+    private RestClient client;
 
-    public IndexOntologyService(ElasticSearchConfiguration config) {
-        this.configuration = config;
-        this.indexName = config.getIndexName();
+    @Override
+    public void start() throws Exception { }
+
+    @Override
+    public void stop() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
 
-    private RestClient getRestClient() {
-        return ElasticSearchSupport.getRestClient(this.configuration);
+    public IndexOntologyService(ElasticSearchConfiguration config) {
+        this.indexName = config.getIndexName();
+        this.client = ElasticSearchSupport.createRestClient(config);
     }
 
     /**
@@ -51,7 +58,7 @@ public class IndexOntologyService {
      * @throws IOException The exception
      */
     public void indexOntologies(List<StreamRec> streamRecList) throws IOException {
-        try(RestClient client = getRestClient()) {
+        try {
             for (StreamRec streamRec : streamRecList) {
 
                 // Deprecate everything that might already exist for this ontology file
@@ -111,9 +118,7 @@ public class IndexOntologyService {
      * @throws IOException The exception
      */
     public Boolean deprecateOntology(String ontologyType) throws IOException {
-        try (RestClient client = getRestClient()) {
-            utils.bulkDeprecateTerms(client, indexName, ontologyType);
-        }
+        utils.bulkDeprecateTerms(client, indexName, ontologyType);
         return true;
     }
 

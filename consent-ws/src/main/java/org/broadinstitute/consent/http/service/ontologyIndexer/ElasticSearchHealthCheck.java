@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.ontologyIndexer;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.elasticsearch.client.Response;
@@ -13,23 +14,33 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.InternalServerErrorException;
 import java.io.IOException;
 
-public class ElasticSearchHealthCheck extends HealthCheck {
+public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
-    private ElasticSearchConfiguration configuration;
+    private String index;
     private JsonParser parser = new JsonParser();
-    public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
-        this.configuration = config;
+    private RestClient client;
+
+    @Override
+    public void start() throws Exception { }
+
+    @Override
+    public void stop() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
-    private RestClient getRestClient() {
-        return ElasticSearchSupport.getRestClient(this.configuration);
+
+    public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
+        this.index = config.getIndexName();
+        this.client = ElasticSearchSupport.createRestClient(config);
     }
 
     @Override
     protected Result check() throws Exception {
-        try(RestClient client = getRestClient()) {
+        try {
             Response esResponse = client.performRequest("GET",
-                ElasticSearchSupport.getClusterHealthPath(configuration.getIndexName()),
+                ElasticSearchSupport.getClusterHealthPath(this.index),
                 ElasticSearchSupport.jsonHeader);
             if (esResponse.getStatusLine().getStatusCode() != 200) {
                 logger.error("Invalid health check request: " + esResponse.getStatusLine().getReasonPhrase());

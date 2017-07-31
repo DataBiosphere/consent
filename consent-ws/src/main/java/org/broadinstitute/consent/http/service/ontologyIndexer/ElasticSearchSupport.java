@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("WeakerAccess")
 public class ElasticSearchSupport {
 
-    public static RestClient getRestClient(ElasticSearchConfiguration configuration) {
+    public static RestClient createRestClient(ElasticSearchConfiguration configuration) {
         HttpHost[] hosts = configuration.
             getServers().
             stream().

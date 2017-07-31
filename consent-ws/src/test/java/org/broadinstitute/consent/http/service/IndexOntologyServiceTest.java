@@ -41,7 +41,7 @@ public class IndexOntologyServiceTest {
         ElasticSearchConfiguration configuration = new ElasticSearchConfiguration();
         configuration.setIndexName(INDEX_NAME);
         configuration.setServers(Collections.singletonList("localhost"));
-        client = ElasticSearchSupport.getRestClient(configuration);
+        client = ElasticSearchSupport.createRestClient(configuration);
         this.ontologyService = new IndexOntologyService(configuration);
         server = startClientAndServer(9200);
         server.when(request()).respond(response().withStatusCode(200));
