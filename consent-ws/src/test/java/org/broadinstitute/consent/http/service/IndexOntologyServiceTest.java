@@ -1,16 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.common.io.Resources;
+import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
+import org.broadinstitute.consent.http.service.ontologyIndexer.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerUtils;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.client.RestClient;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockserver.integration.ClientAndServer;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -22,33 +24,61 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 public class IndexOntologyServiceTest {
 
     private static final String INDEX_NAME = "test-index";
     private IndexOntologyService ontologyService;
     private IndexerUtils indexUtils = new IndexerUtils();
-    private Node node;
-    private Client client;
+    private ClientAndServer server;
+    private RestClient client;
 
     @Before
     public void setUp() throws Exception {
-        // Mocks an in-memory elastic-search node
-        node = NodeBuilder.nodeBuilder().node();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> node.close()));
-        node.start();
-        client = node.client();
-        this.ontologyService = new IndexOntologyService(client, INDEX_NAME);
+        ElasticSearchConfiguration configuration = new ElasticSearchConfiguration();
+        configuration.setIndexName(INDEX_NAME);
+        configuration.setServers(Collections.singletonList("localhost"));
+        client = ElasticSearchSupport.createRestClient(configuration);
+        this.ontologyService = new IndexOntologyService(configuration);
+        server = startClientAndServer(9200);
+        server.when(request()).respond(response().withStatusCode(200));
+    }
+
+    @After
+    public void shutDown() throws Exception {
+        if (server != null && server.isRunning()) {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void testReIndexOntology() {
+        try {
+            URL url = Resources.getResource("data-use.owl");
+            StreamRec streamRec = new StreamRec(
+                url.openStream(),
+                "Test",
+                "DUOS",
+                "owl",
+                "data-use.owl");
+            ontologyService.indexOntologies(Collections.singletonList(streamRec));
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
     @Test
     public void testGetParents() throws Exception {
-        URL url = Resources.getResource("diseases.owl");
+        URL url = Resources.getResource("data-use.owl");
         StreamRec streamRec = new StreamRec(
             url.openStream(),
             "test_ontology",
-            "DOID",
+            "DUOS",
             "owl",
-            "diseases.owl");
+            "data-use.owl");
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(streamRec.getStream());
         OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
@@ -58,48 +88,15 @@ public class IndexOntologyServiceTest {
             annotationProperties.put(property.getIRI().getFragment(), property));
 
         for (OWLClass owlClass: ontology.getClassesInSignature()) {
-            if (owlClass.toStringID().equals("http://purl.obolibrary.org/obo/DOID_4952")) {
+            if (owlClass.toStringID().equals("http://www.broadinstitute.org/ontologies/DUOS/MGH")) {
                 List<Set<OWLClass>> parents = indexUtils.getFilteredParentSets(owlClass, reasoner);
-                Assert.assertTrue("'postpoliomyelitis syndrome' should have 4 parents.", parents.size() == 4);
+                Assert.assertTrue("'MGH' should have 4 parents.", parents.size() == 4);
             }
-            if (owlClass.toStringID().equals("http://purl.obolibrary.org/obo/DOID_1749")) {
+            if (owlClass.toStringID().equals("http://www.broadinstitute.org/ontologies/DUOS/girls")) {
                 List<Set<OWLClass>> parents = indexUtils.getFilteredParentSets(owlClass, reasoner);
-                Assert.assertTrue("'squamous cell carcinoma' should have 5 parents.", parents.size() == 5);
-            }
-            // fetal alcohol spectrum disorder has 4 overall parents and two parents at level 1
-            if (owlClass.toStringID().equals("http://purl.obolibrary.org/obo/DOID_0050696")) {
-                List<Set<OWLClass>> parents = indexUtils.getFilteredParentSets(owlClass, reasoner);
-                Assert.assertTrue("'fetal alcohol spectrum disorder' should have 4 parents.", parents.size() == 4);
-                Assert.assertTrue("'fetal alcohol spectrum disorder' should have 2 first level parents.", parents.get(0).size() == 2);
+                Assert.assertTrue("'girls' should have 2 parents.", parents.size() == 2);
             }
          }
-
-    }
-
-    @Test
-    public void testDeleteByType() {
-        try {
-            indexUtils.validateIndexExists(client, INDEX_NAME);
-            indexUtils.deleteByOntologyType(client, INDEX_NAME, "Test");
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testReIndexOntology() {
-        try {
-            URL url = Resources.getResource("diseases.owl");
-            StreamRec streamRec = new StreamRec(
-                url.openStream(),
-                "Test",
-                "DOID",
-                "owl",
-                "diseases.owl");
-            ontologyService.indexOntologies(Collections.singletonList(streamRec));
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
     }
 
     @Test
@@ -116,20 +113,30 @@ public class IndexOntologyServiceTest {
     public void testBulkUploadTerms() {
         try {
             Collection<Term> terms = getTerms();
-            indexUtils.bulkUploadTerms(client, ontologyService.getIndexName(), terms);
+            indexUtils.bulkUploadTerms(client, INDEX_NAME, terms);
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
     }
 
+    @Test
+    public void testBulkDeprecateTerms() {
+        try {
+            indexUtils.bulkDeprecateTerms(client, INDEX_NAME, "organization");
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+
     private Collection<Term> getTerms() throws OWLOntologyCreationException, IOException {
-        URL url = Resources.getResource("diseases.owl");
+        URL url = Resources.getResource("data-use.owl");
         StreamRec streamRec = new StreamRec(
             url.openStream(),
             "test_ontology",
-            "DOID",
+            "DUOS",
             "owl",
-            "diseases.owl");
+            "data-use.owl");
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(streamRec.getStream());
         OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();

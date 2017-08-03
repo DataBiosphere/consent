@@ -1,16 +1,14 @@
 package org.broadinstitute.consent.http.service.ontologyIndexer;
 
 import com.google.common.collect.Lists;
+import com.twitter.util.CountDownLatch;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.models.ontology.Term;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseListener;
+import org.elasticsearch.client.RestClient;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
@@ -32,37 +30,6 @@ public class IndexerUtils {
             owlClass.isOWLClass() &&
             !owlClass.isOWLThing() &&
             !owlClass.isOWLNothing();
-    }
-
-    /**
-     * Check to see if the index exists and create it otherwise.
-     *
-     * @throws InternalServerErrorException The exception
-     */
-    public void validateIndexExists(Client client, String indexName) throws InternalServerErrorException {
-        IndicesExistsRequest existsRequest = new IndicesExistsRequest(indexName);
-        if (!client.admin().indices().exists(existsRequest).actionGet().isExists()) {
-            CreateIndexRequest indexRequest = new CreateIndexRequest(indexName);
-            try {
-                client.admin().indices().create(indexRequest).actionGet();
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                throw new InternalServerErrorException();
-            }
-        }
-    }
-
-    /**
-     * Delete all terms of a specific type (i.e. "Disease", "Organization")
-     *
-     * @param type The type
-     */
-    public void deleteByOntologyType(Client client, String indexName, String type) {
-        validateIndexExists(client, indexName);
-        DeleteByQueryRequestBuilder deleteByQuery = client.prepareDeleteByQuery(indexName);
-        QueryBuilder queryBuilder = QueryBuilders.termQuery(Term.FIELD_ONTOLOGY_TYPE, type);
-        deleteByQuery.setQuery(queryBuilder);
-        deleteByQuery.execute().actionGet();
     }
 
     /**
@@ -101,23 +68,29 @@ public class IndexerUtils {
         };
 
         Term term = new Term(owlClass.toStringID(), ontologyType);
-        if (!owlClass.getAnnotations(ontology, deprecated).isEmpty()) {
+        if (deprecated != null && !owlClass.getAnnotations(ontology, deprecated).isEmpty()) {
             term.setUsable(false);
         }
 
-        owlClass.getAnnotations(ontology, hasExactSynonym).forEach((synonyms) ->
-            term.addSynonym(synonyms.getValue().accept(visitor)));
-
-        Set<OWLAnnotation> labels = owlClass.getAnnotations(ontology, label);
-        assert labels.size() <= 1 : "Exactly 0 or 1 labels allowed per class";
-        if (labels.size() == 1) {
-            term.addLabel(labels.iterator().next().getValue().accept(visitor));
+        if (hasExactSynonym != null) {
+            owlClass.getAnnotations(ontology, hasExactSynonym).forEach((synonyms) ->
+                term.addSynonym(synonyms.getValue().accept(visitor)));
         }
 
-        Set<OWLAnnotation> definitions = owlClass.getAnnotations(ontology, definition);
-        assert definitions.size() <= 1 : "Exactly 0 or 1 definitions allowed per class";
-        if (definitions.size() == 1) {
-            term.addDefinition(definitions.iterator().next().getValue().accept(visitor));
+        if (label != null) {
+            Set<OWLAnnotation> labels = owlClass.getAnnotations(ontology, label);
+            assert labels.size() <= 1 : "Exactly 0 or 1 labels allowed per class";
+            if (labels.size() == 1) {
+                term.addLabel(labels.iterator().next().getValue().accept(visitor));
+            }
+        }
+
+        if (definition != null) {
+            Set<OWLAnnotation> definitions = owlClass.getAnnotations(ontology, definition);
+            assert definitions.size() <= 1 : "Exactly 0 or 1 definitions allowed per class";
+            if (definitions.size() == 1) {
+                term.addDefinition(definitions.iterator().next().getValue().accept(visitor));
+            }
         }
 
         int position = 0;
@@ -195,33 +168,86 @@ public class IndexerUtils {
      * @param client The ES client
      * @param indexName The index
      * @param terms Collection of Terms that will be populated
-     * @return True if there are no errors, false otherwise
+     * @return True if there are no errors, exception otherwise
      * @throws IOException The exception
      */
-    public Boolean bulkUploadTerms(Client client, String indexName, Collection<Term> terms) throws IOException {
-        // Setting the partition relatively small so we can fail fast for incremental uploads
+    public Boolean bulkUploadTerms(RestClient client, String indexName, Collection<Term> terms) throws IOException {
+        // Set the partition relatively small so we can fail fast for incremental uploads
         List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 100);
         for (List<Term> termList: termLists) {
-            BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+            final CountDownLatch latch = new CountDownLatch(termList.size());
+            ResponseListener listener = createResponseListener(latch);
             for (Term term: termList) {
-                bulkRequestBuilder.add(client.prepareIndex(indexName, "ontology_term")
-                    .setSource(term.document())
-                    .setId(term.getId())
-                );
+                HttpEntity entity = new NStringEntity(
+                    term.toString(),
+                    ContentType.APPLICATION_JSON);
+                client.performRequestAsync("PUT",
+                    ElasticSearchSupport.getTermIdPath(indexName, term.getId()),
+                    Collections.emptyMap(),
+                    entity,
+                    listener,
+                    ElasticSearchSupport.jsonHeader);
             }
-            BulkResponse response = bulkRequestBuilder.execute().actionGet();
-            if (response.hasFailures()) {
-                for (BulkItemResponse r : response.getItems()) {
-                    if (r.isFailed()) {
-                        logger.error(r.getFailureMessage());
-                    }
-                }
-                return false;
-            }
-            client.prepareBulk();
+            latch.await();
         }
         return true;
     }
 
+    /**
+     * Set all terms of a particular ontology type to `usable=false`, thereby deprecating them.
+     *
+     * @param client The ES client
+     * @param indexName The index
+     * @param ontologyType The ontology type (e.g. "Disease", or "Organization")
+     */
+    public void bulkDeprecateTerms(RestClient client, String indexName, String ontologyType) throws IOException, InternalServerErrorException {
+        String query = "{" +
+            "  \"script\": {" +
+            "    \"inline\": \"ctx._source.usable=false\"," +
+            "    \"lang\": \"painless\"" +
+            "  }," +
+            "  \"query\": {" +
+            "    \"term\": {" +
+            "      \"ontology\": \"" + ontologyType.toLowerCase() + "\"" +
+            "    }" +
+            "  }" +
+            "}";
+        String path = "/" + indexName + "/_update_by_query";
+        Response esResponse = client.performRequest(
+            "POST",
+            path,
+            Collections.emptyMap(),
+            new NStringEntity(query, ContentType.APPLICATION_JSON),
+            ElasticSearchSupport.jsonHeader);
+        if (esResponse.getStatusLine().getStatusCode() != 200) {
+            logger.error("Error in bulk deprecate response: " + esResponse.getStatusLine().getReasonPhrase());
+            throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
+        }
+    }
+
+    /**
+     * Create a response handler that will appropriately deal with the response from Elastic Search
+     *
+     * @param latch The countdown latch to decrement with each successful response
+     * @return The ResponseListener
+     */
+    private ResponseListener createResponseListener(CountDownLatch latch) {
+        return new ResponseListener() {
+            @Override
+            public void onSuccess(Response response) {
+                latch.countDown();
+            }
+            @Override
+            public void onFailure(Exception exception) {
+                logger.error(exception.getMessage());
+                latch.countDown();
+                try {
+                    throw new IOException(exception);
+                } catch (IOException e) {
+                    logger.error(exception.getMessage());
+                }
+            }
+        };
+    }
 
 }
