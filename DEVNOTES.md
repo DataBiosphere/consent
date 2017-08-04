@@ -15,6 +15,9 @@ cd consent
 mvn clean package 
 ```
 
+Tests spin up embedded mongo and http servers that run against localhost. 
+Ensure that your test environment supports that. 
+
 ### Render Configs 
 Specific to internal Broad systems:
 ```bash
