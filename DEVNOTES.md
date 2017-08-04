@@ -12,7 +12,7 @@ git clone git@github.com:broadinstitute/consent.git
 ### Build, test
 ```bash
 cd consent
-mvn clean package 
+mvn clean test package 
 ```
 
 Tests spin up embedded mongo and http servers that run against localhost. 
