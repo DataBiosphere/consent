@@ -63,7 +63,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
 
         // Creating MongodbExecutable
-        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, Network.localhostIsIPv6()));
+        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, false, "127.0.0.1"));
 
         // Starting Mongodb
         mongod = mongodExe.start();
