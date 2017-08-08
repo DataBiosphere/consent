@@ -1,20 +1,39 @@
 # Local Development
 
-Check out repository:
+* Maven 3.5
+* Java 8
+* Dropwizard Docs: http://www.dropwizard.io/
+
+### Check out repository:
 ```bash
 git clone git@github.com:broadinstitute/consent.git
 ```
 
-Build and render Configs:
+### Build, test
 ```bash
 cd consent
-mvn clean compile
-APP_NAME=consent ENV=local OUTPUT_DIR=config ../firecloud-develop/configure.rb
+mvn clean test package 
 ```
 
-Spin up application:
+Tests spin up embedded mongo and http servers that run against localhost. 
+Ensure that your test environment supports that. 
+
+### Render Configs 
+Specific to internal Broad systems:
+```bash
+APP_NAME=consent ENV=local OUTPUT_DIR=config ../firecloud-develop/configure.rb
+```
+Otherwise, use `consent-ws/src/test/resources/consent-config.yml` as a template to 
+create your own environment-specific configuration. 
+
+### Spin up application:
+Specific to internal Broad systems:
 ```bash
 docker-compose -p consent -f config/docker-compose.yaml up
+```
+Or, if not using docker:
+```bash
+java -jar /path/to/consent.jar server /path/to/config/file
 ```
 
 Visit local swagger page: https://local.broadinstitute.org:27443/swagger/
