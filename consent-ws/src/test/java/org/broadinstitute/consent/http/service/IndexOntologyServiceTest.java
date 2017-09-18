@@ -88,13 +88,9 @@ public class IndexOntologyServiceTest {
             annotationProperties.put(property.getIRI().getFragment(), property));
 
         for (OWLClass owlClass: ontology.getClassesInSignature()) {
-            if (owlClass.toStringID().equals("http://www.broadinstitute.org/ontologies/DUOS/MGH")) {
+            if (owlClass.toStringID().equals("http://www.broadinstitute.org/ontologies/DUOS/control")) {
                 List<Set<OWLClass>> parents = indexUtils.getFilteredParentSets(owlClass, reasoner);
-                Assert.assertTrue("'MGH' should have 4 parents.", parents.size() == 4);
-            }
-            if (owlClass.toStringID().equals("http://www.broadinstitute.org/ontologies/DUOS/girls")) {
-                List<Set<OWLClass>> parents = indexUtils.getFilteredParentSets(owlClass, reasoner);
-                Assert.assertTrue("'girls' should have 2 parents.", parents.size() == 2);
+                Assert.assertTrue("'control' should have 1 parent.", parents.size() == 1);
             }
          }
     }
