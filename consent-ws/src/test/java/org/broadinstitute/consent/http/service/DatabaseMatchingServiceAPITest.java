@@ -39,17 +39,14 @@ import static org.mockito.Mockito.when;
 public class DatabaseMatchingServiceAPITest {
 
     @Mock
-    ServicesConfiguration config;
+    private ServicesConfiguration config;
     @Mock
-    ConsentAPI consentAPI;
+    private ConsentAPI consentAPI;
     @Mock
-    DataAccessRequestAPI dataAccessAPI;
+    private DataAccessRequestAPI dataAccessAPI;
     @Mock
-    DataSetAPI dsAPI;
+    private DataSetAPI dsAPI;
 
-    private static UseRestriction sampleUseRestriction1;
-    private static UseRestriction sampleUseRestriction2;
-    private static UseRestriction sampleUsePurpose1;
     private static Consent sampleConsent1;
     private static Consent sampleConsent2;
     private static RequestMatchingObject reqmo1;
@@ -62,17 +59,17 @@ public class DatabaseMatchingServiceAPITest {
 
     @BeforeClass
     public static void setUpClass() throws IOException {
-        sampleUseRestriction1 = new And(
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/methods_research")),
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/population_structure")),
+        UseRestriction sampleUseRestriction1 = new And(
+                new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000015")),
+                new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000011")),
                 new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
         );
-        sampleUseRestriction2 = new And(
-                new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit"),
+        UseRestriction sampleUseRestriction2 = new And(
+                new Named("http://purl.obolibrary.org/obo/DUO_0000018"),
                 new Named("http://www.broadinstitute.org/ontologies/DUOS/female")
         );
-        sampleUsePurpose1 = new And(
-                new Named("http://www.broadinstitute.org/ontologies/DUOS/For_profit")
+        UseRestriction sampleUsePurpose1 = new And(
+                new Named("http://purl.obolibrary.org/obo/DUO_0000018")
         );
         sampleConsent1 = new Consent(false, sampleUseRestriction1, "A data use letter", "sampleConsent1", null, null, null);
         sampleConsent1.setConsentId("CONS-1");
@@ -153,7 +150,7 @@ public class DatabaseMatchingServiceAPITest {
         Match match = matchApi.findSingleMatch("CONS-1", "DAR-2");
         assertTrue(!Objects.isNull(match));
         assertTrue(match.getMatch());
-        assertTrue(match.getFailed() == false);
+        assertTrue(!match.getFailed());
 
     }
 
@@ -167,32 +164,31 @@ public class DatabaseMatchingServiceAPITest {
     @Test
     public void testFindMatchesForConsent() throws IOException {
         DataSet ds = new DataSet(1, "SC-20660", "SC-20660", null, true);
-        List<DataSet> dsList = new ArrayList<>(Arrays.asList(ds));
+        List<DataSet> dsList = Collections.singletonList(ds);
         when(dsAPI.getDataSetsForConsent("CONS-1")).thenReturn(dsList);
         when(dsAPI.getDataSetsForConsent("CONS-2")).thenReturn(dsList);
         when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getObjectId).collect(Collectors.toList()))).thenReturn(new ArrayList<>(Arrays.asList(getSampleDar())));
         List<Match> matches = matchApi.findMatchesForConsent("CONS-1");
         assertTrue(matches.size() == 1);
-        assertTrue(matches.get(0).getFailed() == false);
-        assertTrue(matches.get(0).getMatch() == true);
+        assertTrue(!matches.get(0).getFailed());
+        assertTrue(matches.get(0).getMatch());
         matches = matchApi.findMatchesForConsent("CONS-2");
         assertTrue(matches.size() == 1);
-        assertTrue(matches.get(0).getFailed() == true);
-        assertTrue(matches.get(0).getMatch() == false);
+        assertTrue(matches.get(0).getFailed());
+        assertTrue(!matches.get(0).getMatch());
         when(dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dsList.stream().map(DataSet::getObjectId).collect(Collectors.toList()))).thenReturn(new ArrayList<>());
         matches = matchApi.findMatchesForConsent("CONS-1");
         assertTrue(matches.size() == 0);
     }
 
-    public static Document getSampleDar() throws IOException {
+    private static Document getSampleDar() throws IOException {
         Document document = new Document();
         document.putAll(jsonAsMap(sampleDar1));
         return document;
     }
 
-    private static HashMap<String,Object> jsonAsMap(String jsonSource) throws IOException {
-        HashMap<String,Object> result = new ObjectMapper().readValue(jsonSource, HashMap.class);
-        return result;
+    private static Map<String, Object> jsonAsMap(String jsonSource) throws IOException {
+        return new ObjectMapper().readValue(jsonSource, Map.class);
     }
 
     private static String sampleDar1 = "{\n" +
@@ -227,7 +223,7 @@ public class DatabaseMatchingServiceAPITest {
             "\t\t\"type\": \"and\",\n" +
             "\t\t\"operands\": [{\n" +
             "\t\t\t\"type\": \"named\",\n" +
-            "\t\t\t\"name\": \"http://www.broadinstitute.org/ontologies/DUOS/For_profit\"\n" +
+            "\t\t\t\"name\": \"http://purl.obolibrary.org/obo/DUO_0000018\"\n" +
             "\t\t}]\n" +
             "\t},\n" +
             "\t\"datasetId\": [\n" +
