@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -31,7 +31,7 @@ public class ElasticSearchSupport {
     }
 
     public static String getClusterHealthPath(String index) {
-        return "/_cluster/health/" + index;
+        return "/_cluster/health";
     }
 
     public static Header jsonHeader = new BasicHeader("Content-Type", "application/json");

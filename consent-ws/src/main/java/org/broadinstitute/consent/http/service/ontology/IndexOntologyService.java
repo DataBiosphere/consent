@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.io.IOUtils;

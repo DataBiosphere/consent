@@ -32,7 +32,7 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.resources.*;
 import org.broadinstitute.consent.http.service.*;
-import org.broadinstitute.consent.http.service.ontologyIndexer.*;
+import org.broadinstitute.consent.http.service.ontology.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;

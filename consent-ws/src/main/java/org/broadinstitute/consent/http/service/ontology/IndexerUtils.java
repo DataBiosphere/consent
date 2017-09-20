@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import com.google.common.collect.Lists;
 import com.twitter.util.CountDownLatch;
