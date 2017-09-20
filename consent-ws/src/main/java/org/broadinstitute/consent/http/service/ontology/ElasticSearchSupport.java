@@ -31,7 +31,7 @@ public class ElasticSearchSupport {
     }
 
     public static String getClusterHealthPath(String index) {
-        return "/_cluster/health";
+        return "/_cluster/health/" + index;
     }
 
     public static Header jsonHeader = new BasicHeader("Content-Type", "application/json");

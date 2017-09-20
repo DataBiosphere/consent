@@ -58,6 +58,7 @@ public class IndexOntologyService implements Managed {
      * @throws IOException The exception
      */
     public void indexOntologies(List<StreamRec> streamRecList) throws IOException {
+        utils.checkIndex(client, indexName);
         try {
             for (StreamRec streamRec : streamRecList) {
 
@@ -95,7 +96,7 @@ public class IndexOntologyService implements Managed {
                     logger.warn(streamRec.getFileName() + " is missing deprecated annotation property");
                 }
 
-                Set<OWLClass> owlClasses = ontology.getClassesInSignature();
+                Set<OWLClass> owlClasses = ontology.getClassesInSignature(true);
                 Collection<Term> terms = owlClasses.stream().map(
                     (o) -> utils.generateTerm(o, streamRec.getOntologyType(), ontology, annotationProperties, reasoner)
                 ).collect(Collectors.toList());

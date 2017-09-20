@@ -7,6 +7,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.models.ontology.Term;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.ResponseListener;
 import org.elasticsearch.client.RestClient;
 import org.semanticweb.owlapi.model.*;
@@ -30,6 +31,28 @@ public class IndexerUtils {
             owlClass.isOWLClass() &&
             !owlClass.isOWLThing() &&
             !owlClass.isOWLNothing();
+    }
+
+
+    void checkIndex(RestClient client, String indexName) {
+        try {
+            client.performRequest(
+                    "GET",
+                    ElasticSearchSupport.getIndexPath(indexName),
+                    ElasticSearchSupport.jsonHeader);
+        } catch (ResponseException re) {
+            // Response exception indicates a status code such as 404 not found, so try creating it.
+            try {
+                client.performRequest(
+                        "PUT",
+                        ElasticSearchSupport.getIndexPath(indexName),
+                        ElasticSearchSupport.jsonHeader);
+            } catch (IOException ioe) {
+                logger.error("Exception creating index: " + indexName + ": " + ioe.getMessage());
+            }
+        } catch (IOException e) {
+            logger.error("Exception checking for index: " + indexName + ": " + e.getMessage());
+        }
     }
 
     /**
