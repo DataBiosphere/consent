@@ -17,7 +17,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jetty.version>9.3.11.v20160721</jetty.version>
-    <owl.version>5.0.1</owl.version>
+    <owl.version>5.0.5</owl.version>
   </properties>
 
   <modules>
@@ -199,7 +199,7 @@
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
-        <version>0.8.1.0</version>
+        <version>1.0.0.3</version>
       </dependency>
 
       <dependency>
