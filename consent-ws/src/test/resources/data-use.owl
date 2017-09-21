@@ -104,9 +104,6 @@
         <obo:hasExactSynonym>Girls</obo:hasExactSynonym>
     </owl:Class>
 
-
-    <!-- TODO: All further classes should be moved to DUO -->
-
     <!-- http://www.broadinstitute.org/ontologies/DUOS/research_type -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/research_type">
@@ -116,7 +113,6 @@
         <obo:hasExactSynonym>Research Type</obo:hasExactSynonym>
     </owl:Class>
 
-    <!-- TODO: This should migrate to DUO ??? -->
     <!-- http://www.broadinstitute.org/ontologies/DUOS/aggregate_research -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/aggregate_research">
@@ -136,7 +132,6 @@
         <obo:hasExactSynonym>Dataset Usage</obo:hasExactSynonym>
     </owl:Class>
 
-    <!-- TODO: This should migrate to DUO !!! -->
     <!-- http://www.broadinstitute.org/ontologies/DUOS/control -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/control">
