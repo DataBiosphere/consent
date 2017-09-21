@@ -1,0 +1,49 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <!-- See https://broadinstitute.atlassian.net/browse/GAWB-2522
+         and https://broadinstitute.atlassian.net/browse/GAWB-2523
+     -->
+    <changeSet author="grushton" id="113">
+
+        <!-- Methods Research Migration -->
+        <sql dbms="hsql, mysql">
+            update election set useRestriction = REPLACE(useRestriction, 'http://www.broadinstitute.org/ontologies/DUOS/methods_research', 'http://purl.obolibrary.org/obo/DUO_0000015')
+        </sql>
+        <sql dbms="hsql, mysql">
+            update consents set useRestriction = REPLACE(useRestriction, 'http://www.broadinstitute.org/ontologies/DUOS/methods_research', 'http://purl.obolibrary.org/obo/DUO_0000015')
+        </sql>
+
+
+        <!-- Population Structure Migration -->
+        <sql dbms="hsql, mysql">
+            update election set useRestriction = REPLACE(useRestriction, 'http://www.broadinstitute.org/ontologies/DUOS/population_structure', 'http://purl.obolibrary.org/obo/DUO_0000011')
+        </sql>
+        <sql dbms="hsql, mysql">
+            update consents set useRestriction = REPLACE(useRestriction, 'http://www.broadinstitute.org/ontologies/DUOS/population_structure', 'http://purl.obolibrary.org/obo/DUO_0000011')
+        </sql>
+
+
+        <!-- Non Profit Migration -->
+        <sql dbms="hsql, mysql">
+            update election set useRestriction = REPLACE(useRestriction, 'http://www.broadinstitute.org/ontologies/DUOS/Non_profit', 'http://purl.obolibrary.org/obo/DUO_0000018')
+        </sql>
+        <sql dbms="hsql, mysql">
+            update consents set useRestriction = REPLACE(useRestriction, 'http://www.broadinstitute.org/ontologies/DUOS/Non_profit', 'http://purl.obolibrary.org/obo/DUO_0000018')
+        </sql>
+
+
+        <!-- For Profit Migration to Not: Non Profit -->
+        <sql dbms="hsql, mysql">
+            update election set useRestriction = REPLACE(useRestriction, '{"type":"named","name":"http://www.broadinstitute.org/ontologies/DUOS/For_profit"}', '{"type":"not","operand":{"type":"named","name":"http://purl.obolibrary.org/obo/DUO_0000018"}}')
+        </sql>
+        <sql dbms="hsql, mysql">
+            update consents set useRestriction = REPLACE(useRestriction, '{"type":"named","name":"http://www.broadinstitute.org/ontologies/DUOS/For_profit"}', '{"type":"not","operand":{"type":"named","name":"http://purl.obolibrary.org/obo/DUO_0000018"}}')
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>
