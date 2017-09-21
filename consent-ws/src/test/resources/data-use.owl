@@ -18,7 +18,7 @@
          xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
          xmlns:obo="http://purl.obolibrary.org/obo/">
     <owl:Ontology rdf:about="http://www.broadinstitute.org/ontologies/DUOS">
-        <rdfs:label rdf:datatype="&xsd;string">Data-Use Restrictions and Research Purpose Ontology</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Data-Use Restrictions and Research Purpose Ontology</rdfs:label>
         <owl:imports rdf:resource="http://purl.obolibrary.org/obo/duo/releases/2017-02-17/duo.owl"/>
     </owl:Ontology>
 
@@ -35,12 +35,12 @@
     <!-- http://www.broadinstitute.org/ontologies/DUOS/pediatric -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/pediatric">
-        <rdfs:label rdf:datatype="&xsd;string">pediatric</rdfs:label>
-        <rdfs:comment rdf:datatype="&xsd;string">Having to do with children.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pediatric</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Having to do with children.</obo:IAO_0000115>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Having to do with children.</rdfs:comment>
         <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000001</oboInOwl:id>
         <obo:hasExactSynonym>Childhood</obo:hasExactSynonym>
         <obo:hasExactSynonym>Pediatric</obo:hasExactSynonym>
-        <obo:hasExactSynonym>pediatric</obo:hasExactSynonym>
     </owl:Class>
 
 
@@ -48,6 +48,10 @@
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/phenotypic_sex">
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">phenotypic sex</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A biological sex quality.</obo:IAO_0000115>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000002</oboInOwl:id>
+        <obo:hasExactSynonym>Phenotypic Sex</obo:hasExactSynonym>
+        <obo:hasExactSynonym>Gender</obo:hasExactSynonym>
     </owl:Class>
 
     <!-- http://www.broadinstitute.org/ontologies/DUOS/male -->
@@ -55,40 +59,42 @@
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/male">
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/phenotypic_sex"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A biological sex quality inhering in an individual or a population whose sex organs contain only male gametes.</obo:IAO_0000115>
-        <rdfs:label rdf:datatype="&xsd;string">male</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">male</rdfs:label>
         <owl:disjointWith rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/female"/>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000021</oboInOwl:id>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000003</oboInOwl:id>
         <obo:hasExactSynonym>Male</obo:hasExactSynonym>
-        <obo:hasExactSynonym>male</obo:hasExactSynonym>
     </owl:Class>
 
     <!-- http://www.broadinstitute.org/ontologies/DUOS/boys -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/boys">
-        <rdfs:label rdf:datatype="&xsd;string">males under 18 years old</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">males under age of 18.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">boys</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/pediatric"/>
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/male"/>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000022</oboInOwl:id>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000004</oboInOwl:id>
+        <obo:hasExactSynonym>Boys</obo:hasExactSynonym>
     </owl:Class>
 
     <!-- http://www.broadinstitute.org/ontologies/DUOS/female -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/female">
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/phenotypic_sex"/>
-        <rdfs:label rdf:datatype="&xsd;string">female</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">female</rdfs:label>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A biological sex quality inhering in an individual or a population that only produces gametes that can be fertilised by male gametes.</obo:IAO_0000115>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000023</oboInOwl:id>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000005</oboInOwl:id>
         <obo:hasExactSynonym>Female</obo:hasExactSynonym>
-        <obo:hasExactSynonym>female</obo:hasExactSynonym>
     </owl:Class>
 
     <!-- http://www.broadinstitute.org/ontologies/DUOS/girls -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/girls">
-        <rdfs:label rdf:datatype="&xsd;string">females under 18 years old</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">females under the age of 18.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">girls</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/pediatric"/>
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/female"/>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000024</oboInOwl:id>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000006</oboInOwl:id>
+        <obo:hasExactSynonym>Girls</obo:hasExactSynonym>
     </owl:Class>
 
 
@@ -96,28 +102,42 @@
 
     <!-- http://www.broadinstitute.org/ontologies/DUOS/research_type -->
 
-    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/research_type"/>
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/research_type">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A descriptor that represents a specific type of research.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Research Type</rdfs:label>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000007</oboInOwl:id>
+        <obo:hasExactSynonym>Research Type</obo:hasExactSynonym>
+    </owl:Class>
 
     <!-- TODO: This should migrate to DUO ??? -->
     <!-- http://www.broadinstitute.org/ontologies/DUOS/aggregate_research -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/aggregate_research">
-        <rdfs:label rdf:datatype="&xsd;string">Aggregate Research</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A descriptor that represents aggregate research.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aggregate Research</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/research_type"/>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000051</oboInOwl:id>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000008</oboInOwl:id>
+        <obo:hasExactSynonym>Aggregate Research</obo:hasExactSynonym>
     </owl:Class>
 
 
     <!-- http://www.broadinstitute.org/ontologies/DUOS/dataset_usage -->
-    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/dataset_usage"/>
+    <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/dataset_usage">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A descriptor that represents usage of a dataset.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">data set usage</rdfs:label>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000009</oboInOwl:id>
+        <obo:hasExactSynonym>Dataset Usage</obo:hasExactSynonym>
+    </owl:Class>
 
     <!-- TODO: This should migrate to DUO !!! -->
     <!-- http://www.broadinstitute.org/ontologies/DUOS/control -->
 
     <owl:Class rdf:about="http://www.broadinstitute.org/ontologies/DUOS/control">
-        <rdfs:label rdf:datatype="&xsd;string">be used as a control set</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A descriptor that represents dataset usage as a control set.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">control set usage</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://www.broadinstitute.org/ontologies/DUOS/dataset_usage"/>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000012</oboInOwl:id>
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DUOS:000010</oboInOwl:id>
+        <obo:hasExactSynonym>Control</obo:hasExactSynonym>
     </owl:Class>
 
 

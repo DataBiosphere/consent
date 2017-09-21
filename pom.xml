@@ -17,6 +17,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jetty.version>9.3.11.v20160721</jetty.version>
+    <owl.version>5.0.1</owl.version>
   </properties>
 
   <modules>
@@ -81,13 +82,7 @@
       <dependency>
         <groupId>net.sourceforge.owlapi</groupId>
         <artifactId>owlapi-distribution</artifactId>
-        <version>3.4.10</version>
-        <exclusions>
-          <exclusion>
-            <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-contract</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>${owl.version}</version>
       </dependency>
 
       <dependency>

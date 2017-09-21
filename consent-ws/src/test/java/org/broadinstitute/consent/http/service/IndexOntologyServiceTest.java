@@ -14,14 +14,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
@@ -55,6 +61,24 @@ public class IndexOntologyServiceTest {
     }
 
     @Test
+    public void testGenerateTerms() {
+        try {
+            URL url = Resources.getResource("data-use.owl");
+            StreamRec streamRec = new StreamRec(
+                    url.openStream(),
+                    "Test",
+                    "DUOS",
+                    "owl",
+                    "data-use.owl");
+            Collection<Term> terms = indexUtils.generateTerms(streamRec);
+            Assert.assertNotNull(terms);
+            Assert.assertFalse(terms.isEmpty());
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
     public void testReIndexOntology() {
         try {
             URL url = Resources.getResource("data-use.owl");
@@ -83,16 +107,12 @@ public class IndexOntologyServiceTest {
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(streamRec.getStream());
         OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
         OWLReasoner reasoner = reasonerFactory.createNonBufferingReasoner(ontology);
-        HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
-        ontology.getAnnotationPropertiesInSignature().forEach((property) ->
-            annotationProperties.put(property.getIRI().getFragment(), property));
-
-        for (OWLClass owlClass: ontology.getClassesInSignature()) {
+        for (OWLClass owlClass: ontology.classesInSignature().collect(Collectors.toSet())) {
             if (owlClass.toStringID().equals("http://www.broadinstitute.org/ontologies/DUOS/control")) {
                 List<Set<OWLClass>> parents = indexUtils.getFilteredParentSets(owlClass, reasoner);
                 Assert.assertTrue("'control' should have 1 parent.", parents.size() == 1);
             }
-         }
+        }
     }
 
     @Test
@@ -137,12 +157,9 @@ public class IndexOntologyServiceTest {
         OWLOntology ontology = manager.loadOntologyFromOntologyDocument(streamRec.getStream());
         OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
         OWLReasoner reasoner = reasonerFactory.createNonBufferingReasoner(ontology);
-        HashMap<String, OWLAnnotationProperty> annotationProperties = new HashMap<>();
-        ontology.getAnnotationPropertiesInSignature().forEach((property) ->
-            annotationProperties.put(property.getIRI().getFragment(), property));
-        Set<OWLClass> owlClasses = ontology.getClassesInSignature();
+        Set<OWLClass> owlClasses = ontology.classesInSignature().collect(Collectors.toSet());
         return owlClasses.stream().map(
-            (o) -> indexUtils.generateTerm(o, streamRec.getOntologyType(), ontology, annotationProperties, reasoner)
+            (o) -> indexUtils.generateTerm(o, streamRec.getOntologyType(), ontology, reasoner)
         ).collect(Collectors.toList());
     }
 
