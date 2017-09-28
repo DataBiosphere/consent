@@ -199,7 +199,7 @@
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
-        <version>1.0.0.3</version>
+        <version>0.8.1.0</version>
       </dependency>
 
       <dependency>
