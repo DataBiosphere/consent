@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
