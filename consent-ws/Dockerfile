@@ -1,14 +1,10 @@
-FROM phusion/baseimage:latest
-FROM java:openjdk-8-jre
+FROM openjdk:8
 
-#base setup
-RUN apt-get update \
-    && apt-get install -y supervisor \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* 
+# Standard apt-get cleanup.
+RUN apt-get -yq autoremove && \
+    apt-get -yq clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* && \
+    rm -rf /var/tmp/*
 
-#Configs
 COPY consent-ws/target/consent.jar /opt/consent.jar
-COPY consent-ws/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-#CMD ["/usr/bin/supervisord"]
-CMD /usr/bin/java -jar /opt/consent.jar server /etc/consent.conf 
