@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

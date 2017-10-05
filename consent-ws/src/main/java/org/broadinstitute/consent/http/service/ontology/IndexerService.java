@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import com.google.inject.ImplementedBy;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;

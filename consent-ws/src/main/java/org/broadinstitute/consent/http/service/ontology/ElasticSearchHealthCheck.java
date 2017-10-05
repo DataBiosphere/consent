@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.ontologyIndexer;
+package org.broadinstitute.consent.http.service.ontology;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.gson.JsonObject;

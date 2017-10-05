@@ -5,7 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.OntologyTypes;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
-import org.broadinstitute.consent.http.service.ontologyIndexer.IndexerService;
+import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
 import javax.annotation.security.PermitAll;
