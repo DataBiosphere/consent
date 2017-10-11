@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http;
 
 import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
+import com.tradier.raven.logging.RavenBootstrap;
+import com.tradier.raven.logging.UncaughtExceptionHandlers;
 import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -69,6 +71,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
     public static void main(String[] args) throws Exception {
+        String dsn = System.getProperties().getProperty("sentry.dsn");
+        if (null != dsn && !dsn.isEmpty()) {
+            RavenBootstrap.bootstrap(System.getProperties().getProperty("sentry.dsn"));
+            Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
+        }
         new ConsentApplication().run(args);
     }
 
