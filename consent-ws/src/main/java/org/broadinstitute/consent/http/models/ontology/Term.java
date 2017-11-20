@@ -46,13 +46,15 @@ public class Term {
         parents.add(new Parent(parent, label, position));
     }
 
+    public List<Parent> getParents() { return parents; }
+
     @Override
     public String toString() {
         Gson gson = new GsonBuilder().create();
         return gson.toJson(this);
     }
 
-    class Parent {
+    public class Parent {
         String id;
         String label;
         Integer order;
@@ -61,6 +63,11 @@ public class Term {
             this.label = label;
             this.order = order;
         }
+
+        public String getId() { return id; }
+        public String getLabel() { return label; }
+        public Integer getOrder() { return order; }
+
     }
 
 }
