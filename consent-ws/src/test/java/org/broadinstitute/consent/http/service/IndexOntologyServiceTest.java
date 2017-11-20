@@ -61,6 +61,31 @@ public class IndexOntologyServiceTest {
     }
 
     @Test
+    public void testParentTerms() throws Exception {
+        Collection<Term> terms = getTerms();
+        Term female = null;
+        for (Term term : terms) {
+            if (term.getId().equals("http://www.broadinstitute.org/ontologies/DUOS/female")) {
+                female = term;
+            }
+        }
+        Assert.assertNotNull(female);
+
+        Term.Parent phenotypicSex = null;
+        for (Term.Parent p : female.getParents()) {
+            if (p.getId().equals("http://www.broadinstitute.org/ontologies/DUOS/phenotypic_sex")) {
+                phenotypicSex = p;
+            }
+        }
+        Assert.assertNotNull(phenotypicSex);
+        Assert.assertNotNull(phenotypicSex.getLabel());
+        Assert.assertNotNull(phenotypicSex.getOrder());
+
+        Assert.assertEquals("phenotypic sex", phenotypicSex.getLabel());
+        Assert.assertEquals(Integer.valueOf(1), phenotypicSex.getOrder());
+    }
+
+    @Test
     public void testGenerateTerms() {
         try {
             URL url = Resources.getResource("data-use.owl");
