@@ -140,12 +140,24 @@ public class IndexerUtils {
         int position = 0;
         for (Set<OWLClass> parentSet : getFilteredParentSets(owlClass, reasoner)) {
             position ++;
-            for (OWLClass p : parentSet) {
-                term.addParent(p.toStringID(), position);
+            for (OWLClass parentClass : parentSet) {
+                Set<OWLAnnotation> parentAnnotations = EntitySearcher.getAnnotations(parentClass, ontology).collect(Collectors.toSet());
+                String label = getPropFromAnnotations(parentAnnotations, FIELD_LABEL_PROPERTY);
+                term.addParent(parentClass.toStringID(), label, position);
             }
         }
         return term;
+    }
 
+
+    private String getPropFromAnnotations(Set<OWLAnnotation> annotations, String propName) {
+        for (OWLAnnotation annotation : annotations) {
+            String propertyName = annotation.getProperty().getIRI().getRemainder().orElse("");
+            if (annotation.getValue().asLiteral().isPresent() && propertyName.equals(propName)) {
+                return annotation.getValue().asLiteral().get().getLiteral();
+            }
+        }
+        return null;
     }
 
     /**
