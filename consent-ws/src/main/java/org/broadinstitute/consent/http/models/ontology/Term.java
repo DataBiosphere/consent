@@ -42,9 +42,11 @@ public class Term {
 
     public String getId() { return id; }
 
-    public void addParent(String parent, Integer position) {
-        parents.add(new Parent(parent, position));
+    public void addParent(String parent, String label, Integer position) {
+        parents.add(new Parent(parent, label, position));
     }
+
+    public List<Parent> getParents() { return parents; }
 
     @Override
     public String toString() {
@@ -52,13 +54,20 @@ public class Term {
         return gson.toJson(this);
     }
 
-    class Parent {
+    public class Parent {
         String id;
+        String label;
         Integer order;
-        Parent(String id, Integer order) {
+        Parent(String id, String label, Integer order) {
             this.id = id;
+            this.label = label;
             this.order = order;
         }
+
+        public String getId() { return id; }
+        public String getLabel() { return label; }
+        public Integer getOrder() { return order; }
+
     }
 
 }
