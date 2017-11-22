@@ -80,6 +80,12 @@
     <dependencies>
 
       <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>1.2.3</version>
+      </dependency>
+
+      <dependency>
         <groupId>net.sourceforge.owlapi</groupId>
         <artifactId>owlapi-distribution</artifactId>
         <version>${owl.version}</version>
@@ -168,7 +174,7 @@
       <dependency>
         <groupId>mysql</groupId>
         <artifactId>mysql-connector-java</artifactId>
-        <version>5.1.31</version>
+        <version>5.1.44</version>
       </dependency>
 
       <dependency>
