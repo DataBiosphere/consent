@@ -1,11 +1,11 @@
 Consent Web Services
 ====================
 
-[![Build Status](https://travis-ci.com/broadinstitute/consent.svg?token=3ve6QNemvC5zpJzsoKzf&branch=develop)](https://travis-ci.com/broadinstitute/consent) [![Coverage Status](https://coveralls.io/repos/github/broadinstitute/consent/badge.svg?branch=develop&t=ThluHs)](https://coveralls.io/github/broadinstitute/consent?branch=develop)
+[![Build Status](https://travis-ci.org/DataBiosphere/consent.svg?branch=develop)](https://travis-ci.org/DataBiosphere/consent)
 
 # Consent Web Services API
 
-The primary API layer for the Data Use Oversight System [DUOS](https://github.com/broadinstitute/consent-ui)
+The primary API layer for the Data Use Oversight System [DUOS](https://github.com/DataBiosphere/consent-ui)
 
 ## Data Use Oversight System
 
