@@ -1,11 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.mongodb.MongoClient;
-import de.flapdoodle.embedmongo.MongoDBRuntime;
-import de.flapdoodle.embedmongo.MongodExecutable;
-import de.flapdoodle.embedmongo.MongodProcess;
-import de.flapdoodle.embedmongo.config.MongodConfig;
-import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -34,9 +29,6 @@ import static org.mockito.Mockito.doReturn;
 public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
 
     private static final String TEST_DATABASE_NAME = "TestConsent";
-    private MongodExecutable mongodExe;
-    private MongodProcess mongod;
-    private MongoClient mongo;
     private long mongoDocuments;
 
     @ClassRule
@@ -50,32 +42,18 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
 
     @Before
     public void setUp() throws IOException {
-        // Creating Mongodbruntime instance
-        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
-
-        // Creating MongodbExecutable
-        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, false, "127.0.0.1"));
-
-        // Starting Mongodb
-        mongod = mongodExe.start();
-        mongo = new MongoClient("127.0.0.1", 37017);
-
+        MongoClient mongo = setUpMongoClient();
         MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
         MongoConsentDB spiedMongoi = Mockito.spy(mongoi);
-
         DatabaseDataAccessRequestAPI.getInstance().setMongoDBInstance(spiedMongoi);
-
         doReturn("TESTDAR-COUNTER").when(spiedMongoi).getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
-
         mongoi.getDataAccessRequestCollection().drop();
         mongoi.getPartialDataAccessRequestCollection().drop();
-
     }
 
     @After
-    public void teardown() throws Exception {
-        mongod.stop();
-        mongodExe.cleanup();
+    public void teardown() {
+        shutDownMongo();
     }
 
     @Test

@@ -2,12 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCursor;
-import de.flapdoodle.embedmongo.MongoDBRuntime;
-import de.flapdoodle.embedmongo.MongodExecutable;
-import de.flapdoodle.embedmongo.MongodProcess;
-import de.flapdoodle.embedmongo.config.MongodConfig;
-import de.flapdoodle.embedmongo.distribution.Version;
-import de.flapdoodle.embedmongo.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -42,9 +36,6 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
     private static final String TEST_DATABASE_NAME = "TestConsent";
-    private MongodExecutable mongodExe;
-    private MongodProcess mongod;
-    private MongoClient mongo;
 
 
     @ClassRule
@@ -58,17 +49,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
 
     @Before
     public void setup() throws Exception {
-
-        // Creating Mongodbruntime instance
-        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
-
-        // Creating MongodbExecutable
-        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, false, "127.0.0.1"));
-
-        // Starting Mongodb
-        mongod = mongodExe.start();
-        mongo = new MongoClient("localhost", 37017);
-
+        MongoClient mongo = setUpMongoClient();
         MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
         mongoi.getCountersCollection().drop();
         mongoi.getDataAccessRequestCollection().drop();
@@ -88,10 +69,8 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
     @After
-    public void teardown() throws Exception {
-        mongo.close();
-        mongod.stop();
-        mongodExe.cleanup();
+    public void teardown() {
+        shutDownMongo();
     }
 
     @Test
@@ -122,7 +101,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
 
-    public void deleteVotes(List<Vote> votes) throws IOException {
+    private void deleteVotes(List<Vote> votes) throws IOException {
         Client client = ClientBuilder.newClient();
         for (Vote vote : votes) {
             checkStatus(OK,
@@ -130,7 +109,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         }
     }
 
-    public void updateVote(Integer id, Vote vote) throws IOException {
+    private void updateVote(Integer id, Vote vote) throws IOException {
         Client client = ClientBuilder.newClient();
         vote.setVote(true);
         vote.setRationale(null);
@@ -155,7 +134,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
 
-    public void testDataRequestPendingCase(Integer dacUserId) throws IOException {
+    private void testDataRequestPendingCase(Integer dacUserId) throws IOException {
         Client client = ClientBuilder.newClient();
         List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {});
         assertThat(pendingCases).isNotNull();

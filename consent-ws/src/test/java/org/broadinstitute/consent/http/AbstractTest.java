@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http;
 
+import com.mongodb.MongoClient;
+import de.flapdoodle.embedmongo.MongoDBRuntime;
+import de.flapdoodle.embedmongo.MongodExecutable;
+import de.flapdoodle.embedmongo.MongodProcess;
+import de.flapdoodle.embedmongo.config.MongodConfig;
+import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -49,6 +55,8 @@ abstract public class AbstractTest extends ResourcedTest {
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
+    private MongodExecutable mongodExe;
+    private MongodProcess mongod;
 
     /*
      * Some utility methods for interacting with HTTP-services.
@@ -184,6 +192,21 @@ abstract public class AbstractTest extends ResourcedTest {
                 setLastUpdate(createDate).
                 setSortDate(createDate).
                 build();
+    }
+
+    protected MongoClient setUpMongoClient() throws IOException {
+        // Creating Mongodbruntime instance
+        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
+        // Creating MongodbExecutable
+        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 27017, false, "target/mongo"));
+        // Starting Mongodb
+        mongod = mongodExe.start();
+        return new MongoClient("localhost", 27017);
+    }
+
+    protected void shutDownMongo() {
+        mongod.stop();
+        mongodExe.cleanup();
     }
 
 }
