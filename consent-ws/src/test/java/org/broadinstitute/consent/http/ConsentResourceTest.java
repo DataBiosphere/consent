@@ -4,9 +4,7 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
@@ -22,8 +20,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -95,16 +91,9 @@ public class ConsentResourceTest extends AbstractTest {
 
     private String createConsent(Client client) throws IOException {
         String consentPath = path2Url("/consent");
-        Timestamp createDate = new Timestamp(new Date().getTime());
-        Consent consent = new Consent(
-            true,
-            new Everything(),
-            null,
-            name,
-            createDate,
-            createDate,
-            createDate
-        );
+        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Consent consent = generateNewConsent(new Everything(), dataUse);
+        consent.setName(name);
         consent.setTranslatedUseRestriction("translated");
         Response response = checkStatus(CREATED, post(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");

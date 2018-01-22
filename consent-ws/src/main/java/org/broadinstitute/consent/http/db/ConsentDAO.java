@@ -54,11 +54,12 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction)")
+            "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
+                       @Bind("dataUse") String dataUse,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
                        @Bind("dulName") String dulName,
@@ -78,13 +79,14 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
 
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
-            "useRestriction = :useRestriction, dataUseLetter = :dataUseLetter, name = :name, " +
+            "useRestriction = :useRestriction, dataUse = :dataUse, dataUseLetter = :dataUseLetter, name = :name, " +
             "dulName = :dulName, " +
             "lastUpdate = :lastUpdate, sortDate = :sortDate, translatedUseRestriction = :translatedUseRestriction " +
             "where consentId = :consentId and active = true")
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
+                       @Bind("dataUse") String dataUse,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
                        @Bind("dulName") String dulName,

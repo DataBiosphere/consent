@@ -9,6 +9,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +26,13 @@ abstract public class Resource {
 
     protected Response createExceptionResponse(Exception e) {
         try {
-            return dispatch.get(e.getClass()).handle(e);
+            logger().warn("Returning error response to client: " + e.getMessage());
+            ExceptionHandler handler = dispatch.get(e.getClass());
+            if (handler != null) {
+                return handler.handle(e);
+            } else {
+                return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            }
         } catch (Throwable t) {
             logger().error(t.getMessage());
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();

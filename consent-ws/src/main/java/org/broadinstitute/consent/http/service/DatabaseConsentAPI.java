@@ -107,7 +107,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
-        consentDAO.insertConsent(id, rec.requiresManualReview, rec.useRestriction.toString(), rec.getDataUseLetter(), rec.name, rec.dulName, createDate, createDate, rec.getTranslatedUseRestriction(), true);
+        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate, rec.getTranslatedUseRestriction(), true);
         return consentDAO.findConsentById(id);
     }
 
@@ -149,7 +149,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (StringUtils.isEmpty(consentDAO.checkConsentbyId(id))) {
             throw new NotFoundException();
         }
-        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate(), rec.getTranslatedUseRestriction());
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate(), rec.getTranslatedUseRestriction());
         return consentDAO.findConsentById(id);
     }
 

@@ -43,15 +43,10 @@ public class Consent {
     @JsonProperty
     public String translatedUseRestriction;
 
+    @JsonProperty
+    public DataUseDTO dataUse;
 
     public Consent() {
-    }
-
-
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String name) {
-        this.name = name;
-        this.requiresManualReview = requiresManualReview;
-        this.useRestriction = useRestriction;
     }
 
     public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
@@ -159,9 +154,20 @@ public class Consent {
     public String getTranslatedUseRestriction() {
         return translatedUseRestriction;
     }
+
     @JsonProperty
     public void setTranslatedUseRestriction(String translatedUseRestriction) {
         this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    @JsonProperty
+    public DataUseDTO getDataUse() {
+        return dataUse;
+    }
+
+    @JsonProperty
+    public void setDataUse(DataUseDTO dataUse) {
+        this.dataUse = dataUse;
     }
 
 }
