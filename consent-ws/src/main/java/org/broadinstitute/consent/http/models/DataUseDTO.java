@@ -1,11 +1,18 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.GsonBuilder;
+import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 
 @SuppressWarnings({"unused", "SameParameterValue"})
 public class DataUseDTO {
+
+    private static final Logger logger = Logger.getLogger(DataUseDTO.class);
+
     private Boolean generalUse;
     private Boolean hmbResearch;
     private List<String> diseaseRestrictions;
@@ -272,5 +279,20 @@ public class DataUseDTO {
     public String toString() {
         return new GsonBuilder().create().toJson(this);
     }
-    
+
+    public static DataUseDTO parseDataUse(String str) throws IOException {
+        if (str == null || str.isEmpty()) {
+            return null;
+        } else {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                ObjectReader reader = mapper.readerFor(DataUseDTO.class);
+                return reader.readValue(str);
+            } catch (IOException e) {
+                logger.error(String.format("DataUseDTO parse exception on \"%s\"", str));
+                throw e;
+            }
+        }
+    }
+
 }
