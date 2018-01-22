@@ -115,11 +115,23 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    public void testMissingDataUse() throws Exception {
+    public void testMissingDataUseCreate() throws Exception {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, null);
         Response response = post(client, consentPath(), rec);
         assertThat(response.getStatus() == BAD_REQUEST);
+    }
+
+    @Test
+    public void testMissingDataUseUpdate() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Consent rec = generateNewConsent(everything, generalUse);
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
+        String createdLocation = checkHeader(response, "Location");
+
+        Consent update = generateNewConsent(everything, null);
+        Response updateResponse = put(client, createdLocation, update);
+        assertThat(updateResponse.getStatus() == BAD_REQUEST);
     }
 
     private void assertValidConsentResource(Client client, Consent rec) throws IOException {
