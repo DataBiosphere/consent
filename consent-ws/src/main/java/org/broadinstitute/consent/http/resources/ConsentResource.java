@@ -67,7 +67,6 @@ public class ConsentResource extends Resource {
     @Consumes("application/json")
     @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth User user) {
-        logger().info("Inside createConsent.");
         try {
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             if (rec.getTranslatedUseRestriction() == null) {
@@ -85,7 +84,6 @@ public class ConsentResource extends Resource {
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
         }  catch (Exception e) {
-            logger().info("Execption: " + e.getMessage());
             return createExceptionResponse(e);
         }
     }
