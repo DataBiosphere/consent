@@ -6,10 +6,10 @@
 
     <changeSet author="grushton" id="114">
         <addColumn tableName="consents">
-            <column name="dataUse" type="text" defaultValue="">
-                <constraints nullable="false"/>
-            </column>
+            <column name="dataUse" type="text"/>
         </addColumn>
+        <sql dbms="hsql, mysql">update consents set dataUse = ''</sql>
+        <sql dbms="hsql, mysql">ALTER TABLE consents MODIFY dataUse text NOT NULL</sql>
     </changeSet>
 
 </databaseChangeLog>
