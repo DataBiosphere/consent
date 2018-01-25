@@ -54,8 +54,6 @@ freeMarkerConfiguration:
   defaultEncoding: UTF-8
 googleAuthentication:
   clientId: clientId
-  authorizedAccounts:
-    - authorizedServiceAccountId
 basicAuthentication:
   users:
     - user: testuser

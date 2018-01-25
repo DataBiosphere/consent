@@ -57,7 +57,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
         HashMap<String, Object> tokenInfo = validateToken(bearer);
         try {
             String clientId = tokenInfo.containsKey("aud") ? tokenInfo.get("aud").toString() : tokenInfo.get("audience").toString();
-            if (clientId == null || !config.getAuthorizedServiceAccounts().contains(clientId)) {
+            if (clientId == null) {
                 unauthorized(bearer);
             }
         } catch (AuthenticationException e) {
