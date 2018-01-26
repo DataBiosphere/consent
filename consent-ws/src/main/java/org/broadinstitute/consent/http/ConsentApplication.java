@@ -137,7 +137,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             MailService.initInstance(config.getMailConfiguration());
             EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications());
         } catch (IOException e) {
-            LOGGER.error("Error on Mail Notificacion Service initialization. Service won't work.", e);
+            LOGGER.error("Mail Notification Service initialization error.", e);
         }
 
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
@@ -152,7 +152,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
-        OAuthAuthenticator.initInstance(config.getGoogleAuthentication());
+        OAuthAuthenticator.initInstance();
 
         // Mail Services
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
