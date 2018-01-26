@@ -2063,6 +2063,9 @@ definitions:
       useRestriction:
         type: string
         description: The UseRestriction of this consent. Used to match against another entities.
+      dataUse:
+        type: string
+        description: The Data Use question/answer set for this consent.
       name:
         type: string
         description: Name to identify the consent.

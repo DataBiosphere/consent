@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
@@ -76,6 +75,9 @@ public class ConsentResource extends Resource {
             if(rec.getUseRestriction() != null){
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
+            if (rec.getDataUse() == null) {
+                throw new IllegalArgumentException("Data Use Object is required.");
+            }
             Consent consent = api.create(rec);
             auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
@@ -98,6 +100,9 @@ public class ConsentResource extends Resource {
             }
             if(updated.getUseRestriction() != null) {
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(updated.getUseRestriction()));
+            }
+            if (updated.getDataUse() == null) {
+                throw new IllegalArgumentException("Data Use Object is required.");
             }
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             updated = api.update(id, updated);

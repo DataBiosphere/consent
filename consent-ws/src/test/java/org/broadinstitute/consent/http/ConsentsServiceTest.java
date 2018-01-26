@@ -3,8 +3,7 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -166,14 +165,8 @@ public class ConsentsServiceTest extends AbstractTest {
 
     private String postConsent(Client client) throws IOException {
         String consentPath = path2Url("/consent");
-        Consent consent = new Consent();
-        consent.requiresManualReview = true;
-        consent.useRestriction = new Everything();
-        consent.name = Math.random()+"Name";
-        Timestamp createDate = new Timestamp(new Date().getTime());
-        consent.setSortDate(createDate);
-        consent.setLastUpdate(createDate);
-        consent.setCreateDate(createDate);
+        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Consent consent = generateNewConsent(new Everything(), dataUse);
         Response response = checkStatus(CREATED, post(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");
         return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

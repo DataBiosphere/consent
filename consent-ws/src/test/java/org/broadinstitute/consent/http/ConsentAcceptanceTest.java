@@ -1,13 +1,8 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.models.grammar.Not;
-import org.broadinstitute.consent.http.models.grammar.Nothing;
-import org.broadinstitute.consent.http.models.grammar.And;
-import org.broadinstitute.consent.http.models.grammar.Named;
-import org.broadinstitute.consent.http.models.grammar.Some;
-import org.broadinstitute.consent.http.models.grammar.Only;
-import org.broadinstitute.consent.http.models.grammar.Or;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.grammar.*;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
@@ -19,15 +14,15 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentAcceptanceTest extends ConsentServiceTest {
 
-    Timestamp createDate = new Timestamp(new Date().getTime());
+    private final UseRestriction everything = new Everything();
+    private final UseRestriction nothing = new Nothing();
+    private DataUseDTO generalUse = new DataUseBuilder().setGeneralUse(true).build();
+    private DataUseDTO notGeneralUse = new DataUseBuilder().setGeneralUse(false).build();
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
@@ -41,7 +36,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         mockTranslateResponse();
         mockValidateResponse();
     }
@@ -49,21 +44,22 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     @Test
     public void testCreateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(true,  new Everything(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = generateNewConsent(everything, generalUse);
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testUpdateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(true,  new Everything(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = generateNewConsent(everything, generalUse);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         mockValidateTokenResponse();
         Consent created = retrieveConsent(client, createdLocation);
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
-        Consent update = new Consent(false,  new Nothing(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent update = generateNewConsent(nothing, notGeneralUse);
+        update.setRequiresManualReview(true);
         check200(put(client, createdLocation, update));
         Consent updated = retrieveConsent(client, createdLocation);
 
@@ -74,7 +70,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     @Test
     public void testDeleteConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(true,  new Everything(), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = generateNewConsent(everything, generalUse);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         check200(delete(client, createdLocation));
@@ -84,41 +80,59 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     @Test
     public void testOnlyOrNamedConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(false, new Only("http://broadinstitute.org/ontology/consent/research_on", new Or(new Named("DOID:1"), new Named("DOID:2"))),
-                                  null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
+        UseRestriction only = new Only("http://broadinstitute.org/ontology/consent/research_on", new Or(new Named("DOID:1"), new Named("DOID:2")));
+        Consent rec = generateNewConsent(only, notGeneralUse);
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testAndConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(false, new And(new Named("DOID:1"), new Named("DOID:2")), null,  UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = generateNewConsent(new And(new Named("DOID:1"), new Named("DOID:2")), notGeneralUse);
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testNotConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(false, new Not(new Named("DOID:1")),  null, UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = generateNewConsent(new Not(new Named("DOID:1")), notGeneralUse);
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testNothingConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(false,  new Nothing(),  null, UUID.randomUUID().toString(), createDate, createDate, createDate);
+        Consent rec = generateNewConsent(nothing, notGeneralUse);
         assertValidConsentResource(client, rec);
     }
 
     @Test
     public void testSomeConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(false,  new Some(
-                "http://broadinstitute.org/ontology/consent/research_on",
-                new Named("DOID:1")), null, UUID.randomUUID().toString(), createDate, createDate, createDate);
+        UseRestriction some = new Some("http://broadinstitute.org/ontology/consent/research_on", new Named("DOID:1"));
+        Consent rec = generateNewConsent(some, notGeneralUse);
         assertValidConsentResource(client, rec);
     }
 
+    @Test
+    public void testMissingDataUseCreate() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Consent rec = generateNewConsent(everything, null);
+        Response response = post(client, consentPath(), rec);
+        assertThat(response.getStatus() == BAD_REQUEST);
+    }
+
+    @Test
+    public void testMissingDataUseUpdate() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Consent rec = generateNewConsent(everything, generalUse);
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
+        String createdLocation = checkHeader(response, "Location");
+
+        Consent update = generateNewConsent(everything, null);
+        Response updateResponse = put(client, createdLocation, update);
+        assertThat(updateResponse.getStatus() == BAD_REQUEST);
+    }
 
     private void assertValidConsentResource(Client client, Consent rec) throws IOException {
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));

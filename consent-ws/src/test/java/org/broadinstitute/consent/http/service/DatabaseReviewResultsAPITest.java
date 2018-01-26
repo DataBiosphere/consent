@@ -3,14 +3,11 @@ package org.broadinstitute.consent.http.service;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ElectionReview;
-import org.broadinstitute.consent.http.models.ElectionReviewVote;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.And;
 import org.broadinstitute.consent.http.models.grammar.Named;
 import org.junit.Before;
@@ -24,7 +21,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
-public class DatabaseReviewResultsAPITest{
+public class DatabaseReviewResultsAPITest {
 
     @Mock
     private ElectionDAO electionDAO;
@@ -33,10 +30,16 @@ public class DatabaseReviewResultsAPITest{
     @Mock
     private ConsentDAO consentDAO;
 
-    DatabaseReviewResultsAPI databaseReviewResultsAPI;
+    private DatabaseReviewResultsAPI databaseReviewResultsAPI;
 
-    Election sampleElection = new Election();
-    Consent consent = new Consent(false, new And(new Named("DOID:1"), new Named("DOID:2")), "Consent 1");
+    private Election sampleElection = new Election();
+    private DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    private Consent consent = new ConsentBuilder().
+            setRequiresManualReview(false).
+            setUseRestriction(new And(new Named("DOID:1"), new Named("DOID:2"))).
+            setDataUse(dataUse).
+            setName("Consent 1").
+            build();
 
     @Before
     public void setUp(){
