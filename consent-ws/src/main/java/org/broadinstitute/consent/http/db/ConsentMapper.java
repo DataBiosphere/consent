@@ -31,8 +31,8 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         consent.setName(r.getString("name"));
         consent.setCreateDate(r.getTimestamp("createDate"));
         consent.setSortDate(r.getTimestamp("sortDate"));
-        consent.setLastUpdate(r.getTimestamp("lastUpdate"));
-        consent.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
+        consent.setLastUpdate((r.getTimestamp("lastUpdate") == null) ? null : r.getTimestamp("lastUpdate"));
+        consent.setTranslatedUseRestriction((r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"));
         return consent;
     }
 
