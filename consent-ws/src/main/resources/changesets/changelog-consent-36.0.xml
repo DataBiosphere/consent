@@ -1,0 +1,15 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="grushton" id="114">
+        <addColumn tableName="consents">
+            <column name="dataUse" type="text"/>
+        </addColumn>
+        <sql dbms="hsql, mysql">UPDATE consents SET dataUse = ''</sql>
+        <sql dbms="hsql, mysql">ALTER TABLE consents MODIFY dataUse text NOT NULL</sql>
+    </changeSet>
+
+</databaseChangeLog>

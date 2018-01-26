@@ -2,11 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCursor;
-import de.flapdoodle.embedmongo.MongoDBRuntime;
-import de.flapdoodle.embedmongo.MongodExecutable;
-import de.flapdoodle.embedmongo.MongodProcess;
-import de.flapdoodle.embedmongo.config.MongodConfig;
-import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
@@ -43,9 +38,6 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     private static final String INVALID_DATA_REQUEST_ID = "55fb15569a434c232c5d50a9";
     private static final String INVALID_STATUS = "testStatus";
     private static final String TEST_DATABASE_NAME = "TestConsent";
-    private MongodExecutable mongodExe;
-    private MongodProcess mongod;
-    private MongoClient mongo;
 
 
     @ClassRule
@@ -59,17 +51,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
 
     @Before
     public void setup() throws Exception {
-
-        // Creating Mongodbruntime instance
-        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
-
-        // Creating MongodbExecutable
-        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 37017, false, "127.0.0.1"));
-
-        // Starting Mongodb
-        mongod = mongodExe.start();
-        mongo = new MongoClient("127.0.0.1", 37017);
-
+        MongoClient mongo = setUpMongoClient();
         MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
 
         // configuring ResearchPurposeAPI instance to use in memory Mongo
@@ -90,9 +72,8 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     }
 
     @After
-    public void teardown() throws Exception {
-        mongod.stop();
-        mongodExe.cleanup();
+    public void teardown() {
+        shutDownMongo();
     }
 
     @Test

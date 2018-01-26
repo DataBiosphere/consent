@@ -8,10 +8,7 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.WorkspaceAssociationDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
@@ -406,7 +403,13 @@ public class AssociationTest extends ConsentServiceTest {
 
     private String setupConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        Consent rec = new Consent(false, new Everything(), UUID.randomUUID().toString());
+        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Consent rec = new ConsentBuilder().
+                setRequiresManualReview(false).
+                setUseRestriction(new Everything()).
+                setDataUse(dataUse).
+                setName(UUID.randomUUID().toString()).
+                build();
         Response response = checkStatus( CREATED, post(client, consentPath(), rec) );
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

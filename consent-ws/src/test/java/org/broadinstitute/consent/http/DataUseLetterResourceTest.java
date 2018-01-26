@@ -4,6 +4,8 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.resources.DataUseLetterResource;
@@ -183,8 +185,8 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
 
     private String setupConsent(String dul) throws IOException {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        Timestamp createDate = new Timestamp(new Date().getTime());
-        Consent rec = new Consent(false, new Everything(), dul, UUID.randomUUID().toString(), createDate, createDate, createDate);
+        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Consent rec = generateNewConsent(new Everything(), dataUse);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         String consent_id = createdLocation.substring(createdLocation.lastIndexOf("/") + 1);

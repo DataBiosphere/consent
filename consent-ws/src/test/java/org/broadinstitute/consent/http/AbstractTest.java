@@ -1,19 +1,34 @@
 package org.broadinstitute.consent.http;
 
+import com.mongodb.MongoClient;
+import de.flapdoodle.embedmongo.MongoDBRuntime;
+import de.flapdoodle.embedmongo.MongodExecutable;
+import de.flapdoodle.embedmongo.MongodProcess;
+import de.flapdoodle.embedmongo.config.MongodConfig;
+import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentBuilder;
+import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.UUID;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -33,24 +48,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 abstract public class AbstractTest extends ResourcedTest {
 
+    private final Logger logger = Logger.getLogger("AbstractTest");
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
-    public static final int CONFLICT = Response.Status.CONFLICT.getStatusCode();
+    static final int CONFLICT = Response.Status.CONFLICT.getStatusCode();
+    static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
-    public static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
-
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
+    private MongodExecutable mongodExe;
+    private MongodProcess mongod;
 
     /*
      * Some utility methods for interacting with HTTP-services.
      */
 
     public <T> Response post(Client client, String path, T value) throws IOException {
-        mockValidateTokenResponse();
-        return post(client, path, "testuser", value);
-    }
-
-    public <T> Response post(Client client, String path, String user, T value) throws IOException {
         mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
@@ -61,11 +73,6 @@ abstract public class AbstractTest extends ResourcedTest {
 
     public <T> Response put(Client client, String path, T value) throws IOException {
         mockValidateTokenResponse();
-        return put(client, path, "testuser", value);
-    }
-
-    public <T> Response put(Client client, String path, String user, T value) throws IOException {
-        mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
@@ -75,10 +82,6 @@ abstract public class AbstractTest extends ResourcedTest {
 
     public Response delete(Client client, String path) throws IOException {
         mockValidateTokenResponse();
-        return delete(client, path, "testuser");
-    }
-
-    public Response delete(Client client, String path, String user) {
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
@@ -91,10 +94,6 @@ abstract public class AbstractTest extends ResourcedTest {
         return getWithMediaType(client, path, MediaType.APPLICATION_JSON_TYPE);
     }
 
-    public Response getTextPlain(Client client, String path) {
-        return getWithMediaType(client, path, MediaType.TEXT_PLAIN_TYPE);
-    }
-
     private Response getWithMediaType(Client client, String path, MediaType mediaType) {
         return client.target(path)
                 .request(mediaType)
@@ -102,14 +101,15 @@ abstract public class AbstractTest extends ResourcedTest {
                 .get(Response.class);
     }
 
-    public Response check200(Response response) throws IOException {
-        return checkStatus(200, response);
+    void check200(Response response) {
+        checkStatus(200, response);
     }
 
-    public Response checkStatus(int status, Response response) throws IOException {
-
+    public Response checkStatus(int status, Response response) {
+        if (response.getStatus() != status) {
+            logger.error("Incorrect response status: " + response.toString());
+        }
         assertThat(response.getStatus()).isEqualTo(status);
-
         return response;
     }
 
@@ -126,7 +126,7 @@ abstract public class AbstractTest extends ResourcedTest {
         return String.format("http://localhost:%d/api/%s", rule().getLocalPort(), path);
     }
 
-    public void mockTranslateResponse(){
+    void mockTranslateResponse(){
         final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
         final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
         String mockString = "TranslateMock";
@@ -140,7 +140,7 @@ abstract public class AbstractTest extends ResourcedTest {
         DatabaseTranslateServiceAPI.getInstance().setClient(clientMock);
     }
 
-    public void mockValidateResponse(){
+    void mockValidateResponse(){
         final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
         final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
         ValidateResponse entity = new ValidateResponse(true, "mockedValidatedRestriction");
@@ -171,7 +171,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 "\"email_verified\": \"true\", " +
                 "\"access_type\": \"online\" " +
                 " }";
-        InputStream inputStream = IOUtils.toInputStream(result);
+        InputStream inputStream = IOUtils.toInputStream(result, Charset.defaultCharset());
         HttpClient client = Mockito.mock(HttpClient.class);
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         HttpEntity entity = Mockito.mock(HttpEntity.class);
@@ -180,4 +180,33 @@ abstract public class AbstractTest extends ResourcedTest {
         Mockito.when(entity.getContent()).thenReturn(inputStream);
         OAuthAuthenticator.getInstance().setHttpClient(client);
     }
+
+    Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {
+        Timestamp createDate = new Timestamp(new Date().getTime());
+        return new ConsentBuilder().
+                setRequiresManualReview(false).
+                setUseRestriction(useRestriction).
+                setDataUse(dataUse).
+                setName(UUID.randomUUID().toString()).
+                setCreateDate(createDate).
+                setLastUpdate(createDate).
+                setSortDate(createDate).
+                build();
+    }
+
+    protected MongoClient setUpMongoClient() throws IOException {
+        // Creating Mongodbruntime instance
+        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
+        // Creating MongodbExecutable
+        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 27017, false, "target/mongo"));
+        // Starting Mongodb
+        mongod = mongodExe.start();
+        return new MongoClient("localhost", 27017);
+    }
+
+    protected void shutDownMongo() {
+        mongod.stop();
+        mongodExe.cleanup();
+    }
+
 }
