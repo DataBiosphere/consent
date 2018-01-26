@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.collections.Closure;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -14,8 +12,6 @@ import java.sql.SQLException;
 
 public class ConsentMapper implements ResultSetMapper<Consent> {
 
-    private Logger logger = Logger.getLogger("ConsentMapper");
-
     public Consent map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         Consent consent = new Consent();
         consent.setConsentId(r.getString("consentId"));
@@ -24,11 +20,10 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         consent.setDulName(r.getString("dulName"));
         try {
             consent.setUseRestriction(UseRestriction.parse(r.getString("useRestriction")));
-            consent.setDataUse(DataUseDTO.parseDataUse(r.getString("dataUse")));
         } catch (IOException e) {
-            logger.error("Unable to parse object from database: " + e.getMessage());
             throw new SQLException(e);
         }
+        consent.setDataUse(DataUseDTO.parseDataUse(r.getString("dataUse")).orElse(null));
         consent.setName(r.getString("name"));
         consent.setCreateDate(r.getTimestamp("createDate"));
         consent.setSortDate(r.getTimestamp("sortDate"));
