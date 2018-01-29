@@ -18,6 +18,21 @@ mvn clean test package
 Tests spin up embedded mongo and http servers that run against localhost. 
 Ensure that your test environment supports that. 
 
+
+#### Docker
+
+Consent docker images are stored in the cloud in the [Consent Dockerhub repo](https://hub.docker.com/r/broadinstitute/consent).
+```
+# to build the docker image
+./consent-ws/build.sh -d build
+
+# to build the docker image and push it to dockerhub 
+./consent-ws/build.sh -d push
+
+# to pull the docker image from dockerhub
+docker pull broadinstitute/consent
+```
+
 ### Render Configs 
 Specific to internal Broad systems:
 ```bash
@@ -78,3 +93,4 @@ elasticSearch:
 Consent will now point to a local ES instance. 
 I also suggest changing the default bucket location so uploaded
 ontology files do not interfere with other dev environments.
+
