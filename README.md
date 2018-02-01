@@ -2,6 +2,7 @@ Consent Web Services
 ====================
 
 [![Build Status](https://travis-ci.org/DataBiosphere/consent.svg?branch=develop)](https://travis-ci.org/DataBiosphere/consent)
+[![codecov](https://codecov.io/gh/DataBiosphere/consent/branch/develop/graph/badge.svg)](https://codecov.io/gh/DataBiosphere/consent)
 
 # Consent Web Services API
 
