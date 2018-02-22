@@ -22,7 +22,13 @@ public class StatusResource {
     @Produces("application/json")
     public Response getStatus() {
         Map<String, HealthCheck.Result> results = healthChecks.runHealthChecks();
-        return Response.ok(results).build();
+        HealthCheck.Result mysql = results.getOrDefault("mysql", HealthCheck.Result.unhealthy("Unable to access mysql database"));
+        HealthCheck.Result mongodb = results.getOrDefault("mongodb", HealthCheck.Result.unhealthy("Unable to access mongodb database"));
+        if (!mysql.isHealthy() || !mongodb.isHealthy()) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(results).build();
+        } else {
+            return Response.ok(results).build();
+        }
     }
 
 }
