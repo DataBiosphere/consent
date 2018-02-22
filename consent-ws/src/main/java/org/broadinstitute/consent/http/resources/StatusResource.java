@@ -24,10 +24,10 @@ public class StatusResource {
         Map<String, HealthCheck.Result> results = healthChecks.runHealthChecks();
         HealthCheck.Result mysql = results.getOrDefault("mysql", HealthCheck.Result.unhealthy("Unable to access mysql database"));
         HealthCheck.Result mongodb = results.getOrDefault("mongodb", HealthCheck.Result.unhealthy("Unable to access mongodb database"));
-        if (!mysql.isHealthy() || !mongodb.isHealthy()) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(results).build();
-        } else {
+        if (mysql.isHealthy() && mongodb.isHealthy()) {
             return Response.ok(results).build();
+        } else {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(results).build();
         }
     }
 
