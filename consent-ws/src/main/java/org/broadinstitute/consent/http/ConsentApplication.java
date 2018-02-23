@@ -217,6 +217,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
+        env.jersey().register(new StatusResource(env.healthChecks()));
 
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
