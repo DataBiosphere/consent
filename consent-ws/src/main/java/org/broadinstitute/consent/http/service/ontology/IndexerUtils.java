@@ -60,12 +60,12 @@ public class IndexerUtils {
             try {
                 HttpEntity settings = new NStringEntity(
                     "{" +
-                       "  \"settings\": {" +
-                       "    \"index\": {" +
-                       "      \"number_of_replicas\": " + targetReplicaCount +
-                       "    }" +
-                       "  }" +
-                       "}",
+                    "  \"settings\": {" +
+                    "    \"index\": {" +
+                    "      \"number_of_replicas\": " + targetReplicaCount +
+                    "    }" +
+                    "  }" +
+                    "}",
                     ContentType.APPLICATION_JSON);
 
                 client.performRequest(
