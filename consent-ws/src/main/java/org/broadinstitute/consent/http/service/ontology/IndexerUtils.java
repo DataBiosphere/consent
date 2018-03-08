@@ -49,7 +49,7 @@ public class IndexerUtils {
             IRI_FILTERS.stream().anyMatch(f -> owlClass.getIRI().toString().contains(f));
     }
 
-    void checkIndex(RestClient client, String indexName) {
+    void checkIndex(RestClient client, String indexName, int targetReplicaCount) {
         try {
             client.performRequest(
                     "GET",
@@ -58,9 +58,21 @@ public class IndexerUtils {
         } catch (ResponseException re) {
             // Response exception indicates a status code such as 404 not found, so try creating it.
             try {
+                HttpEntity settings = new NStringEntity(
+                    "{" +
+                       "  \"settings\": {" +
+                       "    \"index\": {" +
+                       "      \"number_of_replicas\": " + targetReplicaCount +
+                       "    }" +
+                       "  }" +
+                       "}",
+                    ContentType.APPLICATION_JSON);
+
                 client.performRequest(
                         "PUT",
                         ElasticSearchSupport.getIndexPath(indexName),
+                        null,
+                        settings,
                         ElasticSearchSupport.jsonHeader);
             } catch (IOException ioe) {
                 logger.error("Exception creating index: " + indexName + ": " + ioe.getMessage());
