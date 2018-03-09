@@ -17,6 +17,7 @@ public class IndexOntologyService implements Managed {
     private final String indexName;
     private IndexerUtils utils = new IndexerUtils();
     private RestClient client;
+    private int targetReplicaCount;
 
     @Override
     public void start() throws Exception { }
@@ -31,6 +32,9 @@ public class IndexOntologyService implements Managed {
     public IndexOntologyService(ElasticSearchConfiguration config) {
         this.indexName = config.getIndexName();
         this.client = ElasticSearchSupport.createRestClient(config);
+        // If multiple servers specified, replicate to all of them.
+        // If the environment only specifies 1 server, set replicas to 0 so we (accurately) report Green status.
+        this.targetReplicaCount = config.getServers().size() - 1;
     }
 
     /**
@@ -40,7 +44,7 @@ public class IndexOntologyService implements Managed {
      * @throws IOException The exception
      */
     public void indexOntologies(List<StreamRec> streamRecList) throws IOException {
-        utils.checkIndex(client, indexName);
+        utils.checkIndex(client, indexName, targetReplicaCount);
         try {
             for (StreamRec streamRec : streamRecList) {
                 // Deprecate everything that might already exist for this ontology file
