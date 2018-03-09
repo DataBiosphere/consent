@@ -71,7 +71,7 @@ public class IndexerUtils {
                 client.performRequest(
                         "PUT",
                         ElasticSearchSupport.getIndexPath(indexName),
-                        null,
+                        Collections.emptyMap(),
                         settings,
                         ElasticSearchSupport.jsonHeader);
             } catch (IOException ioe) {
