@@ -39,7 +39,7 @@ public class StoreOntologyService   {
                     type,
                     url_suffix);
         }catch (IOException | GeneralSecurityException e) {
-            throw new InternalServerErrorException("Problem with storage service.");
+            throw new InternalServerErrorException("Problem with storage service. (Error 10)");
         }
     }
 
@@ -52,7 +52,7 @@ public class StoreOntologyService   {
                             srec.getFileType(),
                             url_suffix));
                 }catch (IOException | URISyntaxException | GeneralSecurityException e) {
-                    throw new InternalServerErrorException("Problem with storage service.");
+                    throw new InternalServerErrorException("Problem with storage service. (Error 20)");
                 }
             }
         }
@@ -67,7 +67,7 @@ public class StoreOntologyService   {
             if (e instanceof HttpResponseException && ((HttpResponseException) e).getStatusCode() == 404) {
                 return null;
             } else {
-                throw new InternalError("Problem with storage service.");
+                throw new InternalError("Problem with storage service. (Error 30)");
             }
         }
     }
@@ -76,7 +76,7 @@ public class StoreOntologyService   {
         try {
             return store.getStorageDocument(fileUrl);
         } catch (Exception e) {
-            throw new InternalError("Problem with storage service.");
+            throw new InternalError("Problem with storage service. (Error 40)");
         }
     }
 
@@ -84,7 +84,7 @@ public class StoreOntologyService   {
         try {
             store.deleteStorageDocument(fileUrl);
         }catch (Exception e) {
-            throw new InternalError("Problem with storage service.");
+            throw new InternalError("Problem with storage service. (Error 50)");
         }
     }
 }
