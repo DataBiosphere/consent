@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
@@ -78,6 +79,9 @@ public class ConsentResource extends Resource {
             if (rec.getDataUse() == null) {
                 throw new IllegalArgumentException("Data Use Object is required.");
             }
+            if (rec.getDataUseLetter() != null) {
+                checkValidDUL(rec);
+            }
             Consent consent = api.create(rec);
             auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
@@ -103,6 +107,9 @@ public class ConsentResource extends Resource {
             }
             if (updated.getDataUse() == null) {
                 throw new IllegalArgumentException("Data Use Object is required.");
+            }
+            if (updated.getDataUseLetter() != null) {
+                checkValidDUL(updated);
             }
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             updated = api.update(id, updated);
@@ -178,6 +185,17 @@ public class ConsentResource extends Resource {
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
+    }
+
+    private void checkValidDUL(Consent rec) {
+        if (rec.getDataUseLetter() != null) {
+            // ensure that the URL is a valid one
+            try {
+                new GenericUrl(rec.getDataUseLetter());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid Data Use Letter URL: " + rec.getDataUseLetter());
+            }
+        }
     }
 
 }

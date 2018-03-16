@@ -181,7 +181,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         checkConsentExists(consentId);
         validateAssociations(new_associations);
         for (ConsentAssociation association : new_associations) {
-            logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
+            logger.info(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
                     association.getAssociationType(), association.getElements().size()));
             validateElements(association.getElements());
             try {
@@ -239,7 +239,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         List<Long> insertedIds = insertBatch.executeAndGenerateKeys(LongColumnMapper.PRIMITIVE).list();
         h.close();
         List<String> stringsList = new ArrayList<>();
-        stringsList.addAll(insertedIds.stream().map(Object::toString).collect(Collectors.toList()));
+        for (Long id: insertedIds) stringsList.add(id.toString());
         return stringsList;
     }
 
