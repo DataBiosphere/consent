@@ -97,6 +97,12 @@ public class ConsentsServiceTest extends AbstractTest {
      * Then find the associations that were just created.
      *
      * TODO: This test is broken. The asserts were never actually tested.
+     * TODO: There is also a cartesian product bug in the endpoint:
+     * See https://broadinstitute.atlassian.net/browse/GAWB-3313
+     *
+     * Additionally, this test is not idempotent with other tests. If there are consents with
+     * sample associations, they will be retrieved here and throw off the count. Need a completely
+     * clean db to test this feature.
      */
     @Test
     @Ignore
