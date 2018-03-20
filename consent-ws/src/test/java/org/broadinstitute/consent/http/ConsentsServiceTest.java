@@ -64,6 +64,20 @@ public class ConsentsServiceTest extends AbstractTest {
     }
 
     @Test
+    public void testFindConsentsWithNoIds() throws IOException {
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.
+                target(path2Url("/consents")).
+                queryParam("ids", "");
+        mockValidateTokenResponse();
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
+                header("Authorization", "Bearer access-token").
+                get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(NOT_FOUND);
+    }
+
+    @Test
     public void testFindNoConsents() throws IOException {
         Client client = ClientBuilder.newClient();
         mockValidateTokenResponse();
