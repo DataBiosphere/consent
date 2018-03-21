@@ -188,13 +188,11 @@ public class ConsentResource extends Resource {
     }
 
     private void checkValidDUL(Consent rec) {
-        if (rec.getDataUseLetter() != null) {
-            // ensure that the URL is a valid one
-            try {
-                new GenericUrl(rec.getDataUseLetter());
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Invalid Data Use Letter URL: " + rec.getDataUseLetter());
-            }
+        // ensure that the URL is a valid one
+        try {
+            new GenericUrl(rec.getDataUseLetter());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid Data Use Letter URL: " + rec.getDataUseLetter());
         }
     }
 
