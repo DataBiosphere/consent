@@ -1733,6 +1733,31 @@ paths:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
+  /api/match/{consentId}/{darId}:
+    get:
+      summary: getMatches
+      description: Returns whether a consent and a data access request match or not
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: darId
+          in: path
+          description: Data Access Request ID
+          required: true
+          type: string
+      tags:
+        - Consent
+        - Data Access Request
+        - Match
+      responses:
+        '200':
+          description: Returns a match result of the stuctured use restrictions of the Consent
+            and Data Access Request. If no results are found, no data is returned.
+          schema:
+            $ref: '#/definitions/MatchResult'
   /api/report:
       post:
         summary: createdHelpReport
@@ -2126,6 +2151,27 @@ definitions:
       hasConcerns:
         type: boolean
         description: For Dataset elections, it is a flag for DataSet owners concerns.
+  MatchResult:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: The id of the stored match result
+      consent:
+        type: string
+        description: The Consent ID
+      purpose:
+        type: string
+        description: The Data Access Request ID
+      match:
+        type: boolean
+        description: The match condition between the consent and data access request
+      failed:
+        type: boolean
+        description: Indicates a system failure or not. If true, the system was not able to perform a logic match between the two objects.
+      createDate:
+        type: string
+        description: A string representation of the date that this match result was created.
   Match:
     type: object
     properties:
