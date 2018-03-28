@@ -1733,19 +1733,19 @@ paths:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
-  /api/match/{consentId}/{darId}:
+  /api/match/{consentId}/{purposeId}:
     get:
       summary: getMatches
-      description: Returns whether a consent and a data access request match or not
+      description: Returns the match results between a Consent and a Data Access Request.
       parameters:
         - name: consentId
           in: path
           description: Consent ID
           required: true
           type: string
-        - name: darId
+        - name: purposeId
           in: path
-          description: Data Access Request ID
+          description: Data Access Request (or research purpose) ID
           required: true
           type: string
       tags:
@@ -2165,10 +2165,11 @@ definitions:
         description: The Data Access Request ID
       match:
         type: boolean
-        description: The match condition between the consent and data access request
+        description: The match condition between the Consent and Data Access Request
       failed:
         type: boolean
-        description: Indicates a system failure or not. If true, the system was not able to perform a logic match between the two objects.
+        description: Indicates a system failure or not. If true, the system was not able to
+          perform a logic match between the two objects.
       createDate:
         type: string
         description: A string representation of the date that this match result was created.
