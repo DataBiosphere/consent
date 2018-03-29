@@ -1758,6 +1758,10 @@ paths:
             and Data Access Request. If no results are found, no data is returned.
           schema:
             $ref: '#/definitions/MatchResult'
+        '500':
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
   /api/report:
       post:
         summary: createdHelpReport
