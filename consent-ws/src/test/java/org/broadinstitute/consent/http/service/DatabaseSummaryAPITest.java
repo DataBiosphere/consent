@@ -149,7 +149,8 @@ public class DatabaseSummaryAPITest {
         Vote v3 = new Vote(3, false, dacUserId, new Date(), new Date(), 3, "", voteType, false, false);
         Vote v4 = new Vote(4, true, dacUserId, new Date(), new Date(), 4, "", voteType, false, false);
         Vote v5 = new Vote(5, true, dacUserId, new Date(), new Date(), 5, "", voteType, false, false);
-        return Arrays.asList(v1, v2, v3, v4, v5);
+        Vote nul = new Vote(6, null, dacUserId, new Date(), new Date(), 6, "", voteType, false, false);
+        return Arrays.asList(v1, v2, v3, v4, v5, nul);
     }
 
 }
