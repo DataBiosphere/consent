@@ -122,9 +122,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return summaryList;
     }
 
-    private List<Vote> filterVotes(List<Vote> votes, Boolean voteValue) {
+    private List<Vote> filterVotes(List<Vote> votes, Boolean desiredValue) {
         return votes.stream().filter(
-                v -> v.getType().equals(VoteType.AGREEMENT.getValue()) && v.getVote() != null && v.getVote().equals(voteValue)
+                v -> v.getType().equals(VoteType.AGREEMENT.getValue()) && v.getVote() != null && v.getVote().equals(desiredValue)
         ).collect(Collectors.toList());
     }
 
