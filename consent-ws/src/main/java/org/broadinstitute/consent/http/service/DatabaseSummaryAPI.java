@@ -110,8 +110,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
             List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
             List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
 
-            List<Vote> agreementYesVotes = filterVotes(votes, Boolean.TRUE);
-            List<Vote> agreementNoVotes = filterVotes(votes, Boolean.FALSE);
+            List<Vote> agreementYesVotes = filterAgreementVotes(votes, Boolean.TRUE);
+            List<Vote> agreementNoVotes = filterAgreementVotes(votes, Boolean.FALSE);
 
             if (CollectionUtils.isNotEmpty(agreementYesVotes) || CollectionUtils.isNotEmpty(agreementNoVotes)) {
                 summaryList.add(createSummary(0, agreementYesVotes.size(), agreementNoVotes.size()));
@@ -122,7 +122,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return summaryList;
     }
 
-    private List<Vote> filterVotes(List<Vote> votes, Boolean desiredValue) {
+    private List<Vote> filterAgreementVotes(List<Vote> votes, Boolean desiredValue) {
         return votes.stream().filter(
                 v -> v.getType().equals(VoteType.AGREEMENT.getValue()) && v.getVote() != null && v.getVote().equals(desiredValue)
         ).collect(Collectors.toList());
