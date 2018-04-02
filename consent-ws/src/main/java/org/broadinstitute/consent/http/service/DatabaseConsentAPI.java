@@ -181,7 +181,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         checkConsentExists(consentId);
         validateAssociations(new_associations);
         for (ConsentAssociation association : new_associations) {
-            logger.info(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
+            logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
                     association.getAssociationType(), association.getElements().size()));
             validateElements(association.getElements());
             try {
