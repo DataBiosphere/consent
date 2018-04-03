@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.glassfish.jersey.client.ClientProperties;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -42,7 +43,10 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         this.dataAccessAPI = darAPI;
         this.consentAPI = consentAPI;
         this.dsAPI = dsAPI;
-        this.matchServiceTarget = client.target(config.getMatchURL());
+        Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
+        client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
+        client.property(ClientProperties.READ_TIMEOUT, timeout);
+        matchServiceTarget = client.target(config.getMatchURL());
     }
 
     @Override
