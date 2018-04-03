@@ -2173,7 +2173,7 @@ definitions:
       failed:
         type: boolean
         description: Indicates a system failure or not. If true, the system was not able to
-          perform a logic match between the two objects.
+          perform a logic match between the two objects due to a server error.
       createDate:
         type: string
         description: A string representation of the date that this match result was created.
