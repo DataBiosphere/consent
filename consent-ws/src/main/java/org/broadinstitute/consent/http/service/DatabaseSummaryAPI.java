@@ -100,6 +100,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private List<Summary> getMatchSummaryCases() {
         List<Summary> summaryList = new ArrayList<>();
         summaryList.add(createSummary(0, matchDAO.countMatchesByResult(Boolean.TRUE), matchDAO.countMatchesByResult(Boolean.FALSE)));
+
         List<Election> latestElections = electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue());
         List<Election> reviewedElections = null;
         if(!CollectionUtils.isEmpty(latestElections)){
@@ -108,17 +109,23 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         if( !CollectionUtils.isEmpty(reviewedElections)){
             List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
             List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
-            List<Vote> agreementVotes = votes.stream().filter(v -> v.getType().equals(VoteType.AGREEMENT.getValue())).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(agreementVotes)){
-                Map<Boolean, List<Vote>> partition =
-                        agreementVotes.stream()
-                                .collect(Collectors.partitioningBy(v -> v.getVote()));
-                summaryList.add(createSummary(0, partition.get(Boolean.TRUE).size(), partition.get(Boolean.FALSE).size()));
+
+            List<Vote> agreementYesVotes = filterAgreementVotes(votes, Boolean.TRUE);
+            List<Vote> agreementNoVotes = filterAgreementVotes(votes, Boolean.FALSE);
+
+            if (CollectionUtils.isNotEmpty(agreementYesVotes) || CollectionUtils.isNotEmpty(agreementNoVotes)) {
+                summaryList.add(createSummary(0, agreementYesVotes.size(), agreementNoVotes.size()));
             }
         }else{
             summaryList.add(createSummary(0,0,0));
         }
         return summaryList;
+    }
+
+    private List<Vote> filterAgreementVotes(List<Vote> votes, Boolean desiredValue) {
+        return votes.stream().filter(
+                v -> v.getType().equals(VoteType.AGREEMENT.getValue()) && v.getVote() != null && v.getVote().equals(desiredValue)
+        ).collect(Collectors.toList());
     }
 
 
