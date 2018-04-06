@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.DataUseDTO;
-import org.broadinstitute.consent.http.models.grammar.*;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.grammar.*;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -119,7 +119,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, null);
         Response response = post(client, consentPath(), rec);
-        assertThat(response.getStatus() == BAD_REQUEST);
+        assertThat(response.getStatus()).isEqualTo(BAD_REQUEST);
     }
 
     @Test
@@ -131,7 +131,29 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
         Consent update = generateNewConsent(everything, null);
         Response updateResponse = put(client, createdLocation, update);
-        assertThat(updateResponse.getStatus() == BAD_REQUEST);
+        assertThat(updateResponse.getStatus()).isEqualTo(BAD_REQUEST);
+    }
+
+    @Test
+    public void testInvalidDULCreate() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Consent rec = generateNewConsent(everything, generalUse);
+        rec.setDataUseLetter("invalidUrl");
+        Response response = post(client, consentPath(), rec);
+        assertThat(response.getStatus()).isEqualTo(BAD_REQUEST);
+    }
+
+    @Test
+    public void testInvalidDULUpdate() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Consent rec = generateNewConsent(everything, generalUse);
+        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
+        String createdLocation = checkHeader(response, "Location");
+
+        Consent update = generateNewConsent(everything, null);
+        update.setDataUseLetter("invalidUrl");
+        Response updateResponse = put(client, createdLocation, update);
+        assertThat(updateResponse.getStatus()).isEqualTo(BAD_REQUEST);
     }
 
     private void assertValidConsentResource(Client client, Consent rec) throws IOException {

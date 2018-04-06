@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.HelpReport;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -40,7 +41,13 @@ public class HelpReportTest  extends AbstractTest {
 
     @Before
     public void setUp() throws IOException {
+        removeReports();
         mockValidateTokenResponse();
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        removeReports();
     }
 
     @Test
@@ -68,13 +75,13 @@ public class HelpReportTest  extends AbstractTest {
     private void testRetrieveAllReportsByNotAdminUser() throws IOException {
         Client client = ClientBuilder.newClient();
         List<HelpReport> reports = getJson(client,  path2Url(HELP_REPORT_USER_URL + USER_ID)).readEntity(new GenericType<List<HelpReport>>() {});
-        assertThat(reports.size() == 3);
-        reports.stream().forEach(r -> {
+        assertThat(reports.size()).isEqualTo(3);
+        reports.forEach(r -> {
                     assertThat(r.getUserName().equals(USER_NAME));
                     assertThat(r.getSubject().contains(SUBJECT));
                     assertThat(r.getDescription().contains(DESCRIPTION));
-                    assertThat(r.getReportId() != null);
-                    assertThat(r.getCreateDate() != null);
+                    assertThat(r.getReportId()).isNotNull();
+                    assertThat(r.getCreateDate()).isNotNull();
                 }
         );
 
@@ -84,7 +91,7 @@ public class HelpReportTest  extends AbstractTest {
         Client client = ClientBuilder.newClient();
         List<HelpReport> reports = getJson(client,  path2Url(HELP_REPORT_USER_URL + USER_ADMIN_ID)).readEntity(new GenericType<List<HelpReport>>() {
         });
-        reports.stream().forEach(r -> {
+        reports.forEach(r -> {
                     try {
                         checkStatus(OK,
                                 delete(client, path2Url(HELP_REPORT_URL+"/"+r.getReportId())));

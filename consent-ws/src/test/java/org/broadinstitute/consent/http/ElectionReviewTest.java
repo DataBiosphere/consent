@@ -39,7 +39,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
         Client client = ClientBuilder.newClient();
         ElectionReview electionReview = getJson(client, electionReviewPath(CONSENT_ID, ElectionType.TRANSLATE_DUL.getValue())).readEntity(new GenericType<ElectionReview>() {
         });
-        assertThat(electionReview == null);
+        assertThat(electionReview).isNull();
     }
 
     @Test
@@ -48,7 +48,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
         createElection();
         ElectionReview electionReview = getJson(client, electionReviewPath(CONSENT_ID, ElectionType.TRANSLATE_DUL.getValue())).readEntity(new GenericType<ElectionReview>() {
         });
-        assertThat(electionReview != null);
+        assertThat(electionReview).isNotNull();
         assertThat(electionReview.getConsent().getConsentId().equals(CONSENT_ID));
         assertThat(electionReview.getElection().getReferenceId().equals(CONSENT_ID));
         assertThat(!electionReview.getReviewVote().isEmpty());
@@ -76,7 +76,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
         Client client = ClientBuilder.newClient();
         ElectionReview electionReview = getJson(client, electionReviewByElectionIdPath(123)).readEntity(new GenericType<ElectionReview>() {
         });
-        assertThat(electionReview == null);
+        assertThat(electionReview).isNull();
     }
 
     @Test
@@ -85,7 +85,7 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
         Election election = createElection();
         ElectionReview electionReview = getJson(client, electionReviewByElectionIdPath(election.getElectionId())).readEntity(new GenericType<ElectionReview>() {
         });
-        assertThat(electionReview != null);
+        assertThat(electionReview).isNotNull();
         assertThat(electionReview.getElection().getElectionId().equals(election.getElectionId()));
         assertThat(electionReview.getElection().getReferenceId().equals(CONSENT_ID));
         assertThat(electionReview.getConsent().getConsentId().equals(CONSENT_ID));
@@ -96,10 +96,10 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
     public void testGetLastClosedElectionReviewByReferenceId() throws IOException {
         Client client = ClientBuilder.newClient();
         mockValidateTokenResponse();
-        Election election = createElection();
+        createElection();
         ElectionReview electionReview = getJson(client, lastElectionReviewPath(CONSENT_ID)).readEntity(new GenericType<ElectionReview>() {
         });
-        assertThat(electionReview == null);
+        assertThat(electionReview).isNull();
         deleteElection();
     }
 
@@ -112,11 +112,10 @@ public class ElectionReviewTest  extends ElectionReviewServiceTest {
         Response response = checkStatus(CREATED,
                 post(client, electionConsentPath(CONSENT_ID), election));
         String createdLocation = checkHeader(response, "Location");
-        Election created = getJson(client, createdLocation).readEntity(Election.class);
-        return created;
+        return getJson(client, createdLocation).readEntity(Election.class);
     }
 
-    public void deleteElection() throws IOException {
+    private void deleteElection() throws IOException {
         Client client = ClientBuilder.newClient();
         mockValidateTokenResponse();
         List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() {

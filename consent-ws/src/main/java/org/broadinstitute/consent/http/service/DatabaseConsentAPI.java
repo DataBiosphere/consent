@@ -239,7 +239,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         List<Long> insertedIds = insertBatch.executeAndGenerateKeys(LongColumnMapper.PRIMITIVE).list();
         h.close();
         List<String> stringsList = new ArrayList<>();
-        stringsList.addAll(insertedIds.stream().map(Object::toString).collect(Collectors.toList()));
+        for (Long id: insertedIds) stringsList.add(id.toString());
         return stringsList;
     }
 

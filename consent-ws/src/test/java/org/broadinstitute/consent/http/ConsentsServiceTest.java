@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -16,7 +17,6 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ public class ConsentsServiceTest extends AbstractTest {
     @Test
     public void testFindConsents() throws IOException {
         Collection<String> ids = populateConsents();
-        assertThat(ids.size() == N);
+        assertThat(ids.size()).isEqualTo(N);
 
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.
@@ -57,10 +57,24 @@ public class ConsentsServiceTest extends AbstractTest {
                 request(MediaType.APPLICATION_JSON_TYPE).
                 header("Authorization", "Bearer access-token").
                 get(Response.class);
-        assertThat(response.getStatus() == OK);
+        assertThat(response.getStatus()).isEqualTo(OK);
         mockValidateTokenResponse();
         List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
-        assertThat(consents.size() == N);
+        assertThat(consents.size()).isEqualTo(N);
+    }
+
+    @Test
+    public void testFindConsentsWithNoIds() throws IOException {
+        Client client = ClientBuilder.newClient();
+        WebTarget webTarget = client.
+                target(path2Url("/consents")).
+                queryParam("ids", "");
+        mockValidateTokenResponse();
+        Response response = webTarget.
+                request(MediaType.APPLICATION_JSON_TYPE).
+                header("Authorization", "Bearer access-token").
+                get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(NOT_FOUND);
     }
 
     @Test
@@ -72,7 +86,7 @@ public class ConsentsServiceTest extends AbstractTest {
                 request(MediaType.APPLICATION_JSON_TYPE).
                 header("Authorization", "Bearer access-token").
                 get(Response.class);
-        assertThat(response.getStatus() == NOT_FOUND);
+        assertThat(response.getStatus()).isEqualTo(NOT_FOUND);
     }
 
     @Test
@@ -87,17 +101,28 @@ public class ConsentsServiceTest extends AbstractTest {
                 request(MediaType.APPLICATION_JSON_TYPE).
                 header("Authorization", "Bearer access-token").
                 get(Response.class);
-        assertThat(response.getStatus() == NOT_FOUND);
+        List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
+        assertThat(response.getStatus()).isEqualTo(OK);
+        assertThat(consents).isEmpty();
     }
 
     /**
      * Post a number of consents, then a number of consent associations.
      * Then find the associations that were just created.
+     *
+     * TODO: This test is broken. The asserts were never actually tested.
+     * TODO: There is also a cartesian product bug in the endpoint:
+     * See https://broadinstitute.atlassian.net/browse/GAWB-3313
+     *
+     * Additionally, this test is not idempotent with other tests. If there are consents with
+     * sample associations, they will be retrieved here and throw off the count. Need a completely
+     * clean db to test this feature.
      */
     @Test
+    @Ignore
     public void testFindConsentsBySampleAssociation() throws IOException {
         Collection<String> ids = populateConsentAssociations();
-        assertThat(ids.size() == N);
+        assertThat(ids.size()).isEqualTo(N);
         mockValidateTokenResponse();
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/sample"));
@@ -105,15 +130,15 @@ public class ConsentsServiceTest extends AbstractTest {
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer access-token")
                 .get(Response.class);
-        assertThat(response.getStatus() == OK);
+        assertThat(response.getStatus()).isEqualTo(OK);
         List<Consent> consents = response.readEntity(new GenericType<List<Consent>>() {});
-        assertThat(consents.size() == N);
+        assertThat(consents.size()).isEqualTo(N);
     }
 
     @Test
     public void testFindConsentsByBadAssociation() throws IOException {
         Collection<String> ids = populateConsentAssociations();
-        assertThat(ids.size() == N);
+        assertThat(ids.size()).isEqualTo(N);
         mockValidateTokenResponse();
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/nothing"));
@@ -121,13 +146,13 @@ public class ConsentsServiceTest extends AbstractTest {
                 request(MediaType.APPLICATION_JSON_TYPE).
                 header("Authorization", "Bearer access-token").
                 get(Response.class);
-        assertThat(response.getStatus() == NOT_FOUND);
+        assertThat(response.getStatus()).isEqualTo(NOT_FOUND);
     }
 
     @Test
     public void testFindConsentsWithoutAssociation() throws IOException {
         Collection<String> ids = populateConsentAssociations();
-        assertThat(ids.size() == N);
+        assertThat(ids.size()).isEqualTo(N);
         mockValidateTokenResponse();
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(path2Url("/consents/"));
@@ -135,7 +160,7 @@ public class ConsentsServiceTest extends AbstractTest {
                 request(MediaType.APPLICATION_JSON_TYPE).
                 header("Authorization", "Bearer access-token").
                 get(Response.class);
-        assertThat(response.getStatus() == NOT_FOUND);
+        assertThat(response.getStatus()).isEqualTo(NOT_FOUND);
     }
 
     private Collection<String> populateConsentAssociations() throws IOException {
