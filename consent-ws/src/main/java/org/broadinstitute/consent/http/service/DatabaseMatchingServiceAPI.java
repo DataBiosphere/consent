@@ -18,6 +18,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,26 +28,25 @@ import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
-    ConsentAPI consentAPI;
-    DataAccessRequestAPI dataAccessAPI;
-    DataSetAPI dsAPI;
-    private WebTarget target;
-    GenericType<ResponseMatchingObject> rmo = new GenericType<ResponseMatchingObject>(){};
-    protected Logger logger() {
-        return Logger.getLogger("DatabaseMatchingServiceAPI");
-    }
+    private ConsentAPI consentAPI;
+    private DataAccessRequestAPI dataAccessAPI;
+    private DataSetAPI dsAPI;
+    private WebTarget matchServiceTarget;
+    private GenericType<ResponseMatchingObject> rmo = new GenericType<ResponseMatchingObject>(){};
+    private Logger logger = Logger.getLogger("DatabaseMatchingServiceAPI");
 
     public static void initInstance(Client client, ServicesConfiguration config) {
         MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), AbstractDataSetAPI.getInstance()));
     }
 
-    protected DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DataSetAPI dsAPI){
+    DatabaseMatchingServiceAPI(Client client, ServicesConfiguration config, ConsentAPI consentAPI, DataAccessRequestAPI darAPI, DataSetAPI dsAPI){
         this.dataAccessAPI = darAPI;
         this.consentAPI = consentAPI;
         this.dsAPI = dsAPI;
-        client.property(ClientProperties.CONNECT_TIMEOUT, 10000);
-        client.property(ClientProperties.READ_TIMEOUT,    10000);
-        target = client.target(config.getMatchURL());
+        Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
+        client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
+        client.property(ClientProperties.READ_TIMEOUT, timeout);
+        matchServiceTarget = client.target(config.getMatchURL());
     }
 
     @Override
@@ -59,7 +59,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                 match = singleEntitiesMatch(consent, dar);
             }
         } catch (Exception e) {
-            logger().error("Error finding single match.", e);
+            logger.error("Error finding single match.", e);
             return null;
         }
         return match;
@@ -74,7 +74,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                 try {
                     match = singleEntitiesMatch(consent, dar);
                 } catch (Exception e) {
-                    logger().error("Error finding single match.", e);
+                    logger.error("Error finding single match.", e);
                     match = createMatch(consent.getConsentId(), purposeId, true, false);
                 }
             }
@@ -96,7 +96,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                         matches.add(match);
                     }
                 } catch (Exception e) {
-                    logger().error("Error finding  matches for consent.", e);
+                    logger.error("Error finding  matches for consent.", e);
                     matches.add(createMatch(consentId, dar.get(DarConstants.ID).toString(), true, false));
                 }
             }
@@ -105,24 +105,29 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private Match singleEntitiesMatch(Consent consent, Document dar) throws Exception {
+        if (consent == null) {
+            logger.error("Consent is null");
+            throw new IllegalArgumentException("Consent cannot be null");
+        }
+        if (dar == null) {
+            logger.error("Data Access Request is null");
+            throw new IllegalArgumentException("Data Access Request cannot be null");
+        }
         if(!dar.containsKey(DarConstants.RESTRICTION)){
-            logger().error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
+            logger.error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
             throw new Exception("Data Access Request: " + dar.getString(DarConstants.DAR_CODE) + " cannot be matched. Missing Use Restriction field.");
         }
-        if(consent != null && dar != null){
-            Match match = createMatch(consent.getConsentId(), dar.get(DarConstants.ID).toString(), false, false);
-            RequestMatchingObject requestObject = createRequestObject(consent, dar);
-            String json = new Gson().toJson(requestObject);
-            Response res = target.request("application/json").post(Entity.json(json));
-            if (res.getStatus() == Response.Status.OK.getStatusCode()) {
-                ResponseMatchingObject entity = res.readEntity(rmo);
-                if (entity.isResult()) {
-                    match.setMatch(true);
-                }
+        Match match = createMatch(consent.getConsentId(), dar.get(DarConstants.ID).toString(), false, false);
+        RequestMatchingObject requestObject = createRequestObject(consent, dar);
+        String json = new Gson().toJson(requestObject);
+        Response res = matchServiceTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+        if (res.getStatus() == Response.Status.OK.getStatusCode()) {
+            ResponseMatchingObject entity = res.readEntity(rmo);
+            if (entity.isResult()) {
+                match.setMatch(true);
             }
-            return match;
         }
-        return null;
+        return match;
     }
 
     private Match createMatch(String consentId, String purposeId, boolean failed, boolean isMatch) {
@@ -140,7 +145,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         try {
             consent = consentAPI.retrieve(consentId);
         } catch (UnknownIdentifierException e) {
-            logger().error("Consent for specified id does not exist.", e);
+            logger.error("Consent for specified id does not exist.", e);
         }
         return consent;
     }

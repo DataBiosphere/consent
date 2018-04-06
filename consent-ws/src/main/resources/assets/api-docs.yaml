@@ -1733,6 +1733,35 @@ paths:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
+  /api/match/{consentId}/{purposeId}:
+    get:
+      summary: getMatches
+      description: Returns the match results between a Consent and a Data Access Request.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: purposeId
+          in: path
+          description: Data Access Request (or research purpose) ID
+          required: true
+          type: string
+      tags:
+        - Consent
+        - Data Access Request
+        - Match
+      responses:
+        '200':
+          description: Returns a match result of the stuctured use restrictions of the Consent
+            and Data Access Request. If no results are found, no data is returned.
+          schema:
+            $ref: '#/definitions/MatchResult'
+        '500':
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
   /api/report:
       post:
         summary: createdHelpReport
@@ -2126,6 +2155,28 @@ definitions:
       hasConcerns:
         type: boolean
         description: For Dataset elections, it is a flag for DataSet owners concerns.
+  MatchResult:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: The id of the stored match result
+      consent:
+        type: string
+        description: The Consent ID
+      purpose:
+        type: string
+        description: The Data Access Request ID
+      match:
+        type: boolean
+        description: The match condition between the Consent and Data Access Request
+      failed:
+        type: boolean
+        description: Indicates a system failure or not. If true, the system was not able to
+          perform a logic match between the two objects due to a server error.
+      createDate:
+        type: string
+        description: A string representation of the date that this match result was created.
   Match:
     type: object
     properties:
