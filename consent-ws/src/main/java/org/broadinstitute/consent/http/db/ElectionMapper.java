@@ -15,7 +15,7 @@ public class ElectionMapper implements ResultSetMapper<Election> {
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         UseRestriction useRestriction = null;
 
-        if (StringUtils.isNoneBlank((r.getString("useRestriction")))){
+        if (StringUtils.isNoneBlank((r.getString("useRestriction")))) {
             try {
                 useRestriction = UseRestriction.parse(r.getString("useRestriction"));
             } catch (IOException e) {
@@ -35,7 +35,9 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 (r.getDate("lastUpdate") == null) ? null : r.getDate("lastUpdate"),
                 (r.getString("finalAccessVote") == null) ? null : r.getBoolean("finalAccessVote"),
                 useRestriction,
-                (r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction")
+                (r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"),
+                (r.getString("dataUseLetter") == null) ? null : r.getString("datUseLetter"),
+                (r.getString("dulName") == null) ? null : r.getString("dulName")
         );
     }
 }

@@ -1,7 +1,7 @@
-insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now());
-insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now());
-insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate) values ('testId3',true,'{"type":"everything"}',true,'testName3',now(),now(),now());
-insert into consents (consentId, requiresManualReview, useRestriction, active, name, createDate, sortDate, lastUpdate) values ('testId4', 0, '{"type":"everything"}', 1, 'test name 4', '2015-11-06 14:39:48', '2015-11-06 14:39:48', '2015-11-06 14:39:48');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now(),'');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now(),'');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse) values ('testId3',true,'{"type":"everything"}',true,'testName3',now(),now(),now(),'');
+insert into consents (consentId, requiresManualReview, useRestriction, active, name, createDate, sortDate, lastUpdate,dataUse) values ('testId4', 0, '{"type":"everything"}', 1, 'test name 4', '2015-11-06 14:39:48', '2015-11-06 14:39:48', '2015-11-06 14:39:48','');
 insert into consentassociations(associationId, consentId,associationType,objectId) values (100,'testId','associationType','1');
 insert into consentassociations(associationId, consentId, associationType, objectId) values (101, 'testId', 'associationType', 'SC-20657');
 insert into consentassociations(associationId, consentId, associationType, objectId) values (102, 'testId2', 'associationType', 'SC-20658');

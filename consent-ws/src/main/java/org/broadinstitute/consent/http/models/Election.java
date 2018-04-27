@@ -49,11 +49,18 @@ public class Election {
     @JsonProperty
     private String displayId;
 
+    @JsonProperty
+    private String dataUseLetter;
+
+    @JsonProperty
+    private String dulName;
+
     public Election() {
     }
+
     public Election(Integer electionId, String electionType,
-                    String status, Date createDate,
-                    String referenceId, Date lastUpdate , Boolean finalAccessVote, Integer dataSetId) {
+            String status, Date createDate,
+            String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -64,11 +71,10 @@ public class Election {
         this.dataSetId = dataSetId;
     }
 
-
     public Election(Integer electionId, String electionType,
-                    Boolean finalVote, String finalRationale, String status, Date createDate,
-                    Date finalVoteDate, String referenceId, Date lastUpdate , Boolean finalAccessVote,
-                    UseRestriction useRestriction, String translatedUseRestriction) {
+            Boolean finalVote, String finalRationale, String status, Date createDate,
+            Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
+            UseRestriction useRestriction, String translatedUseRestriction) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -81,6 +87,27 @@ public class Election {
         this.finalVoteDate = finalVoteDate;
         this.useRestriction = useRestriction;
         this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    public Election(Integer electionId, String electionType,
+            Boolean finalVote, String finalRationale, String status, Date createDate,
+            Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
+            UseRestriction useRestriction, String translatedUseRestriction,
+            String dataUserLetter, String dulName) {
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.lastUpdate = lastUpdate;
+        this.finalAccessVote = finalAccessVote;
+        this.finalVote = finalVote;
+        this.finalRationale = finalRationale;
+        this.finalVoteDate = finalVoteDate;
+        this.useRestriction = useRestriction;
+        this.translatedUseRestriction = translatedUseRestriction;
+        this.dataUseLetter = dataUserLetter;
+        this.dulName = dulName;
     }
 
     public Election(Integer electionId, String electionType, String status, Date createDate, String referenceId, Integer dataSetId) {
@@ -211,4 +238,21 @@ public class Election {
     public void setDisplayId(String displayId) {
         this.displayId = displayId;
     }
+
+    public String getDataUseLetter() {
+        return dataUseLetter;
+    }
+
+    public void setDataUseLetter(String dataUseLetter) {
+        this.dataUseLetter = dataUseLetter;
+    }
+
+    public String getDulName() {
+        return dulName;
+    }
+
+    public void setDulName(String dulName) {
+        this.dulName = dulName;
+    }
+
 }
