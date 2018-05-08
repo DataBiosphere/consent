@@ -111,7 +111,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction,  "
             + " e.dataUseLetter, e.dulName, e.archived, e.version, v.rationale finalRationale, v.createDate finalVoteDate, "
-            + " e.lastUpdate, e.finalAccessVote, e.electionType, e.version, e.archived  from election e"
+            + " e.lastUpdate, e.finalAccessVote, e.electionType  from election e"
             + " left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON
             + "' where  e.electionId = :electionId")
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
