@@ -47,6 +47,22 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             @Bind("dataUseLetter") String dataUseLetter,
             @Bind("dulName") String dulName);
 
+    @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction,"
+            + " dataUseLetter, dulName,version,archived) values "
+            + "( :electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction,:dataUseLetter,:dulName,:version,:archived)")
+    @GetGeneratedKeys
+    Integer insertElection(@Bind("electionType") String electionType,
+            @Bind("status") String status,
+            @Bind("createDate") Date createDate,
+            @Bind("referenceId") String referenceId,
+            @Bind("finalAccessVote") Boolean finalAccessVote,
+            @Bind("useRestriction") String useRestriction,
+            @Bind("translatedUseRestriction") String translatedUseRestriction,
+            @Bind("dataUseLetter") String dataUseLetter,
+            @Bind("dulName") String dulName,
+            @Bind("version") Integer version,
+            @Bind("archived") Boolean archived);
+
     @SqlUpdate("insert into election (electionType, status, createDate, referenceId, datasetId) values "
             + "( :electionType, :status, :createDate,:referenceId, :datasetId)")
     @GetGeneratedKeys
@@ -267,4 +283,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + " and v.type = 'FINAL'  and e.referenceId in (<darIds>) order by e.createDate asc")
     List<Election> findRequestElectionsByReferenceIds(@BindIn("darIds") List<String> darIds);
 
+    @SqlUpdate("update election set archive = true, lastUpdate = :lastUpdate where electionId = :electionId ")
+    void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
 }

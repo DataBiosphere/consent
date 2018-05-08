@@ -9,9 +9,10 @@ import java.sql.SQLException;
 
 public class DatabaseElectionMapper implements ResultSetMapper<Election> {
 
-
     @Override
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+        System.out.println("------------- DatabaseElectionMapper --------------");
+        System.out.flush();
         return new Election(
                 r.getInt("electionId"),
                 r.getString("electionType"),

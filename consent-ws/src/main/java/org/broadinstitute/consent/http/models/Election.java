@@ -55,12 +55,20 @@ public class Election {
     @JsonProperty
     private String dulName;
 
+    @JsonProperty
+    private Boolean archived;
+
+    @JsonProperty
+    private Integer version;
+
     public Election() {
     }
 
     public Election(Integer electionId, String electionType,
             String status, Date createDate,
             String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId) {
+        System.out.println("------------- Election constructor 1 --------------");
+        System.out.flush();
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -75,6 +83,7 @@ public class Election {
             Boolean finalVote, String finalRationale, String status, Date createDate,
             Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
             UseRestriction useRestriction, String translatedUseRestriction) {
+        System.out.println("------------- Election constructor 2 --------------");
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -93,7 +102,9 @@ public class Election {
             Boolean finalVote, String finalRationale, String status, Date createDate,
             Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
             UseRestriction useRestriction, String translatedUseRestriction,
-            String dataUserLetter, String dulName) {
+            String dataUseLetter, String dulName) {
+        System.out.println("------------- Election constructor 3 --------------");
+
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -106,11 +117,37 @@ public class Election {
         this.finalVoteDate = finalVoteDate;
         this.useRestriction = useRestriction;
         this.translatedUseRestriction = translatedUseRestriction;
-        this.dataUseLetter = dataUserLetter;
+        this.dataUseLetter = dataUseLetter;
         this.dulName = dulName;
     }
 
+    public Election(Integer electionId, String electionType,
+            Boolean finalVote, String finalRationale, String status, Date createDate,
+            Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
+            UseRestriction useRestriction, String translatedUseRestriction,
+            String dataUseLetter, String dulName, Integer version, Boolean archived) {
+        System.out.println("------------- Election constructor 4 --------------");
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.lastUpdate = lastUpdate;
+        this.finalAccessVote = finalAccessVote;
+        this.finalVote = finalVote;
+        this.finalRationale = finalRationale;
+        this.finalVoteDate = finalVoteDate;
+        this.useRestriction = useRestriction;
+        this.translatedUseRestriction = translatedUseRestriction;
+        this.dataUseLetter = dataUseLetter;
+        this.dulName = dulName;
+        this.version = version;
+        this.archived = archived;
+    }
+
     public Election(Integer electionId, String electionType, String status, Date createDate, String referenceId, Integer dataSetId) {
+        System.out.println("------------- Election constructor 4 --------------");
+
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -253,6 +290,22 @@ public class Election {
 
     public void setDulName(String dulName) {
         this.dulName = dulName;
+    }
+
+    public Boolean getArchived() {
+        return archived;
+    }
+
+    public void setArchived(Boolean archived) {
+        this.archived = archived;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 
 }

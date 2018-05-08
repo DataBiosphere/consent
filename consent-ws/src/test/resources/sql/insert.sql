@@ -1,7 +1,7 @@
-insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now(),'');
-insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now(),'');
-insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse) values ('testId3',true,'{"type":"everything"}',true,'testName3',now(),now(),now(),'');
-insert into consents (consentId, requiresManualReview, useRestriction, active, name, createDate, sortDate, lastUpdate,dataUse) values ('testId4', 0, '{"type":"everything"}', 1, 'test name 4', '2015-11-06 14:39:48', '2015-11-06 14:39:48', '2015-11-06 14:39:48','');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now(),'','dataUseLetter-link-01.here','dulName-01.pdf');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now(),'','dataUseLetter-link-02.here','dulName-02.pdf');
+insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId3',true,'{"type":"everything"}',true,'testName3',now(),now(),now(),'','dataUseLetter-link-03.here','dulName-03.pdf');
+insert into consents (consentId, requiresManualReview, useRestriction, active, name, createDate, sortDate, lastUpdate,dataUse,dataUseLetter,dulName) values ('testId4', 0, '{"type":"everything"}', 1, 'test name 4', '2015-11-06 14:39:48', '2015-11-06 14:39:48', '2015-11-06 14:39:48','','dataUseLetter-link-04.here','dulName-04.pdf');
 insert into consentassociations(associationId, consentId,associationType,objectId) values (100,'testId','associationType','1');
 insert into consentassociations(associationId, consentId, associationType, objectId) values (101, 'testId', 'associationType', 'SC-20657');
 insert into consentassociations(associationId, consentId, associationType, objectId) values (102, 'testId2', 'associationType', 'SC-20658');
@@ -12,6 +12,7 @@ insert into dacuser(dacUserId,email,displayName,createDate) values(2,'test2@broa
 insert into dacuser(dacUserId,email,displayName,createDate) values(3,'test3@broad.com','testUser2','2015-08-05 13:58:50');
 insert into dacuser(dacUserId,email,displayName,createDate) values(4,'test4@broad.com','testUser3','2015-08-05 13:58:50');
 insert into dacuser(dacUserId,email,displayName,createDate) values(5,'oauthuser@broadinstitute.org','oauth','2015-08-05 13:58:50');
+insert into dacuser(dacUserId,email,displayName,createDate) values(666,'diegogil@broadinstitute.org','oauth','2015-08-05 13:58:50');
 insert into election(electionId, electionType, status, createDate, referenceId) values (130, '2', 'Closed', '2015-11-06 17:52:18', 'testId4');
 INSERT INTO vote(voteId, vote, dacUserId, createDate, electionId, rationale, reminderSent, type) VALUES (2000, 1, 1, '2015-08-05 13:58:50', 130, 'Empty', 0, 'CHAIRPERSON');
 insert into researchpurpose (purposeId,purpose) values(1,'General Use');
@@ -29,4 +30,4 @@ insert into user_role(roleId, dacUserId) values(6,5);
 insert into user_role(roleId, dacUserId) values(5,5);
 insert into user_role(roleId, dacUserId) values(4,5);
 insert into user_role(roleId, dacUserId) values(2,5);
-
+insert into user_role(roleId, dacUserId) values(4,666);

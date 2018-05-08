@@ -20,12 +20,25 @@ public class ElectionResource extends Resource {
         this.api = AbstractElectionAPI.getInstance();
     }
 
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/{id}/archive")
+    @RolesAllowed({"ADMIN"})
+    public Response archiveElection(@PathParam("id") Integer id) {
+        try {
+            System.out.println("----------------------------------- resource archiveElection-------------------------------------");
+            return Response.ok().entity(api.archiveElection(id)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
 
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed({"ADMIN", "DATAOWNER","CHAIRPERSON","MEMBER"})
+    @RolesAllowed({"ADMIN", "DATAOWNER", "CHAIRPERSON", "MEMBER"})
     public Response updateElection(Election rec, @PathParam("id") Integer id) {
         try {
             return Response.ok().entity(api.updateElectionById(rec, id)).build();
@@ -59,6 +72,5 @@ public class ElectionResource extends Resource {
             return createExceptionResponse(e);
         }
     }
-
 
 }

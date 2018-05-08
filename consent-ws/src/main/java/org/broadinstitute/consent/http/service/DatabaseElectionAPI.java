@@ -51,18 +51,18 @@ import java.util.stream.Collectors;
  */
 public class DatabaseElectionAPI extends AbstractElectionAPI {
 
-    private MailMessageDAO mailMessageDAO;
-    private ElectionDAO electionDAO;
-    private ConsentDAO consentDAO;
-    private VoteDAO voteDAO;
-    private DACUserDAO dacUserDAO;
+    private final MailMessageDAO mailMessageDAO;
+    private final ElectionDAO electionDAO;
+    private final ConsentDAO consentDAO;
+    private final VoteDAO voteDAO;
+    private final DACUserDAO dacUserDAO;
     private MongoConsentDB mongo;
-    private DataSetDAO dataSetDAO;
+    private final DataSetDAO dataSetDAO;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
-    private EmailNotifierAPI emailNotifierAPI;
-    private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
-    private ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+    private final EmailNotifierAPI emailNotifierAPI;
+    private static final Logger LOGGER = LoggerFactory.getLogger("DatabaseElectionAPI");
+    private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private final String DATA_USE_LIMITATION = "Data Use Limitation";
     private final String DATA_ACCESS_REQUEST = "Data Access Request";
 
@@ -104,6 +104,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
     }
 
+    @Override
     public void setMongoDBInstance(MongoConsentDB mongo) {
         this.mongo = mongo;
     }
@@ -345,7 +346,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 emailNotifierAPI.sendClosedDataSetElectionsMessage(darElections);
             }
         } catch (MessagingException | IOException | TemplateException e) {
-            logger.error("Exception sending Closed Dataset Elections email. Cause: " + e.getMessage());
+            LOGGER.error("Exception sending Closed Dataset Elections email. Cause: " + e.getMessage());
         }
     }
 
@@ -666,6 +667,31 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             vote.setRationale(rec.getFinalRationale());
             voteDAO.updateVote(vote.getVote(), vote.getRationale(), vote.getUpdateDate(), vote.getVoteId(), vote.getIsReminderSent(), vote.getElectionId(), vote.getCreateDate(), vote.getHasConcerns());
         }
+    }
+
+    @Override
+    public String archiveElection(Integer electionId) {
+        System.out.println("----------------------------------- API archiveElection: " + electionId);
+
+        String result = String.format("{electionid: %d, archived: false }", electionId);
+
+        Election election = electionDAO.findElectionById(electionId);
+
+        if (election == null) {
+            System.out.println("---------------------- Election for specified id does not exist -------------------------");
+            throw new NotFoundException("Election for specified id does not exist");
+
+        } else {
+            System.out.println("election is archived ? : " + election.getArchived());
+        }
+
+        if (election.getArchived() == true) {
+            Date lastUpdate = new Date();
+
+            electionDAO.archiveElectionById(electionId, lastUpdate);
+            result = String.format("{electionid: %d,   archived: true }", electionId);
+        }
+        return result;
     }
 
 }

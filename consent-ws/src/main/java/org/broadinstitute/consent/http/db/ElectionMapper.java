@@ -12,9 +12,12 @@ import java.sql.SQLException;
 
 public class ElectionMapper implements ResultSetMapper<Election> {
 
+    @Override
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         UseRestriction useRestriction = null;
 
+        System.out.println("------------- ElectionMapper --------------");
+        System.out.flush();
         if (StringUtils.isNoneBlank((r.getString("useRestriction")))) {
             try {
                 useRestriction = UseRestriction.parse(r.getString("useRestriction"));
@@ -36,8 +39,10 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 (r.getString("finalAccessVote") == null) ? null : r.getBoolean("finalAccessVote"),
                 useRestriction,
                 (r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"),
-                (r.getString("dataUseLetter") == null) ? null : r.getString("datUseLetter"),
-                (r.getString("dulName") == null) ? null : r.getString("dulName")
+                (r.getString("dataUseLetter") == null) ? null : r.getString("dataUseLetter"),
+                (r.getString("dulName") == null) ? null : r.getString("dulName"),
+                r.getInt("version"),
+                (r.getString("archived") == null) ? null : r.getBoolean("archived")
         );
     }
 }
