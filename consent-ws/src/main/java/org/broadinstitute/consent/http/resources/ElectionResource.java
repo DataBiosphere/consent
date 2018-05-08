@@ -27,7 +27,6 @@ public class ElectionResource extends Resource {
     @RolesAllowed({"ADMIN"})
     public Response archiveElection(@PathParam("id") Integer id) {
         try {
-            System.out.println("----------------------------------- resource archiveElection-------------------------------------");
             return Response.ok().entity(api.archiveElection(id)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

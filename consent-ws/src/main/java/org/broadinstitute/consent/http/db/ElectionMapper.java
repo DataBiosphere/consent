@@ -15,9 +15,6 @@ public class ElectionMapper implements ResultSetMapper<Election> {
     @Override
     public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         UseRestriction useRestriction = null;
-
-        System.out.println("------------- ElectionMapper --------------");
-        System.out.flush();
         if (StringUtils.isNoneBlank((r.getString("useRestriction")))) {
             try {
                 useRestriction = UseRestriction.parse(r.getString("useRestriction"));

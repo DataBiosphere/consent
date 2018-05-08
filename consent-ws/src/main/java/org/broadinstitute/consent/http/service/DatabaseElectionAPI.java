@@ -147,7 +147,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             updateAccessElection(electionId, election.getElectionType(), rec.getStatus());
         }
         Date lastUpdate = new Date();
+
         electionDAO.updateElectionById(electionId, rec.getStatus(), lastUpdate);
+        if(rec.getArchived() != null && rec.getArchived()) {
+            electionDAO.archiveElectionById(electionId, lastUpdate);
+        }
         updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
