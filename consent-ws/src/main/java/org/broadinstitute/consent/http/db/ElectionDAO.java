@@ -34,8 +34,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsWithFinalVoteByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction,"
-            + " dataUseLetter, dulName) values "
-            + "( :electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction,:dataUseLetter,:dulName)")
+            + " dataUseLetter, dulName, version) values "
+            + "( :electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction,:dataUseLetter,:dulName,:version)")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
             @Bind("status") String status,
@@ -45,7 +45,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             @Bind("useRestriction") String useRestriction,
             @Bind("translatedUseRestriction") String translatedUseRestriction,
             @Bind("dataUseLetter") String dataUseLetter,
-            @Bind("dulName") String dulName);
+            @Bind("dulName") String dulName,
+            @Bind("version") Integer version);
 
     @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction,"
             + " dataUseLetter, dulName,version,archived) values "
@@ -285,4 +286,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("update election set archived = true, lastUpdate = :lastUpdate where electionId = :electionId ")
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
+
+    @SqlQuery("SELECT MAX(version) FROM election  where referenceId = :referenceId")
+    Integer getLastVersionByReferenceId(@Bind("referenceId") String referenceId);
 }
+
