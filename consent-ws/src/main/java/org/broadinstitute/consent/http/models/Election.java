@@ -67,8 +67,6 @@ public class Election {
     public Election(Integer electionId, String electionType,
             String status, Date createDate,
             String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId) {
-        System.out.println("------------- Election constructor 1 --------------");
-        System.out.flush();
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -83,7 +81,6 @@ public class Election {
             Boolean finalVote, String finalRationale, String status, Date createDate,
             Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
             UseRestriction useRestriction, String translatedUseRestriction) {
-        System.out.println("------------- Election constructor 2 --------------");
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -103,8 +100,6 @@ public class Election {
             Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
             UseRestriction useRestriction, String translatedUseRestriction,
             String dataUseLetter, String dulName) {
-        System.out.println("------------- Election constructor 3 --------------");
-
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -126,7 +121,6 @@ public class Election {
             Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
             UseRestriction useRestriction, String translatedUseRestriction,
             String dataUseLetter, String dulName, Integer version, Boolean archived) {
-        System.out.println("------------- Election constructor 4 --------------");
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -146,8 +140,6 @@ public class Election {
     }
 
     public Election(Integer electionId, String electionType, String status, Date createDate, String referenceId, Integer dataSetId) {
-        System.out.println("------------- Election constructor 4 --------------");
-
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
