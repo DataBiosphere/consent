@@ -436,21 +436,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
-    @Override
-    public String archiveElection(Integer electionId) {
-         String result = String.format("{electionid: %d, archived: false }", electionId);
-         Election election = electionDAO.findElectionById(electionId);
-         if (election == null) {
-             throw new NotFoundException("Election for specified id does not exist");
-         }
-         if (election.getArchived() == true) {
-             Date lastUpdate = new Date();
-             electionDAO.archiveElectionById(electionId, lastUpdate);
-             result = String.format("{electionid: %d,   archived: true }", electionId);
-         }
-        return result;
-    }
-
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
         for(Election e: elections){
             if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){
@@ -459,7 +444,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         return true;
     }
-
 
 
     private void validateElectionIsValid(String referenceId, ElectionType electionType) throws Exception{

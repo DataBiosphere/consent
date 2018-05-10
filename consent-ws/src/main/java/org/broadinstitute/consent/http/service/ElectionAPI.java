@@ -58,5 +58,4 @@ public interface ElectionAPI {
 
     List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList);
 
-    String archiveElection(Integer electionId);
 }

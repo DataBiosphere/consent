@@ -11,7 +11,7 @@
             </column>
         </addColumn>
         <addColumn tableName="election">
-            <column name="version" type="integer" defaultValueNumeric="0">
+            <column name="version" type="integer" defaultValueNumeric="1">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

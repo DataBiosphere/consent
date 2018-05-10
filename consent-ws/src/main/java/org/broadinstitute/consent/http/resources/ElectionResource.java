@@ -23,19 +23,6 @@ public class ElectionResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    @Path("/{id}/archive")
-    @RolesAllowed({"ADMIN"})
-    public Response archiveElection(@PathParam("id") Integer id) {
-        try {
-            return Response.ok().entity(api.archiveElection(id)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
     @Path("/{id}")
     @RolesAllowed({"ADMIN", "DATAOWNER", "CHAIRPERSON", "MEMBER"})
     public Response updateElection(Election rec, @PathParam("id") Integer id) {
