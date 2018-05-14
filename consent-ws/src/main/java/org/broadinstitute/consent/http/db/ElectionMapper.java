@@ -36,9 +36,9 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 (r.getDate(ElectionFields.LAST_UPDATE.getValue()) == null) ? null : r.getDate(ElectionFields.LAST_UPDATE.getValue()),
                 (r.getString(ElectionFields.FINAL_ACCESS_VOTE.getValue()) == null) ? null : r.getBoolean(ElectionFields.FINAL_ACCESS_VOTE.getValue()),
                 useRestriction,
-                (r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()) == null) ? null : r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()),
-                (r.getString(ElectionFields.DATA_USE_LETTER.getValue()) == null) ? null : r.getString(ElectionFields.DATA_USE_LETTER.getValue()),
-                (r.getString(ElectionFields.DUL_NAME.getValue()) == null) ? null : r.getString(ElectionFields.DUL_NAME.getValue()),
+                r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()),
+                r.getString(ElectionFields.DATA_USE_LETTER.getValue()),
+                r.getString(ElectionFields.DUL_NAME.getValue()),
                 r.getInt(ElectionFields.VERSION.getValue()),
                 (r.getString(ElectionFields.ARCHIVED.getValue()) == null) ? null : r.getBoolean(ElectionFields.ARCHIVED.getValue())
         );

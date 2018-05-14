@@ -113,7 +113,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
                 createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
-                election.getDataUseLetter(), election.getDulName(), election.getVersion());
+                election.getDataUseLetter(), election.getDulName());
         updateSortDate(referenceId, createDate);
         if(electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
@@ -570,12 +570,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (StringUtils.isEmpty(election.getStatus())) {
             election.setStatus(ElectionStatus.OPEN.getValue());
         }
-        setVersion(election, referenceId);
-    }
-
-    private void setVersion(Election election, String referenceId) {
-        Integer version = electionDAO.getLastVersionByReferenceId(referenceId);
-        election.setVersion(version == null ? 1 : ++version);
     }
 
     private void validateReferenceId(String referenceId, ElectionType electionType) {
