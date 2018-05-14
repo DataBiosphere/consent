@@ -253,7 +253,4 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("update election set archived = true, lastUpdate = :lastUpdate where electionId = :electionId ")
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
 
-    @SqlQuery("SELECT MAX(version) FROM election  where referenceId = :referenceId")
-    Integer getLastVersionByReferenceId(@Bind("referenceId") String referenceId);
-
 }

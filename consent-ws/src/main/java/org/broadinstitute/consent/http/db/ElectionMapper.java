@@ -33,7 +33,7 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 r.getDate(ElectionFields.CREATE_DATE.getValue()),
                 r.getDate(ElectionFields.FINAL_VOTE_DATE.getValue()),
                 r.getString(ElectionFields.REFERENCE_ID.getValue()),
-                (r.getDate(ElectionFields.LAST_UPDATE.getValue()) == null) ? null : r.getDate(ElectionFields.LAST_UPDATE.getValue()),
+                r.getDate(ElectionFields.LAST_UPDATE.getValue()),
                 (r.getString(ElectionFields.FINAL_ACCESS_VOTE.getValue()) == null) ? null : r.getBoolean(ElectionFields.FINAL_ACCESS_VOTE.getValue()),
                 useRestriction,
                 r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()),
