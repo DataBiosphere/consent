@@ -112,7 +112,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         setGeneralFields(election, referenceId, electionType);
         Date createDate = new Date();
         Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
-                createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction());
+                createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
+                election.getDataUseLetter(), election.getDulName());
         updateSortDate(referenceId, createDate);
         if(electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
@@ -140,6 +141,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getStatus(), lastUpdate);
+        if(rec.getArchived() != null && rec.getArchived()) {
+            electionDAO.archiveElectionById(electionId, lastUpdate);
+        }
         updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
@@ -432,7 +436,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
-
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
         for(Election e: elections){
             if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){
@@ -441,7 +444,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         return true;
     }
-
 
 
     private void validateElectionIsValid(String referenceId, ElectionType electionType) throws Exception{
@@ -533,6 +535,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 Consent consent = consentDAO.findConsentById(referenceId);
                 election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
                 election.setUseRestriction(consent.getUseRestriction());
+                election.setDataUseLetter(consent.getDataUseLetter());
+                election.setDulName(consent.getDulName());
                 break;
             case DATA_ACCESS:
                 election.setElectionType(ElectionType.DATA_ACCESS.getValue());

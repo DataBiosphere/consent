@@ -5,6 +5,7 @@ import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -536,8 +537,13 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     public String delimiterCheck(String delimitatedString){
-        return TEXT_DELIMITER +
-               delimitatedString.replaceAll(TEXT_DELIMITER,"\'") + TEXT_DELIMITER;
+        if (StringUtils.isNotEmpty(delimitatedString)) {
+            return TEXT_DELIMITER +
+                    delimitatedString.replaceAll(TEXT_DELIMITER,"\'") + TEXT_DELIMITER;
+        } else {
+            return "";
+        }
+
     }
 
 }
