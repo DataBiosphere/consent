@@ -526,8 +526,11 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return  mongo.getDataAccessRequestCollection().find(q);
     }
 
-    private String booleanToString(boolean b) {
-        return b ? "YES" : "NO";
+    private String booleanToString(Boolean b) {
+        if(b != null) {
+            return b ? "YES" : "NO";
+        }
+        return "-";
     }
 
     private String nullToString(String b) {
