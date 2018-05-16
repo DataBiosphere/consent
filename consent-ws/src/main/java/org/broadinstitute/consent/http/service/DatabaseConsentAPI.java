@@ -37,14 +37,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -114,8 +107,13 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
+        // armar mi consent con election aca
+        Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
         Consent consent = consentDAO.findConsentById(id);
-        if (consent == null) {
+        if(election != null) {
+            consent.setLastElectionStatus(election.getStatus());
+            consent.setLastElectionArchived(election.getArchived());
+        } else if (consent == null) {
             throw new UnknownIdentifierException("Consent does not exist");
         }
         return consent;
@@ -375,6 +373,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }
         logger.debug(String.format("getAllAssociationsForConsent - returning '%s'", assoc_list.toString()));
         return assoc_list;
+    }
+
+    // Validate Election for a given consent.
+    private void checkElectionStatus(Election asociatedElection) {
+
     }
 
     @Override

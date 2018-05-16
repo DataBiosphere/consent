@@ -27,6 +27,7 @@ public class ConsentsResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Collection<Consent> findByIds(@QueryParam("ids") Optional<String> ids) {
+        // ADD LAST ELECTION STATUS HERE
         if (ids.isPresent()) {
             List<String> splitIds = new ArrayList<>();
             for (String id : ids.get().split(",")) {
