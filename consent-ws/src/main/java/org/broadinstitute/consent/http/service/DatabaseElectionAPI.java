@@ -246,6 +246,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
+    public Election describeElectionByVoteId(Integer voteId) {
+        return electionDAO.findElectionByVoteId(voteId);
+    }
+
+    @Override
     public List<Election> cancelOpenElectionAndReopen() throws Exception{
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
         cancelOpenElection(ElectionType.TRANSLATE_DUL.getValue());
