@@ -5,6 +5,9 @@ public enum HeaderSummary {
 
 
     CONSENT("Consent"),
+    VERSION("Version"),
+    STATUS("Status"),
+    ARCHIVED("Archived"),
     STRUCT_LIMITATIONS("Structured Limitations"),
     DATE("Date "),
     CHAIRPERSON("Chairperson"),
