@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -163,7 +164,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.CLOSED.getValue());
+                List<String> electionStatus = new ArrayList<>(Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()));
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), electionStatus);
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
@@ -182,6 +184,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals("CHAIRPERSON")).collect(singletonCollector());
                         DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
                         summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
+                        summaryWriter.write(election.getVersion() + SEPARATOR);
+                        summaryWriter.write(election.getStatus() + SEPARATOR);
+                        summaryWriter.write(booleanToString(election.getArchived()) + SEPARATOR);
                         summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
                         summaryWriter.write(formatTimeToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
@@ -415,6 +420,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private void setSummaryHeader(FileWriter summaryWriter , Integer maxNumberOfDACMembers) throws IOException {
         summaryWriter.write(
                 HeaderSummary.CONSENT.getValue() + SEPARATOR +
+                        HeaderSummary.VERSION.getValue() + SEPARATOR +
+                        HeaderSummary.STATUS.getValue() + SEPARATOR +
+                        HeaderSummary.ARCHIVED.getValue() + SEPARATOR +
                         HeaderSummary.STRUCT_LIMITATIONS.getValue() + SEPARATOR +
                         HeaderSummary.DATE.getValue() + SEPARATOR +
                         HeaderSummary.CHAIRPERSON.getValue() + SEPARATOR +
@@ -518,8 +526,11 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return  mongo.getDataAccessRequestCollection().find(q);
     }
 
-    private String booleanToString(boolean b) {
-        return b ? "YES" : "NO";
+    private String booleanToString(Boolean b) {
+        if(b != null) {
+            return b ? "YES" : "NO";
+        }
+        return "-";
     }
 
     private String nullToString(String b) {
