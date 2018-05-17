@@ -34,6 +34,12 @@ public class ConsentManage {
 	@JsonProperty
 	private Timestamp sortDate;
 
+	@JsonProperty
+	private String version;
+
+	@JsonProperty
+	private Boolean archived;
+
 	public ConsentManage() {
 	}
 
@@ -101,4 +107,19 @@ public class ConsentManage {
 		this.electionId = electionId;
 	}
 
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public Boolean getArchived() {
+		return archived;
+	}
+
+	public void setArchived(Boolean archived) {
+		this.archived = archived;
+	}
 }
