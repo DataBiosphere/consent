@@ -245,9 +245,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
-    @Override
     public Election describeElectionByVoteId(Integer voteId) {
-        return electionDAO.findElectionByVoteId(voteId);
+        Election election = electionDAO.findElectionByVoteId(voteId);
+        if (election == null) {
+            throw new NotFoundException();
+        }
+        return election;
     }
 
     @Override
