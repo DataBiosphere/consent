@@ -107,7 +107,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
-        // armar mi consent con election aca
         Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
         Consent consent = consentDAO.findConsentById(id);
         if(election != null) {

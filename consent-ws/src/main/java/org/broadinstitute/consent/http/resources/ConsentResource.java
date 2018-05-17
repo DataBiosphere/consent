@@ -41,13 +41,11 @@ public class ConsentResource extends Resource {
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final ElectionAPI electionAPI;
 
-
     @Path("{id}")
     @GET
     @Produces("application/json")
     @PermitAll
     public Response describe(@PathParam("id") String id) {
-        // TODO devolver last election status
         try {
             return Response.ok(populateFromApi(id))
                     .build();
@@ -103,7 +101,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
     public Response update(@PathParam("id") String id, Consent updated, @Auth User user) {
         try {
-            checkConsentElection(populateFromApi(id));
+//            checkConsentElection(populateFromApi(id));
             if (updated.getTranslatedUseRestriction() == null) {
                 updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
             }
@@ -208,6 +206,7 @@ public class ConsentResource extends Resource {
         if(consentElectionStatus == ElectionStatus.OPEN.getValue() ||
            consentElectionStatus == ElectionStatus.CLOSED.getValue() ||
            !consentElectionArchived) {
+            //Throw more specific exception
             throw new Exception("Election condition fails");
         }
     }
