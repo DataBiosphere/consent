@@ -245,6 +245,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
+    public Election describeElectionByVoteId(Integer voteId) {
+        Election election = electionDAO.findElectionByVoteId(voteId);
+        if (election == null) {
+            throw new NotFoundException();
+        }
+        return election;
+    }
+
     @Override
     public List<Election> cancelOpenElectionAndReopen() throws Exception{
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());

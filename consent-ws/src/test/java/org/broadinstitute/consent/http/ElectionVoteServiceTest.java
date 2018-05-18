@@ -50,6 +50,10 @@ public abstract class ElectionVoteServiceTest extends AbstractTest {
         }
     }
 
+    public String electionVotePathById(Integer voteId) {
+        return path2Url(String.format("election/vote/%s", voteId));
+    }
+
     public String electionPathById(Integer electionId) {
             return path2Url(String.format("election/%s",  electionId));
     }

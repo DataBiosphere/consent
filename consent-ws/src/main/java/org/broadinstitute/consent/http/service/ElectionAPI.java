@@ -28,6 +28,8 @@ public interface ElectionAPI {
 
     Election describeElectionById(Integer electionId);
 
+    Election describeElectionByVoteId(Integer voteId) throws NotFoundException;
+
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
     List<Election> cancelOpenElectionAndReopen() throws Exception;

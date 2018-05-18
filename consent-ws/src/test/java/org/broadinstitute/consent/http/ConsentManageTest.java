@@ -49,13 +49,28 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
                 .equals(ElectionStatus.OPEN.getValue()));
         Assert.assertTrue(consentManageUpdated.get(0).getElectionStatus()
                 .equals(ElectionStatus.OPEN.getValue()));
+
         List<Vote> votes = getJson(client, voteConsentPath(CONSENT_ID)).readEntity(new GenericType<List<Vote>>() { });
         deleteVotes(votes, CONSENT_ID);
         delete(client, electionConsentPathById(CONSENT_ID, electionId));
         List<Vote> votesElection2 = getJson(client, voteConsentPath(CONSENT_ID_2)).readEntity(new GenericType<List<Vote>>() {
         });
+        // find election by vote id
+        testFindElectionByVote(votesElection2.get(0));
         deleteVotes(votesElection2, CONSENT_ID_2);
         delete(client, electionConsentPathById(CONSENT_ID_2, electionId_2));
+    }
+
+    @Test
+    public void testFindElectionByNonExistentVoteId()  throws IOException {
+        Client client = ClientBuilder.newClient();
+        checkStatus(NOT_FOUND, getJson(client, electionVotePathById(999)));
+    }
+
+    private void testFindElectionByVote(Vote vote) throws IOException {
+        Client client = ClientBuilder.newClient();
+        Election election = getJson(client, electionVotePathById(vote.getVoteId())).readEntity(Election.class);
+        Assert.assertTrue(election.getElectionId().equals(vote.getElectionId()));
     }
 
     public void deleteVotes(List<Vote> votes, String consentId) {
