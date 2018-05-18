@@ -56,7 +56,7 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
         List<Vote> votesElection2 = getJson(client, voteConsentPath(CONSENT_ID_2)).readEntity(new GenericType<List<Vote>>() {
         });
         // find election by vote id
-        testFindElectionByVoteId(votesElection2.get(0));
+        testFindElectionByVote(votesElection2.get(0));
         deleteVotes(votesElection2, CONSENT_ID_2);
         delete(client, electionConsentPathById(CONSENT_ID_2, electionId_2));
     }
@@ -67,7 +67,7 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
         checkStatus(NOT_FOUND, getJson(client, electionVotePathById(999)));
     }
 
-    private void testFindElectionByVoteId(Vote vote) throws IOException {
+    private void testFindElectionByVote(Vote vote) throws IOException {
         Client client = ClientBuilder.newClient();
         Election election = getJson(client, electionVotePathById(vote.getVoteId())).readEntity(Election.class);
         Assert.assertTrue(election.getElectionId().equals(vote.getElectionId()));
