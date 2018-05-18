@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.Consent;
@@ -202,7 +201,7 @@ public class ConsentResource extends Resource {
         Consent consent = populateFromApi(consentId);
         Boolean consentElectionArchived = consent.getLastElectionArchived();
 
-        if (!consentElectionArchived) {
+        if (consentElectionArchived != null && !consentElectionArchived) {
             throw new UpdateConsentException(String.format("Consent with a name of '%s' can't be updated.", consentId));
         }
     }
