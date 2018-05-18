@@ -14,3 +14,5 @@ DELETE FROM dataset WHERE objectId IN ('SC-20657', 'SC-20659', 'SC-20658', 'SC-2
 DELETE FROM approval_expiration_time;
 DELETE FROM consentassociations;
 DELETE FROM workspace_audit;
+DELETE FROM vote WHERE dacUserId = 5;
+DELETE FROM user_role WHERE dacUserId = 5;
