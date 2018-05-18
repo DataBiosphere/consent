@@ -200,12 +200,9 @@ public class ConsentResource extends Resource {
 
     private void checkConsentElection(String consentId) throws Exception {
         Consent consent = populateFromApi(consentId);
-
-        String consentElectionStatus = consent.getLastElectionStatus();
         Boolean consentElectionArchived = consent.getLastElectionArchived();
 
-        if(!consentElectionArchived && (consentElectionStatus == ElectionStatus.OPEN.getValue() ||
-           consentElectionStatus == ElectionStatus.CLOSED.getValue())) {
+        if (!consentElectionArchived) {
             throw new UpdateConsentException(String.format("Consent with a name of '%s' can't be updated.", consentId));
         }
     }
