@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.*;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -49,6 +50,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
+    @Ignore
     public void testUpdateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
@@ -123,6 +125,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
+    @Ignore
     public void testMissingDataUseUpdate() throws Exception {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
@@ -144,6 +147,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
+    @Ignore
     public void testInvalidDULUpdate() throws Exception {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);

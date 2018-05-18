@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
+import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
@@ -26,8 +27,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
@@ -101,7 +100,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
     public Response update(@PathParam("id") String id, Consent updated, @Auth User user) {
         try {
-//            checkConsentElection(populateFromApi(id));
+            checkConsentElection(id);
             if (updated.getTranslatedUseRestriction() == null) {
                 updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
             }
@@ -199,15 +198,16 @@ public class ConsentResource extends Resource {
         }
     }
 
-    private void checkConsentElection(Consent consentElection) throws Exception {
-        ArrayList<String> notAllowedConditions = new ArrayList<>(Arrays.asList(ElectionStatus.OPEN.getValue(), ElectionStatus.CLOSED.getValue()));
-        String consentElectionStatus = consentElection.getLastElectionStatus();
-        Boolean consentElectionArchived = consentElection.getLastElectionArchived();
+    private void checkConsentElection(String consentId) throws Exception {
+        Consent consent = populateFromApi(consentId);
+
+        String consentElectionStatus = consent.getLastElectionStatus();
+        Boolean consentElectionArchived = consent.getLastElectionArchived();
+
         if(consentElectionStatus == ElectionStatus.OPEN.getValue() ||
            consentElectionStatus == ElectionStatus.CLOSED.getValue() ||
            !consentElectionArchived) {
-            //Throw more specific exception
-            throw new Exception("Election condition fails");
+            throw new UpdateConsentException(String.format("Consent with a name of '%s' can't be updated.", consentId));
         }
     }
 }

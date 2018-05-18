@@ -107,13 +107,15 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     @Override
     public Consent retrieve(String id) throws UnknownIdentifierException {
-        Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
         Consent consent = consentDAO.findConsentById(id);
-        if(election != null) {
+        if (consent == null) {
+            throw new UnknownIdentifierException("Consent does not exist");
+        }
+
+        Election election = electionDAO.findLastElectionVersionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
+        if (election != null) {
             consent.setLastElectionStatus(election.getStatus());
             consent.setLastElectionArchived(election.getArchived());
-        } else if (consent == null) {
-            throw new UnknownIdentifierException("Consent does not exist");
         }
         return consent;
     }
