@@ -47,6 +47,20 @@ public class ElectionResource extends Resource {
         }
     }
 
+
+    @GET
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/vote/{voteId}")
+    @PermitAll
+    public Response describeElectionByVoteId(@PathParam("voteId") Integer id) {
+        try {
+            return Response.ok().entity(api.describeElectionByVoteId(id)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     @GET
     @Consumes("application/json")
     @Produces("application/json")
