@@ -202,7 +202,7 @@ public class ConsentResource extends Resource {
         Boolean consentElectionArchived = consent.getLastElectionArchived();
 
         if (consentElectionArchived != null && !consentElectionArchived) {
-            throw new UpdateConsentException(String.format("Consent with a name of '%s' can't be updated.", consentId));
+            throw new UpdateConsentException(String.format("Consent with Id '%s' can't be updated.", consentId));
         }
     }
 }
