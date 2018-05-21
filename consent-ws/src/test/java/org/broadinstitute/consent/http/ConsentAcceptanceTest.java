@@ -2,9 +2,9 @@ package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.*;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -12,8 +12,10 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,6 +67,10 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
         assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
         assertThat(updated.useRestriction).isEqualTo(update.useRestriction);
+//
+        Election election = createElection(created.consentId);
+        checkStatus(BAD_REQUEST, put(client, createdLocation, update));
+        deleteElection(created.getConsentId(), election.getElectionId());
     }
 
     @Test
@@ -164,6 +170,32 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
+    }
+
+    public Election createElection(String consentId) throws IOException {
+        Client client = ClientBuilder.newClient();
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        Response response = checkStatus(CREATED,
+                post(client, electionConsentPath(consentId), election));
+        String createdLocation = checkHeader(response, "Location");
+        return getJson(client, createdLocation).readEntity(Election.class);
+    }
+
+    private void deleteElection(String consentId, Integer electionId) throws IOException {
+
+        Client client = ClientBuilder.newClient();
+        mockValidateTokenResponse();
+        List<Vote> votes = getJson(client, voteConsentPath(consentId)).readEntity(new GenericType<List<Vote>>() {
+        });
+
+        for (Vote vote : votes) {
+            checkStatus(OK,
+                    delete(client, voteConsentIdPath(consentId, vote.getVoteId())));
+        }
+
+        checkStatus(OK, delete(client, electionConsentPathById(consentId, electionId)));
     }
 
 }
