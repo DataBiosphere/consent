@@ -181,6 +181,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             BasicDBObject in = new BasicDBObject("$in", objarray);
             BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
+
+
             elections.forEach(election -> {
                 MongoCursor<Document> itr = dataAccessRequests.iterator();
                 try {
@@ -188,6 +190,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                         Document next = itr.next();
                         if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
                             election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
+                            election.setProjectTitle(next.getDate(DarConstants.PROJECT_TITLE).toString());
                         }
                     }
                 } finally {
