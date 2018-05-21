@@ -50,7 +50,6 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    @Ignore
     public void testUpdateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
@@ -125,7 +124,6 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    @Ignore
     public void testMissingDataUseUpdate() throws Exception {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
@@ -147,7 +145,6 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     @Test
-    @Ignore
     public void testInvalidDULUpdate() throws Exception {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
