@@ -522,6 +522,8 @@ paths:
           description: Returns the requested consent.
           schema:
             $ref: '#/definitions/Consent'
+        '400':
+          description: The election associated to the given consent is not archived.
         '404':
           description: The consent associated with the ID couldn't be found.
         '500':
