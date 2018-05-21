@@ -14,6 +14,9 @@ import java.sql.Timestamp;
 public class Consent {
 
     @JsonProperty
+    public String consentId;
+
+    @JsonProperty
     public String lastElectionStatus;
 
     @JsonProperty
@@ -185,9 +188,6 @@ public class Consent {
     public void setDataUse(DataUseDTO dataUse) {
         this.dataUse = dataUse;
     }
-
-    @JsonProperty
-    public String consentId;
 
     @JsonProperty
     public String getLastElectionStatus() {
