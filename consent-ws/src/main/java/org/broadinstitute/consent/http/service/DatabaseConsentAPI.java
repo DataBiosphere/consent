@@ -37,7 +37,14 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -374,11 +381,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }
         logger.debug(String.format("getAllAssociationsForConsent - returning '%s'", assoc_list.toString()));
         return assoc_list;
-    }
-
-    // Validate Election for a given consent.
-    private void checkElectionStatus(Election asociatedElection) {
-
     }
 
     @Override
