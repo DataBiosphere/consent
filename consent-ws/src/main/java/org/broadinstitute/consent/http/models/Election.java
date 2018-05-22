@@ -78,6 +78,20 @@ public class Election {
     }
 
     public Election(Integer electionId, String electionType,
+                    String status, Date createDate,
+                    String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId, Boolean archived) {
+        this.electionId = electionId;
+        this.electionType = electionType;
+        this.status = status;
+        this.createDate = createDate;
+        this.referenceId = referenceId;
+        this.lastUpdate = lastUpdate;
+        this.finalAccessVote = finalAccessVote;
+        this.dataSetId = dataSetId;
+        this.archived = archived;
+    }
+
+    public Election(Integer electionId, String electionType,
             Boolean finalVote, String finalRationale, String status, Date createDate,
             Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
             UseRestriction useRestriction, String translatedUseRestriction) {

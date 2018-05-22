@@ -118,6 +118,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (consent == null) {
             throw new UnknownIdentifierException("Consent does not exist");
         }
+
+        Election election = electionDAO.findLastElectionVersionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
+        if (election != null) {
+            consent.setLastElectionStatus(election.getStatus());
+            consent.setLastElectionArchived(election.getArchived());
+        }
         return consent;
     }
 

@@ -6,6 +6,7 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.TranslateType;
+import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
@@ -37,7 +38,6 @@ public class ConsentResource extends Resource {
     private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final ElectionAPI electionAPI;
-
 
     @Path("{id}")
     @GET
@@ -99,6 +99,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
     public Response update(@PathParam("id") String id, Consent updated, @Auth User user) {
         try {
+            checkConsentElection(id);
             if (updated.getTranslatedUseRestriction() == null) {
                 updated.setTranslatedUseRestriction(translateServiceAPI.translate(TranslateType.SAMPLESET.getValue(),updated.getUseRestriction()));
             }
@@ -196,4 +197,13 @@ public class ConsentResource extends Resource {
         }
     }
 
+    private void checkConsentElection(String consentId) throws Exception {
+        Consent consent = populateFromApi(consentId);
+        Boolean consentElectionArchived = consent.getLastElectionArchived();
+
+        if (consentElectionArchived != null && !consentElectionArchived) {
+            // NOTE: we still need to define a proper error message that clarifies the cause of the error.
+            throw new UpdateConsentException(String.format("Consent '%s' cannot be updated with an active election.", consentId));
+        }
+    }
 }

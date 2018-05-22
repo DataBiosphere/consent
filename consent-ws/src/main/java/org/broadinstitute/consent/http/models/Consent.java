@@ -17,6 +17,12 @@ public class Consent {
     public String consentId;
 
     @JsonProperty
+    public String lastElectionStatus;
+
+    @JsonProperty
+    public Boolean lastElectionArchived;
+
+    @JsonProperty
     public Boolean requiresManualReview;
 
     @JsonProperty
@@ -58,6 +64,19 @@ public class Consent {
         this.createDate = createDate;
         this.sortDate = sortDate;
         this.lastUpdate = lastUpdate;
+    }
+
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
+                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate,
+                   String lastElectionStatus) {
+        this.requiresManualReview = requiresManualReview;
+        this.useRestriction = useRestriction;
+        this.dataUseLetter = dataUseLetter;
+        this.name = name;
+        this.createDate = createDate;
+        this.sortDate = sortDate;
+        this.lastUpdate = lastUpdate;
+        this.lastElectionStatus = lastElectionStatus;
     }
 
     @JsonProperty
@@ -168,6 +187,24 @@ public class Consent {
     @JsonProperty
     public void setDataUse(DataUseDTO dataUse) {
         this.dataUse = dataUse;
+    }
+
+    @JsonProperty
+    public String getLastElectionStatus() {
+        return lastElectionStatus;
+    }
+
+    @JsonProperty
+    public void setLastElectionStatus(String lastElectionStatus) {
+        this.lastElectionStatus = lastElectionStatus;
+    }
+
+    public Boolean getLastElectionArchived() {
+        return lastElectionArchived;
+    }
+
+    public void setLastElectionArchived(Boolean lastElectionArchived) {
+        this.lastElectionArchived = lastElectionArchived;
     }
 
 }
