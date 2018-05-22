@@ -523,7 +523,10 @@ paths:
           schema:
             $ref: '#/definitions/Consent'
         '400':
-          description: The election associated to the given consent is not archived.
+          description:
+            Consent updates are only allowed when
+              1-There have been no previous elections created for this consent
+              2-The most recent election has been closed/cancelled AND archived
         '404':
           description: The consent associated with the ID couldn't be found.
         '500':
@@ -2119,6 +2122,12 @@ definitions:
         type: string
         format: date
         description: The translated use restriction of the consent.
+      lastElectionStatus:
+        type: string
+        description: Displays the associated election if this exists, else is null.
+      lastElectionArchived:
+        type: boolean
+        description: Flag indicating if the last election associated is archived or not. Null if election doesn't exists
   Vote:
     type: object
     properties:
@@ -2321,6 +2330,16 @@ definitions:
       displayId:
         type: string
         description: The ID for display.
+      dulName:
+        type: string
+        description: Contains the correspondant Dul name for the given election.
+      version:
+        type: integer
+        format: int32
+        description: Indicates the version number of the given election.
+      archived:
+        type: boolean
+        description: Determines if the election is archived.
   ConsentManage:
     type: object
     properties:
