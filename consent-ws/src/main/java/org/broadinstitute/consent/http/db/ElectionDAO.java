@@ -87,7 +87,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             +  "e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e"
             + " inner join vote v on v.electionId = e.electionId and v.type = '"+ CHAIRPERSON
-            + "'  where   e.referenceId = :referenceId and e.electionType = :type")
+            + "' where e.referenceId = :referenceId and e.electionType = :type and e.version = (select MAX(version) from election where referenceId = :referenceId)")
     Election getElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "

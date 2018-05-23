@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -33,12 +34,14 @@ import java.util.UUID;
 public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;
+    private final ElectionAPI electionApi;
     private final GCSStore store;
     private final DACUserAPI dacUserAPI;
     private final AuditServiceAPI auditServiceAPI;
 
     public DataUseLetterResource(GCSStore store) {
         this.api = AbstractConsentAPI.getInstance();
+        this.electionApi = AbstractElectionAPI.getInstance();
         this.store = store;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
@@ -129,9 +132,12 @@ public class DataUseLetterResource extends Resource {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         try {
+            Election election = electionApi.describeConsentElection(consentId);
             Consent consent = api.retrieve(consentId);
-            String fileUrl  = consent.getDataUseLetter();
-            String fileName = consent.getDulName();
+
+            String fileUrl  = election == null ? consent.getDataUseLetter() : election.getDataUseLetter();
+            String fileName = election == null ? consent.getDulName() : election.getDulName();
+
             HttpResponse r = store.getStorageDocument(fileUrl);
             File targetFile = new File(fileName);
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
