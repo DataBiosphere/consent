@@ -54,8 +54,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
     @SqlUpdate("insert into consents " +
-            "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction) values " +
-            "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction)")
+            "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction, groupName) values " +
+            "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction, :groupName)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -66,7 +66,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("createDate") Date createDate,
                        @Bind("sortDate") Date sortDate,
                        @Bind("translatedUseRestriction") String translatedUseRestriction,
-                       @Bind("valid_restriction") Boolean validRestriction);
+                       @Bind("valid_restriction") Boolean validRestriction,
+                       @Bind("groupName") String groupName);
 
 
 
