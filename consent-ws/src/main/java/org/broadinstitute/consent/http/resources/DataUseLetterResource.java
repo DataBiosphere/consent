@@ -131,13 +131,17 @@ public class DataUseLetterResource extends Resource {
     public Response getDUL(@PathParam("id") String consentId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
+        String fileUrl, fileName;
         try {
-            Election election = electionApi.describeConsentElection(consentId);
             Consent consent = api.retrieve(consentId);
-
-            String fileUrl  = election == null ? consent.getDataUseLetter() : election.getDataUseLetter();
-            String fileName = election == null ? consent.getDulName() : election.getDulName();
-
+            if (consent.getLastElectionStatus() != null) {
+                Election election = electionApi.describeConsentElection(consentId);
+                fileUrl = election.getDataUseLetter();
+                fileName = election.getDulName();
+            } else {
+                fileUrl = consent.getDataUseLetter();
+                fileName = consent.getDulName();
+            }
             HttpResponse r = store.getStorageDocument(fileUrl);
             File targetFile = new File(fileName);
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
