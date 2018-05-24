@@ -1,3 +1,4 @@
+
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
@@ -190,7 +191,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                         Document next = itr.next();
                         if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
                             election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
-                            election.setProjectTitle(next.getDate(DarConstants.PROJECT_TITLE).toString());
+                            election.setProjectTitle(next.get(DarConstants.PROJECT_TITLE).toString());
                         }
                     }
                 } finally {
