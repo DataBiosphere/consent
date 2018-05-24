@@ -165,6 +165,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
             pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
         }else{
              pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
+             pendingCase.setConsentGroupName(consentDAO.findConsentById(election.getReferenceId()).getGroupName());
         }
         pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
         pendingCase.setAlreadyVoted(pendingCase.getAlreadyVoted() == null ? vote.getVote() != null : pendingCase.getAlreadyVoted());
