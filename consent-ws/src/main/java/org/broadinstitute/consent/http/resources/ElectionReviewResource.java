@@ -35,7 +35,7 @@ public class ElectionReviewResource {
     @Produces("application/json")
     @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
     public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId, @QueryParam("type") String type) {
-        return api.describeCollectElectionReviewByReferenceId(referenceId, type);
+        return api.describeLastElectionReviewByReferenceIdAndType(referenceId, type);
     }
 
     @GET

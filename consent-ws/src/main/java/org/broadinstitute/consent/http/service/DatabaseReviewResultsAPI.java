@@ -37,6 +37,12 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     }
 
     @Override
+    public ElectionReview describeLastElectionReviewByReferenceIdAndType(String referenceId, String type) {
+        Election election = electionDAO.findLastElectionByReferenceIdAndType(referenceId, type);
+        return getElectionReview(referenceId, election);
+    }
+
+    @Override
     public Boolean openElections() {
         Boolean openElections = false;
         if(electionDAO.verifyOpenElections() != null && electionDAO.verifyOpenElections() > 0){

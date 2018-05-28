@@ -9,6 +9,8 @@ public interface ReviewResultsAPI {
 
     ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type);
 
+    ElectionReview describeLastElectionReviewByReferenceIdAndType(String referenceId, String type);
+
     Boolean openElections();
 
     ElectionReview describeElectionReviewByElectionId(Integer electionId,Boolean isFinalAccess);
