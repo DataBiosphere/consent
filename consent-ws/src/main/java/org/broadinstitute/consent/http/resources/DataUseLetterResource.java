@@ -128,14 +128,14 @@ public class DataUseLetterResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER","DATAOWNER"})
-    public Response getDUL(@PathParam("id") String consentId) {
+    public Response getDUL(@PathParam("id") String consentId, @QueryParam("electionId") Integer electionId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);
         String fileUrl, fileName;
         try {
             Consent consent = api.retrieve(consentId);
             if (consent.getLastElectionStatus() != null) {
-                Election election = electionApi.describeConsentElection(consentId);
+                Election election = electionId != null ? electionApi.describeElectionById(electionId) : electionApi.describeConsentElection(consentId);
                 fileUrl = election.getDataUseLetter();
                 fileName = election.getDulName();
             } else {
