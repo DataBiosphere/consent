@@ -84,6 +84,19 @@ public class Consent {
         this.groupName = groupName;
     }
 
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
+                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate,
+                   String lastElectionStatus) {
+        this.requiresManualReview = requiresManualReview;
+        this.useRestriction = useRestriction;
+        this.dataUseLetter = dataUseLetter;
+        this.name = name;
+        this.createDate = createDate;
+        this.sortDate = sortDate;
+        this.lastUpdate = lastUpdate;
+        this.lastElectionStatus = lastElectionStatus;
+    }
+
     @JsonProperty
     public Timestamp getCreateDate() {
         return createDate;

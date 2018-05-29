@@ -64,6 +64,9 @@ public class Election {
     @JsonProperty
     private String consentGroupName;
 
+    @JsonProperty
+    private String projectTitle;
+
     public Election() {
     }
 
@@ -320,4 +323,11 @@ public class Election {
 
     public void setConsentGroupName(String consentGroupName) { this.consentGroupName = consentGroupName; }
 
+    public String getProjectTitle() {
+        return projectTitle;
+    }
+
+    public void setProjectTitle(String projectTitle) {
+        this.projectTitle = projectTitle;
+    }
 }
