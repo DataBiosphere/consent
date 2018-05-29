@@ -51,6 +51,9 @@ public class PendingCase implements Comparable<PendingCase>{
     @JsonProperty
     private Integer rpVoteId;
 
+    @JsonProperty
+    private String projectTitle;
+
 
     public Date getCreateDate() {
         return createDate;
@@ -176,5 +179,13 @@ public class PendingCase implements Comparable<PendingCase>{
 
     public void setRpVoteId(Integer rpVoteId) {
         this.rpVoteId = rpVoteId;
+    }
+
+    public String getProjectTitle() {
+        return projectTitle;
+    }
+
+    public void setProjectTitle(String projectTitle) {
+        this.projectTitle = projectTitle;
     }
 }

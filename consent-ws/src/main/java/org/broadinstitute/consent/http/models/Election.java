@@ -61,6 +61,10 @@ public class Election {
     @JsonProperty
     private Integer version;
 
+
+    @JsonProperty
+    private String projectTitle;
+
     public Election() {
     }
 
@@ -314,4 +318,11 @@ public class Election {
         this.version = version;
     }
 
+    public String getProjectTitle() {
+        return projectTitle;
+    }
+
+    public void setProjectTitle(String projectTitle) {
+        this.projectTitle = projectTitle;
+    }
 }
