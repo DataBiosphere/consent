@@ -48,15 +48,15 @@ public class DatabaseReviewResultsAPITest {
         when(voteDAO.findVoteByTypeAndElectionId(anyInt(), anyString())).thenReturn(randomVotesList());
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt())).thenReturn(randomReviewVotesList());
         when(voteDAO.findElectionReviewVotesByElectionId(anyInt(), anyString())).thenReturn(randomReviewVotesList());
-        when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(anyString(), anyString())).thenReturn(sampleElection);
+        when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(sampleElection);
         when(electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(anyString(), anyObject())).thenReturn(sampleElection);
         when(electionDAO.findElectionWithFinalVoteById(anyInt())).thenReturn(sampleElection);
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
     }
 
     @Test
-    public void testDescribeCollectElectionReviewByReferenceId() throws Exception {
-        ElectionReview review = databaseReviewResultsAPI.describeCollectElectionReviewByReferenceId("anyString", "anyType");
+    public void testDescribeLastElectionReviewByReferenceIdAndType() throws Exception {
+        ElectionReview review = databaseReviewResultsAPI.describeLastElectionReviewByReferenceIdAndType("anyString", "anyType");
         assertTrue("Consent should be equal to mocked response ", review.getConsent().equals(consent));
         assertTrue("Sample Election should be equal to mocked response ", review.getElection().equals(sampleElection));
     }

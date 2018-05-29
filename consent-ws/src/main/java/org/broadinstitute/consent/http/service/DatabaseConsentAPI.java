@@ -473,4 +473,17 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consent;
     }
 
+    @Override
+    public Consent retrieveElectionDul(String consentId, Integer electionId, Consent consent) {
+        Election election;
+        if (electionId != null) {
+            election = electionDAO.findElectionWithFinalVoteById(electionId);
+        } else {
+            election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
+        }
+        consent.setDataUseLetter(election.getDataUseLetter());
+        consent.setDulName(election.getDulName());
+        return consent;
+    }
+
 }

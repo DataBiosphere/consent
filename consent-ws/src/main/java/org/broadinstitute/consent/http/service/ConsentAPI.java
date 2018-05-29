@@ -77,4 +77,5 @@ public interface ConsentAPI {
      */
     boolean hasWorkspaceAssociation(String workspaceId);
 
+    Consent retrieveElectionDul(String consentId, Integer electionId, Consent consent);
 }
