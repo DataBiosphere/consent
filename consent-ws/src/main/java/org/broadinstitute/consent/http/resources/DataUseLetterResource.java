@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -34,14 +33,12 @@ import java.util.UUID;
 public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;
-    private final ElectionAPI electionApi;
     private final GCSStore store;
     private final DACUserAPI dacUserAPI;
     private final AuditServiceAPI auditServiceAPI;
 
     public DataUseLetterResource(GCSStore store) {
         this.api = AbstractConsentAPI.getInstance();
-        this.electionApi = AbstractElectionAPI.getInstance();
         this.store = store;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
