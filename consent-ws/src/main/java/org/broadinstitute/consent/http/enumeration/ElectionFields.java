@@ -18,7 +18,8 @@ public enum ElectionFields {
     TRANSLATED_USE_RESTRICTION("translatedUseRestriction"),
     VERSION("version"),
     ARCHIVED("archived"),
-    DUL_NAME("dulName");
+    DUL_NAME("dulName"),
+    CONSENT_GROUP_NAME("consentGroupName");
 
     private String value;
 

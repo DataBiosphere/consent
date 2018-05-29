@@ -144,7 +144,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
 
-    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, e.electionId, e.status, e.version, e.archived  " +
+    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, c.groupName, e.electionId, e.status, e.version, e.archived  " +
             "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
             "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
             "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
