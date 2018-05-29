@@ -17,6 +17,12 @@ public class Consent {
     public String consentId;
 
     @JsonProperty
+    public String lastElectionStatus;
+
+    @JsonProperty
+    public Boolean lastElectionArchived;
+
+    @JsonProperty
     public Boolean requiresManualReview;
 
     @JsonProperty
@@ -61,6 +67,20 @@ public class Consent {
         this.createDate = createDate;
         this.sortDate = sortDate;
         this.lastUpdate = lastUpdate;
+        this.groupName = groupName;
+    }
+
+    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
+                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate, String groupName,
+                   String lastElectionStatus) {
+        this.requiresManualReview = requiresManualReview;
+        this.useRestriction = useRestriction;
+        this.dataUseLetter = dataUseLetter;
+        this.name = name;
+        this.createDate = createDate;
+        this.sortDate = sortDate;
+        this.lastUpdate = lastUpdate;
+        this.lastElectionStatus = lastElectionStatus;
         this.groupName = groupName;
     }
 
@@ -180,8 +200,23 @@ public class Consent {
     }
 
     @JsonProperty
-    public void setGroupName(String groupName) {
-        this.groupName= groupName;
+    public void setGroupName(String groupName) { this.groupName = groupName; }
+
+    public String getLastElectionStatus() {
+        return lastElectionStatus;
+    }
+
+    @JsonProperty
+    public void setLastElectionStatus(String lastElectionStatus) {
+        this.lastElectionStatus = lastElectionStatus;
+    }
+
+    public Boolean getLastElectionArchived() {
+        return lastElectionArchived;
+    }
+
+    public void setLastElectionArchived(Boolean lastElectionArchived) {
+        this.lastElectionArchived = lastElectionArchived;
     }
 
 }
