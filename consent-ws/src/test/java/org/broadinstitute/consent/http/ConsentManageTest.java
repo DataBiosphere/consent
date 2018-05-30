@@ -40,6 +40,7 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
         Assert.assertTrue(consentManage.get(0).getConsentId().equals(CONSENT_ID));
         Assert.assertTrue(consentManage.get(0).getElectionStatus().equals(ElectionStatus.OPEN.getValue()));
         Assert.assertTrue(consentManage.get(0).getElectionId().equals(electionId));
+        Assert.assertTrue(consentManage.get(2).getGroupName().equals("Test Group Name"));
 
         Integer electionId_2 = createElection(CONSENT_ID_2);
         List<ConsentManage> consentManageUpdated = getJson(client, consentManagePath()).readEntity(new GenericType<List<ConsentManage>>() {
