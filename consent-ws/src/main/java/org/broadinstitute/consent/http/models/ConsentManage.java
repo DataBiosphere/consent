@@ -40,6 +40,9 @@ public class ConsentManage {
 	@JsonProperty
 	private Boolean archived;
 
+	@JsonProperty
+	private String groupName;
+
 	public ConsentManage() {
 	}
 
@@ -49,6 +52,7 @@ public class ConsentManage {
 		this.createDate = consent.getCreateDate();
 		this.sortDate = consent.getSortDate();
 	    this.editable = null;
+	    this.groupName = consent.getGroupName();
     }
 
 	public Timestamp getCreateDate() {
@@ -122,4 +126,9 @@ public class ConsentManage {
 	public void setArchived(Boolean archived) {
 		this.archived = archived;
 	}
+
+	public String getGroupName() { return groupName; }
+
+	public void setGroupName(String groupName) { this.groupName = groupName; }
+
 }

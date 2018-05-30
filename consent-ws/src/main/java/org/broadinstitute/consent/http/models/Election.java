@@ -61,6 +61,8 @@ public class Election {
     @JsonProperty
     private Integer version;
 
+    @JsonProperty
+    private String consentGroupName;
 
     @JsonProperty
     private String projectTitle;
@@ -155,6 +157,7 @@ public class Election {
         this.dulName = dulName;
         this.version = version;
         this.archived = archived;
+        this.consentGroupName = consentGroupName;
     }
 
     public Election(Integer electionId, String electionType, String status, Date createDate, String referenceId, Integer dataSetId) {
@@ -298,9 +301,7 @@ public class Election {
         return dulName;
     }
 
-    public void setDulName(String dulName) {
-        this.dulName = dulName;
-    }
+    public void setDulName(String dulName) { this.dulName = dulName; }
 
     public Boolean getArchived() {
         return archived;
@@ -317,6 +318,10 @@ public class Election {
     public void setVersion(Integer version) {
         this.version = version;
     }
+
+    public String getConsentGroupName() { return consentGroupName; }
+
+    public void setConsentGroupName(String consentGroupName) { this.consentGroupName = consentGroupName; }
 
     public String getProjectTitle() {
         return projectTitle;
