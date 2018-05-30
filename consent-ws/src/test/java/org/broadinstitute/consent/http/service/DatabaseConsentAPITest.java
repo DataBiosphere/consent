@@ -13,14 +13,12 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.sql.BatchUpdateException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -35,8 +33,11 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
     private static final String CONSENT_ID = "testId";
     private static final String CONSENT_DULNAME = "consent-dul";
     private static final String CONSENT_DUL_URL = "consent-url";
-    private static final String ELECTION_DULNAME = "election-dul";
-    private static final String ELECTION_DUL_URL = "election-url";
+
+    private static final String ELECTION_DULNAME_V1 = "election-dul-version1";
+    private static final String ELECTION_DUL_URL_V1 = "election-url-version1";
+    private static final String ELECTION_DULNAME_V2 = "election-dul-version2";
+    private static final String ELECTION_DUL_URL_V2 = "election-url-version2";
 
     private ConsentAPI databaseConsentApi = DatabaseConsentAPI.getInstance();
 
@@ -56,62 +57,75 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
     }
 
     @Test
-    public void testRetrieveElectionDulWithElectionId() throws IOException, UnknownIdentifierException {
+    public void testRetrieveElectionDulWithoutElectionId() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent consent = generateNewConsent(everything, generalUse);
-        Election election = createElection(CONSENT_ID, client);
 
-        databaseConsentApi.retrieveElectionDul(election.getElectionId(), consent);
+        Election firstElection = createElection(ELECTION_DULNAME_V1, ELECTION_DUL_URL_V1, client);
+        Election lastElection = createElection(ELECTION_DULNAME_V2, ELECTION_DUL_URL_V2, client);
 
-        Consent retrievedConsent = databaseConsentApi.retrieve(CONSENT_ID);
+        Election retrievedElection = databaseConsentApi.retrieveElectionDul(null, consent.getConsentId());
 
-        assertThat(retrievedConsent.getDulName().equals(election.getDulName()));
+        assertThat(firstElection.getVersion().equals(1));
+        assertThat(lastElection.getVersion().equals(2));
 
-        deleteElection(CONSENT_ID, election.getElectionId(), client);
+        assertThat(retrievedElection.getDulName().equals(lastElection.getDulName()));
+        assertThat(retrievedElection.getDataUseLetter().equals(lastElection.getDataUseLetter()));
+
+        assertThat(consent.getDulName()).isNotEqualTo(retrievedElection.getDulName());
+        assertThat(consent.getDataUseLetter()).isNotEqualTo(retrievedElection.getDataUseLetter());
+
+        deleteElection(firstElection.getElectionId(), client);
+        deleteElection(lastElection.getElectionId(), client);
     }
 
     @Test
-    public void testRetrieveElectionDulWithoutElectionId() throws IOException, UnknownIdentifierException {
+    public void testRetrieveElectionDulWithElectionId() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent consent = generateNewConsent(everything, generalUse);
-        Election election = createElection(CONSENT_ID, client);
 
-        databaseConsentApi.retrieveElectionDul(null, consent);
+        Election firstElection = createElection(ELECTION_DULNAME_V1, ELECTION_DUL_URL_V1, client);
+        Election lastElection = createElection(ELECTION_DULNAME_V2, ELECTION_DUL_URL_V2, client);
 
-        Consent retrievedConsent = databaseConsentApi.retrieve(CONSENT_ID);
+        Election retrievedElection = databaseConsentApi.retrieveElectionDul(firstElection.getElectionId(), consent.getConsentId());
 
-        assertThat(retrievedConsent.getDulName().equals(election.getDulName()));
+        assertThat(firstElection.getVersion().equals(1));
+        assertThat(lastElection.getVersion().equals(2));
 
-        deleteElection(CONSENT_ID, election.getElectionId(), client);
+        assertThat(retrievedElection.getDulName().equals(firstElection.getDulName()));
+        assertThat(retrievedElection.getDataUseLetter().equals(firstElection.getDataUseLetter()));
+
+        assertThat(consent.getDulName()).isNotEqualTo(retrievedElection.getDulName());
+        assertThat(consent.getDataUseLetter()).isNotEqualTo(retrievedElection.getDataUseLetter());
+
+        deleteElection(firstElection.getElectionId(), client);
+        deleteElection(lastElection.getElectionId(), client);
     }
 
-
-    private Election createElection(String consentId, Client client) throws IOException {
+    private Election createElection(String dulName, String dulUrl, Client client) throws IOException {
         Election election = new Election();
-        election.setDulName(ELECTION_DULNAME);
-        election.setDataUseLetter(ELECTION_DUL_URL);
-        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setDulName(dulName);
+        election.setDataUseLetter(dulUrl);
+        election.setStatus(ElectionStatus.CANCELED.getValue());
         election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         Response response = checkStatus(CREATED,
-                post(client, electionConsentPath(consentId), election));
+                post(client, electionConsentPath(DatabaseConsentAPITest.CONSENT_ID), election));
         String createdLocation = checkHeader(response, "Location");
         return getJson(client, createdLocation).readEntity(Election.class);
     }
 
-    private void deleteElection(String consentId, Integer electionId, Client client) throws IOException {
+    private void deleteElection(Integer electionId, Client client) throws IOException {
         mockValidateTokenResponse();
-        List<Vote> votes = getJson(client, voteConsentPath(consentId)).readEntity(new GenericType<List<Vote>>() {
+        List<Vote> votes = getJson(client, voteConsentPath(DatabaseConsentAPITest.CONSENT_ID)).readEntity(new GenericType<List<Vote>>() {
         });
-
         for (Vote vote : votes) {
             checkStatus(OK,
-                    delete(client, voteConsentIdPath(consentId, vote.getVoteId())));
+                    delete(client, voteConsentIdPath(DatabaseConsentAPITest.CONSENT_ID, vote.getVoteId())));
         }
-
-        checkStatus(OK, delete(client, electionConsentPathById(consentId, electionId)));
+        checkStatus(OK, delete(client, electionConsentPathById(DatabaseConsentAPITest.CONSENT_ID, electionId)));
     }
 
-    Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {
+    private Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {
         Timestamp createDate = new Timestamp(new Date().getTime());
         return new ConsentBuilder().
                 setConsentId(CONSENT_ID).
