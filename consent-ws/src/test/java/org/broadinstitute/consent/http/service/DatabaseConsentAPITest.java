@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -52,14 +51,12 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
 
 
     @Test (expected = UnknownIdentifierException.class)
-    @Ignore
     public void testRetrieveUnkownIdentifier() throws UnknownIdentifierException {
         databaseConsentApi.retrieve("non-existent Id");
     }
 
     @Test
-    @Ignore
-    public void testRetrieveElectionDulWithoutElectionId() throws IOException {
+    public void testRetrieveElectionDulWithoutElectionId() throws IOException, UnknownIdentifierException {
         Client client = ClientBuilder.newClient();
         Consent consent = generateNewConsent(everything, generalUse);
 
@@ -77,8 +74,7 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
     }
 
     @Test
-    @Ignore
-    public void testRetrieveElectionDulWithElectionId() throws IOException {
+    public void testRetrieveElectionDulWithElectionId() throws IOException, UnknownIdentifierException {
         Client client = ClientBuilder.newClient();
         Consent consent = generateNewConsent(everything, generalUse);
 

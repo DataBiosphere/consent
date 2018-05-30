@@ -145,7 +145,7 @@ public class DataUseLetterResource extends Resource {
                     .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
                     .build();
         } catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
+            throw new NotFoundException(e);
         } catch (IOException e) {
             logger().error("Error when trying to read/write the file " + e.getMessage());
         } catch (GeneralSecurityException e) {

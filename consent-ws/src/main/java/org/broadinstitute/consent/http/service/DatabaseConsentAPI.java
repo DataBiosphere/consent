@@ -116,7 +116,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public Consent retrieve(String id) throws UnknownIdentifierException {
         Consent consent = consentDAO.findConsentById(id);
         if (consent == null) {
-            throw new UnknownIdentifierException("Consent does not exist");
+            throw new UnknownIdentifierException(String.format("Could not find consent with id %s", id));
         }
 
         Election election = electionDAO.findLastElectionVersionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
@@ -474,12 +474,15 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Election retrieveElectionDul(Integer electionId, String consentId) {
+    public Election retrieveElectionDul(Integer electionId, String consentId) throws UnknownIdentifierException{
         Election election;
         if (electionId != null) {
             election = electionDAO.findElectionWithFinalVoteById(electionId);
         } else {
             election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
+        }
+        if (election.getDataUseLetter() == null) {
+            throw new UnknownIdentifierException(String.format("Could not found DUL for elecionId: '%s", election.getElectionId()));
         }
         return election;
     }
