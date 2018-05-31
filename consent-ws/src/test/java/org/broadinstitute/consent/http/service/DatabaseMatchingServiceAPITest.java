@@ -71,9 +71,9 @@ public class DatabaseMatchingServiceAPITest {
         UseRestriction sampleUsePurpose1 = new And(
                 new Named("http://purl.obolibrary.org/obo/DUO_0000018")
         );
-        sampleConsent1 = new Consent(false, sampleUseRestriction1, "A data use letter", "sampleConsent1", null, null, null);
+        sampleConsent1 = new Consent(false, sampleUseRestriction1, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
         sampleConsent1.setConsentId("CONS-1");
-        sampleConsent2 = new Consent(false, sampleUseRestriction2, "A data use letter", "sampleConsent1", null, null, null);
+        sampleConsent2 = new Consent(false, sampleUseRestriction2, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
         sampleConsent2.setConsentId("CONS-2");
 
         reqmo1 = new RequestMatchingObject(sampleConsent1.getUseRestriction(), sampleUsePurpose1);

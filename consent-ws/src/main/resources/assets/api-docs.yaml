@@ -2128,6 +2128,9 @@ definitions:
       lastElectionArchived:
         type: boolean
         description: Flag indicating if the last election associated is archived or not. Null if election doesn't exists
+      groupName:
+        type: string
+        description: The Group Name provided by ORSP
   Vote:
     type: object
     properties:

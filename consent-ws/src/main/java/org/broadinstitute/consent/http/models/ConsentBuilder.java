@@ -72,4 +72,9 @@ public class ConsentBuilder {
         this.consent.setDataUse(dataUse);
         return this;
     }
+
+    public ConsentBuilder setGroupName(String groupName) {
+        this.consent.setGroupName(groupName);
+        return this;
+    }
 }
