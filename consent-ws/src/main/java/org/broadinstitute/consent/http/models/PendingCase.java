@@ -52,6 +52,9 @@ public class PendingCase implements Comparable<PendingCase>{
     private Integer rpVoteId;
 
     @JsonProperty
+    private String consentGroupName;
+
+    @JsonProperty
     private String projectTitle;
 
 
@@ -179,6 +182,10 @@ public class PendingCase implements Comparable<PendingCase>{
 
     public void setRpVoteId(Integer rpVoteId) {
         this.rpVoteId = rpVoteId;
+    }
+
+    public void setConsentGroupName(String consentGroupName) { 
+        this.consentGroupName = consentGroupName;
     }
 
     public String getProjectTitle() {

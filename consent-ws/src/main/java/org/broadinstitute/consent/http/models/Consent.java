@@ -52,11 +52,14 @@ public class Consent {
     @JsonProperty
     public DataUseDTO dataUse;
 
+    @JsonProperty
+    public String groupName;
+
     public Consent() {
     }
 
     public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
-                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate) {
+                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate, String groupName) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
         this.dataUseLetter = dataUseLetter;
@@ -64,10 +67,11 @@ public class Consent {
         this.createDate = createDate;
         this.sortDate = sortDate;
         this.lastUpdate = lastUpdate;
+        this.groupName = groupName;
     }
 
     public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
-                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate,
+                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate, String groupName,
                    String lastElectionStatus) {
         this.requiresManualReview = requiresManualReview;
         this.useRestriction = useRestriction;
@@ -77,6 +81,7 @@ public class Consent {
         this.sortDate = sortDate;
         this.lastUpdate = lastUpdate;
         this.lastElectionStatus = lastElectionStatus;
+        this.groupName = groupName;
     }
 
     @JsonProperty
@@ -190,6 +195,13 @@ public class Consent {
     }
 
     @JsonProperty
+    public String getGroupName() {
+        return groupName;
+    }
+
+    @JsonProperty
+    public void setGroupName(String groupName) { this.groupName = groupName; }
+
     public String getLastElectionStatus() {
         return lastElectionStatus;
     }
