@@ -88,6 +88,21 @@ public class UseRestrictionConverter {
         if (pediatricsOnly) {
             dataUseDTO.setPediatric(true);
         }
+
+
+        if(Boolean.valueOf(form.getOrDefault("poa", false).toString())){
+            dataUseDTO.setPopulationOriginsAncestry(true);
+//            dataUseDTO.setGeneralUse(true); // general use de DAR
+        } else{
+            dataUseDTO.setPopulationOriginsAncestry(false);
+        }
+
+        if(Boolean.valueOf(form.getOrDefault("hmb", false).toString())){
+            dataUseDTO.setHmbResearch(true);
+        } else{
+            dataUseDTO.setHmbResearch(false);
+        }
+
         return dataUseDTO;
     }
 
