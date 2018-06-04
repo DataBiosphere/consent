@@ -11,10 +11,7 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DataAccessParserTest {
 
@@ -43,17 +40,6 @@ public class DataAccessParserTest {
     private final String NON_TECH_RUS = "Summary";
     private final String RESEARCH_OTHER_TEXT = "Research Other Text";
     private final String PATH = "template/RequestApplication.pdf";
-    private final String ONTOLOGIES = "[{ " +
-        "\"id\" : \"http://purl.obolibrary.org/obo/DOID_162\"," +
-        "\"label\" : \"cancer\"," +
-        "\"definition\" : \"A disease of cellular proliferation that is malignant and primary, characterized by uncontrolled cellular proliferation, local cell invasion and metastasis.\"," +
-        "\"synonyms\" : [ " +
-                      "\"primary cancer\"," +
-                      "\"malignant neoplasm\"," +
-              "\"malignant tumor \" ; " +
-        "]" +
-    "}";
-
 
     public DataAccessParserTest() {
         this.dataAccessParser = new DataAccessParser();
@@ -90,7 +76,6 @@ public class DataAccessParserTest {
         dar.put(DarConstants.CONTROLS, true);
         dar.put(DarConstants.OTHER, true);
         dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
-        dar.put(DarConstants.ONTOLOGIES, ONTOLOGIES);
         PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
@@ -115,7 +100,7 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.CONTROLS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.OTHER).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT).getValueAsString().equals(RESEARCH_OTHER_TEXT));
-     //   Assert.isTrue(acroForm.getField(DarConstants.ONTOLOGIES).getValueAsString().equals("cancer"));
+        Assert.isTrue(acroForm.getField(DarConstants.ONTOLOGIES).getValueAsString().equals("cancer"));
 
     }
 

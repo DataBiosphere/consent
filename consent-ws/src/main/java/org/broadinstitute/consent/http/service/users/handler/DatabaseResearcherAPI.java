@@ -115,6 +115,11 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.STATE.getValue(), properties.containsKey(ResearcherFields.STATE.getValue()) ? properties.get(ResearcherFields.STATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.STREET_ADDRESS_2.getValue(), properties.containsKey(ResearcherFields.STREET_ADDRESS_2.getValue()) ? properties.get(ResearcherFields.STREET_ADDRESS_2.getValue()) : null);
         rpForDAR.put(ResearcherFields.DIVISION.getValue(), properties.containsKey(ResearcherFields.DIVISION.getValue()) ? properties.get(ResearcherFields.DIVISION.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ERA_COMMONS_ID.getValue(), properties.containsKey(ResearcherFields.ERA_COMMONS_ID.getValue()) ? properties.get(ResearcherFields.ERA_COMMONS_ID.getValue()) : null);
+        rpForDAR.put(ResearcherFields.PUBMED_ID.getValue(), properties.containsKey(ResearcherFields.PUBMED_ID.getValue()) ? properties.get(ResearcherFields.PUBMED_ID.getValue()) : null);
+        rpForDAR.put(ResearcherFields.PROFILE_NAME.getValue(), properties.containsKey(ResearcherFields.PROFILE_NAME.getValue()) ? properties.get(ResearcherFields.DIVISION.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.containsKey(ResearcherFields.DIVISION.getValue()) ? properties.get(ResearcherFields.DIVISION.getValue()) : null);
+        rpForDAR.put(ResearcherFields.SCIENTIFIC_URL.getValue(), properties.containsKey(ResearcherFields.DIVISION.getValue()) ? properties.get(ResearcherFields.DIVISION.getValue()) : null);
         rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
         return rpForDAR;
     }

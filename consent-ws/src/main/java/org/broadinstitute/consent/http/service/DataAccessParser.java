@@ -126,8 +126,8 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.ONTOLOGIES: {
-                 //   List<String> ontologies = generateDiseasesSummary(dar);
-                 //   field.setValue(CollectionUtils.isNotEmpty(ontologies) ? String.join(", ", ontologies) :  "--");
+                    List<String> ontologies = generateDiseasesSummary(dar);
+                    field.setValue(CollectionUtils.isNotEmpty(ontologies) ? String.join(", ", ontologies) :  "--");
                     break;
                 }
                 // STEP 3
