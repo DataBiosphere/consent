@@ -67,51 +67,50 @@ public class DarConstants {
 
     public static final String SCIENTIFIC_URL = "scientificURL";
 
-    public static final String RESEARCH_PURPOSE = "researchPurpose";
-
     public static final String PI_NAME = "piName";
 
     public static final String PI_EMAIL = "piEmail";
 
     public static final String COMPLETED = "completed";
 
-    public static final String NON_TECH_SUMMARY = "nonTechSummary";
+    public static final String NON_TECH_RUS = "non_tech_rus";
 
-    public static final String RESEARCH_DISEASES = "researchDiseases";
+    public static final String DISEASES = "diseases";
 
-    public static final String RESEARCH_METHODS = "researchMethods";
+    public static final String METHODS = "methods";
 
-    public static final String RESEARCH_CONTROLS = "researchControls";
+    public static final String CONTROLS = "controls";
 
-    public static final String RESEARCH_POPULATION = "researchPopulation";
+    public static final String POPULATION = "population";
 
-    public static final String RESEARCH_OTHER = "researchOther";
+    public static final String OTHER = "other";
 
-    public static final String RESEARCH_OTHER_TEXT = "researchOtherText";
+    public static final String OTHER_TEXT = "othertext";
 
-    public static final String DISEASE_AREAS = "diseaseAreas";
+    public static final String ONTOLOGIES = "ontologies";
 
-    public static final String PS_COMMERCIAL = "psCommercial";
+    public static final String FOR_PROFIT = "forProfit";
 
-    public static final String PS_GENDER = "psGender";
+    public static final String ONE_GENDER = "onegender";
 
-    public static final String PS_PEDIATRIC = "psPediatric";
+    public static final String PEDIATRIC = "pediatric";
 
-    public static final String PS_ILLEGAL = "psIllegal";
+    public static final String ILLEGAL_BEHAVE = "illegalbehave";
 
-    public static final String PS_ADDICTION = "psAddiction";
+    public static final String ADDICTION = "addiction";
 
-    public static final String PS_SEXUAL_DISEASE = "psSexualDisease";
+    public static final String SEXUAL_DISEASES = "sexualdiseases";
 
-    public static final String PS_STIGMA_DISEASE = "psStigmaDisease";
+    public static final String STIGMATIZED_DISEASES = "stigmatizediseases";
 
-    public static final String PS_VULNERABLE_POP = "psVulnerablePop";
+    public static final String VULNERABLE_POP = "vulnerablepop";
 
-    public static final String PS_MIGRATION = "psMigration";
+    public static final String POP_MIGRATION = "popmigration";
 
-    public static final String PS_PSYCH_TRAITS = "psPsychTraits";
+    public static final String PSYCH_TRAITS = "psychtraits";
 
-    public static final String PS_NOT_HEALTH = "psNotHealth";
+    public static final String NOT_HEALTH = "nothealth";
 
+    public static final String GENDER = "gender";
 
 }
