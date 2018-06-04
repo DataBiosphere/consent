@@ -101,14 +101,14 @@ public class DataAccessParser {
                     if(Boolean.valueOf(researcherProperties.get("isThePI"))){
                         field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     } else {
-                        field.setValue(getDefaultValue(dar.getString(DarConstants.PI_EMAIL)));
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PI_EMAIL)));
                     }
 
                     break;
                 }
                 case DarConstants.INVESTIGATOR: {
                     if(Boolean.valueOf(researcherProperties.get("isThePI"))){
-                        field.setValue(getDefaultValue(dar.getString(DarConstants.PROFILE_NAME)));
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
                     } else {
                         field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));
                     }
