@@ -40,7 +40,7 @@ public class DataAccessParserTest {
     private final String NON_TECH_RUS = "Summary";
     private final String RESEARCH_OTHER_TEXT = "Research Other Text";
     private final String PATH = "template/RequestApplication.pdf";
-
+    private final String PROFILE_NAME = "Profile Name Test";
     public DataAccessParserTest() {
         this.dataAccessParser = new DataAccessParser();
         this.researcherProperties = new HashMap<>();
@@ -65,6 +65,8 @@ public class DataAccessParserTest {
         researcherProperties.put(DarConstants.ERA_COMMONS_ID, ERA_COMMONS_ID);
         researcherProperties.put(DarConstants.PUBMED_ID, PUBMED_ID);
         researcherProperties.put(DarConstants.SCIENTIFIC_URL, SCIENTIFIC_URL);
+        researcherProperties.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
+        dar.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME);
         dar.put(DarConstants.INVESTIGATOR, INVESTIGATOR);
         dar.put(DarConstants.PI_EMAIL, PI_EMAIL);
         dar.put(DarConstants.PROJECT_TITLE, PROJECT_TITLE);
@@ -86,21 +88,20 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(ResearcherFields.STATE.getValue()).getValueAsString().equals(STATE));
         Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_2.getValue()).getValueAsString().equals(STREET_2));
         Assert.isTrue(acroForm.getField(ResearcherFields.DIVISION.getValue()).getValueAsString().equals(DIVISION));
-        Assert.isTrue(acroForm.getField(DarConstants.INVESTIGATOR).getValueAsString().equals(INVESTIGATOR));
+        Assert.isTrue(acroForm.getField(DarConstants.INVESTIGATOR).getValueAsString().equals(PROFILE_NAME));
         Assert.isTrue(acroForm.getField(DarConstants.ACADEMIC_BUSINESS_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
         Assert.isTrue(acroForm.getField(DarConstants.ERA_COMMONS_ID).getValueAsString().equals(ERA_COMMONS_ID));
         Assert.isTrue(acroForm.getField(DarConstants.PUBMED_ID).getValueAsString().equals(PUBMED_ID));
         Assert.isTrue(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString().equals(SCIENTIFIC_URL));
-        Assert.isTrue(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString().equals(PI_EMAIL));
+        Assert.isTrue(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
         Assert.isTrue(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString().equals(PROJECT_TITLE));
-        acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(DATASET_ID + ", " + DATASET_ID_2);
+        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(DATASET_ID + ", " + DATASET_ID_2));
         Assert.isTrue(acroForm.getField(DarConstants.RUS).getValueAsString().equals(RUS));
         Assert.isTrue(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString().equals(NON_TECH_RUS));
         Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.CONTROLS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.OTHER).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT).getValueAsString().equals(RESEARCH_OTHER_TEXT));
-        Assert.isTrue(acroForm.getField(DarConstants.ONTOLOGIES).getValueAsString().equals("cancer"));
 
     }
 
