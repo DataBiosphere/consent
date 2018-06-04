@@ -61,6 +61,8 @@ public class Election {
     @JsonProperty
     private Integer version;
 
+    @JsonProperty
+    private String consentGroupName;
 
     @JsonProperty
     private String projectTitle;
@@ -83,7 +85,8 @@ public class Election {
 
     public Election(Integer electionId, String electionType,
                     String status, Date createDate,
-                    String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId, Boolean archived) {
+                    String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId, Boolean archived,
+                    String dulName, String translatedUseRestriction, String dataUseLetter) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -93,6 +96,9 @@ public class Election {
         this.finalAccessVote = finalAccessVote;
         this.dataSetId = dataSetId;
         this.archived = archived;
+        this.dulName = dulName;
+        this.translatedUseRestriction = translatedUseRestriction;
+        this.dataUseLetter = dataUseLetter;
     }
 
     public Election(Integer electionId, String electionType,
@@ -155,6 +161,7 @@ public class Election {
         this.dulName = dulName;
         this.version = version;
         this.archived = archived;
+        this.consentGroupName = consentGroupName;
     }
 
     public Election(Integer electionId, String electionType, String status, Date createDate, String referenceId, Integer dataSetId) {
@@ -298,9 +305,7 @@ public class Election {
         return dulName;
     }
 
-    public void setDulName(String dulName) {
-        this.dulName = dulName;
-    }
+    public void setDulName(String dulName) { this.dulName = dulName; }
 
     public Boolean getArchived() {
         return archived;
@@ -317,6 +322,10 @@ public class Election {
     public void setVersion(Integer version) {
         this.version = version;
     }
+
+    public String getConsentGroupName() { return consentGroupName; }
+
+    public void setConsentGroupName(String consentGroupName) { this.consentGroupName = consentGroupName; }
 
     public String getProjectTitle() {
         return projectTitle;

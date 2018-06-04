@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -125,13 +126,17 @@ public class DataUseLetterResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER","DATAOWNER"})
-    public Response getDUL(@PathParam("id") String consentId) {
-        String msg = String.format("GETing Data Use Letter for consent with id '%s'", consentId);
+    public Response getDUL(@PathParam("id") String consentId, @QueryParam("electionId") Integer electionId) {
+        String msg = String.format("GETing Data Use Letter for consent with id '%s' and Election Id '%s", consentId, electionId);
         logger().debug(msg);
+        Election election = null;
         try {
             Consent consent = api.retrieve(consentId);
-            String fileUrl  = consent.getDataUseLetter();
-            String fileName = consent.getDulName();
+            if (StringUtils.isNotEmpty(consent.getLastElectionStatus())) {
+                election = api.retrieveElection(electionId, consentId);
+            }
+            String fileUrl = election != null ? election.getDataUseLetter() : consent.getDataUseLetter();
+            String fileName = election != null ? election.getDulName() : consent.getDulName();
             HttpResponse r = store.getStorageDocument(fileUrl);
             File targetFile = new File(fileName);
             FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
@@ -140,7 +145,7 @@ public class DataUseLetterResource extends Resource {
                     .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
                     .build();
         } catch (UnknownIdentifierException e) {
-            throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
+            throw new NotFoundException(e);
         } catch (IOException e) {
             logger().error("Error when trying to read/write the file " + e.getMessage());
         } catch (GeneralSecurityException e) {

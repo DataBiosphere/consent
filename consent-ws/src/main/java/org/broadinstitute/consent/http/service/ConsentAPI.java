@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 
 import javax.ws.rs.core.UriInfo;
@@ -77,4 +78,5 @@ public interface ConsentAPI {
      */
     boolean hasWorkspaceAssociation(String workspaceId);
 
+    Election retrieveElection(Integer electionId, String consentId);
 }

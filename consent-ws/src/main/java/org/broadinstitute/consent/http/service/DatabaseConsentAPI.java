@@ -107,7 +107,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
-        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate, rec.getTranslatedUseRestriction(), true);
+        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(),
+                rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(),
+                createDate, createDate, rec.getTranslatedUseRestriction(), true, rec.getGroupName());
         return consentDAO.findConsentById(id);
     }
 
@@ -116,7 +118,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public Consent retrieve(String id) throws UnknownIdentifierException {
         Consent consent = consentDAO.findConsentById(id);
         if (consent == null) {
-            throw new UnknownIdentifierException("Consent does not exist");
+            throw new UnknownIdentifierException(String.format("Could not find consent with id %s", id));
         }
 
         Election election = electionDAO.findLastElectionVersionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
@@ -473,4 +475,14 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return consent;
     }
 
+    @Override
+    public Election retrieveElection(Integer electionId, String consentId) {
+        Election election;
+        if (electionId != null) {
+            election = electionDAO.findElectionWithFinalVoteById(electionId);
+        } else {
+            election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
+        }
+        return election;
+    }
 }
