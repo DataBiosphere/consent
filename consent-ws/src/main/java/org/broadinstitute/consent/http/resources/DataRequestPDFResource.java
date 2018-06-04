@@ -33,8 +33,8 @@ public class DataRequestPDFResource extends Resource {
     @PermitAll
     @Produces( "application/pdf")
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
-        Document dar = new Document();//darApi.describeDataAccessRequestById(requestId);
-        Map<String, String> researcherProperties = new HashMap<>();//researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
+        Document dar = darApi.describeDataAccessRequestById(requestId);
+        Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
 
         StreamingOutput fileStream =  new StreamingOutput()
         {
