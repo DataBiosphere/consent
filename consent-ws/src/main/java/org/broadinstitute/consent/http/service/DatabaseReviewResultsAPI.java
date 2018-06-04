@@ -31,8 +31,8 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
     }
 
     @Override
-    public ElectionReview describeCollectElectionReviewByReferenceId(String referenceId, String type) {
-        Election election = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, type);
+    public ElectionReview describeLastElectionReviewByReferenceIdAndType(String referenceId, String type) {
+        Election election = electionDAO.findLastElectionByReferenceIdAndType(referenceId, type);
         return getElectionReview(referenceId, election);
     }
 
