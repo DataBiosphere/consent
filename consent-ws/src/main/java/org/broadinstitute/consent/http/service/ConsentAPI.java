@@ -78,5 +78,5 @@ public interface ConsentAPI {
      */
     boolean hasWorkspaceAssociation(String workspaceId);
 
-    Election retrieveElectionDul(Integer electionId, String consentId) throws UnknownIdentifierException;
+    Election retrieveElection(Integer electionId, String consentId);
 }

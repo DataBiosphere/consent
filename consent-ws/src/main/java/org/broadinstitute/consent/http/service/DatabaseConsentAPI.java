@@ -476,17 +476,13 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Election retrieveElectionDul(Integer electionId, String consentId) throws UnknownIdentifierException{
+    public Election retrieveElection(Integer electionId, String consentId) {
         Election election;
         if (electionId != null) {
             election = electionDAO.findElectionWithFinalVoteById(electionId);
         } else {
             election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
         }
-        if (election.getDataUseLetter() == null) {
-            throw new UnknownIdentifierException(String.format("Could not found DUL for elecionId: '%s", election.getElectionId()));
-        }
         return election;
     }
-
 }

@@ -62,7 +62,7 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
 
         Election lastElection = createElection(ELECTION_DULNAME_V2, ELECTION_DUL_URL_V2, client);
 
-        Election retrievedElection = databaseConsentApi.retrieveElectionDul(null, consent.getConsentId());
+        Election retrievedElection = databaseConsentApi.retrieveElection(null, consent.getConsentId());
 
         assertThat(retrievedElection.getDulName().equals(lastElection.getDulName()));
         assertThat(retrievedElection.getDataUseLetter().equals(lastElection.getDataUseLetter()));
@@ -80,7 +80,7 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
 
         Election election = createElection(ELECTION_DULNAME_V1, ELECTION_DUL_URL_V1, client);
 
-        Election retrievedElection = databaseConsentApi.retrieveElectionDul(election.getElectionId(), consent.getConsentId());
+        Election retrievedElection = databaseConsentApi.retrieveElection(election.getElectionId(), consent.getConsentId());
 
         assertThat(retrievedElection.getDulName().equals(election.getDulName()));
         assertThat(retrievedElection.getDataUseLetter().equals(election.getDataUseLetter()));

@@ -133,7 +133,7 @@ public class DataUseLetterResource extends Resource {
         try {
             Consent consent = api.retrieve(consentId);
             if (StringUtils.isNotEmpty(consent.getLastElectionStatus())) {
-                election = api.retrieveElectionDul(electionId, consentId);
+                election = api.retrieveElection(electionId, consentId);
             }
             String fileUrl = election != null ? election.getDataUseLetter() : consent.getDataUseLetter();
             String fileName = election != null ? election.getDulName() : consent.getDulName();
