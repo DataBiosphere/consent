@@ -66,7 +66,7 @@ public class DataAccessParserTest {
         researcherProperties.put(DarConstants.PUBMED_ID, PUBMED_ID);
         researcherProperties.put(DarConstants.SCIENTIFIC_URL, SCIENTIFIC_URL);
         researcherProperties.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        dar.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME);
+        researcherProperties.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME);
         dar.put(DarConstants.INVESTIGATOR, INVESTIGATOR);
         dar.put(DarConstants.PI_EMAIL, PI_EMAIL);
         dar.put(DarConstants.PROJECT_TITLE, PROJECT_TITLE);
