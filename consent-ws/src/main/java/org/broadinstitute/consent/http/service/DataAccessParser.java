@@ -17,12 +17,7 @@ public class DataAccessParser {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {
-                // STEP 1
-                case DarConstants.INVESTIGATOR: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));
-                    break;
-                }
-                case DarConstants.INSTITUTION: {
+                 case DarConstants.INSTITUTION: {
                     field.setValue(getDefaultValue(researcherProperties.get(DarConstants.INSTITUTION)));
                     break;
                 }
@@ -58,7 +53,6 @@ public class DataAccessParser {
                     field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STATE)));
                     break;
                 }
-                // STEP 2
                 case DarConstants.CONTROLS: {
                     field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.CONTROLS)));
                     break;
@@ -104,7 +98,20 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.PI_EMAIL: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.PI_EMAIL)));
+                    if(Boolean.valueOf(researcherProperties.get("isThePI"))){
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
+                    } else {
+                        field.setValue(getDefaultValue(dar.getString(DarConstants.PI_EMAIL)));
+                    }
+
+                    break;
+                }
+                case DarConstants.INVESTIGATOR: {
+                    if(Boolean.valueOf(researcherProperties.get("isThePI"))){
+                        field.setValue(getDefaultValue(dar.getString(DarConstants.PROFILE_NAME)));
+                    } else {
+                        field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));
+                    }
                     break;
                 }
                 case DarConstants.PROJECT_TITLE: {
@@ -129,7 +136,6 @@ public class DataAccessParser {
                     field.setValue(CollectionUtils.isNotEmpty(ontologies) ? String.join(", ", ontologies) :  "--");
                     break;
                 }
-                // STEP 3
                 case DarConstants.FOR_PROFIT: {
                     field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.FOR_PROFIT)));
                     break;
