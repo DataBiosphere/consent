@@ -54,19 +54,24 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     public void testUpdateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
+        rec.setGroupName("Test Group Name");
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         mockValidateTokenResponse();
         Consent created = retrieveConsent(client, createdLocation);
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
+        assertThat(created.groupName).isEqualTo(rec.groupName);
         Consent update = generateNewConsent(nothing, notGeneralUse);
         update.setRequiresManualReview(true);
+        update.setGroupName("Group Name in testing");
         check200(put(client, createdLocation, update));
         Consent updated = retrieveConsent(client, createdLocation);
 
         assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
         assertThat(updated.useRestriction).isEqualTo(update.useRestriction);
+        // Consent Group Name shouldn't be updated
+        assertThat(updated.groupName).isEqualTo(rec.groupName);
         Election election = createElection(created.consentId);
         checkStatus(BAD_REQUEST, put(client, createdLocation, update));
         deleteElection(created.getConsentId(), election.getElectionId());
@@ -162,6 +167,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
     }
 
     private void assertValidConsentResource(Client client, Consent rec) throws IOException {
+        rec.setGroupName("Test Group Name");
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         mockValidateTokenResponse();
@@ -169,6 +175,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
         assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
         assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
+        assertThat(created.groupName).isEqualTo(rec.groupName);
     }
 
     public Election createElection(String consentId) throws IOException {

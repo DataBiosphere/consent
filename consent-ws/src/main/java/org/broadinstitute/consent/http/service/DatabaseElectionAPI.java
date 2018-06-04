@@ -1,3 +1,4 @@
+
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
@@ -181,6 +182,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             BasicDBObject in = new BasicDBObject("$in", objarray);
             BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
+
+
             elections.forEach(election -> {
                 MongoCursor<Document> itr = dataAccessRequests.iterator();
                 try {
@@ -188,6 +191,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                         Document next = itr.next();
                         if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
                             election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
+                            election.setProjectTitle(next.get(DarConstants.PROJECT_TITLE).toString());
                         }
                     }
                 } finally {
@@ -203,6 +207,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
                             collect(Collectors.toList());
                     election.setDisplayId(c.get(0).getName());
+                    election.setConsentGroupName(c.get(0).getGroupName());
                 });
             }
         }

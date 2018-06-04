@@ -107,7 +107,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
-        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate, rec.getTranslatedUseRestriction(), true);
+        consentDAO.insertConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(),
+                rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(),
+                createDate, createDate, rec.getTranslatedUseRestriction(), true, rec.getGroupName());
         return consentDAO.findConsentById(id);
     }
 

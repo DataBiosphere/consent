@@ -75,8 +75,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     @Override
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
-        List<Election> elections;
-        elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(),false) : electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
+        List<Election> elections = isChairPerson(dacUserId)  ?  electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(),false) : electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -162,9 +161,13 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
             BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
             FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
-            pendingCase.setFrontEndId(dataAccessRequest.first() != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
+            if(dataAccessRequest.first() != null) {
+                pendingCase.setFrontEndId(dataAccessRequest.first().get(DarConstants.DAR_CODE).toString());
+                pendingCase.setProjectTitle(dataAccessRequest.first().get(DarConstants.PROJECT_TITLE).toString());
+            }
         }else{
              pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
+             pendingCase.setConsentGroupName(consentDAO.findConsentById(election.getReferenceId()).getGroupName());
         }
         pendingCase.setLogged(setLogged(pendingCase.getTotalVotes(), pendingCase.getVotesLogged()));
         pendingCase.setAlreadyVoted(pendingCase.getAlreadyVoted() == null ? vote.getVote() != null : pendingCase.getAlreadyVoted());
