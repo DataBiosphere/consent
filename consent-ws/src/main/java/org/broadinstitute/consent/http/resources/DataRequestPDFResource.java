@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
 import javax.ws.rs.core.HttpHeaders;
@@ -13,7 +12,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/pdf")

@@ -51,8 +51,6 @@ public class DarConstants {
 
     public static final String ZIP_POSTAL_CODE = "zipcode";
 
-    public static final String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
-
     public static final String COUNTRY = "country";
 
     public static final String DIVISION = "division";
@@ -67,11 +65,7 @@ public class DarConstants {
 
     public static final String SCIENTIFIC_URL = "scientificURL";
 
-    public static final String PI_NAME = "piName";
-
     public static final String PI_EMAIL = "piEmail";
-
-    public static final String COMPLETED = "completed";
 
     public static final String NON_TECH_RUS = "non_tech_rus";
 

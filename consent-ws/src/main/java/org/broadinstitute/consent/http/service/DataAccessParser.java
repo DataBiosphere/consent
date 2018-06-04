@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -185,8 +184,7 @@ public class DataAccessParser {
     }
 
     private String getYesOrNotValue(Boolean value){
-        String YES = "Yes", NO = "No";
-        return value == null || !value ? NO : YES;
+        return value == null || !value ? "No" : "Yes";
     }
 
     private String getDefaultValue(String value){
@@ -194,7 +192,7 @@ public class DataAccessParser {
     }
 
     private List<String> generateDiseasesSummary(Document darDocument) {
-        List<Map<String, String>> ontologies = (List<Map<String, String>>) darDocument.get("ontologies");
+        List<Map<String, String>> ontologies = (List<Map<String, String>>) darDocument.get(DarConstants.ONTOLOGIES);
         List<String> diseases = new ArrayList<>();
         if(!CollectionUtils.isEmpty(ontologies)) {
            for (Map<String, String> ontology : ontologies) {
