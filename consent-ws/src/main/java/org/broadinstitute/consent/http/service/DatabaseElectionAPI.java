@@ -207,6 +207,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
                             collect(Collectors.toList());
                     election.setDisplayId(c.get(0).getName());
+                    election.setConsentGroupName(c.get(0).getGroupName());
                 });
             }
         }
