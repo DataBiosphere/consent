@@ -21,7 +21,10 @@ public class DatabaseElectionMapper implements ResultSetMapper<Election> {
                 r.getDate(ElectionFields.LAST_UPDATE.getValue()),
                 (r.getString(ElectionFields.FINAL_ACCESS_VOTE.getValue()) == null) ? null : r.getBoolean(ElectionFields.FINAL_ACCESS_VOTE.getValue()),
                 r.getInt(ElectionFields.DATASET_ID.getValue()),
-                r.getBoolean(ElectionFields.ARCHIVED.getValue())
+                r.getBoolean(ElectionFields.ARCHIVED.getValue()),
+                r.getString(ElectionFields.DUL_NAME.getValue()),
+                r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()),
+                r.getString(ElectionFields.DATA_USE_LETTER.getValue())
         );
     }
 }
