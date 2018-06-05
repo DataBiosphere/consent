@@ -33,7 +33,7 @@ public class DataRequestPDFResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-
+        String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE) + ".pdf";
         StreamingOutput fileStream =  new StreamingOutput()
         {
             @Override
@@ -54,7 +54,7 @@ public class DataRequestPDFResource extends Resource {
         };
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename = myfile.pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + fileName + ".pdf")
                 .build();
     }
 
