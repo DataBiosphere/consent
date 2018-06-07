@@ -7,19 +7,26 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 
 import java.util.*;
@@ -43,6 +50,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ConsentDAO consentDAO;
 
+    private final DataAccessParser dataAccessParser;
+
+    private ResearcherAPI researcherAPI;
+
     private final String DATA_SET_ID = "datasetId";
 
     private final String SUFFIX = "-A-";
@@ -59,6 +70,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final String DENIED = "Denied";
 
+    private final String PATH = "template/RequestApplication.pdf";
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -88,6 +100,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.voteDAO = voteDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
+        this.dataAccessParser = new DataAccessParser();
     }
 
 
@@ -384,6 +397,23 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
     }
 
+    @Override
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties) throws NotFoundException, IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        PDDocument darDOC = new PDDocument();
+        try {
+            ClassLoader classLoader = getClass().getClassLoader();
+            InputStream is = classLoader.getResourceAsStream(PATH);
+            darDOC = PDDocument.load(is);
+            dataAccessParser.fillDARForm(dar, researcherProperties, darDOC.getDocumentCatalog().getAcroForm());
+            darDOC.save(output);
+            return output.toByteArray();
+        } finally {
+            output.close();
+            darDOC.close();
+        }
+
+    }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
         if(CollectionUtils.isNotEmpty(dataAccessRequestList)){
