@@ -400,14 +400,19 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties) throws NotFoundException, IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        ClassLoader classLoader = getClass().getClassLoader();
-        InputStream is = classLoader.getResourceAsStream(PATH);
-        PDDocument darDOC = PDDocument.load(is);
-        dataAccessParser.fillDARForm(dar, researcherProperties, darDOC.getDocumentCatalog().getAcroForm());
-        darDOC.save(output);
-        output.close();
-        darDOC.close();
-        return output.toByteArray();
+        PDDocument darDOC = new PDDocument();
+        try {
+            ClassLoader classLoader = getClass().getClassLoader();
+            InputStream is = classLoader.getResourceAsStream(PATH);
+            darDOC = PDDocument.load(is);
+            dataAccessParser.fillDARForm(dar, researcherProperties, darDOC.getDocumentCatalog().getAcroForm());
+            darDOC.save(output);
+            return output.toByteArray();
+        } finally {
+            output.close();
+            darDOC.close();
+        }
+
     }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {

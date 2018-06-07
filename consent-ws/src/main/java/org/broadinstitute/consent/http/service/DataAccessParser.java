@@ -54,23 +54,23 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.CONTROLS: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.CONTROLS)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.CONTROLS)));
                     break;
                 }
                 case DarConstants.POPULATION: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.POPULATION)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.POPULATION)));
                     break;
                 }
                 case DarConstants.DISEASES: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.DISEASES)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.DISEASES)));
                     break;
                 }
                 case DarConstants.METHODS: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.METHODS)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.METHODS)));
                     break;
                 }
                 case DarConstants.OTHER: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.OTHER)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.OTHER)));
                     break;
                 }
                 case DarConstants.OTHER_TEXT: {
@@ -137,11 +137,11 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.FOR_PROFIT: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.FOR_PROFIT)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.FOR_PROFIT)));
                     break;
                 }
                 case DarConstants.ONE_GENDER: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.ONE_GENDER)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ONE_GENDER)));
                     break;
                 }
                 case DarConstants.GENDER: {
@@ -149,39 +149,39 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.PEDIATRIC: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.PEDIATRIC)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.PEDIATRIC)));
                     break;
                 }
                 case DarConstants.ILLEGAL_BEHAVE: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.ILLEGAL_BEHAVE)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ILLEGAL_BEHAVE)));
                     break;
                 }
                 case DarConstants.ADDICTION: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.ADDICTION)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ADDICTION)));
                     break;
                 }
                 case DarConstants.SEXUAL_DISEASES: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.SEXUAL_DISEASES)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.SEXUAL_DISEASES)));
                     break;
                 }
                 case DarConstants.STIGMATIZED_DISEASES: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.STIGMATIZED_DISEASES)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.STIGMATIZED_DISEASES)));
                     break;
                 }
                 case DarConstants.VULNERABLE_POP: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.VULNERABLE_POP)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.VULNERABLE_POP)));
                     break;
                 }
                 case DarConstants.POP_MIGRATION: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.POP_MIGRATION)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.POP_MIGRATION)));
                     break;
                 }
                 case DarConstants.PSYCH_TRAITS: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.PSYCH_TRAITS)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.PSYCH_TRAITS)));
                     break;
                 }
                 case DarConstants.NOT_HEALTH: {
-                    field.setValue(getYesOrNotValue(dar.getBoolean(DarConstants.NOT_HEALTH)));
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.NOT_HEALTH)));
                     break;
                 }
             }
@@ -189,7 +189,7 @@ public class DataAccessParser {
         return acroForm;
     }
 
-    private String getYesOrNotValue(Boolean value){
+    private String getYesOrNoValue(Boolean value){
         return value == null || !value ? "No" : "Yes";
     }
 
