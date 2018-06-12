@@ -449,6 +449,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
+    @Override
+    public List<Election> findDataAccessClosedElectionsByFinalResult(Boolean isApproved) {
+        return electionDAO.findDataAccessClosedElectionsByFinalResult(isApproved);
+    }
+
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
         for(Election e: elections){
             if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){

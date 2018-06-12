@@ -8,8 +8,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.*;
@@ -22,11 +20,8 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.sql.Timestamp;
 
 import java.util.*;
@@ -52,7 +47,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final DataAccessParser dataAccessParser;
 
-    private ResearcherAPI researcherAPI;
+    private  final ResearcherPropertyDAO  researcherPropertyDAO;
 
     private final String DATA_SET_ID = "datasetId";
 
@@ -71,6 +66,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final String DENIED = "Denied";
 
     private final String PATH = "template/RequestApplication.pdf";
+
+    private final DataAccessReportsParser dataAccessReportsParser;
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -82,8 +79,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *                  read/write data.
      * @param converter
      */
-    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO));
+    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
@@ -92,7 +89,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO) {
+    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
         this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
@@ -101,6 +98,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.dataAccessParser = new DataAccessParser();
+        this.dataAccessReportsParser = new DataAccessReportsParser();
+        this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
 
@@ -413,6 +412,46 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darDOC.close();
         }
 
+    }
+
+    @Override
+    public File createApprovedDARDocument() throws NotFoundException, IOException {
+        List<Election> elections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
+        File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        dataAccessReportsParser.setApprovedDARHeader(darWriter);
+        if (CollectionUtils.isNotEmpty(elections)) {
+            for (Election election : elections) {
+                Document dar = describeDataAccessRequestById(election.getReferenceId());
+                String profileName = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
+                String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
+                Consent consent = consentDAO.findConsentFromDatasetID(dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString());
+                dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consent);
+            }
+        }
+        darWriter.flush();
+        return file;
+    }
+
+    @Override
+    public File createReviewedDARDocument() throws NotFoundException, IOException {
+        List<Election> approvedElections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
+        List<Election> disaprovedElections = electionDAO.findDataAccessClosedElectionsByFinalResult(false);
+        List<Election> elections = new ArrayList<>();
+        elections.addAll(approvedElections);
+        elections.addAll(disaprovedElections);
+        File file = File.createTempFile("ReviewedDataAccessRequests", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        dataAccessReportsParser.setReviewedDARHeader(darWriter);
+        if (CollectionUtils.isNotEmpty(elections)) {
+            for (Election election : elections) {
+                Document dar = describeDataAccessRequestById(election.getReferenceId());
+                Consent consent = consentDAO.findConsentFromDatasetID(dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString());
+                dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consent);
+            }
+        }
+        darWriter.flush();
+        return file;
     }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {

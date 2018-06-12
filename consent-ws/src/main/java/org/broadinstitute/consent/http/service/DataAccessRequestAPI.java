@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -57,7 +58,7 @@ public interface DataAccessRequestAPI {
 
     List<Document> describePartialDataAccessRequestManage(Integer userId);
 
-    Object getField(String requestId , String field);
+    Object getField(String requestId, String field);
 
     void setMongoDBInstance(MongoConsentDB mongo);
 
@@ -76,5 +77,11 @@ public interface DataAccessRequestAPI {
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
     byte[] createDARDocument(Document dar, Map<String, String> researcherProperties) throws IOException;
+
+    File createApprovedDARDocument() throws NotFoundException, IOException;
+
+    File createReviewedDARDocument() throws NotFoundException, IOException;
+
 }
+
 

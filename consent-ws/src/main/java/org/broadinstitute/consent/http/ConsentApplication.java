@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import com.github.fakemongo.Fongo;
+import com.google.common.collect.Lists;
 import com.mongodb.MongoClient;
 import com.tradier.raven.logging.RavenBootstrap;
 import com.tradier.raven.logging.UncaughtExceptionHandlers;
@@ -19,7 +20,6 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import jersey.repackaged.com.google.common.collect.Lists;
 import org.broadinstitute.consent.http.authentication.*;
 import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -125,7 +125,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(client, config.getServicesConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
 
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, mongoInstance);
 
@@ -218,7 +218,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new DataRequestPDFResource(researcherAPI));
+        env.jersey().register(new DataRequestReportsResource(researcherAPI));
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be
