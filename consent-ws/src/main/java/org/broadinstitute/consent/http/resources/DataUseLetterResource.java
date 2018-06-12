@@ -135,7 +135,7 @@ public class DataUseLetterResource extends Resource {
             if (StringUtils.isNotEmpty(consent.getLastElectionStatus())) {
                 election = api.retrieveElection(electionId, consentId);
             }
-            String fileUrl = (election != null && !election.getDulName().isEmpty()) ? election.getDataUseLetter() : consent.getDataUseLetter();
+            String fileUrl = (election != null && !election.getDataUseLetter().isEmpty()) ? election.getDataUseLetter() : consent.getDataUseLetter();
             String fileName = (election != null && !election.getDulName().isEmpty()) ? election.getDulName() : consent.getDulName();
             HttpResponse r = store.getStorageDocument(fileUrl);
             File targetFile = new File(fileName);
