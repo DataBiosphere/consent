@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http;
 
 import com.github.fakemongo.Fongo;
-import com.google.common.collect.Lists;
 import com.mongodb.MongoClient;
 import com.tradier.raven.logging.RavenBootstrap;
 import com.tradier.raven.logging.UncaughtExceptionHandlers;
@@ -20,6 +19,7 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import jersey.repackaged.com.google.common.collect.Lists;
 import org.broadinstitute.consent.http.authentication.*;
 import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;

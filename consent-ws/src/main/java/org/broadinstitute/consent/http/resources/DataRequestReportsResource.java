@@ -68,7 +68,7 @@ public class DataRequestReportsResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @PermitAll
-    @Path("/approvedDAR")
+    @Path("/approved")
     public Response downloadApprovedDARs() {
         try {
            return Response.ok(darApi.createApprovedDARDocument())
@@ -82,7 +82,7 @@ public class DataRequestReportsResource extends Resource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @PermitAll
-    @Path("/reviewedDAR")
+    @Path("/reviewed")
     public Response downloadReviewedDARs() {
         try {
             return Response.ok(darApi.createReviewedDARDocument())
