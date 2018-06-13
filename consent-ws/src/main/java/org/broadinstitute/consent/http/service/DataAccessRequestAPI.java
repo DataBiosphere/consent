@@ -10,9 +10,10 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-
+import java.util.Map;
 
 
 public interface DataAccessRequestAPI {
@@ -73,5 +74,7 @@ public interface DataAccessRequestAPI {
     FindIterable<Document> findDARUseRestrictions();
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
+
+    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties) throws IOException;
 }
 
