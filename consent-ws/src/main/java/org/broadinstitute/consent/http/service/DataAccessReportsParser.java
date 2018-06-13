@@ -39,7 +39,7 @@ public class DataAccessReportsParser {
         String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
         String sDUL = StringUtils.isNotEmpty(consent.getTranslatedUseRestriction()) ?  consent.getTranslatedUseRestriction().replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
-        String rus = StringUtils.isNotEmpty( dar.getString(DarConstants.RUS)) ?  dar.getString(DarConstants.RUS).replace("\n", " ") : "";
+        String rusSummary = StringUtils.isNotEmpty( dar.getString(DarConstants.NON_TECH_RUS)) ?  dar.getString(DarConstants.NON_TECH_RUS).replace("\n", " ") : "";
         darWriter.write(
                 dar.getString(DarConstants.DAR_CODE) + DEFAULT_SEPARATOR +
                 dataSetName + DEFAULT_SEPARATOR +
@@ -49,7 +49,7 @@ public class DataAccessReportsParser {
                 institution + DEFAULT_SEPARATOR +
                 sDUL + DEFAULT_SEPARATOR +
                 translatedRestriction + DEFAULT_SEPARATOR +
-                rus + DEFAULT_SEPARATOR +
+                rusSummary + DEFAULT_SEPARATOR +
                 formatTimeToDate(dar.getDate(DarConstants.SORT_DATE).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                 " " + END_OF_LINE);

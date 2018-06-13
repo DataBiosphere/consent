@@ -23,7 +23,7 @@ public class DataAccessReportsParserTest {
     private final String CONSENT_NAME = "ORSP-1903";
     private final String REQUESTER = "Wesley";
     private final String ORGANIZATION = "Broad";
-    private final String RUS = "Purpose";
+    private final String RUS_SUMMARY = "Purpose";
     private final String sDUL = "Samples Restricted for use with \"cancer\" [DOID_162(CC)]\n" +
             "Future use by for-profit entities is prohibited [NPU]\n" +
             "Future use of aggregate-level data for general research purposes is prohibited [NPNV]\n" +
@@ -78,7 +78,7 @@ public class DataAccessReportsParserTest {
                 Assert.isTrue(columns[5].equals(ORGANIZATION));
                 Assert.isTrue(columns[6].equals(sDUL.replace("\n", " ")));
                 Assert.isTrue(columns[7].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
-                Assert.isTrue(columns[8].equals(RUS));
+                Assert.isTrue(columns[8].equals(RUS_SUMMARY));
             }
             i++;
         }
@@ -148,7 +148,7 @@ public class DataAccessReportsParserTest {
         dar.put(DarConstants.DATASET_ID, dataSets);
         dar.put(DarConstants.DAR_CODE, DAR_CODE);
         dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
-        dar.put(DarConstants.RUS, RUS);
+        dar.put(DarConstants.NON_TECH_RUS, RUS_SUMMARY);
         dar.put(DarConstants.SORT_DATE, currentDate);
         return dar;
     }
