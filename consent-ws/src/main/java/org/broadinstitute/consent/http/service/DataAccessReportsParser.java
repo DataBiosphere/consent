@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.Consent;
@@ -35,13 +36,13 @@ public class DataAccessReportsParser {
 
     public void addApprovedDARLine(FileWriter darWriter, Election election, Document dar, String profileName, String institution, Consent consent) throws IOException {
         List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
-        String sDUL = StringUtils.isNotEmpty(election.getTranslatedUseRestriction()) ? election.getTranslatedUseRestriction() : consent.getTranslatedUseRestriction();
-        sDUL = StringUtils.isNotEmpty(sDUL) ?  sDUL.replace("\n", "") : "";
-        String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("\n", " ") :  "";
+        String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
+        String sDUL = StringUtils.isNotEmpty(consent.getTranslatedUseRestriction()) ?  consent.getTranslatedUseRestriction().replace("\n", " ") : "";
+        String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
         String rus = StringUtils.isNotEmpty( dar.getString(DarConstants.RUS)) ?  dar.getString(DarConstants.RUS).replace("\n", " ") : "";
         darWriter.write(
                 dar.getString(DarConstants.DAR_CODE) + DEFAULT_SEPARATOR +
-                dataSetDetail.get(0).getString("name") + DEFAULT_SEPARATOR +
+                dataSetName + DEFAULT_SEPARATOR +
                 dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString() + DEFAULT_SEPARATOR +
                 consent.getName() + DEFAULT_SEPARATOR +
                 profileName + DEFAULT_SEPARATOR +
@@ -69,13 +70,13 @@ public class DataAccessReportsParser {
 
     public void addReviewedDARLine(FileWriter darWriter, Election election, Document dar, Consent consent) throws IOException {
         List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
-        String sDUL = StringUtils.isNotEmpty(election.getTranslatedUseRestriction()) ? election.getTranslatedUseRestriction() : consent.getTranslatedUseRestriction();
-        sDUL = StringUtils.isNotEmpty(sDUL) ?  sDUL.replace("\n", "") : "";
-        String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("\n", " ") :  "";
+        String sDUL = StringUtils.isNotEmpty(consent.getTranslatedUseRestriction()) ? consent.getTranslatedUseRestriction().replace("\n", " ") : "";
+        String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
         String finalVote = election.getFinalVote() ? "Yes" : "No";
+        String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
         darWriter.write(
                 dar.getString(DarConstants.DAR_CODE) + DEFAULT_SEPARATOR +
-                        dataSetDetail.get(0).getString("name") + DEFAULT_SEPARATOR +
+                        dataSetName + DEFAULT_SEPARATOR +
                         dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString() + DEFAULT_SEPARATOR +
                         consent.getName() + DEFAULT_SEPARATOR +
                         sDUL + DEFAULT_SEPARATOR +
@@ -84,7 +85,7 @@ public class DataAccessReportsParser {
                         finalVote + END_OF_LINE);
     }
 
-    public String formatTimeToDate(long time) {
+    private String formatTimeToDate(long time) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(time);
         Integer day = cal.get(Calendar.DAY_OF_MONTH);
