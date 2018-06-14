@@ -92,7 +92,6 @@ public class UseRestrictionConverter {
 
         if(Boolean.valueOf(form.getOrDefault("poa", false).toString())){
             dataUseDTO.setPopulationOriginsAncestry(true);
-//            dataUseDTO.setGeneralUse(true); // general use de DAR
         } else{
             dataUseDTO.setPopulationOriginsAncestry(false);
         }
