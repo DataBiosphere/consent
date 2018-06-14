@@ -7,10 +7,10 @@
     <changeSet author="vvicario" id="118">
         <sql dbms="hsql, mysql"> UPDATE election as el SET dataUseLetter =
             (SELECT c.dataUseLetter from consents c where el.referenceId = c.consentId)
-            where el.createDate &lt; '2018-05-23' and el.dataUseLetter is null </sql>
+            where el.createDate &lt; '2018-05-23' </sql>
         <sql dbms="hsql, mysql"> UPDATE election as el SET dulName =
             (SELECT c.dulName from consents c where el.referenceId = c.consentId)
-            where el.createDate &lt; '2018-05-23' and el.dulName is null </sql>
+            where el.createDate &lt; '2018-05-23' </sql>
     </changeSet>
 
 </databaseChangeLog>
