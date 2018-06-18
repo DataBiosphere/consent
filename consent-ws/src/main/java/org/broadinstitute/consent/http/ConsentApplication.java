@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
-import com.tradier.raven.logging.RavenBootstrap;
-import com.tradier.raven.logging.UncaughtExceptionHandlers;
 import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -45,6 +43,8 @@ import org.broadinstitute.consent.http.service.users.handler.DatabaseResearcherA
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
+import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
+import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -73,7 +73,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     public static void main(String[] args) throws Exception {
         String dsn = System.getProperties().getProperty("sentry.dsn");
         if (null != dsn && !dsn.isEmpty()) {
-            RavenBootstrap.bootstrap(System.getProperties().getProperty("sentry.dsn"));
+            SentryBootstrap.bootstrap(dsn);
             Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
         }
         new ConsentApplication().run(args);
