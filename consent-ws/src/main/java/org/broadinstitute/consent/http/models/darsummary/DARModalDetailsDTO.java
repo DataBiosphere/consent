@@ -170,6 +170,14 @@ public class DARModalDetailsDTO {
             researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL));
             manualReviewIsTrue();
         }
+        if(darDocument.containsKey("hmb") && darDocument.getBoolean("hmb")){
+            researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL));
+            manualReviewIsTrue();
+        }
+        if(darDocument.containsKey("poa") && darDocument.getBoolean("poa")){
+            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL));
+            manualReviewIsTrue();
+        }
         if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
             researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString("othertext")));
             manualReviewIsTrue();
