@@ -1,0 +1,16 @@
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="vvicario" id="118">
+        <sql dbms="hsql, mysql"> UPDATE election as el SET dataUseLetter =
+            (SELECT c.dataUseLetter from consents c where el.referenceId = c.consentId)
+            where el.createDate &lt; '2018-05-23' </sql>
+        <sql dbms="hsql, mysql"> UPDATE election as el SET dulName =
+            (SELECT c.dulName from consents c where el.referenceId = c.consentId)
+            where el.createDate &lt; '2018-05-23' </sql>
+    </changeSet>
+
+</databaseChangeLog>
