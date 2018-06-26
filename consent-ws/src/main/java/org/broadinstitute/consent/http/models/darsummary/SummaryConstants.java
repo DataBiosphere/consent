@@ -25,6 +25,10 @@ public class SummaryConstants {
     public static final String RT_CONTROLS_DETAIL = "The reason for this request is to increase the number of controls available for a comparison group.";
     public static final String RT_POPULATION = "Population structure or normal variation studies: ";
     public static final String RT_POPULATION_DETAIL = "The primary purpose of the research is to understand variation in the general population.";
+    public static final String RT_HEALTH_BIOMEDICAL = "Health/medical/biomedical research: ";
+    public static final String RT_HEALTH_BIOMEDICAL_DETAIL = "The primary purpose of the study is to investigate a health/medical/biomedical (or biological) phenomenon or condition.";
+    public static final String RT_POPULATION_ORIGINS = "Population origins or ancestry research: ";
+    public static final String RT_POPULATION_ORIGINS_DETAIL = "This outcome of this study is expected to provide new knowledge about the origins of a certain population or its ancestry.";
     public static final String RT_OTHER = "Other: ";
 
 }

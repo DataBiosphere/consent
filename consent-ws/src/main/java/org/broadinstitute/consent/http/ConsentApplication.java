@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
-import com.tradier.raven.logging.RavenBootstrap;
-import com.tradier.raven.logging.UncaughtExceptionHandlers;
 import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -45,6 +43,8 @@ import org.broadinstitute.consent.http.service.users.handler.DatabaseResearcherA
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
+import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
+import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -73,7 +73,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     public static void main(String[] args) throws Exception {
         String dsn = System.getProperties().getProperty("sentry.dsn");
         if (null != dsn && !dsn.isEmpty()) {
-            RavenBootstrap.bootstrap(System.getProperties().getProperty("sentry.dsn"));
+            SentryBootstrap.bootstrap(dsn);
             Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
         }
         new ConsentApplication().run(args);
@@ -125,7 +125,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(client, config.getServicesConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO);
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
 
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, mongoInstance);
 
@@ -167,8 +167,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,
-                        config.getStoreOntologyConfiguration().getBucketSubdirectory(),
-                        config.getStoreOntologyConfiguration().getConfigurationFileName());
+                config.getStoreOntologyConfiguration().getBucketSubdirectory(),
+                config.getStoreOntologyConfiguration().getConfigurationFileName());
 
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
@@ -211,14 +211,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 .setRealm(" ")
                 .buildAuthFilter();
         List<AuthFilter> filters = Lists.newArrayList(
-            defaultAuthFilter,
-            new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
-            new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
+                defaultAuthFilter,
+                new BasicCustomAuthFilter(new BasicAuthenticator(config.getBasicAuthentication())),
+                new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
-
+        env.jersey().register(new DataRequestReportsResource(researcherAPI));
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be

@@ -63,7 +63,7 @@ public class UseRestrictionConverter {
         ArrayList<HashMap<String, String>> ontologies = (ArrayList<HashMap<String, String>>) form.get("ontologies");
         if (CollectionUtils.isNotEmpty(ontologies)) {
             dataUseDTO.setDiseaseRestrictions(
-                ontologies.stream().map(hashMap -> hashMap.get("id")).collect(Collectors.toList())
+                    ontologies.stream().map(hashMap -> hashMap.get("id")).collect(Collectors.toList())
             );
         }
 
@@ -76,7 +76,7 @@ public class UseRestrictionConverter {
         // limited to one gender + children analysis
         boolean oneGenderOnly = Boolean.valueOf(form.getOrDefault("onegender", false).toString());
         String selectedGender = (String) form.getOrDefault("gender", "X");
-        boolean pediatricsOnly =  Boolean.valueOf(form.getOrDefault("pediatric", false).toString());
+        boolean pediatricsOnly = Boolean.valueOf(form.getOrDefault("pediatric", false).toString());
 
         if (oneGenderOnly) {
             if (selectedGender.equalsIgnoreCase("M"))
@@ -88,6 +88,19 @@ public class UseRestrictionConverter {
         if (pediatricsOnly) {
             dataUseDTO.setPediatric(true);
         }
+
+        if (Boolean.valueOf(form.getOrDefault("poa", false).toString())) {
+            dataUseDTO.setPopulationOriginsAncestry(true);
+        } else {
+            dataUseDTO.setPopulationOriginsAncestry(false);
+        }
+
+        if (Boolean.valueOf(form.getOrDefault("hmb", false).toString())) {
+            dataUseDTO.setHmbResearch(true);
+        } else {
+            dataUseDTO.setHmbResearch(false);
+        }
+
         return dataUseDTO;
     }
 
