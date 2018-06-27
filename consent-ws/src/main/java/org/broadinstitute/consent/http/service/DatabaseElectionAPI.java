@@ -115,7 +115,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
                 createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
                 election.getDataUseLetter(), election.getDulName());
-        updateSortDateAndConsentElectionId(referenceId, createDate);
+        updateSortDate(referenceId, createDate);
         if(electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
             electionDAO.insertAccessRP(access.getElectionId(), id);
@@ -148,7 +148,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(rec.getArchived() != null && rec.getArchived()) {
             electionDAO.archiveElectionById(electionId, lastUpdate);
         }
-        updateSortDateAndConsentElectionId(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
+        updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
@@ -659,7 +659,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private void updateSortDateAndConsentElectionId(String referenceId, Date createDate){
+    private void updateSortDate(String referenceId, Date createDate){
         if(consentDAO.checkConsentbyId(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
