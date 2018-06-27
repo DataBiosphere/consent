@@ -107,4 +107,6 @@ public class DarConstants {
 
     public static final String GENDER = "gender";
 
+    public static final String CONSENT_ELECTION_IDS = "consentElectionIds";
+
 }

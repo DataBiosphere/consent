@@ -105,7 +105,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
-        validateElectionIsValid(referenceId, electionType);
+        Election consentElection = validateAndGetDULElection(referenceId, electionType);
         validateAvailableUsers(electionType);
         validateReferenceId(referenceId, electionType);
         validateExistentElection(referenceId, electionType);
@@ -115,10 +115,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
                 createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
                 election.getDataUseLetter(), election.getDulName());
-        updateSortDate(referenceId, createDate);
+        updateSortDateAndConsentElectionId(referenceId, createDate);
         if(electionType.equals(ElectionType.RP)) {
             Election access = describeDataRequestElection(referenceId);
             electionDAO.insertAccessRP(access.getElectionId(), id);
+        }
+        if(electionType.equals(ElectionType.DATA_ACCESS)) {
+            electionDAO.insertAccessAndConsentElection(id, consentElection.getElectionId());
         }
         return electionDAO.findElectionWithFinalVoteById(id);
     }
@@ -145,7 +148,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(rec.getArchived() != null && rec.getArchived()) {
             electionDAO.archiveElectionById(electionId, lastUpdate);
         }
-        updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
+        updateSortDateAndConsentElectionId(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
@@ -403,6 +406,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
+    public Election getConsentElectionByDARElectionId(Integer darElectionId){
+        Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
+        return electionId != null ? electionDAO.findElectionById(electionId) : null;
+    }
+
+
+    @Override
     public List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList) {
         List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(darList)){
@@ -449,11 +459,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
-    @Override
-    public List<Election> findDataAccessClosedElectionsByFinalResult(Boolean isApproved) {
-        return electionDAO.findDataAccessClosedElectionsByFinalResult(isApproved);
-    }
-
     private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
         for(Election e: elections){
             if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){
@@ -464,7 +469,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private void validateElectionIsValid(String referenceId, ElectionType electionType) throws Exception{
+    private Election validateAndGetDULElection(String referenceId, ElectionType electionType) throws Exception {
+        Election consentElection = null;
         if(electionType.equals(ElectionType.DATA_ACCESS)){
             Document dar = describeDataAccessRequestById(referenceId);
             if(dar == null){
@@ -472,7 +478,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             }
             List<DataSet> dataSets = verifyDisableDataSets(dar, referenceId);
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getObjectId());
-            Election consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
+            consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
             if((consentElection == null)){
                 throw new IllegalArgumentException(DUL_NOT_APROVED);
             } else {
@@ -483,6 +489,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 }
             }
         }
+        return consentElection;
     }
 
     private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
@@ -652,7 +659,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private void updateSortDate(String referenceId, Date createDate){
+    private void updateSortDateAndConsentElectionId(String referenceId, Date createDate){
         if(consentDAO.checkConsentbyId(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {

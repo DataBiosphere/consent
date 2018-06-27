@@ -515,7 +515,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             try{
                 darManage.setOwnerUser(getOwnerUser(dar.getInteger("userId")));
             }catch (Exception e){
-                darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString("userId"))));
+           //     darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString("userId"))));
             }
             requestsManage.add(darManage);
         });
