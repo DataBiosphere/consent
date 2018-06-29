@@ -224,6 +224,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         return datasetIds;
     }
+    //"datasetId": ["SC-20657"]
+    @Override
+    public List<Document> describeDataAccessWithDataSetId(String dataSetId) {
+        List<Document> response = new ArrayList<>();
+        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId)).into(new ArrayList<>()));
+        return response;
+    }
 
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {

@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -25,14 +24,14 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
-    private final ElectionAPI electionAPI;
+    private final ElectionAPI api;
     private final VoteAPI voteAPI;
     private final EmailNotifierAPI emailApi;
     private final DataAccessRequestAPI darApi;
     private final SummaryAPI summaryAPI;
 
     public DataRequestElectionResource() {
-        this.electionAPI = AbstractElectionAPI.getInstance();
+        this.api = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
@@ -47,12 +46,12 @@ public class DataRequestElectionResource extends Resource {
         URI uri;
         Election accessElection;
         try {
-            accessElection = electionAPI.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
+            accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
             List<Vote> votes;
             //create RP election
             if(!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))){
                 votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
-                Election rpElection = electionAPI.createElection(rec, requestId.toString(), ElectionType.RP);
+                Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
                 voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
             }else{
                 votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, true);
@@ -61,7 +60,7 @@ public class DataRequestElectionResource extends Resource {
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (Exception e){
-          return createExceptionResponse(e);
+            return createExceptionResponse(e);
         }
         return Response.created(uri).entity(accessElection).build();
     }
@@ -72,7 +71,7 @@ public class DataRequestElectionResource extends Resource {
     @PermitAll
     public Response describe(@PathParam("requestId") String requestId) {
         try {
-            return  Response.status(Status.OK).entity(electionAPI.describeDataRequestElection(requestId)).build();
+            return  Response.status(Status.OK).entity(api.describeDataRequestElection(requestId)).build();
         } catch (Exception e) {
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
@@ -84,7 +83,7 @@ public class DataRequestElectionResource extends Resource {
     @RolesAllowed("ADMIN")
     public Response deleteElection(@PathParam("requestId") String requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
-            electionAPI.deleteElection(requestId, id);
+            api.deleteElection(requestId, id);
             return Response.status(Response.Status.OK).entity("Election was deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
