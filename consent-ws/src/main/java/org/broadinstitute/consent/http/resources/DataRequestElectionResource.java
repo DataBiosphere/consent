@@ -72,12 +72,7 @@ public class DataRequestElectionResource extends Resource {
     @PermitAll
     public Response describe(@PathParam("requestId") String requestId) {
         try {
-            Election darElection = electionAPI.describeDataRequestElection(requestId);
-            Document election = new Document();
-            election.put("election", darElection);
-            Election consentElection = electionAPI.getConsentElectionByDARElectionId(darElection.getElectionId());
-            election.put("dulName", consentElection != null ? consentElection.getDulName() : null);
-            return  Response.status(Status.OK).entity(election).build();
+            return  Response.status(Status.OK).entity(electionAPI.describeDataRequestElection(requestId)).build();
         } catch (Exception e) {
             return Response.status(Status.NOT_FOUND).entity(new Error(e.getMessage(), Status.NOT_FOUND.getStatusCode())).build();
         }
