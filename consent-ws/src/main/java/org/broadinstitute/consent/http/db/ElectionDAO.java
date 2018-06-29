@@ -275,4 +275,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + "' where v.vote = :isApproved  and e.electionType = 'DataAccess' order by createDate asc")
     List<Election> findDataAccessClosedElectionsByFinalResult(@Bind("isApproved") Boolean isApproved);
 
+    @SqlQuery("select e.lastUpdate from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + FINAL
+            + "' where v.vote = :isApproved  and e.electionType = 'DataAccess' and e.referenceId = :darId order by createDate asc")
+    Date findDataAccessClosedElectionsByFinalResult(@Bind("isApproved") Boolean isApproved, @Bind("darId") String darId);
+
+
 }

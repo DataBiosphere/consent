@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 
@@ -71,6 +72,18 @@ public class ElectionResource extends Resource {
             return Response.ok().entity("{ \"open\" : " + api.isDataSetElectionOpen() + " }").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("/consent/{requestElectionId}")
+    @PermitAll
+    public Response describeConsentElectionByDARElectionId(@PathParam("requestElectionId") Integer requestElectionId) {
+        try {
+            return  Response.status(Response.Status.OK).entity(api.getConsentElectionByDARElectionId(requestElectionId)).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build();
         }
     }
 
