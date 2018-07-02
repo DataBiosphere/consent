@@ -43,6 +43,9 @@ public class ConsentManage {
 	@JsonProperty
 	private String groupName;
 
+	@JsonProperty
+	private Boolean updateStatus;
+
 	public ConsentManage() {
 	}
 
@@ -53,6 +56,7 @@ public class ConsentManage {
 		this.sortDate = consent.getSortDate();
 	    this.editable = null;
 	    this.groupName = consent.getGroupName();
+	    this.updateStatus = consent.getUpdated();
     }
 
 	public Timestamp getCreateDate() {
@@ -130,5 +134,13 @@ public class ConsentManage {
 	public String getGroupName() { return groupName; }
 
 	public void setGroupName(String groupName) { this.groupName = groupName; }
+
+	public Boolean getUpdateStatus() {
+		return updateStatus;
+	}
+
+	public void setUpdateStatus(boolean updateStatus) {
+		this.updateStatus = updateStatus;
+	}
 
 }

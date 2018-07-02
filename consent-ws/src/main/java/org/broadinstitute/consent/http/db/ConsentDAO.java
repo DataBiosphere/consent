@@ -26,7 +26,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery("SELECT c.* " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
+            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
             "WHERE cs.objectId = :datasetId")
     Consent findConsentFromDatasetID(@Bind("datasetId") String datasetId);
 
@@ -37,7 +37,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @Mapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.objectId, ds.name " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
-            "INNER JOIN dataset ds on cs.objectId = ds.objectId "+
+            "INNER JOIN dataset ds on cs.objectId = ds.objectId " +
             "WHERE cs.objectId IN (<datasetId>)")
     Set<ConsentDataSet> getConsentIdAndDataSets(@BindIn("datasetId") List<String> datasetId);
 
@@ -49,7 +49,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where name = :name and active=true")
     Consent findConsentByName(@Bind("name") String name);
-    
+
     @SqlQuery("select c.* from consents c inner join consentassociations a on c.consentId = a.consentId where c.active=true and a.associationType = :associationType ")
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
@@ -70,7 +70,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("groupName") String groupName);
 
 
-
     @SqlUpdate("delete from consents where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
@@ -82,8 +81,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("update consents set requiresManualReview = :requiresManualReview, " +
             "useRestriction = :useRestriction, dataUse = :dataUse, dataUseLetter = :dataUseLetter, name = :name, " +
             "dulName = :dulName, " +
-            "lastUpdate = :lastUpdate, sortDate = :sortDate, translatedUseRestriction = :translatedUseRestriction " +
-            "where consentId = :consentId and active = true")
+            "lastUpdate = :lastUpdate, sortDate = :sortDate, translatedUseRestriction = :translatedUseRestriction, " +
+            "groupName = :groupName, updated = :updated where consentId = :consentId and active = true")
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("useRestriction") String useRestriction,
@@ -93,7 +92,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("dulName") String dulName,
                        @Bind("lastUpdate") Date createDate,
                        @Bind("sortDate") Date sortDate,
-                       @Bind("translatedUseRestriction") String translatedUseRestriction);
+                       @Bind("translatedUseRestriction") String translatedUseRestriction,
+                       @Bind("groupName") String groupName,
+                       @Bind("updated")  Boolean updateStatus);
 
     @SqlUpdate("update consents set sortDate = :sortDate " +
             "where consentId = :consentId and active = true")
@@ -144,7 +145,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select requiresManualReview from consents where consentId = :consentId")
     Boolean checkManualReview(@Bind("consentId") String consentId);
 
-    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, c.groupName, e.electionId, e.status, e.version, e.archived  " +
+    @SqlQuery("select c.consentId, c.name, c.createDate, c.sortDate, c.groupName, c.updated, e.electionId, e.status, e.version, e.archived  " +
             "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
             "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
             "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")

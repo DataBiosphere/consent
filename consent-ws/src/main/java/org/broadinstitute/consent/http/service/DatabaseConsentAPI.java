@@ -157,7 +157,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (StringUtils.isEmpty(consentDAO.checkConsentbyId(id))) {
             throw new NotFoundException();
         }
-        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate(), rec.getTranslatedUseRestriction());
+        consentDAO.updateConsent(id, rec.getRequiresManualReview(), rec.getUseRestriction().toString(), rec.getDataUse().toString(), rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(), rec.getSortDate(), rec.getTranslatedUseRestriction(), rec.getGroupName(), true);
         return consentDAO.findConsentById(id);
     }
 
