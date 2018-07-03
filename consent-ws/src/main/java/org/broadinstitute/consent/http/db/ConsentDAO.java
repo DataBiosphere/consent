@@ -26,7 +26,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery("SELECT c.* " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
+            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
             "WHERE cs.objectId = :datasetId")
     Consent findConsentFromDatasetID(@Bind("datasetId") String datasetId);
 
@@ -37,7 +37,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @Mapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.objectId, ds.name " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
-            "INNER JOIN dataset ds on cs.objectId = ds.objectId " +
+            "INNER JOIN dataset ds on cs.objectId = ds.objectId "+
             "WHERE cs.objectId IN (<datasetId>)")
     Set<ConsentDataSet> getConsentIdAndDataSets(@BindIn("datasetId") List<String> datasetId);
 
@@ -49,7 +49,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where name = :name and active=true")
     Consent findConsentByName(@Bind("name") String name);
-
     @SqlQuery("select c.* from consents c inner join consentassociations a on c.consentId = a.consentId where c.active=true and a.associationType = :associationType ")
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
@@ -71,6 +70,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
 
     @SqlUpdate("delete from consents where consentId = :consentId")
+    
     void deleteConsent(@Bind("consentId") String consentId);
 
 
