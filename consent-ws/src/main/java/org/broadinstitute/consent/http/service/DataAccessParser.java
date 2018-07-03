@@ -73,7 +73,7 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.OTHER)));
                     break;
                 }
-                case DarConstants.OTHER_TEXT: {
+                case "otherText": {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.OTHER_TEXT)));
                     break;
                 }
@@ -182,6 +182,14 @@ public class DataAccessParser {
                 }
                 case DarConstants.NOT_HEALTH: {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.NOT_HEALTH)));
+                    break;
+                }
+                case "health": {
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.HMB)));
+                    break;
+                }
+                case "origins": {
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.POA)));
                     break;
                 }
             }
