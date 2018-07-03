@@ -120,6 +120,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             Election access = describeDataRequestElection(referenceId);
             electionDAO.insertAccessRP(access.getElectionId(), id);
         }
+        consentDAO.updateConsentUpdateStatus(referenceId, false);
         return electionDAO.findElectionWithFinalVoteById(id);
     }
 

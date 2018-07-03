@@ -26,7 +26,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Consent findConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery("SELECT c.* " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
+            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId "+
             "WHERE cs.objectId = :datasetId")
     Consent findConsentFromDatasetID(@Bind("datasetId") String datasetId);
 
@@ -37,7 +37,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @Mapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.objectId, ds.name " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
-            "INNER JOIN dataset ds on cs.objectId = ds.objectId " +
+            "INNER JOIN dataset ds on cs.objectId = ds.objectId "+
             "WHERE cs.objectId IN (<datasetId>)")
     Set<ConsentDataSet> getConsentIdAndDataSets(@BindIn("datasetId") List<String> datasetId);
 
@@ -167,4 +167,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     void updateConsentValidUseRestriction(@BindIn("consentId") List<String> consentId,
                                    @Bind("valid_restriction") Boolean validRestriction);
 
+    @SqlUpdate("update consents set updated = :consentStatus where consentId = :referenceId")
+    void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,
+                                   @Bind("consentStatus") Boolean consentStatus);
 }
