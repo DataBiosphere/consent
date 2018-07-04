@@ -49,6 +49,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where name = :name and active=true")
     Consent findConsentByName(@Bind("name") String name);
+
     @SqlQuery("select c.* from consents c inner join consentassociations a on c.consentId = a.consentId where c.active=true and a.associationType = :associationType ")
     Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
 
@@ -68,9 +69,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("valid_restriction") Boolean validRestriction,
                        @Bind("groupName") String groupName);
 
-
     @SqlUpdate("delete from consents where consentId = :consentId")
-    
     void deleteConsent(@Bind("consentId") String consentId);
 
 
