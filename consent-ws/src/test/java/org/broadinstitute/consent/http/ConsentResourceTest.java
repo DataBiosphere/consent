@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentResourceTest extends AbstractTest {
 
@@ -84,6 +85,10 @@ public class ConsentResourceTest extends AbstractTest {
 
         Consent consent = response3.readEntity(Consent.class);
         assertNotNull(consent);
+
+        // When creating an election, consent update flag should be set to false
+        assertThat(consent.updateStatus).isEqualTo(false);
+
         // And that the location (ID) and name are what we expect
         assertTrue(location.equals(consent.consentId));
         assertEquals(name, consent.name);

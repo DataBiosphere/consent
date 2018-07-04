@@ -2131,6 +2131,9 @@ definitions:
       groupName:
         type: string
         description: The Group Name provided by ORSP
+      updateStatus:
+        type: boolean
+        description: Indicates if a consent has been updated from orsp
   Vote:
     type: object
     properties:
@@ -2369,6 +2372,9 @@ definitions:
         type: string
         format: date-time
         description: The datetime the election was created/updated (the last updated).
+      updateStatus:
+        type: boolean
+        description: Indicates if a consent has been updated from orsp
   DataAccessRequest:
     type: object
     properties:
