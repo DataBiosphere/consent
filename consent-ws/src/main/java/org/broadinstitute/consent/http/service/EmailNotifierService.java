@@ -16,10 +16,7 @@ import org.broadinstitute.consent.http.mail.MailServiceAPI;
 import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -248,6 +245,15 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
+    @Override
+    public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
+        if(isServiceActive){
+            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+            Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
+            List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
+            mailService.sendNewHelpReportMessage(usersEmail, template);
+        }
+    }
 
     private List<VoteAndElectionModel> findVotesDelegationInfo(List<Integer> voteIds, Integer oldUserId){
         if(CollectionUtils.isNotEmpty(voteIds)) {

@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.mail.MessagingException;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
+
+import org.broadinstitute.consent.http.models.*;
 import org.bson.Document;
 
 public interface EmailNotifierAPI {
@@ -34,4 +32,7 @@ public interface EmailNotifierAPI {
     void sendUserDelegateResponsibilitiesMessage(DACUser newUser, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException;
 
     void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException;
+
+    void sendNewRequestHelpMessage(HelpReport helpReport) throws IOException, TemplateException, MessagingException;
+
 }
