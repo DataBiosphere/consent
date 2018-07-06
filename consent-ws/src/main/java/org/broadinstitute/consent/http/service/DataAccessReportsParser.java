@@ -10,6 +10,7 @@ import org.bson.Document;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class DataAccessReportsParser {
@@ -46,6 +47,16 @@ public class DataAccessReportsParser {
                         HeaderDAR.APPROVED_DISAPPROVED.getValue() + END_OF_LINE);
     }
 
+    public void setDataSetApprovedUsersHeader(FileWriter darWriter) throws IOException {
+        darWriter.write(
+                HeaderDAR.USERNAME.getValue() + DEFAULT_SEPARATOR +
+                        HeaderDAR.NAME.getValue() + DEFAULT_SEPARATOR +
+                        HeaderDAR.ORGANIZATION.getValue() + DEFAULT_SEPARATOR +
+                        HeaderDAR.DAR_ID.getValue() + DEFAULT_SEPARATOR +
+                        HeaderDAR.DATE_REQUEST_APPROVAL.getValue() + DEFAULT_SEPARATOR +
+                        HeaderDAR.RENEWAL_DATE.getValue() + END_OF_LINE);
+    }
+
     public void addApprovedDARLine(FileWriter darWriter, Election election, Document dar, String profileName, String institution, Consent consent) throws IOException {
         String rusSummary = StringUtils.isNotEmpty( dar.getString(DarConstants.NON_TECH_RUS)) ?  dar.getString(DarConstants.NON_TECH_RUS).replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
@@ -63,6 +74,17 @@ public class DataAccessReportsParser {
                           finalVote;
         ;
         addDARLine(darWriter, dar, "", content2, consent);
+    }
+
+
+    public void addDataSetApprovedUsersLine(FileWriter darWriter, String email, String name, String institution, String darCode, Date approvalDate) throws IOException {
+        darWriter.write(
+                email + DEFAULT_SEPARATOR +
+                    name + DEFAULT_SEPARATOR +
+                    institution + DEFAULT_SEPARATOR +
+                    darCode + DEFAULT_SEPARATOR +
+                    formatTimeToDate(approvalDate.getTime()) + DEFAULT_SEPARATOR +
+                    " - " + END_OF_LINE);
     }
 
     private String formatTimeToDate(long time) {

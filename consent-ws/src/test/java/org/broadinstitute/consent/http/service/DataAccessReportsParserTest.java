@@ -32,6 +32,7 @@ public class DataAccessReportsParserTest {
             "Future use as a control set for diseases other than those specified is not prohibited";
     private final String DAR_CODE = "DAR_3";
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
+    private final String EMAIL = "vvicario@test.com";
 
     public DataAccessReportsParserTest() {
         this.parser = new DataAccessReportsParser();
@@ -125,6 +126,39 @@ public class DataAccessReportsParserTest {
             i++;
         }
         Assert.isTrue(i == 2);
+    }
+
+    @Test
+    public void testDataSetApprovedUsers() throws IOException{
+        File file = File.createTempFile("DataSetApprovedUsers", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        parser.setDataSetApprovedUsersHeader(darWriter);
+        Date approvalDate = new Date();
+        parser.addDataSetApprovedUsersLine(darWriter, EMAIL, REQUESTER, ORGANIZATION, DAR_CODE, approvalDate);
+        darWriter.flush();
+        Stream<String> stream = Files.lines(Paths.get(file.getPath()));
+        Iterator<String> iterator = stream.iterator();
+        int i = 0;
+        while (iterator.hasNext()) {
+            String line = iterator.next();
+            String[] columns = line.split("\t");
+            Assert.isTrue(columns.length == 6);
+            if(i == 0) {
+                Assert.isTrue(columns[0].equals(HeaderDAR.USERNAME.getValue()));
+                Assert.isTrue(columns[1].equals(HeaderDAR.NAME.getValue()));
+                Assert.isTrue(columns[2].equals(HeaderDAR.ORGANIZATION.getValue()));
+                Assert.isTrue(columns[3].equals(HeaderDAR.DAR_ID.getValue()));
+                Assert.isTrue(columns[4].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
+                Assert.isTrue(columns[5].equals(HeaderDAR.RENEWAL_DATE.getValue()));
+            }
+            if (i == 1) {
+                Assert.isTrue(columns[0].equals(EMAIL));
+                Assert.isTrue(columns[1].equals(REQUESTER));
+                Assert.isTrue(columns[2].equals(ORGANIZATION));
+                Assert.isTrue(columns[3].equals(DAR_CODE));
+            }
+            i++;
+        }
     }
 
     private Consent createConsent(){

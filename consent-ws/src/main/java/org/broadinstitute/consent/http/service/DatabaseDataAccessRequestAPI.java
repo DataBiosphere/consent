@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.print.Doc;
 import javax.ws.rs.NotFoundException;
 import java.io.*;
 import java.sql.Timestamp;
@@ -452,6 +453,35 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         darWriter.flush();
         return file;
+    }
+
+
+    @Override
+    public File createDataSetApprovedUsersDocument(String dataSetId) throws IOException {
+        File file = File.createTempFile("DatasetApprovedUsers", ".tsv");
+        FileWriter darWriter = new FileWriter(file);
+        List<Document> darList = describeDataAccessByDataSetId(dataSetId);
+        dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
+        if(CollectionUtils.isNotEmpty(darList)){
+            for(Document dar: darList){
+                Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.get(DarConstants.ID).toString());
+                if(approvalDate != null) {
+                    String email = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
+                    String name = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
+                    String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
+                    String darCode = dar.getString(DarConstants.DAR_CODE);
+                    dataAccessReportsParser.addDataSetApprovedUsersLine(darWriter, email, name, institution, darCode, approvalDate);
+                }
+            }
+        }
+        darWriter.flush();
+        return file;
+    }
+
+    private List<Document> describeDataAccessByDataSetId(String dataSetId) {
+        List<Document> response = new ArrayList<>();
+        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId)).into(new ArrayList<>()));
+        return response;
     }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
