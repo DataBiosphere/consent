@@ -63,12 +63,14 @@ public class ElectionReviewResource {
     @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
     public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Election election = electionAPI.describeElectionById(electionId);
+        Election consentElection = electionAPI.getConsentElectionByDARElectionId(election.getElectionId());
         List<String> dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList(DarConstants.DATASET_ID)).get(DarConstants.DATASET_ID, List.class);
-        Consent consent =  consentAPI.getConsentFromDatasetID(dataSetId.get(0));
-        ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId,isFinalAccess);
+        Consent consent = consentAPI.getConsentFromDatasetID(dataSetId.get(0));
+        ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId, isFinalAccess);
         List<Vote> agreementVote = api.describeAgreementVote(electionId);
-        accessElectionReview.setVoteAgreement(CollectionUtils.isNotEmpty(agreementVote) ? agreementVote.get(0) : null);
         accessElectionReview.setConsent(consent);
+        accessElectionReview.setVoteAgreement(CollectionUtils.isNotEmpty(agreementVote) ? agreementVote.get(0) : null);
+        accessElectionReview.setAssociatedConsent(consent, consentElection);
         return accessElectionReview;
     }
 

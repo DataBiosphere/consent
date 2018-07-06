@@ -82,6 +82,8 @@ public interface DataAccessRequestAPI {
 
     File createReviewedDARDocument() throws NotFoundException, IOException;
 
+    File createDataSetApprovedUsersDocument(String dataSetId) throws IOException;
+
 }
 
 
