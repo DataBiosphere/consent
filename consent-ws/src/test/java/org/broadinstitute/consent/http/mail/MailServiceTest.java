@@ -9,6 +9,7 @@ import org.junit.Test;
 import javax.mail.MessagingException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class MailServiceTest {
@@ -148,5 +149,16 @@ public class MailServiceTest {
             Assert.fail("Should not throw exception");
         }
     }
+
+    @Test
+    public void testNewHelpReportMessage() throws Exception {
+        Assert.assertNotNull(mailService);
+        try {
+            mailService.sendNewHelpReportMessage(Arrays.asList(TO), template, "Test");
+        } catch (Exception e) {
+            Assert.fail("Should not throw exception");
+        }
+    }
+
 
 }
