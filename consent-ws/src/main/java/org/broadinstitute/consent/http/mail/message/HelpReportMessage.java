@@ -10,12 +10,12 @@ public class HelpReportMessage extends MailMessage {
 
     private final String HELP_REPORT = "New report has been created by %s.";
 
-    public List<Mail> newHelpReportMessage(List<String> toAddress, String fromAddress, Writer template) throws MessagingException {
-        return generateEmailMessage(toAddress, fromAddress, template, null, null);
+    public List<Mail> newHelpReportMessage(List<String> toAddress, String fromAddress, Writer template, String userName) throws MessagingException {
+        return generateEmailMessage(toAddress, fromAddress, template, null, userName);
     }
 
     @Override
-    String assignSubject(String userName, String type) {
+    String assignSubject(String type, String userName) {
         return String.format(HELP_REPORT, userName);
     }
 }

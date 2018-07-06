@@ -130,8 +130,8 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     @Override
-    public void sendNewHelpReportMessage(List<String> usersAddress, Writer template) throws MessagingException {
-        Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template);
+    public void sendNewHelpReportMessage(List<String> usersAddress,  Writer template, String username) throws MessagingException {
+        Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template, username);
         sendMessages(messages);
     }
 

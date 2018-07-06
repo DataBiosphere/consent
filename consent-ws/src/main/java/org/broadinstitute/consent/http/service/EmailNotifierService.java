@@ -251,7 +251,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
             Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
             List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
-            mailService.sendNewHelpReportMessage(usersEmail, template);
+            mailService.sendNewHelpReportMessage(usersEmail, template, helpReport.getUserName());
         }
     }
 

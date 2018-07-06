@@ -28,6 +28,6 @@ public interface MailServiceAPI {
 
     void sendNewResearcherCreatedMessage(String admin, Writer template) throws IOException, TemplateException, MessagingException;
 
-    void sendNewHelpReportMessage(List<String> usersAddress, Writer template) throws MessagingException;
+    void sendNewHelpReportMessage(List<String> usersAddress, Writer template, String username) throws MessagingException;
 
 }
