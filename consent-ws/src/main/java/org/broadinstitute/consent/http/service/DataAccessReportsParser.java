@@ -47,6 +47,7 @@ public class DataAccessReportsParser {
                         HeaderDAR.APPROVED_DISAPPROVED.getValue() + END_OF_LINE);
     }
 
+
     public void setDataSetApprovedUsersHeader(FileWriter darWriter) throws IOException {
         darWriter.write(
                 HeaderDAR.USERNAME.getValue() + DEFAULT_SEPARATOR +
@@ -57,23 +58,20 @@ public class DataAccessReportsParser {
                         HeaderDAR.RENEWAL_DATE.getValue() + END_OF_LINE);
     }
 
-    public void addApprovedDARLine(FileWriter darWriter, Election election, Document dar, String profileName, String institution, Consent consent) throws IOException {
-        String rusSummary = StringUtils.isNotEmpty( dar.getString(DarConstants.NON_TECH_RUS)) ?  dar.getString(DarConstants.NON_TECH_RUS).replace("\n", " ") : "";
+    public void addApprovedDARLine(FileWriter darWriter, Election election, Document dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {        String rusSummary = StringUtils.isNotEmpty( dar.getString(DarConstants.NON_TECH_RUS)) ?  dar.getString(DarConstants.NON_TECH_RUS).replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
         String content2 = rusSummary + DEFAULT_SEPARATOR +
                 formatTimeToDate(dar.getDate(DarConstants.SORT_DATE).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                 " ";
-        addDARLine(darWriter, dar, content1, content2, consent);
-
+        addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
     }
 
-    public void addReviewedDARLine(FileWriter darWriter, Election election, Document dar, Consent consent) throws IOException {
+    public void addReviewedDARLine(FileWriter darWriter, Election election, Document dar, String consentName, String translatedUseRestriction) throws IOException {
         String finalVote = election.getFinalVote() ? "Yes" : "No";
         String content2 = formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                           finalVote;
-        ;
-        addDARLine(darWriter, dar, "", content2, consent);
+        addDARLine(darWriter, dar, "", content2, consentName, translatedUseRestriction);
     }
 
 
@@ -96,16 +94,16 @@ public class DataAccessReportsParser {
         return month.toString() + "/" + day.toString() + "/" + year.toString();
     }
 
-    private void addDARLine(FileWriter darWriter, Document dar, String customContent1, String customContent2, Consent consent) throws IOException {
+    private void addDARLine(FileWriter darWriter, Document dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
         List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
         String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
-        String sDUL = StringUtils.isNotEmpty(consent.getTranslatedUseRestriction()) ?  consent.getTranslatedUseRestriction().replace("\n", " ") : "";
+        String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
         darWriter.write(
                 dar.getString(DarConstants.DAR_CODE) + DEFAULT_SEPARATOR +
                         dataSetName + DEFAULT_SEPARATOR +
                         dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString() + DEFAULT_SEPARATOR +
-                        consent.getName() + DEFAULT_SEPARATOR +
+                        consentName + DEFAULT_SEPARATOR +
                         customContent1 +
                         sDUL + DEFAULT_SEPARATOR +
                         translatedRestriction + DEFAULT_SEPARATOR +

@@ -42,12 +42,11 @@ public class DataAccessReportsParserTest {
     public void testDataAccessApprovedReport() throws IOException {
         File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
         Date currentDate = new Date();
-        Consent consent = createConsent();
         Election election = createElection(currentDate);
         Document dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setApprovedDARHeader(darWriter);
-        parser.addApprovedDARLine(darWriter, election, dar, REQUESTER, ORGANIZATION, consent);
+        parser.addApprovedDARLine(darWriter, election, dar, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
         darWriter.flush();
         Stream<String> stream = Files.lines(Paths.get(file.getPath()));
         Iterator<String> iterator = stream.iterator();
@@ -90,12 +89,11 @@ public class DataAccessReportsParserTest {
     public void testDataAccessReviewedReport() throws IOException {
         File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
         Date currentDate = new Date();
-        Consent consent = createConsent();
         Election election = createElection(currentDate);
         Document dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setReviewedDARHeader(darWriter);
-        parser.addReviewedDARLine(darWriter, election, dar, consent);
+        parser.addReviewedDARLine(darWriter, election, dar, CONSENT_NAME, sDUL);
         darWriter.flush();
         Stream<String> stream = Files.lines(Paths.get(file.getPath()));
         Iterator<String> iterator = stream.iterator();
@@ -127,7 +125,7 @@ public class DataAccessReportsParserTest {
         }
         Assert.isTrue(i == 2);
     }
-
+    
     @Test
     public void testDataSetApprovedUsers() throws IOException{
         File file = File.createTempFile("DataSetApprovedUsers", ".tsv");
@@ -159,13 +157,6 @@ public class DataAccessReportsParserTest {
             }
             i++;
         }
-    }
-
-    private Consent createConsent(){
-        Consent consent = new Consent();
-        consent.setName(CONSENT_NAME);
-        consent.setTranslatedUseRestriction(sDUL);
-        return consent;
     }
 
     private Election createElection(Date currentDate){

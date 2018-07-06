@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.bson.Document;
 
 import java.util.List;
 
@@ -24,6 +25,9 @@ public class ElectionReview {
 
     @JsonProperty
     private Integer rpElectionId;
+
+    @JsonProperty
+    private Document associatedConsent;
 
     public ElectionReview(){}
 
@@ -67,4 +71,17 @@ public class ElectionReview {
         this.finalVote = finalVote;
     }
 
+    public Document getAssociatedConsent() {
+        return associatedConsent;
+    }
+
+    public void setAssociatedConsent(Consent consent, Election consentElection) {
+        this.associatedConsent = new Document();
+        this.associatedConsent.put("electionId", consentElection != null ? consentElection.getElectionId() : null);
+        this.associatedConsent.put("consentId", consent.getConsentId());
+        this.associatedConsent.put("useRestriction", consentElection != null ? consentElection.getUseRestriction() : consent.getUseRestriction());
+        this.associatedConsent.put("translatedUseRestriction", consentElection != null ? consentElection.getTranslatedUseRestriction() : consent.getTranslatedUseRestriction());
+        this.associatedConsent.put("dulName", consentElection != null ? consentElection.getDulName() : consent.getDulName());
+        this.associatedConsent.put("name", consent.getName());
+    }
 }

@@ -199,6 +199,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
                         @Bind("electionRPId") Integer electionRPId);
 
+    @SqlUpdate("insert into accesselection_consentelection (access_election_id, consent_election_id ) values ( :electionAccessId, :electionConsentId)")
+    void insertAccessAndConsentElection(@Bind("electionAccessId") Integer electionAccessId,
+                        @Bind("electionConsentId") Integer electionConsentId);
+
+    @SqlQuery("select consent_election_id from accesselection_consentelection where access_election_id = :electionAccessId ")
+    Integer getElectionConsentIdByDARElectionId(@Bind("electionAccessId") Integer electionAccessId);
+
     @RegisterMapper({AccessRPMapper.class})
     @SqlQuery("select * from access_rp where electionAccessId in (<electionAccessIds>) ")
     List<AccessRP> findAccessRPbyElectionAccessId(@BindIn("electionAccessIds") List<Integer> electionAccessIds);
