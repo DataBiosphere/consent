@@ -22,6 +22,7 @@ public class FreeMarkerTemplateHelper {
 
     Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
+    private final String HELP_REPORT_URL = "help_me";
 
     public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
@@ -81,7 +82,7 @@ public class FreeMarkerTemplateHelper {
 
     public Writer getHelpReportTemplate(HelpReport helpReport, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-help-report.html");
-        return generateHelpReportTemplate(helpReport, serverUrl, temp);
+        return generateHelpReportTemplate(helpReport, serverUrl + HELP_REPORT_URL, temp);
     }
 
     private Writer generateHelpReportTemplate(HelpReport helpReport, String serverUrl, Template temp) throws IOException, TemplateException {
