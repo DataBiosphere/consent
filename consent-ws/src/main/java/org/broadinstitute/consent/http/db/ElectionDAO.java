@@ -9,6 +9,7 @@ import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
+import org.skife.jdbi.v2.sqlobject.customizers.RegisterColumnMapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
@@ -274,5 +275,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + " e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + FINAL
             + "' where v.vote = :isApproved  and e.electionType = 'DataAccess' order by createDate asc")
     List<Election> findDataAccessClosedElectionsByFinalResult(@Bind("isApproved") Boolean isApproved);
+
+    @SqlQuery("select  MAX(v.createDate) createDate from election e inner join vote v on v.electionId = e.electionId and v.type = 'FINAL'" +
+            "where v.vote = true  and e.electionType = 'DataAccess' and referenceId = :referenceId GROUP BY e.createDate")
+    @Mapper(DateMapper.class)
+    Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
 
 }

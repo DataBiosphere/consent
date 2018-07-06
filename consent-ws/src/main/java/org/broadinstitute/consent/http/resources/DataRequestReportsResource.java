@@ -36,7 +36,7 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-        String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE) + ".pdf";
+        String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         StreamingOutput fileStream =  new StreamingOutput()
         {
             @Override

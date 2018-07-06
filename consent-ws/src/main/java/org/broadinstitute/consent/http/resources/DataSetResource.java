@@ -22,10 +22,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,9 +33,8 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.ParseResult;
+import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
@@ -48,8 +45,10 @@ public class DataSetResource extends Resource {
     private final String END_OF_LINE = System.lineSeparator();
     private final String TSV_DELIMITER = "\t";
     private final DataSetAPI api;
+    private final DataAccessRequestAPI dataAccessRequestAPI;
 
     public DataSetResource() {
+        this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.api = AbstractDataSetAPI.getInstance();
     }
 
@@ -240,6 +239,20 @@ public class DataSetResource extends Resource {
             DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();
         }catch (Exception e){
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @PermitAll
+    @Path("/{datasetId}/approved/users")
+    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") String dataSetId) {
+        try {
+            return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(dataSetId))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")
+                    .build();
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

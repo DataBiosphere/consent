@@ -77,6 +77,8 @@ public class DataAccessParserTest {
         dar.put(DarConstants.METHODS, true);
         dar.put(DarConstants.CONTROLS, true);
         dar.put(DarConstants.OTHER, true);
+        dar.put(DarConstants.POA, true);
+        dar.put(DarConstants.HMB, true);
         dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
         PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
@@ -101,7 +103,9 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.CONTROLS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.OTHER).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT).getValueAsString().equals(RESEARCH_OTHER_TEXT));
+        Assert.isTrue(acroForm.getField("otherText").getValueAsString().equals(RESEARCH_OTHER_TEXT));
+        Assert.isTrue(acroForm.getField("origins").getValueAsString().equals("Yes"));
+        Assert.isTrue(acroForm.getField("health").getValueAsString().equals("Yes"));
 
     }
 

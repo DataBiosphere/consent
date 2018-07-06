@@ -70,8 +70,7 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
 
         assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
         assertThat(updated.useRestriction).isEqualTo(update.useRestriction);
-        // Consent Group Name shouldn't be updated
-        assertThat(updated.groupName).isEqualTo(rec.groupName);
+
         Election election = createElection(created.consentId);
         checkStatus(BAD_REQUEST, put(client, createdLocation, update));
         deleteElection(created.getConsentId(), election.getElectionId());
