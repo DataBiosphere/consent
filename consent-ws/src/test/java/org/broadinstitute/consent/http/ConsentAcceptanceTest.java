@@ -67,7 +67,8 @@ public class ConsentAcceptanceTest extends ConsentServiceTest {
         update.setGroupName("Group Name in testing");
         check200(put(client, createdLocation, update));
         Consent updated = retrieveConsent(client, createdLocation);
-
+        // when an update is done to a consent from orsp, updateStatus flag is set true
+        assertThat(updated.updateStatus).isEqualTo(true);
         assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
         assertThat(updated.useRestriction).isEqualTo(update.useRestriction);
 

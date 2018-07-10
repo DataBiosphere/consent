@@ -60,5 +60,6 @@ public interface ElectionAPI {
 
     List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList);
 
-    List<Election> findDataAccessClosedElectionsByFinalResult(Boolean isApproved);
+    Election getConsentElectionByDARElectionId(Integer electionId);
+
 }

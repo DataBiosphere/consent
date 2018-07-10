@@ -30,6 +30,7 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         consent.setLastUpdate((r.getTimestamp("lastUpdate") == null) ? null : r.getTimestamp("lastUpdate"));
         consent.setTranslatedUseRestriction((r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"));
         consent.setGroupName(r.getString("groupName"));
+        consent.setUpdated(r.getBoolean("updated"));
         return consent;
     }
 

@@ -55,6 +55,9 @@ public class Consent {
     @JsonProperty
     public String groupName;
 
+    @JsonProperty
+    public boolean updateStatus;
+
     public Consent() {
     }
 
@@ -218,5 +221,15 @@ public class Consent {
     public void setLastElectionArchived(Boolean lastElectionArchived) {
         this.lastElectionArchived = lastElectionArchived;
     }
+
+    public boolean getUpdated() {
+        return updateStatus;
+    }
+
+    @JsonProperty
+    public void setUpdated(boolean updateStatus) {
+        this.updateStatus = updateStatus;
+    }
+
 
 }

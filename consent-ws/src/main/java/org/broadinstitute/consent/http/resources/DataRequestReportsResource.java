@@ -10,11 +10,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 @Path("{api : (api/)?}dataRequest")
@@ -40,7 +36,7 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-        String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE) + ".pdf";
+        String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         StreamingOutput fileStream =  new StreamingOutput()
         {
             @Override

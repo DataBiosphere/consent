@@ -107,4 +107,8 @@ public class DarConstants {
 
     public static final String GENDER = "gender";
 
+    public static final String HMB = "hmb";
+
+    public static final String POA = "poa";
+
 }

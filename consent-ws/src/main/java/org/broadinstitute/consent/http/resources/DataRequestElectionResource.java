@@ -60,7 +60,7 @@ public class DataRequestElectionResource extends Resource {
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (Exception e){
-          return createExceptionResponse(e);
+            return createExceptionResponse(e);
         }
         return Response.created(uri).entity(accessElection).build();
     }

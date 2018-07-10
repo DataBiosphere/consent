@@ -16,3 +16,4 @@ DELETE FROM consentassociations;
 DELETE FROM workspace_audit;
 DELETE FROM vote WHERE dacUserId = 5;
 DELETE FROM user_role WHERE dacUserId = 5;
+UPDATE consents SET updated = null;

@@ -15,7 +15,11 @@ public enum HeaderDAR {
     DATE_REQUEST_APPROVAL("Date of request approval"),
     DATE_REQUEST_RE_ATTESTATION("Date of request re-attestation"),
     DATE_REQUEST_APPROVAL_DISAPROVAL("Date of request approval/disapproval"),
-    APPROVED_DISAPPROVED("Approved / disapproved");
+    APPROVED_DISAPPROVED("Approved / disapproved"),
+    RENEWAL_DATE("Renewal Date"),
+    USERNAME("Username"),
+    NAME("Name");
+
 
     private String value;
 
