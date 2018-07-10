@@ -116,12 +116,20 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
                 election.getDataUseLetter(), election.getDulName());
         updateSortDate(referenceId, createDate);
-        if(electionType.equals(ElectionType.RP)) {
-            Election access = describeDataRequestElection(referenceId);
-            electionDAO.insertAccessRP(access.getElectionId(), id);
-        }
-        if(electionType.equals(ElectionType.DATA_ACCESS)) {
-            electionDAO.insertAccessAndConsentElection(id, consentElection.getElectionId());
+
+        switch (electionType) {
+            case DATA_ACCESS:
+                electionDAO.insertAccessAndConsentElection(id, consentElection.getElectionId());
+                break;
+            case TRANSLATE_DUL:
+                consentDAO.updateConsentUpdateStatus(referenceId, false);
+                break;
+            case RP:
+                Election access = describeDataRequestElection(referenceId);
+                electionDAO.insertAccessRP(access.getElectionId(), id);
+                break;
+            case DATA_SET:
+                break;
         }
         return electionDAO.findElectionWithFinalVoteById(id);
     }

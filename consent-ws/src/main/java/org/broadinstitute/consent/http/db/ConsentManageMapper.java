@@ -23,6 +23,7 @@ public class ConsentManageMapper implements ResultSetMapper<ConsentManage> {
         consentManage.setArchived(r.getBoolean(ElectionFields.ARCHIVED.getValue()));
         consentManage.setEditable(true);
         consentManage.setGroupName(r.getString("groupName"));
+        consentManage.setUpdateStatus(r.getBoolean("updated"));
         return consentManage;
     }
 
