@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.HelpReport;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.HelpReportAPI;
 
 import javax.annotation.security.PermitAll;
@@ -18,9 +20,11 @@ import java.util.List;
 public class HelpReportResource extends Resource {
 
     private final HelpReportAPI helpReportAPI;
+    private final EmailNotifierAPI emailApi;
 
     public HelpReportResource(){
         this.helpReportAPI = AbstractHelpReportAPI.getInstance();
+        this.emailApi = AbstractEmailNotifierAPI.getInstance();
     }
 
     @POST
@@ -29,6 +33,7 @@ public class HelpReportResource extends Resource {
     public Response createdHelpReport(@Context UriInfo info, HelpReport helpReport) {
         try {
             helpReport = helpReportAPI.create(helpReport);
+            emailApi.sendNewRequestHelpMessage(helpReport);
             URI uri = info.getRequestUriBuilder().path("{id}").build(helpReport.getReportId());
             return Response.created(uri).entity(helpReport).build();
         } catch (Exception e) {

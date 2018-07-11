@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 
 public class FreeMarkerTemplateHelper {
@@ -21,6 +22,7 @@ public class FreeMarkerTemplateHelper {
 
     Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
+    private final String HELP_REPORT_URL = "help_me";
 
     public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
@@ -76,6 +78,18 @@ public class FreeMarkerTemplateHelper {
     public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String type, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("closed-dataset-elections.html");
         return generateClosedDatasetElectionsTemplate(elections, darCode, serverUrl, temp);
+    }
+
+    public Writer getHelpReportTemplate(HelpReport helpReport, String serverUrl) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("new-help-report.html");
+        return generateHelpReportTemplate(helpReport, serverUrl + HELP_REPORT_URL, temp);
+    }
+
+    private Writer generateHelpReportTemplate(HelpReport helpReport, String serverUrl, Template temp) throws IOException, TemplateException {
+        NewHelpReportTemplate model = new NewHelpReportTemplate(helpReport.getUserName(), helpReport.getSubject(), helpReport.getDescription(), helpReport.getCreateDate(), serverUrl);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
     }
 
     private Writer generateClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String serverUrl, Template temp) throws IOException, TemplateException {

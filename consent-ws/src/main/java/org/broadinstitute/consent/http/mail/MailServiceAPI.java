@@ -27,4 +27,7 @@ public interface MailServiceAPI {
     void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException;
 
     void sendNewResearcherCreatedMessage(String admin, Writer template) throws IOException, TemplateException, MessagingException;
+
+    void sendNewHelpReportMessage(List<String> usersAddress, Writer template, String username) throws MessagingException;
+
 }

@@ -26,6 +26,7 @@ public class MailService extends AbstractMailServiceAPI {
     private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
     private DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
+    private HelpReportMessage helpReportMessage = new HelpReportMessage();
 
     private Logger logger() {
         return Logger.getLogger("MailService");
@@ -126,6 +127,12 @@ public class MailService extends AbstractMailServiceAPI {
     public void sendNewResearcherCreatedMessage(String toAddress, Writer template) throws MessagingException {
         Mail message = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
         sendMessage(message);
+    }
+
+    @Override
+    public void sendNewHelpReportMessage(List<String> usersAddress,  Writer template, String username) throws MessagingException {
+        Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template, username);
+        sendMessages(messages);
     }
 
 }
