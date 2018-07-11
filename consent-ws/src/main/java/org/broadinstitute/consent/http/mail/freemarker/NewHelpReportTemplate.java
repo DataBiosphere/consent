@@ -4,8 +4,6 @@ import java.util.Date;
 
 public class NewHelpReportTemplate {
 
-       /* This model works for templates: new-case. */
-
     private String userName;
 
     private String subject;
