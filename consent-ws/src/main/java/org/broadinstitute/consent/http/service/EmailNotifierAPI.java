@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.mail.MessagingException;
-
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.HelpReport;
 import org.bson.Document;
 
 public interface EmailNotifierAPI {
