@@ -28,6 +28,7 @@ public class DARModalDetailsDTO {
     private boolean isTherePurposeStatements;
     private boolean sensitivePopulation = false;
     private boolean requiresManualReview = false;
+    private Integer userId;
 
     @JsonProperty
     private Map<String, String> datasetDetail;
@@ -39,6 +40,7 @@ public class DARModalDetailsDTO {
         setResearcherName(owner, darDocument.getString(DarConstants.INVESTIGATOR));
         setStatus(status);
         setRationale(rationale);
+        setUserId(darDocument.getInteger(DarConstants.USER_ID));
     }
 
     public DARModalDetailsDTO(Document darDocument){
@@ -277,5 +279,14 @@ public class DARModalDetailsDTO {
     public void setRationale(String rationale) {
         this.rationale = rationale;
     }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
 }
 
