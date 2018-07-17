@@ -160,28 +160,28 @@ public class DARModalDetailsDTO {
     private List<SummaryItem> generateResearchTypeSummary(Document darDocument) {
         List<SummaryItem> researchList = new ArrayList<>();
         if(darDocument.containsKey("diseases") && darDocument.getBoolean("diseases")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_DISEASE_RELATED, SummaryConstants.RT_DISEASE_RELATED_DETAIL));
+            researchList.add(new SummaryItem(SummaryConstants.RT_DISEASE_RELATED, SummaryConstants.RT_DISEASE_RELATED_DETAIL, false));
         }
         if(darDocument.containsKey("methods") && darDocument.getBoolean("methods")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_METHODS_DEVELOPMENT, SummaryConstants.RT_METHODS_DEVELOPMENT_DETAIL));
+            researchList.add(new SummaryItem(SummaryConstants.RT_METHODS_DEVELOPMENT, SummaryConstants.RT_METHODS_DEVELOPMENT_DETAIL, false));
         }
         if(darDocument.containsKey("controls") && darDocument.getBoolean("controls")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_CONTROLS, SummaryConstants.RT_CONTROLS_DETAIL));
+            researchList.add(new SummaryItem(SummaryConstants.RT_CONTROLS, SummaryConstants.RT_CONTROLS_DETAIL, false));
         }
         if(darDocument.containsKey("population") && darDocument.getBoolean("population")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL));
+            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL, true));
             manualReviewIsTrue();
         }
         if(darDocument.containsKey("hmb") && darDocument.getBoolean("hmb")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL));
+            researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL, true));
             manualReviewIsTrue();
         }
         if(darDocument.containsKey("poa") && darDocument.getBoolean("poa")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL));
+            researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL, true));
             manualReviewIsTrue();
         }
         if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString("othertext")));
+            researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString("othertext"), true));
             manualReviewIsTrue();
         }
         return researchList;
