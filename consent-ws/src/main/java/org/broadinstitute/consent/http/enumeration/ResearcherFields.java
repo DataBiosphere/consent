@@ -25,8 +25,11 @@ public enum ResearcherFields {
     PI_EMAIL("piEmail", false),
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
-    INVESTIGATOR("investigator", false);
-
+    INVESTIGATOR("investigator", false),
+    // change token name
+    ERATOKEN("token", false),
+    ERADATE("eraDate", false),
+    ERASTATUS("eraStatus",false);
 
     private String value;
     private Boolean required;

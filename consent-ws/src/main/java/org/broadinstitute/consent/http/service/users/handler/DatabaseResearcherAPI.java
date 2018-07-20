@@ -81,6 +81,13 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         return describeResearcherProperties(userId);
     }
 
+    @Override
+    public String updateEraByResearcherId(Integer userId, String token){
+        researcherPropertyDAO.setEraByResearcherId(userId, token);
+        return "ok";
+
+    }
+
     private void saveProperties(Integer userId, List<ResearcherProperty> properties) {
         researcherPropertyDAO.deleteAllPropertiesByUser(userId);
         researcherPropertyDAO.insertAll(properties);
