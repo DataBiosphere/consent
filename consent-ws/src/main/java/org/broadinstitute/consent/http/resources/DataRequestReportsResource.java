@@ -4,6 +4,8 @@ import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.json.HTTP;
+
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
 import javax.ws.rs.core.HttpHeaders;
@@ -37,28 +39,17 @@ public class DataRequestReportsResource extends Resource {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
-        StreamingOutput fileStream =  new StreamingOutput()
-        {
-            @Override
-            public void write(java.io.OutputStream output) throws IOException, WebApplicationException
-            {
-                try
-                {
-                    byte[] data = darApi.createDARDocument(dar, researcherProperties);
-                    output.write(data);
-                    output.flush();
-                    output.close();
-                }
-                catch (Exception e)
-                {
-                    throw new WebApplicationException("File Not Found !!");
-                }
-            }
-        };
-        return Response
-                .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + fileName + ".pdf")
-                .build();
+        try{
+            return Response
+                    .ok(darApi.createDARDocument(dar, researcherProperties), MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + fileName + ".pdf")
+                    .header(HttpHeaders.ACCEPT, "application/pdf")
+                    .header("Access-Control-Expose-Headers", HttpHeaders.CONTENT_DISPOSITION)
+                    .build();
+        }
+        catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
