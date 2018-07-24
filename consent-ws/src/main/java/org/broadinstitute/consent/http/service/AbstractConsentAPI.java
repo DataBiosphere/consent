@@ -1,5 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import org.broadinstitute.consent.http.models.ConsentGroupName;
+
+import java.util.List;
+
 /**
  * Created by egolin on 10/1/14.
  * <p/>

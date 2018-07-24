@@ -1,15 +1,29 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentGroupName;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import java.util.*;
+import java.io.InputStream;
+import java.util.List;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 /**
  * This service will find all consents for a comma-separated list of ids or for an association type.
@@ -83,6 +97,27 @@ public class ConsentsResource extends Resource {
     @Override
     protected Logger logger() {
         return Logger.getLogger("ConsentsResource");
+    }
+
+
+    @Path("groupname")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed({"ADMIN"})
+    public Response updateGroupName(@Context UriInfo info, @Auth User user,
+                                    @FormDataParam("data") InputStream uploadedDataSet,
+                                    @FormDataParam("data") FormDataBodyPart data) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            List<ConsentGroupName> groupNames;
+            groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<ConsentGroupName>>(){});
+            api.updateConsentGroupName(groupNames);
+            return Response.status(Response.Status.OK).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+
     }
 
 }

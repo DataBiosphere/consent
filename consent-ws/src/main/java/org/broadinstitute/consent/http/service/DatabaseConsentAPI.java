@@ -17,10 +17,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -484,5 +481,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
         }
         return election;
+    }
+
+    public void updateConsentGroupName(List<ConsentGroupName> consentGroupNames) {
+        logger.trace("Update Consent Group Name");
+        for (ConsentGroupName consentGroupName: consentGroupNames) {
+            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+        }
     }
 }
