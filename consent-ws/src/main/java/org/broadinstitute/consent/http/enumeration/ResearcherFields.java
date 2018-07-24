@@ -28,7 +28,7 @@ public enum ResearcherFields {
     INVESTIGATOR("investigator", false),
     ERA_TOKEN("eraToken", false),
     ERA_DATE("eraDate", false),
-    ERA_EXPIRATION_DATE("eraExpiriation",false),
+    ERA_EXPIRATION_DATE("eraExpiration",false),
     ERA_STATUS("eraStatus",false);
 
 
