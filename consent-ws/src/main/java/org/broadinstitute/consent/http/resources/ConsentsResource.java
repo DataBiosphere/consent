@@ -18,6 +18,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.*;
 import java.io.InputStream;
 import java.util.List;
@@ -112,7 +113,7 @@ public class ConsentsResource extends Resource {
             List<Consent> groupNames;
             groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<Consent>>(){});
             api.updateConsentGroupName(groupNames);
-            return Response.ok(groupNames).build();
+            return Response.status(Response.Status.CREATED).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
