@@ -21,6 +21,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
+import java.util.Calendar;
+
 import java.util.stream.Collectors;
 
 public class DatabaseResearcherAPI implements ResearcherAPI{
@@ -45,7 +48,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     @Override
     public List<ResearcherProperty> registerResearcher(Map<String, String> researcherPropertiesMap, Integer userId, Boolean validate) throws NotFoundException, UnsupportedOperationException {
         validateUser(userId);
-        checkExistentProperties(userId);
+//        checkExistentProperties(userId);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if(validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
@@ -82,14 +85,32 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     }
 
     @Override
-    public String updateEraByResearcherId(Integer userId, String token){
-        researcherPropertyDAO.setEraByResearcherId(userId, token);
+    public String insertEraByResearcherId(Integer userId, String token){
+        Map<String,String> researcherProperties = new HashMap<>();
+        Date lastUpdate = new Date();
+        Calendar c = Calendar.getInstance();
+        c.setTime(lastUpdate);
+        c.add(Calendar.DATE, 30);
+
+        researcherProperties.put("eraToken", token);
+        researcherProperties.put("eraDate", lastUpdate.toString());
+        researcherProperties.put("eraExpiration", c.getTime().toString());
+        researcherProperties.put("eraStatus", "true");
+        List<ResearcherProperty> properties = getERAProperties(researcherProperties, userId);
+
+//        researcherPropertyDAO.setEraByResearcherId(userId, token);
+//        researcherPropertyDAO.insertAll(properties);
+//        primero borrar lo que este si es que esta
+        researcherPropertyDAO.insertAll(properties);
+
+//        researcherPropertyDAO.setEraByResearcherId(userId, token, lastUpdate);
         return "ok";
 
     }
 
     private void saveProperties(Integer userId, List<ResearcherProperty> properties) {
-        researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+//        researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+        researcherPropertyDAO.deletePropertieByUserAndKey(properties);
         researcherPropertyDAO.insertAll(properties);
     }
 
@@ -106,9 +127,23 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
 
     @Override
     public Map<String, String> describeResearcherPropertiesForDAR(Integer userId) {
-        Map<String, String> properties = describeResearcherPropertiesMap(userId);
+         Map<String, String> properties = describeResearcherPropertiesMap(userId);
         return getResearcherPropertiesForDAR(properties, userId);
     }
+
+    @Override
+    public List<ResearcherProperty> updateEraByResearcherId(Integer userId, String eraToken, Boolean eraStatus) {
+        Map<String,String> eraProperties = new HashMap<>();
+        Date lastUpdate = new Date();
+        eraProperties.put(ResearcherFields.ERA_TOKEN.getValue(), eraToken);
+        eraProperties.put(ResearcherFields.ERA_DATE.getValue(), lastUpdate.toString());
+        eraProperties.put(ResearcherFields.ERA_STATUS.getValue(), eraStatus.toString());
+        List<ResearcherProperty> properties = getResearcherProperties(eraProperties, userId);
+
+        researcherPropertyDAO.deletePropertieByUserAndKey(properties);
+        return null;
+    }
+
 
     private Map<String, String> getResearcherPropertiesForDAR(Map<String, String> properties, Integer userId) {
         Map<String, String> rpForDAR = new HashMap<>();
@@ -132,6 +167,13 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.PI_EMAIL.getValue(), properties.containsKey(ResearcherFields.PI_EMAIL.getValue()) ? properties.get(ResearcherFields.PI_EMAIL.getValue()) : null);
         rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
         rpForDAR.put(ResearcherFields.DO_YOU_HAVE_PI.getValue(), properties.containsKey(ResearcherFields.DO_YOU_HAVE_PI.getValue()) ? properties.get(ResearcherFields.DO_YOU_HAVE_PI.getValue()) : null);
+
+
+        rpForDAR.put(ResearcherFields.ERA_TOKEN.getValue(), properties.containsKey(ResearcherFields.ERA_TOKEN.getValue()) ? properties.get(ResearcherFields.ERA_TOKEN.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ERA_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_DATE.getValue()) ? properties.get(ResearcherFields.ERA_DATE.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
+
+
         return rpForDAR;
     }
 
@@ -166,6 +208,14 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     private List<ResearcherProperty> getResearcherProperties(Map<String, String> researcherPropertiesMap, Integer userId) {
         List<ResearcherProperty> properties = new ArrayList<>();
         researcherPropertiesMap.forEach((propertyKey, propertyValue) -> {
+            properties.add(new ResearcherProperty(userId, propertyKey, propertyValue));
+        });
+        return properties;
+    }
+
+    private List<ResearcherProperty> getERAProperties(Map<String, String> ERAPropertiesMap, Integer userId) {
+        List<ResearcherProperty> properties = new ArrayList<>();
+        ERAPropertiesMap.forEach((propertyKey, propertyValue) -> {
             properties.add(new ResearcherProperty(userId, propertyKey, propertyValue));
         });
         return properties;
@@ -207,4 +257,6 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
             }
         }
     }
+
+
 }

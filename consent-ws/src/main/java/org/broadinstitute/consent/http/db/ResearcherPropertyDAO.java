@@ -11,6 +11,7 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @UseStringTemplate3StatementLocator
@@ -37,6 +38,13 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     @SqlUpdate("delete from researcher_property where  userId = :userId")
     void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
+
+
+
+    @SqlUpdate("delete from researcher_property where userId = :userId and propertyKey = :property")
+    void deletePropertieByUserAndKey(@BindBean Collection<ResearcherProperty> researcherProperties);
+//    void deletePropertieByUserAndKey(@Bind("userId") Integer userId, @Bind("property") String propertyKey);
+
     @SqlQuery(value = "select * from researcher_property where " +
             "(propertyKey = '" + INSTITUTION + "' AND propertyValue != :institutionName) OR " +
             "(propertyKey = '" + ARE_YOU_PRINCIPAL_INVESTIGATOR + "' AND  propertyValue != :isThePI) OR " +
@@ -54,5 +62,8 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
 //    @SqlUpdate("update dacuser set displayName=:displayName where dacUserId = :id")
 
     @SqlUpdate("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, 'eraToken', :token)")
-    void setEraByResearcherId(@Bind("userId")Integer userId, @Bind("token") String token);
+    void setEraByResearcherId(@Bind("userId")Integer userId,
+                              @Bind("token") String token,
+                              @Bind("lastUpdate") Date lastUpdate);
+
 }

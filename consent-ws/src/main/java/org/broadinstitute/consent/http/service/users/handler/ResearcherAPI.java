@@ -16,9 +16,11 @@ public interface ResearcherAPI {
 
     Map<String, String> describeResearcherPropertiesMap(Integer userId) throws NotFoundException;
 
-    String updateEraByResearcherId(Integer userId, String token);
+    String insertEraByResearcherId(Integer userId, String token);
 
     void deleteResearcherProperties(Integer userId);
 
     Map<String, String> describeResearcherPropertiesForDAR(Integer userId);
+
+    List<ResearcherProperty> updateEraByResearcherId(Integer userId, String eraToken, Boolean eraStatus);
 }

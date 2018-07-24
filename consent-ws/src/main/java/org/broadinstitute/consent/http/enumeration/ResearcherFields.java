@@ -26,10 +26,11 @@ public enum ResearcherFields {
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
     INVESTIGATOR("investigator", false),
-    // change token name
-    ERATOKEN("token", false),
-    ERADATE("eraDate", false),
-    ERASTATUS("eraStatus",false);
+    ERA_TOKEN("eraToken", false),
+    ERA_DATE("eraDate", false),
+    ERA_EXPIRATION_DATE("eraExpiriation",false),
+    ERA_STATUS("eraStatus",false);
+
 
     private String value;
     private Boolean required;
