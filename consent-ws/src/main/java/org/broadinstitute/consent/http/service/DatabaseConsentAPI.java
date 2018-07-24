@@ -483,9 +483,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return election;
     }
 
-    public void updateConsentGroupName(List<ConsentGroupName> consentGroupNames) {
-        logger.trace("Update Consent Group Name");
-        for (ConsentGroupName consentGroupName: consentGroupNames) {
+    public void updateConsentGroupName(List<Consent> consentGroupNames) {
+        logger.info("Update Consent Group Name");
+        for (Consent consentGroupName: consentGroupNames) {
             consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
         }
     }

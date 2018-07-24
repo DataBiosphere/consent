@@ -77,5 +77,5 @@ public interface ConsentAPI {
 
     Election retrieveElection(Integer electionId, String consentId);
 
-    void updateConsentGroupName(List<ConsentGroupName> consentGroupNames);
+    void updateConsentGroupName(List<Consent> consentGroupNames);
 }

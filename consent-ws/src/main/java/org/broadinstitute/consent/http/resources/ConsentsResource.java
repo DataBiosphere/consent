@@ -7,7 +7,6 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentGroupName;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
@@ -100,20 +99,20 @@ public class ConsentsResource extends Resource {
     }
 
 
-    @Path("groupname")
     @POST
+    @Path("groupname")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @RolesAllowed({"ADMIN"})
+    @RolesAllowed("ADMIN")
     public Response updateGroupName(@Context UriInfo info, @Auth User user,
                                     @FormDataParam("data") InputStream uploadedDataSet,
                                     @FormDataParam("data") FormDataBodyPart data) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            List<ConsentGroupName> groupNames;
-            groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<ConsentGroupName>>(){});
+            List<Consent> groupNames;
+            groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<Consent>>(){});
             api.updateConsentGroupName(groupNames);
-            return Response.status(Response.Status.OK).build();
+            return Response.ok(groupNames).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
