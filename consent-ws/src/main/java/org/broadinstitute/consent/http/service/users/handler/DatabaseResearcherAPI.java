@@ -21,8 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
-import java.util.Calendar;
 
 import java.util.stream.Collectors;
 
@@ -69,47 +67,22 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         Boolean isProfileCompleted = StringUtils.isEmpty(completed) ? false : Boolean.valueOf(completed);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
         if(!isProfileCompleted && isUpdatedProfileCompleted){
-            saveProperties(userId, properties);
+            saveProperties(properties);
             notifyAdmins(userId, ACTION_REGISTERED);
         }else if(hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)){
-            saveProperties(userId, properties);
+            saveProperties(properties);
             DACUserRole dacUserRole = new DACUserRole();
             dacUserRole.setStatus(RoleStatus.PENDING.toString());
             dacUserRole.setRoleId(5);
             dacUserAPI.updateRoleStatus(dacUserRole, userId);
             notifyAdmins(userId, ACTION_UPDATED);
         }else{
-            saveProperties(userId, properties);
+            saveProperties(properties);
         }
         return describeResearcherProperties(userId);
     }
 
-    @Override
-    public String insertEraByResearcherId(Integer userId, String token){
-        Map<String,String> researcherProperties = new HashMap<>();
-        Date lastUpdate = new Date();
-        Calendar c = Calendar.getInstance();
-        c.setTime(lastUpdate);
-        c.add(Calendar.DATE, 30);
-
-        researcherProperties.put("eraToken", token);
-        researcherProperties.put("eraDate", lastUpdate.toString());
-        researcherProperties.put("eraExpiration", c.getTime().toString());
-        researcherProperties.put("eraStatus", "true");
-        List<ResearcherProperty> properties = getERAProperties(researcherProperties, userId);
-
-//        researcherPropertyDAO.setEraByResearcherId(userId, token);
-//        researcherPropertyDAO.insertAll(properties);
-//        primero borrar lo que este si es que esta
-        researcherPropertyDAO.insertAll(properties);
-
-//        researcherPropertyDAO.setEraByResearcherId(userId, token, lastUpdate);
-        return "ok";
-
-    }
-
-    private void saveProperties(Integer userId, List<ResearcherProperty> properties) {
-//        researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+    private void saveProperties(List<ResearcherProperty> properties) {
         researcherPropertyDAO.deletePropertieByUserAndKey(properties);
         researcherPropertyDAO.insertAll(properties);
     }
@@ -129,19 +102,6 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     public Map<String, String> describeResearcherPropertiesForDAR(Integer userId) {
          Map<String, String> properties = describeResearcherPropertiesMap(userId);
         return getResearcherPropertiesForDAR(properties, userId);
-    }
-
-    @Override
-    public List<ResearcherProperty> updateEraByResearcherId(Integer userId, String eraToken, Boolean eraStatus) {
-        Map<String,String> eraProperties = new HashMap<>();
-        Date lastUpdate = new Date();
-        eraProperties.put(ResearcherFields.ERA_TOKEN.getValue(), eraToken);
-        eraProperties.put(ResearcherFields.ERA_DATE.getValue(), lastUpdate.toString());
-        eraProperties.put(ResearcherFields.ERA_STATUS.getValue(), eraStatus.toString());
-        List<ResearcherProperty> properties = getResearcherProperties(eraProperties, userId);
-
-        researcherPropertyDAO.deletePropertieByUserAndKey(properties);
-        return null;
     }
 
 
@@ -171,6 +131,8 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
 
         rpForDAR.put(ResearcherFields.ERA_TOKEN.getValue(), properties.containsKey(ResearcherFields.ERA_TOKEN.getValue()) ? properties.get(ResearcherFields.ERA_TOKEN.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_DATE.getValue()) ? properties.get(ResearcherFields.ERA_DATE.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
+
         rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
 
 

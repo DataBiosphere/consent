@@ -188,7 +188,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(AllAssociationsResource.class);
         env.jersey().register(ConsentElectionResource.class);
         env.jersey().register(DataRequestElectionResource.class);
-        env.jersey().register(new NIHAccountLinkResource(researcherAPI));
         env.jersey().register(ConsentVoteResource.class);
         env.jersey().register(DataRequestVoteResource.class);
         env.jersey().register(ConsentCasesResource.class);
