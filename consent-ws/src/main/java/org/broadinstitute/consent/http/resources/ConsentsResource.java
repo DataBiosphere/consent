@@ -18,7 +18,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.util.*;
 import java.io.InputStream;
 import java.util.List;
@@ -101,7 +100,7 @@ public class ConsentsResource extends Resource {
 
 
     @POST
-    @Path("groupname")
+    @Path("group-name")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("ADMIN")
