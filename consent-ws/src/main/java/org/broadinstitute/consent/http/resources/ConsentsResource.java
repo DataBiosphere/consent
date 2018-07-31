@@ -100,7 +100,7 @@ public class ConsentsResource extends Resource {
 
 
     @POST
-    @Path("group-name")
+    @Path("group-names")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("ADMIN")
@@ -109,8 +109,7 @@ public class ConsentsResource extends Resource {
                                     @FormDataParam("data") FormDataBodyPart data) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            List<Consent> groupNames;
-            groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<Consent>>(){});
+            List<Consent> groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<Consent>>(){});
             api.updateConsentGroupName(groupNames);
             return Response.status(Response.Status.CREATED).build();
         } catch (Exception e) {
