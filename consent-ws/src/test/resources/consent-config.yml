@@ -54,6 +54,8 @@ freeMarkerConfiguration:
   defaultEncoding: UTF-8
 googleAuthentication:
   clientId: clientId
+nihAuthentication:
+  signingSecret: notasecret
 basicAuthentication:
   users:
     - user: testuser

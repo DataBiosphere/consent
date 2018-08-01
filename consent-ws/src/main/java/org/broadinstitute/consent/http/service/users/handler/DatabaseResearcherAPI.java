@@ -99,6 +99,11 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     }
 
     @Override
+    public void deleteResearcherSpecificProperties(List<ResearcherProperty> properties) {
+        researcherPropertyDAO.deletePropertieByUserAndKey(properties);
+    }
+
+    @Override
     public Map<String, String> describeResearcherPropertiesForDAR(Integer userId) {
          Map<String, String> properties = describeResearcherPropertiesMap(userId);
         return getResearcherPropertiesForDAR(properties, userId);

@@ -11,6 +11,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import io.jsonwebtoken.SignatureException;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
@@ -66,6 +67,8 @@ abstract public class Resource {
         dispatch.put(NotFoundException.class, e ->
                 Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
+                Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
+        dispatch.put(SignatureException.class, e->
                 Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
         dispatch.put(MySQLSyntaxErrorException.class, e ->
                 Response.serverError().entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());

@@ -20,4 +20,5 @@ public interface ResearcherAPI {
 
     Map<String, String> describeResearcherPropertiesForDAR(Integer userId);
 
+    void deleteResearcherSpecificProperties(List<ResearcherProperty> properties);
 }

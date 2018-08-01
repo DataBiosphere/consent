@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MongoConfiguration;
+import org.broadinstitute.consent.http.configurations.NihConfiguration;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -91,6 +92,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         final MongoClient mongoClient;
+        final NihConfiguration nihConfiguration = config.getNihConfiguration();
 
         if (mongoConfiguration.isTestMode()) {
             Fongo fongo = new Fongo("TestServer");
@@ -175,6 +177,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherAPI researcherAPI = new DatabaseResearcherAPI(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
         final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance, researcherPropertyDAO);
+        final NihAuthApi nihAuthApi = new NihAuthServiceAPI(nihConfiguration, researcherAPI);
 
         // How register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
@@ -204,6 +207,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ResearcherResource(researcherAPI));
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
+        env.jersey().register(new NihLoginResource(nihAuthApi));
 
         // Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
