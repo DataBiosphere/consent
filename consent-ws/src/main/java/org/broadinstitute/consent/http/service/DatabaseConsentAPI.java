@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -37,14 +38,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -486,10 +480,27 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return election;
     }
 
-    public void updateConsentGroupName(List<Consent> consentGroupNames) {
+    @Override
+    public List<ConsentGroupNameDTO> verifyConsentsGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
+        Map<String, String> groupNameMap = new HashMap<>();
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            if(!groupNameMap.containsKey(consentGroupName.getConsentId()) && !consentGroupName.getConsentId().equals("")) {
+                groupNameMap.put(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+            } else {
+                wrongConsentGroupNames.add(consentGroupName);
+            }
+        }
+        if (wrongConsentGroupNames.isEmpty()) {
+            updateConsentGroupName(groupNameMap);
+        }
+        return wrongConsentGroupNames;
+    }
+
+    private void updateConsentGroupName(Map<String, String> consentGroupNames) {
         logger.info("Update Consent Group Name");
-        for (Consent consentGroupName: consentGroupNames) {
-            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+        for (Map.Entry<String, String> consentGroupName: consentGroupNames.entrySet()) {
+            consentDAO.updateConsentGroupName(consentGroupName.getKey(), consentGroupName.getValue());
         }
     }
 }

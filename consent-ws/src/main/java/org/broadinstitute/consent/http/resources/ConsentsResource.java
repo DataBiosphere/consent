@@ -8,16 +8,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.print.attribute.standard.Media;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.io.InputStream;
 import java.util.List;
@@ -101,17 +105,21 @@ public class ConsentsResource extends Resource {
 
     @POST
     @Path("group-names")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(value = {MediaType.APPLICATION_JSON, MediaType.MULTIPART_FORM_DATA})
+    @Consumes(value = {MediaType.MULTIPART_FORM_DATA, MediaType.APPLICATION_JSON})
     @RolesAllowed("ADMIN")
     public Response updateGroupName(@Context UriInfo info, @Auth User user,
                                     @FormDataParam("data") InputStream uploadedDataSet,
-                                    @FormDataParam("data") FormDataBodyPart data) {
+                                    @FormDataParam("data") FormDataContentDisposition data) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            List<Consent> groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<Consent>>(){});
-            api.updateConsentGroupName(groupNames);
-            return Response.status(Response.Status.CREATED).build();
+            List<ConsentGroupNameDTO> groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<ConsentGroupNameDTO>>() {});
+            List<ConsentGroupNameDTO> errors = api.verifyConsentsGroupNames(groupNames);
+            if (errors.isEmpty()) {
+                return Response.status(Response.Status.OK).build();
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
+            }
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
