@@ -209,4 +209,17 @@ abstract public class AbstractTest extends ResourcedTest {
         mongodExe.cleanup();
     }
 
+    Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse, String consentId) {
+        Timestamp createDate = new Timestamp(new Date().getTime());
+        return new ConsentBuilder().
+                setConsentId(consentId).
+                setRequiresManualReview(false).
+                setUseRestriction(useRestriction).
+                setDataUse(dataUse).
+                setName(UUID.randomUUID().toString()).
+                setCreateDate(createDate).
+                setLastUpdate(createDate).
+                setSortDate(createDate).
+                build();
+    }
 }

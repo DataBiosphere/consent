@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http;
 
+import com.google.common.io.Resources;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -10,16 +11,23 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -141,6 +149,61 @@ public class ConsentResourceTest extends AbstractTest {
         assertNotNull("API should update election", updated);
 
         return updated;
+    }
+
+    @Test
+    public void testUpdateConsentGroupName() throws Exception {
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+
+
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+        MultiPart multipart = createFormData("consent-group-name-ok", "json");
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(multipart, multipart.getMediaType()));
+
+        assertEquals(OK, response.getStatus());
+//        assertEquals(consent.getGroupName(), "Lorem Ipsum / 11-22");
+        // TODO get a Consent with group name updated
+    }
+
+    @Test
+    public void testUpdateConsentGroupNameBadFormat() throws Exception {
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+        MultiPart multipart = createFormData("consent-group-name-duplicated", "json");
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(multipart, multipart.getMediaType()));
+
+        assertEquals(BAD_REQUEST, response.getStatus());
+    }
+
+    private MultiPart createFormData(String name, String ext) throws URISyntaxException {
+        MultiPart multiPart = new MultiPart();
+        multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        String fileName = "json/" + name + "." + ext;
+        URI uri = Resources.getResource(fileName).toURI();
+        File file = new File(uri);
+        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data", file, MediaType.valueOf("text/plain"));
+        multiPart.bodyPart(fileDataBodyPart);
+        return multiPart;
+    }
+
+    private String createConsentGroupName(Client client) throws IOException {
+        String consentPath = path2Url("/consent");
+        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        Consent consent = generateNewConsent(new Everything(), dataUse, "consentId5");
+        consent.setName(name);
+        consent.setTranslatedUseRestriction("translated");
+        Response response = checkStatus(CREATED, post(client, consentPath, consent));
+        String createdLocation = checkHeader(response, "Location");
+        return createdLocation.substring(createdLocation.lastIndexOf("/") + 1);
     }
 
 }

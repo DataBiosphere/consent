@@ -485,13 +485,13 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
         Map<String, String> groupNameMap = new HashMap<>();
         for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
-            if(!groupNameMap.containsKey(consentGroupName.getConsentId()) && !consentGroupName.getConsentId().equals("")) {
+            if(!groupNameMap.containsKey(consentGroupName.getConsentId()) && !StringUtils.isEmpty(consentGroupName.getConsentId())) {
                 groupNameMap.put(consentGroupName.getConsentId(), consentGroupName.getGroupName());
             } else {
                 wrongConsentGroupNames.add(consentGroupName);
             }
         }
-        if (wrongConsentGroupNames.isEmpty()) {
+        if (!CollectionUtils.isEmpty(wrongConsentGroupNames)) {
             updateConsentGroupName(groupNameMap);
         }
         return wrongConsentGroupNames;

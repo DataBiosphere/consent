@@ -1,0 +1,14 @@
+[
+  {
+    "consentId": "testId3",
+    "groupName": "Vestibulum sed / 33-44"
+  },
+  {
+    "consentId": "testId3",
+    "groupName": "wrong group name"
+  },
+  {
+    "consentId": "",
+    "groupName": "empty consent Id"
+  }
+]
