@@ -7,6 +7,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -15,6 +16,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -125,10 +127,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 dataAccessList.add(dataAccess);
             });
         }
+        Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
+        String darLinkedinProfile = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
+        String researcherLinkedinProfile = researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.LINKEDIN_PROFILE.getValue());
+        updateLinkedinProfile(userId, darLinkedinProfile, researcherLinkedinProfile);
         insertDataAccess(dataAccessList);
         return dataAccessList;
     }
-
 
     @Override
     public Document describeDataAccessRequestById(String id) throws NotFoundException {
@@ -602,5 +607,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);
         return dataAccess;
     }
+
+    private void updateLinkedinProfile(Integer userId, String darLinkedinProfile, String researcherLinkedinProfile) {
+        if(!Objects.equals(darLinkedinProfile, researcherLinkedinProfile)){
+            researcherPropertyDAO.deletePropertyByUser(ResearcherFields.LINKEDIN_PROFILE.getValue(), userId);
+            if(!StringUtils.isEmpty(darLinkedinProfile)) {
+                researcherPropertyDAO.insertPropertyByUser(ResearcherFields.LINKEDIN_PROFILE.getValue(), darLinkedinProfile, userId);
+            }
+        }
+    }
+
 
 }
