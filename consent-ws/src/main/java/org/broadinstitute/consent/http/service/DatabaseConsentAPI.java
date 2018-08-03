@@ -491,7 +491,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 wrongConsentGroupNames.add(consentGroupName);
             }
         }
-        if (!CollectionUtils.isEmpty(wrongConsentGroupNames)) {
+        if (CollectionUtils.isEmpty(wrongConsentGroupNames)) {
             updateConsentGroupName(groupNameMap);
         }
         return wrongConsentGroupNames;
