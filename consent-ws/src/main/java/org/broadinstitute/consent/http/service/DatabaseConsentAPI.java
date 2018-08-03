@@ -481,7 +481,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public List<ConsentGroupNameDTO> verifyConsentsGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+    public List<ConsentGroupNameDTO> verifyAndUpdateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
         List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
         Map<String, String> groupNameMap = new HashMap<>();
         for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {

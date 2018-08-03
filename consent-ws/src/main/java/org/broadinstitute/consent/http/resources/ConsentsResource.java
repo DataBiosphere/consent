@@ -100,18 +100,49 @@ public class ConsentsResource extends Resource {
     }
 
 
+    /**
+     * Given taht this end-point isn't mapped in swagger follow this steps:
+     * 1. Works only for Admin users. It should be used via a REST client, such as Postman.
+     * What it's needed?
+     *     Admin user token
+     *     point to /api/consents/group-names/
+     *     Headers: Accept: application/json Authorization: Bearer token_admin Content-Type: multipart/form-data
+     *     Body of the request: Key -> data; Value -> file
+     *
+     * 2. The info of the group names comes from the ORSP db. Run this query:
+     * <code>select  dur.vault_consent_id as consentId, i.summary as groupName
+     * from issue i
+     * inner join data_use_restriction dur on dur.consent_group_key = i.project_key
+     * where i.type = 'Consent Group'
+     * and dur.vault_export_date is not null;</code>
+     *
+     * 3. Export to csv file. This file should be exported to JSON with the following format:
+     * [
+     *     {
+     *         "consentId": "testId",
+     *         "groupName": "lorem ipsum / 123"
+     *     },
+     *     {
+     *         "consentId": "testId2",
+     *         "groupName": "lorem ipsum / 124"
+     *     }
+     * ]
+     * @param info
+     * @param user
+     * @param uploadedDataSet
+     * @return
+     */
     @POST
     @Path("group-names")
     @Produces(value = {MediaType.APPLICATION_JSON, MediaType.MULTIPART_FORM_DATA})
     @Consumes(value = {MediaType.MULTIPART_FORM_DATA, MediaType.APPLICATION_JSON})
     @RolesAllowed("ADMIN")
     public Response updateGroupName(@Context UriInfo info, @Auth User user,
-                                    @FormDataParam("data") InputStream uploadedDataSet,
-                                    @FormDataParam("data") FormDataContentDisposition data) {
+                                    @FormDataParam("data") InputStream uploadedDataSet ) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             List<ConsentGroupNameDTO> groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<ConsentGroupNameDTO>>() {});
-            List<ConsentGroupNameDTO> errors = api.verifyConsentsGroupNames(groupNames);
+            List<ConsentGroupNameDTO> errors = api.verifyAndUpdateConsentGroupNames(groupNames);
             if (errors.isEmpty()) {
                 return Response.status(Response.Status.OK).build();
             } else {
