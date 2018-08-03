@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.rabbitmq.client.ExceptionHandler;
 import org.broadinstitute.consent.http.service.NihAuthApi;
-import org.broadinstitute.consent.http.service.NihAuthServiceAPI;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
@@ -11,24 +9,25 @@ import java.util.Map;
 
 @Path("{api : (api/)?}nih-login/")
 
-public class NihLoginResource extends Resource {
+public class NihAccountResource extends Resource {
 
     NihAuthApi nihAuthApi;
 
-    public NihLoginResource (NihAuthApi nihAuthApi) {
+    public NihAccountResource(NihAuthApi nihAuthApi) {
         this.nihAuthApi = nihAuthApi;
     }
 
     @POST
-    @Consumes("application/json")
     @Path("{userId}/{token}")
-    @RolesAllowed("RESEARCHER")
     @Produces("application/json")
+    @RolesAllowed("RESEARCHER")
 
-    public Response registerResearcher(@PathParam("userId") Integer userId, @PathParam("token") String jwt, Map<String, String> properties) {
+    public Response registerResearcher(@PathParam("userId") Integer userId, @PathParam("token") String jwt) {
+        System.out.println("jwt  : " + jwt);
+        System.out.println("user  : " + userId);
         try{
 
-            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAuthApi.generateToken(), userId, properties)).build();
+            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAuthApi.generateToken(), userId)).build();
 //            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId, properties)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
@@ -42,7 +41,8 @@ public class NihLoginResource extends Resource {
 
     public Response deleteNihAccount(@PathParam("userId") Integer userId) {
         try {
-            return Response.ok(nihAuthApi.deleteNihAccountById(userId)).build();
+            nihAuthApi.deleteNihAccountById(userId);
+            return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

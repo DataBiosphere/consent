@@ -133,11 +133,10 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
         rpForDAR.put(ResearcherFields.DO_YOU_HAVE_PI.getValue(), properties.containsKey(ResearcherFields.DO_YOU_HAVE_PI.getValue()) ? properties.get(ResearcherFields.DO_YOU_HAVE_PI.getValue()) : null);
 
-
         rpForDAR.put(ResearcherFields.ERA_TOKEN.getValue(), properties.containsKey(ResearcherFields.ERA_TOKEN.getValue()) ? properties.get(ResearcherFields.ERA_TOKEN.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_DATE.getValue()) ? properties.get(ResearcherFields.ERA_DATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
-
+        rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.containsKey(ResearcherFields.ERA_USERNAME.getValue()) ? properties.get(ResearcherFields.ERA_USERNAME.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
 
 
