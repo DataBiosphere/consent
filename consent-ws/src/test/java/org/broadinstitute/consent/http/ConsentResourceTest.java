@@ -1,12 +1,15 @@
 package org.broadinstitute.consent.http;
 
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
@@ -37,6 +40,8 @@ import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentResourceTest extends AbstractTest {
+    final String GROUPNAME_ID = "testId5";
+    final String GROUPNAME = "Sed tristique / 22-33";
 
     private String name;
 
@@ -157,62 +162,100 @@ public class ConsentResourceTest extends AbstractTest {
     @Test
     public void testUpdateConsentGroupName() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-
-
         WebTarget webTarget = client.target(path2Url("/consents/group-names"));
-        MultiPart multipart = createFormData("consent-group-name-ok", "json");
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(groupNameList);
 
         mockValidateTokenResponse();
         Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer access-token")
-                .post(Entity.entity(multipart, multipart.getMediaType()));
+                .post(Entity.entity(jsonString, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(OK, response.getStatus());
     }
 
     @Test
-    public void testUpdateConsentGroupNameBadDuplicated() throws Exception {
-        String invalidJson = "[{\"consentId\":\"testId3\",\"groupName\":\"wrong group name\"}," +
-                "{\"consentId\":\"\",\"groupName\":\"empty consent Id\"}]";
+    public void testUpdateConsentGroupNameBadDuplicatedIds() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(groupNameList);
+
+        String invalidJson = invalidConsentGroupName(GROUPNAME_ID);
 
         WebTarget webTarget = client.target(path2Url("/consents/group-names"));
-        MultiPart multipart = createFormData("consent-group-name-duplicated", "json");
 
         mockValidateTokenResponse();
         Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer access-token")
-                .post(Entity.entity(multipart, multipart.getMediaType()));
+                .post(Entity.entity(jsonString, MediaType.APPLICATION_JSON_TYPE));
 
         String result = response.readEntity(String.class);
         assertEquals(BAD_REQUEST, response.getStatus());
-        assertTrue(result.equals(invalidJson));
+        assertEquals(result,invalidJson);
+    }
+
+    @Test
+    public void testUpdateConsentGroupNameBadEmptyIds() throws Exception {
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        groupNameList.add(createConsentGroupNameJson(""));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(groupNameList);
+
+        String invalidJson = invalidConsentGroupName("");
+
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(jsonString, MediaType.APPLICATION_JSON_TYPE));
+
+        String result = response.readEntity(String.class);
+        assertEquals(BAD_REQUEST, response.getStatus());
+        assertEquals(result, invalidJson);
     }
 
     @Test
     public void testUpdateConsentGroupNameBadFormat() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
 
+        String invalidJson = invalidConsentGroupName(GROUPNAME_ID);
+        invalidJson = invalidJson.replace(",", "");
+
         WebTarget webTarget = client.target(path2Url("/consents/group-names"));
-        MultiPart multipart = createFormData("consent-group-name-format", "json");
 
         mockValidateTokenResponse();
         Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer access-token")
-                .post(Entity.entity(multipart, multipart.getMediaType()));
+                .post(Entity.entity(invalidJson, MediaType.APPLICATION_JSON_TYPE));
 
-        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
-    private MultiPart createFormData(String name, String ext) throws URISyntaxException {
-        MultiPart multiPart = new MultiPart();
-        multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        String fileName = "json/" + name + "." + ext;
-        URI uri = Resources.getResource(fileName).toURI();
-        File file = new File(uri);
-        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data", file, MediaType.valueOf("text/plain"));
-        multiPart.bodyPart(fileDataBodyPart);
-        return multiPart;
+    private ConsentGroupNameDTO createConsentGroupNameJson(String consentId) {
+        ConsentGroupNameDTO consentGroupName = new ConsentGroupNameDTO();
+        consentGroupName.setConsentId(consentId);
+        consentGroupName.setGroupName(GROUPNAME);
+
+        return consentGroupName;
+    }
+
+    private String invalidConsentGroupName(String consentId) {
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+        groupNameList.add(createConsentGroupNameJson(consentId));
+        Gson invalidGson = new Gson();
+
+        return invalidGson.toJson(groupNameList);
     }
 
 }

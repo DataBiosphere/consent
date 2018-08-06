@@ -96,7 +96,7 @@ public class ConsentsResource extends Resource {
 
 
     /**
-     * Given that these end-point isn't mapped in swagger follow this steps:
+     * Given that this end-point isn't mapped in swagger follow this steps:
      * 1. Works only for Admin users. It should be used via a REST client, such as Postman.
      * What it's needed?
      *     Admin user token
