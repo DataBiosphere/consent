@@ -392,7 +392,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
         List<ConsentManage> closedElections = consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue());
-        closedElections.forEach(consentManage -> consentManage.setVote(voteDAO.findChairPersonVoteByElectionId(consentManage.getElectionId())));
+        closedElections.forEach(consentManage -> {
+            Boolean vote = voteDAO.findChairPersonVoteByElectionId(consentManage.getElectionId());
+            consentManage.setVote(vote != null && vote ? "Approved" : "Denied");
+        });
         consentManageList.addAll(closedElections);
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());

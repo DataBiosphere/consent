@@ -150,7 +150,7 @@ public class ConsentManage {
 		return vote;
 	}
 
-	public void setVote(Boolean vote) {
-		this.vote = vote ? "Approved" : "Denied";
+	public void setVote(String vote) {
+		this.vote = vote;
 	}
 }
