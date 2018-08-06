@@ -98,7 +98,7 @@ public class ConsentsResource extends Resource {
     /**
      * Given that this end-point isn't mapped in swagger follow this steps:
      * 1. Works only for Admin users. It should be used via a REST client, such as Postman.
-     * What it's needed?
+     * Requirements:
      *     Admin user token
      *     point to /api/consents/group-names/
      *     Headers: Accept: application/json Authorization: Bearer token_admin Content-Type: multipart/json
