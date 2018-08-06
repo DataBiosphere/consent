@@ -178,7 +178,7 @@ public class ConsentResourceTest extends AbstractTest {
     }
 
     @Test
-    public void testUpdateConsentGroupNameBadDuplicatedIds() throws Exception {
+    public void testUpdateConsentGroupNameDuplicatedIds() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
 
@@ -202,7 +202,7 @@ public class ConsentResourceTest extends AbstractTest {
     }
 
     @Test
-    public void testUpdateConsentGroupNameBadEmptyIds() throws Exception {
+    public void testUpdateConsentGroupNameEmptyIds() throws Exception {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
 
