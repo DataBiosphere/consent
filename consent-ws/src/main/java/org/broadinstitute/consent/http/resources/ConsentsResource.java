@@ -101,7 +101,7 @@ public class ConsentsResource extends Resource {
      * What it's needed?
      *     Admin user token
      *     point to /api/consents/group-names/
-     *     Headers: Accept: application/json Authorization: Bearer token_admin Content-Type: multipart/form-data
+     *     Headers: Accept: application/json Authorization: Bearer token_admin Content-Type: multipart/json
      *     Body of the request: Key -> data; Value -> file
      *
      * 2. The info of the group names comes from the ORSP db. Run this query:
