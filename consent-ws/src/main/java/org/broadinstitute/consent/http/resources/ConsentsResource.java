@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
@@ -11,8 +9,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -20,7 +16,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.util.*;
-import java.io.InputStream;
 import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -101,7 +96,7 @@ public class ConsentsResource extends Resource {
 
 
     /**
-     * Given taht this end-point isn't mapped in swagger follow this steps:
+     * Given that these end-point isn't mapped in swagger follow this steps:
      * 1. Works only for Admin users. It should be used via a REST client, such as Postman.
      * What it's needed?
      *     Admin user token
@@ -129,20 +124,16 @@ public class ConsentsResource extends Resource {
      * ]
      * @param info
      * @param user
-     * @param uploadedDataSet
+     * @param data
      * @return
      */
     @POST
     @Path("group-names")
-    @Produces(value = {MediaType.APPLICATION_JSON, MediaType.MULTIPART_FORM_DATA})
-    @Consumes(value = {MediaType.MULTIPART_FORM_DATA, MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("ADMIN")
-    public Response updateGroupName(@Context UriInfo info, @Auth User user,
-                                    @FormDataParam("data") InputStream uploadedDataSet ) {
-        ObjectMapper objectMapper = new ObjectMapper();
+    public Response updateGroupNames(@Context UriInfo info, @Auth User user, List<ConsentGroupNameDTO> data) {
         try {
-            List<ConsentGroupNameDTO> groupNames = objectMapper.readValue(uploadedDataSet, new TypeReference<List<ConsentGroupNameDTO>>() {});
-            List<ConsentGroupNameDTO> errors = api.verifyAndUpdateConsentGroupNames(groupNames);
+            List<ConsentGroupNameDTO> errors = api.updateConsentGroupNames(data);
             if (errors.isEmpty()) {
                 return Response.status(Response.Status.OK).build();
             } else {

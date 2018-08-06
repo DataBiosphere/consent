@@ -481,7 +481,16 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public List<ConsentGroupNameDTO> verifyAndUpdateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+    public List<ConsentGroupNameDTO> updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        List<ConsentGroupNameDTO> wrongConsentGroupNames = verifyConsentGroupNames(consentGroupNames);
+
+        if (CollectionUtils.isEmpty(wrongConsentGroupNames)) {
+            updateConsentGroupName(consentGroupNames);
+        }
+        return wrongConsentGroupNames;
+    }
+
+    private List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
         List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
         Map<String, String> groupNameMap = new HashMap<>();
         for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
@@ -491,16 +500,13 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 wrongConsentGroupNames.add(consentGroupName);
             }
         }
-        if (CollectionUtils.isEmpty(wrongConsentGroupNames)) {
-            updateConsentGroupName(groupNameMap);
-        }
         return wrongConsentGroupNames;
     }
 
-    private void updateConsentGroupName(Map<String, String> consentGroupNames) {
+    private void updateConsentGroupName(List<ConsentGroupNameDTO> consentGroupNames) {
         logger.info("Update Consent Group Name");
-        for (Map.Entry<String, String> consentGroupName: consentGroupNames.entrySet()) {
-            consentDAO.updateConsentGroupName(consentGroupName.getKey(), consentGroupName.getValue());
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
         }
     }
 }
