@@ -30,11 +30,11 @@ public class NihServiceAPI implements NihAuthApi {
         this.nihConfiguration = nihConfiguration;
     }
 
-    // For testing pourposes
+    // For testing purposes
     @Override
     public String generateToken() {
         String token = Jwts.builder()
-                .claim("nihUsername", "EraLeo")
+                .claim("nihUsername", "MBEMIS")
                 .signWith(key)
                 .compact();
         return token;
@@ -44,6 +44,7 @@ public class NihServiceAPI implements NihAuthApi {
     public Map<String, String> authenticateNih(String jwt, Integer userId) throws DecodingException{
         // Use this as secret when this is well configured
         byte[] secret = nihConfiguration.getSigningSecret().getBytes();
+
 //        This throws a weak token exception, need to handle somehow
 //        Key key = Keys.hmacShaKeyFor(secret);
 

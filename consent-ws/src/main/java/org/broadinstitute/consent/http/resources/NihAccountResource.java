@@ -23,8 +23,6 @@ public class NihAccountResource extends Resource {
     @RolesAllowed("RESEARCHER")
 
     public Response registerResearcher(@PathParam("userId") Integer userId, @PathParam("token") String jwt) {
-        System.out.println("jwt  : " + jwt);
-        System.out.println("user  : " + userId);
         try{
 
             return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAuthApi.generateToken(), userId)).build();
