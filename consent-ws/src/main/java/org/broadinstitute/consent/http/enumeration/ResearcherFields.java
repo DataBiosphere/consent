@@ -30,7 +30,7 @@ public enum ResearcherFields {
     ERA_DATE("eraDate", false),
     ERA_EXPIRATION_DATE("eraExpiration",false),
     ERA_STATUS("eraStatus",false),
-    ERA_USERNAME("jti", false);
+    ERA_USERNAME("nihUsername", false);
 
 
     private String value;

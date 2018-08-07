@@ -28,7 +28,7 @@ public class NihAccountResource extends Resource {
         try{
 
             return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAuthApi.generateToken(), userId)).build();
-//            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId, properties)).build();
+//            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }

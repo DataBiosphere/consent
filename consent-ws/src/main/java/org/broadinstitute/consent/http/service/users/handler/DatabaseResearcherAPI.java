@@ -51,7 +51,8 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         if(validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
-        researcherPropertyDAO.insertAll(properties);
+        saveProperties(properties);
+//        researcherPropertyDAO.insertAll(properties);
         notifyAdmins(userId, ACTION_REGISTERED);
         return describeResearcherProperties(userId);
     }
@@ -174,14 +175,6 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     private List<ResearcherProperty> getResearcherProperties(Map<String, String> researcherPropertiesMap, Integer userId) {
         List<ResearcherProperty> properties = new ArrayList<>();
         researcherPropertiesMap.forEach((propertyKey, propertyValue) -> {
-            properties.add(new ResearcherProperty(userId, propertyKey, propertyValue));
-        });
-        return properties;
-    }
-
-    private List<ResearcherProperty> getERAProperties(Map<String, String> ERAPropertiesMap, Integer userId) {
-        List<ResearcherProperty> properties = new ArrayList<>();
-        ERAPropertiesMap.forEach((propertyKey, propertyValue) -> {
             properties.add(new ResearcherProperty(userId, propertyKey, propertyValue));
         });
         return properties;

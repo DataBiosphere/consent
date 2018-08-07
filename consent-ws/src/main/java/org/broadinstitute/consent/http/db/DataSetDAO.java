@@ -119,7 +119,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM" +
             " election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId " +
             " and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%') or dsp.propertyValue like concat('%',:partial,'%')" +
-            " order by d.dataSetId")
+            " order by d.objectId")
     List< Map<String, String>> getObjectIdsbyPartial(@Bind("partial") String partial);
 
 }

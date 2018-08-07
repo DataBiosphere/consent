@@ -2,7 +2,10 @@ package org.broadinstitute.consent.http.service;
 
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.impl.crypto.MacProvider;
+//import io.jsonwebtoken.impl.crypto.MacProvider;
+import io.jsonwebtoken.io.DecodingException;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.WeakKeyException;
 import org.broadinstitute.consent.http.configurations.NihConfiguration;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
@@ -16,11 +19,12 @@ import java.util.stream.Collectors;
 
 
 public class NihServiceAPI implements NihAuthApi {
-    private static final Key secret = MacProvider.generateKey(SignatureAlgorithm.HS256);
-    private static final byte[] secretBytes = secret.getEncoded();
-    private static final String base64SecretBytes = Base64.getEncoder().encodeToString(secretBytes);
+
+
     NihConfiguration nihConfiguration;
     ResearcherAPI researcherAPI;
+    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
     public NihServiceAPI(NihConfiguration nihConfiguration, ResearcherAPI researcherApi) {
         this.researcherAPI = researcherApi;
         this.nihConfiguration = nihConfiguration;
@@ -29,32 +33,30 @@ public class NihServiceAPI implements NihAuthApi {
     // For testing pourposes
     @Override
     public String generateToken() {
-        String id = UUID.randomUUID().toString().replace("-", "");
-        Date now = new Date();
-        Date exp = new Date(System.currentTimeMillis() + (1000 * 30)); // 30 seconds
-
         String token = Jwts.builder()
-                .setId(id)
-                .signWith(SignatureAlgorithm.HS256, base64SecretBytes)
+                .claim("nihUsername", "EraLeo")
+                .signWith(key)
                 .compact();
         return token;
     }
 
     @Override
-    public Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException{
+    public Map<String, String> authenticateNih(String jwt, Integer userId) throws DecodingException{
         // Use this as secret when this is well configured
-        String secret = nihConfiguration.getSigningSecret();
+        byte[] secret = nihConfiguration.getSigningSecret().getBytes();
+//        This throws a weak token exception, need to handle somehow
+//        Key key = Keys.hmacShaKeyFor(secret);
 
         try {
             Map<String,String> jws = Jwts.parser()
-                    .setSigningKey(base64SecretBytes)
+                    .setSigningKey(key)
                     .parseClaimsJws(jwt).getBody()
                     .entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
             return createNihContent(jws, userId);
 
-        } catch (SignatureException e) {
-            throw e;
+        } catch (DecodingException ex) {
+            throw ex;
         }
 
     }
