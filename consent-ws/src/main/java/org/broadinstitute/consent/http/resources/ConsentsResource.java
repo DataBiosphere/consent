@@ -15,9 +15,13 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.Collections;
 
 /**
  * This service will find all consents for a comma-separated list of ids or for an association type.
@@ -132,8 +136,9 @@ public class ConsentsResource extends Resource {
     @RolesAllowed("ADMIN")
     public Response updateGroupNames(@Context UriInfo info, @Auth User user, List<ConsentGroupNameDTO> data) {
         try {
-            List<ConsentGroupNameDTO> errors = api.updateConsentGroupNames(data);
+            List<ConsentGroupNameDTO> errors = api.verifyConsentGroupNames(data);
             if (errors.isEmpty()) {
+                api.updateConsentGroupNames(data);
                 return Response.status(Response.Status.OK).build();
             } else {
                 return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();

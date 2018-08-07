@@ -481,16 +481,15 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public List<ConsentGroupNameDTO> updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
-        List<ConsentGroupNameDTO> wrongConsentGroupNames = verifyConsentGroupNames(consentGroupNames);
-
-        if (CollectionUtils.isEmpty(wrongConsentGroupNames)) {
-            updateConsentGroupName(consentGroupNames);
+    public void updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        logger.info("Update Consent Group Name");
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
         }
-        return wrongConsentGroupNames;
     }
 
-    private List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+    @Override
+    public List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
         List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
         Map<String, String> groupNameMap = new HashMap<>();
         for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
@@ -501,12 +500,5 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             }
         }
         return wrongConsentGroupNames;
-    }
-
-    private void updateConsentGroupName(List<ConsentGroupNameDTO> consentGroupNames) {
-        logger.info("Update Consent Group Name");
-        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
-            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
-        }
     }
 }
