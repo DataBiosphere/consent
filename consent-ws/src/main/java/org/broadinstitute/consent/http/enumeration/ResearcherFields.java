@@ -29,7 +29,7 @@ public enum ResearcherFields {
     ERA_TOKEN("eraToken", false),
     ERA_DATE("eraDate", false),
     ERA_EXPIRATION_DATE("eraExpiration",false),
-    ERA_STATUS("eraStatus",false),
+    ERA_STATUS("eraAuthorized",false),
     ERA_USERNAME("nihUsername", false);
 
 

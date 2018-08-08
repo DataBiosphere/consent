@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import java.security.Key;
@@ -33,7 +34,7 @@ public class NihServiceAPI implements NihAuthApi {
     }
 
     @Override
-    public Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException {
+    public Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException, MalformedJwtException {
 
         Key key = Keys.hmacShaKeyFor(nihConfiguration.getSigningSecret());
 
@@ -59,7 +60,7 @@ public class NihServiceAPI implements NihAuthApi {
 
     private Map<String, String> createNihContent(String nihUserName, Integer userId) {
         Map<String, String> nihComponents = new HashMap<>();
-        if (nihUserName != null && nihUserName.isEmpty()) {
+        if (nihUserName != null && !nihUserName.isEmpty()) {
             nihComponents.put(ResearcherFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
             nihComponents.put(ResearcherFields.ERA_USERNAME.getValue(), nihUserName);
             nihComponents.putAll(updateAndExpirationDates());
