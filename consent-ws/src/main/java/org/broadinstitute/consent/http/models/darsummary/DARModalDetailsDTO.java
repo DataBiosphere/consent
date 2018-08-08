@@ -21,6 +21,13 @@ public class DARModalDetailsDTO {
     private String projectTitle;
     private String status;
     private String rationale;
+    private String department;
+    private String city;
+    private String country;
+    private String nihUserName;
+    private Boolean havenihUserName;
+    private Boolean havePi;
+    private Boolean isThePi;
     private List<SummaryItem> researchType;
     private List<String> diseases;
     private List<SummaryItem> purposeStatements;
@@ -48,6 +55,13 @@ public class DARModalDetailsDTO {
         setPrincipalInvestigator(darDocument.getString(DarConstants.INVESTIGATOR));
         setInstitutionName(this.institutionName = darDocument.getString(DarConstants.INSTITUTION));
         setProjectTitle(this.projectTitle = darDocument.getString(DarConstants.PROJECT_TITLE));
+        setDepartment(this.department = darDocument.getString(DarConstants.DEPARTMENT));
+        setCity(this.city = darDocument.getString(DarConstants.CITY));
+        setCountry(this.country = darDocument.getString(DarConstants.COUNTRY));
+        setNihUserName(this.nihUserName = darDocument.getString(DarConstants.ERA_NIH_USER_NAME));
+        setHavenihUserName(this.havenihUserName = !getNihUserName().isEmpty());
+        setHavePi(this.havePi = darDocument.getString(DarConstants.HAVE_PI) != null ? Boolean.valueOf(darDocument.getString(DarConstants.HAVE_PI)) : false);
+        setIsThePi(this.isThePi = darDocument.getString(DarConstants.HAVE_PI) == null);
         setIsThereDiseases(false);
         setIsTherePurposeStatements(false);
         setResearchType(generateResearchTypeSummary(darDocument));
@@ -287,6 +301,66 @@ public class DARModalDetailsDTO {
     public void setUserId(Integer userId) {
         this.userId = userId;
     }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+
+    public Boolean getHavenihUserName() {
+        return havenihUserName;
+    }
+
+    public void setHavenihUserName(Boolean havenihUserName) {
+        this.havenihUserName = havenihUserName;
+    }
+
+    public String getNihUserName() {
+        return nihUserName;
+    }
+
+    public void setNihUserName(String nihUserName) {
+        this.nihUserName = nihUserName;
+    }
+
+
+    public Boolean getHavePi() {
+        return havePi;
+    }
+
+    public void setHavePi(Boolean havePi) {
+        this.havePi = havePi;
+    }
+
+    public Boolean getIsThePi() {
+        return isThePi;
+    }
+
+    public void setIsThePi(Boolean isThePi) {
+        isThePi = isThePi;
+    }
+
+
 
 }
 

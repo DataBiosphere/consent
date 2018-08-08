@@ -1,69 +1,51 @@
 package org.broadinstitute.consent.http.service;
 
 
-import io.jsonwebtoken.*;
-//import io.jsonwebtoken.impl.crypto.MacProvider;
-import io.jsonwebtoken.io.DecodingException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.WeakKeyException;
+import io.jsonwebtoken.security.SignatureException;
+import java.security.Key;
+
 import org.broadinstitute.consent.http.configurations.NihConfiguration;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 
-import javax.ws.rs.core.Response;
-import java.security.Key;
-import java.sql.BatchUpdateException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Calendar;
+import java.util.Date;
+
+
 
 
 public class NihServiceAPI implements NihAuthApi {
 
 
-    NihConfiguration nihConfiguration;
-    ResearcherAPI researcherAPI;
-    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private NihConfiguration nihConfiguration;
+    private ResearcherAPI researcherAPI;
 
     public NihServiceAPI(NihConfiguration nihConfiguration, ResearcherAPI researcherApi) {
         this.researcherAPI = researcherApi;
         this.nihConfiguration = nihConfiguration;
     }
 
-    // For testing purposes
     @Override
-    public String generateToken() {
-        String token = Jwts.builder()
-                .claim("nihUsername", "MBEMIS")
-                .signWith(key)
-                .compact();
-        return token;
+    public Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException {
+
+        Key key = Keys.hmacShaKeyFor(nihConfiguration.getSigningSecret());
+
+        String nihUserName = Jwts.parser()
+                .setSigningKey(key)
+                .parsePlaintextJws(jwt).getBody();
+
+        return createNihContent(nihUserName, userId);
     }
 
     @Override
-    public Map<String, String> authenticateNih(String jwt, Integer userId) throws DecodingException{
-        // Use this as secret when this is well configured
-        byte[] secret = nihConfiguration.getSigningSecret().getBytes();
-
-//        This throws a weak token exception, need to handle somehow
-//        Key key = Keys.hmacShaKeyFor(secret);
-
-        try {
-            Map<String,String> jws = Jwts.parser()
-                    .setSigningKey(key)
-                    .parseClaimsJws(jwt).getBody()
-                    .entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-            return createNihContent(jws, userId);
-
-        } catch (DecodingException ex) {
-            throw ex;
-        }
-
-    }
-
-    @Override
-    public Response deleteNihAccountById(Integer userId) {
+    public void deleteNihAccountById(Integer userId) {
         List<ResearcherProperty> properties = new ArrayList<>();
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_DATE.getValue()));
@@ -72,23 +54,21 @@ public class NihServiceAPI implements NihAuthApi {
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
 
         researcherAPI.deleteResearcherSpecificProperties(properties);
-        return Response.ok().build();
-
     }
 
 
-    private Map<String, String> createNihContent(Map<String, String> jws, Integer userId) {
+    private Map<String, String> createNihContent(String nihUserName, Integer userId) {
         Map<String, String> nihComponents = new HashMap<>();
-        if (!jws.isEmpty()) {
+        if (nihUserName != null && nihUserName.isEmpty()) {
             nihComponents.put(ResearcherFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
-            nihComponents.putAll(jws);
-            nihComponents.putAll(setUpdateAndExpirationDate());
+            nihComponents.put(ResearcherFields.ERA_USERNAME.getValue(), nihUserName);
+            nihComponents.putAll(updateAndExpirationDates());
             researcherAPI.updateResearcher(nihComponents, userId, false);
         }
         return nihComponents;
     }
 
-    private Map<String, String> setUpdateAndExpirationDate() {
+    private Map<String, String> updateAndExpirationDates() {
         Map<String, String> dates = new HashMap<>();
         Date currentDate = new Date();
 

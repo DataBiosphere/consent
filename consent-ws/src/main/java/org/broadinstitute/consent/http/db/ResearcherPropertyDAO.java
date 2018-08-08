@@ -19,7 +19,7 @@ import java.util.List;
 public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyDAO> {
 
     public static final String INSTITUTION = "institution";
-    public  static final String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
+    public static final String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
     public static final String DO_YOU_HAVE_PI = "havePI";
     public static final String ERA_COMMONS_ID = "eRACommonsID";
     public static final String PUBMED_ID = "pubmedID";
@@ -38,10 +38,7 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     @SqlUpdate("delete from researcher_property where  userId = :userId")
     void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
-
-
-
-    @SqlBatch("delete from researcher_property where (userId = :userId and propertyKey = :propertyKey)")
+    @SqlBatch("delete from researcher_property where userId = :userId and propertyKey = :propertyKey")
     void deletePropertieByUserAndKey(@BindBean Collection<ResearcherProperty> researcherProperties);
 
     @SqlQuery(value = "select * from researcher_property where " +
@@ -57,12 +54,5 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
 
     @SqlQuery("select propertyValue from researcher_property  where  userId = :userId and propertyKey = :propertyKey")
     String findPropertyValueByPK(@Bind("userId") Integer userId, @Bind("propertyKey") String propertyKey);
-
-//    @SqlUpdate("update dacuser set displayName=:displayName where dacUserId = :id")
-
-    @SqlUpdate("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, 'eraToken', :token)")
-    void setEraByResearcherId(@Bind("userId")Integer userId,
-                              @Bind("token") String token,
-                              @Bind("lastUpdate") Date lastUpdate);
 
 }

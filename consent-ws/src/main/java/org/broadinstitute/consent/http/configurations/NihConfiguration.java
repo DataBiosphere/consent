@@ -8,8 +8,8 @@ public class NihConfiguration {
     private String signingSecret;
 
 
-    public String getSigningSecret() {
-        return signingSecret;
+    public byte[] getSigningSecret() {
+        return signingSecret.getBytes();
     }
 
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
+import io.jsonwebtoken.security.SignatureException;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -11,7 +12,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import io.jsonwebtoken.SignatureException;
+
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;

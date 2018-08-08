@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class NihAccountResource extends Resource {
 
-    NihAuthApi nihAuthApi;
+    private NihAuthApi nihAuthApi;
 
     public NihAccountResource(NihAuthApi nihAuthApi) {
         this.nihAuthApi = nihAuthApi;
@@ -24,9 +24,7 @@ public class NihAccountResource extends Resource {
 
     public Response registerResearcher(@PathParam("userId") Integer userId, @PathParam("token") String jwt) {
         try{
-
-            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAuthApi.generateToken(), userId)).build();
-//            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId)).build();
+            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId)).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }
