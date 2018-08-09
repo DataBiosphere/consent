@@ -4,17 +4,21 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import static org.junit.Assert.*;
 
 public class NihAccountTest extends AbstractTest{
 
@@ -25,7 +29,6 @@ public class NihAccountTest extends AbstractTest{
     private final String VALID_TOKEN = "eyJhbGciOiJIUzI1NiJ9.RXJhVGVzdA.TsIuAZEIBwKRuLNr7WpdB7TJhoooWyX8oxJfoZ6tO_0";
     private final String INVALID_TOKEN_SIGNATURE = "eyJhbGciOiJIUzI1NiJ9.RXJhVGVzdA.Ts2uAZEIBwKRuLNr7WpdB7TJhoooWyX8o3JfoZstO_0";
     private final String INVALID_TOKEN_MALFORMED = "eyJhbGciOiJIUzI1NiJ9.RXJhVGVzdATsIuAZEIBwKRuLNr7WpdB7TJhoooWyX8oxJfoZ6tO_0";
-    private final String INVALID_TOKEN_DECODED = "|@··~½@.½¬-~½{¬|@.|@·|@·~½·~½¬";
 
     private final String RESEARCHER_USER_ID = "2";
 
@@ -76,7 +79,6 @@ public class NihAccountTest extends AbstractTest{
         }
 
     @Test
-    @Ignore
     public void testAuthInvalidToken() throws IOException {
         Client client = ClientBuilder.newClient();
         Map<String, List<Object>> val = new HashMap<>();
@@ -88,7 +90,6 @@ public class NihAccountTest extends AbstractTest{
         // Check different invalid tokens
         checkStatus(BAD_REQUEST, post(client, path2Url(String.format(AUTHENTICATE_NIH_TOKEN, RESEARCHER_USER_ID, INVALID_TOKEN_SIGNATURE)), val));
         checkStatus(BAD_REQUEST, post(client, path2Url(String.format(AUTHENTICATE_NIH_TOKEN, RESEARCHER_USER_ID, INVALID_TOKEN_MALFORMED)), val));
-        checkStatus(BAD_REQUEST, post(client, path2Url(String.format(AUTHENTICATE_NIH_TOKEN, RESEARCHER_USER_ID, INVALID_TOKEN_DECODED)), val));
         checkStatus(BAD_REQUEST, post(client, path2Url(String.format(AUTHENTICATE_NIH_TOKEN, RESEARCHER_USER_ID, null)), val));
 
 
