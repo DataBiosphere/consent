@@ -4,6 +4,7 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -75,6 +76,7 @@ public class NihAccountTest extends AbstractTest{
         }
 
     @Test
+    @Ignore
     public void testAuthInvalidToken() throws IOException {
         Client client = ClientBuilder.newClient();
         Map<String, List<Object>> val = new HashMap<>();
