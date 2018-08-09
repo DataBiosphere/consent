@@ -55,7 +55,7 @@ freeMarkerConfiguration:
 googleAuthentication:
   clientId: clientId
 nihAuthentication:
-  signingSecret: notasecret
+  signingSecret: duossecrettobeimplementedwithjwt
 basicAuthentication:
   users:
     - user: testuser

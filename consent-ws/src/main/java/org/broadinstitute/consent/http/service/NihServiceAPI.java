@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.service;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import java.security.Key;
@@ -34,7 +36,7 @@ public class NihServiceAPI implements NihAuthApi {
     }
 
     @Override
-    public Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException, MalformedJwtException {
+    public Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException, MalformedJwtException, UnsupportedJwtException, DecodingException {
 
         Key key = Keys.hmacShaKeyFor(nihConfiguration.getSigningSecret());
 
