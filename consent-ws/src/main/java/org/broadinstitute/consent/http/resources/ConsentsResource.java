@@ -99,7 +99,7 @@ public class ConsentsResource extends Resource {
 
 
     /**
-     * Given that this end-point isn't mapped in swagger follow this steps:
+     * Given that this end-point isn't mapped in swagger follow these steps:
      * 1. Works only for Admin users. It should be used via a REST client, such as Postman.
      * Requirements:
      *     Admin user token
@@ -114,7 +114,7 @@ public class ConsentsResource extends Resource {
      * where i.type = 'Consent Group'
      * and dur.vault_export_date is not null;</code>
      *
-     * 3. Export to csv file. This file should be exported to JSON with the following format:
+     * 3. Export to csv file. This file should be exported to a structured JSON with the following format:
      * [
      *     {
      *         "consentId": "testId",
@@ -141,7 +141,7 @@ public class ConsentsResource extends Resource {
                 api.updateConsentGroupNames(data);
                 return Response.status(Response.Status.OK).build();
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
+                return createExceptionResponse(new BadRequestException(errors.toString()));
             }
         } catch (Exception e) {
             return createExceptionResponse(e);

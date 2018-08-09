@@ -1,9 +1,7 @@
 package org.broadinstitute.consent.http;
 
-import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -15,9 +13,7 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
-import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,13 +22,9 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -161,7 +153,7 @@ public class ConsentResourceTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentGroupName() throws Exception {
-        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        Client client = ClientBuilder.newBuilder().build();
         WebTarget webTarget = client.target(path2Url("/consents/group-names"));
         List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
 
