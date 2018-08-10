@@ -18,11 +18,11 @@ public class DataAccessParser {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {
                  case DarConstants.INSTITUTION: {
-                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.INSTITUTION)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.INSTITUTION)));
                     break;
                 }
                 case DarConstants.DEPARTMENT: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.INSTITUTION)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.DEPARTMENT)));
                     break;
                 }
                 case DarConstants.DIVISION: {
@@ -30,11 +30,11 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.STREET_ADDRESS_1: {
-                    field.setValue(getDefaultValue(researcherProperties.get(dar.getString(DarConstants.STREET_ADDRESS_1))));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.STREET_ADDRESS_1)));
                     break;
                 }
                 case DarConstants.STREET_ADDRESS_2: {
-                    field.setValue(getDefaultValue(researcherProperties.get(dar.getString(DarConstants.STREET_ADDRESS_2))));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.STREET_ADDRESS_2)));
                     break;
                 }
                 case DarConstants.CITY: {
@@ -98,7 +98,7 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.PI_EMAIL: {
-                    if(Boolean.valueOf(researcherProperties.get("isThePI"))){
+                    if(Boolean.valueOf(dar.getString("isThePI"))){
                         field.setValue(getDefaultValue(dar.getString(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     } else {
                         field.setValue(getDefaultValue(dar.getString(DarConstants.PI_EMAIL)));
@@ -108,7 +108,7 @@ public class DataAccessParser {
                 }
                 case DarConstants.INVESTIGATOR: {
                     if(Boolean.valueOf(dar.getString("isThePI"))){
-                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
+                        field.setValue(getDefaultValue(dar.getString(DarConstants.PROFILE_NAME)));
                     } else {
                         field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));
                     }
