@@ -171,7 +171,7 @@ public class ConsentResourceTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentGroupNameDuplicatedIds() throws Exception {
-        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        Client client = ClientBuilder.newBuilder().build();
         List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
 
         groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
@@ -195,7 +195,7 @@ public class ConsentResourceTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentGroupNameEmptyIds() throws Exception {
-        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        Client client = ClientBuilder.newBuilder().build();
         List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
 
         groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
@@ -219,7 +219,7 @@ public class ConsentResourceTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentGroupNameBadFormat() throws Exception {
-        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        Client client = ClientBuilder.newBuilder().build();
 
         String invalidJson = invalidConsentGroupName(GROUPNAME_ID);
         invalidJson = invalidJson.replace(",", "");

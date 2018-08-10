@@ -141,7 +141,7 @@ public class ConsentsResource extends Resource {
                 api.updateConsentGroupNames(data);
                 return Response.status(Response.Status.OK).build();
             } else {
-                return createExceptionResponse(new BadRequestException(errors.toString()));
+                return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
             }
         } catch (Exception e) {
             return createExceptionResponse(e);
