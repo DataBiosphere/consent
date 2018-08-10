@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -34,14 +35,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -488,5 +482,27 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
         }
         return election;
+    }
+
+    @Override
+    public void updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        logger.info("Update Consent Group Name");
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+        }
+    }
+
+    @Override
+    public List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
+        Map<String, String> groupNameMap = new HashMap<>();
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            if(!groupNameMap.containsKey(consentGroupName.getConsentId()) && !StringUtils.isEmpty(consentGroupName.getConsentId())) {
+                groupNameMap.put(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+            } else {
+                wrongConsentGroupNames.add(consentGroupName);
+            }
+        }
+        return wrongConsentGroupNames;
     }
 }
