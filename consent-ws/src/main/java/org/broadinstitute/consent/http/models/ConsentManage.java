@@ -46,6 +46,9 @@ public class ConsentManage {
 	@JsonProperty
 	private Boolean updateStatus;
 
+	@JsonProperty
+	private String vote;
+
 	public ConsentManage() {
 	}
 
@@ -143,4 +146,11 @@ public class ConsentManage {
 		this.updateStatus = updateStatus;
 	}
 
+	public String getVote() {
+		return vote;
+	}
+
+	public void setVote(String vote) {
+		this.vote = vote;
+	}
 }

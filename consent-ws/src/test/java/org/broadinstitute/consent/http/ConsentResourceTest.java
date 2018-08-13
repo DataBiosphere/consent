@@ -1,31 +1,39 @@
 package org.broadinstitute.consent.http;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentResourceTest extends AbstractTest {
+    final String GROUPNAME_ID = "testId5";
+    final String GROUPNAME = "Sed tristique / 22-33";
 
     private String name;
 
@@ -141,6 +149,105 @@ public class ConsentResourceTest extends AbstractTest {
         assertNotNull("API should update election", updated);
 
         return updated;
+    }
+
+    @Test
+    public void testUpdateConsentGroupName() throws Exception {
+        Client client = ClientBuilder.newBuilder().build();
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(groupNameList);
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(jsonString, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(OK, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateConsentGroupNameDuplicatedIds() throws Exception {
+        Client client = ClientBuilder.newBuilder().build();
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(groupNameList);
+
+        String invalidJson = invalidConsentGroupName(GROUPNAME_ID);
+
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(jsonString, MediaType.APPLICATION_JSON_TYPE));
+
+        String result = response.readEntity(String.class);
+        assertEquals(BAD_REQUEST, response.getStatus());
+        assertEquals(result,invalidJson);
+    }
+
+    @Test
+    public void testUpdateConsentGroupNameEmptyIds() throws Exception {
+        Client client = ClientBuilder.newBuilder().build();
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+
+        groupNameList.add(createConsentGroupNameJson(GROUPNAME_ID));
+        groupNameList.add(createConsentGroupNameJson(""));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(groupNameList);
+
+        String invalidJson = invalidConsentGroupName("");
+
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(jsonString, MediaType.APPLICATION_JSON_TYPE));
+
+        String result = response.readEntity(String.class);
+        assertEquals(BAD_REQUEST, response.getStatus());
+        assertEquals(result, invalidJson);
+    }
+
+    @Test
+    public void testUpdateConsentGroupNameBadFormat() throws Exception {
+        Client client = ClientBuilder.newBuilder().build();
+
+        String invalidJson = invalidConsentGroupName(GROUPNAME_ID);
+        invalidJson = invalidJson.replace(",", "");
+
+        WebTarget webTarget = client.target(path2Url("/consents/group-names"));
+
+        mockValidateTokenResponse();
+        Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer access-token")
+                .post(Entity.entity(invalidJson, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    private ConsentGroupNameDTO createConsentGroupNameJson(String consentId) {
+        ConsentGroupNameDTO consentGroupName = new ConsentGroupNameDTO();
+        consentGroupName.setConsentId(consentId);
+        consentGroupName.setGroupName(GROUPNAME);
+
+        return consentGroupName;
+    }
+
+    private String invalidConsentGroupName(String consentId) {
+        List<ConsentGroupNameDTO> groupNameList = new ArrayList<>();
+        groupNameList.add(createConsentGroupNameJson(consentId));
+        Gson invalidGson = new Gson();
+
+        return invalidGson.toJson(groupNameList);
     }
 
 }

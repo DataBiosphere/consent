@@ -7,10 +7,7 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.broadinstitute.consent.http.db.AssociationDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.ConsentMapper;
-import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
@@ -21,6 +18,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -37,14 +35,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +47,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private final ConsentDAO consentDAO;
     private final ElectionDAO electionDAO;
     private final AssociationDAO associationDAO;
+    private final VoteDAO voteDAO;
     private final DBI jdbi;
     private final Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
@@ -66,11 +58,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, DBI jdbi) {
+    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, DBI jdbi, VoteDAO voteDAO) {
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.consentDAO = dao;
         this.electionDAO = electionDAO;
         this.associationDAO = associationDAO;
+        this.voteDAO = voteDAO;
         this.mongo = mongo;
         this.jdbi = jdbi;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
@@ -86,8 +79,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, mongo, jdbi));
+    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, VoteDAO voteDAO) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, mongo, jdbi, voteDAO));
     }
 
     // Consent Methods
@@ -391,7 +384,12 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents(), UN_REVIEWED));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.OPEN.getValue()));
         consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CANCELED.getValue()));
-        consentManageList.addAll(consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue()));
+        List<ConsentManage> closedElections = consentDAO.findConsentManageByStatus(ElectionStatus.CLOSED.getValue());
+        closedElections.forEach(consentManage -> {
+            Boolean vote = voteDAO.findChairPersonVoteByElectionId(consentManage.getElectionId());
+            consentManage.setVote(vote != null && vote ? "Approved" : "Denied");
+        });
+        consentManageList.addAll(closedElections);
         consentManageList.sort((c1, c2) -> c2.getSortDate().compareTo(c1.getSortDate()));
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         if (!openElections.isEmpty()) {
@@ -484,5 +482,27 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
         }
         return election;
+    }
+
+    @Override
+    public void updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        logger.info("Update Consent Group Name");
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+        }
+    }
+
+    @Override
+    public List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
+        List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
+        Map<String, String> groupNameMap = new HashMap<>();
+        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+            if(!groupNameMap.containsKey(consentGroupName.getConsentId()) && !StringUtils.isEmpty(consentGroupName.getConsentId())) {
+                groupNameMap.put(consentGroupName.getConsentId(), consentGroupName.getGroupName());
+            } else {
+                wrongConsentGroupNames.add(consentGroupName);
+            }
+        }
+        return wrongConsentGroupNames;
     }
 }
