@@ -53,7 +53,6 @@ public class NihServiceAPI implements NihAuthApi {
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_DATE.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_STATUS.getValue()));
-        properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_TOKEN.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
 
         researcherAPI.deleteResearcherSpecificProperties(properties);

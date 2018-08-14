@@ -26,7 +26,6 @@ public enum ResearcherFields {
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
     INVESTIGATOR("investigator", false),
-    ERA_TOKEN("eraToken", false),
     ERA_DATE("eraDate", false),
     ERA_EXPIRATION_DATE("eraExpiration",false),
     ERA_STATUS("eraAuthorized",false),

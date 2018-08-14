@@ -44,12 +44,11 @@ public class DARModalDetailsDTO {
     public DARModalDetailsDTO(Document darDocument, DACUser owner, ElectionAPI electionAPI, String status, String rationale){
         this(darDocument);
         setNeedDOApproval(electionAPI.darDatasetElectionStatus((darDocument.get(DarConstants.ID).toString())));
-        setResearcherName(darDocument.getString(DarConstants.INVESTIGATOR));
+        setResearcherName(owner, darDocument.getString(DarConstants.INVESTIGATOR));
         setStatus(status);
         setRationale(rationale);
         setUserId(darDocument.getInteger(DarConstants.USER_ID));
     }
-//return new DARModalDetailsDTO(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role.getStatus(), role.getRationale());
 
     public DARModalDetailsDTO(Document darDocument){
         setDarCode(darDocument.getString(DarConstants.DAR_CODE));
@@ -61,8 +60,8 @@ public class DARModalDetailsDTO {
         setCountry(this.country = darDocument.getString(DarConstants.COUNTRY));
         setNihUserName(this.nihUserName = darDocument.getString(DarConstants.ERA_NIH_USER_NAME));
         setHavenihUserName(this.havenihUserName = getNihUserName() != null && !getNihUserName().isEmpty());
-        setHavePi(this.havePi = darDocument.getString(DarConstants.HAVE_PI) != null ? Boolean.valueOf(darDocument.getString(DarConstants.HAVE_PI)) : false);
-        setIsThePi(this.isThePi = darDocument.getString(DarConstants.HAVE_PI) == null);
+//        setHavePi(this.havePi = darDocument.getString(DarConstants.HAVE_PI) != null ? Boolean.valueOf(darDocument.getString(DarConstants.HAVE_PI)) : false);
+//        setIsThePi(this.isThePi = darDocument.getString(DarConstants.HAVE_PI) == null);
         setIsThereDiseases(false);
         setIsTherePurposeStatements(false);
         setResearchType(generateResearchTypeSummary(darDocument));
@@ -83,8 +82,12 @@ public class DARModalDetailsDTO {
         return researcherName;
     }
 
-    public void setResearcherName(String principalInvestigator) {
-        this.researcherName = principalInvestigator;
+    public void setResearcherName(DACUser owner, String principalInvestigator) {
+        if(owner.getDisplayName().equals(principalInvestigator)){
+            researcherName = principalInvestigator;
+        } else {
+            researcherName = owner.getDisplayName();
+        }
     }
 
     public boolean isRequiresManualReview() {

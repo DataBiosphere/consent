@@ -69,6 +69,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
             saveProperties(properties);
             notifyAdmins(userId, ACTION_REGISTERED);
         } else if (hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)) {
+            deleteResearcherProperties(userId);
             saveProperties(properties);
             DACUserRole dacUserRole = new DACUserRole();
             dacUserRole.setStatus(RoleStatus.PENDING.toString());
@@ -131,7 +132,6 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.PI_EMAIL.getValue(), properties.containsKey(ResearcherFields.PI_EMAIL.getValue()) ? properties.get(ResearcherFields.PI_EMAIL.getValue()) : null);
         rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
         rpForDAR.put(ResearcherFields.DO_YOU_HAVE_PI.getValue(), properties.containsKey(ResearcherFields.DO_YOU_HAVE_PI.getValue()) ? properties.get(ResearcherFields.DO_YOU_HAVE_PI.getValue()) : null);
-        rpForDAR.put(ResearcherFields.ERA_TOKEN.getValue(), properties.containsKey(ResearcherFields.ERA_TOKEN.getValue()) ? properties.get(ResearcherFields.ERA_TOKEN.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_DATE.getValue()) ? properties.get(ResearcherFields.ERA_DATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.containsKey(ResearcherFields.ERA_USERNAME.getValue()) ? properties.get(ResearcherFields.ERA_USERNAME.getValue()) : null);

@@ -18,39 +18,39 @@ public class DataAccessParser {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {
                  case DarConstants.INSTITUTION: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.INSTITUTION)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.INSTITUTION)));
                     break;
                 }
                 case DarConstants.DEPARTMENT: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.DEPARTMENT)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.DEPARTMENT)));
                     break;
                 }
                 case DarConstants.DIVISION: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.DIVISION)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.DIVISION)));
                     break;
                 }
                 case DarConstants.STREET_ADDRESS_1: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.STREET_ADDRESS_1)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STREET_ADDRESS_1)));
                     break;
                 }
                 case DarConstants.STREET_ADDRESS_2: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.STREET_ADDRESS_2)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STREET_ADDRESS_2)));
                     break;
                 }
                 case DarConstants.CITY: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.CITY)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.CITY)));
                     break;
                 }
                 case DarConstants.ZIP_POSTAL_CODE: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.ZIP_POSTAL_CODE)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ZIP_POSTAL_CODE)));
                     break;
                 }
                 case DarConstants.COUNTRY: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.COUNTRY)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.COUNTRY)));
                     break;
                 }
                 case DarConstants.STATE: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.STATE)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STATE)));
                     break;
                 }
                 case DarConstants.CONTROLS: {
@@ -82,33 +82,33 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.ACADEMIC_BUSINESS_EMAIL: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     break;
                 }
                 case DarConstants.ERA_COMMONS_ID: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.ERA_COMMONS_ID)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ERA_COMMONS_ID)));
                     break;
                 }
                 case DarConstants.PUBMED_ID: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.PUBMED_ID)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PUBMED_ID)));
                     break;
                 }
                 case DarConstants.SCIENTIFIC_URL: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.SCIENTIFIC_URL)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.SCIENTIFIC_URL)));
                     break;
                 }
                 case DarConstants.PI_EMAIL: {
-                    if(Boolean.valueOf(dar.getString("isThePI"))){
-                        field.setValue(getDefaultValue(dar.getString(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
+                    if(Boolean.valueOf(researcherProperties.get("isThePI"))){
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     } else {
-                        field.setValue(getDefaultValue(dar.getString(DarConstants.PI_EMAIL)));
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PI_EMAIL)));
                     }
 
                     break;
                 }
                 case DarConstants.INVESTIGATOR: {
-                    if(Boolean.valueOf(dar.getString("isThePI"))){
-                        field.setValue(getDefaultValue(dar.getString(DarConstants.PROFILE_NAME)));
+                    if(Boolean.valueOf(researcherProperties.get("isThePI"))){
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
                     } else {
                         field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));
                     }
