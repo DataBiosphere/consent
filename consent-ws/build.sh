@@ -25,7 +25,6 @@ set -e
 DOCKER_CMD=
 BRANCH=${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}  # default to current branch
 DOCKERHUB_REGISTRY=${DOCKERHUB_REGISTRY:-broadinstitute/$PROJECT}
-DOCKERHUB_TESTS_REGISTRY=${DOCKERHUB_TESTS_REGISTRY:-broadinstitute/$PROJECT-tests}
 GCR_REGISTRY=""
 ENV=${ENV:-""}
 SERVICE_ACCT_KEY_FILE=""
