@@ -39,9 +39,6 @@ if [ -z "$1" ]; then
 fi
 while [ "$1" != "" ]; do
     case $1 in
-        compile)
-            BUILD_CLJ=true
-            ;;
         -d | --docker)
             shift
             echo "docker command = $1"
