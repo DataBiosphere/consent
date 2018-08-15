@@ -92,7 +92,7 @@ function docker_cmd()
         HASH_TAG=${GIT_SHA:0:12}
 
         echo "Building $DOCKERHUB_REGISTRY:$HASH_TAG"
-        docker build -t $DOCKERHUB_REGISTRY:${HASH_TAG} .
+        docker build -t $DOCKERHUB_REGISTRY:${HASH_TAG} consent-ws
 
         if [ $DOCKER_CMD = "push" ]; then
             echo "pushing $PROJECT docker image..."
