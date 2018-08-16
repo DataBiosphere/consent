@@ -51,7 +51,6 @@ public class NihServiceAPI implements NihAuthApi {
     public void deleteNihAccountById(Integer userId) {
         List<ResearcherProperty> properties = new ArrayList<>();
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
-        properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_DATE.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_STATUS.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
 
@@ -79,7 +78,6 @@ public class NihServiceAPI implements NihAuthApi {
         c.add(Calendar.DATE, 30);
         Date expires= c.getTime();
 
-        dates.put(ResearcherFields.ERA_DATE.getValue(), String.valueOf(currentDate.getTime()));
         dates.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), String.valueOf(expires.getTime()));
 
         return dates;

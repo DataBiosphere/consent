@@ -60,12 +60,7 @@ public class NihAccountTest extends AbstractTest{
         // Check decoded values and generated data in data base
         assertEquals(ERA_NAME, properties.get(ResearcherFields.ERA_USERNAME.getValue()));
         assertEquals(ERA_AUTHORIZED, properties.get(ResearcherFields.ERA_STATUS.getValue()));
-        assertNotNull(properties.get(ResearcherFields.ERA_DATE.getValue()));
         assertNotNull(properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
-
-        // Check if expiration date is 30 days ahead of updated date
-        assertTrue(checkExpirationDays(properties.get(ResearcherFields.ERA_DATE.getValue()),
-                                properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue())));
 
         delete(client, path2Url(String.format(DELETE_NIH_ACCOUNT, RESEARCHER_USER_ID)));
 
@@ -74,8 +69,6 @@ public class NihAccountTest extends AbstractTest{
         assertNull(properties.get(ResearcherFields.ERA_USERNAME.getValue()));
         assertNull(properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
         assertNull(properties.get(ResearcherFields.ERA_STATUS.getValue()));
-        assertNull(properties.get(ResearcherFields.ERA_DATE.getValue()));
-
         }
 
     @Test
