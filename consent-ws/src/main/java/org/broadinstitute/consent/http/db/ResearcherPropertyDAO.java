@@ -17,12 +17,12 @@ import java.util.List;
 @RegisterMapper({ResearcherPropertyMapper.class})
 public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyDAO> {
 
-    public static final String INSTITUTION = "institution";
-    public  static final String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
-    public static final String DO_YOU_HAVE_PI = "havePI";
-    public static final String ERA_COMMONS_ID = "eRACommonsID";
-    public static final String PUBMED_ID = "pubmedID";
-    public static final String SCIENTIFIC_URL = "scientificURL";
+    String INSTITUTION = "institution";
+    String ARE_YOU_PRINCIPAL_INVESTIGATOR = "isThePI";
+    String DO_YOU_HAVE_PI = "havePI";
+    String ERA_COMMONS_ID = "eRACommonsID";
+    String PUBMED_ID = "pubmedID";
+    String SCIENTIFIC_URL = "scientificURL";
 
 
     @SqlQuery("select * from researcher_property where userId = :userId")
@@ -36,6 +36,12 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
 
     @SqlUpdate("delete from researcher_property where  userId = :userId")
     void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
+
+    @SqlUpdate("delete from researcher_property where  userId = :userId and propertyKey = :propertyKey")
+    void deletePropertyByUser(@Bind("propertyKey") String propertyKey, @Bind("userId") Integer userId);
+
+    @SqlUpdate("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, :propertyKey, :propertyValue)")
+    void insertPropertyByUser(@Bind("propertyKey") String propertyKey, @Bind("propertyValue") String propertyValue, @Bind("userId") Integer userId);
 
     @SqlQuery(value = "select * from researcher_property where " +
             "(propertyKey = '" + INSTITUTION + "' AND propertyValue != :institutionName) OR " +
