@@ -2049,6 +2049,55 @@ paths:
           description: The requested user doesnt exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/nih-login/{userId}:
+    delete:
+      summary: Delete Era Commons Account
+      description: Removes only Era Commons Account related information from the given user in its Researcher Profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - User
+        - Researcher
+        - Era Commons
+      responses:
+        '200':
+          description: Returns an empty response if the operation was successfully
+  /api/nih-login/{userId}/{token}:
+    post:
+      summary: Nih Jwt verification
+      description: Verifies if the given token is valid, if its ok will save to MySql and return saved values. If the token is not valid returns error.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+          format: int32
+        - name: token
+          in: path
+          description: Jason Web Token provided by Shibboleth's redirection, or from Nih's Mock page
+          required: true
+          type: string
+      tags:
+        - User
+        - Researcher
+        - Era Commons
+      responses:
+      '200':
+        description: Returns Era Commons Account properties. Map<String, String> format
+        schema:
+          $ref: '#/definitions/EraProperties'
+      '404':
+        description: The user doesnt exist in the system
+        schema:
+        $ref: '#/definitions/ErrorResponse'
+      '400':
+        description: Jwt Bad Authentication, or Malformed Token, or Decoding Error
+        schema:
+        $ref: '#/definitions/ErrorResponse'
   /status:
     get:
       summary: System Health Status
@@ -2064,6 +2113,18 @@ definitions:
     items:
       type: object
       $ref: '#/definitions/UserProperties'
+  EraProperties:
+    type: array
+    properies:
+      nihUsername:
+        type: string
+        description: Nih account associated name.
+      eraAuthorized:
+        type: string
+        description: Flag to determine if a user is authorized.
+      eraExpiration:
+        type: string
+        description: Contains the token expiration date in miliseconds.
   Property:
     type: object
     properties:

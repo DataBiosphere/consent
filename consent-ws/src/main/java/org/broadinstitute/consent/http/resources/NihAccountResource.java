@@ -7,7 +7,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
-@Path("{api : (api/)?}nih-login/")
+@Path("api/nih-login/")
 
 public class NihAccountResource extends Resource {
 
@@ -23,9 +23,9 @@ public class NihAccountResource extends Resource {
     @RolesAllowed("RESEARCHER")
 
     public Response registerResearcher(@PathParam("userId") Integer userId, @PathParam("token") String jwt) {
-        try{
+        try {
             return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId)).build();
-        }catch (Exception e){
+        } catch (Exception e){
             return createExceptionResponse(e);
         }
     }

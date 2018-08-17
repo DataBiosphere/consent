@@ -21,11 +21,7 @@ import java.util.HashMap;
 import java.util.Calendar;
 import java.util.Date;
 
-
-
-
 public class NihServiceAPI implements NihAuthApi {
-
 
     private NihConfiguration nihConfiguration;
     private ResearcherAPI researcherAPI;
@@ -63,13 +59,13 @@ public class NihServiceAPI implements NihAuthApi {
         if (nihUserName != null && !nihUserName.isEmpty()) {
             nihComponents.put(ResearcherFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
             nihComponents.put(ResearcherFields.ERA_USERNAME.getValue(), nihUserName);
-            nihComponents.putAll(updateAndExpirationDates());
+            nihComponents.putAll(generateEraExpirationDates());
             researcherAPI.updateResearcher(nihComponents, userId, false);
         }
         return nihComponents;
     }
 
-    private Map<String, String> updateAndExpirationDates() {
+    private Map<String, String> generateEraExpirationDates() {
         Map<String, String> dates = new HashMap<>();
         Date currentDate = new Date();
 
