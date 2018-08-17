@@ -60,8 +60,6 @@ public class DARModalDetailsDTO {
         setCountry(this.country = darDocument.getString(DarConstants.COUNTRY));
         setNihUserName(this.nihUserName = darDocument.getString(DarConstants.ERA_NIH_USER_NAME));
         setHavenihUserName(this.havenihUserName = getNihUserName() != null && !getNihUserName().isEmpty());
-//        setHavePi(this.havePi = darDocument.getString(DarConstants.HAVE_PI) != null ? Boolean.valueOf(darDocument.getString(DarConstants.HAVE_PI)) : false);
-//        setIsThePi(this.isThePi = darDocument.getString(DarConstants.HAVE_PI) == null);
         setIsThereDiseases(false);
         setIsTherePurposeStatements(false);
         setResearchType(generateResearchTypeSummary(darDocument));
@@ -343,24 +341,4 @@ public class DARModalDetailsDTO {
         this.nihUserName = nihUserName;
     }
 
-
-    public Boolean getHavePi() {
-        return havePi;
-    }
-
-    public void setHavePi(Boolean havePi) {
-        this.havePi = havePi;
-    }
-
-    public Boolean getIsThePi() {
-        return isThePi;
-    }
-
-    public void setIsThePi(Boolean isThePi) {
-        isThePi = isThePi;
-    }
-
-
-
 }
-

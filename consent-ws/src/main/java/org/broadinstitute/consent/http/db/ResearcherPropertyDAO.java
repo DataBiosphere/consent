@@ -11,7 +11,6 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 @UseStringTemplate3StatementLocator

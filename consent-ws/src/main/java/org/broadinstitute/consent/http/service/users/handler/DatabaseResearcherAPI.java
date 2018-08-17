@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.stream.Collectors;
 
 public class DatabaseResearcherAPI implements ResearcherAPI{
@@ -135,8 +134,6 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.containsKey(ResearcherFields.ERA_USERNAME.getValue()) ? properties.get(ResearcherFields.ERA_USERNAME.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
-
-
         return rpForDAR;
     }
 
@@ -206,6 +203,4 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
             }
         }
     }
-
-
 }
