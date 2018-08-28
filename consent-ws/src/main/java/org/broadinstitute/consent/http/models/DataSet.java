@@ -41,9 +41,8 @@ public class DataSet {
         this.active = active;
     }
 
-    public DataSet(String objectId, Date createDate) {
+    public DataSet(String objectId) {
         this.objectId = objectId;
-        this.createDate = createDate;
     }
 
     public Integer getDataSetId() {
