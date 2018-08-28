@@ -183,7 +183,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
                     association.getAssociationType(), association.getElements().size()));
             validateEmptyObjectIds(association.getElements());
-            processAssociation(association.getElements(), false);
+            processAssociation(association.getElements());
             try {
                 consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
                 List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
@@ -218,7 +218,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             // and add the new associations
             try {
                 if (new_ids.size() > 0) {
-                    processAssociation(new_ids, true);
+                    processAssociation(new_ids);
                     List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
                     auditServiceAPI.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
                 }
@@ -256,15 +256,11 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         }
     }
 
-    private void processAssociation(List<String> objectIds, boolean update) {
+    private void processAssociation(List<String> objectIds) {
         if (CollectionUtils.isNotEmpty(objectIds)) {
             objectIds.stream().forEach(objectId -> {
                 Integer dsId = dataSetDAO.findDataSetIdByObjectId(objectId);
-                if (dsId != null) {
-                    if (!update && consentDAO.findConsentAssociationIdByDataSetId(dsId) != null) {
-                        throw new IllegalArgumentException("Already exists an association for the specified object id");
-                    }
-                } else {
+                if (dsId == null) {
                     dataSetDAO.insertAll(Arrays.asList(new DataSet(objectId)));
                 }
 
