@@ -62,21 +62,31 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     void updateDataSetNeedsApproval(@Bind("objectId") String objectId, @Bind("needs_approval") Boolean needs_approval);
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId order by d.dataSetId, k.displayOrder")
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
+            "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
+            "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
+            "order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets();
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId where d.objectId = :objectId order by d.dataSetId, k.displayOrder")
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
+            "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
+            "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
+            "where d.objectId = :objectId order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetWithPropertiesByOBjectId(@Bind("objectId") String objectId);
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
+    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId " +
+            " inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  + "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate " +
             " and ev.referenceId = e.referenceId and v.vote = true and d.active = true order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @Mapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.objectId = d.objectId inner join consents c on c.consentId = ca.consentId where d.objectId in (<objectIdList>) order by d.dataSetId, k.receiveOrder")
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
+            "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
+            "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
+            "where d.objectId in (<objectIdList>) order by d.dataSetId, k.receiveOrder")
     Set<DataSetDTO> findDataSetsByReceiveOrder(@BindIn("objectIdList") List<String> objectIdList);
 
     @Mapper(BatchMapper.class)
@@ -95,11 +105,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
     @RegisterMapper({DictionaryMapper.class})
-    @SqlQuery("SELECT * FROM dictionary d order by displayOrder")
+    @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder != 10 order by displayOrder")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
-    @SqlQuery("SELECT COUNT(*) FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
-    Integer consentAssociationCount(@BindIn("objectIdList") List<String> objectIdList);
 
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
@@ -110,15 +118,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (Select objectId FROM consentassociations Where consentId = :consentId)")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
 
-    @SqlQuery("SELECT * FROM dataset d WHERE d.objectId = :objectId ")
-    DataSet getDataSetsByObjectId(@Bind("objectId") String objectId);
-
     @RegisterMapper({AssociationMapper.class})
     @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
-    @SqlQuery("SELECT DISTINCT d.objectId as id, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d inner join consentassociations ca on ca.objectId = d.objectId and d.active = true" +
+    @SqlQuery("SELECT DISTINCT d.objectId as id, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d " +
+            " inner join consentassociations ca on ca.dataSetId = d.dataSetId and d.active = true" +
             " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +

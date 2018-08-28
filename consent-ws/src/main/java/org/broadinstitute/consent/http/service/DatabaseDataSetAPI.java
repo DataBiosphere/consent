@@ -34,7 +34,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private DataSetAuditDAO dataSetAuditDAO;
     private ElectionDAO electionDAO;
 
-    public static final String DATA_SET_ID = "Dataset ID";
+    public static final String SAMPLE_COLLECTION_ID = "Sample Collection ID";
 
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
@@ -149,7 +149,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 List<String> dataSetObjectIdList = new ArrayList<>();
                 dataSetDTOList.stream().forEach(dataSet -> {
                     Map<String, String> dataSetProperties = dataSet.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName, DataSetPropertyDTO::getPropertyValue));
-                    dataSetObjectIdList.add(dataSetProperties.get(DATA_SET_ID));
+                    dataSetObjectIdList.add(dataSetProperties.get(SAMPLE_COLLECTION_ID));
                 });
                 List<DataSet> dataSetList = dsDAO.getDataSetsForObjectIdList(dataSetObjectIdList);
                 Map<String, Integer> datasetMap =
@@ -157,9 +157,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                                 DataSet::getDataSetId));
                 Set<String> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<String>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
-                    String datasetObjectId = dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME);
+                    String datasetObjectId = dataSetDTO.getPropertyValue(SAMPLE_COLLECTION_ID);
                     Map<String, String> dataSetProperties = dataSetDTO.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName, DataSetPropertyDTO::getPropertyValue));
-                    String dataSetObjectId = dataSetProperties.get(DATA_SET_ID);
+                    String dataSetObjectId = dataSetProperties.get(SAMPLE_COLLECTION_ID);
                     if (CollectionUtils.isNotEmpty(datasetsAssociatedToOpenElections) &&
                             datasetsAssociatedToOpenElections.contains(dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME))) {
                         dataSetDTO.setUpdateAssociationToDataOwnerAllowed(false);
@@ -266,8 +266,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private Collection<DataSetDTO> orderByDataSetId(Collection<DataSetDTO> dataSetDTOList) {
         if (CollectionUtils.isNotEmpty(dataSetDTOList)) {
             dataSetDTOList.stream().forEach(dataSetDTO -> {
-                List<DataSetPropertyDTO> dataSetProperty = dataSetDTO.getProperties().stream().filter(property -> property.getPropertyName().equals(DATA_SET_ID)).collect(Collectors.toList());
-                List<DataSetPropertyDTO> properties = dataSetDTO.getProperties().stream().filter(property -> !property.getPropertyName().equals(DATA_SET_ID)).collect(Collectors.toList());
+                List<DataSetPropertyDTO> dataSetProperty = dataSetDTO.getProperties().stream().filter(property -> property.getPropertyName().equals(SAMPLE_COLLECTION_ID)).collect(Collectors.toList());
+                List<DataSetPropertyDTO> properties = dataSetDTO.getProperties().stream().filter(property -> !property.getPropertyName().equals(SAMPLE_COLLECTION_ID)).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(dataSetProperty)) {
                     properties.add(1, dataSetProperty.get(0));
                     dataSetDTO.setProperties(properties);
