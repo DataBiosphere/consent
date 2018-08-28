@@ -1,0 +1,59 @@
+<databaseChangeLog
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="vvicario" id="121">
+        <addColumn tableName="consentassociations">
+            <column name="dataSetId" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet author="vvicario" id="122">
+        <addUniqueConstraint columnNames="dataSetId"
+                             constraintName="unique_dataSetId"
+                             tableName="consentassociations"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="123">
+        <addForeignKeyConstraint baseColumnNames="dataSetId" baseTableName="consentassociations"
+                                 constraintName="fkdatasets" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataSetId"
+                                 referencedTableName="dataset" referencesUniqueColumn="false"/>
+    </changeSet>
+
+
+    <changeSet author="vvicario" id="124">
+        <sql dbms="hsql, mysql">
+            UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
+            INSERT INTO dataset(objectId) SELECT ca.objectId FROM consentassociations ca where dataSetId is null;
+            UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
+        </sql>
+    </changeSet>
+
+    <changeSet author="vvicario" id="125">
+        <update tableName="dictionary">
+            <column name="key" value="Sample Collection ID"> </column>
+            <column name="required" valueBoolean="false"> </column>
+            <where>`key` = 'Dataset ID'</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="vvicario" id="126">
+        <dropColumn tableName="consentassociations"
+                    columnName="objectId"/>
+
+    </changeSet>
+
+    <changeSet author="vvicario" id="127">
+        <insert tableName="dictionary">
+            <column name="key" value="Consent ID"/>
+            <column name="required" valueBoolean="false"/>
+            <column name="displayOrder" value="10"/>
+            <column name="receiveOrder" value="10"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

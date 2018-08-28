@@ -23,6 +23,9 @@ public class DataSet {
     private Boolean active;
 
     @JsonProperty
+    private String consentId;
+
+    @JsonProperty
     private Boolean needsApproval;
 
     private Set<DataSetProperty> properties;
@@ -36,6 +39,11 @@ public class DataSet {
         this.name = name;
         this.createDate = createDate;
         this.active = active;
+    }
+
+    public DataSet(String objectId, Date createDate) {
+        this.objectId = objectId;
+        this.createDate = createDate;
     }
 
     public Integer getDataSetId() {
@@ -92,5 +100,13 @@ public class DataSet {
 
     public void setNeedsApproval(Boolean needsApproval) {
         this.needsApproval = needsApproval;
+    }
+
+    public String getConsentId() {
+        return consentId;
+    }
+
+    public void setConsentId(String consentId) {
+        this.consentId = consentId;
     }
 }

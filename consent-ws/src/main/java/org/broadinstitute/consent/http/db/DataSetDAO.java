@@ -33,6 +33,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
+    @SqlQuery("select * from dataset where objectId = :objectId")
+    Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
+
     @SqlQuery("select * from dataset where objectId in (<objectIdList>) and needs_approval = true")
     List<DataSet> findNeedsApprovalDataSetByObjectId(@BindIn("objectIdList") List<String> objectIdList);
 
@@ -95,11 +98,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT * FROM dictionary d order by displayOrder")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
-    @SqlQuery("SELECT COUNT(*) FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
+    @SqlQuery("SELECT COUNT(*) FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
     Integer consentAssociationCount(@BindIn("objectIdList") List<String> objectIdList);
 
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+
+    @SqlQuery(" SELECT * FROM dataset d WHERE d.name IN (<names>)")
+    List<DataSet> getDataSetsForNameList(@BindIn("names") List<String> names);
 
     @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (Select objectId FROM consentassociations Where consentId = :consentId)")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
@@ -108,7 +114,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     DataSet getDataSetsByObjectId(@Bind("objectId") String objectId);
 
     @RegisterMapper({AssociationMapper.class})
-    @SqlQuery("SELECT * FROM consentassociations ca WHERE ca.objectId IN (<objectIdList>)")
+    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
@@ -121,5 +127,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%') or dsp.propertyValue like concat('%',:partial,'%')" +
             " order by d.dataSetId")
     List< Map<String, String>> getObjectIdsbyPartial(@Bind("partial") String partial);
+
+    @SqlQuery("SELECT ca.associationId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId = :objectId")
+    Integer getConsentAssociationByObjectId(@Bind("objectId") String objectId);
+
+    @SqlQuery("SELECT dataSetId FROM dataset WHERE name = :name")
+    Integer getDataSetByName(@Bind("name") String name);
+
+    @SqlQuery("select *  from dataset where name in (<names>) ")
+    List<DataSet> searchDataSetsByNameList(@BindIn("names") List<String> names);
 
 }

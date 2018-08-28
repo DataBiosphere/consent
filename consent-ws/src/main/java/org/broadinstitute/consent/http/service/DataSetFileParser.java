@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.opencsv.CSVReader;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
@@ -14,11 +15,14 @@ import java.util.stream.Collectors;
 
 public class DataSetFileParser {
 
-    private final String BLANK_REQUIRED_FIELD = "Dataset ID %s - The required field: %s is empty in row %d.";
+    private final String BLANK_REQUIRED_FIELD = "Dataset %s - The required field: %s is empty in row %d.";
+    private final String BLANK_REQUIRED_FIELDS = "Dataset %s - Consent ID or Sample Collection ID is required";
     private final String MISSING_COLUMNS = "Your file has more/less columns than expected. Expected quantity: %s";
     private final String MISSING_MISPLACED_HEADER = "The uploaded file does not comply with the accepted fields. Field: (%s)%s is not recognized/ordered correctly. It should be '%s'";
     private final String PLEASE_DOWNLOAD = "Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.";
-    private int DATASET_ID_INDEX = 9;
+    private int DATASET_NAME_INDEX = 0;
+    private int SAMPLE_COLLECTION_INDEX = 9;
+    private int CONSENT_ID_INDEX = 10;
 
     public ParseResult parseTSVFile(File file, List<Dictionary> allFields) {
         ParseResult result = new ParseResult();
@@ -38,7 +42,8 @@ public class DataSetFileParser {
             int row = 0;
             String[] record;
             while ( (record = reader.readNext() ) != null) {
-                errors.addAll(validateRequiredFields(++row, record, requiredKeys, record[DATASET_ID_INDEX]));
+                errors.addAll(validateRequiredFields(++row, record, requiredKeys, record[DATASET_NAME_INDEX]));
+                errors.addAll(validateConsentAndCollectionId(record, record[DATASET_NAME_INDEX]));
                 DataSet ds = createDataSet(record);
                 Set<DataSetProperty> properties = new HashSet<>();
                 for(int i=1; i<allKeys.size() ; i++){
@@ -78,12 +83,20 @@ public class DataSetFileParser {
         return requiredFields.stream().filter(field -> record[field.getReceiveOrder()].isEmpty()).map(field -> String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row)).collect(Collectors.toList());
     }
 
+    private List<String> validateConsentAndCollectionId(String[] record, String datasetName) {
+        if(StringUtils.isEmpty(record[SAMPLE_COLLECTION_INDEX]) && StringUtils.isEmpty(record[CONSENT_ID_INDEX])){
+            return Arrays.asList(String.format(BLANK_REQUIRED_FIELDS, datasetName));
+        }
+        return Arrays.asList();
+    }
+
     private DataSet createDataSet(String[] record) {
         DataSet dataset = new DataSet();
         dataset.setCreateDate(new Date());
         dataset.setName(record[0]);
         dataset.setObjectId(record[9]);
         dataset.setActive(true);
+        dataset.setConsentId(record[10]);
         return dataset;
     }
 

@@ -67,7 +67,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
-        assertTrue(result.get(0).equals("Your file has more/less columns than expected. Expected quantity: 10"));
+        assertTrue(result.get(0).equals("Your file has more/less columns than expected. Expected quantity: 11"));
         assertTrue(result.get(1).equals("Please download the Dataset Spreadsheet Model from the 'Add Datasets' window."));
     }
 
