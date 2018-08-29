@@ -228,9 +228,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 dataSetAuditDAO.insertDataSetAudit(dsAudit);
             }
             dataSetAssociationDAO.delete(dataset.getDataSetId());
-            consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
             dsDAO.deleteDataSetsProperties(dataSetId);
-            dsDAO.deleteDataSets(dataSetId);
+            dsDAO.logicalDataSetdelete(dataset.getDataSetId());
             dsDAO.commit();
             dataSetAuditDAO.commit();
         } catch (Exception e) {
@@ -335,7 +334,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         boolean isValid = true;
         for (DataSet dataSet : dataSets) {
             // duplicated dataset
-            if (!overwrite &&  StringUtils.isNotEmpty(dataSet.getObjectId()) && dsDAO.getConsentAssociationByObjectId(dataSet.getObjectId()) != null
+            DataSet existentDataset = StringUtils.isNotEmpty(dataSet.getObjectId()) ? dsDAO.findDataSetByObjectId(dataSet.getObjectId()) : null;
+            if (!overwrite &&  existentDataset != null && StringUtils.isNotEmpty(existentDataset.getName()) && dsDAO.getConsentAssociationByObjectId(dataSet.getObjectId()) != null
                     // missing association if object id is present
                     || StringUtils.isNotEmpty(dataSet.getObjectId()) && CollectionUtils.isEmpty(dsDAO.getAssociationsForObjectIdList(Arrays.asList(dataSet.getObjectId())))
                     // missing consent if consent id is present

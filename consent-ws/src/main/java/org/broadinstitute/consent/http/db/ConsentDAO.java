@@ -193,6 +193,4 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     void updateConsentGroupName(@Bind("consentId") String consentId,
                                 @Bind("groupName") String groupName);
 
-    @SqlQuery("select ca.associationId from consentassociations ca where dataSetId = :dataSetId")
-    Integer findConsentAssociationIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
 }
