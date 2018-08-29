@@ -5,9 +5,9 @@ insert into consents (consentId, requiresManualReview, useRestriction, active, n
 insert into dataset (dataSetId,name,createDate, objectId, active) values(1,'test','2015-08-05 13:58:50','SC-20660', true);
 insert into dataset (dataSetId,name,createDate) values(2,'test2','2015-08-05 13:58:50');
 insert into dataset (dataSetId,name,createDate, objectId, active) values(3,'test3','2015-08-05 13:58:50','SC-20659', true);
-insert into dataset (dataSetId,name,createDate, objectId, active) values(4,'test3','2015-08-05 13:58:50','SC-20658', true);
-insert into dataset (dataSetId,name,createDate, objectId, active) values(5,'test3','2015-08-05 13:58:50','SC-20657', true);
-insert into dataset (dataSetId,name,createDate, objectId, active) values(6,'test3','2015-08-05 13:58:50','1', true);
+insert into dataset (dataSetId,name,createDate, objectId, active) values(4,'test4','2015-08-05 13:58:50','SC-20658', true);
+insert into dataset (dataSetId,name,createDate, objectId, active) values(5,'test5','2015-08-05 13:58:50','SC-20657', true);
+insert into dataset (dataSetId,name,createDate, objectId, active) values(6,'test6','2015-08-05 13:58:50','1', true);
 insert into consentassociations(associationId, consentId,associationType,dataSetId) values (100,'testId','associationType',6);
 insert into consentassociations(associationId, consentId, associationType, dataSetId) values (101, 'testId1', 'associationType', 5);
 insert into consentassociations(associationId, consentId, associationType, dataSetId) values (102, 'testId2', 'associationType', 4);

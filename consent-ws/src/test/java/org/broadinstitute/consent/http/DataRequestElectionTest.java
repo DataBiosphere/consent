@@ -14,10 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -76,6 +73,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         shutDownMongo();
     }
 
+    @Ignore
     @Test
     public void testCreateDataRequestElection() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -152,6 +150,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         checkStatus(NOT_FOUND,
                 put(client, electionPathById(1010), election));
     }
+
 
     @Test
     public void testCreateDataRequestElectionWithInvalidStatus() throws IOException {

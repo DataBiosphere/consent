@@ -327,7 +327,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Consent getConsentFromDatasetID(String datasetId) {
+    public Consent getConsentFromDatasetID(Integer datasetId) {
         return consentDAO.findConsentFromDatasetID(datasetId);
     }
 

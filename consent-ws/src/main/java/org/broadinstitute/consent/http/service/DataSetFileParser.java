@@ -41,13 +41,13 @@ public class DataSetFileParser {
             }
             int row = 0;
             String[] record;
-            while ( (record = reader.readNext() ) != null) {
+            while ((record = reader.readNext()) != null) {
                 errors.addAll(validateRequiredFields(++row, record, requiredKeys, record[DATASET_NAME_INDEX]));
                 errors.addAll(validateConsentAndCollectionId(record, record[DATASET_NAME_INDEX]));
                 DataSet ds = createDataSet(record);
                 Set<DataSetProperty> properties = new HashSet<>();
-                for(int i=1; i<allKeys.size() ; i++){
-                   properties.add(new DataSetProperty(ds.getDataSetId(), allFields.get(i).getKeyId(), record[i], ds.getCreateDate()));
+                for (int i = 1; i < allKeys.size(); i++) {
+                    properties.add(new DataSetProperty(ds.getDataSetId(), allFields.get(i).getKeyId(), record[i], ds.getCreateDate()));
                 }
                 ds.setProperties(properties);
                 datasets.add(ds);
@@ -64,7 +64,7 @@ public class DataSetFileParser {
 
     private List<String> validateHeaderFields(String[] record, List<String> keys) {
         List<String> errors = new ArrayList<>();
-        if ((record.length < keys.size()) || (record.length > keys.size())){
+        if ((record.length < keys.size()) || (record.length > keys.size())) {
             errors.add(String.format(MISSING_COLUMNS, keys.size()));
         } else {
             for (int i = 0; i < record.length; i++) {
@@ -73,18 +73,18 @@ public class DataSetFileParser {
                 }
             }
         }
-        if ( !errors.isEmpty() ) {
+        if (!errors.isEmpty()) {
             errors.add(PLEASE_DOWNLOAD);
         }
         return errors;
     }
 
-    private List<String> validateRequiredFields(int row, String[] record, List<Dictionary> requiredFields, String id){
+    private List<String> validateRequiredFields(int row, String[] record, List<Dictionary> requiredFields, String id) {
         return requiredFields.stream().filter(field -> record[field.getReceiveOrder()].isEmpty()).map(field -> String.format(BLANK_REQUIRED_FIELD, id, field.getKey(), row)).collect(Collectors.toList());
     }
 
     private List<String> validateConsentAndCollectionId(String[] record, String datasetName) {
-        if(StringUtils.isEmpty(record[SAMPLE_COLLECTION_INDEX]) && StringUtils.isEmpty(record[CONSENT_ID_INDEX])){
+        if (StringUtils.isEmpty(record[SAMPLE_COLLECTION_INDEX]) && StringUtils.isEmpty(record[CONSENT_ID_INDEX])) {
             return Arrays.asList(String.format(BLANK_REQUIRED_FIELDS, datasetName));
         }
         return Arrays.asList();
@@ -96,7 +96,7 @@ public class DataSetFileParser {
         dataset.setName(record[0]);
         dataset.setObjectId(record[9]);
         dataset.setActive(true);
-        dataset.setConsentId(record[10]);
+        dataset.setConsentName(record[10]);
         return dataset;
     }
 

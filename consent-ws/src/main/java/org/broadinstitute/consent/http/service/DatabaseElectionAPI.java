@@ -485,7 +485,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 throw new NotFoundException();
             }
             List<DataSet> dataSets = verifyDisableDataSets(dar, referenceId);
-            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getObjectId());
+            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
             consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
             if((consentElection == null)){
                 throw new IllegalArgumentException(DUL_NOT_APROVED);

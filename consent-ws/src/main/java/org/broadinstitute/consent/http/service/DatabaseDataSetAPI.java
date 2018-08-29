@@ -38,6 +38,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
 
     private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
+    private final String MISSING_CONSENT = "Consent ID %s does not exist.";
     private final String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
     private final String DUPLICATED_NAME_ROW = "Dataset Name %s is already present in the database. ";
     private final String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
@@ -78,6 +79,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 processAssociation(dataSets);
             } else {
                 result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
+                result.getErrors().addAll(addMissingConsentIdErrors(dataSets));
                 result.getErrors().addAll(addDuplicatedRowsErrors(dataSets));
                 result.getErrors().addAll(addDuplicateDataSetNames(dataSets));
             }
@@ -298,12 +300,23 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return errors;
     }
 
+    private List<String> addMissingConsentIdErrors(List<DataSet> dataSets) {
+        List<String> errors = new ArrayList<>();
+        List<String> consentNames = dataSets.stream().map(DataSet::getConsentName).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(consentNames)) {
+            List<String> existentConsents = consentDAO.findConsentsIdFromConsentNames(consentNames);
+            List<String> consentIdList = dataSets.stream().map(DataSet::getConsentName).collect(Collectors.toList());
+            errors.addAll(consentIdList.stream().filter(name -> (!(existentConsents.contains(name)))).map(name -> String.format(MISSING_CONSENT, name)).collect(Collectors.toList()));
+        }
+        return errors;
+    }
+
     private List<String> addDuplicatedRowsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> objectIds = dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList());
         List<DataSet> failingRows = CollectionUtils.isNotEmpty(objectIds) ? dsDAO.getDataSetsForObjectIdList(objectIds) : new ArrayList<>();
         errors.addAll(failingRows.stream().filter(ds -> !ds.getObjectId().isEmpty()).map(ds -> String.format(DUPLICATED_ROW, ds.getObjectId())).collect(Collectors.toList()));
-        errors.add(OVERWRITE_ON);
+        if(CollectionUtils.isNotEmpty(errors)) errors.add(OVERWRITE_ON);
         return errors;
     }
 
@@ -325,7 +338,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     // missing association if object id is present
                     || StringUtils.isNotEmpty(dataSet.getObjectId()) && CollectionUtils.isEmpty(dsDAO.getAssociationsForObjectIdList(Arrays.asList(dataSet.getObjectId())))
                     // missing consent if consent id is present
-                    || StringUtils.isNotEmpty(dataSet.getConsentId()) && consentDAO.findConsentById(dataSet.getConsentId()) == null
+                    || StringUtils.isNotEmpty(dataSet.getConsentName()) && consentDAO.getIdByName(dataSet.getConsentName()) == null
                     // dataset name should be unique
                     || !overwrite && dsDAO.getDataSetByName(dataSet.getName()) != null) {
                 isValid = false;
@@ -338,10 +351,10 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private void processAssociation(List<DataSet> dataSetList) {
         dataSetList.forEach(dataSet -> {
-            if (StringUtils.isNotEmpty(dataSet.getConsentId())) {
+            if (StringUtils.isNotEmpty(dataSet.getConsentName())) {
                 Integer datasetId = dsDAO.getDataSetByName(dataSet.getName());
                 if (consentDAO.findAssociationsByDataSetId(datasetId) == null) {
-                    consentDAO.insertConsentAssociation(dataSet.getConsentId(), AssociationType.SAMPLESET.getValue(), datasetId);
+                    consentDAO.insertConsentAssociation(consentDAO.getIdByName(dataSet.getConsentName()), AssociationType.SAMPLESET.getValue(), datasetId);
                 }
             }
         });

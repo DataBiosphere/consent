@@ -56,4 +56,10 @@
         </insert>
     </changeSet>
 
+    <changeSet author="vvicario" id="128">
+        <addUniqueConstraint columnNames="name" tableName="dataset"
+                             deferrable="false" initiallyDeferred="false"/>
+    </changeSet>
+
+
 </databaseChangeLog>

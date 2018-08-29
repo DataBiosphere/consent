@@ -219,7 +219,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Consent describeConsentForDAR(@PathParam("id") String id) {
-        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
+        List<Integer> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
         Consent c;
         if (CollectionUtils.isNotEmpty(datasetId)) {
             c = consentAPI.getConsentFromDatasetID(datasetId.get(0));

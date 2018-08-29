@@ -23,7 +23,7 @@ public class DataSet {
     private Boolean active;
 
     @JsonProperty
-    private String consentId;
+    private String consentName;
 
     @JsonProperty
     private Boolean needsApproval;
@@ -101,11 +101,11 @@ public class DataSet {
         this.needsApproval = needsApproval;
     }
 
-    public String getConsentId() {
-        return consentId;
+    public String getConsentName() {
+        return consentName;
     }
 
-    public void setConsentId(String consentId) {
-        this.consentId = consentId;
+    public void setConsentName(String consentName) {
+        this.consentName = consentName;
     }
 }

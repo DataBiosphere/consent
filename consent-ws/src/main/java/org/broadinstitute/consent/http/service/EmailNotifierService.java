@@ -329,7 +329,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 details.getResearchType(),
                 generateDiseasesString(details.getDiseases()),
                 checkedSentences,
-                consentAPI.getConsentFromDatasetID(dataSets.get(0).getObjectId()).translatedUseRestriction,
+                consentAPI.getConsentFromDatasetID(dataSets.get(0).getDataSetId()).translatedUseRestriction,
                 dsPIModelList,
                 String.valueOf(daysToApprove),
                 URL);
