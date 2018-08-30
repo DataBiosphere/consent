@@ -402,6 +402,19 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    @PUT
+    @Produces("application/json")
+    @Path("/dataset")
+    @PermitAll
+    public Response updateObjectIdByDataset() {
+        try{
+            dataSetAPI.updateDataSetIdToDAR();
+            return Response.ok("DARs were updated.").build();
+        }catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
     private Map<String, Object> parseAsMap(String str) throws IOException {
         ObjectReader reader = mapper.readerFor(Map.class);
         return reader.readValue(str);

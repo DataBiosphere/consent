@@ -82,7 +82,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     dataSetsToUpdate.addAll(dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getObjectId()) && existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
                     dataSetsToCreate.addAll(dataSets.stream().filter(ds -> !existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
                 });
-                if(CollectionUtils.isEmpty(existentdataSets)) {
+                if (CollectionUtils.isEmpty(existentdataSets)) {
                     dataSetsToCreate.addAll(dataSets);
                 } else {
                     dataSetsToCreate.addAll(dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getConsentName()) && StringUtils.isEmpty(ds.getObjectId())).collect(Collectors.toList()));
@@ -95,7 +95,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     dsDAO.updateAllByObjectId(dataSetsToUpdate);
                     List<String> objectIds = dataSetsToUpdate.stream().map(DataSet::getObjectId).collect(Collectors.toList());
                     List<Integer> dataSetIds = dsDAO.searchDataSetsIdsByObjectIdList(objectIds);
-                    if(CollectionUtils.isNotEmpty(dataSetIds)) dsDAO.deleteDataSetsProperties(dataSetIds);
+                    if (CollectionUtils.isNotEmpty(dataSetIds)) dsDAO.deleteDataSetsProperties(dataSetIds);
                     insertDataSetAudit(dataSetsToUpdate, UPDATE, userId, insertProperties(dataSetsToUpdate));
                 }
                 processAssociation(dataSets);
@@ -302,7 +302,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
 
-
     public DataSetDTO getDataSetDTO(Integer dataSetId) {
         Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByDataSetId(dataSetId);
         for (DataSetDTO d : dataSet) {
@@ -312,7 +311,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public void setDataSetIdToDAR() {
+    public void updateDataSetIdToDAR() {
         List<Document> dars = accessAPI.describeDataAccessRequests();
         for (Document dar : dars) {
             List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
@@ -320,12 +319,15 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 DataSet ds = dsDAO.findDataSetByObjectId(dataSets.get(0));
                 List<Integer> dsId = Arrays.asList(ds.getDataSetId());
                 dar.append(DarConstants.DATASET_ID, dsId);
+                ArrayList<Document> datasetDetail = (ArrayList<Document>)dar.get(DarConstants.DATASET_DETAIL);
+                datasetDetail.get(0).getString("name");
+                datasetDetail.get(0).put("datasetId", dsId);
+                dar.append(DarConstants.DATASET_DETAIL, datasetDetail);
                 accessAPI.updateDataAccessRequest(dar, dar.getString(DarConstants.DAR_CODE));
             }
         }
     }
 
-    //TODO object ids? con una lista
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> objectIds = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
@@ -518,9 +520,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
             });
             dataSetList.stream().forEach(dataSet -> {
-              //  DataSetAudit dataSetAudit = new DataSetAudit(dataSet.getDataSetId(), dataSet.getObjectId(), dataSet.getName(), dataSet.getCreateDate(), dataSet.getActive(), userId, action);
-              //  Integer dataSetAuditId = dataSetAuditDAO.insertDataSetAudit(dataSetAudit);
-               // dataSetAuditDAO.insertDataSetAuditProperties(createDataSetAuditProperties(dataSet, dataSetAuditId, dataSetPropertyMap));
+                DataSetAudit dataSetAudit = new DataSetAudit(dataSet.getDataSetId(), dataSet.getObjectId(), dataSet.getName(), dataSet.getCreateDate(), dataSet.getActive(), userId, action);
+                Integer dataSetAuditId = dataSetAuditDAO.insertDataSetAudit(dataSetAudit);
+                dataSetAuditDAO.insertDataSetAuditProperties(createDataSetAuditProperties(dataSet, dataSetAuditId, dataSetPropertyMap));
             });
         }
 
