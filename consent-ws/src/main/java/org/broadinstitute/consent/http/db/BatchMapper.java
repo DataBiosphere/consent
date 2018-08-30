@@ -13,7 +13,7 @@ public class BatchMapper implements ResultSetMapper< Map<String,Integer>> {
     @Override
     public  Map<String,Integer> map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         Map<String,Integer> map = new HashMap<>();
-        map.put(r.getString("objectId"),r.getInt("dataSetId"));
+        map.put(r.getString("name"),r.getInt("dataSetId"));
         return map;
     }
 

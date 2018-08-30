@@ -55,14 +55,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
-    @SqlBatch("update dataset set active = false, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
+    @SqlUpdate("update dataset set active = false, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
     void logicalDataSetdelete(@Bind("dataSetId") Integer dataSetId);
 
     @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
     void updateDataSetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);
 
-    @SqlUpdate("update dataset set needs_approval = :needs_approval where objectId = :objectId")
-    void updateDataSetNeedsApproval(@Bind("objectId") String objectId, @Bind("needs_approval") Boolean needs_approval);
+    @SqlUpdate("update dataset set needs_approval = :needs_approval where dataSetId = :dataSetId")
+    void updateDataSetNeedsApproval(@Bind("objectId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
 
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
@@ -75,8 +75,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
-            "where d.objectId = :objectId order by d.dataSetId, k.displayOrder")
-    Set<DataSetDTO> findDataSetWithPropertiesByOBjectId(@Bind("objectId") String objectId);
+            "where d.dataSetId = :dataSetId order by d.dataSetId, k.displayOrder")
+    Set<DataSetDTO> findDataSetWithPropertiesByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId " +
@@ -91,10 +91,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.objectId in (<objectIdList>) order by d.dataSetId, k.receiveOrder")
     Set<DataSetDTO> findDataSetsByReceiveOrder(@BindIn("objectIdList") List<String> objectIdList);
-
-    @Mapper(BatchMapper.class)
-    @SqlQuery("select datasetId, objectId  from dataset where objectId in (<objectIdList>)")
-    List<Map<String,Integer>> searchByObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
 
     @SqlQuery("select *  from dataset where objectId in (<objectIdList>) ")
@@ -148,5 +144,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlBatch("delete from datasetproperty where dataSetId = (select dataSetId from dataset where objectId in (<objectIdList>))")
     void deleteDataSetsPropertiesByObjectId(@BindIn("objectIdList") Collection<String> objectId);
+
+
+    @Mapper(BatchMapper.class)
+    @SqlQuery("select dataSetId, name  from dataset where name in (<nameList>)")
+    List<Map<String,Integer>> searchByNameIdList(@BindIn("nameList") List<String> nameList);
 
 }

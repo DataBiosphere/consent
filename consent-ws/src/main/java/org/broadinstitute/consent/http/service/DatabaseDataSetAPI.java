@@ -79,14 +79,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 List<DataSet> dataSetsToUpdate = new ArrayList<>();
                 List<DataSet> dataSetsToCreate = new ArrayList<>();
                 existentdataSets.forEach(existentDs -> {
-                    dataSets.stream().forEach(ds -> {
-                        if (!existentDs.getObjectId().equals(ds.getObjectId())) {
-                            ds.setDataSetId(existentDs.getDataSetId());
-                        }
-                    });
-                    dataSetsToUpdate.addAll(dataSets.stream().filter(ds -> existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
+                    dataSetsToUpdate.addAll(dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getObjectId()) && existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
                     dataSetsToCreate.addAll(dataSets.stream().filter(ds -> !existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
                 });
+                if(CollectionUtils.isEmpty(existentdataSets)) {
+                    dataSetsToCreate.addAll(dataSets);
+                } else {
+                    dataSetsToCreate.addAll(dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getConsentName()) && StringUtils.isEmpty(ds.getObjectId())).collect(Collectors.toList()));
+                }
                 if (CollectionUtils.isNotEmpty(dataSetsToCreate)) {
                     dsDAO.insertAll(dataSetsToCreate);
                     insertDataSetAudit(dataSetsToCreate, CREATE, userId, insertProperties(dataSetsToCreate));
@@ -238,19 +238,19 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public void deleteDataset(String datasetObjectId, Integer dacUserId) throws IllegalStateException {
+    public void deleteDataset(Integer dataSetId, Integer dacUserId) throws IllegalStateException {
         try {
             dsDAO.begin();
             dataSetAuditDAO.begin();
-            DataSet dataset = dsDAO.findDataSetByObjectId(datasetObjectId);
-            Collection<Integer> dataSetId = new ArrayList<>();
-            dataSetId.add(dataset.getDataSetId());
+            DataSet dataset = dsDAO.findDataSetById(dataSetId);
+            Collection<Integer> dataSetsId = new ArrayList<>();
+            dataSetsId.add(dataset.getDataSetId());
             if (checkDatasetExistence(dataset.getDataSetId())) {
                 DataSetAudit dsAudit = new DataSetAudit(dataset.getDataSetId(), dataset.getObjectId(), dataset.getName(), new Date(), true, dacUserId, DELETE);
                 dataSetAuditDAO.insertDataSetAudit(dsAudit);
             }
             dataSetAssociationDAO.delete(dataset.getDataSetId());
-            dsDAO.deleteDataSetsProperties(dataSetId);
+            dsDAO.deleteDataSetsProperties(dataSetsId);
             dsDAO.logicalDataSetdelete(dataset.getDataSetId());
             dsDAO.commit();
             dataSetAuditDAO.commit();
@@ -274,12 +274,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public DataSet updateNeedsReviewDataSets(String objectId, Boolean needsApproval) {
-        if (dsDAO.findDataSetByObjectId(objectId) == null) {
+    public DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval) {
+        if (dsDAO.findDataSetById(dataSetId) == null) {
             throw new NotFoundException("DataSet doesn't exist");
         }
-        dsDAO.updateDataSetNeedsApproval(objectId, needsApproval);
-        return dsDAO.findDataSetByObjectId(objectId);
+        dsDAO.updateDataSetNeedsApproval(dataSetId, needsApproval);
+        return dsDAO.findDataSetById(dataSetId);
     }
 
     @Override
@@ -301,9 +301,10 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return dataSetDTOList;
     }
 
-    @Override
-    public DataSetDTO getDataSetDTO(String objectId) {
-        Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByOBjectId(objectId);
+
+
+    public DataSetDTO getDataSetDTO(Integer dataSetId) {
+        Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByDataSetId(dataSetId);
         for (DataSetDTO d : dataSet) {
             return d;
         }
@@ -324,6 +325,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         }
     }
 
+    //TODO object ids? con una lista
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> objectIds = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
@@ -340,9 +342,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         List<String> errors = new ArrayList<>();
         List<String> consentNames = dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getConsentName())).map(DataSet::getConsentName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(consentNames)) {
-            List<String> existentConsents = consentDAO.findConsentsIdFromConsentNames(consentNames);
-            List<String> consentIdList = dataSets.stream().map(DataSet::getConsentName).collect(Collectors.toList());
-            errors.addAll(consentIdList.stream().filter(name -> (!(existentConsents.contains(name)))).map(name -> String.format(MISSING_CONSENT, name)).collect(Collectors.toList()));
+            List<Consent> existentConsents = consentDAO.findConsentsFromConsentNames(consentNames);
+            errors.addAll(existentConsents.stream().filter(consent -> (!(consentNames.contains(consent.getName())))).map(name -> String.format(MISSING_CONSENT, name)).collect(Collectors.toList()));
         }
         return errors;
     }
@@ -398,14 +399,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     private List<DataSetProperty> insertProperties(List<DataSet> dataSets) {
-        List<String> objectIdList = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
-        List<Map<String, Integer>> retrievedValues = dsDAO.searchByObjectIdList(objectIdList);
+        List<String> nameList = dataSets.stream().map(DataSet::getName).collect(Collectors.toList());
+        List<Map<String, Integer>> retrievedValues = dsDAO.searchByNameIdList(nameList);
         Map<String, Integer> retrievedValuesMap = getOneMap(retrievedValues);
         List<DataSetProperty> dataSetPropertiesList = new ArrayList<>();
         dataSets.stream().map((dataSet) -> {
             Set<DataSetProperty> properties = dataSet.getProperties();
             properties.stream().forEach((property) -> {
-                property.setDataSetId(retrievedValuesMap.get(dataSet.getObjectId()));
+                property.setDataSetId(retrievedValuesMap.get(dataSet.getName()));
             });
             return dataSet;
         }).forEach((dataSet) -> {
@@ -517,9 +518,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
             });
             dataSetList.stream().forEach(dataSet -> {
-                DataSetAudit dataSetAudit = new DataSetAudit(dataSet.getDataSetId(), dataSet.getObjectId(), dataSet.getName(), dataSet.getCreateDate(), dataSet.getActive(), userId, action);
-                Integer dataSetAuditId = dataSetAuditDAO.insertDataSetAudit(dataSetAudit);
-                dataSetAuditDAO.insertDataSetAuditProperties(createDataSetAuditProperties(dataSet, dataSetAuditId, dataSetPropertyMap));
+              //  DataSetAudit dataSetAudit = new DataSetAudit(dataSet.getDataSetId(), dataSet.getObjectId(), dataSet.getName(), dataSet.getCreateDate(), dataSet.getActive(), userId, action);
+              //  Integer dataSetAuditId = dataSetAuditDAO.insertDataSetAudit(dataSetAudit);
+               // dataSetAuditDAO.insertDataSetAuditProperties(createDataSetAuditProperties(dataSet, dataSetAuditId, dataSetPropertyMap));
             });
         }
 
