@@ -7,6 +7,9 @@ import java.util.List;
 public class DataSetDTO {
 
     @JsonProperty
+    private Integer dataSetId;
+
+    @JsonProperty
     private String consentId;
 
     @JsonProperty
@@ -104,5 +107,9 @@ public class DataSetDTO {
 
     public void setUpdateAssociationToDataOwnerAllowed(Boolean updateAssociationToDataOwnerAllowed) {
         this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
+    }
+
+    public void setDataSetId(Integer dataSetId) {
+        this.dataSetId = dataSetId;
     }
 }

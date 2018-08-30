@@ -38,8 +38,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select * from consents  where consentId in (<consentIds>)")
     Collection<Consent> findConsentsFromConsentsIDs(@BindIn("consentIds") List<String> consentIds);
 
-    @SqlQuery("select consentId from consents  where name in (<names>)")
-    List<String> findConsentsIdFromConsentNames(@BindIn("names") List<String> names);
+    @SqlQuery("select * from consents  where name in (<names>)")
+    List<Consent> findConsentsFromConsentNames(@BindIn("names") List<String> names);
 
     @Mapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.dataSetId, ds.name " +

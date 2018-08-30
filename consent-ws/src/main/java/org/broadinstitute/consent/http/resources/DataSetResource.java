@@ -119,7 +119,7 @@ public class DataSetResource extends Resource {
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSet( @PathParam("datasetId") String datasetId){
+    public Response describeDataSet( @PathParam("datasetId") Integer datasetId){
         try {
             return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
         } catch (Exception e){
@@ -196,9 +196,9 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{datasetObjectId}/{dacUserId}")
     @RolesAllowed("ADMIN")
-    public Response delete(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
+    public Response delete(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
         try{
-            api.deleteDataset(datasetObjectId, dacUserId);
+            api.deleteDataset(dataSetId, dacUserId);
             return Response.ok().build();
         }catch (Exception e){
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
@@ -234,7 +234,7 @@ public class DataSetResource extends Resource {
     @PUT
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") String dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
+    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
             DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();

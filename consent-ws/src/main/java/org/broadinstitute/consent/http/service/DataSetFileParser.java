@@ -94,9 +94,9 @@ public class DataSetFileParser {
         DataSet dataset = new DataSet();
         dataset.setCreateDate(new Date());
         dataset.setName(record[0]);
-        dataset.setObjectId(record[9]);
+        dataset.setObjectId(StringUtils.isNotEmpty(record[9]) ? record[9] : null);
         dataset.setActive(true);
-        dataset.setConsentName(record[10]);
+        dataset.setConsentName(StringUtils.isNotEmpty(record[10]) ? record[10] : null);
         return dataset;
     }
 
