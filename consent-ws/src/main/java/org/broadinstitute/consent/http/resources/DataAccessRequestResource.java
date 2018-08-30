@@ -371,8 +371,8 @@ public class DataAccessRequestResource extends Resource {
     }
 
     @GET
-    @Produces("application/json")
-    @Path("/hasUseRestriction/{referenceId}")
+    @Consumes("application/json")
+    @Produces("application/json")@Path("/hasUseRestriction/{referenceId}")
     @PermitAll
     public Response hasUseRestriction(@PathParam("referenceId") String referenceId){
         try{
