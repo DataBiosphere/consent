@@ -10,7 +10,10 @@ import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import javax.ws.rs.client.Client;
@@ -53,7 +56,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         shutDownMongo();
     }
 
-    @Ignore
+
     @Test
     public void testDarOperations() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -84,7 +87,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         assertTrue(dtos.size() == 0);
     }
 
-    @Ignore
+
     @Test
     public void testManageDars() throws IOException {
         Client client = ClientBuilder.newClient();

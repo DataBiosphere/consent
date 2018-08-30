@@ -86,7 +86,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
         List<DataSet> dataSets = dsAPI.getDataSetsForConsent(consentId);
-        List<Document> dars = findRelatedDars(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
+        List<Document> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
             for (Document dar : dars) {
@@ -159,7 +159,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return consent;
     }
 
-    private List<Document> findRelatedDars(List<String> dataSetIds){
+    private List<Document> findRelatedDars(List<Integer> dataSetIds){
         return dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dataSetIds);
     }
 

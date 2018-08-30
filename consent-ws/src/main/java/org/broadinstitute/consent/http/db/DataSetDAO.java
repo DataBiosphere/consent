@@ -45,15 +45,15 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("update dataset set name = :name where dataSetId = :dataSetId")
     void updateAll(@BindBean Collection<DataSet> dataSets);
 
+    @SqlBatch("update dataset set name = :name, active = :active where objectId = :objectId")
+    void updateAllByObjectId(@BindBean Collection<DataSet> dataSets);
+
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
             " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
     void insertDataSetsProperties(@BindBean List<DataSetProperty> dataSetPropertiesList);
 
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
-
-    @SqlBatch("delete from dataset where dataSetId = :dataSetId")
-    void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
     @SqlBatch("update dataset set active = false, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
     void logicalDataSetdelete(@Bind("dataSetId") Integer dataSetId);
@@ -66,7 +66,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
-            "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
+            "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId and d.name is not null inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets();
@@ -145,5 +145,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("select *  from dataset where name in (<names>) ")
     List<DataSet> searchDataSetsByNameList(@BindIn("names") List<String> names);
+
+    @SqlBatch("delete from datasetproperty where dataSetId = (select dataSetId from dataset where objectId in (<objectIdList>))")
+    void deleteDataSetsPropertiesByObjectId(@BindIn("objectIdList") Collection<String> objectId);
 
 }

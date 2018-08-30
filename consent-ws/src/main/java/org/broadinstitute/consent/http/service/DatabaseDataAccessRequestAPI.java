@@ -167,9 +167,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * @return A list of Data Access Requests.
      */
     @Override
-    public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<String> dataSetIds) {
+    public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds) {
         List<Document> response = new ArrayList<>();
-        for (String datasetId : dataSetIds) {
+        for (Integer datasetId : dataSetIds) {
             response.addAll(mongo.getDataAccessRequestCollection().find(and(eq(DarConstants.DATASET_ID, datasetId), eq(DarConstants.RESTRICTION, new BasicDBObject("$exists", true)))).into(new ArrayList<>()));
         }
         return response;

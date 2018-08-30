@@ -73,7 +73,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         shutDownMongo();
     }
 
-    @Ignore
+
     @Test
     public void testCreateDataRequestElection() throws IOException {
         Client client = ClientBuilder.newClient();
