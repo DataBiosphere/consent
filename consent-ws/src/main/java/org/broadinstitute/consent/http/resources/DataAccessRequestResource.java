@@ -408,8 +408,7 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public Response updateObjectIdByDataset() {
         try{
-            dataSetAPI.updateDataSetIdToDAR();
-            return Response.ok("DARs were updated.").build();
+            return Response.ok(dataSetAPI.updateDataSetIdToDAR()).build();
         }catch(Exception e){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }

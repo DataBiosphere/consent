@@ -37,6 +37,6 @@ public interface DataSetAPI {
 
     List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList);
 
-    void updateDataSetIdToDAR();
+    String updateDataSetIdToDAR();
 
 }
