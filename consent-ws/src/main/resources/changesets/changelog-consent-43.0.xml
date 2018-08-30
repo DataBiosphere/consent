@@ -61,5 +61,9 @@
                              deferrable="false" initiallyDeferred="false"/>
     </changeSet>
 
-
+    <changeSet author="vvicario" id="129">
+        <dropNotNullConstraint columnDataType="varchar(255)"
+                               columnName="objectId"
+                               tableName="dataset_audit"/>
+    </changeSet>
 </databaseChangeLog>
