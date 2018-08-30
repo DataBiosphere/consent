@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
-import javax.xml.crypto.Data;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -20,7 +19,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 /**
  * Implementation class for DataSetAPI database support.
@@ -39,12 +37,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public static final String SAMPLE_COLLECTION_ID = "Sample Collection ID";
 
 
-    private final String MISSING_ASSOCIATION = "Dataset ID %s doesn't have an associated consent.";
+    private final String MISSING_ASSOCIATION = "Sample Collection ID %s doesn't have an associated consent.";
     private final String MISSING_CONSENT = "Consent ID %s does not exist.";
-    private final String DUPLICATED_ROW = "Dataset ID %s is already present in the database. ";
+    private final String DUPLICATED_ROW = "Sample Collection ID %s is already present in the database. ";
     private final String DUPLICATED_NAME_ROW = "Dataset Name %s is already present in the database. ";
     private final String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
-    private final String DATASETID_PROPERTY_NAME = "Dataset ID";
+    private final String DATASETID_PROPERTY_NAME = "Sample Collection ID";
     private final String CREATE = "CREATE";
     private final String UPDATE = "UPDATE";
     private final String DELETE = "DELETE";
@@ -78,14 +76,17 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 List<DataSet> existentdataSets = dsDAO.getDataSetsForObjectIdList(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
                 List<DataSet> dataSetsToUpdate = new ArrayList<>();
                 List<DataSet> dataSetsToCreate = new ArrayList<>();
-                existentdataSets.forEach(existentDs -> {
-                    dataSetsToUpdate.addAll(dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getObjectId()) && existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
-                    dataSetsToCreate.addAll(dataSets.stream().filter(ds -> !existentDs.getObjectId().equals(ds.getObjectId())).collect(Collectors.toList()));
-                });
+                List<String> existentObjectIds = existentdataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+
+                for (DataSet ds : dataSets) {
+                    if (StringUtils.isNotEmpty(ds.getObjectId()) && existentObjectIds.contains(ds.getObjectId())) {
+                        dataSetsToUpdate.add(ds);
+                    } else {
+                        dataSetsToCreate.add(ds);
+                    }
+                }
                 if (CollectionUtils.isEmpty(existentdataSets)) {
                     dataSetsToCreate.addAll(dataSets);
-                } else {
-                    dataSetsToCreate.addAll(dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getConsentName()) && StringUtils.isEmpty(ds.getObjectId())).collect(Collectors.toList()));
                 }
                 if (CollectionUtils.isNotEmpty(dataSetsToCreate)) {
                     dsDAO.insertAll(dataSetsToCreate);
@@ -313,24 +314,24 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public String updateDataSetIdToDAR() {
         List<Document> dars = accessAPI.describeDataAccessRequests();
-            try {
-                for (Document dar : dars) {
-                    List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-                    if (CollectionUtils.isNotEmpty(dataSets)) {
-                        DataSet ds = dsDAO.findDataSetByObjectId(dataSets.get(0));
-                        List<Integer> dsId = Arrays.asList(ds.getDataSetId());
-                        dar.append(DarConstants.DATASET_ID, dsId);
-                        ArrayList<Document> datasetDetail = (ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL);
-                        datasetDetail.get(0).getString("name");
-                        datasetDetail.get(0).put("datasetId", ds.getDataSetId());
-                        dar.append(DarConstants.DATASET_DETAIL, datasetDetail);
-                        accessAPI.updateDataAccessRequest(dar, dar.getString(DarConstants.DAR_CODE));
+        try {
+            for (Document dar : dars) {
+                List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+                if (CollectionUtils.isNotEmpty(dataSets)) {
+                    DataSet ds = dsDAO.findDataSetByObjectId(dataSets.get(0));
+                    List<Integer> dsId = Arrays.asList(ds.getDataSetId());
+                    dar.append(DarConstants.DATASET_ID, dsId);
+                    ArrayList<Document> datasetDetail = (ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL);
+                    datasetDetail.get(0).getString("name");
+                    datasetDetail.get(0).put("datasetId", ds.getDataSetId());
+                    dar.append(DarConstants.DATASET_DETAIL, datasetDetail);
+                    accessAPI.updateDataAccessRequest(dar, dar.getString(DarConstants.DAR_CODE));
 
-                    }
                 }
-            } catch (Exception e) {
-                return "DARs have already been updated";
             }
+        } catch (Exception e) {
+            return "DARs have already been updated";
+        }
         return "DARs have been updated successful.";
     }
 
@@ -359,7 +360,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private List<String> addDuplicatedRowsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> objectIds = dataSets.stream().map(d -> d.getObjectId()).collect(Collectors.toList());
-        List<DataSet> failingRows = CollectionUtils.isNotEmpty(objectIds) ? dsDAO.getDataSetsForObjectIdList(objectIds) : new ArrayList<>();
+        List<DataSet> failingRows = CollectionUtils.isNotEmpty(objectIds) ? dsDAO.getDataSetsWithValidNameForObjectIdList(objectIds) : new ArrayList<>();
         errors.addAll(failingRows.stream().filter(ds -> !ds.getObjectId().isEmpty()).map(ds -> String.format(DUPLICATED_ROW, ds.getObjectId())).collect(Collectors.toList()));
         if (CollectionUtils.isNotEmpty(errors)) errors.add(OVERWRITE_ON);
         return errors;

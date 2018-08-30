@@ -150,4 +150,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select dataSetId, name  from dataset where name in (<nameList>)")
     List<Map<String,Integer>> searchByNameIdList(@BindIn("nameList") List<String> nameList);
 
+    @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>) AND d.name is not null")
+    List<DataSet> getDataSetsWithValidNameForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 }
