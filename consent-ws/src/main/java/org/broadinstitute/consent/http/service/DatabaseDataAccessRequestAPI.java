@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import javax.print.Doc;
 import javax.ws.rs.NotFoundException;
 import java.io.*;
 import java.sql.Timestamp;
@@ -461,7 +460,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
 
     @Override
-    public File createDataSetApprovedUsersDocument(String dataSetId) throws IOException {
+    public File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException {
         File file = File.createTempFile("DatasetApprovedUsers", ".tsv");
         FileWriter darWriter = new FileWriter(file);
         List<Document> darList = describeDataAccessByDataSetId(dataSetId);
@@ -482,7 +481,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return file;
     }
 
-    private List<Document> describeDataAccessByDataSetId(String dataSetId) {
+    private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
         List<Document> response = new ArrayList<>();
         response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId)).into(new ArrayList<>()));
         return response;

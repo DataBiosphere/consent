@@ -31,7 +31,7 @@ public interface DataSetAPI {
 
     void deleteDataset(Integer datasetId, Integer dacUserId) throws IllegalStateException;
 
-    void disableDataset(String datasetObjectId, Boolean active);
+    void disableDataset(Integer dataSetId, Boolean active);
 
     DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval);
 

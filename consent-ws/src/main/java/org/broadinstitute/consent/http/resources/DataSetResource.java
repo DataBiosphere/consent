@@ -209,8 +209,8 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/disable/{datasetObjectId}/{active}")
     @RolesAllowed("ADMIN")
-    public Response disableDataSet(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("active") Boolean active, @Context UriInfo info) {
-        api.disableDataset(datasetObjectId, active);
+    public Response disableDataSet(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("active") Boolean active, @Context UriInfo info) {
+        api.disableDataset(dataSetId, active);
         return Response.ok().build();
     }
 
@@ -247,7 +247,7 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @PermitAll
     @Path("/{datasetId}/approved/users")
-    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") String dataSetId) {
+    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer dataSetId) {
         try {
             return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(dataSetId))
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")

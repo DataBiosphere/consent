@@ -267,8 +267,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public void disableDataset(String datasetId, Boolean active) {
-        DataSet dataset = dsDAO.findDataSetByObjectId(datasetId);
+    public void disableDataset(Integer datasetId, Boolean active) {
+        DataSet dataset = dsDAO.findDataSetById(datasetId);
         if (dataset != null) {
             dsDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }

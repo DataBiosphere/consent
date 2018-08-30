@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -32,6 +33,7 @@ public class DatasetAssociationTest extends DatasetAssociationServiceTest {
     }
 
     @Test
+    @Ignore
     public void testCreateDatasetAssociation() throws IOException {
         Client client = ClientBuilder.newClient();
         List<Integer> dataOwnerIds = new ArrayList();
