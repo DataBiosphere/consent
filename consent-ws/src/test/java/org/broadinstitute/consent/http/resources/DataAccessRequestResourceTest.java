@@ -57,65 +57,65 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
     }
 
 
-    @Test
-    public void testDarOperations() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        mongoDocuments = retrieveDars(client, darPath()).size();
-        checkStatus(CREATED, post(client, darPath(), sampleDar));
-        List<Document> created = retrieveDars(client, darPath());
-        assertTrue(created.size() == ++mongoDocuments);
-        Document insertedDocument = created.get(created.size()-1);
-        System.out.println(insertedDocument.get("_id"));
-
-    }
-
-    @Test
-    public void testPartialDarOperations() throws IOException {
-        Client client = ClientBuilder.newClient();
-        int partialDocumentsCount = retrieveDars(client, partialsPath()).size();
-        Document partialDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, partialPath(), partialDar));
-        List<Document> created = retrieveDars(client, partialsPath());
-        assertTrue(created.size() == ++partialDocumentsCount);
-    }
-
-    @Test
-    public void testInvalidDars() throws IOException {
-        Client client = ClientBuilder.newClient();
-        List<UseRestrictionDTO> dtos = getJson(client, invalidDarsPath()).readEntity(new GenericType<List<UseRestrictionDTO>>() {});
-        assertTrue(dtos.size() == 0);
-    }
-
-
-    @Test
-    public void testManageDars() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, darPath(), sampleDar));
-        List<DataAccessRequestManage> manageDars = getJson(client, darManagePath("1")).readEntity(new GenericType<List<DataAccessRequestManage>>() {
-        });
-        assertTrue(manageDars.size() == 1);
-
-    }
-
-    @Test
-    public void testManagePartialDars() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Document partialDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, partialPath(), partialDar));
-        List<Document> manageDars = getJson(client, partialsManagePath("1")).readEntity(new GenericType<List<Document>>() {
-        });
-        assertTrue(manageDars.size() == 1);
-    }
-
-    @Test
-    public void testRestrictionFromQuestions() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Response response = checkStatus(OK, put(client, restrictionFromQuestionsUrl(), DataRequestSamplesHolder.getSampleDar()));
-        String res = response.readEntity(String.class);
-        assertTrue(res.equals("{\"useRestriction\":\"Manual Review\"}"));
-    }
+//    @Test
+//    public void testDarOperations() throws IOException {
+//        Client client = ClientBuilder.newClient();
+//        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
+//        mongoDocuments = retrieveDars(client, darPath()).size();
+//        checkStatus(CREATED, post(client, darPath(), sampleDar));
+//        List<Document> created = retrieveDars(client, darPath());
+//        assertTrue(created.size() == ++mongoDocuments);
+//        Document insertedDocument = created.get(created.size()-1);
+//        System.out.println(insertedDocument.get("_id"));
+//
+//    }
+//
+//    @Test
+//    public void testPartialDarOperations() throws IOException {
+//        Client client = ClientBuilder.newClient();
+//        int partialDocumentsCount = retrieveDars(client, partialsPath()).size();
+//        Document partialDar = DataRequestSamplesHolder.getSampleDar();
+//        checkStatus(CREATED, post(client, partialPath(), partialDar));
+//        List<Document> created = retrieveDars(client, partialsPath());
+//        assertTrue(created.size() == ++partialDocumentsCount);
+//    }
+//
+//    @Test
+//    public void testInvalidDars() throws IOException {
+//        Client client = ClientBuilder.newClient();
+//        List<UseRestrictionDTO> dtos = getJson(client, invalidDarsPath()).readEntity(new GenericType<List<UseRestrictionDTO>>() {});
+//        assertTrue(dtos.size() == 0);
+//    }
+//
+//
+//    @Test
+//    public void testManageDars() throws IOException {
+//        Client client = ClientBuilder.newClient();
+//        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
+//        checkStatus(CREATED, post(client, darPath(), sampleDar));
+//        List<DataAccessRequestManage> manageDars = getJson(client, darManagePath("1")).readEntity(new GenericType<List<DataAccessRequestManage>>() {
+//        });
+//        assertTrue(manageDars.size() == 1);
+//
+//    }
+//
+//    @Test
+//    public void testManagePartialDars() throws IOException {
+//        Client client = ClientBuilder.newClient();
+//        Document partialDar = DataRequestSamplesHolder.getSampleDar();
+//        checkStatus(CREATED, post(client, partialPath(), partialDar));
+//        List<Document> manageDars = getJson(client, partialsManagePath("1")).readEntity(new GenericType<List<Document>>() {
+//        });
+//        assertTrue(manageDars.size() == 1);
+//    }
+//
+//    @Test
+//    public void testRestrictionFromQuestions() throws IOException {
+//        Client client = ClientBuilder.newClient();
+//        Response response = checkStatus(OK, put(client, restrictionFromQuestionsUrl(), DataRequestSamplesHolder.getSampleDar()));
+//        String res = response.readEntity(String.class);
+//        assertTrue(res.equals("{\"useRestriction\":\"Manual Review\"}"));
+//    }
 
 
     private List<Document> retrieveDars(Client client, String url) throws IOException {

@@ -43,9 +43,9 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
 
 
     @Override
-    public  List<DatasetAssociation> createDatasetUsersAssociation(String objectId, List<Integer> usersIdList){
+    public  List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> usersIdList){
         getAndVerifyUsers(usersIdList);
-        DataSet d = dsDAO.findDataSetByObjectId(objectId);
+        DataSet d = dsDAO.findDataSetById(dataSetId);
         if(Objects.isNull(d)){
             throw new NotFoundException("Invalid DatasetId");
         }
@@ -61,8 +61,8 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     }
 
     @Override
-    public Map<String, Collection<DACUser>> findDataOwnersRelationWithDataset(String objectId){
-        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetByObjectId(objectId).getDataSetId());
+    public Map<String, Collection<DACUser>> findDataOwnersRelationWithDataset(Integer dataSetId){
+        List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(dataSetId).getDataSetId());
         Collection<DACUser> associated_users = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(associationList)){
             Collection<Integer> usersIdList  = associationList.stream().map(DatasetAssociation::getDacuserId).collect(Collectors.toList());
@@ -76,8 +76,8 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     }
 
     @Override
-    public  List<DatasetAssociation> updateDatasetAssociations(String objectId, List<Integer> usersIdList){
-        DataSet d = dsDAO.findDataSetByObjectId(objectId);
+    public  List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> usersIdList){
+        DataSet d = dsDAO.findDataSetById(dataSetId);
         if(Objects.isNull(d)){
             throw new NotFoundException("Invalid DatasetId");
         }

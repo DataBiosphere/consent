@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
-import javax.xml.crypto.Data;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -20,7 +19,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 /**
  * Implementation class for DataSetAPI database support.
@@ -266,8 +264,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public void disableDataset(String datasetId, Boolean active) {
-        DataSet dataset = dsDAO.findDataSetByObjectId(datasetId);
+    public void disableDataset(Integer datasetId, Boolean active) {
+        DataSet dataset = dsDAO.findDataSetById(datasetId);
         if (dataset != null) {
             dsDAO.updateDataSetActive(dataset.getDataSetId(), active);
         }
