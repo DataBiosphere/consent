@@ -47,6 +47,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final String UPDATE = "UPDATE";
     private final String DELETE = "DELETE";
 
+    private final Integer CONSENT_ID = 11;
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
@@ -416,7 +417,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             });
             return dataSet;
         }).forEach((dataSet) -> {
-            Set<DataSetProperty> properties = dataSet.getProperties().stream().filter(property -> property.getPropertyKey() != 11).collect(Collectors.toSet());
+            Set<DataSetProperty> properties = dataSet.getProperties().stream().filter(property -> !property.getPropertyKey().equals(CONSENT_ID)).collect(Collectors.toSet());
             dataSetPropertiesList.addAll(properties);
         });
         dsDAO.insertDataSetsProperties(dataSetPropertiesList);
