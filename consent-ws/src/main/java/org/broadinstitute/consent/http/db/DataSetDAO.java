@@ -33,6 +33,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
+    @SqlQuery("select * from dataset where dataSetId = :dataSetId")
+    DataSet findDataSetByDataSetId(@Bind("dataSetId") Integer dataSetId);
+
     @SqlQuery("select * from dataset where objectId = :objectId")
     Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
 
@@ -45,7 +48,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("update dataset set name = :name where dataSetId = :dataSetId")
     void updateAll(@BindBean Collection<DataSet> dataSets);
 
-    @SqlBatch("update dataset set name = :name, active = :active where objectId = :objectId")
+    @SqlBatch("update dataset set name = :name, active = :active, createDate = :createDate where objectId = :objectId")
     void updateAllByObjectId(@BindBean Collection<DataSet> dataSets);
 
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +

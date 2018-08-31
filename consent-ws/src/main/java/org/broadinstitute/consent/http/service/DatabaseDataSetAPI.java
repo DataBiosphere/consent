@@ -419,7 +419,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             });
             return dataSet;
         }).forEach((dataSet) -> {
-            dataSetPropertiesList.addAll(dataSet.getProperties());
+            Set<DataSetProperty> properties = dataSet.getProperties().stream().filter(property -> property.getPropertyKey() != 11).collect(Collectors.toSet());
+            dataSetPropertiesList.addAll(properties);
         });
         dsDAO.insertDataSetsProperties(dataSetPropertiesList);
         return dataSetPropertiesList;
