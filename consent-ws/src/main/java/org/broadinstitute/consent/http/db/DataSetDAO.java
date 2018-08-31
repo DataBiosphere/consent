@@ -125,7 +125,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
-    @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as oid CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d " +
+    @SqlQuery("SELECT DISTINCT d.objectId as id, d.dataSetId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d " +
             " inner join consentassociations ca on ca.dataSetId = d.dataSetId and d.active = true" +
             " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
