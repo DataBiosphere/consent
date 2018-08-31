@@ -501,8 +501,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
-        List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-        List<DataSet> dataSetList = dataSetDAO.searchDataSetsByObjectIdList(dataSets);
+        List<Integer> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+        List<DataSet> dataSetList = dataSetDAO.searchDataSetsByIds(dataSets);
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;

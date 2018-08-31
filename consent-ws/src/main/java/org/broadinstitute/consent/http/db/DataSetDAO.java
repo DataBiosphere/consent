@@ -45,7 +45,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
 
-    @SqlBatch("update dataset set name = :name where dataSetId = :dataSetId")
+    @SqlBatch("update dataset set name = :name, createDate = :createDate, active = :active where dataSetId = :dataSetId")
     void updateAll(@BindBean Collection<DataSet> dataSets);
 
     @SqlBatch("update dataset set name = :name, active = :active, createDate = :createDate where objectId = :objectId")
@@ -58,7 +58,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
-    @SqlUpdate("update dataset set active = false, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
+    @SqlUpdate("update dataset set active = null, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
     void logicalDataSetdelete(@Bind("dataSetId") Integer dataSetId);
 
     @SqlUpdate("update dataset set active = :active where dataSetId = :dataSetId")
@@ -145,14 +145,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select *  from dataset where name in (<names>) ")
     List<DataSet> searchDataSetsByNameList(@BindIn("names") List<String> names);
 
-    @SqlBatch("delete from datasetproperty where dataSetId = (select dataSetId from dataset where objectId in (<objectIdList>))")
-    void deleteDataSetsPropertiesByObjectId(@BindIn("objectIdList") Collection<String> objectId);
-
-
     @Mapper(BatchMapper.class)
     @SqlQuery("select dataSetId, name  from dataset where name in (<nameList>)")
     List<Map<String,Integer>> searchByNameIdList(@BindIn("nameList") List<String> nameList);
 
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>) AND d.name is not null")
     List<DataSet> getDataSetsWithValidNameForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+
+    @SqlQuery("select *  from dataset where dataSetId in (<dataSetIds>) ")
+    List<DataSet> searchDataSetsByIds(@BindIn("dataSetIds") List<Integer> dataSetIds);
 }
