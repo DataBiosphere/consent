@@ -85,9 +85,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                         dataSetsToCreate.add(ds);
                     }
                 }
-                if (CollectionUtils.isEmpty(existentdataSets)) {
-                    dataSetsToCreate.addAll(dataSets);
-                }
                 if (CollectionUtils.isNotEmpty(dataSetsToCreate)) {
                     dsDAO.insertAll(dataSetsToCreate);
                     insertDataSetAudit(dataSetsToCreate, CREATE, userId, insertProperties(dataSetsToCreate));
