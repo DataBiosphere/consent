@@ -112,4 +112,9 @@ public class DataSetDTO {
     public void setDataSetId(Integer dataSetId) {
         this.dataSetId = dataSetId;
     }
+
+    public Integer getDataSetId() {
+        return dataSetId;
+    }
+
 }

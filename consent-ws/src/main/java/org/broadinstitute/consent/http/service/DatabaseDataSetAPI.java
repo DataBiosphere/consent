@@ -189,7 +189,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     } else {
                         dataSetDTO.setUpdateAssociationToDataOwnerAllowed(true);
                     }
-                    if (CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(datasetMap.get(dataSetObjectId)))) {
+                    if (CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(dataSetDTO.getDataSetId()))) {
                         dataSetDTO.setIsAssociatedToDataOwners(false);
                     } else {
                         dataSetDTO.setIsAssociatedToDataOwners(true);

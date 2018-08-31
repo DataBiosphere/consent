@@ -65,7 +65,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     void updateDataSetActive(@Bind("dataSetId") Integer dataSetId, @Bind("active") Boolean active);
 
     @SqlUpdate("update dataset set needs_approval = :needs_approval where dataSetId = :dataSetId")
-    void updateDataSetNeedsApproval(@Bind("objectId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
+    void updateDataSetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
 
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
@@ -125,7 +125,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
-    @SqlQuery("SELECT DISTINCT d.objectId as id, d.dataSetId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d " +
+    @SqlQuery("SELECT DISTINCT d.dataSetId as id, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d " +
             " inner join consentassociations ca on ca.dataSetId = d.dataSetId and d.active = true" +
             " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
