@@ -115,10 +115,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
-        List<String> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
-        dataAccessRequest.remove(DATA_SET_ID);
+        List<Integer> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
+//        dataAccessRequest.remove(DATA_SET_ID); // porque quitaria el dataset????
         if (CollectionUtils.isNotEmpty(dataSets)) {
-            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(dataSets);
+            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(dataAccessRequest.get(DATA_SET_ID, List.class));
             consentDataSets.forEach((consentDataSet) -> {
                 Document dataAccess = processDataSet(dataAccessRequest, consentDataSet);
                 dataAccessList.add(dataAccess);

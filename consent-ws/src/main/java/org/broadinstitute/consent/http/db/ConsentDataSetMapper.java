@@ -19,11 +19,11 @@ public class ConsentDataSetMapper implements ResultSetMapper<ConsentDataSet> {
         ConsentDataSet consentDataSet;
         if (index == 0 || !consentDataSets.containsKey(r.getString("consentId"))) {
             consentDataSet = new ConsentDataSet(r.getString("consentId"), new HashMap<>());
-            consentDataSet.getDataSets().put(r.getString("objectId"), r.getString("name"));
+            consentDataSet.getDataSets().put(r.getString("datasetId"), r.getString("name"));
             consentDataSets.put(r.getString("consentId"),consentDataSet);
         } else {
             consentDataSet = consentDataSets.get(r.getString("consentId"));
-            consentDataSet.getDataSets().put(r.getString("objectId"), r.getString("name"));
+            consentDataSet.getDataSets().put(r.getString("datasetId"), r.getString("name"));
             consentDataSets.put(r.getString("consentId"), consentDataSet);
         }
         return consentDataSet;
