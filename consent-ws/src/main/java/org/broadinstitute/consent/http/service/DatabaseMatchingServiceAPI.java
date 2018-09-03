@@ -20,10 +20,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
@@ -151,10 +148,11 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private Consent findRelatedConsents(String purposeId){
-        List<Integer> datasetIdList = (dataAccessAPI.describeDataAccessRequestById(purposeId)).get(DarConstants.DATASET_ID,List.class);
+        List<String> dataSetIdList = (dataAccessAPI.describeDataAccessRequestFieldsById(purposeId, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
+        Integer dataSetId = Integer.valueOf(dataSetIdList.get(0));
         Consent consent =  null;
-        if(CollectionUtils.isNotEmpty(datasetIdList)){
-            consent = consentAPI.getConsentFromDatasetID(datasetIdList.get(0));
+        if(CollectionUtils.isNotEmpty(dataSetIdList)){
+            consent = consentAPI.getConsentFromDatasetID(dataSetId);
         }
         return consent;
     }

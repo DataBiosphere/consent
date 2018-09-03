@@ -64,8 +64,8 @@ public class ElectionReviewResource {
     public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Election election = electionAPI.describeElectionById(electionId);
         Election consentElection = electionAPI.getConsentElectionByDARElectionId(election.getElectionId());
-        List<Integer> dataSetId = accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList(DarConstants.DATASET_ID)).get(DarConstants.DATASET_ID, List.class);
-        Consent consent = consentAPI.getConsentFromDatasetID(dataSetId.get(0));
+        Integer dataSetId = Integer.valueOf((String) accessRequestAPI.describeDataAccessRequestFieldsById(election.getReferenceId(), Arrays.asList(DarConstants.DATASET_ID)).get("datasetId", List.class).get(0));
+        Consent consent = consentAPI.getConsentFromDatasetID(dataSetId);
         ElectionReview accessElectionReview = api.describeElectionReviewByElectionId(electionId, isFinalAccess);
         List<Vote> agreementVote = api.describeAgreementVote(electionId);
         accessElectionReview.setConsent(consent);
