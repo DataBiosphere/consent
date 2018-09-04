@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -119,8 +120,8 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.DATASET_ID: {
-                    List<String> datasetIds = dar.get(DarConstants.DATASET_ID, List.class);
-                    field.setValue(datasetIds != null ? String.join(", ", datasetIds) :  "--");
+                    Map<String, String> datasetDetailMap = parseDatasetDetail(dar);
+                    field.setValue(datasetDetailMap != null ? String.join(", ", datasetDetailMap.get("objectId"), datasetDetailMap.get("dataSetName")) :  "--");
                     break;
                 }
                 case DarConstants.RUS: {
@@ -195,6 +196,17 @@ public class DataAccessParser {
             }
         }
         return acroForm;
+    }
+
+    private Map<String, String> parseDatasetDetail(Document dar) {
+        ArrayList<Document> datasetDetail = (ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL);
+        Map<String, String> datasetDetailMap = new HashMap<>();
+        datasetDetail.forEach((doc) -> {
+            String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? doc.getString(DarConstants.OBJECT_ID) : "";
+            datasetDetailMap.put("dataSetName", doc.getString("name"));
+            datasetDetailMap.put("objectId" ,objectId);
+        });
+        return datasetDetailMap;
     }
 
     private String getYesOrNoValue(Boolean value){
