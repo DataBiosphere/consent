@@ -59,7 +59,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
     @SqlBatch("delete from dataset where dataSetId = :dataSetId")
-    void deleteDataSet(@Bind("dataSetId") Integer dataSetId);
+    void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
     @SqlUpdate("update dataset set active = null, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
     void logicalDataSetdelete(@Bind("dataSetId") Integer dataSetId);

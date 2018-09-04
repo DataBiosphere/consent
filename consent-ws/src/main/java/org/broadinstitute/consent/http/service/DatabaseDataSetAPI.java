@@ -250,7 +250,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             }
             dataSetAssociationDAO.delete(dataset.getDataSetId());
             dsDAO.deleteDataSetsProperties(dataSetsId);
-            dsDAO.logicalDataSetdelete(dataset.getDataSetId());
+            
+            if (StringUtils.isNotEmpty(dataset.getObjectId())) {
+                dsDAO.logicalDataSetdelete(dataset.getDataSetId());
+            } else {
+                consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
+                dsDAO.deleteDataSets(dataSetsId);
+            }
+
             dsDAO.commit();
             dataSetAuditDAO.commit();
         } catch (Exception e) {
