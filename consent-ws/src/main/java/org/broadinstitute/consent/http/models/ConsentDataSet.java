@@ -10,11 +10,14 @@ public class ConsentDataSet {
     public String consentId;
 
     @JsonProperty
-    public Map<String, String> dataSets;
-;
+    public String objectId;
 
-    public ConsentDataSet(String consentId,  Map<String, String> dataSets) {
+    @JsonProperty
+    public Map<String, String> dataSets;
+
+    public ConsentDataSet(String consentId,  Map<String, String> dataSets, String objectId) {
         this.consentId = consentId;
+        this.objectId = objectId;
         this.dataSets = dataSets;
     }
 
@@ -33,4 +36,13 @@ public class ConsentDataSet {
     public void setDataSets(Map<String, String> dataSets) {
         this.dataSets = dataSets;
     }
+
+    public String getObjectId() {
+        return objectId;
+    }
+
+    public void setObjectId(String objectId) {
+        this.objectId = objectId;
+    }
+
 }

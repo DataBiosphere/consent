@@ -58,6 +58,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
+    @SqlBatch("delete from dataset where dataSetId = :dataSetId")
+    void deleteDataSet(@Bind("dataSetId") Integer dataSetId);
+
     @SqlUpdate("update dataset set active = null, name = null, createDate = null, needs_approval = 0 where dataSetId = :dataSetId")
     void logicalDataSetdelete(@Bind("dataSetId") Integer dataSetId);
 
@@ -125,14 +128,19 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
-    @SqlQuery("SELECT DISTINCT d.dataSetId as id, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue) as concatenation FROM dataset d " +
+    @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as objId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue, c.name) as concatenation FROM dataset d " +
             " inner join consentassociations ca on ca.dataSetId = d.dataSetId and d.active = true" +
-            " inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
+            " inner join consents c on c.consentId = ca.consentId " +
+            " inner join election e on e.referenceId = ca.consentId " +
             " inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +
-            "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM" +
+            "'inner join (SELECT referenceId,MAX(createDate) maxDate FROM" +
             " election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId " +
-            " and v.vote = true  and d.objectId like concat('%',:partial,'%') or d.name like concat('%',:partial,'%') or dsp.propertyValue like concat('%',:partial,'%')" +
+            " and v.vote = true " +
+            " and (d.objectId like concat('%',:partial,'%') " +
+            " or d.name like concat('%',:partial,'%') " +
+            " or dsp.propertyValue like concat('%',:partial,'%')" +
+            " or c.name like concat('%',:partial,'%') )" +
             " order by d.dataSetId")
     List< Map<String, String>> getObjectIdsbyPartial(@Bind("partial") String partial);
 

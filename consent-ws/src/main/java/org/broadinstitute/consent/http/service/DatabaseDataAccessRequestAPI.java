@@ -116,7 +116,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
         List<Integer> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
-//        dataAccessRequest.remove(DATA_SET_ID); // porque quitaria el dataset????
         if (CollectionUtils.isNotEmpty(dataSets)) {
             Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(dataAccessRequest.get(DATA_SET_ID, List.class));
             consentDataSets.forEach((consentDataSet) -> {
@@ -124,6 +123,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 dataAccessList.add(dataAccess);
             });
         }
+        dataAccessRequest.remove(DATA_SET_ID);
         insertDataAccess(dataAccessList);
         return dataAccessList;
     }
@@ -596,8 +596,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             datasetId.add(k);
             document.put("name", v);
             dataSetList.add(document);
+            document.put("objectId", consentDataSet.getObjectId());
         });
         dataAccess.put(DarConstants.DATASET_ID, datasetId);
+//        dataAccess.put("objectId", consentDataSet.getObjectId());
         dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);
         return dataAccess;
     }
