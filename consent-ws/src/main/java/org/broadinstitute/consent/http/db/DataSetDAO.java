@@ -95,8 +95,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
-            "where d.objectId in (<objectIdList>) order by d.dataSetId, k.receiveOrder")
-    Set<DataSetDTO> findDataSetsByReceiveOrder(@BindIn("objectIdList") List<String> objectIdList);
+            "where d.dataSetId in (<dataSetIdList>) order by d.dataSetId, k.receiveOrder")
+    Set<DataSetDTO> findDataSetsByReceiveOrder(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
 
 
     @SqlQuery("select *  from dataset where objectId in (<objectIdList>) ")
@@ -126,6 +126,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @RegisterMapper({AssociationMapper.class})
     @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
+
+    @RegisterMapper({AssociationMapper.class})
+    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
+    List<Association> getAssociationsForDataSetIdList(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
     @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as objId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue, c.name) as concatenation FROM dataset d " +

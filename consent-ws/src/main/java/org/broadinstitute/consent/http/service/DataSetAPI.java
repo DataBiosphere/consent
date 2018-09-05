@@ -21,7 +21,7 @@ public interface DataSetAPI {
 
     DataSetDTO getDataSetDTO(Integer dataSetId ) ;
 
-    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) ;
+    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetIds) ;
 
     Collection<Dictionary> describeDictionaryByDisplayOrder();
 

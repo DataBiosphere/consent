@@ -217,8 +217,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) {
-        return dsDAO.findDataSetsByReceiveOrder(objectIds);
+    public Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
+        return dsDAO.findDataSetsByReceiveOrder(dataSetId);
     }
 
     @Override
@@ -342,12 +342,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
-        List<String> objectIds = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+        List<Integer> objectIds = dataSets.stream().filter(dataset -> dataset.getDataSetId()!= null).map(DataSet::getDataSetId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(objectIds)) {
-            List<Association> presentAssociations = dsDAO.getAssociationsForObjectIdList(objectIds);
-            List<String> associationIdList = presentAssociations.stream().map(Association::getObjectId).collect(Collectors.toList());
-            List<String> dataSetIdList = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
-            errors.addAll(dataSetIdList.stream().filter(dsId -> (!(associationIdList.contains(dsId)) && (!dsId.isEmpty()))).map(dsId -> String.format(MISSING_ASSOCIATION, dsId)).collect(Collectors.toList()));
+            List<Association> presentAssociations = dsDAO.getAssociationsForDataSetIdList(objectIds);
+            List<Integer> associationIdList = presentAssociations.stream().map(Association::getDataSetId).collect(Collectors.toList());
+            errors.addAll(objectIds.stream().filter(dsId -> (!(associationIdList.contains(dsId)))).map(dsId -> String.format(MISSING_ASSOCIATION, dsId)).collect(Collectors.toList()));
         }
         return errors;
     }

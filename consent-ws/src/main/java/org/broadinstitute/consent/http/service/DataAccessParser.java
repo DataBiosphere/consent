@@ -121,7 +121,11 @@ public class DataAccessParser {
                 }
                 case DarConstants.DATASET_ID: {
                     Map<String, String> datasetDetailMap = parseDatasetDetail(dar);
-                    field.setValue(datasetDetailMap != null ? String.join(", ", datasetDetailMap.get("objectId"), datasetDetailMap.get("dataSetName")) :  "--");
+                    if (datasetDetailMap != null && datasetDetailMap.get("objectId").isEmpty() ) {
+                        field.setValue(datasetDetailMap.get("dataSetName"));
+                    } else {
+                        field.setValue(datasetDetailMap != null ? String.join(", ", datasetDetailMap.get("objectId"), datasetDetailMap.get("dataSetName")) :  "--");
+                    }
                     break;
                 }
                 case DarConstants.RUS: {

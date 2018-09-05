@@ -74,9 +74,9 @@ public class DataSetResource extends Resource {
                 inputFile = new File(UUID.randomUUID().toString());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 ParseResult result;
-                if(overwrite) {
+                if (overwrite) {
                     result = api.overwrite(inputFile, userId);
-                }else{
+                } else{
                     result = api.create(inputFile, userId);
                 }
                 dataSets = result.getDatasets();
@@ -109,7 +109,7 @@ public class DataSetResource extends Resource {
     public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
-        }else{
+        } else{
             Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }
@@ -150,7 +150,7 @@ public class DataSetResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @PermitAll
-    public Response downloadDataSets(List<String> idList) {
+    public Response downloadDataSets(List<Integer> idList) {
         String msg = "GETing DataSets to download";
         logger().debug(msg);
 
@@ -175,7 +175,9 @@ public class DataSetResource extends Resource {
 
         for (DataSetDTO row : rows) {
             StringBuilder sbr = new StringBuilder();
+            DataSetPropertyDTO property = new DataSetPropertyDTO("Consent ID",row.getConsentId());
             List<DataSetPropertyDTO> props = row.getProperties();
+            props.add(property);
             for (DataSetPropertyDTO prop : props) {
                 if (sbr.length() > 0)
                     sbr.append(TSV_DELIMITER);
