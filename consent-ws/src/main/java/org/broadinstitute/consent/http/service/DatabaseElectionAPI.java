@@ -383,8 +383,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public String darDatasetElectionStatus(String darReferenceId){
-        List<String> dataSets = describeDataAccessRequestById(darReferenceId).get(DarConstants.DATASET_ID, List.class);
-        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
+        List<Integer> dataSets = describeDataAccessRequestById(darReferenceId).get(DarConstants.DATASET_ID, List.class);
+        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {

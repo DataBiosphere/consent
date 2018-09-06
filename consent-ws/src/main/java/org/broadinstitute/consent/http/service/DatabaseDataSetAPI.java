@@ -74,7 +74,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             if (isValid(dataSets, false)) {
+
                 List<DataSet> existentdataSets = dsDAO.getDataSetsForObjectIdList(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
+
                 List<DataSet> dataSetsToUpdate = new ArrayList<>();
                 List<DataSet> dataSetsToCreate = new ArrayList<>();
                 List<String> existentObjectIds = existentdataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
@@ -169,33 +171,38 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             dataSetDTOList = dsDAO.findDataSets();
             if (userIs(DACUserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
-                List<String> dataSetObjectIdList = new ArrayList<>();
-                dataSetDTOList.stream().forEach(dataSet -> {
-                    Map<String, String> dataSetProperties = dataSet.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName, DataSetPropertyDTO::getPropertyValue));
-                    dataSetObjectIdList.add(dataSetProperties.get(SAMPLE_COLLECTION_ID));
+                List<Integer> dataSetIdList = new ArrayList<>();
+
+                dataSetDTOList.stream().forEach(dataSet ->{
+                    dataSetIdList.add(dataSet.getDataSetId());
                 });
-                List<DataSet> dataSetList = dsDAO.getDataSetsForObjectIdList(dataSetObjectIdList);
-                Map<String, Integer> datasetMap =
-                        dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
-                                DataSet::getDataSetId));
-                Set<String> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<String>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
+
+
+//                List<DataSet> dataSetList = dsDAO.getDataSetsForDataSetIdList(dataSetIdList);
+//                Map<String, Integer> datasetMap =
+//                        dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
+//                                DataSet::getDataSetId));
+
+
+                Set<Integer> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<Integer>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
-                    String datasetObjectId = dataSetDTO.getPropertyValue(SAMPLE_COLLECTION_ID);
-                    Map<String, String> dataSetProperties = dataSetDTO.getProperties().stream().collect(Collectors.toMap(DataSetPropertyDTO::getPropertyName, DataSetPropertyDTO::getPropertyValue));
-                    String dataSetObjectId = dataSetProperties.get(SAMPLE_COLLECTION_ID);
+                    String datasetId = dataSetDTO.getDataSetId().toString();
+
                     if (CollectionUtils.isNotEmpty(datasetsAssociatedToOpenElections) &&
                             datasetsAssociatedToOpenElections.contains(dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME))) {
                         dataSetDTO.setUpdateAssociationToDataOwnerAllowed(false);
                     } else {
                         dataSetDTO.setUpdateAssociationToDataOwnerAllowed(true);
                     }
+
                     if (CollectionUtils.isEmpty(dataSetAssociationDAO.getDatasetAssociation(dataSetDTO.getDataSetId()))) {
                         dataSetDTO.setIsAssociatedToDataOwners(false);
                     } else {
                         dataSetDTO.setIsAssociatedToDataOwners(true);
                     }
+
                     if (CollectionUtils.isNotEmpty(accessRequests)) {
-                        if (accessRequestsDatasetIdSet.contains(datasetObjectId)) {
+                        if (accessRequestsDatasetIdSet.contains(datasetId)) {
                             dataSetDTO.setDeletable(false);
                         } else {
                             dataSetDTO.setDeletable(true);
@@ -289,8 +296,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public List<DataSet> findNeedsApprovalDataSetByObjectId(List<String> objectIdList) {
-        return dsDAO.findNeedsApprovalDataSetByObjectId(objectIdList);
+    public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
+        return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
     private Collection<DataSetDTO> orderByDataSetId(Collection<DataSetDTO> dataSetDTOList) {
@@ -342,11 +349,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
-        List<Integer> objectIds = dataSets.stream().filter(dataset -> dataset.getDataSetId()!= null).map(DataSet::getDataSetId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(objectIds)) {
-            List<Association> presentAssociations = dsDAO.getAssociationsForDataSetIdList(objectIds);
-            List<Integer> associationIdList = presentAssociations.stream().map(Association::getDataSetId).collect(Collectors.toList());
-            errors.addAll(objectIds.stream().filter(dsId -> (!(associationIdList.contains(dsId)))).map(dsId -> String.format(MISSING_ASSOCIATION, dsId)).collect(Collectors.toList()));
+        List<String> objectIdList = dataSets.stream().filter(dataset -> dataset.getObjectId() != null).map(DataSet::getObjectId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(objectIdList)) {
+            List<Association> presentAssociations = dsDAO.getAssociationsForObjectIdList(objectIdList);
+            List<String> associationIdList = presentAssociations.stream().map(Association::getObjectId).collect(Collectors.toList());
+            errors.addAll(objectIdList.stream().filter(dsId -> (!(associationIdList.contains(dsId)))).map(dsId -> String.format(MISSING_ASSOCIATION, dsId)).collect(Collectors.toList()));
+
         }
         return errors;
     }

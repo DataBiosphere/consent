@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -48,13 +49,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
@@ -287,13 +285,15 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/datasetCatalog")
     @RolesAllowed("RESEARCHER")
-    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<String> datasetIds) {
+    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<Integer> datasetIds) {
         Document dar = new Document();
+        Collection<DataSetDTO> dataSets = dataSetAPI.describeDataSetsByReceiveOrder(datasetIds);
+        List<String> dataSetNames = dataSets.stream().map(dataset -> dataset.getPropertyValue("Dataset Name")).collect(Collectors.toList());
         dar.append(DarConstants.USER_ID, userId);
         try {
             List<Map<String, String>> datasets = new ArrayList<>();
-            for(String datasetId: datasetIds){
-                List<Map<String, String>> ds = dataSetAPI.autoCompleteDataSets(datasetId);
+            for(String datasetName: dataSetNames){
+                List<Map<String, String>> ds = dataSetAPI.autoCompleteDataSets(datasetName);
                 datasets.add(ds.get(0));
             }
             dar.append(DarConstants.DATASET_ID, datasets);

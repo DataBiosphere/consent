@@ -99,9 +99,8 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     }
 
     @Override
-    public Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<String> objectId){
-        List<Integer> dataSetsIds = dsDAO.searchDataSetsIdsByObjectIdList(objectId);
-        List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetsIds);
+    public Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList){
+        List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
         Map<DACUser, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
         dataSetAssociations.stream().forEach(dsa ->{
             DACUser dataOwner = dacUserDAO.findDACUserById(dsa.getDacuserId());

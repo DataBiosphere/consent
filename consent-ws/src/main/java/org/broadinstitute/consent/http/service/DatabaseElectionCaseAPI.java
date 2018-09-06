@@ -125,7 +125,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                         FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
                         DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
                         dataOwnerCase.setDarCode(dataAccessRequest != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
-                        dataOwnerCase.setDataSetId(dataSet.getObjectId());
+                        dataOwnerCase.setDataSetId(dataSet.getDataSetId());
                         dataOwnerCase.setDataSetName(dataSet.getName());
                         dataOwnerCase.setVoteId(v.getVoteId());
                         dataOwnerCase.setAlreadyVoted(v.getVote() != null);

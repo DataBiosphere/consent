@@ -522,8 +522,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         documents.forEach((Block<Document>) dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
+            List<Integer> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
             Election election = electionList.get(id.toString());
             darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
             darManage.setRus(dar.getString(DarConstants.RUS));

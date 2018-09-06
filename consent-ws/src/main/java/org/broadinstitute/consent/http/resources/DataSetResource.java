@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;

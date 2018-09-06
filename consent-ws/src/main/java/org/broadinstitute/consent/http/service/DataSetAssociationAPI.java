@@ -14,7 +14,7 @@ public interface DataSetAssociationAPI {
 
     Map<String, Collection<DACUser>> findDataOwnersRelationWithDataset(Integer dataSetId);
 
-    Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<String> objectId);
+    Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList);
 
     List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> usersIdList);
 }

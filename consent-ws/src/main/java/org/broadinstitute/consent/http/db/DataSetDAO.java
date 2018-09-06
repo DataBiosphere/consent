@@ -33,14 +33,11 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
-    @SqlQuery("select * from dataset where dataSetId = :dataSetId")
-    DataSet findDataSetByDataSetId(@Bind("dataSetId") Integer dataSetId);
-
     @SqlQuery("select * from dataset where objectId = :objectId")
     Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
 
-    @SqlQuery("select * from dataset where objectId in (<objectIdList>) and needs_approval = true")
-    List<DataSet> findNeedsApprovalDataSetByObjectId(@BindIn("objectIdList") List<String> objectIdList);
+    @SqlQuery("select * from dataset where dataSetId in (<dataSetIdList>) and needs_approval = true")
+    List<DataSet> findNeedsApprovalDataSetByDataSetId(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
 
     @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
@@ -112,7 +109,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @RegisterMapper({DictionaryMapper.class})
     @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder != 10 order by displayOrder")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
-
 
     @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);

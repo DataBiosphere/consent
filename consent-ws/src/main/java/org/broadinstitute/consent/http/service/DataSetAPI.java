@@ -35,7 +35,7 @@ public interface DataSetAPI {
 
     DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval);
 
-    List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList);
+    List<DataSet>findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList);
 
     String updateDataSetIdToDAR();
 
