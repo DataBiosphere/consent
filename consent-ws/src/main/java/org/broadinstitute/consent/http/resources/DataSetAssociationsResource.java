@@ -19,11 +19,11 @@ public class DataSetAssociationsResource extends Resource {
 
 
     @POST
-    @Path("/{objectId}")
+    @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response associateDatasetWithUsers(@PathParam("objectId") Integer dataSetId, List<Integer> usersIdList) {
+    public Response associateDatasetWithUsers(@PathParam("dataSetId") Integer dataSetId, List<Integer> usersIdList) {
         try {
             return  Response.status(Response.Status.CREATED).entity(api.createDatasetUsersAssociation(dataSetId, usersIdList)).build() ;
         } catch (Exception e){
@@ -32,11 +32,11 @@ public class DataSetAssociationsResource extends Resource {
     }
 
     @GET
-    @Path("/{objectId}")
+    @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response getDatasetAssociations(@PathParam("objectId") Integer dataSetId) {
+    public Response getDatasetAssociations(@PathParam("dataSetId") Integer dataSetId) {
         try {
             return Response.ok(api.findDataOwnersRelationWithDataset(dataSetId)).build();
         } catch (Exception e) {
@@ -45,7 +45,7 @@ public class DataSetAssociationsResource extends Resource {
     }
 
     @PUT
-    @Path("/{objectId}")
+    @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed("ADMIN")

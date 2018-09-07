@@ -37,7 +37,7 @@
         <update tableName="dictionary">
             <column name="key" value="Sample Collection ID"> </column>
             <column name="required" valueBoolean="false"> </column>
-            <where>`key` = 'Dataset ID'</where>
+            <where> key = 'Dataset ID'</where>
         </update>
     </changeSet>
 

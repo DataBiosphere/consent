@@ -177,13 +177,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     dataSetIdList.add(dataSet.getDataSetId());
                 });
 
-
-//                List<DataSet> dataSetList = dsDAO.getDataSetsForDataSetIdList(dataSetIdList);
-//                Map<String, Integer> datasetMap =
-//                        dataSetList.stream().collect(Collectors.toMap(DataSet::getObjectId,
-//                                DataSet::getDataSetId));
-
-
                 Set<Integer> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<Integer>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
                     String datasetId = dataSetDTO.getDataSetId().toString();

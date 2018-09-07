@@ -34,8 +34,9 @@ public class DataAccessParserTest {
     private final String SCIENTIFIC_URL = "www.test.org";
     private final String PI_EMAIL = "vvtest@gmail.com";
     private final String PROJECT_TITLE = "Tittle Test";
-    private final String DATASET_ID = "SC-01253";
-    private final String DATASET_ID_2 = "TX-01253";
+    private final String OBJECT_ID = "SC-01253";
+    private final String DATASET_NAME = "Dataset Name1";
+    private final Integer DATASET_ID = 111;
     private final String RUS = "Purpose";
     private final String NON_TECH_RUS = "Summary";
     private final String RESEARCH_OTHER_TEXT = "Research Other Text";
@@ -70,8 +71,11 @@ public class DataAccessParserTest {
         dar.put(DarConstants.INVESTIGATOR, INVESTIGATOR);
         dar.put(DarConstants.PI_EMAIL, PI_EMAIL);
         dar.put(DarConstants.PROJECT_TITLE, PROJECT_TITLE);
-        List<String> dataSets = Arrays.asList(DATASET_ID, DATASET_ID_2);
+        List<Integer> dataSets = Arrays.asList(DATASET_ID);
         dar.put(DarConstants.DATASET_ID, dataSets);
+        ArrayList<Document> content = new ArrayList<>();
+        content.add(generateDatasetDetails(DATASET_ID, DATASET_NAME, OBJECT_ID));
+        dar.put(DarConstants.DATASET_DETAIL, content);
         dar.put(DarConstants.RUS, RUS);
         dar.put(DarConstants.NON_TECH_RUS, NON_TECH_RUS);
         dar.put(DarConstants.METHODS, true);
@@ -97,7 +101,7 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString().equals(SCIENTIFIC_URL));
         Assert.isTrue(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
         Assert.isTrue(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString().equals(PROJECT_TITLE));
-        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(DATASET_ID + ", " + DATASET_ID_2));
+        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(OBJECT_ID + ", " + DATASET_NAME));        acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(OBJECT_ID + ", " + "dataset Name");
         Assert.isTrue(acroForm.getField(DarConstants.RUS).getValueAsString().equals(RUS));
         Assert.isTrue(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString().equals(NON_TECH_RUS));
         Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
@@ -109,5 +113,12 @@ public class DataAccessParserTest {
 
     }
 
+    private Document generateDatasetDetails(Integer datasetId, String datasetName, String objectId) {
+        Document datasetDetails = new Document();
+        datasetDetails.put("datasetId", datasetId.toString());
+        datasetDetails.put("name", datasetName);
+        datasetDetails.put("objectId", objectId);
+        return datasetDetails;
+    }
 
 }

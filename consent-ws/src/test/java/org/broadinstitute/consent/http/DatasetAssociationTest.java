@@ -19,9 +19,8 @@ import java.util.List;
  */
 public class DatasetAssociationTest extends DatasetAssociationServiceTest {
 
-    private static final String DATASET_OBJECTID = "SC-20660";
-    private static final String INVALID_DATASET_OBJECTID = "SC-0000";
-
+    private static final Integer DATASET_OBJECTID = 1;
+    private static final Integer INVALID_DATASET_OBJECTID = 0;
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -33,7 +32,6 @@ public class DatasetAssociationTest extends DatasetAssociationServiceTest {
     }
 
     @Test
-    @Ignore
     public void testCreateDatasetAssociation() throws IOException {
         Client client = ClientBuilder.newClient();
         List<Integer> dataOwnerIds = new ArrayList();
