@@ -148,11 +148,10 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private Consent findRelatedConsents(String purposeId){
-        List<String> dataSetIdList = (dataAccessAPI.describeDataAccessRequestFieldsById(purposeId, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
-        Integer dataSetId = Integer.valueOf(dataSetIdList.get(0));
+        List<Integer> dataSetIdList = (dataAccessAPI.describeDataAccessRequestFieldsById(purposeId, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
         Consent consent =  null;
         if(CollectionUtils.isNotEmpty(dataSetIdList)){
-            consent = consentAPI.getConsentFromDatasetID(dataSetId);
+            consent = consentAPI.getConsentFromDatasetID(dataSetIdList.get(0));
         }
         return consent;
     }

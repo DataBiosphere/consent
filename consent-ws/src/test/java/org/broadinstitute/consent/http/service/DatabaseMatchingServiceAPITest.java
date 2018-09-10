@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.models.grammar.Not;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -97,7 +98,7 @@ public class DatabaseMatchingServiceAPITest {
         when(consentAPI.retrieve("AbsentConsent")).thenThrow(UnknownIdentifierException.class);
 
         when(dataAccessAPI.describeDataAccessRequestById("DAR-2")).thenReturn(getSampleDar());
-        when(consentAPI.retrieve("CONS-1")).thenReturn(sampleConsent1);
+        when(dataAccessAPI.describeDataAccessRequestFieldsById("DAR-2", Arrays.asList(DarConstants.DATASET_ID))).thenReturn(getSampleDar());        when(consentAPI.retrieve("CONS-1")).thenReturn(sampleConsent1);
         when(consentAPI.retrieve("CONS-2")).thenReturn(sampleConsent2);
 
         when(consentAPI.getConsentFromDatasetID(1)).thenReturn(sampleConsent1);
@@ -155,12 +156,12 @@ public class DatabaseMatchingServiceAPITest {
 
     }
 
-//    @Test
-//    public void testFindMatchForPurpose(){
-//        Match match =  matchApi.findMatchForPurpose("DAR-2");
-//        assertTrue(match.getMatch());
-//        assertTrue(!match.getFailed());
-//    }
+    @Test
+    public void testFindMatchForPurpose(){
+        Match match =  matchApi.findMatchForPurpose("DAR-2");
+        assertTrue(match.getMatch());
+        assertTrue(!match.getFailed());
+    }
 
     @Test
     public void testFindMatchesForConsent() throws IOException {
@@ -227,11 +228,9 @@ public class DatabaseMatchingServiceAPITest {
             "\t\t\t\"name\": \"http://purl.obolibrary.org/obo/DUO_0000018\"\n" +
             "\t\t}]\n" +
             "\t},\n" +
-            "\t\"datasetId\": [\n" +
-            "\t\t\"SC-20660\"\n" +
-            "\t],\n" +
+            "\t\"datasetId\": [1],\n" +
             "\t\"datasetDetail\": [{\n" +
-            "\t\t\"datasetId\": \"SC-20660\",\n" +
+            "\t\t\"datasetId\": 1,\n" +
             "\t\t\"name\": \"UHN_AsaWW (University of Toronto)-Carcinoid\"\n" +
             "\t}],\n" +
             "\t\"dar_code\": \"DAR-6\",\n" +
