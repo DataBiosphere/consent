@@ -131,10 +131,10 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                                       @Bind("associationType") String associationType,
                                       @Bind("objectId") String objectId);
 
-    @SqlUpdate("delete ca from consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId where ca.consentId = :consentId and ca.associationType = :associationType and ds.objectId = :objectId")
+    @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType and dataSetId = :dataSetId")
     void deleteOneAssociation(@Bind("consentId") String consentId,
                               @Bind("associationType") String associationType,
-                              @Bind("objectId") String objectId);
+                              @Bind("dataSetId") Integer dataSetId);
 
     @SqlUpdate("delete from consentassociations where consentId = :consentId and associationType = :associationType")
     void deleteAllAssociationsForType(@Bind("consentId") String consentId,

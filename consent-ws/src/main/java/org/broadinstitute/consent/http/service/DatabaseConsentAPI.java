@@ -304,9 +304,13 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         else if (objectId == null)
             consentDAO.deleteAllAssociationsForType(consentId, associationType);
         else { // both associationType and objectId specified
-            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null)
+            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
                 throw new NotFoundException();
-            consentDAO.deleteOneAssociation(consentId, associationType, objectId);
+            } else {
+                Integer datasetId = dataSetDAO.findDataSetIdByObjectId(objectId);
+                consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
+            }
+
         }
         return getAllAssociationsForConsent(consentId);
     }

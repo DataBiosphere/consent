@@ -166,22 +166,21 @@ public class AssociationTest extends ConsentServiceTest {
     }
 
     @Test
-    @Ignore
     public void testDeleteAssociationByTypeAndObject() throws IOException {
-        final String consentId = setupConsent();
+       final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
 
         ArrayList<ConsentAssociation> assoc_list1 = new ArrayList<>();
-        assoc_list1.add(buildConsentAssociation("sample", "AMD-12354", "AME-56789"));
-        assoc_list1.add(buildConsentAssociation("sampleSet", "ACE-9571"));
+        assoc_list1.add(buildConsentAssociation("sample", "ADF-123889", "LTX-5678889"));
+        assoc_list1.add(buildConsentAssociation("sampleSet", "BDG-95889"));
         Response response = checkStatus(OK, post(client, associationPath(consentId), assoc_list1));
         checkAssociations(assoc_list1, response);
-        response = checkStatus(OK, delete(client, associationQueryPath(consentId, "sample", "AMD-12354")));
+        response = checkStatus(OK, delete(client, associationQueryPath(consentId, "sample", "ADF-123889")));
 
         ArrayList<ConsentAssociation> assoc_list2 = new ArrayList<>();
-        assoc_list2.add(buildConsentAssociation("sample", "AME-56789"));
-        assoc_list2.add(buildConsentAssociation("sampleSet", "ACE-9571"));
+        assoc_list2.add(buildConsentAssociation("sample", "LTX-5678889"));
+        assoc_list2.add(buildConsentAssociation("sampleSet", "BDG-95889"));
         checkAssociations(assoc_list2, response);
         String location = checkHeader(response, "Location");
         System.out.println(String.format("*** testDeleteAssociationByTypeAndObject - returned location '%s'", location));
