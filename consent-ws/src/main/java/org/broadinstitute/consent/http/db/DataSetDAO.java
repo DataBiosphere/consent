@@ -116,16 +116,12 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery(" SELECT * FROM dataset d WHERE d.name IN (<names>)")
     List<DataSet> getDataSetsForNameList(@BindIn("names") List<String> names);
 
-    @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (Select objectId FROM consentassociations Where consentId = :consentId)")
+    @SqlQuery("SELECT ds.* FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ca.consentId = :consentId")
     List<DataSet> getDataSetsForConsent(@Bind("consentId") String consentId);
 
     @RegisterMapper({AssociationMapper.class})
     @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId IN (<objectIdList>)")
     List<Association> getAssociationsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
-
-    @RegisterMapper({AssociationMapper.class})
-    @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
-    List<Association> getAssociationsForDataSetIdList(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
 
     @RegisterMapper({AutocompleteMapper.class})
     @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as objId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue, c.name) as concatenation FROM dataset d " +
