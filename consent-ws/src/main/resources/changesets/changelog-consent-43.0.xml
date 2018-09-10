@@ -34,11 +34,9 @@
     </changeSet>
 
     <changeSet author="vvicario" id="125">
-        <update tableName="dictionary">
-            <column name="key" value="Sample Collection ID"> </column>
-            <column name="required" valueBoolean="false"> </column>
-            <where> key = 'Dataset ID'</where>
-        </update>
+        <sql dbms="hsql, mysql">
+            UPDATE dictionary SET `key` = 'Sample Collection ID', required = false where `key` = 'Dataset ID'
+        </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="126">
