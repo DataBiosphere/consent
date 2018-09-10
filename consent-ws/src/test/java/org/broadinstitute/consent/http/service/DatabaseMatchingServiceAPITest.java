@@ -126,7 +126,6 @@ public class DatabaseMatchingServiceAPITest {
     }
 
     @Test
-    @Ignore
     public void testFindSingleMatchNull() {
         Match match = matchApi.findSingleMatch("NullConsent", "NullDar");
         assertTrue(Objects.isNull(match));
