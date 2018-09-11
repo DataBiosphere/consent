@@ -71,22 +71,6 @@ public class DataSetResourceTest extends DataSetServiceTest {
         assertTrue(result.get(1).equals("Please download the Dataset Spreadsheet Model from the 'Add Datasets' window."));
     }
 
-    @Test
-    public void testCreateCorrectFile() throws Exception {
-        Client client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class).build();
-        WebTarget webTarget = client.target(postDataSetFile(true, 1));
-        MultiPart mp = createFormData("correctFile", "txt");
-        mockValidateTokenResponse();
-        Response response = webTarget
-                .request(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer access_token")
-                .post(Entity.entity(mp, mp.getMediaType()));
-        ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
-        assertTrue(response.getStatus() == (OK));
-        assertTrue(result.size() == 3);
-    }
-
     private MultiPart createFormData(String name, String ext) throws URISyntaxException, IOException {
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);

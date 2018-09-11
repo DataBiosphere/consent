@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 
+import info.aduna.text.StringUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +44,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final String DUPLICATED_NAME_ROW = "Dataset Name %s is already present in the database. ";
     private final String OVERWRITE_ON = "If you wish to overwrite DataSet values, you can turn OVERWRITE mode ON.";
     private final String DATASETID_PROPERTY_NAME = "Sample Collection ID";
+    private final String CONFLICT_IDS = "Conflict in dataset association identificator,  %s - %s, use either Sample Collection ID or Consent ID";
     private final String CREATE = "CREATE";
     private final String UPDATE = "UPDATE";
     private final String DELETE = "DELETE";
@@ -101,6 +103,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 }
                 processAssociation(dataSets);
             } else {
+                result.getErrors().addAll(addIdsErrors(dataSets));
                 result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
                 result.getErrors().addAll(addMissingConsentIdErrors(dataSets));
                 result.getErrors().addAll(addDuplicatedRowsErrors(dataSets));
@@ -141,6 +144,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
             }
         }
+        result.getErrors().addAll(addIdsErrors(dataSets));
         result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
         return result;
     }
@@ -352,12 +356,24 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return errors;
     }
 
+
+    private List<String> addIdsErrors(List<DataSet> dataSets) {
+        List<String> errors = new ArrayList<>();
+          for(DataSet ds : dataSets) {
+              if(StringUtils.isNotEmpty(ds.getObjectId()) && StringUtils.isNotEmpty(ds.getConsentName())) {
+                  errors.add(String.format(CONFLICT_IDS, ds.getObjectId(), ds.getConsentName()));
+              }
+          }
+        return errors;
+    }
+
     private List<String> addMissingConsentIdErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> consentNames = dataSets.stream().filter(ds -> StringUtils.isNotEmpty(ds.getConsentName())).map(DataSet::getConsentName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(consentNames)) {
             List<Consent> existentConsents = consentDAO.findConsentsFromConsentNames(consentNames);
-            errors.addAll(existentConsents.stream().filter(consent -> (!(consentNames.contains(consent.getName())))).map(name -> String.format(MISSING_CONSENT, name)).collect(Collectors.toList()));
+            List<String> existentConsentNames = existentConsents.stream().map(n -> n.getName()).collect(Collectors.toList());
+            errors.addAll(consentNames.stream().filter(consent -> (!(existentConsentNames.contains(consent)))).map(name -> String.format(MISSING_CONSENT, name)).collect(Collectors.toList()));
         }
         return errors;
     }
@@ -386,7 +402,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         for (DataSet dataSet : dataSets) {
             // duplicated dataset
             DataSet existentDataset = StringUtils.isNotEmpty(dataSet.getObjectId()) ? dsDAO.findDataSetByObjectId(dataSet.getObjectId()) : null;
-            if (!overwrite && existentDataset != null && StringUtils.isNotEmpty(existentDataset.getName()) && dsDAO.getConsentAssociationByObjectId(dataSet.getObjectId()) != null
+            if ( StringUtils.isNotEmpty(dataSet.getConsentName()) && StringUtils.isNotEmpty(dataSet.getObjectId())
+                    || !overwrite && existentDataset != null && StringUtils.isNotEmpty(existentDataset.getName()) && dsDAO.getConsentAssociationByObjectId(dataSet.getObjectId()) != null
                     // missing association if object id is present
                     || StringUtils.isNotEmpty(dataSet.getObjectId()) && CollectionUtils.isEmpty(dsDAO.getAssociationsForObjectIdList(Arrays.asList(dataSet.getObjectId())))
                     // missing consent if consent id is present
