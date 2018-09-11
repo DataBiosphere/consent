@@ -49,7 +49,7 @@ public class DataSetAssociationsResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response updateDatasetAssociations(@PathParam("objectId") Integer dataSetId, List<Integer> usersIdList) {
+    public Response updateDatasetAssociations(@PathParam("dataSetId") Integer dataSetId, List<Integer> usersIdList) {
         try {
             return  Response.ok(api.updateDatasetAssociations(dataSetId, usersIdList)).build() ;
         } catch (Exception e){
