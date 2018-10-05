@@ -1,15 +1,27 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
-import java.util.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.Collections;
 
 /**
  * This service will find all consents for a comma-separated list of ids or for an association type.
@@ -83,6 +95,58 @@ public class ConsentsResource extends Resource {
     @Override
     protected Logger logger() {
         return Logger.getLogger("ConsentsResource");
+    }
+
+
+    /**
+     * Given that this end-point isn't mapped in swagger follow these steps:
+     * 1. Works only for Admin users. It should be used via a REST client, such as Postman.
+     * Requirements:
+     *     Admin user token
+     *     point to /api/consents/group-names/
+     *     Headers: Accept: application/json Authorization: Bearer token_admin Content-Type: multipart/json
+     *     Body of the request: Key -> data; Value -> file
+     *
+     * 2. The info of the group names comes from the ORSP db. Run this query:
+     * <code>select  dur.vault_consent_id as consentId, i.summary as groupName
+     * from issue i
+     * inner join data_use_restriction dur on dur.consent_group_key = i.project_key
+     * where i.type = 'Consent Group'
+     * and dur.vault_export_date is not null;</code>
+     *
+     * 3. Export to csv file. This file should be exported to a structured JSON with the following format:
+     * [
+     *     {
+     *         "consentId": "testId",
+     *         "groupName": "lorem ipsum / 123"
+     *     },
+     *     {
+     *         "consentId": "testId2",
+     *         "groupName": "lorem ipsum / 124"
+     *     }
+     * ]
+     * @param info
+     * @param user
+     * @param data
+     * @return
+     */
+    @POST
+    @Path("group-names")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
+    public Response updateGroupNames(@Context UriInfo info, @Auth User user, List<ConsentGroupNameDTO> data) {
+        try {
+            List<ConsentGroupNameDTO> errors = api.verifyConsentGroupNames(data);
+            if (errors.isEmpty()) {
+                api.updateConsentGroupNames(data);
+                return Response.status(Response.Status.OK).build();
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST).entity(errors).build();
+            }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+
     }
 
 }
