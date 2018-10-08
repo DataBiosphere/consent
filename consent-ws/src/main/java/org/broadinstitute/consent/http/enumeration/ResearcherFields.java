@@ -26,7 +26,10 @@ public enum ResearcherFields {
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
     INVESTIGATOR("investigator", false),
-    LINKEDIN_PROFILE("linkedinProfile", false);
+    LINKEDIN_PROFILE("linkedIn", false),
+    RESEARCHER_GATE("researcherGate", false),
+    ORCID("orcid", false);
+
 
     private String value;
     private Boolean required;
