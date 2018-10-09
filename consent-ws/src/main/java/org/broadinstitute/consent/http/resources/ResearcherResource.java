@@ -52,7 +52,7 @@ public class ResearcherResource extends Resource{
 
     @GET
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","RESEARCHER"})
+    @RolesAllowed({"ADMIN","RESEARCHER", "CHAIRPERSON", "MEMBER"})
     public Response describeAllResearcherProperties(@PathParam("userId") Integer userId) {
         try{
             return Response.ok(researcherAPI.describeResearcherPropertiesMap(userId)).build();
