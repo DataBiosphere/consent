@@ -10,41 +10,29 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import javax.validation.constraints.AssertTrue;
 import java.util.ArrayList;
 import java.util.List;
-
 import static org.mockito.Mockito.*;
 
 public class DatabaseDataAccessRequestAPITest {
 
     @Mock
     private MongoConsentDB mongo;
-
     @Mock
     private UseRestrictionConverter converter;
-
     @Mock
     private ElectionDAO electionDAO;
-
     @Mock
     private ConsentDAO consentDAO;
-
     @Mock
     private ResearcherPropertyDAO researcherPropertyDAO;
-
     @Mock
     private VoteDAO voteDAO;
-
     @Mock
     private DACUserDAO dacUserDAO;
-
     @Mock
     private DataSetDAO dataSetDAO;
-
     @Mock
     private DataAccessReportsParser dataAccessReportsParser;
 
