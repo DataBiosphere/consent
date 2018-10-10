@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.BindBean;
+import org.skife.jdbi.v2.unstable.BindIn;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
@@ -37,11 +38,8 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     @SqlUpdate("delete from researcher_property where  userId = :userId")
     void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
-    @SqlUpdate("delete from researcher_property where  userId = :userId and propertyKey = :propertyKey")
-    void deletePropertyByUser(@Bind("propertyKey") String propertyKey, @Bind("userId") Integer userId);
-
-    @SqlUpdate("insert into researcher_property (userId, propertyKey, propertyValue) values (:userId, :propertyKey, :propertyValue)")
-    void insertPropertyByUser(@Bind("propertyKey") String propertyKey, @Bind("propertyValue") String propertyValue, @Bind("userId") Integer userId);
+    @SqlUpdate("delete from researcher_property where  userId = :userId and propertyKey IN (<propertyKeyList>)")
+    void deletePropertyByUser(@BindIn("propertyKeyList") List<String> propertyKeyList, @Bind("userId") Integer userId);
 
     @SqlQuery(value = "select * from researcher_property where " +
             "(propertyKey = '" + INSTITUTION + "' AND propertyValue != :institutionName) OR " +
