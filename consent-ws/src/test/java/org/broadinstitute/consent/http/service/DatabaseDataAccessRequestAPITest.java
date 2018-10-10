@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 public class DatabaseDataAccessRequestAPITest {
 
-
     @Mock
     private MongoConsentDB mongo;
 
@@ -33,9 +32,6 @@ public class DatabaseDataAccessRequestAPITest {
 
     @Mock
     private ConsentDAO consentDAO;
-
-    @Mock
-    private DataAccessParser dataAccessParser;
 
     @Mock
     private ResearcherPropertyDAO researcherPropertyDAO;
@@ -61,7 +57,6 @@ public class DatabaseDataAccessRequestAPITest {
     private final String RESEARCHER_GATE = "researcher_gate";
 
     DatabaseDataAccessRequestAPI databaseDataAccessRequestAPI;
-
 
     @Before
     public void setUp(){
@@ -93,7 +88,6 @@ public class DatabaseDataAccessRequestAPITest {
                 Assert.assertTrue(researcherProperty.getPropertyValue().equals(RESEARCHER_GATE));
             }
         });
-
     }
 
     @Test
@@ -109,19 +103,6 @@ public class DatabaseDataAccessRequestAPITest {
         Assert.assertTrue(properties.get(0).getPropertyValue().equals("845246551313515"));
     }
 
-
-    @Test
-    public void testNotUpdatedResearcher() throws Exception {
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.LINKEDIN_PROFILE.getValue())).thenReturn(LINKEDIN_PROFILE);
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.ORCID.getValue())).thenReturn(ORCID);
-        when(researcherPropertyDAO.findPropertyValueByPK(USER_ID, ResearcherFields.RESEARCHER_GATE.getValue())).thenReturn(RESEARCHER_GATE);
-        Document dar = getDocument(LINKEDIN_PROFILE, ORCID, RESEARCHER_GATE);
-        List<ResearcherProperty> researcherProperties = databaseDataAccessRequestAPI.updateResearcherIdentification(dar);
-        verify(researcherPropertyDAO, times(0)).insertAll(anyObject());
-        Assert.assertTrue(researcherProperties.size() == 0);
-    }
-
-
     private Document getDocument(String linkedIn, String orcid, String researcherGate){
         Document dar = new Document();
         dar.put(DarConstants.USER_ID, USER_ID);
@@ -130,7 +111,4 @@ public class DatabaseDataAccessRequestAPITest {
         dar.put(ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate);
         return dar;
     }
-
-
-
 }

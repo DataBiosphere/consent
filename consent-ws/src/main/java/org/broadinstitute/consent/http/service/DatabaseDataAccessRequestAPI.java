@@ -611,23 +611,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
         String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
         List<ResearcherProperty> rpList = new ArrayList<>();
-        if (!Objects.equals(linkedIn, researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.LINKEDIN_PROFILE.getValue()))
-                || !Objects.equals(orcId, researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.ORCID.getValue()))
-                || !Objects.equals(researcherGate, researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.RESEARCHER_GATE.getValue()))) {
-
-            researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
-            if(StringUtils.isNotEmpty(linkedIn)) {
-                rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
-            }
-            if(StringUtils.isNotEmpty(orcId)) {
-                rpList.add(new ResearcherProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
-            }
-            if(StringUtils.isNotEmpty(researcherGate)) {
-                rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
-            }
-            if(CollectionUtils.isNotEmpty(rpList)) {
-                researcherPropertyDAO.insertAll(rpList);
-            }
+        researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
+        if(StringUtils.isNotEmpty(linkedIn)) {
+          rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
+        }
+        if(StringUtils.isNotEmpty(orcId)) {
+          rpList.add(new ResearcherProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
+        }
+        if(StringUtils.isNotEmpty(researcherGate)) {
+           rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
+        }
+        if(CollectionUtils.isNotEmpty(rpList)) {
+           researcherPropertyDAO.insertAll(rpList);
         }
         return rpList;
     }
