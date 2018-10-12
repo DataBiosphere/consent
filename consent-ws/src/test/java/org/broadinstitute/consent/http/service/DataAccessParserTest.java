@@ -44,6 +44,14 @@ public class DataAccessParserTest {
     private final String RESEARCH_OTHER_TEXT = "Research Other Text";
     private final String PATH = "template/RequestApplication.pdf";
     private final String PROFILE_NAME = "Profile Name Test";
+    private final String MANUAL_REVIEW = "THIS DATA ACCESS REQUEST DOES NOT REQUIRE MANUAL REVIEW";
+    private final String USER_STATUS = "Approved";
+    private final String ADMIN_COMMENT = "Granted bonafide";
+    private final String NIH_USERNAME = "nih-test-username";
+    private final String LINKEDIN = "linkedin-test-id";
+    private final String ORCID = "0001-0002-00122";
+    private final String RESEARCHER_GATE = "researcher-gate-0001-test";
+    private final String DATA_ACCESS_AGREEMENT = "Yes";
     public DataAccessParserTest() {
         this.dataAccessParser = new DataAccessParser();
         this.researcherProperties = new HashMap<>();
@@ -84,6 +92,12 @@ public class DataAccessParserTest {
         dar.put(DarConstants.POA, true);
         dar.put(DarConstants.HMB, true);
         dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
+        dar.put(DarConstants.CHECK_COLLABORATOR, true);
+        dar.put(DarConstants.NIH_USERNAME, NIH_USERNAME);
+        dar.put(DarConstants.LINKEDIN, LINKEDIN);
+        dar.put(DarConstants.ORCID, ORCID);
+        dar.put(DarConstants.RESEARCHER_GATE, RESEARCHER_GATE);
+        dar.put(DarConstants.DATA_ACCESS_AGREEMENT, DATA_ACCESS_AGREEMENT);
         this.manualReview = false;
         this.role.setStatus("approved");
         this.role.setRationale("granted bonafide");
@@ -110,12 +124,18 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.CONTROLS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.OTHER).getValueAsString().equals("Yes"));
+        Assert.isTrue(acroForm.getField(DarConstants.CHECK_COLLABORATOR).getValueAsString().equals("Yes"));
+        Assert.isTrue(acroForm.getField(DarConstants.NIH_USERNAME).getValueAsString().equals(NIH_USERNAME));
+        Assert.isTrue(acroForm.getField(DarConstants.LINKEDIN).getValueAsString().equals(LINKEDIN));
+        Assert.isTrue(acroForm.getField(DarConstants.ORCID).getValueAsString().equals(ORCID));
+        Assert.isTrue(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString().equals(RESEARCHER_GATE));
+        Assert.isTrue(acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField("otherText").getValueAsString().equals(RESEARCH_OTHER_TEXT));
         Assert.isTrue(acroForm.getField("origins").getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField("health").getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField("manualReview").getValueAsString().equals("THIS DATA ACCESS REQUEST DOES NOT REQUIRE MANUAL REVIEW"));
-        Assert.isTrue(acroForm.getField("userStatus").getValueAsString().equals("Approved"));
-        Assert.isTrue(acroForm.getField("adminComment").getValueAsString().equals("Granted bonafideranted bonafide"));
+        Assert.isTrue(acroForm.getField("manualReview").getValueAsString().equals(MANUAL_REVIEW));
+        Assert.isTrue(acroForm.getField("userStatus").getValueAsString().equals(USER_STATUS));
+        Assert.isTrue(acroForm.getField("adminComment").getValueAsString().equals(ADMIN_COMMENT));
     }
 
 
