@@ -7,6 +7,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -89,7 +90,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    private DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
         this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
@@ -126,6 +127,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             });
         }
         insertDataAccess(dataAccessList);
+        updateResearcherIdentification(dataAccessRequest);
         return dataAccessList;
     }
 
@@ -549,7 +551,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             try{
                 darManage.setOwnerUser(getOwnerUser(dar.getInteger("userId")));
             }catch (Exception e){
-               darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString("userId"))));
+                darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString("userId"))));
             }
             requestsManage.add(darManage);
         });
@@ -603,4 +605,27 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return dataAccess;
     }
 
+    protected List<ResearcherProperty> updateResearcherIdentification(Document dataAccessRequest) {
+        Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
+        String linkedIn = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
+        String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
+        String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
+        List<ResearcherProperty> rpList = new ArrayList<>();
+        researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
+        if(StringUtils.isNotEmpty(linkedIn)) {
+          rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
+        }
+        if(StringUtils.isNotEmpty(orcId)) {
+          rpList.add(new ResearcherProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
+        }
+        if(StringUtils.isNotEmpty(researcherGate)) {
+           rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
+        }
+        if(CollectionUtils.isNotEmpty(rpList)) {
+           researcherPropertyDAO.insertAll(rpList);
+        }
+        return rpList;
+    }
+
 }
+
