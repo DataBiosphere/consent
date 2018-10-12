@@ -1,6 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -24,10 +28,14 @@ public class DataRequestReportsResource extends Resource {
 
     private final DataAccessReportsParser dataAccessReportsParser;
 
-    public DataRequestReportsResource(ResearcherAPI researcherAPI) {
+        private final DACUserAPI dacUserAPI;
+        private static final ObjectMapper mapper = new ObjectMapper();
+
+    public DataRequestReportsResource(ResearcherAPI researcherAPI, DACUserAPI dacUserAPI) {
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.researcherAPI = researcherAPI;
         this.dataAccessReportsParser = new DataAccessReportsParser();
+        this.dacUserAPI = dacUserAPI;
     }
 
 
@@ -38,10 +46,12 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
+        DACUserRole role = dacUserAPI.getRoleStatus(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try{
+            Boolean manualReview = requiresManualReview(dar);
             return Response
-                    .ok(darApi.createDARDocument(dar, researcherProperties), MediaType.APPLICATION_OCTET_STREAM)
+                    .ok(darApi.createDARDocument(dar, researcherProperties, role, manualReview), MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + fileName + ".pdf")
                     .header(HttpHeaders.ACCEPT, "application/pdf")
                     .header("Access-Control-Expose-Headers", HttpHeaders.CONTENT_DISPOSITION)
@@ -79,4 +89,32 @@ public class DataRequestReportsResource extends Resource {
             return createExceptionResponse(e);
         }
     }
+
+    private Boolean requiresManualReview(Document dar) throws IOException {
+        Map<String, Object> form = parseAsMap(dar.toJson());
+        for (String field: fieldsForManualReview) {
+            if (Boolean.valueOf(form.get(field).toString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Map<String, Object> parseAsMap(String str) throws IOException {
+        ObjectReader reader = mapper.readerFor(Map.class);
+        return reader.readValue(str);
+    }
+
+    private String[] fieldsForManualReview = {
+            "population",
+            "other",
+            "illegalbehave",
+            "addiction",
+            "sexualdiseases",
+            "stigmatizediseases",
+            "vulnerablepop",
+            "popmigration",
+            "psychtraits",
+            "nothealth"
+    };
 }

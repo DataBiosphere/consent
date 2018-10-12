@@ -4,6 +4,7 @@ import com.vividsolutions.jts.util.Assert;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
@@ -17,6 +18,8 @@ public class DataAccessParserTest {
 
     private DataAccessParser dataAccessParser;
     private Map<String, String> researcherProperties;
+    private DACUserRole role;
+    private Boolean manualReview;
     private Document dar;
     private final String INSTITUTION = "Institution Test";
     private final String DEPARTMENT = "Department Test";
@@ -45,6 +48,7 @@ public class DataAccessParserTest {
         this.dataAccessParser = new DataAccessParser();
         this.researcherProperties = new HashMap<>();
         this.dar = new Document();
+        this.role = new DACUserRole();
     }
 
     @Test
@@ -80,7 +84,8 @@ public class DataAccessParserTest {
         dar.put(DarConstants.POA, true);
         dar.put(DarConstants.HMB, true);
         dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
-        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
+        this.manualReview = false;
+        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
         Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
