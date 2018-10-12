@@ -51,7 +51,7 @@ public class DataAccessParserTest {
     private final String LINKEDIN = "linkedin-test-id";
     private final String ORCID = "0001-0002-00122";
     private final String RESEARCHER_GATE = "researcher-gate-0001-test";
-    private final String DATA_ACCESS_AGREEMENT = "Yes";
+    private final String DATA_ACCESS_AGREEMENT = "/url/bucket/id-bucket-test";
     public DataAccessParserTest() {
         this.dataAccessParser = new DataAccessParser();
         this.researcherProperties = new HashMap<>();
