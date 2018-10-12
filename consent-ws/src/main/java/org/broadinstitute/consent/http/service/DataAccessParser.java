@@ -197,15 +197,15 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.CHECK_COLLABORATOR)));
                     break;
                 }
-                case "user_status": {
-                    field.setValue(getDefaultValue(role.getStatus()));
+                case "userStatus": {
+                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getStatus())));
                     break;
                 }
-                case "rationale": {
-                    field.setValue(getDefaultValue(role.getRationale()));
+                case "adminComment": {
+                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getRationale())));
                     break;
                 }
-                case "requires_manual_review": {
+                case "manualReview": {
                     field.setValue(getDefaultValue(checkRequiresManualReview(manualReview)));
                     break;
                 }
@@ -226,7 +226,8 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.DATA_ACCESS_AGREEMENT: {
-                    field.setValue(getYesOrNoValue(dar.getString(DarConstants.DATA_ACCESS_AGREEMENT)));
+                    Boolean existDataAccessAgreement = dar.getString(DarConstants.DATA_ACCESS_AGREEMENT) == null? false: true;
+                    field.setValue(getYesOrNoValue(existDataAccessAgreement));
                     break;
                 }
             }
@@ -260,5 +261,4 @@ public class DataAccessParser {
         return "THIS DATA ACCESS REQUEST DOES NOT REQUIRE MANUAL REVIEW";
     }
 
-    private Boolean checkDataAccessAgreementFile()
 }

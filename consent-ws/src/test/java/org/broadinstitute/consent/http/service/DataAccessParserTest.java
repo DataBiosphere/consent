@@ -85,6 +85,8 @@ public class DataAccessParserTest {
         dar.put(DarConstants.HMB, true);
         dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
         this.manualReview = false;
+        this.role.setStatus("approved");
+        this.role.setRationale("granted bonafide");
         PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
@@ -111,7 +113,9 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField("otherText").getValueAsString().equals(RESEARCH_OTHER_TEXT));
         Assert.isTrue(acroForm.getField("origins").getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField("health").getValueAsString().equals("Yes"));
-
+        Assert.isTrue(acroForm.getField("manualReview").getValueAsString().equals("THIS DATA ACCESS REQUEST DOES NOT REQUIRE MANUAL REVIEW"));
+        Assert.isTrue(acroForm.getField("userStatus").getValueAsString().equals("Approved"));
+        Assert.isTrue(acroForm.getField("adminComment").getValueAsString().equals("Ggranted bonafideranted bonafide"));
     }
 
 

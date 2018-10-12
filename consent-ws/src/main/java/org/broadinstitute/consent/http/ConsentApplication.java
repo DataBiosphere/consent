@@ -218,7 +218,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new DataRequestReportsResource(researcherAPI));
+        env.jersey().register(new DataRequestReportsResource(researcherAPI, DatabaseDACUserAPI.getInstance()));
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be

@@ -113,14 +113,14 @@ public class DarConstants {
 
     public static final String CHECK_COLLABORATOR = "checkCollaborator";
 
-    public static final String NIH_USERNAME = "nih_username";
+    public static final String NIH_USERNAME = "nihUsername";
 
     public static final String LINKEDIN = "linkedIn";
 
     public static final String ORCID = "orcid";
 
-    public static final String RESEARCHER_GATE = "researcher_gate";
+    public static final String RESEARCHER_GATE = "researcherGate";
 
-    public static final String DATA_ACCESS_AGREEMENT = "data_access_agreement";
+    public static final String DATA_ACCESS_AGREEMENT = "dataAccessAgreement";
 
 }

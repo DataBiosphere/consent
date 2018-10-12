@@ -93,8 +93,10 @@ public class DataRequestReportsResource extends Resource {
     private Boolean requiresManualReview(Document dar) throws IOException {
         Map<String, Object> form = parseAsMap(dar.toJson());
         for (String field: fieldsForManualReview) {
-            if (Boolean.valueOf(form.get(field).toString())) {
-                return true;
+            if (form.containsKey(field)) {
+                if (Boolean.valueOf(form.get(field).toString())) {
+                    return true;
+                }
             }
         }
         return false;
