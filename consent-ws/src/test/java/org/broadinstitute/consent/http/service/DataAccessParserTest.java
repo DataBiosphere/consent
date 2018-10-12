@@ -115,7 +115,7 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField("health").getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField("manualReview").getValueAsString().equals("THIS DATA ACCESS REQUEST DOES NOT REQUIRE MANUAL REVIEW"));
         Assert.isTrue(acroForm.getField("userStatus").getValueAsString().equals("Approved"));
-        Assert.isTrue(acroForm.getField("adminComment").getValueAsString().equals("Ggranted bonafideranted bonafide"));
+        Assert.isTrue(acroForm.getField("adminComment").getValueAsString().equals("Granted bonafideranted bonafide"));
     }
 
 
