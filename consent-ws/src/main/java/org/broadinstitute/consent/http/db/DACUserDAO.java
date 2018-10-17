@@ -51,11 +51,12 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
                           @Bind("displayName") String displayName,
                           @Bind("createDate") Date createDate);
 
-    @SqlUpdate("update dacuser set email=:email, displayName=:displayName where dacUserId=:id")
+    @SqlUpdate("update dacuser set email=:email, displayName=:displayName, additional_email=:additionalEmail where dacUserId=:id")
     @GetGeneratedKeys
     Integer updateDACUser(@Bind("email") String email,
                           @Bind("displayName") String displayName,
-                          @Bind("id") Integer id);
+                          @Bind("id") Integer id,
+                          @Bind("additionalEmail") String additionalEmail);
 
     @SqlUpdate("delete from dacuser where email = :email")
     void deleteDACUserByEmail(@Bind("email") String email);

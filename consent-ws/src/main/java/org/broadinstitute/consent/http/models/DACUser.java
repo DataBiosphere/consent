@@ -20,6 +20,9 @@ public class DACUser {
     private Date createDate;
 
     @JsonProperty
+    private String additionalEmail;
+
+    @JsonProperty
     private List<DACUserRole> roles;
 
     public DACUser() {
@@ -30,6 +33,14 @@ public class DACUser {
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
+    }
+
+    public DACUser(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
+        this.dacUserId = dacUserId;
+        this.email = email;
+        this.displayName = displayName;
+        this.createDate = createDate;
+        this.additionalEmail = additionalEmail;
     }
 
     public DACUser(Integer dacUserId, String email, String displayName,
@@ -79,6 +90,14 @@ public class DACUser {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getAdditionalEmail() {
+        return additionalEmail;
+    }
+
+    public void setAdditionalEmail(String additionalEmail) {
+        this.additionalEmail = additionalEmail;
     }
 
     @Override

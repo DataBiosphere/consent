@@ -72,25 +72,25 @@ public class MailService extends AbstractMailServiceAPI {
         }
     }
 
-    public void sendCollectMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = collectMessageCreator.collectMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessage(message);
+    public void sendCollectMessage(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+        List<Mail> messages = collectMessageCreator.collectMessage(toAddresses, fromAccount, template, referenceId, type);
+        sendMessages(messages);
     }
 
-    public void sendNewCaseMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessage(message);
+    public void sendNewCaseMessage(List<String> toAddress, String referenceId, String type, Writer template) throws MessagingException {
+        List<Mail> messages = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
+        sendMessages(messages);
     }
 
-    public void sendReminderMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = reminderMessageCreator.reminderMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessage(message);
+    public void sendReminderMessage(List<String> addresses, String referenceId, String type, Writer template) throws MessagingException {
+        List<Mail> messages = reminderMessageCreator.reminderMessage(addresses, fromAccount, template, referenceId, type);
+        sendMessages(messages);
     }
 
     @Override
-    public void sendDisabledDatasetMessage(String toAddress, String referenceId, String type, Writer template) throws MessagingException {
-        Mail message = disabledDatasetCreator.disabledDatasetMessage(toAddress, fromAccount, template, referenceId, type);
-        sendMessage(message);
+    public void sendDisabledDatasetMessage(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+        List<Mail> messages = disabledDatasetCreator.disabledDatasetMessage(toAddresses, fromAccount, template, referenceId, type);
+        sendMessages(messages);
     }
 
     @Override
@@ -112,21 +112,21 @@ public class MailService extends AbstractMailServiceAPI {
     }
 
     @Override
-    public void sendFlaggedDarAdminApprovedMessage(String toAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException {
-        Mail message = adminApprovedDarMessageCreator.flaggedDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
-        sendMessage(message);
+    public void sendFlaggedDarAdminApprovedMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+        List<Mail> messages = adminApprovedDarMessageCreator.flaggedDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
+        sendMessages(messages);
     }
 
     @Override
-    public void sendDelegateResponsibilitiesMessage(String toAddress, Writer template) throws MessagingException {
-        Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
-        sendMessage(message);
+    public void sendDelegateResponsibilitiesMessage(List<String> userAddresses, Writer template) throws MessagingException {
+        List<Mail> messages = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(userAddresses, fromAccount, template);
+        sendMessages(messages);
     }
 
     @Override
-    public void sendNewResearcherCreatedMessage(String toAddress, Writer template) throws MessagingException {
-        Mail message = researcherCreatedMessage.newResearcherCreatedMessage(toAddress, fromAccount, template, "", "");
-        sendMessage(message);
+    public void sendNewResearcherCreatedMessage(List<String> toAddresses, Writer template) throws MessagingException {
+        List<Mail> messages = researcherCreatedMessage.newResearcherCreatedMessage(toAddresses, fromAccount, template, "", "");
+        sendMessages(messages);
     }
 
     @Override

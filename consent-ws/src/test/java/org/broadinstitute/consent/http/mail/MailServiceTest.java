@@ -47,14 +47,14 @@ public class MailServiceTest {
         MailService.initInstance(config);
         mailService = AbstractMailServiceAPI.MailServiceAPIHolder.getInstance();
         Assert.assertNotNull(mailService);
-        mailService.sendCollectMessage(TO, ID, TYPE, template);
+        mailService.sendCollectMessage(Collections.singletonList(TO), ID, TYPE, template);
     }
 
     @Test
     public void testCollectMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendCollectMessage(TO, ID, TYPE, template);
+            mailService.sendCollectMessage(Collections.singletonList(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -64,7 +64,7 @@ public class MailServiceTest {
     public void testNewCaseMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendNewCaseMessage(TO, ID, TYPE, template);
+            mailService.sendNewCaseMessage(Collections.singletonList(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -74,7 +74,7 @@ public class MailServiceTest {
     public void testReminderMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendReminderMessage(TO, ID, TYPE, template);
+            mailService.sendReminderMessage(Collections.singletonList(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -84,7 +84,7 @@ public class MailServiceTest {
     public void testDisabledDatasetMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendDisabledDatasetMessage(TO, ID, TYPE, template);
+            mailService.sendDisabledDatasetMessage(Collections.singletonList(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -114,7 +114,7 @@ public class MailServiceTest {
     public void testFlaggedDarAdminApprovedMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendFlaggedDarAdminApprovedMessage(TO, ID, TYPE, template);
+            mailService.sendFlaggedDarAdminApprovedMessage(Collections.singletonList(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -134,7 +134,7 @@ public class MailServiceTest {
     public void testDelegateResponsibilitiesMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendDelegateResponsibilitiesMessage(TO, template);
+            mailService.sendDelegateResponsibilitiesMessage(Collections.singletonList(TO), template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -144,7 +144,7 @@ public class MailServiceTest {
     public void testNewResearcherCreatedMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendNewResearcherCreatedMessage(TO, template);
+            mailService.sendNewResearcherCreatedMessage(Collections.singletonList(TO), template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }

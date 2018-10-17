@@ -8,25 +8,25 @@ import java.util.List;
 
 public interface MailServiceAPI {
 
-    void sendCollectMessage(String address, String referenceId, String type, Writer template) throws MessagingException;
+    void sendCollectMessage(List<String> addresses, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendNewCaseMessage(String userAddress, String referenceId, String type, Writer template) throws MessagingException;
+    void sendNewCaseMessage(List<String> userAddress, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendReminderMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
+    void sendReminderMessage(List<String> addresses, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendDisabledDatasetMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
+    void sendDisabledDatasetMessage(List<String> addresses, String referenceId, String type, Writer template) throws MessagingException;
 
     void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException;
 
     void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
-    void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+    void sendFlaggedDarAdminApprovedMessage(List<String> userAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
     void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
-    void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException;
+    void sendDelegateResponsibilitiesMessage(List<String> userAddresses, Writer template) throws MessagingException;
 
-    void sendNewResearcherCreatedMessage(String admin, Writer template) throws IOException, TemplateException, MessagingException;
+    void sendNewResearcherCreatedMessage(List<String> admin, Writer template) throws IOException, TemplateException, MessagingException;
 
     void sendNewHelpReportMessage(List<String> usersAddress, Writer template, String username) throws MessagingException;
 

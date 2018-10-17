@@ -128,6 +128,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.LINKEDIN_PROFILE.getValue(), properties.containsKey(ResearcherFields.LINKEDIN_PROFILE.getValue()) ? properties.get(ResearcherFields.LINKEDIN_PROFILE.getValue()) : null);
         rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.containsKey(ResearcherFields.RESEARCHER_GATE.getValue()) ? properties.get(ResearcherFields.RESEARCHER_GATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.containsKey(ResearcherFields.ORCID.getValue()) ? properties.get(ResearcherFields.ORCID.getValue()) : null);
+        rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.containsKey(ResearcherFields.CHECK_NOTIFICATIONS.getValue()) ? properties.get(ResearcherFields.CHECK_NOTIFICATIONS.getValue()) : null);
         return rpForDAR;
     }
 

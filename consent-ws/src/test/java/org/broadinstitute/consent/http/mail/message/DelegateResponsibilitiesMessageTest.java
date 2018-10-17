@@ -8,6 +8,8 @@ import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -23,8 +25,8 @@ public class DelegateResponsibilitiesMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Mail message = new DelegateResponsibilitiesMessage().delegateResponsibilitiesMessage("to@address.com", "from@address.com", template);
-        assertTrue(message.getSubject().equals("You have been assigned a New Role in DUOS."));
+        List<Mail> messages = new DelegateResponsibilitiesMessage().delegateResponsibilitiesMessage(Collections.singletonList("to@address.com"), "from@address.com", template);
+        assertTrue(messages.get(0).getSubject().equals("You have been assigned a New Role in DUOS."));
     }
 
 }
