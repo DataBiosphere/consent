@@ -155,7 +155,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         OAuthAuthenticator.initInstance();
 
         // Mail Services
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
+        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO, researcherPropertyDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
