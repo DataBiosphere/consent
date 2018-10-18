@@ -162,9 +162,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 if(electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
                     rpVoteId = findRpVoteId(election.getElectionId(), user.getDacUserId());
                 }
+                List<String> academicEmails = getAcademicEmails(Arrays.asList(user));
+
                 String serverUrl = generateUserVoteUrl(SERVER_URL, electionType, vote.getVoteId().toString(), entityId, rpVoteId);
                 Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, serverUrl);
                 List<String> emails = StringUtils.isNotEmpty(user.getAdditionalEmail()) ? Arrays.asList(user.getAdditionalEmail(), user.getEmail()) : Collections.singletonList(user.getEmail());
+                if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
                 sendNewCaseMessage(emails, electionType, entityName, template);
             }
         }
@@ -245,10 +248,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendUserDelegateResponsibilitiesMessage(DACUser user, Integer oldUser,  String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
+            List<String> academicEmails = getAcademicEmails(Arrays.asList(user));
             String delegateURL = SERVER_URL + delegateURL(newRole);
             List<VoteAndElectionModel> votesInformation = findVotesDelegationInfo(delegatedVotes.stream().map(vote -> vote.getVoteId()).collect(Collectors.toList()), oldUser);
             Writer template =  getUserDelegateResponsibilitiesTemplate(user, newRole, votesInformation, delegateURL);
             List<String> emails = StringUtils.isNotEmpty(user.getAdditionalEmail()) ? Arrays.asList(user.getAdditionalEmail(), user.getEmail()) : Collections.singletonList(user.getEmail());
+            if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
             mailService.sendDelegateResponsibilitiesMessage(emails, template);
         }
     }
