@@ -44,12 +44,13 @@ public class DACUser {
     }
 
     public DACUser(Integer dacUserId, String email, String displayName,
-                   String isApproved, Date createDate, List<DACUserRole> roles) {
+                   String isApproved, Date createDate, List<DACUserRole> roles, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.roles = roles;
+        this.additionalEmail = additionalEmail;
     }
 
     public Integer getDacUserId() {

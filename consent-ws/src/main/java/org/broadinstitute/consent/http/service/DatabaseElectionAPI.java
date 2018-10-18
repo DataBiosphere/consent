@@ -496,19 +496,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
             DACUser dacUser = dacUserDAO.findDACUserById(dar.getInteger("userId"));
-            List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId());
-            ResearcherProperty checkNotification = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst().get();
-            ResearcherProperty academicEmailRP = null;
-            if(checkNotification != null && checkNotification.getPropertyValue().equals("true")) {
-                academicEmailRP = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).findFirst().get();
-            }
-            String academicEmail = academicEmailRP != null ? academicEmailRP.getPropertyValue() : null;
             if(!createElection){
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, academicEmail, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
             }else{
                 updateDataAccessRequest(dataSetList, dar, dar.getString(DarConstants.DAR_CODE));
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, academicEmail, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
             }
         }
         return dataSetList;

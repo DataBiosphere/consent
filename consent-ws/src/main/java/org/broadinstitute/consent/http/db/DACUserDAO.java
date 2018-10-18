@@ -72,7 +72,8 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.roleId where r.name = 'Admin'")
     Integer verifyAdminUsers();
 
-    @SqlQuery("select u.* from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = :roleName and du.email_preference = :emailPreference")
+    @Mapper(DACUserRoleMapper.class)
+    @SqlQuery("select u.*, r.roleId, r.name, du.status from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
     @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN "
@@ -104,5 +105,8 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @GetGeneratedKeys
     Integer updateDACUser(@Bind("displayName") String displayName,
                           @Bind("id") Integer id);
+
+    @SqlQuery("select u.dacUserId from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where u.dacUserId = :dacUserId and r.name = 'Researcher'")
+    Integer checkResearcherRole(@Bind("dacUserId") Integer dacUserId);
 
 }

@@ -4,25 +4,18 @@ import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.MailServiceAPI;
 import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.HelpReport;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -32,6 +25,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import javax.mail.MessagingException;
+import javax.swing.text.html.Option;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.Writer;
@@ -44,6 +38,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
     private DACUserDAO dacUserDAO;
+    private ResearcherPropertyDAO researcherPropertyDAO;
     private MailServiceDAO mailServiceDAO;
     private ConsentAPI consentAPI;
     private DataAccessRequestAPI dataAccessAPI;
@@ -92,11 +87,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    public static void initInstance(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive) {
-        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(voteDAO, mongo, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, helper, serverUrl, serviceActive));
+    public static void initInstance(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO) {
+        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(voteDAO, mongo, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, helper, serverUrl, serviceActive, researcherPropertyDAO));
     }
 
-    public EmailNotifierService(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive){
+    public EmailNotifierService(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO){
         this.dacUserDAO = dacUserDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -109,19 +104,19 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;
         this.mongo = mongo;
+        this.researcherPropertyDAO = researcherPropertyDAO;
     }
-
 
     @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
             List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isEmpty(users)) return;
+            List<String> academicEmails = getAcademicEmails(users);
             List<String> addresses = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             List<String> additionalEmail = users.stream().map(DACUser::getAdditionalEmail).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(additionalEmail)) {
-                addresses.addAll(additionalEmail);
-            }
+            if(CollectionUtils.isNotEmpty(additionalEmail)) addresses.addAll(additionalEmail);
+            if(CollectionUtils.isNotEmpty(academicEmails)) addresses.addAll(academicEmails);
             List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
             Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
             Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
@@ -176,11 +171,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendDisabledDatasetsMessage(DACUser user, String academicEmail, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
+    public void sendDisabledDatasetsMessage(DACUser user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVER_URL);
             List<String> emails = StringUtils.isNotEmpty(user.getAdditionalEmail()) ? Arrays.asList(user.getAdditionalEmail(), user.getEmail()) : Collections.singletonList(user.getEmail());
-            if(academicEmail != null) emails.add(academicEmail);
+            List<String> academicEmails =  getAcademicEmails(Arrays.asList(user));
+            if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
             mailService.sendDisabledDatasetMessage(emails, dataAcessRequestId, null, template);
         }
     }
@@ -192,6 +188,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             List<String> additionEmails = users.stream().map(DACUser::getAdditionalEmail).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(additionEmails)) usersEmail.addAll(additionEmails);
+            List<String> academicEmails =  getAcademicEmails(users);
+            if(CollectionUtils.isNotEmpty(academicEmails)) usersEmail.addAll(academicEmails);
             mailService.sendCancelDARRequestMessage(usersEmail, dataAcessRequestId, null, template);
         }
     }
@@ -207,10 +205,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 reviewedDatasets.put(dar_code, dsElections);
             }
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+            List<String> academicEmails = getAcademicEmails(users);
             Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
             List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
-            List<String> additionEmails = users.stream().map(DACUser::getAdditionalEmail).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(additionEmails)) usersEmail.addAll(additionEmails);
+            List<String> additionalEmails = users.stream().map(DACUser::getAdditionalEmail).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(additionalEmails)) usersEmail.addAll(additionalEmails);
+            if(CollectionUtils.isNotEmpty(academicEmails)) usersEmail.addAll(academicEmails);
             mailService.sendClosedDatasetElectionsMessage(usersEmail, "", "", template);
         }
     }
@@ -219,7 +219,9 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     public void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
         if(isServiceActive){
             for(DACUser admin: admins) {
+                List<String> academicEmails = getAcademicEmails(Arrays.asList(admin));
                 List<String> emails = StringUtils.isNotEmpty(admin.getAdditionalEmail()) ? Arrays.asList(admin.getAdditionalEmail(), admin.getEmail()) : Collections.singletonList(admin.getEmail());
+                if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
                 Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
                 mailService.sendFlaggedDarAdminApprovedMessage(emails, darCode, SERVER_URL, template);
             }
@@ -232,6 +234,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             for(DACUser owner: dataSetMap.keySet()){
                 String dataOwnerConsoleURL = SERVER_URL + DATA_OWNER_CONSOLE_URL;
                 List<String> emails = StringUtils.isNotEmpty(owner.getAdditionalEmail()) ? Arrays.asList(owner.getAdditionalEmail(), owner.getEmail()) : Collections.singletonList(owner.getEmail());
+                List<String> academicEmails =  getAcademicEmails(Arrays.asList(owner));
+                if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
                 Writer template =  getPIApprovalMessageTemplate(access, dataSetMap.get(owner), owner, amountOfTime, dataOwnerConsoleURL);
                 mailService.sendFlaggedDarAdminApprovedMessage(emails, access.getString(DarConstants.DAR_CODE), SERVER_URL, template);
             }
@@ -258,6 +262,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             for(DACUser admin: admins){
                 Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
                 List<String> emails = StringUtils.isNotEmpty(admin.getAdditionalEmail()) ? Arrays.asList(admin.getAdditionalEmail(), admin.getEmail()) : Collections.singletonList(admin.getEmail());
+                List<String> academicEmails =  getAcademicEmails(Arrays.asList(admin));
+                if(CollectionUtils.isNotEmpty(academicEmails)) emails.addAll(academicEmails);
                 mailService.sendNewResearcherCreatedMessage(emails, template);
             }
         }
@@ -271,6 +277,8 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
             List<String> additionEmails = users.stream().map(DACUser::getAdditionalEmail).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(additionEmails)) usersEmail.addAll(additionEmails);
+            List<String> academicEmails =  getAcademicEmails(users);
+            if(CollectionUtils.isNotEmpty(academicEmails)) usersEmail.addAll(academicEmails);
             mailService.sendNewHelpReportMessage(usersEmail, template, helpReport.getUserName());
         }
     }
@@ -495,5 +503,24 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             return ElectionTypeString.TRANSLATE_DUL.getValue();
         }
         return ElectionTypeString.DATA_ACCESS.getValue();
+    }
+
+    private List<String> getAcademicEmails(List<DACUser> users) {
+        List<String> academicEmails = new ArrayList<>();
+        for(DACUser user: users) {
+            if (dacUserDAO.checkResearcherRole(user.getDacUserId()) != null) {
+                List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId());
+                Optional<ResearcherProperty> checkNotification = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
+                if(checkNotification.isPresent()){
+                    if (checkNotification != null && checkNotification.get().getPropertyValue().equals("true")) {
+                        ResearcherProperty academicEmailRP = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).findFirst().get();
+                        academicEmails.add(academicEmailRP.getPropertyValue());
+                    }
+                    break;
+                }
+
+            }
+        }
+        return academicEmails;
     }
 }
