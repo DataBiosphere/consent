@@ -512,11 +512,10 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId());
                 Optional<ResearcherProperty> checkNotification = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.CHECK_NOTIFICATIONS.getValue())).findFirst();
                 if(checkNotification.isPresent()){
-                    if (checkNotification != null && checkNotification.get().getPropertyValue().equals("true")) {
+                    if (checkNotification.get().getPropertyValue().equals("true")) {
                         ResearcherProperty academicEmailRP = researcherProperties.stream().filter(rp -> rp.getPropertyKey().equals(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).findFirst().get();
                         academicEmails.add(academicEmailRP.getPropertyValue());
                     }
-                    break;
                 }
 
             }
