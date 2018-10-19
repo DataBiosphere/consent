@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 
-import info.aduna.text.StringUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -72,7 +71,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public ParseResult create(File dataSetFile, Integer userId) {
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder());
+        Integer lastAlias = dsDAO.findLastAlias();
+        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false);
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             if (isValid(dataSets, false)) {
@@ -116,7 +116,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public ParseResult overwrite(File dataSetFile, Integer userId) {
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder());
+        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), null, true);
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             List<String> nameList = dataSets.stream().map(DataSet::getName).collect(Collectors.toList());
@@ -505,6 +505,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 if (existentDataSets.containsKey(newDataSet.getName()) || existentDataSets.containsKey(newDataSet.getObjectId())) {
                     DataSet existentDataSet = existentDataSets.containsKey(newDataSet.getName()) ? existentDataSets.get(newDataSet.getName()) : existentDataSets.get(newDataSet.getObjectId());
                     newDataSet.setDataSetId(existentDataSet.getDataSetId());
+                    if(existentDataSet.getAlias() != 0) {
+                        newDataSet.setAlias(existentDataSet.getAlias());
+                    }
                     dataSetToUpdate.add(newDataSet);
                 } else {
                     dataSetToCreate.add(newDataSet);
@@ -513,15 +516,17 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         } else {
             dataSetToCreate.addAll(dataSets);
         }
-        if (CollectionUtils.isNotEmpty(dataSetToCreate)) {
-            dsDAO.insertAll(dataSetToCreate);
-            List<DataSetProperty> properties = insertProperties(dataSetToCreate);
-            insertDataSetAudit(dataSetToCreate, CREATE, userId, properties);
+        List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias());
+        if (CollectionUtils.isNotEmpty(dataSetToCreateWithAlias)) {
+            dsDAO.insertAll(dataSetToCreateWithAlias);
+            List<DataSetProperty> properties = insertProperties(dataSetToCreateWithAlias);
+            insertDataSetAudit(dataSetToCreateWithAlias, CREATE, userId, properties);
         }
-        if (CollectionUtils.isNotEmpty(dataSetToUpdate)) {
-            dsDAO.updateAll(dataSetToUpdate);
-            List<DataSetProperty> properties = insertProperties(dataSetToUpdate);
-            insertDataSetAudit(dataSetToUpdate, UPDATE, userId, properties);
+        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias());
+        if (CollectionUtils.isNotEmpty(dataSetToUpdateWithAlias)) {
+            dsDAO.updateAll(dataSetToUpdateWithAlias);
+            List<DataSetProperty> properties = insertProperties(dataSetToUpdateWithAlias);
+            insertDataSetAudit(dataSetToUpdateWithAlias, UPDATE, userId, properties);
         }
     }
 

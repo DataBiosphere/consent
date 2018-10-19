@@ -26,6 +26,8 @@ import java.util.Set;
 public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     String CHAIRPERSON = "CHAIRPERSON";
+    String SECOND_DATASET_NAME = "Melanoma_Regev";
+    String FIRST_DATASET_NAME = "Melanoma-Regev-Izar-Garraway-DFCI-ICR";
 
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
@@ -42,13 +44,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where dataSetId in (<dataSetIdList>) and needs_approval = true")
     List<DataSet> findNeedsApprovalDataSetByDataSetId(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
 
-    @SqlBatch("insert into dataset (name, createDate, objectId, active) values (:name, :createDate, :objectId, :active)")
+    @SqlBatch("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
     void insertAll(@BindBean Collection<DataSet> dataSets);
 
-    @SqlBatch("update dataset set name = :name, createDate = :createDate, active = :active where dataSetId = :dataSetId")
+    @SqlBatch("update dataset set name = :name, createDate = :createDate, active = :active, alias = :alias where dataSetId = :dataSetId")
     void updateAll(@BindBean Collection<DataSet> dataSets);
 
-    @SqlBatch("update dataset set name = :name, active = :active, createDate = :createDate where objectId = :objectId")
+    @SqlBatch("update dataset set name = :name, active = :active, createDate = :createDate, alias = :alias where objectId = :objectId")
     void updateAllByObjectId(@BindBean Collection<DataSet> dataSets);
 
     @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
@@ -165,4 +167,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("select *  from dataset where dataSetId in (<dataSetIds>) ")
     List<DataSet> searchDataSetsByIds(@BindIn("dataSetIds") List<Integer> dataSetIds);
+
+    @SqlQuery("select MAX(alias) from dataset where name !=  '" + FIRST_DATASET_NAME  + "' AND name !=  '" + SECOND_DATASET_NAME + "'")
+    Integer findLastAlias();
 }

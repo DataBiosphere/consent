@@ -28,6 +28,9 @@ public class DataSet {
     @JsonProperty
     private Boolean needsApproval;
 
+    @JsonProperty
+    private Integer alias;
+
     private Set<DataSetProperty> properties;
 
     public DataSet() {
@@ -107,5 +110,13 @@ public class DataSet {
 
     public void setConsentName(String consentName) {
         this.consentName = consentName;
+    }
+
+    public Integer getAlias() {
+        return alias;
+    }
+
+    public void setAlias(Integer alias) {
+        this.alias = alias;
     }
 }

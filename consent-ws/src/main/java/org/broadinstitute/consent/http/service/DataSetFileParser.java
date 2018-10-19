@@ -23,8 +23,10 @@ public class DataSetFileParser {
     private int DATASET_NAME_INDEX = 0;
     private int SAMPLE_COLLECTION_INDEX = 9;
     private int CONSENT_ID_INDEX = 10;
+    private String SECOND_DATASET_NAME = "Melanoma_Regev";
+    private String FIRST_DATASET_NAME = "Melanoma-Regev-Izar-Garraway-DFCI-ICR";
 
-    public ParseResult parseTSVFile(File file, List<Dictionary> allFields) {
+    public ParseResult parseTSVFile(File file, List<Dictionary> allFields, Integer lastAlias, Boolean overwrite) {
         ParseResult result = new ParseResult();
         List<String> errors = new ArrayList<>();
         List<DataSet> datasets = new ArrayList<>();
@@ -51,12 +53,12 @@ public class DataSetFileParser {
                 }
                 ds.setProperties(properties);
                 datasets.add(ds);
-
             }
         } catch (IOException e) {
             logger().error("An unexpected error had occurred in DataSetFileParser", e);
             errors.add("An unexpected error had occurred in DataSetFileParser - Contact Support");
         }
+        if(!overwrite) datasets = createAlias(datasets, lastAlias);
         result.setDatasets(datasets);
         result.setErrors(errors);
         return result;
@@ -98,6 +100,26 @@ public class DataSetFileParser {
         dataset.setActive(true);
         dataset.setConsentName(StringUtils.isNotEmpty(record[10]) ? record[10] : null);
         return dataset;
+    }
+
+    public List<DataSet> createAlias(final List<DataSet> dataSets, Integer lastAlias) {
+        int initialAlias = 3;
+        List<DataSet> results = new ArrayList<>(dataSets);
+        for(DataSet ds: results) {
+            if(ds.getName().equals(SECOND_DATASET_NAME)) {
+                ds.setAlias(2);
+            }
+            else if(ds.getName().equals(FIRST_DATASET_NAME)){
+                ds.setAlias(1);
+            }
+            else if(lastAlias == 0) {
+                ds.setAlias(initialAlias);
+                ++initialAlias;
+            } else {
+                ds.setAlias(++lastAlias);
+            }
+        }
+        return results;
     }
 
     protected Logger logger() {
