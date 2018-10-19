@@ -37,7 +37,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private ConsentDAO consentDAO;
     private DataSetDAO datasetDAO;
     private MatchDAO matchDAO;
-    private DataSetDAO dataSetDAO;
     private final MongoConsentDB mongo;
     private static final String SEPARATOR = "\t";
     private static final String TEXT_DELIMITER = "\"";
@@ -280,8 +279,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         Document dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
                         if ( !dar.isEmpty() ){
                             List<String> datasetId =  dar.get(DarConstants.DATASET_ID, List.class);
-                            if(CollectionUtils.isNotEmpty(datasetId)){
-                                //TODO
+                            if(CollectionUtils.isNotEmpty(datasetId)) {
                                 Association association = associations.stream().filter((as) -> as.getObjectId().equals(datasetDAO.findObjectIdByDataSetId(Integer.valueOf(datasetId.get(0))))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
@@ -305,7 +303,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }
                                 summaryWriter.write( dar.get(DarConstants.INVESTIGATOR)  + SEPARATOR);
                                 summaryWriter.write( dar.get(DarConstants.PROJECT_TITLE)  + SEPARATOR);
-                                summaryWriter.write( dar.get(DarConstants.DATASET_ID)  + SEPARATOR);summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
+                                List<String> ids =  dar.get(DarConstants.DATASET_ID, List.class);
+                                summaryWriter.write( ids.get(0)  + SEPARATOR);
+                                summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
                                 for (DACUser dacUser : electionDacUsers){
                                     summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
 
