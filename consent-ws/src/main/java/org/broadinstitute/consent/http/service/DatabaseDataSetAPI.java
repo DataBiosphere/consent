@@ -505,7 +505,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 if (existentDataSets.containsKey(newDataSet.getName()) || existentDataSets.containsKey(newDataSet.getObjectId())) {
                     DataSet existentDataSet = existentDataSets.containsKey(newDataSet.getName()) ? existentDataSets.get(newDataSet.getName()) : existentDataSets.get(newDataSet.getObjectId());
                     newDataSet.setDataSetId(existentDataSet.getDataSetId());
-                    if(existentDataSet.getAlias() != 0) {
+                    if(existentDataSet.getAlias() != null && existentDataSet.getAlias() != 0) {
                         newDataSet.setAlias(existentDataSet.getAlias());
                     }
                     dataSetToUpdate.add(newDataSet);
@@ -522,7 +522,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             List<DataSetProperty> properties = insertProperties(dataSetToCreateWithAlias);
             insertDataSetAudit(dataSetToCreateWithAlias, CREATE, userId, properties);
         }
-        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias());
+        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias());
         if (CollectionUtils.isNotEmpty(dataSetToUpdateWithAlias)) {
             dsDAO.updateAll(dataSetToUpdateWithAlias);
             List<DataSetProperty> properties = insertProperties(dataSetToUpdateWithAlias);

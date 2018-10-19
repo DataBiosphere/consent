@@ -115,7 +115,8 @@ public class DataSetFileParser {
             else if(lastAlias == 0) {
                 ds.setAlias(initialAlias);
                 ++initialAlias;
-            } else {
+            }
+            else if(ds.getAlias() == null || ds.getAlias() == 0){
                 ds.setAlias(++lastAlias);
             }
         }

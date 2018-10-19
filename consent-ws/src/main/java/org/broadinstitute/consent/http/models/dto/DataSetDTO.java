@@ -33,6 +33,10 @@ public class DataSetDTO {
     @JsonProperty
     private Boolean updateAssociationToDataOwnerAllowed;
 
+    @JsonProperty
+    private String alias;
+
+    private final String PREFIX = "DUOS-";
 
     public DataSetDTO() {
     }
@@ -117,4 +121,28 @@ public class DataSetDTO {
         return dataSetId;
     }
 
+    public void setAlias(Integer alias) {
+        if(alias < 10) {
+            this.alias = PREFIX + "00000" + alias;
+        }
+        else if(alias < 100) {
+            this.alias = PREFIX + "0000" + alias;
+        }
+        else if(alias < 1000) {
+            this.alias = PREFIX + "000" + alias;
+        }
+        else if(alias < 10000) {
+            this.alias = PREFIX + "00" + alias;
+        }
+        else if(alias < 100000) {
+            this.alias = PREFIX + "0" + alias;
+        }
+        else {
+            this.alias = PREFIX + alias;
+        }
+    }
+
+    public String getAlias(){
+        return alias;
+    }
 }
