@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class DatasetOwnerListModel {
 
     private String ownerName;
@@ -9,7 +11,7 @@ public class DatasetOwnerListModel {
     public DatasetOwnerListModel(String ownerName, String datasetName, String datasetId) {
         this.ownerName = ownerName;
         this.datasetName = datasetName;
-        this.datasetId = datasetId;
+        this.datasetId = StringUtils.isEmpty(datasetId) ? "--" : datasetId;
     }
 
     public String getOwnerName() {
