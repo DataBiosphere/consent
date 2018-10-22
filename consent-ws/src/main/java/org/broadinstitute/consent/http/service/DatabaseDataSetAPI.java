@@ -346,7 +346,12 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public void updateDataSetAlias() {
-//TODO
+       List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
+       if(CollectionUtils.isNotEmpty(dsList)) {
+         Integer lastAlias = dsDAO.findLastAlias();
+         parser.createAlias(dsList, lastAlias);
+         dsDAO.updateAll(dsList);
+       }
     }
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {

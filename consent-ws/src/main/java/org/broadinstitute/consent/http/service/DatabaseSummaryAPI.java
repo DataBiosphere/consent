@@ -303,8 +303,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }
                                 summaryWriter.write( dar.get(DarConstants.INVESTIGATOR)  + SEPARATOR);
                                 summaryWriter.write( dar.get(DarConstants.PROJECT_TITLE)  + SEPARATOR);
-                                List<String> ids =  dar.get(DarConstants.DATASET_ID, List.class);
-                                summaryWriter.write( ids.get(0)  + SEPARATOR);
+                                List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
+                                String objectId = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("objectId") : " ";
+                                summaryWriter.write( objectId  + SEPARATOR);
                                 summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
                                 for (DACUser dacUser : electionDacUsers){
                                     summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);

@@ -97,12 +97,13 @@ public class DataAccessReportsParser {
     private void addDARLine(FileWriter darWriter, Document dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
         List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
         String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
+        String objectId = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("objectId") : " ";
         String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
         darWriter.write(
                 dar.getString(DarConstants.DAR_CODE) + DEFAULT_SEPARATOR +
                         dataSetName + DEFAULT_SEPARATOR +
-                        dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString() + DEFAULT_SEPARATOR +
+                        objectId + DEFAULT_SEPARATOR +
                         consentName + DEFAULT_SEPARATOR +
                         customContent1 +
                         sDUL + DEFAULT_SEPARATOR +
