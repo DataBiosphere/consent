@@ -4,7 +4,7 @@ public enum HeaderDAR {
 
     DAR_ID("DAR ID"),
     DATASET_NAME("Dataset name"),
-    DATASET_ID("Dataset ID (SC-ID)"),
+    DATASET_ID("SC-ID"),
     CONSENT_ID("Consent ID"),
     DATA_REQUESTER_NAME("Data requester name"),
     ORGANIZATION("Organization"),

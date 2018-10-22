@@ -23,7 +23,7 @@ public enum HeaderSummary {
     CHAIRPERSON_FEEDBACK("Chairperson feedback on Vault Decision"),
     RESEARCHER("Principal Investigator"),
     PROJECT_TITLE("Project title"),
-    DATASET_ID("Dataset ID"),
+    DATASET_ID("SC-ID"),
     DATA_ACCESS_SUBM_DATE("Data Access Request submission date"),
     DAC_MEMBERS("DAC Member"),
     REQUIRE_MANUAL_REVIEW("Require Manual Review"),
