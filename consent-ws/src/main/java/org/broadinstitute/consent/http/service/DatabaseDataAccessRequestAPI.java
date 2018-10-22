@@ -483,7 +483,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
         List<Document> response = new ArrayList<>();
-        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId)).into(new ArrayList<>()));
+        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId.toString())).into(new ArrayList<>()));
         return response;
     }
 
