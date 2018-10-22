@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import org.broadinstitute.consent.http.util.DatasetUtil;
 
 public class DataOwnerCase {
+    @JsonProperty
+    private String alias;
 
     @JsonProperty
     private Integer dataSetId;
@@ -84,5 +86,14 @@ public class DataOwnerCase {
 
     public void setHasConcerns(Boolean hasConcerns) {
         this.hasConcerns = hasConcerns;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(Integer alias) {
+        this.alias = DatasetUtil.parseAlias(alias);
+
     }
 }

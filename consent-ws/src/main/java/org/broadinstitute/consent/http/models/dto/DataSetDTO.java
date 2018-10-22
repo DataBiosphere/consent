@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+
 import java.util.List;
 
 
@@ -35,8 +37,6 @@ public class DataSetDTO {
 
     @JsonProperty
     private String alias;
-
-    private final String PREFIX = "DUOS-";
 
     public DataSetDTO() {
     }
@@ -122,24 +122,7 @@ public class DataSetDTO {
     }
 
     public void setAlias(Integer alias) {
-        if(alias < 10) {
-            this.alias = PREFIX + "00000" + alias;
-        }
-        else if(alias < 100) {
-            this.alias = PREFIX + "0000" + alias;
-        }
-        else if(alias < 1000) {
-            this.alias = PREFIX + "000" + alias;
-        }
-        else if(alias < 10000) {
-            this.alias = PREFIX + "00" + alias;
-        }
-        else if(alias < 100000) {
-            this.alias = PREFIX + "0" + alias;
-        }
-        else {
-            this.alias = PREFIX + alias;
-        }
+        this.alias = DatasetUtil.parseAlias(alias);
     }
 
     public String getAlias(){
