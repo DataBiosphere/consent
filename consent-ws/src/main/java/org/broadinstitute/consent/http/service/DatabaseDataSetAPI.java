@@ -344,6 +344,16 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return "DARs have been updated successful.";
     }
 
+    @Override
+    public void updateDataSetAlias() {
+       List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
+       if(CollectionUtils.isNotEmpty(dsList)) {
+         Integer lastAlias = dsDAO.findLastAlias();
+         parser.createAlias(dsList, lastAlias);
+         dsDAO.updateAll(dsList);
+       }
+    }
+
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> objectIdList = dataSets.stream().filter(dataset -> dataset.getObjectId() != null).map(DataSet::getObjectId).collect(Collectors.toList());

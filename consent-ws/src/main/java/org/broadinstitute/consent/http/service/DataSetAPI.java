@@ -39,4 +39,6 @@ public interface DataSetAPI {
 
     String updateDataSetIdToDAR();
 
+    void updateDataSetAlias();
+
 }

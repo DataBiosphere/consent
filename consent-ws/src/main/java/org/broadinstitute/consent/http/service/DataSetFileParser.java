@@ -106,13 +106,13 @@ public class DataSetFileParser {
         int initialAlias = 3;
         List<DataSet> results = new ArrayList<>(dataSets);
         for(DataSet ds: results) {
-            if(ds.getName().equals(SECOND_DATASET_NAME)) {
+            if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(SECOND_DATASET_NAME)) {
                 ds.setAlias(2);
             }
-            else if(ds.getName().equals(FIRST_DATASET_NAME)){
+            else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(FIRST_DATASET_NAME)){
                 ds.setAlias(1);
             }
-            else if(lastAlias == 0) {
+            else if(lastAlias == null || lastAlias == 0) {
                 ds.setAlias(initialAlias);
                 ++initialAlias;
             }
