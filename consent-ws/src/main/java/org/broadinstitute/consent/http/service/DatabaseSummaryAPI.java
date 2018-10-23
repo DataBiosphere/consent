@@ -235,7 +235,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         List<Integer> ids =  dar.get(DarConstants.DATASET_ID, List.class);
                         datasetIds.addAll(ids);
                     });
-                    List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<Integer>(datasetIds));
+                    List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
                     List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
                     List<Integer> darElectionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
@@ -282,7 +282,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         if ( !dar.isEmpty() ){
                             List<Integer> datasetId =  dar.get(DarConstants.DATASET_ID, List.class);
                             if(CollectionUtils.isNotEmpty(datasetId)) {
-                                Association association = associations.stream().filter((as) -> as.getObjectId().equals(datasetDAO.findObjectIdByDataSetId(datasetId.get(0)))).collect(singletonCollector());
+                                Association association = associations.stream().filter((as) -> as.getDataSetId().equals(datasetId.get(0))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
