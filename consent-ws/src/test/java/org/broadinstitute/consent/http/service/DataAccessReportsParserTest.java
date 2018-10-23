@@ -72,7 +72,7 @@ public class DataAccessReportsParserTest {
             if (i == 1) {
                 Assert.isTrue(columns[0].equals(DAR_CODE));
                 Assert.isTrue(columns[1].equals(NAME));
-                Assert.isTrue(columns[2].equals(SC_ID));
+                Assert.isTrue(columns[2].equals(""));
                 Assert.isTrue(columns[3].equals(CONSENT_NAME));
                 Assert.isTrue(columns[4].equals(REQUESTER));
                 Assert.isTrue(columns[5].equals(ORGANIZATION));
@@ -115,7 +115,7 @@ public class DataAccessReportsParserTest {
             if (i == 1) {
                 Assert.isTrue(columns[0].equals(DAR_CODE));
                 Assert.isTrue(columns[1].equals(NAME));
-                Assert.isTrue(columns[2].equals(SC_ID));
+                Assert.isTrue(columns[2].equals(""));
                 Assert.isTrue(columns[3].equals(CONSENT_NAME));
                 Assert.isTrue(columns[4].equals(sDUL.replace("\n", " ")));
                 Assert.isTrue(columns[5].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
@@ -175,6 +175,7 @@ public class DataAccessReportsParserTest {
         List<Document> detailsList = new ArrayList<>();
         detailsList.add(datasetDetail);
         dar.put(DarConstants.DATASET_DETAIL, detailsList);
+        dar.put(DarConstants.DATASET_ID, new ArrayList<>());
         dar.put(DarConstants.DAR_CODE, DAR_CODE);
         dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
         dar.put(DarConstants.NON_TECH_RUS, RUS_SUMMARY);
