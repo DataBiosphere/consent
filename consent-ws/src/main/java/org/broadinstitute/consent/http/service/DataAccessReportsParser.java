@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import java.io.*;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.List;
 
 public class DataAccessReportsParser {
 
-    private static final String DEFAULT_SEPARATOR =  "\t";;
+    private static final String DEFAULT_SEPARATOR =  "\t";
 
     private static final String END_OF_LINE = System.lineSeparator();
 
@@ -95,19 +96,22 @@ public class DataAccessReportsParser {
     }
 
     private void addDARLine(FileWriter darWriter, Document dar, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
-        List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
-        String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
-        String objectId = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("objectId") : " ";
-
-
-
-
+        List<Document> dataSetDetails = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
+        List<String> datasetNames = new ArrayList<>();
+        for(Document detail : dataSetDetails) {
+            datasetNames.add(StringUtils.isNotEmpty(detail.getString("name")) ? detail.getString("name") : " ");
+        }
+        List<Integer> dataSetIds = dar.get(DarConstants.DATASET_ID, ArrayList.class);
+        List<String> dataSetUUIds = new ArrayList<>();
+        for(Integer id : dataSetIds) {
+            dataSetUUIds.add(DatasetUtil.parseAlias(id));
+        }
         String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
         darWriter.write(
                 dar.getString(DarConstants.DAR_CODE) + DEFAULT_SEPARATOR +
-                        dataSetName + DEFAULT_SEPARATOR +
-                        objectId + DEFAULT_SEPARATOR +
+                        StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +
+                        StringUtils.join(dataSetUUIds, ",") + DEFAULT_SEPARATOR +
                         consentName + DEFAULT_SEPARATOR +
                         customContent1 +
                         sDUL + DEFAULT_SEPARATOR +
