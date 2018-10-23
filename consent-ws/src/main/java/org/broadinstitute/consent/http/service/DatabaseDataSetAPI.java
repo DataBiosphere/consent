@@ -211,7 +211,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             }
         }
         if (!dataSetDTOList.isEmpty()) setConsentNameDTOList(dataSetDTOList);
-        return orderByDataSetId(dataSetDTOList);
+        return dataSetDTOList;
     }
 
 
@@ -296,21 +296,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
         return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
-
-    private Collection<DataSetDTO> orderByDataSetId(Collection<DataSetDTO> dataSetDTOList) {
-        if (CollectionUtils.isNotEmpty(dataSetDTOList)) {
-            dataSetDTOList.stream().forEach(dataSetDTO -> {
-                List<DataSetPropertyDTO> dataSetProperty = dataSetDTO.getProperties().stream().filter(property -> property.getPropertyName().equals(SAMPLE_COLLECTION_ID)).collect(Collectors.toList());
-                List<DataSetPropertyDTO> properties = dataSetDTO.getProperties().stream().filter(property -> !property.getPropertyName().equals(SAMPLE_COLLECTION_ID)).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(dataSetProperty)) {
-                    properties.add(1, dataSetProperty.get(0));
-                    dataSetDTO.setProperties(properties);
-                }
-            });
-        }
-        return dataSetDTOList;
-    }
-
 
     public DataSetDTO getDataSetDTO(Integer dataSetId) {
         Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByDataSetId(dataSetId);
