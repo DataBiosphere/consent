@@ -7,6 +7,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -588,18 +589,20 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
         List<Document> dataSetList = new ArrayList<>();
-        List<String> datasetId = new ArrayList<>();
+        List<Integer> datasetId = new ArrayList<>();
         Document dataAccess = new Document(dataAccessRequest);
         consentDataSet.getDataSets().forEach((k,v) -> {
             Document document = new Document();
             document.put(DATA_SET_ID,k);
-            datasetId.add(k);
+            datasetId.add(Integer.valueOf(k));
             document.put("name", v);
             dataSetList.add(document);
-            document.put("objectId", consentDataSet.getObjectId());
+            String objectId = dataSetDAO.findObjectIdByDataSetId(Integer.valueOf(k));
+            if(StringUtils.isNotEmpty(objectId)) {
+                document.put("objectId", objectId);
+            }
         });
         dataAccess.put(DarConstants.DATASET_ID, datasetId);
-//        dataAccess.put("objectId", consentDataSet.getObjectId());
         dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);
         return dataAccess;
     }

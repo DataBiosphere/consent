@@ -62,7 +62,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         // Create Documents needed in mongo for testing
         List<Integer> dataSets = new ArrayList<>();
         dataSets.add(1);
-        Document doc = new Document().append("testingInfo1", "someValue").append(DarConstants.DATASET_ID, dataSets);
+        Document doc = new Document().append(DarConstants.DATASET_ID, dataSets);
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
         DATA_REQUEST_ID = String.valueOf(dars.next().get(DarConstants.ID));
