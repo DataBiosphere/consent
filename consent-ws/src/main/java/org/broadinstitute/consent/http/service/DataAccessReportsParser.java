@@ -98,6 +98,10 @@ public class DataAccessReportsParser {
         List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
         String dataSetName = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("name") : " ";
         String objectId = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("objectId") : " ";
+
+
+
+
         String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ?  translatedUseRestriction.replace("\n", " ") : "";
         String translatedRestriction = StringUtils.isNotEmpty(dar.getString(DarConstants.TRANSLATED_RESTRICTION)) ? dar.getString(DarConstants.TRANSLATED_RESTRICTION).replace("<br>", " ") :  "";
         darWriter.write(

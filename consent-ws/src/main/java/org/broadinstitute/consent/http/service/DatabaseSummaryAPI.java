@@ -15,9 +15,11 @@ import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -230,8 +232,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     FindIterable<Document> dataAccessRequests = findDataAccessRequests(darIds);
                     HashSet<Integer> datasetIds = new HashSet<>();
                     dataAccessRequests.forEach((Block<Document>) dar -> {
-                        List<String> ids =  dar.get(DarConstants.DATASET_ID, List.class);
-                        datasetIds.add(Integer.valueOf(ids.get(0)));
+                        List<Integer> ids =  dar.get(DarConstants.DATASET_ID, List.class);
+                        datasetIds.addAll(ids);
                     });
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<Integer>(datasetIds));
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
@@ -278,9 +280,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         }
                         Document dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
                         if ( !dar.isEmpty() ){
-                            List<String> datasetId =  dar.get(DarConstants.DATASET_ID, List.class);
+                            List<Integer> datasetId =  dar.get(DarConstants.DATASET_ID, List.class);
                             if(CollectionUtils.isNotEmpty(datasetId)) {
-                                Association association = associations.stream().filter((as) -> as.getObjectId().equals(datasetDAO.findObjectIdByDataSetId(Integer.valueOf(datasetId.get(0))))).collect(singletonCollector());
+                                Association association = associations.stream().filter((as) -> as.getObjectId().equals(datasetDAO.findObjectIdByDataSetId(datasetId.get(0)))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
@@ -303,13 +305,15 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }
                                 summaryWriter.write( dar.get(DarConstants.INVESTIGATOR)  + SEPARATOR);
                                 summaryWriter.write( dar.get(DarConstants.PROJECT_TITLE)  + SEPARATOR);
-                                List<Document> dataSetDetail = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
-                                String objectId = CollectionUtils.isNotEmpty(dataSetDetail) ? dataSetDetail.get(0).getString("objectId") : " ";
-                                summaryWriter.write( objectId  + SEPARATOR);
+                                List<Integer> dataSetIds = dar.get(DarConstants.DATASET_ID, ArrayList.class);
+                                List<String> dataSetUUIds = new ArrayList<>();
+                                for(Integer id : dataSetIds) {
+                                    dataSetUUIds.add(DatasetUtil.parseAlias(id));
+                                }
+                                summaryWriter.write( StringUtils.join(dataSetUUIds, ",")  + SEPARATOR);
                                 summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
                                 for (DACUser dacUser : electionDacUsers){
                                     summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
-
                                 }
                                 for (int i = 0; i < (maxNumberOfDACMembers - electionDacUsers.size()); i++) {
                                     summaryWriter.write(
