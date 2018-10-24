@@ -262,8 +262,8 @@ public class DARModalDetailsDTO {
     public void setDatasetDetail(ArrayList<Document> datasetDetail) {
         Map<String, String> datasetDetailMap = new HashMap<>();
         datasetDetail.forEach((doc) -> {
-            String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? doc.getString(DarConstants.OBJECT_ID) : "";
-            datasetDetailMap.put(objectId ,doc.getString("name"));
+            String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? doc.getString(DarConstants.OBJECT_ID) : "--";
+            datasetDetailMap.put(doc.getString("name"), objectId);
         });
         this.datasetDetail = datasetDetailMap;
     }

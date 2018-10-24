@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DataAccessParser {
 
@@ -120,12 +121,8 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.DATASET_ID: {
-                    Map<String, String> datasetDetailMap = parseDatasetDetail(dar);
-                    if (datasetDetailMap != null && datasetDetailMap.get("objectId").isEmpty() ) {
-                        field.setValue(datasetDetailMap.get("dataSetName"));
-                    } else {
-                        field.setValue(datasetDetailMap != null ? String.join(", ", datasetDetailMap.get("objectId"), datasetDetailMap.get("dataSetName")) :  "--");
-                    }
+                    String parsedDatasets = parseDatasetDetail(dar);
+                    field.setValue(parsedDatasets);
                     break;
                 }
                 case DarConstants.RUS: {
@@ -202,15 +199,18 @@ public class DataAccessParser {
         return acroForm;
     }
 
-    private Map<String, String> parseDatasetDetail(Document dar) {
+    private String parseDatasetDetail(Document dar) {
         ArrayList<Document> datasetDetail = (ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL);
         Map<String, String> datasetDetailMap = new HashMap<>();
+
         datasetDetail.forEach((doc) -> {
-            String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? doc.getString(DarConstants.OBJECT_ID) : "";
-            datasetDetailMap.put("dataSetName", doc.getString("name"));
-            datasetDetailMap.put("objectId" ,objectId);
+            String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? " | ".concat(doc.getString(DarConstants.OBJECT_ID)) : "";
+            datasetDetailMap.put(doc.getString("name"), objectId);
         });
-        return datasetDetailMap;
+
+        return datasetDetailMap.entrySet().stream()
+                .map(name -> name.getKey() + name.getValue())
+                .collect(Collectors.joining("; "));
     }
 
     private String getYesOrNoValue(Boolean value){
