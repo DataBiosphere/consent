@@ -101,7 +101,7 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString().equals(SCIENTIFIC_URL));
         Assert.isTrue(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
         Assert.isTrue(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString().equals(PROJECT_TITLE));
-        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(OBJECT_ID + ", " + DATASET_NAME));        acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(OBJECT_ID + ", " + "dataset Name");
+        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals("Dataset Name1 | " + OBJECT_ID));
         Assert.isTrue(acroForm.getField(DarConstants.RUS).getValueAsString().equals(RUS));
         Assert.isTrue(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString().equals(NON_TECH_RUS));
         Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
