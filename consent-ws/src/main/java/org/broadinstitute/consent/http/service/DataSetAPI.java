@@ -29,6 +29,8 @@ public interface DataSetAPI {
 
     List<Map<String, String>> autoCompleteDataSets(String partial);
 
+    List<Map<String, String>> getCompleteDataSet(String dataSetName);
+
     void deleteDataset(Integer datasetId, Integer dacUserId) throws IllegalStateException;
 
     void disableDataset(Integer dataSetId, Boolean active);

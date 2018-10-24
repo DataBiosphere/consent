@@ -302,7 +302,7 @@ public class DataAccessRequestResource extends Resource {
         try {
             List<Map<String, String>> datasets = new ArrayList<>();
             for(String datasetName: dataSetNames){
-                List<Map<String, String>> ds = dataSetAPI.autoCompleteDataSets(datasetName);
+                List<Map<String, String>> ds = dataSetAPI.getCompleteDataSet(datasetName);
                 datasets.add(ds.get(0));
             }
             dar.append(DarConstants.DATASET_ID, datasets);
