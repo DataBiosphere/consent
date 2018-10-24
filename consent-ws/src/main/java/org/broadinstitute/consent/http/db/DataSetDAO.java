@@ -110,13 +110,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
     @RegisterMapper({DictionaryMapper.class})
-    @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder != 10 order by displayOrder")
+    @SqlQuery("SELECT * FROM dictionary d WHERE d.displayOrder is not null  order by displayOrder")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
-    @SqlQuery(" SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
+    @SqlQuery("SELECT * FROM dataset d WHERE d.objectId IN (<objectIdList>)")
     List<DataSet> getDataSetsForObjectIdList(@BindIn("objectIdList") List<String> objectIdList);
 
-    @SqlQuery(" SELECT * FROM dataset d WHERE d.name IN (<names>)")
+    @SqlQuery("SELECT * FROM dataset d WHERE d.name IN (<names>)")
     List<DataSet> getDataSetsForNameList(@BindIn("names") List<String> names);
 
     @SqlQuery("SELECT ds.* FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ca.consentId = :consentId")
@@ -166,8 +166,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select *  from dataset where dataSetId in (<dataSetIds>) ")
     List<DataSet> searchDataSetsByIds(@BindIn("dataSetIds") List<Integer> dataSetIds);
 
-    @SqlQuery("select MAX(alias) from dataset where name != :firstDS AND name != :secondDS")
-    Integer findLastAlias(@Bind("firstDS")String firstDS, @Bind("secondDS")String secondDS);
+    @SqlQuery("select MAX(alias) from dataset")
+    Integer findLastAlias();
 
     @SqlQuery("select *  from dataset where alias is null or alias = 0 ")
     List<DataSet> getDataSetsWithoutAlias();

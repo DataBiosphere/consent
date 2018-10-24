@@ -51,7 +51,6 @@
         <insert tableName="dictionary">
             <column name="key" value="Consent ID"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="10"/>
             <column name="receiveOrder" value="10"/>
         </insert>
     </changeSet>

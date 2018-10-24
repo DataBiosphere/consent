@@ -110,7 +110,7 @@ public class DataSetFileParser {
             else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(alias1)){
                 ds.setAlias(1);
             }
-            else if(lastAlias == null || lastAlias == 0) {
+            else if(lastAlias == null || lastAlias < 3) {
                 ds.setAlias(initialAlias);
                 ++initialAlias;
             }

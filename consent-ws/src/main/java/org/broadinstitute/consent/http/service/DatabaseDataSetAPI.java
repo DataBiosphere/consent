@@ -74,7 +74,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public ParseResult create(File dataSetFile, Integer userId) {
-        Integer lastAlias = dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
+        Integer lastAlias = dsDAO.findLastAlias();
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false, datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -336,7 +336,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public void updateDataSetAlias() {
        List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
        if(CollectionUtils.isNotEmpty(dsList)) {
-         Integer lastAlias = dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
+         Integer lastAlias = dsDAO.findLastAlias();
          parser.createAlias(dsList, lastAlias, datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
          dsDAO.updateAll(dsList);
        }
@@ -514,13 +514,13 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         } else {
             dataSetToCreate.addAll(dataSets);
         }
-        List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2()), datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
+        List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias(), datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         if (CollectionUtils.isNotEmpty(dataSetToCreateWithAlias)) {
             dsDAO.insertAll(dataSetToCreateWithAlias);
             List<DataSetProperty> properties = insertProperties(dataSetToCreateWithAlias);
             insertDataSetAudit(dataSetToCreateWithAlias, CREATE, userId, properties);
         }
-        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2()), datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
+        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias(), datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         if (CollectionUtils.isNotEmpty(dataSetToUpdateWithAlias)) {
             dsDAO.updateAll(dataSetToUpdateWithAlias);
             List<DataSetProperty> properties = insertProperties(dataSetToUpdateWithAlias);
