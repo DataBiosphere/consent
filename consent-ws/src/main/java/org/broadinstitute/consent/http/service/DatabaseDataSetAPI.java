@@ -186,7 +186,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
                 Set<Integer> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<Integer>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
-                    String datasetId = dataSetDTO.getDataSetId().toString();
+                    Integer datasetId = dataSetDTO.getDataSetId();
 
                     if (CollectionUtils.isNotEmpty(datasetsAssociatedToOpenElections) &&
                             datasetsAssociatedToOpenElections.contains(dataSetDTO.getPropertyValue(DATASETID_PROPERTY_NAME))) {

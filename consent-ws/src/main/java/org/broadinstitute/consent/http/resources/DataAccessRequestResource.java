@@ -285,6 +285,10 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/datasetCatalog")
     @RolesAllowed("RESEARCHER")
+    /*
+     * Note: Run this endpoint only once, in order to apply datasets correspondent alias Id
+     * in MySql and replace objectId to datasetId in Mongodb
+    */
     public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<Integer> datasetIds) {
         Document dar = new Document();
         Collection<DataSetDTO> dataSets = dataSetAPI.describeDataSetsByReceiveOrder(datasetIds);
