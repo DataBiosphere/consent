@@ -373,7 +373,8 @@ public class DataAccessRequestResource extends Resource {
 
     @GET
     @Consumes("application/json")
-    @Produces("application/json")@Path("/hasUseRestriction/{referenceId}")
+    @Produces("application/json")
+    @Path("/hasUseRestriction/{referenceId}")
     @PermitAll
     public Response hasUseRestriction(@PathParam("referenceId") String referenceId){
         try{
@@ -411,8 +412,8 @@ public class DataAccessRequestResource extends Resource {
         try{
             dataSetAPI.updateDataSetAlias();
             return Response.ok(dataSetAPI.updateDataSetIdToDAR()).build();
-        }catch(Exception e){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        } catch(Exception e) {
+            return createExceptionResponse(e);
         }
     }
 

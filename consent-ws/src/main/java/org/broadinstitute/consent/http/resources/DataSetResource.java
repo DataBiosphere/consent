@@ -108,7 +108,7 @@ public class DataSetResource extends Resource {
     public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
-        } else{
+        } else {
             Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }

@@ -26,8 +26,6 @@ import java.util.Set;
 public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     String CHAIRPERSON = "CHAIRPERSON";
-    String SECOND_DATASET_NAME = "Melanoma_Regev";
-    String FIRST_DATASET_NAME = "Melanoma-Regev-Izar-Garraway-DFCI-ICR";
 
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
@@ -168,8 +166,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select *  from dataset where dataSetId in (<dataSetIds>) ")
     List<DataSet> searchDataSetsByIds(@BindIn("dataSetIds") List<Integer> dataSetIds);
 
-    @SqlQuery("select MAX(alias) from dataset where name !=  '" + FIRST_DATASET_NAME  + "' AND name !=  '" + SECOND_DATASET_NAME + "'")
-    Integer findLastAlias();
+    @SqlQuery("select MAX(alias) from dataset where name != :firstDS AND name != :secondDS")
+    Integer findLastAlias(@Bind("firstDS")String firstDS, @Bind("secondDS")String secondDS);
 
     @SqlQuery("select *  from dataset where alias is null or alias = 0 ")
     List<DataSet> getDataSetsWithoutAlias();

@@ -9,6 +9,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
+import org.broadinstitute.consent.http.configurations.DatasetConfiguration;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -47,6 +48,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final String CREATE = "CREATE";
     private final String UPDATE = "UPDATE";
     private final String DELETE = "DELETE";
+    private final  DatasetConfiguration datasetConfiguration;
 
     private final Integer CONSENT_ID = 11;
 
@@ -54,11 +56,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, dsRoleDAO, consentDAO, dataSetAuditDAO, electionDAO));
+    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, DatasetConfiguration datasetConfiguration) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, dsRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, datasetConfiguration));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, DatasetConfiguration datasetConfiguration) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.dsRoleDAO = dsRoleDAO;
@@ -66,13 +68,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAuditDAO = dataSetAuditDAO;
         this.electionDAO = electionDAO;
+        this.datasetConfiguration = datasetConfiguration;
     }
 
 
     @Override
     public ParseResult create(File dataSetFile, Integer userId) {
-        Integer lastAlias = dsDAO.findLastAlias();
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false);
+        Integer lastAlias = dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
+        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false, datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             if (isValid(dataSets, false)) {
@@ -116,7 +119,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public ParseResult overwrite(File dataSetFile, Integer userId) {
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), null, true);
+        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), null, true, datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
             List<String> nameList = dataSets.stream().map(DataSet::getName).collect(Collectors.toList());
@@ -333,8 +336,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     public void updateDataSetAlias() {
        List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
        if(CollectionUtils.isNotEmpty(dsList)) {
-         Integer lastAlias = dsDAO.findLastAlias();
-         parser.createAlias(dsList, lastAlias);
+         Integer lastAlias = dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
+         parser.createAlias(dsList, lastAlias, datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
          dsDAO.updateAll(dsList);
        }
     }
@@ -511,13 +514,13 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         } else {
             dataSetToCreate.addAll(dataSets);
         }
-        List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias());
+        List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2()), datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         if (CollectionUtils.isNotEmpty(dataSetToCreateWithAlias)) {
             dsDAO.insertAll(dataSetToCreateWithAlias);
             List<DataSetProperty> properties = insertProperties(dataSetToCreateWithAlias);
             insertDataSetAudit(dataSetToCreateWithAlias, CREATE, userId, properties);
         }
-        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias());
+        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias(datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2()), datasetConfiguration.getDuos1(), datasetConfiguration.getDuos2());
         if (CollectionUtils.isNotEmpty(dataSetToUpdateWithAlias)) {
             dsDAO.updateAll(dataSetToUpdateWithAlias);
             List<DataSetProperty> properties = insertProperties(dataSetToUpdateWithAlias);

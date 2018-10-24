@@ -23,10 +23,8 @@ public class DataSetFileParser {
     private int DATASET_NAME_INDEX = 0;
     private int SAMPLE_COLLECTION_INDEX = 9;
     private int CONSENT_ID_INDEX = 10;
-    private String SECOND_DATASET_NAME = "Melanoma_Regev";
-    private String FIRST_DATASET_NAME = "Melanoma-Regev-Izar-Garraway-DFCI-ICR";
 
-    public ParseResult parseTSVFile(File file, List<Dictionary> allFields, Integer lastAlias, Boolean overwrite) {
+    public ParseResult parseTSVFile(File file, List<Dictionary> allFields, Integer lastAlias, Boolean overwrite, String alias1, String alias2) {
         ParseResult result = new ParseResult();
         List<String> errors = new ArrayList<>();
         List<DataSet> datasets = new ArrayList<>();
@@ -58,7 +56,7 @@ public class DataSetFileParser {
             logger().error("An unexpected error had occurred in DataSetFileParser", e);
             errors.add("An unexpected error had occurred in DataSetFileParser - Contact Support");
         }
-        if(!overwrite) datasets = createAlias(datasets, lastAlias);
+        if(!overwrite) datasets = createAlias(datasets, lastAlias, alias1, alias2);
         result.setDatasets(datasets);
         result.setErrors(errors);
         return result;
@@ -102,14 +100,14 @@ public class DataSetFileParser {
         return dataset;
     }
 
-    public List<DataSet> createAlias(final List<DataSet> dataSets, Integer lastAlias) {
+    public List<DataSet> createAlias(final List<DataSet> dataSets, Integer lastAlias, String alias1, String alias2) {
         int initialAlias = 3;
         List<DataSet> results = new ArrayList<>(dataSets);
         for(DataSet ds: results) {
-            if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(SECOND_DATASET_NAME)) {
+            if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(alias2)) {
                 ds.setAlias(2);
             }
-            else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(FIRST_DATASET_NAME)){
+            else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(alias1)){
                 ds.setAlias(1);
             }
             else if(lastAlias == null || lastAlias == 0) {

@@ -82,42 +82,4 @@
         </sql>
     </changeSet>
 
-
-    <!--<changeSet author="vvicario" id="132">-->
-        <!--<createProcedure  dbms="hsql, mysql">-->
-            <!--CREATE PROCEDURE ActualizarDataSet-->
-            <!--IS-->
-            <!--BEGIN-->
-                <!--DECLARE a int;-->
-                <!--DECLARE b int;-->
-                <!--DECLARE i int;-->
-                <!--set i = 1;  set b = 2;-->
-                <!--DECLARE cur1 CURSOR FOR SELECT dataSetId FROM dataset where alias is null;-->
-                <!--OPEN cur1;-->
-                <!--cur1: LOOP FETCH cur1 INTO a;-->
-                <!--update dataset set alias = b + i where dataSetId = a;-->
-                <!--i = i+1;-->
-                <!--END LOOP;-->
-            <!--CLOSE cur1;-->
-            <!--END;-->
-        <!--</createProcedure>-->
-    <!--</changeSet>-->
-
-
-    <!--<changeSet author="vvicario" id="132">-->
-        <!--<createProcedure>-->
-            <!--USE `consent`;-->
-            <!--CREATE PROCEDURE `AAA`;-->
-            <!--DELIMITER $$-->
-            <!--USE `consent`$$-->
-            <!--CREATE PROCEDURE `AAA` ()-->
-            <!--BEGIN-->
-            <!--select * from dacUser limit 1;-->
-            <!--END$$-->
-
-            <!--DELIMITER ;-->
-        <!--</createProcedure>-->
-    <!--</changeSet>-->
-
-
 </databaseChangeLog>

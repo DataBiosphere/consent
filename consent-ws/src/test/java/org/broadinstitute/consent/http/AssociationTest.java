@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.models.dto.WorkspaceAssociationDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;

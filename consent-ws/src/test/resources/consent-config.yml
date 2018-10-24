@@ -67,3 +67,6 @@ elasticSearch:
   servers:
     - localhost
   indexName: iName
+dataset:
+  duos1: Melanoma_Regev
+  duos2: Melanoma-Regev-Izar-Garraway-DFCI-ICR

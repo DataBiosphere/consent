@@ -53,6 +53,9 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
 
+    @JsonProperty("dataset")
+    private DatasetConfiguration dataset = new DatasetConfiguration();
+
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
@@ -117,4 +120,9 @@ public class ConsentConfiguration extends Configuration {
     public StoreOntologyConfiguration getStoreOntologyConfiguration() {
         return storeOntology;
     }
+
+    public DatasetConfiguration getDatasetConfiguration() {
+        return dataset;
+    }
+
 }

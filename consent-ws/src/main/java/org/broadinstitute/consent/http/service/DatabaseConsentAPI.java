@@ -258,13 +258,21 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     private void processAssociation(List<String> objectIds) {
         if (CollectionUtils.isNotEmpty(objectIds)) {
-            objectIds.stream().forEach(objectId -> {
-                Integer dsId = dataSetDAO.findDataSetIdByObjectId(objectId);
-                if (dsId == null) {
-                    dataSetDAO.insertAll(Arrays.asList(new DataSet(objectId)));
-                }
-
-            });
+            List<DataSet> dataSets = dataSetDAO.getDataSetsForObjectIdList(objectIds);
+            List<String> existentObjectsId = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+            List<DataSet> dataSetsToCreate = new ArrayList<>();
+            if(CollectionUtils.isNotEmpty(dataSets)) {
+                objectIds.stream().forEach(objectId -> {
+                    if(!existentObjectsId.contains(objectId)) {
+                        dataSetsToCreate.add(new DataSet(objectId));
+                    }
+                });
+            } else {
+                objectIds.stream().forEach(objectId -> {
+                    dataSetsToCreate.add(new DataSet(objectId));
+               });
+            }
+            dataSetDAO.insertAll(dataSetsToCreate);
         }
     }
 
