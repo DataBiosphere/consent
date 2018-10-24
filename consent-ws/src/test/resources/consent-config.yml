@@ -68,5 +68,5 @@ elasticSearch:
     - localhost
   indexName: iName
 dataset:
-  duos1: Melanoma_Regev
-  duos2: Melanoma-Regev-Izar-Garraway-DFCI-ICR
+  duos1: Melanoma-Regev-Izar-Garraway-DFCI-ICR
+  duos2: Melanoma_Regev
