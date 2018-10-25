@@ -34,4 +34,3 @@ insert into user_role(roleId, dacUserId) values(6,5);
 insert into user_role(roleId, dacUserId) values(5,5);
 insert into user_role(roleId, dacUserId) values(4,5);
 insert into user_role(roleId, dacUserId) values(2,5);
-
