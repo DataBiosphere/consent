@@ -12,6 +12,10 @@ public class ConsentDataSet {
     @JsonProperty
     public String objectId;
 
+    /**
+     * Map<String, String> dataSets content model is
+     * Key = dataset name Value = object id
+    */
     @JsonProperty
     public Map<String, String> dataSets;
 

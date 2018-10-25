@@ -248,9 +248,9 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @PermitAll
     @Path("/{datasetId}/approved/users")
-    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer dataSetId) {
+    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer datasetId) {
         try {
-            return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(dataSetId))
+            return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(datasetId))
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {

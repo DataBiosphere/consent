@@ -99,7 +99,7 @@ public class DataAccessReportsParser {
         List<Document> dataSetDetails = dar.get(DarConstants.DATASET_DETAIL, ArrayList.class);
         List<String> datasetNames = new ArrayList<>();
         for(Document detail : dataSetDetails) {
-            datasetNames.add(StringUtils.isNotEmpty(detail.getString("name")) ? detail.getString("name") : " ");
+            datasetNames.add(StringUtils.defaultString(detail.getString("name")));
         }
         List<Integer> dataSetIds = dar.get(DarConstants.DATASET_ID, ArrayList.class);
         List<String> dataSetUUIds = new ArrayList<>();

@@ -210,7 +210,7 @@ public class DataAccessParser {
 
         return datasetDetailMap.entrySet().stream()
                 .map(name -> name.getKey() + name.getValue())
-                .collect(Collectors.joining("; "));
+                .collect(Collectors.joining(", "));
     }
 
     private String getYesOrNoValue(Boolean value){
