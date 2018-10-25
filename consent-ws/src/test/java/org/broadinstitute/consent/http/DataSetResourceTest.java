@@ -89,6 +89,19 @@ public class DataSetResourceTest extends DataSetServiceTest {
         assertTrue(result.get(4).equals("Sample Collection ID SC-20658 is already present in the database. "));
     }
 
+    @Test
+    public void testCreateDataSet() throws IOException, URISyntaxException {
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        WebTarget webTarget = client.target(postDataSetFile(true, 1));
+        MultiPart mp = createFormData("correctFile", "txt");
+        mockValidateTokenResponse();
+        Response response = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer access_token")
+                .post(Entity.entity(mp, mp.getMediaType()));
+        checkStatus(200, response);
+    }
+
     private MultiPart createFormData(String name, String ext) throws URISyntaxException, IOException {
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
