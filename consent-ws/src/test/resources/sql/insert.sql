@@ -1,3 +1,4 @@
+UPDATE dictionary SET key = 'Sample Collection ID' where key = 'Dataset ID';
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now(),'','dataUseLetter-link-01.here','dulName-01.pdf');
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now(),'','dataUseLetter-link-02.here','dulName-02.pdf');
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId3',true,'{"type":"everything"}',true,'testName3',now(),now(),now(),'','dataUseLetter-link-03.here','dulName-03.pdf');
@@ -33,3 +34,4 @@ insert into user_role(roleId, dacUserId) values(6,5);
 insert into user_role(roleId, dacUserId) values(5,5);
 insert into user_role(roleId, dacUserId) values(4,5);
 insert into user_role(roleId, dacUserId) values(2,5);
+

@@ -10,6 +10,9 @@ public class DatasetConfiguration {
     @NotNull
     public String duos2;
 
+    // Note:
+    // duos1 and duos2 values are pre-defined dataset names where each one must have assigned a reserved alias id.
+    // These are duos1 = 1 and duos2 = 2 respectively, for the rest we continue with incremental count.
     public String getDuos1() {
         return duos1;
     }
