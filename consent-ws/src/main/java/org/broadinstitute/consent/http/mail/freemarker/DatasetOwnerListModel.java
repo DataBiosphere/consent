@@ -6,12 +6,12 @@ public class DatasetOwnerListModel {
 
     private String ownerName;
     private String datasetName;
-    private String objectId;
+    private String datasetId;
 
     public DatasetOwnerListModel(String ownerName, String datasetName, String datasetId) {
         this.ownerName = ownerName;
         this.datasetName = datasetName;
-        this.objectId = StringUtils.isEmpty(datasetId) ? "--" : datasetId;
+        this.datasetId = StringUtils.isEmpty(datasetId) ? "--" : datasetId;
     }
 
     public String getOwnerName() {
@@ -22,8 +22,8 @@ public class DatasetOwnerListModel {
         return datasetName;
     }
 
-    public String getObjectId() {
-        return objectId;
+    public String getDatasetId() {
+        return datasetId;
     }
 
 }
