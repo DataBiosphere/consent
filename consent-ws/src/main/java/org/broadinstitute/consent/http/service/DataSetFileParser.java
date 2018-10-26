@@ -24,7 +24,7 @@ public class DataSetFileParser {
     private int SAMPLE_COLLECTION_INDEX = 9;
     private int CONSENT_ID_INDEX = 10;
 
-    public ParseResult parseTSVFile(File file, List<Dictionary> allFields, Integer lastAlias, Boolean overwrite, String alias1, String alias2) {
+    public ParseResult parseTSVFile(File file, List<Dictionary> allFields, Integer lastAlias, Boolean overwrite, List<String> predefinedDatasets) {
         ParseResult result = new ParseResult();
         List<String> errors = new ArrayList<>();
         List<DataSet> datasets = new ArrayList<>();
@@ -56,7 +56,7 @@ public class DataSetFileParser {
             logger().error("An unexpected error had occurred in DataSetFileParser", e);
             errors.add("An unexpected error had occurred in DataSetFileParser - Contact Support");
         }
-        if(!overwrite) datasets = createAlias(datasets, lastAlias, alias1, alias2);
+        if(!overwrite) datasets = createAlias(datasets, lastAlias, predefinedDatasets);
         result.setDatasets(datasets);
         result.setErrors(errors);
         return result;
@@ -100,14 +100,14 @@ public class DataSetFileParser {
         return dataset;
     }
 
-    public List<DataSet> createAlias(final List<DataSet> dataSets, Integer lastAlias, String alias1, String alias2) {
+    public List<DataSet> createAlias(final List<DataSet> dataSets, Integer lastAlias, List<String> predefinedDatasets) {
         int initialAlias = 3;
         List<DataSet> results = new ArrayList<>(dataSets);
         for(DataSet ds: results) {
-            if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(alias2)) {
+            if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(predefinedDatasets.get(1))) {
                 ds.setAlias(2);
             }
-            else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(alias1)){
+            else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(predefinedDatasets.get(0))){
                 ds.setAlias(1);
             }
             else if(lastAlias == null || lastAlias < 3) {

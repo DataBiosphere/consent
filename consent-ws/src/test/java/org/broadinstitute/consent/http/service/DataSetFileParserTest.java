@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DataSetFileParserTest {
@@ -28,7 +29,8 @@ public class DataSetFileParserTest {
         dataSet2.setName(DATASET_2);
         dataSets.add(dataSet);
         dataSets.add(dataSet2);
-        List<DataSet> results = dataSetFileParser.createAlias(dataSets,5, DATASET_1, DATASET_2);
+        List<String> predefinedDatasets = Arrays.asList(DATASET_1, DATASET_2);
+        List<DataSet> results = dataSetFileParser.createAlias(dataSets,5, predefinedDatasets);
         Assert.assertTrue(results.size() == 2);
         Assert.assertTrue(results.get(0).getAlias().equals(DATASET_ALIAS_1));
         Assert.assertTrue(results.get(1).getAlias().equals(DATASET_ALIAS_2));
@@ -40,7 +42,8 @@ public class DataSetFileParserTest {
         DataSet dataSet = new DataSet();
         dataSet.setName("Test");
         dataSets.add(dataSet);
-        List<DataSet> results = dataSetFileParser.createAlias(dataSets,0, DATASET_1, DATASET_2);
+        List<String> predefinedDatasets = Arrays.asList(DATASET_1, DATASET_2);
+        List<DataSet> results = dataSetFileParser.createAlias(dataSets,0, predefinedDatasets);
         Assert.assertTrue(results.size() == 1);
         Assert.assertTrue(results.get(0).getAlias().equals(DATASET_ALIAS_3));
     }
@@ -51,7 +54,8 @@ public class DataSetFileParserTest {
         DataSet dataSet = new DataSet();
         dataSet.setName("Test");
         dataSets.add(dataSet);
-        List<DataSet> results = dataSetFileParser.createAlias(dataSets,3, DATASET_1, DATASET_2);
+        List<String> predefinedDatasets = Arrays.asList(DATASET_1, DATASET_2);
+        List<DataSet> results = dataSetFileParser.createAlias(dataSets,3, predefinedDatasets);
         Assert.assertTrue(results.size() == 1);
         Assert.assertTrue(results.get(0).getAlias().equals(DATASET_ALIAS_4));
     }
