@@ -433,7 +433,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         List<DataSetProperty> dataSetPropertiesList = new ArrayList<>();
         dataSets.stream().map((dataSet) -> {
             Set<DataSetProperty> properties = dataSet.getProperties();
-            properties.stream().forEach((property) -> {
+            properties.forEach((property) -> {
                 property.setDataSetId(retrievedValuesMap.get(dataSet.getName()));
             });
             return dataSet;
