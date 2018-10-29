@@ -47,7 +47,9 @@ public class DataSetFileParser {
                 DataSet ds = createDataSet(record);
                 Set<DataSetProperty> properties = new HashSet<>();
                 for (int i = 1; i < allKeys.size(); i++) {
-                    properties.add(new DataSetProperty(ds.getDataSetId(), allFields.get(i).getKeyId(), record[i], ds.getCreateDate()));
+                    if(i != CONSENT_ID_INDEX) {
+                        properties.add(new DataSetProperty(ds.getDataSetId(), allFields.get(i).getKeyId(), record[i], ds.getCreateDate()));
+                    }
                 }
                 ds.setProperties(properties);
                 datasets.add(ds);

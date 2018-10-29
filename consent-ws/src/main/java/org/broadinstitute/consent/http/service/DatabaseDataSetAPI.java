@@ -32,10 +32,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private DataAccessRequestAPI accessAPI;
     private DataSetAuditDAO dataSetAuditDAO;
     private ElectionDAO electionDAO;
-
-    public static final String SAMPLE_COLLECTION_ID = "Sample Collection ID";
-
-
     private final String MISSING_ASSOCIATION = "Sample Collection ID %s doesn't have an associated consent.";
     private final String MISSING_CONSENT = "Consent ID %s does not exist.";
     private final String DUPLICATED_ROW = "Sample Collection ID %s is already present in the database. ";
@@ -47,8 +43,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final String UPDATE = "UPDATE";
     private final String DELETE = "DELETE";
     private final  List<String> predefinedDatasets;
-
-    private final Integer CONSENT_ID = 11;
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
@@ -71,7 +65,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
 
     @Override
-    public ParseResult create(File dataSetFile, Integer userId) {
+    public synchronized ParseResult create(File dataSetFile, Integer userId) {
         Integer lastAlias = dsDAO.findLastAlias();
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false, predefinedDatasets);
         List<DataSet> dataSets = result.getDatasets();
@@ -116,7 +110,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
 
     @Override
-    public ParseResult overwrite(File dataSetFile, Integer userId) {
+    public synchronized ParseResult overwrite(File dataSetFile, Integer userId) {
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), null, true, predefinedDatasets);
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -438,8 +432,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             });
             return dataSet;
         }).forEach((dataSet) -> {
-            Set<DataSetProperty> properties = dataSet.getProperties().stream().filter(property -> !property.getPropertyKey().equals(CONSENT_ID)).collect(Collectors.toSet());
-            dataSetPropertiesList.addAll(properties);
+            dataSetPropertiesList.addAll(dataSet.getProperties());
         });
         dsDAO.insertDataSetsProperties(dataSetPropertiesList);
         return dataSetPropertiesList;
