@@ -43,6 +43,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final String UPDATE = "UPDATE";
     private final String DELETE = "DELETE";
     private final  List<String> predefinedDatasets;
+    private final Object aliasDBValueLock = new Object();
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
@@ -65,52 +66,58 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
 
     @Override
-    public synchronized ParseResult create(File dataSetFile, Integer userId) {
-        Integer lastAlias = dsDAO.findLastAlias();
-        ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false, predefinedDatasets);
-        List<DataSet> dataSets = result.getDatasets();
-        if (CollectionUtils.isNotEmpty(dataSets)) {
-            if (isValid(dataSets, false)) {
+    public ParseResult create(File dataSetFile, Integer userId) {
+        synchronized (aliasDBValueLock) {
+            Integer lastAlias = dsDAO.findLastAlias();
+            ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), lastAlias, false, predefinedDatasets);
+            List<DataSet> dataSets = result.getDatasets();
+            if (CollectionUtils.isNotEmpty(dataSets)) {
+                if (isValid(dataSets, false)) {
 
-                List<DataSet> existentdataSets = dsDAO.getDataSetsForObjectIdList(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
+                    List<DataSet> existentdataSets = dsDAO.getDataSetsForObjectIdList(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
 
-                List<DataSet> dataSetsToUpdate = new ArrayList<>();
-                List<DataSet> dataSetsToCreate = new ArrayList<>();
-                List<String> existentObjectIds = existentdataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+                    List<DataSet> dataSetsToUpdate = new ArrayList<>();
+                    List<DataSet> dataSetsToCreate = new ArrayList<>();
+                    List<String> existentObjectIds = existentdataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
 
-                for (DataSet ds : dataSets) {
-                    if (StringUtils.isNotEmpty(ds.getObjectId()) && existentObjectIds.contains(ds.getObjectId())) {
-                        dataSetsToUpdate.add(ds);
-                    } else {
-                        dataSetsToCreate.add(ds);
+                    for (DataSet ds : dataSets) {
+                        if (StringUtils.isNotEmpty(ds.getObjectId()) && existentObjectIds.contains(ds.getObjectId())) {
+                            dataSetsToUpdate.add(ds);
+                        } else {
+                            dataSetsToCreate.add(ds);
+                        }
                     }
+                    if (CollectionUtils.isNotEmpty(dataSetsToCreate)) {
+                        dsDAO.insertAll(dataSetsToCreate);
+                        insertDataSetAudit(dataSetsToCreate, CREATE, userId, insertProperties(dataSetsToCreate));
+                    }
+                    if (CollectionUtils.isNotEmpty(dataSetsToUpdate)) {
+                        dsDAO.updateAllByObjectId(dataSetsToUpdate);
+                        List<String> objectIds = dataSetsToUpdate.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+                        List<Integer> dataSetIds = dsDAO.searchDataSetsIdsByObjectIdList(objectIds);
+                        if (CollectionUtils.isNotEmpty(dataSetIds))
+                            dsDAO.deleteDataSetsProperties(dataSetIds);
+                        insertDataSetAudit(dataSetsToUpdate, UPDATE, userId, insertProperties(dataSetsToUpdate));
+                    }
+                    processAssociation(dataSets);
+                } else {
+                    result.getErrors().addAll(addIdsErrors(dataSets));
+                    result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
+                    result.getErrors().addAll(addMissingConsentIdErrors(dataSets));
+                    result.getErrors().addAll(addDuplicatedRowsErrors(dataSets));
+                    result.getErrors().addAll(addDuplicateDataSetNames(dataSets));
                 }
-                if (CollectionUtils.isNotEmpty(dataSetsToCreate)) {
-                    dsDAO.insertAll(dataSetsToCreate);
-                    insertDataSetAudit(dataSetsToCreate, CREATE, userId, insertProperties(dataSetsToCreate));
-                }
-                if (CollectionUtils.isNotEmpty(dataSetsToUpdate)) {
-                    dsDAO.updateAllByObjectId(dataSetsToUpdate);
-                    List<String> objectIds = dataSetsToUpdate.stream().map(DataSet::getObjectId).collect(Collectors.toList());
-                    List<Integer> dataSetIds = dsDAO.searchDataSetsIdsByObjectIdList(objectIds);
-                    if (CollectionUtils.isNotEmpty(dataSetIds)) dsDAO.deleteDataSetsProperties(dataSetIds);
-                    insertDataSetAudit(dataSetsToUpdate, UPDATE, userId, insertProperties(dataSetsToUpdate));
-                }
-                processAssociation(dataSets);
-            } else {
-                result.getErrors().addAll(addIdsErrors(dataSets));
-                result.getErrors().addAll(addMissingAssociationsErrors(dataSets));
-                result.getErrors().addAll(addMissingConsentIdErrors(dataSets));
-                result.getErrors().addAll(addDuplicatedRowsErrors(dataSets));
-                result.getErrors().addAll(addDuplicateDataSetNames(dataSets));
             }
+            return result;
         }
-        return result;
     }
 
 
     @Override
-    public synchronized ParseResult overwrite(File dataSetFile, Integer userId) {
+    public ParseResult overwrite(File dataSetFile, Integer userId) {
+        // this code does not need to be synchronized for the alias value because it does not
+        // retrieve the last alias from the DB. in processDataSets, there are synchronized blocks
+        // that handle the synchronization when the alias value is retrieved and used
         ParseResult result = parser.parseTSVFile(dataSetFile, dsDAO.getMappedFieldsOrderByReceiveOrder(), null, true, predefinedDatasets);
         List<DataSet> dataSets = result.getDatasets();
         if (CollectionUtils.isNotEmpty(dataSets)) {
@@ -327,12 +334,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public void updateDataSetAlias() {
-       List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
-       if(CollectionUtils.isNotEmpty(dsList)) {
-         Integer lastAlias = dsDAO.findLastAlias();
-         parser.createAlias(dsList, lastAlias, predefinedDatasets);
-         dsDAO.updateAll(dsList);
-       }
+        List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
+        if(CollectionUtils.isNotEmpty(dsList)) {
+            synchronized (aliasDBValueLock) {
+                Integer lastAlias = dsDAO.findLastAlias();
+                parser.createAlias(dsList, lastAlias, predefinedDatasets);
+                dsDAO.updateAll(dsList);
+            }
+        }
     }
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
@@ -506,17 +515,21 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         } else {
             dataSetToCreate.addAll(dataSets);
         }
-        List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias(), predefinedDatasets);
-        if (CollectionUtils.isNotEmpty(dataSetToCreateWithAlias)) {
-            dsDAO.insertAll(dataSetToCreateWithAlias);
-            List<DataSetProperty> properties = insertProperties(dataSetToCreateWithAlias);
-            insertDataSetAudit(dataSetToCreateWithAlias, CREATE, userId, properties);
+        synchronized (aliasDBValueLock) {
+            List<DataSet> dataSetToCreateWithAlias = parser.createAlias(dataSetToCreate, dsDAO.findLastAlias(), predefinedDatasets);
+            if (CollectionUtils.isNotEmpty(dataSetToCreateWithAlias)) {
+                dsDAO.insertAll(dataSetToCreateWithAlias);
+                List<DataSetProperty> properties = insertProperties(dataSetToCreateWithAlias);
+                insertDataSetAudit(dataSetToCreateWithAlias, CREATE, userId, properties);
+            }
         }
-        List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias(), predefinedDatasets);
-        if (CollectionUtils.isNotEmpty(dataSetToUpdateWithAlias)) {
-            dsDAO.updateAll(dataSetToUpdateWithAlias);
-            List<DataSetProperty> properties = insertProperties(dataSetToUpdateWithAlias);
-            insertDataSetAudit(dataSetToUpdateWithAlias, UPDATE, userId, properties);
+        synchronized (aliasDBValueLock) {
+            List<DataSet> dataSetToUpdateWithAlias = parser.createAlias(dataSetToUpdate, dsDAO.findLastAlias(), predefinedDatasets);
+            if (CollectionUtils.isNotEmpty(dataSetToUpdateWithAlias)) {
+                dsDAO.updateAll(dataSetToUpdateWithAlias);
+                List<DataSetProperty> properties = insertProperties(dataSetToUpdateWithAlias);
+                insertDataSetAudit(dataSetToUpdateWithAlias, UPDATE, userId, properties);
+            }
         }
     }
 
