@@ -26,6 +26,9 @@ public enum ResearcherFields {
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
     INVESTIGATOR("investigator", false),
+    LINKEDIN_PROFILE("linkedIn", false),
+    RESEARCHER_GATE("researcherGate", false),
+    ORCID("orcid", false),
     ERA_EXPIRATION_DATE("eraExpiration",false),
     ERA_STATUS("eraAuthorized",false),
     ERA_USERNAME("nihUsername", false);
