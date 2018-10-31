@@ -130,12 +130,21 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.PI_EMAIL.getValue(), properties.containsKey(ResearcherFields.PI_EMAIL.getValue()) ? properties.get(ResearcherFields.PI_EMAIL.getValue()) : null);
         rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
         rpForDAR.put(ResearcherFields.DO_YOU_HAVE_PI.getValue(), properties.containsKey(ResearcherFields.DO_YOU_HAVE_PI.getValue()) ? properties.get(ResearcherFields.DO_YOU_HAVE_PI.getValue()) : null);
+<<<<<<< HEAD
         rpForDAR.put(ResearcherFields.LINKEDIN_PROFILE.getValue(), properties.containsKey(ResearcherFields.LINKEDIN_PROFILE.getValue()) ? properties.get(ResearcherFields.LINKEDIN_PROFILE.getValue()) : null);
         rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.containsKey(ResearcherFields.RESEARCHER_GATE.getValue()) ? properties.get(ResearcherFields.RESEARCHER_GATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.containsKey(ResearcherFields.ORCID.getValue()) ? properties.get(ResearcherFields.ORCID.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.containsKey(ResearcherFields.ERA_USERNAME.getValue()) ? properties.get(ResearcherFields.ERA_USERNAME.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
+=======
+        rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.containsKey(ResearcherFields.ERA_USERNAME.getValue()) ? properties.get(ResearcherFields.ERA_USERNAME.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
+        rpForDAR.put(ResearcherFields.LINKEDIN_PROFILE.getValue(), properties.containsKey(ResearcherFields.LINKEDIN_PROFILE.getValue()) ? properties.get(ResearcherFields.LINKEDIN_PROFILE.getValue()) : null);
+        rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.containsKey(ResearcherFields.RESEARCHER_GATE.getValue()) ? properties.get(ResearcherFields.RESEARCHER_GATE.getValue()) : null);
+        rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.containsKey(ResearcherFields.ORCID.getValue()) ? properties.get(ResearcherFields.ORCID.getValue()) : null);
+>>>>>>> 596f571d584f1bc1bc39523cd88d1311d0304284
         return rpForDAR;
     }
 
