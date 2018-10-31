@@ -4,6 +4,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -76,7 +77,7 @@ public interface DataAccessRequestAPI {
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
-    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties) throws IOException;
+    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview) throws IOException;
 
     File createApprovedDARDocument() throws NotFoundException, IOException;
 
