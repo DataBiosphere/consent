@@ -11,7 +11,7 @@ public class DelegateResponsibilitiesMessage extends MailMessage{
     private final String NEW_ROLES = "You have been assigned a New Role in DUOS.";
 
     public List<Mail> delegateResponsibilitiesMessage(List<String> toAddresses, String fromAddress, Writer template) throws MessagingException {
-        return generateEmailMessage(toAddresses, fromAddress, template, null, null);
+        return generateEmailMessages(toAddresses, fromAddress, template, null, null);
     }
 
     @Override

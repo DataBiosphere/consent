@@ -12,7 +12,7 @@ public class FlaggedDarApprovedMessage extends MailMessage{
     private final String ADMIN_APPROVED_DAR = "%s that requires data owners reviewing approved.";
 
     public List<Mail> flaggedDarMessage(List<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(toAddresses, fromAddress, template, referenceId, type);
+        return generateEmailMessages(toAddresses, fromAddress, template, referenceId, type);
     }
 
     @Override

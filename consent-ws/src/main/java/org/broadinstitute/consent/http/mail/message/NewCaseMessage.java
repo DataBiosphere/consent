@@ -12,7 +12,7 @@ public class NewCaseMessage extends MailMessage{
     private final String NEWCASE_DAR = "Log votes on Data Access Request case id: %s.";
 
     public List<Mail> newCaseMessage(List<String> addresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(addresses, fromAddress, template, referenceId, type);
+        return generateEmailMessages(addresses, fromAddress, template, referenceId, type);
     }
 
     @Override

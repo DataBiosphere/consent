@@ -102,7 +102,7 @@ public class DACUserResource extends Resource {
     @Path("/main_fields/{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({"ADMIN", "RESEARCHER"})
     public Response updateMainFields(@Context UriInfo info, DACUser dac, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);

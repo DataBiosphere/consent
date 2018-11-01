@@ -11,7 +11,7 @@ public class NewResearcherCreatedMessage extends MailMessage{
     private final String NEW_RESEARCHER_CREATED = "Review Researcher Profile.";
 
     public List<Mail> newResearcherCreatedMessage(List<String> toAddress, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(toAddress, fromAddress, template, referenceId, type);
+        return generateEmailMessages(toAddress, fromAddress, template, referenceId, type);
     }
 
     @Override

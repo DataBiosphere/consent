@@ -13,7 +13,7 @@ public class ReminderMessage extends MailMessage {
     private final String REMINDER_RP = "Urgent: Log votes on Research Purpose Review case id: %s.";
 
     public List<Mail> reminderMessage(List<String> address, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(address, fromAddress, template, referenceId, type);
+        return generateEmailMessages(address, fromAddress, template, referenceId, type);
     }
 
     @Override

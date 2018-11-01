@@ -12,7 +12,7 @@ public class ClosedDatasetElectionMessage extends MailMessage {
     private final String CLOSED_DATASET_ELECTIONS = "Report of closed Dataset elections.";
 
     public Collection<Mail> closedDatasetElectionMessage(List<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(toAddresses, fromAddress, template, referenceId, type);
+        return generateEmailMessages(toAddresses, fromAddress, template, referenceId, type);
     }
 
     @Override
