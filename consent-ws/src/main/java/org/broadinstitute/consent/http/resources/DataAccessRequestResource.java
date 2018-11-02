@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -48,13 +49,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
@@ -219,10 +222,11 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Consent describeConsentForDAR(@PathParam("id") String id) {
-        List<String> datasetId = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
+        List<Integer> dataSetIdList = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
+        Integer dataSetId = dataSetIdList.get(0);
         Consent c;
-        if (CollectionUtils.isNotEmpty(datasetId)) {
-            c = consentAPI.getConsentFromDatasetID(datasetId.get(0));
+        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
+            c = consentAPI.getConsentFromDatasetID(dataSetId);
             if (c == null) {
                 throw new NotFoundException("Unable to find the consent related to the datasetId present in the DAR.");
             }
@@ -286,13 +290,19 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/datasetCatalog")
     @RolesAllowed("RESEARCHER")
-    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<String> datasetIds) {
+    /*
+     * Note: Run this endpoint only once, in order to apply datasets correspondent alias Id
+     * in MySql and replace objectId to datasetId in Mongodb
+    */
+    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<Integer> datasetIds) {
         Document dar = new Document();
+        Collection<DataSetDTO> dataSets = dataSetAPI.describeDataSetsByReceiveOrder(datasetIds);
+        List<String> dataSetNames = dataSets.stream().map(dataset -> dataset.getPropertyValue("Dataset Name")).collect(Collectors.toList());
         dar.append(DarConstants.USER_ID, userId);
         try {
             List<Map<String, String>> datasets = new ArrayList<>();
-            for(String datasetId: datasetIds){
-                List<Map<String, String>> ds = dataSetAPI.autoCompleteDataSets(datasetId);
+            for(String datasetName: dataSetNames){
+                List<Map<String, String>> ds = dataSetAPI.getCompleteDataSet(datasetName);
                 datasets.add(ds.get(0));
             }
             dar.append(DarConstants.DATASET_ID, datasets);
@@ -371,6 +381,7 @@ public class DataAccessRequestResource extends Resource {
     }
 
     @GET
+    @Consumes("application/json")
     @Produces("application/json")
     @Path("/hasUseRestriction/{referenceId}")
     @PermitAll
@@ -399,6 +410,19 @@ public class DataAccessRequestResource extends Resource {
             }
         }catch(Exception e){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+    @PUT
+    @Produces("application/json")
+    @Path("/dataset")
+    @PermitAll
+    public Response updateObjectIdByDataset() {
+        try{
+            dataSetAPI.updateDataSetAlias();
+            return Response.ok(dataSetAPI.updateDataSetIdToDAR()).build();
+        } catch(Exception e) {
+            return createExceptionResponse(e);
         }
     }
 

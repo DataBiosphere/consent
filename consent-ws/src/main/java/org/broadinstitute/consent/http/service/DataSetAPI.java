@@ -19,9 +19,9 @@ public interface DataSetAPI {
 
     List<DataSet> getDataSetsForConsent(String consentId);
 
-    DataSetDTO getDataSetDTO(String objectId ) ;
+    DataSetDTO getDataSetDTO(Integer dataSetId ) ;
 
-    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<String> objectIds) ;
+    Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetIds) ;
 
     Collection<Dictionary> describeDictionaryByDisplayOrder();
 
@@ -29,12 +29,18 @@ public interface DataSetAPI {
 
     List<Map<String, String>> autoCompleteDataSets(String partial);
 
-    void deleteDataset(String datasetObjectId, Integer dacUserId) throws IllegalStateException;
+    List<Map<String, String>> getCompleteDataSet(String dataSetName);
 
-    void disableDataset(String datasetObjectId, Boolean active);
+    void deleteDataset(Integer datasetId, Integer dacUserId) throws IllegalStateException;
 
-    DataSet updateNeedsReviewDataSets(String dataSetId, Boolean needsApproval);
+    void disableDataset(Integer dataSetId, Boolean active);
 
-    List<DataSet>findNeedsApprovalDataSetByObjectId(List<String> objectIdList);
+    DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval);
+
+    List<DataSet>findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList);
+
+    String updateDataSetIdToDAR();
+
+    void updateDataSetAlias();
 
 }

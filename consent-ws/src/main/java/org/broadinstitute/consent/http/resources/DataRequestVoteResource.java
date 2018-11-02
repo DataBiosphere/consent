@@ -82,7 +82,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             Vote vote = api.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
-            List<String> dataSets = access.get(DarConstants.DATASET_ID, List.class);
+            List<Integer> dataSets = access.get(DarConstants.DATASET_ID, List.class);
             if(access.containsKey(DarConstants.RESTRICTION)){
                 List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
                 if(vote.getVote() != null && votes.get(0).getVote() != null){
@@ -182,7 +182,7 @@ public class DataRequestVoteResource extends Resource {
         }
     }
 
-    private void createDataOwnerElection(String requestId, Vote vote, Document access, List<String> dataSets) throws MessagingException, IOException, TemplateException {
+    private void createDataOwnerElection(String requestId, Vote vote, Document access, List<Integer> dataSets) throws MessagingException, IOException, TemplateException {
         Vote agreementVote = null;
         Vote finalVote = null;
         if(vote.getType().equals(VoteType.FINAL.getValue())){
@@ -196,9 +196,9 @@ public class DataRequestVoteResource extends Resource {
         }
         if((finalVote != null && finalVote.getVote() != null && finalVote.getVote()) && (agreementVote == null || (agreementVote != null && agreementVote.getVote() != null))){
             List<DataSet> needsApprovedDataSets = dataSetAPI.findNeedsApprovalDataSetByObjectId(dataSets);
-            List<String> objectIds = needsApprovedDataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+            List<Integer> dataSetIds = needsApprovedDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
-                Map<DACUser, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(objectIds);
+                Map<DACUser, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(dataSetIds);
                 List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.stream().forEach(election -> {

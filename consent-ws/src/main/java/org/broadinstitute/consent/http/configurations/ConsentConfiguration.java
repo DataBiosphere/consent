@@ -7,6 +7,8 @@ import io.dropwizard.db.DataSourceFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConsentConfiguration extends Configuration {
 
@@ -52,6 +54,9 @@ public class ConsentConfiguration extends Configuration {
     @Valid
     @NotNull
     private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
+
+    @JsonProperty("datasets")
+    private List<String> datasets = new ArrayList<>();
 
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
@@ -117,4 +122,9 @@ public class ConsentConfiguration extends Configuration {
     public StoreOntologyConfiguration getStoreOntologyConfiguration() {
         return storeOntology;
     }
+
+    public List<String> getDatasets() {
+        return datasets;
+    }
+
 }

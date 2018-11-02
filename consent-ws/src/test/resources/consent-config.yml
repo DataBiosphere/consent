@@ -67,3 +67,6 @@ elasticSearch:
   servers:
     - localhost
   indexName: iName
+datasets:
+  - Melanoma-Regev-Izar-Garraway-DFCI-ICR
+  - Melanoma_Regev
