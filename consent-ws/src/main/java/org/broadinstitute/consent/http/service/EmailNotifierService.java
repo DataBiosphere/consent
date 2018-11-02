@@ -255,7 +255,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     private List<String> getEmails(List<DACUser> users) {
         List<String> usersEmail = users.stream().map(DACUser::getEmail).collect(Collectors.toList());
-        List<String> additionalEmails = users.stream().map(DACUser::getAdditionalEmail).collect(Collectors.toList());
+        List<String> additionalEmails = users.stream().filter(user -> StringUtils.isNotEmpty(user.getAdditionalEmail())).map(DACUser::getAdditionalEmail).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(additionalEmails)) usersEmail.addAll(additionalEmails);
         List<String> academicEmails =  getAcademicEmails(users);
         if(CollectionUtils.isNotEmpty(academicEmails)) usersEmail.addAll(additionalEmails);
