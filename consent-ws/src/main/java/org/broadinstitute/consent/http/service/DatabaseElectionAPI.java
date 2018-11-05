@@ -372,8 +372,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public String darDatasetElectionStatus(String darReferenceId){
-        List<String> dataSets = describeDataAccessRequestById(darReferenceId).get(DarConstants.DATASET_ID, List.class);
-        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
+        List<Integer> dataSets = describeDataAccessRequestById(darReferenceId).get(DarConstants.DATASET_ID, List.class);
+        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
@@ -474,7 +474,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 throw new NotFoundException();
             }
             List<DataSet> dataSets = verifyDisableDataSets(dar, referenceId);
-            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getObjectId());
+            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
             consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
             if((consentElection == null)){
                 throw new IllegalArgumentException(DUL_NOT_APROVED);
@@ -490,8 +490,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
-        List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-        List<DataSet> dataSetList = dataSetDAO.searchDataSetsByObjectIdList(dataSets);
+        List<Integer> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+        List<DataSet> dataSetList = dataSetDAO.searchDataSetsByIds(dataSets);
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;

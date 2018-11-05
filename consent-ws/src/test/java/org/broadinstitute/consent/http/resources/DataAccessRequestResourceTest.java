@@ -56,6 +56,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         shutDownMongo();
     }
 
+
     @Test
     public void testDarOperations() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -85,6 +86,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         List<UseRestrictionDTO> dtos = getJson(client, invalidDarsPath()).readEntity(new GenericType<List<UseRestrictionDTO>>() {});
         assertTrue(dtos.size() == 0);
     }
+
 
     @Test
     public void testManageDars() throws IOException {

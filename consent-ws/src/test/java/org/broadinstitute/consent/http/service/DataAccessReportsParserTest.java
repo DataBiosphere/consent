@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.vividsolutions.jts.util.Assert;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -19,8 +18,9 @@ import java.util.stream.Stream;
 public class DataAccessReportsParserTest {
 
     DataAccessReportsParser parser;
-    private final String DATASET_ID = "SC-01253";
+    private final String SC_ID = "SC-01253";
     private final String CONSENT_NAME = "ORSP-1903";
+    private final String NAME = "Test";
     private final String REQUESTER = "Wesley";
     private final String ORGANIZATION = "Broad";
     private final String RUS_SUMMARY = "Purpose";
@@ -71,8 +71,8 @@ public class DataAccessReportsParserTest {
             }
             if (i == 1) {
                 Assert.isTrue(columns[0].equals(DAR_CODE));
-                Assert.isTrue(columns[1].equals(" "));
-                Assert.isTrue(columns[2].equals(DATASET_ID));
+                Assert.isTrue(columns[1].equals(NAME));
+                Assert.isTrue(columns[2].equals(""));
                 Assert.isTrue(columns[3].equals(CONSENT_NAME));
                 Assert.isTrue(columns[4].equals(REQUESTER));
                 Assert.isTrue(columns[5].equals(ORGANIZATION));
@@ -114,8 +114,8 @@ public class DataAccessReportsParserTest {
             }
             if (i == 1) {
                 Assert.isTrue(columns[0].equals(DAR_CODE));
-                Assert.isTrue(columns[1].equals(" "));
-                Assert.isTrue(columns[2].equals(DATASET_ID));
+                Assert.isTrue(columns[1].equals(NAME));
+                Assert.isTrue(columns[2].equals(""));
                 Assert.isTrue(columns[3].equals(CONSENT_NAME));
                 Assert.isTrue(columns[4].equals(sDUL.replace("\n", " ")));
                 Assert.isTrue(columns[5].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
@@ -169,8 +169,13 @@ public class DataAccessReportsParserTest {
 
     private Document createDAR(Date currentDate) {
         Document dar = new Document();
-        ArrayList<String> dataSets = new ArrayList<>(Arrays.asList(DATASET_ID));
-        dar.put(DarConstants.DATASET_ID, dataSets);
+        Document datasetDetail = new Document();
+        datasetDetail.put(DarConstants.OBJECT_ID, SC_ID);
+        datasetDetail.put("name", NAME);
+        List<Document> detailsList = new ArrayList<>();
+        detailsList.add(datasetDetail);
+        dar.put(DarConstants.DATASET_DETAIL, detailsList);
+        dar.put(DarConstants.DATASET_ID, new ArrayList<>());
         dar.put(DarConstants.DAR_CODE, DAR_CODE);
         dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
         dar.put(DarConstants.NON_TECH_RUS, RUS_SUMMARY);

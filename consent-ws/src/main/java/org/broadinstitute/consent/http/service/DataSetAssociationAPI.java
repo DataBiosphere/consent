@@ -10,11 +10,11 @@ import java.util.Map;
 
 public interface DataSetAssociationAPI {
 
-    List<DatasetAssociation> createDatasetUsersAssociation(String objectId, List<Integer> usersIdList);
+    List<DatasetAssociation> createDatasetUsersAssociation(Integer dataSetId, List<Integer> usersIdList);
 
-    Map<String, Collection<DACUser>> findDataOwnersRelationWithDataset(String datasetId);
+    Map<String, Collection<DACUser>> findDataOwnersRelationWithDataset(Integer dataSetId);
 
-    Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<String> objectId);
+    Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList);
 
-    List<DatasetAssociation> updateDatasetAssociations(String objectId, List<Integer> usersIdList);
+    List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> usersIdList);
 }
