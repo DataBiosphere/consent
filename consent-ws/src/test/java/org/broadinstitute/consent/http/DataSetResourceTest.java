@@ -67,14 +67,31 @@ public class DataSetResourceTest extends DataSetServiceTest {
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
         assertTrue(result.size() == 2);
         assertTrue(response.getStatus() == (BAD_REQUEST));
-        assertTrue(result.get(0).equals("Your file has more/less columns than expected. Expected quantity: 10"));
+        assertTrue(result.get(0).equals("Your file has more/less columns than expected. Expected quantity: 11"));
         assertTrue(result.get(1).equals("Please download the Dataset Spreadsheet Model from the 'Add Datasets' window."));
     }
 
     @Test
-    public void testCreateCorrectFile() throws Exception {
-        Client client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class).build();
+    public void testCreateConsentIdAlreadyExists() throws IOException, URISyntaxException {
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+        WebTarget webTarget = client.target(postDataSetFile(false, 1));
+        MultiPart mp = createFormData("wrongIdentifiers", "txt");
+        mockValidateTokenResponse();
+        Response response = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer access_token")
+                .post(Entity.entity(mp, mp.getMediaType()));
+        ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
+        assertTrue(result.get(0).equals("Conflict in dataset association identificator,  SC-20658 - 1, use either Sample Collection ID or Consent ID"));
+        assertTrue(result.get(1).equals("Sample Collection ID SC-xxxxxx doesn't have an associated consent."));
+        assertTrue(result.get(2).equals("Consent ID 1 does not exist."));
+        assertTrue(result.get(3).equals("Consent ID 1 does not exist."));
+        assertTrue(result.get(4).equals("Sample Collection ID SC-20658 is already present in the database. "));
+    }
+
+    @Test
+    public void testCreateDataSet() throws IOException, URISyntaxException {
+        Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
         WebTarget webTarget = client.target(postDataSetFile(true, 1));
         MultiPart mp = createFormData("correctFile", "txt");
         mockValidateTokenResponse();
@@ -82,9 +99,7 @@ public class DataSetResourceTest extends DataSetServiceTest {
                 .request(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer access_token")
                 .post(Entity.entity(mp, mp.getMediaType()));
-        ArrayList<DataSet> result = response.readEntity(new GenericType<ArrayList<DataSet>>(){});
-        assertTrue(response.getStatus() == (OK));
-        assertTrue(result.size() == 3);
+        checkStatus(200, response);
     }
 
     private MultiPart createFormData(String name, String ext) throws URISyntaxException, IOException {

@@ -24,7 +24,7 @@ public interface DataAccessRequestAPI {
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
-    List<Document> describeDataAccessWithDataSetIdAndRestriction(List<String> dataSetIds);
+    List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds);
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
 
@@ -83,7 +83,7 @@ public interface DataAccessRequestAPI {
 
     File createReviewedDARDocument() throws NotFoundException, IOException;
 
-    File createDataSetApprovedUsersDocument(String dataSetId) throws IOException;
+    File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException;
 
 }
 

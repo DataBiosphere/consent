@@ -7,6 +7,8 @@ import io.dropwizard.db.DataSourceFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConsentConfiguration extends Configuration {
 
@@ -57,6 +59,10 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private final NihConfiguration nihAuthentication = new NihConfiguration();
+
+    @JsonProperty("datasets")
+    private List<String> datasets = new ArrayList<>();
+
 
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
@@ -125,5 +131,9 @@ public class ConsentConfiguration extends Configuration {
 
     public NihConfiguration getNihConfiguration() {
         return nihAuthentication;
+    }
+
+    public List<String> getDatasets() {
+        return datasets;
     }
 }

@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.*;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
@@ -74,9 +73,9 @@ public class DataSetResource extends Resource {
                 inputFile = new File(UUID.randomUUID().toString());
                 FileUtils.copyInputStreamToFile(uploadedDataSet, inputFile);
                 ParseResult result;
-                if(overwrite) {
+                if (overwrite) {
                     result = api.overwrite(inputFile, userId);
-                }else{
+                } else{
                     result = api.create(inputFile, userId);
                 }
                 dataSets = result.getDatasets();
@@ -109,7 +108,7 @@ public class DataSetResource extends Resource {
     public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
-        }else{
+        } else {
             Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }
@@ -119,7 +118,7 @@ public class DataSetResource extends Resource {
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSet( @PathParam("datasetId") String datasetId){
+    public Response describeDataSet( @PathParam("datasetId") Integer datasetId){
         try {
             return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
         } catch (Exception e){
@@ -150,7 +149,7 @@ public class DataSetResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @PermitAll
-    public Response downloadDataSets(List<String> idList) {
+    public Response downloadDataSets(List<Integer> idList) {
         String msg = "GETing DataSets to download";
         logger().debug(msg);
 
@@ -175,7 +174,9 @@ public class DataSetResource extends Resource {
 
         for (DataSetDTO row : rows) {
             StringBuilder sbr = new StringBuilder();
+            DataSetPropertyDTO property = new DataSetPropertyDTO("Consent ID",row.getConsentId());
             List<DataSetPropertyDTO> props = row.getProperties();
+            props.add(property);
             for (DataSetPropertyDTO prop : props) {
                 if (sbr.length() > 0)
                     sbr.append(TSV_DELIMITER);
@@ -196,9 +197,9 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{datasetObjectId}/{dacUserId}")
     @RolesAllowed("ADMIN")
-    public Response delete(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
+    public Response delete(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
         try{
-            api.deleteDataset(datasetObjectId, dacUserId);
+            api.deleteDataset(dataSetId, dacUserId);
             return Response.ok().build();
         }catch (Exception e){
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
@@ -209,8 +210,8 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/disable/{datasetObjectId}/{active}")
     @RolesAllowed("ADMIN")
-    public Response disableDataSet(@PathParam("datasetObjectId") String datasetObjectId, @PathParam("active") Boolean active, @Context UriInfo info) {
-        api.disableDataset(datasetObjectId, active);
+    public Response disableDataSet(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("active") Boolean active, @Context UriInfo info) {
+        api.disableDataset(dataSetId, active);
         return Response.ok().build();
     }
 
@@ -234,7 +235,7 @@ public class DataSetResource extends Resource {
     @PUT
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") String dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
+    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
             DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);
             return Response.ok().entity(dataSet).build();
@@ -247,9 +248,9 @@ public class DataSetResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @PermitAll
     @Path("/{datasetId}/approved/users")
-    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") String dataSetId) {
+    public Response downloadDatasetApprovedUsers(@PathParam("datasetId") Integer datasetId) {
         try {
-            return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(dataSetId))
+            return Response.ok(dataAccessRequestAPI.createDataSetApprovedUsersDocument(datasetId))
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + "DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {

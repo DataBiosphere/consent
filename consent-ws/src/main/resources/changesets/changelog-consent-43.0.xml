@@ -1,0 +1,84 @@
+<databaseChangeLog
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="vvicario" id="121">
+        <addColumn tableName="consentassociations">
+            <column name="dataSetId" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet author="vvicario" id="122">
+        <addUniqueConstraint columnNames="dataSetId"
+                             constraintName="unique_dataSetId"
+                             tableName="consentassociations"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="123">
+        <addForeignKeyConstraint baseColumnNames="dataSetId" baseTableName="consentassociations"
+                                 constraintName="fkdatasets" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataSetId"
+                                 referencedTableName="dataset" referencesUniqueColumn="false"/>
+    </changeSet>
+
+
+    <changeSet author="vvicario" id="124">
+        <sql dbms="hsql, mysql">
+            UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
+            INSERT INTO dataset(objectId) SELECT ca.objectId FROM consentassociations ca where dataSetId is null;
+            UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
+        </sql>
+    </changeSet>
+
+    <changeSet author="vvicario" id="125">
+        <update tableName="dictionary">
+            <column name="key" value="Sample Collection ID"> </column>
+            <column name="required" valueBoolean="false"> </column>
+            <where>receiveOrder = 9</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="vvicario" id="126">
+        <dropColumn tableName="consentassociations"
+                    columnName="objectId"/>
+
+    </changeSet>
+
+    <changeSet author="vvicario" id="127">
+        <insert tableName="dictionary">
+            <column name="key" value="Consent ID"/>
+            <column name="required" valueBoolean="false"/>
+            <column name="receiveOrder" value="10"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="vvicario" id="128">
+        <addUniqueConstraint columnNames="name" tableName="dataset"
+                             deferrable="false" initiallyDeferred="false"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="129">
+        <dropNotNullConstraint columnDataType="varchar(255)"
+                               columnName="objectId"
+                               tableName="dataset_audit"/>
+    </changeSet>
+
+    <changeSet author="vvicario" id="130">
+        <addColumn tableName="dataset">
+            <column name="alias" type="bigint" defaultValue="0">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="vvicario" id="131">
+        <sql dbms="hsql, mysql">
+            UPDATE dataset SET alias = 2 where name = 'Melanoma_Regev';
+            UPDATE dataset SET alias = 1 where name = 'Melanoma-Regev-Izar-Garraway-DFCI-ICR';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

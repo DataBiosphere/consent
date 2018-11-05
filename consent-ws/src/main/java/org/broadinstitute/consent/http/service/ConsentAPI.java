@@ -55,7 +55,7 @@ public interface ConsentAPI {
      *
      * @param datasetId the identifier data set
      */
-    Consent getConsentFromDatasetID(String datasetId);
+    Consent getConsentFromDatasetID(Integer datasetId);
 
     // Data Use Letter methods.
     Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException;

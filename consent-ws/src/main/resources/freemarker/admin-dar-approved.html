@@ -27,14 +27,14 @@
                     <tr>
                         <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Data Owner</th>
                         <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Dataset Name</th>
-                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">Dataset ID</th>
+                        <th align="left" style="font-family: 'Roboto', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc; padding: 0 0 5px 5px; text-align: left;">SC ID</th>
                     </tr>
                     <#list dol>
                         <#items as owner>
                             <tr style="font-family: 'Roboto', sans-serif;">
                                 <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.ownerName}</td>
                                 <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.datasetName}</td>
-                                <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.datasetId}</td>
+                                <td style="font-family: 'Roboto', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">${owner.objectId}</td>
                             </tr>
                         </#items>
                     </#list>

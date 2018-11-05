@@ -14,10 +14,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -52,13 +49,14 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private final Logger logger;
     private final String UN_REVIEWED = "un-reviewed";
     private final MongoConsentDB mongo;
+    private final DataSetDAO dataSetDAO;
 
     /**
      * The constructor is private to force use of the factory methods and enforce the singleton pattern.
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, DBI jdbi, VoteDAO voteDAO) {
+    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, DBI jdbi, VoteDAO voteDAO, DataSetDAO dataSetDAO) {
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.consentDAO = dao;
         this.electionDAO = electionDAO;
@@ -67,7 +65,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         this.mongo = mongo;
         this.jdbi = jdbi;
         this.logger = Logger.getLogger("DatabaseConsentAPI");
-
+        this.dataSetDAO = dataSetDAO;
     }
 
     /**
@@ -79,8 +77,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, VoteDAO voteDAO) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, mongo, jdbi, voteDAO));
+    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, MongoConsentDB mongo, VoteDAO voteDAO, DataSetDAO dataSetDAO) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, mongo, jdbi, voteDAO, dataSetDAO));
     }
 
     // Consent Methods
@@ -93,10 +91,10 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         } else {
             id = UUID.randomUUID().toString();
         }
-        if(consentDAO.getIdByName(rec.getName()) != null){
+        if (consentDAO.getIdByName(rec.getName()) != null) {
             throw new IllegalArgumentException("Consent for the specified name already exist");
         }
-        if(StringUtils.isNotEmpty(rec.consentId) && consentDAO.checkConsentbyId(rec.consentId) != null){
+        if (StringUtils.isNotEmpty(rec.consentId) && consentDAO.checkConsentbyId(rec.consentId) != null) {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
@@ -184,7 +182,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         for (ConsentAssociation association : new_associations) {
             logger.debug(String.format("CreateAssociation, adding associations for '%s', %d ids supplied",
                     association.getAssociationType(), association.getElements().size()));
-            validateElements(association.getElements());
+            validateEmptyObjectIds(association.getElements());
+            processAssociation(association.getElements());
             try {
                 consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
                 List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
@@ -209,7 +208,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         for (ConsentAssociation association : new_associations) {
             String atype = association.getAssociationType();
             List<String> new_ids = association.getElements();
-            validateElements(new_ids);
+            validateEmptyObjectIds(new_ids);
             logger.debug(String.format("updateAssociation, adding associations for '%s', ids(cnt=%d) are '%s'",
                     atype, new_ids.size(), new_ids.toString()));
             // First retrieve the existing associations for that type.
@@ -219,6 +218,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             // and add the new associations
             try {
                 if (new_ids.size() > 0) {
+                    processAssociation(new_ids);
                     List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
                     auditServiceAPI.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
                 }
@@ -230,27 +230,49 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return getAllAssociationsForConsent(consentId);
     }
 
-    /** Can't add this to the DAO interface =( **/
-    private List<String> updateAssociations(String consentId, String associationType, List<String> ids){
+    /**
+     * Can't add this to the DAO interface =(
+     **/
+    private List<String> updateAssociations(String consentId, String associationType, List<String> ids) {
         Handle h = jdbi.open();
-        PreparedBatch insertBatch = h.prepareBatch("insert into consentassociations (consentId, associationType, objectId) values (?, ?, ?)");
-        for(String id: ids){
-            insertBatch.add(consentId, associationType, id);
+        PreparedBatch insertBatch = h.prepareBatch("insert into consentassociations (consentId, associationType, dataSetId) values (?, ?, ?)");
+        for (String id : ids) {
+            insertBatch.add(consentId, associationType, dataSetDAO.findDataSetIdByObjectId(id));
         }
         List<Long> insertedIds = insertBatch.executeAndGenerateKeys(LongColumnMapper.PRIMITIVE).list();
         h.close();
         List<String> stringsList = new ArrayList<>();
-        for (Long id: insertedIds) stringsList.add(id.toString());
+        for (Long id : insertedIds) stringsList.add(id.toString());
         return stringsList;
     }
 
-    private void validateElements(List<String> newIds) {
+    private void validateEmptyObjectIds(List<String> newIds) {
         if (CollectionUtils.isNotEmpty(newIds)) {
             newIds.stream().forEach(objectId -> {
-                if(StringUtils.isEmpty(objectId)){
+                if (StringUtils.isEmpty(objectId)) {
                     throw new IllegalArgumentException("Elements are required");
                 }
             });
+        }
+    }
+
+    private void processAssociation(List<String> objectIds) {
+        if (CollectionUtils.isNotEmpty(objectIds)) {
+            List<DataSet> dataSets = dataSetDAO.getDataSetsForObjectIdList(objectIds);
+            List<String> existentObjectsId = dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList());
+            List<DataSet> dataSetsToCreate = new ArrayList<>();
+            if(CollectionUtils.isNotEmpty(dataSets)) {
+                objectIds.stream().forEach(objectId -> {
+                    if(!existentObjectsId.contains(objectId)) {
+                        dataSetsToCreate.add(new DataSet(objectId));
+                    }
+                });
+            } else {
+                objectIds.stream().forEach(objectId -> {
+                    dataSetsToCreate.add(new DataSet(objectId));
+               });
+            }
+            dataSetDAO.insertAll(dataSetsToCreate);
         }
     }
 
@@ -290,9 +312,13 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         else if (objectId == null)
             consentDAO.deleteAllAssociationsForType(consentId, associationType);
         else { // both associationType and objectId specified
-            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null)
+            if (consentDAO.findAssociationByTypeAndId(consentId, associationType, objectId) == null){
                 throw new NotFoundException();
-            consentDAO.deleteOneAssociation(consentId, associationType, objectId);
+            } else {
+                Integer datasetId = dataSetDAO.findDataSetIdByObjectId(objectId);
+                consentDAO.deleteOneAssociation(consentId, associationType, datasetId);
+            }
+
         }
         return getAllAssociationsForConsent(consentId);
     }
@@ -313,7 +339,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Consent getConsentFromDatasetID(String datasetId) {
+    public Consent getConsentFromDatasetID(Integer datasetId) {
         return consentDAO.findConsentFromDatasetID(datasetId);
     }
 
@@ -406,8 +432,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 datasetNames.addAll(dataSets);
             });
             List<String> objectIds = new ArrayList<>();
-            if(CollectionUtils.isNotEmpty(datasetNames)){
-                objectIds = consentDAO.getAssociationsConsentIdfromObjectIds(datasetNames);
+            if (CollectionUtils.isNotEmpty(datasetNames)) {
+                objectIds = consentDAO.getAssociationsConsentIdfromDataSetIds(datasetNames);
             }
 
             for (ConsentManage consentManage : consentManageList) {
@@ -437,14 +463,14 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public boolean hasWorkspaceAssociation(String workspaceId){
+    public boolean hasWorkspaceAssociation(String workspaceId) {
         return !Objects.isNull(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId));
     }
 
     @Override
     public Consent getConsentFromObjectIdAndType(String objectId, String associationType) {
         Consent consent = consentDAO.findConsentByAssociationAndObjectId(associationType, objectId);
-        if(consent == null){
+        if (consent == null) {
             throw new NotFoundException("The specified id does not exists.");
         }
         return consent;
@@ -487,7 +513,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public void updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
         logger.info("Update Consent Group Name");
-        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
+        for (ConsentGroupNameDTO consentGroupName : consentGroupNames) {
             consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
         }
     }
@@ -496,8 +522,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     public List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
         List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
         Map<String, String> groupNameMap = new HashMap<>();
-        for (ConsentGroupNameDTO consentGroupName: consentGroupNames) {
-            if(!groupNameMap.containsKey(consentGroupName.getConsentId()) && !StringUtils.isEmpty(consentGroupName.getConsentId())) {
+        for (ConsentGroupNameDTO consentGroupName : consentGroupNames) {
+            if (!groupNameMap.containsKey(consentGroupName.getConsentId()) && !StringUtils.isEmpty(consentGroupName.getConsentId())) {
                 groupNameMap.put(consentGroupName.getConsentId(), consentGroupName.getGroupName());
             } else {
                 wrongConsentGroupNames.add(consentGroupName);

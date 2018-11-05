@@ -37,9 +37,7 @@ public class DataRequestSamplesHolder {
             "    \"userId\" : 1,\n" +
             "    \"addiction\" : false,\n" +
             "    \"translated_restriction\" : \"Samples will be used under the following conditions:<br>Needs Manual Review.<br>Data will be used for health/medical/biomedical research [HMB(CC)]<br>Data will be used as a control sample set [NCTRL=0]<br>Data will not be used for commercial purpose<br>Data will be used to study ONLY a pediatric population [RS-[PEDIATRIC]]<br>\",\n" +
-            "    \"datasetId\" : [ \n" +
-            "        \"SC-20660\"\n" +
-            "    ],\n" +
+            "    \"datasetId\" : [1],\n" +
             "    \"datasetDetail\" : [ \n" +
             "        {\n" +
             "            \"datasetId\" : \"SC-20660\",\n" +

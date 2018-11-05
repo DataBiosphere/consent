@@ -19,39 +19,39 @@ public class DataSetAssociationsResource extends Resource {
 
 
     @POST
-    @Path("/{objectId}")
+    @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response associateDatasetWithUsers(@PathParam("objectId") String objectId, List<Integer> usersIdList) {
+    public Response associateDatasetWithUsers(@PathParam("dataSetId") Integer dataSetId, List<Integer> usersIdList) {
         try {
-            return  Response.status(Response.Status.CREATED).entity(api.createDatasetUsersAssociation(objectId, usersIdList)).build() ;
+            return  Response.status(Response.Status.CREATED).entity(api.createDatasetUsersAssociation(dataSetId, usersIdList)).build() ;
         } catch (Exception e){
             return createExceptionResponse(e);
         }
     }
 
     @GET
-    @Path("/{objectId}")
+    @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response getDatasetAssociations(@PathParam("objectId") String objectId) {
+    public Response getDatasetAssociations(@PathParam("dataSetId") Integer dataSetId) {
         try {
-            return Response.ok(api.findDataOwnersRelationWithDataset(objectId)).build();
+            return Response.ok(api.findDataOwnersRelationWithDataset(dataSetId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
 
     @PUT
-    @Path("/{objectId}")
+    @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed("ADMIN")
-    public Response updateDatasetAssociations(@PathParam("objectId") String objectId, List<Integer> usersIdList) {
+    public Response updateDatasetAssociations(@PathParam("dataSetId") Integer dataSetId, List<Integer> usersIdList) {
         try {
-            return  Response.ok(api.updateDatasetAssociations(objectId, usersIdList)).build() ;
+            return  Response.ok(api.updateDatasetAssociations(dataSetId, usersIdList)).build() ;
         } catch (Exception e){
             return createExceptionResponse(e);
         }
