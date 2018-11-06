@@ -141,7 +141,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             Map<String, String> data = retrieveForCollect(electionId);
             String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
             Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
-            List<String> emails = StringUtils.isNotEmpty(data.get("additionalEmail")) ? Arrays.asList(data.get("additionalEmail"), data.get("email")) : Collections.singletonList(data.get("additionalEmail"));
+            List<String> emails = StringUtils.isNotEmpty(data.get("additionalEmail")) ? Arrays.asList(data.get("additionalEmail"), data.get("email")) : Collections.singletonList(data.get("email"));
             mailService.sendCollectMessage(emails, data.get("entityName"), data.get("electionType"), template);
             emailDAO.insertEmail(null, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 1, new Date(), template.toString());
         }
