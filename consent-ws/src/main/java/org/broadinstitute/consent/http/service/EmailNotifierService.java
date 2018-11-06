@@ -153,7 +153,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             Map<String, String> data = retrieveForVote(voteId);
             String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
             Writer template = templateHelper.getReminderTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), voteUrl);
-            List<String> emails = StringUtils.isNotEmpty(data.get("additionalEmail")) ? Arrays.asList(data.get("additionalEmail"), data.get("email")) : Collections.singletonList(data.get("additionalEmail"));
+            List<String> emails = StringUtils.isNotEmpty(data.get("additionalEmail")) ? Arrays.asList(data.get("additionalEmail"), data.get("email")) : Collections.singletonList(data.get("email"));
             mailService.sendReminderMessage(emails, data.get("entityName"), data.get("electionType"), template);
             emailDAO.insertEmail(voteId, data.get("electionId"), Integer.valueOf(data.get("dacUserId")), 3, new Date(), template.toString());
             voteDAO.updateVoteReminderFlag(voteId, true);
@@ -206,8 +206,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 reviewedDatasets.put(dar_code, dsElections);
             }
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
-            Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
-            mailService.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
+            if(CollectionUtils.isNotEmpty(users)) {
+                Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
+                mailService.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
+            }
+
         }
     }
 
@@ -259,8 +262,10 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
-            Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
-            mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());
+            if(CollectionUtils.isNotEmpty(users)) {
+                Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
+                mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());
+            }
         }
     }
 
