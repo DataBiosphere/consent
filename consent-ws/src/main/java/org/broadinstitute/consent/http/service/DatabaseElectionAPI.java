@@ -1,3 +1,4 @@
+
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
@@ -406,8 +407,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
-        List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
-        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
+       List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
+       List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
         getElectionStatusDTO(electionStatusDTOs, elections, DATA_USE_LIMITATION);
         return electionStatusDTOs;
     }

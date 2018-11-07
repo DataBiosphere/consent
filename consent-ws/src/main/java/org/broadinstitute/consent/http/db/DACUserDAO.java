@@ -105,8 +105,4 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @GetGeneratedKeys
     Integer updateDACUser(@Bind("displayName") String displayName,
                           @Bind("id") Integer id);
-
-    @SqlQuery("select u.dacUserId from dacuser u inner join user_role du on du.dacUserId = u.dacUserId inner join roles r on r.roleId = du.roleId where u.dacUserId = :dacUserId and r.name = 'Researcher'")
-    Integer checkResearcherRole(@Bind("dacUserId") Integer dacUserId);
-
 }
