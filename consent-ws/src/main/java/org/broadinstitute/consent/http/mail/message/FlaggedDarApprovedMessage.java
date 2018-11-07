@@ -5,13 +5,14 @@ import com.sendgrid.Mail;
 import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.List;
+import java.util.Set;
 
 public class FlaggedDarApprovedMessage extends MailMessage{
 
     /* This message is sent to the Admin when a Dataset that requires owners Approval is approved by te DAC.*/
     private final String ADMIN_APPROVED_DAR = "%s that requires data owners reviewing approved.";
 
-    public List<Mail> flaggedDarMessage(List<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+    public List<Mail> flaggedDarMessage(Set<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
         return generateEmailMessages(toAddresses, fromAddress, template, referenceId, type);
     }
 

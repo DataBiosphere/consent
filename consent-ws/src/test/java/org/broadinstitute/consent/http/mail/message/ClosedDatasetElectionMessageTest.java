@@ -10,6 +10,7 @@ import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 import static org.junit.Assert.assertTrue;
 
@@ -25,7 +26,7 @@ public class ClosedDatasetElectionMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new ClosedDatasetElectionMessage().closedDatasetElectionMessage(Collections.singletonList("to@address.com"), "from@address.com", template, "SomeReferenceId", "Some Type");
+        Collection<Mail> messages = new ClosedDatasetElectionMessage().closedDatasetElectionMessage(new HashSet<>(Collections.singletonList("to@address.com")), "from@address.com", template, "SomeReferenceId", "Some Type");
         for (Mail message: messages) {
             assertTrue(message.getSubject().equals("Report of closed Dataset elections."));
         }

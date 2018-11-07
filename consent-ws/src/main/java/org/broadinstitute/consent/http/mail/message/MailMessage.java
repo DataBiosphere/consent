@@ -7,11 +7,12 @@ import com.sendgrid.Mail;
 import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class MailMessage {
 
-    protected List<Mail> generateEmailMessages(List<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+    protected List<Mail> generateEmailMessages(Set<String> toAddresses, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
         if (toAddresses == null || toAddresses.isEmpty()) {
             throw new MessagingException("List of to-addresses cannot be empty");
         }

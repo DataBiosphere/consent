@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class MailService extends AbstractMailServiceAPI {
 
@@ -72,65 +73,65 @@ public class MailService extends AbstractMailServiceAPI {
         }
     }
 
-    public void sendCollectMessage(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendCollectMessage(Set<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
         List<Mail> messages = collectMessageCreator.collectMessage(toAddresses, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
-    public void sendNewCaseMessage(List<String> toAddress, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendNewCaseMessage(Set<String> toAddress, String referenceId, String type, Writer template) throws MessagingException {
         List<Mail> messages = newCaseMessageCreator.newCaseMessage(toAddress, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
-    public void sendReminderMessage(List<String> addresses, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendReminderMessage(Set<String> addresses, String referenceId, String type, Writer template) throws MessagingException {
         List<Mail> messages = reminderMessageCreator.reminderMessage(addresses, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
     @Override
-    public void sendDisabledDatasetMessage(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendDisabledDatasetMessage(Set<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
         List<Mail> messages = disabledDatasetCreator.disabledDatasetMessage(toAddresses, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
     @Override
-    public void sendNewDARRequests(List<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
+    public void sendNewDARRequests(Set<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
         Collection<Mail> messages = newDARMessageCreator.newDARRequestMessage(toAddresses, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
     @Override
-    public void sendCancelDARRequestMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+    public void sendCancelDARRequestMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         Collection<Mail> messages = darCancelMessageCreator.cancelDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
         sendMessages(messages);
     }
 
     @Override
-    public void sendClosedDatasetElectionsMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+    public void sendClosedDatasetElectionsMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         Collection<Mail> messages = closedDatasetElections.closedDatasetElectionMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
         sendMessages(messages);
     }
 
     @Override
-    public void sendFlaggedDarAdminApprovedMessage(List<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
+    public void sendFlaggedDarAdminApprovedMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         List<Mail> messages = adminApprovedDarMessageCreator.flaggedDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
         sendMessages(messages);
     }
 
     @Override
-    public void sendDelegateResponsibilitiesMessage(List<String> userAddresses, Writer template) throws MessagingException {
+    public void sendDelegateResponsibilitiesMessage(Set<String> userAddresses, Writer template) throws MessagingException {
         List<Mail> messages = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(userAddresses, fromAccount, template);
         sendMessages(messages);
     }
 
     @Override
-    public void sendNewResearcherCreatedMessage(List<String> toAddresses, Writer template) throws MessagingException {
+    public void sendNewResearcherCreatedMessage(Set<String> toAddresses, Writer template) throws MessagingException {
         List<Mail> messages = researcherCreatedMessage.newResearcherCreatedMessage(toAddresses, fromAccount, template, "", "");
         sendMessages(messages);
     }
 
     @Override
-    public void sendNewHelpReportMessage(List<String> usersAddress,  Writer template, String username) throws MessagingException {
+    public void sendNewHelpReportMessage(Set<String> usersAddress,  Writer template, String username) throws MessagingException {
         Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template, username);
         sendMessages(messages);
     }

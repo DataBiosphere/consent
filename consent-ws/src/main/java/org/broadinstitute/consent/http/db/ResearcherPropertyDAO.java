@@ -54,4 +54,7 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
 
     @SqlQuery("select propertyValue from researcher_property  where  userId = :userId and propertyKey = :propertyKey")
     String findPropertyValueByPK(@Bind("userId") Integer userId, @Bind("propertyKey") String propertyKey);
+
+    @SqlQuery("select * from researcher_property where userId  in (<userIds>)")
+    List<ResearcherProperty> findResearcherPropertiesByUserIds(@BindIn("userIds") List<Integer> userIds);
 }

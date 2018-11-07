@@ -1,4 +1,3 @@
-
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
@@ -8,12 +7,12 @@ import com.mongodb.client.MongoCursor;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
@@ -407,8 +406,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
-       List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
-       List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
+        List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
+        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
         getElectionStatusDTO(electionStatusDTOs, elections, DATA_USE_LIMITATION);
         return electionStatusDTOs;
     }

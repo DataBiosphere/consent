@@ -99,7 +99,7 @@ public class DACUserResource extends Resource {
     }
 
     @PUT
-    @Path("/main_fields/{id}")
+    @Path("/mainFields/{id}")
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
