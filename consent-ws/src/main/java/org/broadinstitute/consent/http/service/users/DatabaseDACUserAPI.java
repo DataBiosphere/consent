@@ -266,12 +266,25 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateRequiredFields(updatedUser);
         rolesHandler.updateRoles(dac);
         try {
-            dacUserDAO.updateDACUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id);
+            dacUserDAO.updateDACUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
         DACUser dacUser = describeDACUserByEmail(updatedUser.getEmail());
         dacUser.setRoles(roleDAO.findRolesByUserId(dacUser.getDacUserId()));
+        return dacUser;
+    }
+
+    @Override
+    public DACUser updateDACUserById(DACUser dac, Integer id) throws IllegalArgumentException, NotFoundException {
+        validateExistentUserById(id);
+        validateRequiredFields(dac);
+        try {
+            dacUserDAO.updateDACUser(dac.getEmail(), dac.getDisplayName(), id, dac.getAdditionalEmail());
+        } catch (UnableToExecuteStatementException e) {
+            throw new IllegalArgumentException("Email shoud be unique.");
+        }
+        DACUser dacUser = describeDACUserByEmail(dac.getEmail());
         return dacUser;
     }
 

@@ -28,7 +28,8 @@ public enum ResearcherFields {
     INVESTIGATOR("investigator", false),
     LINKEDIN_PROFILE("linkedIn", false),
     RESEARCHER_GATE("researcherGate", false),
-    ORCID("orcid", false);
+    ORCID("orcid", false),
+    CHECK_NOTIFICATIONS("checkNotifications", false);
 
 
     private String value;

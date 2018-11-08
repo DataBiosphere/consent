@@ -8,6 +8,8 @@ import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -23,8 +25,8 @@ public class DisabledDatasetMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Mail message = new DisabledDatasetMessage().disabledDatasetMessage("to@address.com", "from@address.com", template, "DAR-123", "SomeType");
-        assertTrue(message.getSubject().equals("Datasets not available for Data Access Request Application id: DAR-123."));
+        List<Mail> messages = new DisabledDatasetMessage().disabledDatasetMessage(Collections.singleton("to@address.com"), "from@address.com", template, "DAR-123", "SomeType");
+        assertTrue(messages.get(0).getSubject().equals("Datasets not available for Data Access Request Application id: DAR-123."));
     }
 
 }

@@ -152,7 +152,7 @@ public class FreeMarkerTemplateHelperTest {
     private DataSet ds1 = new DataSet(1, "DS-101", "Dataset 1", new Date(), true);
     private DataSet ds2 = new DataSet(2, "DS-102", "Dataset 2", new Date(), true);
     private DataSet ds3 = new DataSet(3, "DS-103", "Dataset 3", new Date(), true);
-    private DACUser testDacUser = new DACUser(1, "testuser@email.com", "Test User", new Date());
+    private DACUser testDacUser = new DACUser(1, "testuser@email.com", "Test User", new Date(), null);
     private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null , true, 1);
     private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null , false, 2);
     private Election e3 = new Election(3, "DataSet", "Closed", new Date(), "DAR-2", null , true, 1);
