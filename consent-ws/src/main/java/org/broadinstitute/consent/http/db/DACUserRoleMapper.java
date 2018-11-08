@@ -24,7 +24,8 @@ public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
                     r.getString("email"),
                     r.getString("displayName"),
                     null,
-                    r.getDate("createDate"), new ArrayList<>());
+                    r.getDate("createDate"), new ArrayList<>(),
+                    r.getString("additional_email"));
             String status = getStatus(r);
             DACUserRole role = new DACUserRole(r.getInt("roleId"), r.getString("name"), null, null, status);
             user.getRoles().add(role);

@@ -63,7 +63,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUser() {
-        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date());
+        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setDacUserId(3);
         DACUserRole role = new DACUserRole(1, DACUserRoles.RESEARCHER.getValue());
@@ -79,7 +79,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithExistentEmail() {
-        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date());
+        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
         try {
             databaseDACUserAPI.createDACUser(user);
@@ -90,7 +90,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithoutDisplayName() {
-        DACUser user = new DACUser(null, EMAIL, null, new Date());
+        DACUser user = new DACUser(null, EMAIL, null, new Date(), null);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -100,7 +100,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithoutEmail() {
-        DACUser user = new DACUser(null, null, DISPLAY_NAME, new Date());
+        DACUser user = new DACUser(null, null, DISPLAY_NAME, new Date(), null);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -120,7 +120,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void describeUserByEmail() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(dacUser);
         DACUser user = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         assertNotNull(user);
@@ -139,7 +139,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void describeUserById() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.findDACUserById(1)).thenReturn(dacUser);
         DACUser user = databaseDACUserAPI.describeDACUserById(1);
         assertNotNull(user);
@@ -147,12 +147,12 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationMemberTrue() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         List<Integer> openElectionIdsForThisUser = new ArrayList<>(Arrays.asList(2));
         when(electionDAO.verifyOpenElections()).thenReturn(3);
         when(electionDAO.findNonDataSetOpenElectionIds(dacUser.getDacUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
-        when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new DACUser(5, EMAIL, DISPLAY_NAME, new Date()))));
+        when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new DACUser(5, EMAIL, DISPLAY_NAME, new Date(), null))));
         ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
@@ -161,7 +161,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationMemberTrueWithEmptyCandidates() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         List<Integer> openElectionIdsForThisUser = new ArrayList<>(Arrays.asList(2));
         when(electionDAO.verifyOpenElections()).thenReturn(3);
         when(electionDAO.findNonDataSetOpenElectionIds(dacUser.getDacUserId())).thenReturn(openElectionIdsForThisUser);
@@ -175,7 +175,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationMemberFalse() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
         ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.MEMBER.getValue());
         assertNotNull(response);
@@ -185,7 +185,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationChairpersonFalse() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
         ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.CHAIRPERSON.getValue());
         assertNotNull(response);
@@ -195,7 +195,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationDataOwnerTrueWithEmptyCandidates() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         List<Integer> associatedDataSetId = new ArrayList<>(Arrays.asList(2));
         List<Integer> dataOwnersPerDataSet = new ArrayList<>(Arrays.asList(1));
         when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(dacUser.getDacUserId())).thenReturn(associatedDataSetId);

@@ -136,6 +136,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.containsKey(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) ? properties.get(ResearcherFields.ERA_EXPIRATION_DATE.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.containsKey(ResearcherFields.ERA_USERNAME.getValue()) ? properties.get(ResearcherFields.ERA_USERNAME.getValue()) : null);
         rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.containsKey(ResearcherFields.ERA_STATUS.getValue()) ? properties.get(ResearcherFields.ERA_STATUS.getValue()) : null);
+        rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.containsKey(ResearcherFields.CHECK_NOTIFICATIONS.getValue()) ? properties.get(ResearcherFields.CHECK_NOTIFICATIONS.getValue()) : null);
         return rpForDAR;
     }
 

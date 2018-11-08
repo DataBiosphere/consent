@@ -4,6 +4,8 @@ import com.sendgrid.Mail;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
+import java.util.List;
+import java.util.Set;
 
 public class ReminderMessage extends MailMessage {
 
@@ -11,8 +13,8 @@ public class ReminderMessage extends MailMessage {
     private final String REMINDER_DAR = "Urgent: Log votes on Data Access Request case id: %s.";
     private final String REMINDER_RP = "Urgent: Log votes on Research Purpose Review case id: %s.";
 
-    public Mail reminderMessage(String address, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
-        return generateEmailMessage(address, fromAddress, template, referenceId, type);
+    public List<Mail> reminderMessage(Set<String> address, String fromAddress, Writer template, String referenceId, String type) throws MessagingException {
+        return generateEmailMessages(address, fromAddress, template, referenceId, type);
     }
 
     @Override
