@@ -9,9 +9,7 @@ import org.junit.Test;
 import javax.mail.MessagingException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 
 public class MailServiceTest {
 
@@ -48,14 +46,14 @@ public class MailServiceTest {
         MailService.initInstance(config);
         mailService = AbstractMailServiceAPI.MailServiceAPIHolder.getInstance();
         Assert.assertNotNull(mailService);
-        mailService.sendCollectMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+        mailService.sendCollectMessage(Collections.singleton(TO), ID, TYPE, template);
     }
 
     @Test
     public void testCollectMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendCollectMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendCollectMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -65,7 +63,7 @@ public class MailServiceTest {
     public void testNewCaseMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendNewCaseMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendNewCaseMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -75,7 +73,7 @@ public class MailServiceTest {
     public void testReminderMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendReminderMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendReminderMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -85,7 +83,7 @@ public class MailServiceTest {
     public void testDisabledDatasetMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendDisabledDatasetMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendDisabledDatasetMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -95,7 +93,7 @@ public class MailServiceTest {
     public void testNewDARRequests() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendNewDARRequests(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendNewDARRequests(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -105,7 +103,7 @@ public class MailServiceTest {
     public void testCancelDARRequestMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendCancelDARRequestMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendCancelDARRequestMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -115,7 +113,7 @@ public class MailServiceTest {
     public void testFlaggedDarAdminApprovedMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendFlaggedDarAdminApprovedMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendFlaggedDarAdminApprovedMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -125,7 +123,7 @@ public class MailServiceTest {
     public void testClosedDatasetElectionsMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendClosedDatasetElectionsMessage(new HashSet<>(Collections.singletonList(TO)), ID, TYPE, template);
+            mailService.sendClosedDatasetElectionsMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -135,7 +133,7 @@ public class MailServiceTest {
     public void testDelegateResponsibilitiesMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendDelegateResponsibilitiesMessage(new HashSet<>(Collections.singletonList(TO)), template);
+            mailService.sendDelegateResponsibilitiesMessage(Collections.singleton(TO), template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -145,7 +143,7 @@ public class MailServiceTest {
     public void testNewResearcherCreatedMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendNewResearcherCreatedMessage(new HashSet<>(Collections.singletonList(TO)), template);
+            mailService.sendNewResearcherCreatedMessage(Collections.singleton(TO), template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
@@ -155,7 +153,7 @@ public class MailServiceTest {
     public void testNewHelpReportMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {
-            mailService.sendNewHelpReportMessage(new HashSet<>(Collections.singletonList(TO)), template, "Test");
+            mailService.sendNewHelpReportMessage(Collections.singleton(TO), template, "Test");
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
