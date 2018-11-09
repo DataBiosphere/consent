@@ -7,6 +7,7 @@ import de.flapdoodle.embedmongo.MongodProcess;
 import de.flapdoodle.embedmongo.config.MongodConfig;
 import de.flapdoodle.embedmongo.distribution.Version;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -207,6 +209,12 @@ abstract public class AbstractTest extends ResourcedTest {
     protected void shutDownMongo() {
         mongod.stop();
         mongodExe.cleanup();
+        // Force cleanup of any leftover mongo db files. Only deletes the `mongo` directory itself.
+        try {
+            FileUtils.deleteDirectory(new File("target/mongo"));
+        } catch (IOException e) {
+            logger.error("Unable to remove target/mongo directory");
+        }
     }
 
     Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse, String consentId) {
