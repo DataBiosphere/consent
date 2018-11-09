@@ -51,7 +51,7 @@ public class DatabaseDataSetAssociationAPITest {
         when(dacUserDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         thrown.expect(BadRequestException.class);
         thrown.expectMessage("User with id 1 is not a DATA_OWNER");
-        associationAPI.createDatasetUsersAssociation("DS-001", Arrays.asList(1, 2));
+        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test
@@ -59,33 +59,33 @@ public class DatabaseDataSetAssociationAPITest {
         when(dacUserDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
         thrown.expect(BadRequestException.class);
         thrown.expectMessage("Invalid UserId list.");
-        associationAPI.createDatasetUsersAssociation("DS-001", Arrays.asList(1, 2, 3, 4));
+        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
     }
 
     @Test
     public void testCreateDatasetUsersAssociation() throws Exception {
         when(dacUserDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetByObjectId("DS-001")).thenReturn(ds1);
+        when(dsDAO.findDataSetById(1)).thenReturn(ds1);
         when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(Arrays.asList(dsAssociation1, dsAssociation2));
-        associationAPI.createDatasetUsersAssociation("DS-001", Arrays.asList(1, 2));
+        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test
     public void testCreateDatasetUsersAssociationNotFoundException() throws Exception {
         when(dacUserDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetByObjectId("DS-001")).thenReturn(null);
+        when(dsDAO.findDataSetById(1)).thenReturn(null);
         thrown.expect(NotFoundException.class);
         thrown.expectMessage("Invalid DatasetId");
-        associationAPI.createDatasetUsersAssociation("DS-001", Arrays.asList(1, 2));
+        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
     @Test(expected = BatchUpdateException.class)
     public void testCreateDatasetUsersAssociationBadRequestException() throws Exception {
         when(dacUserDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-        when(dsDAO.findDataSetByObjectId("DS-001")).thenReturn(ds1);
+        when(dsDAO.findDataSetById(1)).thenReturn(ds1);
 
         Mockito.doThrow(BatchUpdateException.class).when(dsAssociationDAO).insertDatasetUserAssociation(anyObject());
-        associationAPI.createDatasetUsersAssociation("DS-001", Arrays.asList(1, 2));
+        associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
 
@@ -100,10 +100,10 @@ public class DatabaseDataSetAssociationAPITest {
     DataSet ds1 = new DataSet(1, "DS-001", "DS-001", new Date(), true);
     DataSet ds2 = new DataSet(2, "DS-002", "DS-002", new Date(), true);
 
-    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), chairpersonList());
-    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList());
-    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList());
-    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList());
+    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), chairpersonList(), null);
+    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
+    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
+    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
 
     private List<DACUserRole> chairpersonList(){
         return Arrays.asList(getChairpersonRole());

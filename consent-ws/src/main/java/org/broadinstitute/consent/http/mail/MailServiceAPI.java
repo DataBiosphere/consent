@@ -4,30 +4,30 @@ import freemarker.template.TemplateException;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.List;
+import java.util.Set;
 
 public interface MailServiceAPI {
 
-    void sendCollectMessage(String address, String referenceId, String type, Writer template) throws MessagingException;
+    void sendCollectMessage(Set<String> addresses, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendNewCaseMessage(String userAddress, String referenceId, String type, Writer template) throws MessagingException;
+    void sendNewCaseMessage(Set<String> userAddress, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendReminderMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
+    void sendReminderMessage(Set<String> addresses, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendDisabledDatasetMessage( String address, String referenceId, String type, Writer template) throws MessagingException;
+    void sendDisabledDatasetMessage(Set<String> addresses, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendNewDARRequests(List<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException;
+    void sendNewDARRequests(Set<String> usersAddress, String referenceId, String type, Writer template) throws MessagingException;
 
-    void sendCancelDARRequestMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+    void sendCancelDARRequestMessage(Set<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
-    void sendFlaggedDarAdminApprovedMessage(String userAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+    void sendFlaggedDarAdminApprovedMessage(Set<String> userAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
-    void sendClosedDatasetElectionsMessage(List<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
+    void sendClosedDatasetElectionsMessage(Set<String> usersAddress, String dataAccessRequestId, String type, Writer template) throws MessagingException;
 
-    void sendDelegateResponsibilitiesMessage(String userAddress, Writer template) throws MessagingException;
+    void sendDelegateResponsibilitiesMessage(Set<String> userAddresses, Writer template) throws MessagingException;
 
-    void sendNewResearcherCreatedMessage(String admin, Writer template) throws IOException, TemplateException, MessagingException;
+    void sendNewResearcherCreatedMessage(Set<String> admin, Writer template) throws IOException, TemplateException, MessagingException;
 
-    void sendNewHelpReportMessage(List<String> usersAddress, Writer template, String username) throws MessagingException;
+    void sendNewHelpReportMessage(Set<String> usersAddress, Writer template, String username) throws MessagingException;
 
 }

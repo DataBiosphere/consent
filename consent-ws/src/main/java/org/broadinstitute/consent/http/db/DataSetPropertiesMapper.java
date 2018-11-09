@@ -23,9 +23,12 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
         DataSetDTO dataSetDTO;
         Integer dataSetId = r.getInt("dataSetId");
         String consentId = r.getString("consentId");
+        Integer alias = r.getInt("alias");
         if (!dataSets.containsKey(dataSetId)) {
             dataSetDTO = new DataSetDTO( new ArrayList<>());
             dataSetDTO.setConsentId(consentId);
+            dataSetDTO.setAlias(alias);
+            dataSetDTO.setDataSetId(dataSetId);
             dataSetDTO.setActive(r.getBoolean("active"));
             dataSetDTO.setTranslatedUseRestriction((r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"));
             DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name",r.getString("name"));

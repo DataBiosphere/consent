@@ -98,6 +98,21 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @PUT
+    @Path("/mainFields/{id}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @PermitAll
+    public Response updateMainFields(@Context UriInfo info, DACUser dac, @PathParam("id") Integer id) {
+        try {
+            URI uri = info.getRequestUriBuilder().path("{id}").build(id);
+            DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
+            return Response.ok(uri).entity(dacUser).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{email}")

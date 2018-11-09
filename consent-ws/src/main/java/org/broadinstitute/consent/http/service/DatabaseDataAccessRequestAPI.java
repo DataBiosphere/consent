@@ -20,7 +20,6 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import javax.print.Doc;
 import javax.ws.rs.NotFoundException;
 import java.io.*;
 import java.sql.Timestamp;
@@ -117,15 +116,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
-        List<String> dataSets =  dataAccessRequest.get(DATA_SET_ID, List.class);
-        dataAccessRequest.remove(DATA_SET_ID);
-        if (CollectionUtils.isNotEmpty(dataSets)) {
-            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(dataSets);
+        List<Integer> datasets =  dataAccessRequest.get(DATA_SET_ID, List.class);
+        if (CollectionUtils.isNotEmpty(datasets)) {
+            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasets);
             consentDataSets.forEach((consentDataSet) -> {
                 Document dataAccess = processDataSet(dataAccessRequest, consentDataSet);
                 dataAccessList.add(dataAccess);
             });
         }
+        dataAccessRequest.remove(DATA_SET_ID);
         insertDataAccess(dataAccessList);
         updateResearcherIdentification(dataAccessRequest);
         return dataAccessList;
@@ -169,9 +168,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * @return A list of Data Access Requests.
      */
     @Override
-    public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<String> dataSetIds) {
+    public List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds) {
         List<Document> response = new ArrayList<>();
-        for (String datasetId : dataSetIds) {
+        for (Integer datasetId : dataSetIds) {
             response.addAll(mongo.getDataAccessRequestCollection().find(and(eq(DarConstants.DATASET_ID, datasetId), eq(DarConstants.RESTRICTION, new BasicDBObject("$exists", true)))).into(new ArrayList<>()));
         }
         return response;
@@ -463,7 +462,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
 
     @Override
-    public File createDataSetApprovedUsersDocument(String dataSetId) throws IOException {
+    public File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException {
         File file = File.createTempFile("DatasetApprovedUsers", ".tsv");
         FileWriter darWriter = new FileWriter(file);
         List<Document> darList = describeDataAccessByDataSetId(dataSetId);
@@ -484,9 +483,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return file;
     }
 
-    private List<Document> describeDataAccessByDataSetId(String dataSetId) {
+    private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
         List<Document> response = new ArrayList<>();
-        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId)).into(new ArrayList<>()));
+        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId.toString())).into(new ArrayList<>()));
         return response;
     }
 
@@ -525,8 +524,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         documents.forEach((Block<Document>) dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByObjectId(dataSets);
+            List<Integer> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
             Election election = electionList.get(id.toString());
             darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
             darManage.setRus(dar.getString(DarConstants.RUS));
@@ -591,14 +590,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
         List<Document> dataSetList = new ArrayList<>();
-        List<String> datasetId = new ArrayList<>();
+        List<Integer> datasetId = new ArrayList<>();
         Document dataAccess = new Document(dataAccessRequest);
         consentDataSet.getDataSets().forEach((k,v) -> {
             Document document = new Document();
             document.put(DATA_SET_ID,k);
-            datasetId.add(k);
+            datasetId.add(Integer.valueOf(k));
             document.put("name", v);
             dataSetList.add(document);
+            String objectId = dataSetDAO.findObjectIdByDataSetId(Integer.valueOf(k));
+            if(StringUtils.isNotEmpty(objectId)) {
+                document.put("objectId", objectId);
+            }
         });
         dataAccess.put(DarConstants.DATASET_ID, datasetId);
         dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);

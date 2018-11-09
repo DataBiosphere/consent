@@ -16,6 +16,9 @@ public class Association {
     @JsonProperty
     public String objectId;
 
+    @JsonProperty
+    public Integer dataSetId;
+
     public Integer getAssociationId() {
         return associationId;
     }
@@ -42,6 +45,14 @@ public class Association {
 
     public String getObjectId() {
         return objectId;
+    }
+
+    public Integer getDataSetId() {
+        return dataSetId;
+    }
+
+    public void setDataSetId(Integer dataSetId) {
+        this.dataSetId = dataSetId;
     }
 
     public void setObjectId(String objectId) {

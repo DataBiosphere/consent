@@ -55,7 +55,7 @@ public class DatabaseSummaryAPITest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO, mongoDB));
+        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO, mongoDB, dataSetDAO));
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.

@@ -59,11 +59,12 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
         DatabaseDataAccessRequestAPI.getInstance().setMongoDBInstance(mongoi);
         // Create Documents needed in mongo for testing
         UseRestriction useRestriction = UseRestriction.parse("{\"type\":\"everything\"}");
-        Document doc = new Document().append("testingInfo1", "someValue");
-        doc.append(DarConstants.DATASET_ID, new ArrayList<>(Arrays.asList("SC-20660")));
+        Document doc = new Document();
+        doc.append(DarConstants.DATASET_ID, new ArrayList<>(Arrays.asList(1)));
         doc.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
         doc.append(DarConstants.TRANSLATED_RESTRICTION,"translated_test_restriction");
-        Document doc2 = new Document().append("testingInfo2", "someValue2").append(DarConstants.DATASET_ID, Arrays.asList("SC-20660")).append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString())).append("translated_restriction","translated_test_restriction");
+        doc.append(DarConstants.DAR_CODE, "DAR_08");
+        Document doc2 = new Document().append(DarConstants.DATASET_ID, Arrays.asList(1)).append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString())).append("translated_restriction","translated_test_restriction").append(DarConstants.DAR_CODE, "DAR-10");
         mongoi.getDataAccessRequestCollection().insertOne(doc);
         mongoi.getDataAccessRequestCollection().insertOne(doc2);
         MongoCursor<Document> dars = mongoi.getDataAccessRequestCollection().find().iterator();
@@ -75,6 +76,7 @@ public class DataRequestElectionTest extends ElectionVoteServiceTest {
     public void teardown() {
         shutDownMongo();
     }
+
 
     @Test
     public void testCreateDataRequestElection() throws IOException {

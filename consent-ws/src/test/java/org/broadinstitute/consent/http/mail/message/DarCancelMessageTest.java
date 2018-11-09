@@ -25,7 +25,7 @@ public class DarCancelMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new DarCancelMessage().cancelDarMessage(Collections.singletonList("to@address.com"), "from@address.com", template, "DAR-123", "Data Access");
+        Collection<Mail> messages = new DarCancelMessage().cancelDarMessage(Collections.singleton("to@address.com"), "from@address.com", template, "DAR-123", "Data Access");
         for (Mail message: messages) {
             assertTrue(message.getSubject().equals("The Data Access Request with ID DAR-123 has been cancelled."));
         }

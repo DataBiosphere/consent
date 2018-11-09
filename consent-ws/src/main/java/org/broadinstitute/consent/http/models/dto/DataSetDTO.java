@@ -1,10 +1,15 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+
 import java.util.List;
 
 
 public class DataSetDTO {
+
+    @JsonProperty
+    private Integer dataSetId;
 
     @JsonProperty
     private String consentId;
@@ -30,6 +35,8 @@ public class DataSetDTO {
     @JsonProperty
     private Boolean updateAssociationToDataOwnerAllowed;
 
+    @JsonProperty
+    private String alias;
 
     public DataSetDTO() {
     }
@@ -104,5 +111,21 @@ public class DataSetDTO {
 
     public void setUpdateAssociationToDataOwnerAllowed(Boolean updateAssociationToDataOwnerAllowed) {
         this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
+    }
+
+    public void setDataSetId(Integer dataSetId) {
+        this.dataSetId = dataSetId;
+    }
+
+    public Integer getDataSetId() {
+        return dataSetId;
+    }
+
+    public void setAlias(Integer alias) {
+        this.alias = DatasetUtil.parseAlias(alias);
+    }
+
+    public String getAlias(){
+        return alias;
     }
 }

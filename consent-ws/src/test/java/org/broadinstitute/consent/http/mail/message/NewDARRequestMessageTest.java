@@ -25,7 +25,7 @@ public class NewDARRequestMessageTest {
 
     @Test
     public void testMessageSubject() throws MessagingException {
-        Collection<Mail> messages = new NewDARRequestMessage().newDARRequestMessage(Collections.singletonList("to@address.com"), "from@address.com", template, "DAR-123", "Data Use Limitations");
+        Collection<Mail> messages = new NewDARRequestMessage().newDARRequestMessage(Collections.singleton("to@address.com"), "from@address.com", template, "DAR-123", "Data Use Limitations");
         for (Mail message: messages) {
             assertTrue(message.getSubject().equals("Create an election for Data Access Request id: DAR-123."));
         }

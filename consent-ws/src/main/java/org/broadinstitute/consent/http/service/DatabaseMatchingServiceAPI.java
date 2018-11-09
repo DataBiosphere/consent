@@ -20,10 +20,11 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
@@ -86,7 +87,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         List<Match> matches = new ArrayList<>();
         Consent consent = findConsent(consentId);
         List<DataSet> dataSets = dsAPI.getDataSetsForConsent(consentId);
-        List<Document> dars = findRelatedDars(dataSets.stream().map(DataSet::getObjectId).collect(Collectors.toList()));
+        List<Document> dars = findRelatedDars(dataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList()));
         if (consent != null && !dars.isEmpty()) {
             Match match;
             for (Document dar : dars) {
@@ -151,15 +152,15 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     }
 
     private Consent findRelatedConsents(String purposeId){
-        List<String> datasetIdList = (dataAccessAPI.describeDataAccessRequestById(purposeId)).get(DarConstants.DATASET_ID,List.class);
+        List<Integer> dataSetIdList = (dataAccessAPI.describeDataAccessRequestFieldsById(purposeId, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
         Consent consent =  null;
-        if(CollectionUtils.isNotEmpty(datasetIdList)){
-            consent = consentAPI.getConsentFromDatasetID(datasetIdList.get(0));
+        if(CollectionUtils.isNotEmpty(dataSetIdList)){
+            consent = consentAPI.getConsentFromDatasetID(dataSetIdList.get(0));
         }
         return consent;
     }
 
-    private List<Document> findRelatedDars(List<String> dataSetIds){
+    private List<Document> findRelatedDars(List<Integer> dataSetIds){
         return dataAccessAPI.describeDataAccessWithDataSetIdAndRestriction(dataSetIds);
     }
 
