@@ -2,7 +2,7 @@
 ## Documentation V1 Release
 
 ### 1. How to set up an instance of the service
-This application relies on some web services, and related database, deployed and running.  That is included in consent-ws project, which is deployed on https://consent.dsde-dev.broadinstitute.org by Jenkins. It also relies on consent-ui, which is deployed by jenkins on  https://consent-ui.dsde-dev.broadinstitute.org/ .
+This application relies on some web services, and related database, deployed and running.  That is included in this project, which is deployed on https://consent.dsde-dev.broadinstitute.org by Jenkins. It also relies on consent-ui, which is deployed by jenkins on  https://consent-ui.dsde-dev.broadinstitute.org/ .
 
 To run it locally, for testing and development purposes, please refer to [README.md](https://github.com/broadinstitute/consent-ui/blob/develop/README.md) file on the source code repository.
 
@@ -11,7 +11,7 @@ Log into the system. By default the landing page will be the Admin console (unle
 
 Once in the Admin Console click on **“Add User”** button. A window is going to pop up.
 
-In order to catalog a new user in the system you should fill all fields: *Name, Google account ID* and at least a *Role* must be set as well. Please take a look at this file to be aware of the [User Roles and Management](https://github.com/broadinstitute/consent/tree/master/consent-ws/docs/UserRolesandManagement-V1Release.md). Once all the information is written, click on **“Add”** button. 
+In order to catalog a new user in the system you should fill all fields: *Name, Google account ID* and at least a *Role* must be set as well. Please take a look at this file to be aware of the [User Roles and Management](https://github.com/broadinstitute/consent/tree/master/docs/UserRolesandManagement-V1Release.md). Once all the information is written, click on **“Add”** button. 
 
 If the google account ID is already set in the system, an alert message will appear on the bottom of the window announcing the conflict. If no conflicts show up when clicking the button, this new user will be cataloged in the system and you will be redirected to the Manage Users page where you will be able to see your recent load at the top of the list.
 
@@ -24,7 +24,7 @@ Once in the Admin Console click on **“Manage Users”** button. This will redi
 
 At least one of the fields must be modified to enabled the **“Save”** button.
 
-For the moment, if there are any open elections when trying to edit a user, an alert message will be displayed on the bottom of the window announcing a conflict and the system will not allow you to edit roles. If no conflicts appear and you want to edit roles, please take a look at this file to be aware of the [User Roles and Management](https://github.com/broadinstitute/consent/tree/master/consent-ws/docs/UserRolesandManagement-V1Release.md).
+For the moment, if there are any open elections when trying to edit a user, an alert message will be displayed on the bottom of the window announcing a conflict and the system will not allow you to edit roles. If no conflicts appear and you want to edit roles, please take a look at this file to be aware of the [User Roles and Management](https://github.com/broadinstitute/consent/tree/master/docs/UserRolesandManagement-V1Release.md).
 
 Once changes are done and saved, the user information will be updated in the system and you will be redirected to the Manage Users page where could see your recent edition.
 

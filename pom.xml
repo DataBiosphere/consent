@@ -2,29 +2,41 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.broadinstitute</groupId>
-  <artifactId>consent-parent</artifactId>
+  <artifactId>consent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Consent Management Services</name>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
     <java.version>1.8</java.version>
     <lucene.version>4.9.0</lucene.version>
     <hsqldb.version>2.3.3</hsqldb.version>
     <liquibase.version>3.5.3</liquibase.version>
     <dropwizard.version>1.3.2</dropwizard.version>
-    <jersey.version>2.19</jersey.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jetty.version>9.3.11.v20160721</jetty.version>
     <owl.version>5.0.5</owl.version>
+    <jackson.version>2.9.5</jackson.version>
+    <swagger.ui.version>2.2.8</swagger.ui.version>
+
+    <driver>org.hsqldb.jdbc.JDBCDriver</driver>
+    <url>jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true</url>
+    <username>sa</username>
+    <password>sa</password>
   </properties>
 
-  <modules>
-    <module>consent-ws</module>
-  </modules>
-
   <build>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/main/resources</directory>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -82,10 +94,177 @@
         <version>4.3.0</version>
       </plugin>
 
+      <plugin>
+        <groupId>com.fizzed</groupId>
+        <artifactId>fizzed-watcher-maven-plugin</artifactId>
+        <version>1.0.6</version>
+        <configuration>
+          <touchFile>target/classes/watcher.txt</touchFile>
+          <watches>
+            <watch>
+              <directory>src/main/java</directory>
+            </watch>
+            <watch>
+              <directory>src/main/resources</directory>
+            </watch>
+          </watches>
+          <goals>
+            <param>compile</param>
+          </goals>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.1</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.liquibase</groupId>
+        <artifactId>liquibase-maven-plugin</artifactId>
+        <version>3.6.2</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>${hsqldb.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+              <dropFirst>true</dropFirst>
+              <changeLogFile>src/main/resources/changelog-master.xml</changeLogFile>
+              <driver>${driver}</driver>
+              <url>${url}</url>
+              <username>${username}</username>
+              <password>${password}</password>
+              <logging>warning</logging>
+            </configuration>
+            <goals>
+              <goal>update</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <finalName>consent</finalName>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+                <exclude>META-INF/LICENSE</exclude>
+                <exclude>META-INF/license</exclude>
+              </excludes>
+            </filter>
+          </filters>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer
+                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.broadinstitute.consent.http.ConsentApplication</mainClass>
+                </transformer>
+                <transformer
+                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>sql-maven-plugin</artifactId>
+        <version>1.5</version>
+        <dependencies>
+          <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.36</version>
+          </dependency>
+          <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>${hsqldb.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>initialize-test-inserts-db</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <driver>${driver}</driver>
+              <url>${url}</url>
+              <username>${username}</username>
+              <password>${password}</password>
+              <autocommit>true</autocommit>
+              <srcFiles>
+                <srcFile>src/test/resources/sql/insert.sql</srcFile>
+              </srcFiles>
+            </configuration>
+          </execution>
+          <execution>
+            <id>delete-after-tests</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <driver>${driver}</driver>
+              <url>${url}</url>
+              <username>${username}</username>
+              <password>${password}</password>
+              <autocommit>true</autocommit>
+              <srcFiles>
+                <srcFile>src/test/resources/sql/delete.sql</srcFile>
+              </srcFiles>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
+
   </build>
 
-  <dependencyManagement>
+
     <dependencies>
 
       <dependency>
@@ -97,6 +276,36 @@
       <dependency>
         <groupId>net.sourceforge.owlapi</groupId>
         <artifactId>owlapi-distribution</artifactId>
+        <exclusions>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-parsers</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-apibinding</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-impl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-tools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-oboformat</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-apibinding</artifactId>
+          </exclusion>
+        </exclusions>
         <version>${owl.version}</version>
       </dependency>
 
@@ -152,6 +361,14 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-debug-all</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -171,13 +388,6 @@
         <groupId>io.dropwizard</groupId>
         <artifactId>dropwizard-jdbi</artifactId>
         <version>${dropwizard.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.hsqldb</groupId>
-        <artifactId>hsqldb</artifactId>
-        <version>${hsqldb.version}</version>
-        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -212,16 +422,329 @@
       </dependency>
 
       <dependency>
-        <groupId>com.hubspot.dropwizard</groupId>
-        <artifactId>dropwizard-guice</artifactId>
-        <version>0.8.1.0</version>
-      </dependency>
-
-      <dependency>
         <groupId>io.dropwizard</groupId>
         <artifactId>dropwizard-metrics-graphite</artifactId>
         <version>${dropwizard.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.dhatim</groupId>
+        <artifactId>dropwizard-sentry</artifactId>
+        <version>1.3.2-3</version>
+      </dependency>
+
+      <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
+      <dependency>
+        <groupId>org.parboiled</groupId>
+        <artifactId>parboiled-java</artifactId>
+        <version>1.1.8</version>
+      </dependency>
+
+      <!-- Used for hot reloading during local development -->
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>springloaded</artifactId>
+        <version>1.2.6.RELEASE</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sendgrid</groupId>
+        <artifactId>sendgrid-java</artifactId>
+        <version>3.1.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sendgrid</groupId>
+        <artifactId>java-http-client</artifactId>
+        <version>3.0.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-client</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>stringtemplate</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-forms</artifactId>
+        <version>${dropwizard.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.jvnet.mimepull</groupId>
+            <artifactId>mimepull</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>1.10.19</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sun.mail</groupId>
+        <artifactId>javax.mail</artifactId>
+        <version>1.5.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.freemarker</groupId>
+        <artifactId>freemarker</artifactId>
+        <version>2.3.23</version>
+      </dependency>
+
+      <!--Freemarker testing libraries-->
+      <dependency>
+        <groupId>net.sourceforge.htmlunit</groupId>
+        <artifactId>htmlunit</artifactId>
+        <version>2.23</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-client</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jsoup</groupId>
+        <artifactId>jsoup</artifactId>
+        <version>1.9.2</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>21.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.opencsv</groupId>
+        <artifactId>opencsv</artifactId>
+        <version>3.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.api-client</groupId>
+        <artifactId>google-api-client</artifactId>
+        <version>1.20.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava-jdk5</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.apis</groupId>
+        <artifactId>google-api-services-storage</artifactId>
+        <version>v1-rev35-1.20.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jvnet</groupId>
+        <artifactId>mimepull</artifactId>
+        <version>1.6</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.api-client</groupId>
+        <artifactId>google-api-client-appengine</artifactId>
+        <version>1.21.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+
+      <dependency>
+        <groupId>com.google.apis</groupId>
+        <artifactId>google-api-services-oauth2</artifactId>
+        <version>v2-rev106-1.21.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.hubspot.dropwizard</groupId>
+        <artifactId>dropwizard-guice</artifactId>
+        <version>1.0.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>javax.annotation</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>aopalliance</groupId>
+            <artifactId>aopalliance</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.3.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.2</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>net.vz.mongodb.jackson</groupId>
+        <artifactId>mongo-jackson-mapper</artifactId>
+        <version>1.4.2</version><exclusions>
+        <exclusion>
+          <groupId>org.mongodb</groupId>
+          <artifactId>mongo-java-driver</artifactId>
+        </exclusion>
+      </exclusions>
+
+      </dependency>
+
+      <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>mongo-java-driver</artifactId>
+        <version>3.3.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.fakemongo</groupId>
+        <artifactId>fongo</artifactId>
+        <version>2.0.6</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>com.yammer.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>3.0.0-BETA1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20141113</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>de.flapdoodle.embedmongo</groupId>
+        <artifactId>de.flapdoodle.embedmongo</artifactId>
+        <version>1.18</version>
+      </dependency>
+
+      <dependency>
+        <groupId>de.spinscale</groupId>
+        <artifactId>dropwizard-jobs-core</artifactId>
+        <version>1.0.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>rest</artifactId>
+        <version>5.5.0</version>
+      </dependency>
+
+      <!-- Required for asynchronous elastic search rest queries -->
+      <dependency>
+        <groupId>com.twitter</groupId>
+        <artifactId>util-core_2.11</artifactId>
+        <version>6.45.0</version>
+      </dependency>
+
+      <!-- Required for mocking ontology and elastic search responses -->
+      <dependency>
+        <groupId>org.mock-server</groupId>
+        <artifactId>mockserver-netty</artifactId>
+        <version>3.10.8</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-expressions</artifactId>
+        <version>${lucene.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-auth</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-core</artifactId>
+        <version>1.3</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.webjars</groupId>
+        <artifactId>swagger-ui</artifactId>
+        <version>${swagger.ui.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.pdfbox</groupId>
+        <artifactId>pdfbox</artifactId>
+        <version>2.0.9</version>
+      </dependency>
+
+      <dependency>
+        <groupId>javax.ws.rs</groupId>
+        <artifactId>javax.ws.rs-api</artifactId>
+        <version>2.0.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.12</version>
+      </dependency>
+
     </dependencies>
-  </dependencyManagement>
+
 </project>

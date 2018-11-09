@@ -24,10 +24,10 @@ Ensure that your test environment supports that.
 Consent docker images are stored in the cloud in the [Consent Dockerhub repo](https://hub.docker.com/r/broadinstitute/consent).
 ```
 # to build the docker image
-./consent-ws/build.sh -d build
+./build.sh -d build
 
 # to build the docker image and push it to dockerhub 
-./consent-ws/build.sh -d push
+./build.sh -d push
 
 # to pull the docker image from dockerhub
 docker pull broadinstitute/consent
@@ -38,7 +38,7 @@ Specific to internal Broad systems:
 ```bash
 APP_NAME=consent ENV=local OUTPUT_DIR=config ../firecloud-develop/configure.rb
 ```
-Otherwise, use `consent-ws/src/test/resources/consent-config.yml` as a template to 
+Otherwise, use `src/test/resources/consent-config.yml` as a template to 
 create your own environment-specific configuration. 
 
 ### Spin up application:
@@ -58,7 +58,7 @@ Port 5005 is open in the configured docker compose.
 Set up a remote debug configuration pointing to `local.broadinstitute.org`
 and the defaults should be correct.
 
-Execute the `fizzed-watcher:run` maven task (under consent-ws plugins)  
+Execute the `fizzed-watcher:run` maven task  
 to enable hot reloading of class and resource files.
 
 
