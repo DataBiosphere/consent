@@ -1,11 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import io.jsonwebtoken.security.SignatureException;
-import java.util.Map;
+import org.broadinstitute.consent.http.models.NIHUserAccount;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+
+import java.util.List;
 
 public interface NihAuthApi {
 
-    Map<String, String> authenticateNih(String jwt, Integer userId) throws SignatureException;
+    List<ResearcherProperty> authenticateNih(NIHUserAccount nihAccount, Integer userId);
 
     void deleteNihAccountById(Integer userId);
 }

@@ -2066,19 +2066,19 @@ paths:
       responses:
         '200':
           description: Returns an empty response if the operation was successfully
-  /api/nih-login/{userId}/{token}:
+  /api/nih-login/{userId}:
     post:
-      summary: Nih Jwt verification
-      description: Verifies if the given token is valid, if its ok will save to MySql and return saved values. If the token is not valid returns error.
+      summary: Store NIH information in Db
+      description: Save to MySql and return saved values.
       parameters:
         - name: userId
           in: path
           required: true
           type: integer
           format: int32
-        - name: token
-          in: path
-          description: Jason Web Token provided by Shibboleth's redirection, or from Nih's Mock page
+        - name: NihAccount
+          in: body
+          description: Object returned by Firecloud endpoint after the given token has been decoded
           required: true
           type: string
       tags:
@@ -2092,10 +2092,6 @@ paths:
           $ref: '#/definitions/EraProperties'
       '404':
         description: The user doesnt exist in the system
-        schema:
-        $ref: '#/definitions/ErrorResponse'
-      '400':
-        description: Jwt Bad Authentication, or Malformed Token, or Decoding Error
         schema:
         $ref: '#/definitions/ErrorResponse'
   /status:

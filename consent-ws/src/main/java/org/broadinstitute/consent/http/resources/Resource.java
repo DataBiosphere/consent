@@ -1,10 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.io.DecodingException;
-import io.jsonwebtoken.security.SignatureException;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -71,14 +67,6 @@ abstract public class Resource {
         dispatch.put(NotFoundException.class, e ->
                 Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
-                Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
-        dispatch.put(SignatureException.class, e->
-                Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
-        dispatch.put(MalformedJwtException.class, e->
-                Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
-        dispatch.put(UnsupportedJwtException.class, e->
-                Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
-        dispatch.put(DecodingException.class, e->
                 Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());
         dispatch.put(MySQLSyntaxErrorException.class, e ->
                 Response.serverError().entity(new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build());

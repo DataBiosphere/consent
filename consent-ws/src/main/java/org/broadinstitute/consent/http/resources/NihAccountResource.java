@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.Map;
 
 @Path("api/nih-login/")
 
@@ -18,13 +18,15 @@ public class NihAccountResource extends Resource {
     }
 
     @POST
-    @Path("{userId}/{token}")
+    @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed("RESEARCHER")
 
-    public Response registerResearcher(@PathParam("userId") Integer userId, @PathParam("token") String jwt) {
+    public Response registerResearcher(@PathParam("userId") Integer userId, NIHUserAccount nihAccount) {
         try {
-            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(jwt, userId)).build();
+            ;
+            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAccount, userId)).build();
+
         } catch (Exception e){
             return createExceptionResponse(e);
         }

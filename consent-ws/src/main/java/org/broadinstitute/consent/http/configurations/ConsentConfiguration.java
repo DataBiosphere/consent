@@ -55,11 +55,6 @@ public class ConsentConfiguration extends Configuration {
     @NotNull
     private BasicAuthConfig basicAuthentication = new BasicAuthConfig();
 
-    @Valid
-    @NotNull
-    @JsonProperty
-    private final NihConfiguration nihAuthentication = new NihConfiguration();
-
     @JsonProperty("datasets")
     private List<String> datasets = new ArrayList<>();
 
@@ -127,10 +122,6 @@ public class ConsentConfiguration extends Configuration {
 
     public StoreOntologyConfiguration getStoreOntologyConfiguration() {
         return storeOntology;
-    }
-
-    public NihConfiguration getNihConfiguration() {
-        return nihAuthentication;
     }
 
     public List<String> getDatasets() {
