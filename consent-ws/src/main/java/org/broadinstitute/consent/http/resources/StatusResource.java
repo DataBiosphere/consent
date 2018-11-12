@@ -32,12 +32,10 @@ public class StatusResource {
         if (mysql.isHealthy() && mongodb.isHealthy()) {
             return Response.ok(results).build();
         } else {
-            if (!mysql.isHealthy()) {
-                logger().error(mysql.getError());
-            }
-            if (!mongodb.isHealthy()) {
-                logger().error(mongodb.getError());
-            }
+            results.entrySet().
+                    stream().
+                    filter(e -> !e.getValue().isHealthy()).
+                    forEach(e -> logger().error("Error in service " + e.getKey() + ": " + e.getValue().getError()));
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(results).build();
         }
     }
