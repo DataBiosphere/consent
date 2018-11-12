@@ -35,9 +35,18 @@ public class StatusResource {
             results.entrySet().
                     stream().
                     filter(e -> !e.getValue().isHealthy()).
-                    forEach(e -> logger().error("Error in service " + e.getKey() + ": " + e.getValue().getError()));
+                    forEach(e -> logger().error("Error in service " + e.getKey() + ": " + formatResultError(e.getValue())));
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(results).build();
         }
+    }
+
+    private String formatResultError(HealthCheck.Result result) {
+        if (result.getMessage() != null) {
+            return result.getMessage();
+        } else if (result.getError() != null) {
+            return result.getError().toString();
+        }
+        return "Healthcheck Result Error";
     }
 
 }
