@@ -45,8 +45,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ConsentDAO consentDAO;
 
-    private final DataAccessParser dataAccessParser;
-
     private  final ResearcherPropertyDAO  researcherPropertyDAO;
 
     private final String DATA_SET_ID = "datasetId";
@@ -97,7 +95,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.voteDAO = voteDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
-        this.dataAccessParser = new DataAccessParser();
         this.dataAccessReportsParser = new DataAccessReportsParser();
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
@@ -406,7 +403,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream is = classLoader.getResourceAsStream(PATH);
             darDOC = PDDocument.load(is);
-            dataAccessParser.fillDARForm(dar, researcherProperties, darDOC.getDocumentCatalog().getAcroForm());
+            new DataAccessParser().fillDARForm(dar, researcherProperties, darDOC.getDocumentCatalog().getAcroForm());
             darDOC.save(output);
             return output.toByteArray();
         } finally {
