@@ -47,8 +47,8 @@ services:
     localURL: http://localhost:8000/#/
 mailConfiguration:
   activateEmailNotifications: false
-  googleAccount: qatesterbsf3@gmail.com
-  sendGridApiKey: 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
+  googleAccount: test@gmail.com
+  sendGridApiKey: test-key
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
