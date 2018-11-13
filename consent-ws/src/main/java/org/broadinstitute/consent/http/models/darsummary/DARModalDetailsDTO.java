@@ -26,8 +26,6 @@ public class DARModalDetailsDTO {
     private String country;
     private String nihUserName;
     private Boolean havenihUserName;
-    private Boolean havePi;
-    private Boolean isThePi;
     private List<SummaryItem> researchType;
     private List<String> diseases;
     private List<SummaryItem> purposeStatements;

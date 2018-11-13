@@ -4,7 +4,12 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.POST;
+import javax.ws.rs.Produces;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.core.Response;
 
 @Path("api/nih-login/")

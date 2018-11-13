@@ -109,6 +109,16 @@ public class DarConstants {
 
     public static final String NOT_HEALTH = "nothealth";
 
+    public static final String HEALTH = "health";
+
+    public static final String ORIGIN = "origins";
+
+    public static final String USR_STATUS = "userStatus";
+
+    public static final String ADMIN_COMMENT = "adminComment";
+
+    public static final String MANUAL_REVIEW = "manualReview";
+
     public static final String GENDER = "gender";
 
     public static final String HMB = "hmb";

@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 
+import javax.ws.rs.BadRequestException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,18 +13,21 @@ import java.util.Date;
 
 public class NihServiceAPI implements NihAuthApi {
 
-//    private NihConfiguration nihConfiguration;
     private ResearcherAPI researcherAPI;
 
-    public NihServiceAPI(/*NihConfiguration nihConfiguration,*/ ResearcherAPI researcherApi) {
+    public NihServiceAPI(ResearcherAPI researcherApi) {
         this.researcherAPI = researcherApi;
-//        this.nihConfiguration = nihConfiguration;
     }
 
     @Override
-    public List<ResearcherProperty> authenticateNih(NIHUserAccount nihAccount, Integer userId) {
-        nihAccount.setEraExpiration(generateEraExpirationDates());
-        return researcherAPI.updateResearcher(nihAccount.getNihMap(), userId, false);
+    public List<ResearcherProperty> authenticateNih(NIHUserAccount nihAccount, Integer userId) throws BadRequestException{
+        if (!nihAccount.getNihUsername().isEmpty()) {
+            nihAccount.setEraExpiration(generateEraExpirationDates());
+            nihAccount.setStatus(true);
+            return researcherAPI.updateResearcher(nihAccount.getNihMap(), userId, false);
+        } else {
+            throw new BadRequestException("Invalid Nih UserName for user : " + userId);
+        }
     }
 
     @Override

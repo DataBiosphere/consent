@@ -17,19 +17,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}dataRequest")
 public class DataRequestReportsResource extends Resource {
 
     private final DataAccessRequestAPI darApi;
-
     private final ResearcherAPI researcherAPI;
-
     private final DataAccessReportsParser dataAccessReportsParser;
-
-        private final DACUserAPI dacUserAPI;
-        private static final ObjectMapper mapper = new ObjectMapper();
+    private final DACUserAPI dacUserAPI;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public DataRequestReportsResource(ResearcherAPI researcherAPI, DACUserAPI dacUserAPI) {
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
@@ -92,14 +91,11 @@ public class DataRequestReportsResource extends Resource {
 
     private Boolean requiresManualReview(Document dar) throws IOException {
         Map<String, Object> form = parseAsMap(dar.toJson());
-        for (String field: fieldsForManualReview) {
-            if (form.containsKey(field)) {
-                if (Boolean.valueOf(form.get(field).toString())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return Arrays.stream(fieldsForManualReview).
+            filter(form::containsKey).
+            map(field -> Boolean.valueOf(form.get(field).toString())).
+            collect(Collectors.toSet()).
+            contains(Boolean.TRUE);
     }
 
     private Map<String, Object> parseAsMap(String str) throws IOException {
