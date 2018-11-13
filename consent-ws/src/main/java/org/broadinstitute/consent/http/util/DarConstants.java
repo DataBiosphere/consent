@@ -125,4 +125,14 @@ public class DarConstants {
 
     public static final String DATA_ACCESS_AGREEMENT = "dataAccessAgreement";
 
+    public static final String HEALTH = "health";
+
+    public static final String ORIGINS = "origins";
+
+    public static final String USER_STATUS = "userStatus";
+
+    public static final String ADMIN_COMMENT = "adminComment";
+
+    public static final String MANUAL_REVIEW = "manualReview";
+
 }

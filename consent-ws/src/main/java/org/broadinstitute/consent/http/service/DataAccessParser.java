@@ -76,7 +76,7 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.OTHER)));
                     break;
                 }
-                case "otherText": {
+                case DarConstants.OTHER_TEXT: {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.OTHER_TEXT)));
                     break;
                 }
@@ -187,11 +187,11 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.NOT_HEALTH)));
                     break;
                 }
-                case "health": {
+                case DarConstants.HEALTH: {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.HMB)));
                     break;
                 }
-                case "origins": {
+                case DarConstants.ORIGINS: {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.POA)));
                     break;
                 }
@@ -199,15 +199,15 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.CHECK_COLLABORATOR)));
                     break;
                 }
-                case "userStatus": {
+                case DarConstants.USER_STATUS: {
                     field.setValue(getDefaultValue(StringUtils.capitalize(role.getStatus())));
                     break;
                 }
-                case "adminComment": {
+                case DarConstants.ADMIN_COMMENT: {
                     field.setValue(getDefaultValue(StringUtils.capitalize(role.getRationale())));
                     break;
                 }
-                case "manualReview": {
+                case DarConstants.MANUAL_REVIEW: {
                     field.setValue(getDefaultValue(checkRequiresManualReview(manualReview)));
                     break;
                 }

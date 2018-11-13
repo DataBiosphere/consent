@@ -8,10 +8,7 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 public class DataAccessParserTest {
@@ -62,9 +59,7 @@ public class DataAccessParserTest {
 
     @Test
     public void testDataAccessParserCompleted() throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
         ClassLoader classLoader = getClass().getClassLoader();
-        InputStream is = classLoader.getResourceAsStream(PATH);;
         researcherProperties.put(ResearcherFields.INSTITUTION.getValue(), INSTITUTION);
         researcherProperties.put(ResearcherFields.DEPARTMENT.getValue(), DEPARTMENT);
         researcherProperties.put(ResearcherFields.STREET_ADDRESS_1.getValue(), STREET_1);
@@ -134,12 +129,12 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.ORCID).getValueAsString().equals(ORCID));
         Assert.isTrue(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString().equals(RESEARCHER_GATE));
         Assert.isTrue(acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField("otherText").getValueAsString().equals(RESEARCH_OTHER_TEXT));
-        Assert.isTrue(acroForm.getField("origins").getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField("health").getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField("manualReview").getValueAsString().equals(MANUAL_REVIEW));
-        Assert.isTrue(acroForm.getField("userStatus").getValueAsString().equals(USER_STATUS));
-        Assert.isTrue(acroForm.getField("adminComment").getValueAsString().equals(ADMIN_COMMENT));
+        Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT).getValueAsString().equals(RESEARCH_OTHER_TEXT));
+        Assert.isTrue(acroForm.getField(DarConstants.ORIGINS).getValueAsString().equals("Yes"));
+        Assert.isTrue(acroForm.getField(DarConstants.HEALTH).getValueAsString().equals("Yes"));
+        Assert.isTrue(acroForm.getField(DarConstants.MANUAL_REVIEW).getValueAsString().equals(MANUAL_REVIEW));
+        Assert.isTrue(acroForm.getField(DarConstants.USER_STATUS).getValueAsString().equals(USER_STATUS));
+        Assert.isTrue(acroForm.getField(DarConstants.ADMIN_COMMENT).getValueAsString().equals(ADMIN_COMMENT));
     }
 
     private Document generateDatasetDetails(Integer datasetId, String datasetName, String objectId) {
