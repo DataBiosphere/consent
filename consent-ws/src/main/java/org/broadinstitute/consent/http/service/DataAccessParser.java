@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class DataAccessParser {
 
-    public PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, PDAcroForm acroForm) throws IOException {
+    public PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, PDAcroForm acroForm) throws IOException {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {
@@ -75,7 +76,7 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.OTHER)));
                     break;
                 }
-                case "otherText": {
+                case DarConstants.OTHER_TEXT: {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.OTHER_TEXT)));
                     break;
                 }
@@ -186,12 +187,49 @@ public class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.NOT_HEALTH)));
                     break;
                 }
-                case "health": {
+                case DarConstants.HEALTH: {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.HMB)));
                     break;
                 }
-                case "origins": {
+                case DarConstants.ORIGINS: {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.POA)));
+                    break;
+                }
+                case DarConstants.CHECK_COLLABORATOR: {
+                    field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.CHECK_COLLABORATOR)));
+                    break;
+                }
+                case DarConstants.USER_STATUS: {
+                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getStatus())));
+                    break;
+                }
+                case DarConstants.ADMIN_COMMENT: {
+                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getRationale())));
+                    break;
+                }
+                case DarConstants.MANUAL_REVIEW: {
+                    field.setValue(getDefaultValue(checkRequiresManualReview(manualReview)));
+                    break;
+                }
+                case DarConstants.NIH_USERNAME: {
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.NIH_USERNAME)));
+                    break;
+                }
+                case DarConstants.LINKEDIN: {
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.LINKEDIN)));
+                    break;
+                }
+                case DarConstants.ORCID: {
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.ORCID)));
+                    break;
+                }
+                case DarConstants.RESEARCHER_GATE: {
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.RESEARCHER_GATE)));
+                    break;
+                }
+                case DarConstants.DATA_ACCESS_AGREEMENT: {
+                    Boolean existDataAccessAgreement = dar.getString(DarConstants.DATA_ACCESS_AGREEMENT) == null? false: true;
+                    field.setValue(getYesOrNoValue(existDataAccessAgreement));
                     break;
                 }
             }
@@ -231,4 +269,12 @@ public class DataAccessParser {
         }
         return diseases;
     }
+
+    private String checkRequiresManualReview(Boolean requiresManualReview) {
+        if (requiresManualReview) {
+            return "THIS DATA ACCESS REQUEST REQUIRES MANUAL REVIEW";
+        }
+        return "THIS DATA ACCESS REQUEST DOES NOT REQUIRE MANUAL REVIEW";
+    }
+
 }
