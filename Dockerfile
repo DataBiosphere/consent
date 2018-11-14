@@ -7,4 +7,4 @@ RUN apt-get -yq autoremove && \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
 
-COPY consent-ws/target/consent.jar /opt/consent.jar
+COPY target/consent.jar /opt/consent.jar
