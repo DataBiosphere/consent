@@ -63,8 +63,6 @@ public class DarConstants {
 
     public static final String ERA_COMMONS_ID = "eRACommonsID";
 
-    public static final String ERA_NIH_USER_NAME = "nihUsername";
-
     public static final String PUBMED_ID = "pubmedID";
 
     public static final String SCIENTIFIC_URL = "scientificURL";
@@ -109,16 +107,6 @@ public class DarConstants {
 
     public static final String NOT_HEALTH = "nothealth";
 
-    public static final String HEALTH = "health";
-
-    public static final String ORIGIN = "origins";
-
-    public static final String USR_STATUS = "userStatus";
-
-    public static final String ADMIN_COMMENT = "adminComment";
-
-    public static final String MANUAL_REVIEW = "manualReview";
-
     public static final String GENDER = "gender";
 
     public static final String HMB = "hmb";
@@ -136,5 +124,15 @@ public class DarConstants {
     public static final String RESEARCHER_GATE = "researcherGate";
 
     public static final String DATA_ACCESS_AGREEMENT = "dataAccessAgreement";
+
+    public static final String HEALTH = "health";
+
+    public static final String ORIGINS = "origins";
+
+    public static final String USER_STATUS = "userStatus";
+
+    public static final String ADMIN_COMMENT = "adminComment";
+
+    public static final String MANUAL_REVIEW = "manualReview";
 
 }

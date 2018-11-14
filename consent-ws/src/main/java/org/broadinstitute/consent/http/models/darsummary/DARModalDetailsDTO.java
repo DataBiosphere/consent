@@ -56,7 +56,7 @@ public class DARModalDetailsDTO {
         setDepartment(this.department = darDocument.getString(DarConstants.DEPARTMENT));
         setCity(this.city = darDocument.getString(DarConstants.CITY));
         setCountry(this.country = darDocument.getString(DarConstants.COUNTRY));
-        setNihUserName(this.nihUserName = darDocument.getString(DarConstants.ERA_NIH_USER_NAME));
+        setNihUserName(this.nihUserName = darDocument.getString(DarConstants.NIH_USERNAME));
         setHavenihUserName(this.havenihUserName = getNihUserName() != null && !getNihUserName().isEmpty());
         setIsThereDiseases(false);
         setIsTherePurposeStatements(false);

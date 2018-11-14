@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.Consent;
@@ -28,6 +26,7 @@ import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
 import javax.annotation.security.PermitAll;
@@ -63,7 +62,6 @@ import java.util.stream.Collectors;
 public class DataAccessRequestResource extends Resource {
 
     private final DataAccessRequestAPI dataAccessRequestAPI;
-    private static final ObjectMapper mapper = new ObjectMapper();
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
@@ -93,7 +91,7 @@ public class DataAccessRequestResource extends Resource {
         List<Document> result;
         UseRestriction useRestriction;
         try {
-            Boolean needsManualReview = requiresManualReview(dar);
+            Boolean needsManualReview = DarUtil.requiresManualReview(dar);
             if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
                 useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
@@ -134,7 +132,7 @@ public class DataAccessRequestResource extends Resource {
             if (dar.containsKey(DarConstants.RESTRICTION)) {
                 dar.remove(DarConstants.RESTRICTION);
             }
-            Boolean needsManualReview = requiresManualReview(dar);
+            Boolean needsManualReview = DarUtil.requiresManualReview(dar);
             if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
@@ -400,7 +398,7 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public Response getUseRestrictionFromQuestions(Document dar) {
         try{
-            Boolean needsManualReview = requiresManualReview(dar);
+            Boolean needsManualReview = DarUtil.requiresManualReview(dar);
             if (!needsManualReview){
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
@@ -426,27 +424,10 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    private Map<String, Object> parseAsMap(String str) throws IOException {
-        ObjectReader reader = mapper.readerFor(Map.class);
-        return reader.readValue(str);
-    }
-
 
     private Document savePartialDarRequest(Document dar) throws Exception{
         dar.append(DarConstants.SORT_DATE,new Date());
         return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
-    }
-
-    private boolean requiresManualReview(Document dar) throws IOException {
-        Map<String, Object> form = parseAsMap(dar.toJson());
-        for (String field : fieldsForManualReview) {
-            if (form.containsKey(field)) {
-                if (Boolean.valueOf(form.get(field).toString())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private Integer obtainUserId (Document dar) {
@@ -457,17 +438,5 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-// Fields that trigger manual review flag.
-    String[] fieldsForManualReview = {
-            "population",
-            "other",
-            "illegalbehave",
-            "addiction",
-            "sexualdiseases",
-            "stigmatizediseases",
-            "vulnerablepop",
-            "popmigration",
-            "psychtraits",
-            "nothealth"
-    };
+
 }
