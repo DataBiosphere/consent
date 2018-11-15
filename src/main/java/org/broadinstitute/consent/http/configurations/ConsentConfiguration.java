@@ -58,7 +58,6 @@ public class ConsentConfiguration extends Configuration {
     @JsonProperty("datasets")
     private List<String> datasets = new ArrayList<>();
 
-
     @JsonProperty("httpClient")
     public JerseyClientConfiguration getJerseyClientConfiguration() {
         return httpClient;
@@ -127,4 +126,5 @@ public class ConsentConfiguration extends Configuration {
     public List<String> getDatasets() {
         return datasets;
     }
+
 }

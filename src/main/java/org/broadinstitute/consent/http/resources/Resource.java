@@ -11,7 +11,6 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;

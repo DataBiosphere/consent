@@ -2049,7 +2049,7 @@ paths:
           description: The requested user doesnt exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /api/nih-login/{userId}:
+  /api/nih-register/{userId}:
     delete:
       summary: Delete Era Commons Account
       description: Removes only Era Commons Account related information from the given user in its Researcher Profile
@@ -2062,13 +2062,13 @@ paths:
       tags:
         - User
         - Researcher
-        - Era Commons
+        - eRA Commons
       responses:
         '200':
           description: Returns an empty response if the operation was successfully
-  /api/nih-login/{userId}:
+  /api/nih-register/{userId}:
     post:
-      summary: Store NIH information in Db
+      summary: Store NIH information
       description: Save to MySql and return saved values.
       parameters:
         - name: userId
@@ -2080,7 +2080,7 @@ paths:
           in: body
           description: Object returned by Firecloud endpoint after the given token has been decoded
           required: true
-          type: string
+          type: Json
       tags:
         - User
         - Researcher
@@ -2091,7 +2091,7 @@ paths:
         schema:
           $ref: '#/definitions/EraProperties'
       '404':
-        description: The user doesnt exist in the system
+        description: The user doesn't exist in the system
         schema:
         $ref: '#/definitions/ErrorResponse'
   /status:

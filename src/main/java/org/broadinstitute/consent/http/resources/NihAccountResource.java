@@ -12,7 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.core.Response;
 
-@Path("api/nih-login/")
+@Path("api/nih-register/")
 
 public class NihAccountResource extends Resource {
 
@@ -29,7 +29,6 @@ public class NihAccountResource extends Resource {
 
     public Response registerResearcher(@PathParam("userId") Integer userId, NIHUserAccount nihAccount) {
         try {
-            ;
             return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAccount, userId)).build();
 
         } catch (Exception e){

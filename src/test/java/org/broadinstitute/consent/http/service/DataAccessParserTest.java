@@ -8,10 +8,7 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 public class DataAccessParserTest {
