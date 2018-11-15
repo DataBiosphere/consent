@@ -10,7 +10,10 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.HelpReport;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+
 import org.bson.Document;
+
 
 public interface EmailNotifierAPI {
 
@@ -37,5 +40,7 @@ public interface EmailNotifierAPI {
     void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException;
 
     void sendNewRequestHelpMessage(HelpReport helpReport) throws IOException, TemplateException, MessagingException;
+
+    void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception;
 
 }

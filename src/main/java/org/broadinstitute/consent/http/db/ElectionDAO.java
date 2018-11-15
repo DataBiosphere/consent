@@ -281,4 +281,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @Mapper(DateMapper.class)
     Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
 
+    @SqlQuery("select  v.vote from vote v where v.electionId = :electionId and v.type = 'FINAL'")
+    Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
 }

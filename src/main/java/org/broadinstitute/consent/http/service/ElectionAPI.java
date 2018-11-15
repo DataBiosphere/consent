@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +19,7 @@ public interface ElectionAPI {
 
     Election updateElectionById(Election rec, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
-    Election updateFinalAccessVoteDataRequestElection(Integer electionId);
+    Election updateFinalAccessVoteDataRequestElection(Integer electionId) throws Exception;
 
     Election describeConsentElection(String consentId) throws NotFoundException;
 

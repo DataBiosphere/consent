@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
 
@@ -84,6 +85,18 @@ public class FreeMarkerTemplateHelper {
         Template temp = freeMarkerConfig.getTemplate("new-help-report.html");
         return generateHelpReportTemplate(helpReport, serverUrl + HELP_REPORT_URL, temp);
     }
+
+    public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName, List<DatasetMailDTO> datasets, String dataUseRestriction, String email) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("researcher-dar-approved.html");
+        return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
+    }
+    private Writer generateResearcherApprovedTemplate(List<DatasetMailDTO> datasets,  String dataUseRestriction, String darCode, String researcherName, String email, Template temp) throws IOException, TemplateException {
+        ResearcherDarApprovedModel model = new ResearcherDarApprovedModel(researcherName, darCode, datasets, dataUseRestriction, email);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
 
     private Writer generateHelpReportTemplate(HelpReport helpReport, String serverUrl, Template temp) throws IOException, TemplateException {
         NewHelpReportTemplate model = new NewHelpReportTemplate(helpReport.getUserName(), helpReport.getSubject(), helpReport.getDescription(), helpReport.getCreateDate(), serverUrl);
