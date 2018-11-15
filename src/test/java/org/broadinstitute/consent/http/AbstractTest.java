@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http;
 
 import com.mongodb.MongoClient;
-import de.flapdoodle.embedmongo.MongoDBRuntime;
-import de.flapdoodle.embedmongo.MongodExecutable;
-import de.flapdoodle.embedmongo.MongodProcess;
-import de.flapdoodle.embedmongo.config.MongodConfig;
-import de.flapdoodle.embedmongo.distribution.Version;
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodProcess;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.config.Storage;
+import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -197,18 +201,26 @@ abstract public class AbstractTest extends ResourcedTest {
     }
 
     protected MongoClient setUpMongoClient() throws IOException {
+        int port = 27017;
+        String bindIp = "localhost";
         // Creating Mongodbruntime instance
-        MongoDBRuntime runtime = MongoDBRuntime.getDefaultInstance();
+        MongodStarter starter = MongodStarter.getDefaultInstance();
         // Creating MongodbExecutable
-        mongodExe = runtime.prepare(new MongodConfig(Version.V2_1_2, 27017, false, "target/mongo"));
+        Storage replication = new Storage("target/mongo",null,0);
+        IMongodConfig config = new MongodConfigBuilder()
+                .version(Version.Main.PRODUCTION)
+                .replication(replication)
+                .net(new Net(bindIp, port, Network.localhostIsIPv6()))
+                .build();
+        mongodExe = starter.prepare(config);
         // Starting Mongodb
         mongod = mongodExe.start();
-        return new MongoClient("localhost", 27017);
+        return new MongoClient(bindIp, port);
     }
 
     protected void shutDownMongo() {
         mongod.stop();
-        mongodExe.cleanup();
+        mongodExe.stop();
         // Force cleanup of any leftover mongo db files. Only deletes the `mongo` directory itself.
         try {
             FileUtils.deleteDirectory(new File("target/mongo"));
