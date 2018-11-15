@@ -25,7 +25,7 @@ import java.util.Map;
 abstract public class Resource {
 
     protected Logger logger() {
-        return Logger.getLogger("consent-ws");
+        return Logger.getLogger("consent");
     }
 
     protected Response createExceptionResponse(Exception e) {
