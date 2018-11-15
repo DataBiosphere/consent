@@ -11,9 +11,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-
 import org.bson.Document;
-
 
 public interface EmailNotifierAPI {
 

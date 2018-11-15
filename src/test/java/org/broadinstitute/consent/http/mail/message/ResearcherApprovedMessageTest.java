@@ -14,6 +14,7 @@ import java.util.List;
 import static org.junit.Assert.assertTrue;
 
 public class ResearcherApprovedMessageTest {
+
     @Mock
     Writer template;
 
