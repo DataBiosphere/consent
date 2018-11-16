@@ -135,9 +135,10 @@ public class DataAccessRequestResource extends Resource {
             @QueryParam("fileName") String fileName) {
         try {
             String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
-            Document url = new Document();
-            url.put("urlDAA", store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));
-            return Response.ok(url).build();
+            Document dataAccessAgreement = new Document();
+            dataAccessAgreement.put("urlDAA", store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));
+            dataAccessAgreement.put("nameDAA", fileName);
+            return Response.ok(dataAccessAgreement).build();
         }
         catch (Exception e) {
             return createExceptionResponse(e);
