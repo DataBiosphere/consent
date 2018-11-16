@@ -71,13 +71,16 @@ public class GCSStore implements CloudStore {
     }
 
     @Override
-    public boolean deleteStorageDocument(String documentUrl) throws IOException, GeneralSecurityException {
+    public boolean deleteStorageDocument(String documentUrl) {
         HttpResponse response = null;
         try {
             initializeCloudStore();
             HttpRequest request = buildHttpDeleteRequest(new GenericUrl(documentUrl));
             response = request.execute();
             return true;
+        } catch (Exception e) {
+            logger().error("Error deleting document.", e);
+            return false;
         } finally {
             if (response != null) {
                 try {
