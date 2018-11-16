@@ -71,18 +71,25 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
     public static void main(String[] args) throws Exception {
-        String dsn = System.getProperties().getProperty("sentry.dsn");
-        if (null != dsn && !dsn.isEmpty()) {
-            SentryBootstrap.bootstrap(dsn);
-            Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
+        LOGGER.info("Starting Consent Application");
+        try {
+            String dsn = System.getProperties().getProperty("sentry.dsn");
+            if (null != dsn && !dsn.isEmpty()) {
+                SentryBootstrap.bootstrap(dsn);
+                Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
+            } else {
+                LOGGER.error("Unable to boostrap sentry logging.");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Exception loading sentry properties: " + e.getMessage());
         }
         new ConsentApplication().run(args);
+        LOGGER.info("Consent Application Started");
     }
 
     @Override
     public void run(ConsentConfiguration config, Environment env) {
 
-        LOGGER.debug("ConsentApplication.run called.");
         // Client to consume another services
         final javax.ws.rs.client.Client client = new JerseyClientBuilder(env).using(config.getJerseyClientConfiguration())
                 .build(getName());
