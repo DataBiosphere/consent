@@ -11,16 +11,16 @@ import java.util.Map;
 public class NIHUserAccount {
 
     @JsonProperty("linkedNihUsername")
-    String nihUsername;
+    private String nihUsername;
 
     @JsonProperty("datasetPermissions")
-    ArrayList datasetPermissions;
+    private ArrayList datasetPermissions;
 
     @JsonProperty("linkExpireTime")
-    String eraExpiration;
+    private String eraExpiration;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    Boolean status;
+    private Boolean status;
 
     public NIHUserAccount() {}
 

@@ -12,8 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.core.Response;
 
-@Path("api/nih-register/")
-
+@Path("api/nih/")
 public class NihAccountResource extends Resource {
 
     private NihAuthApi nihAuthApi;
@@ -26,11 +25,9 @@ public class NihAccountResource extends Resource {
     @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed("RESEARCHER")
-
     public Response registerResearcher(@PathParam("userId") Integer userId, NIHUserAccount nihAccount) {
         try {
-            return Response.status(Response.Status.OK).entity(nihAuthApi.authenticateNih(nihAccount, userId)).build();
-
+            return Response.ok(nihAuthApi.authenticateNih(nihAccount, userId)).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -40,7 +37,6 @@ public class NihAccountResource extends Resource {
     @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed("RESEARCHER")
-
     public Response deleteNihAccount(@PathParam("userId") Integer userId) {
         try {
             nihAuthApi.deleteNihAccountById(userId);

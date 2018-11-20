@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
@@ -84,6 +85,8 @@ public interface DataAccessRequestAPI {
     File createReviewedDARDocument() throws NotFoundException, IOException;
 
     File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException;
+
+    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar,DACUser dacUser, ElectionAPI electionApi, DACUserRole role);
 
 }
 
