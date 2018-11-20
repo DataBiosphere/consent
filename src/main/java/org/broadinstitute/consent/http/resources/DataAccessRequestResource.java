@@ -411,20 +411,6 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    @PUT
-    @Produces("application/json")
-    @Path("/dataset")
-    @PermitAll
-    public Response updateObjectIdByDataset() {
-        try{
-            dataSetAPI.updateDataSetAlias();
-            return Response.ok(dataSetAPI.updateDataSetIdToDAR()).build();
-        } catch(Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-
     private Document savePartialDarRequest(Document dar) throws Exception{
         dar.append(DarConstants.SORT_DATE,new Date());
         return dataAccessRequestAPI.createPartialDataAccessRequest(dar);

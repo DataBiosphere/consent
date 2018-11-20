@@ -39,8 +39,6 @@ public interface DataSetAPI {
 
     List<DataSet>findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList);
 
-    String updateDataSetIdToDAR();
-
     void updateDataSetAlias();
 
 }
