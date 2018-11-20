@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ResearcherApprovedMessage extends MailMessage {
+
     private final String APPROVED_DAR = "Your DUOS Data Access Request Results";
 
     public List<Mail> researcherApprovedMessage(Set<String> toAddresses, String fromAddress, Writer template, String darCode) throws MessagingException {
@@ -16,6 +17,6 @@ public class ResearcherApprovedMessage extends MailMessage {
 
     @Override
     String assignSubject(String referenceId, String type) {
-        return String.format(APPROVED_DAR, referenceId);
+        return APPROVED_DAR;
     }
 }

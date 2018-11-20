@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -388,7 +389,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public String darDatasetElectionStatus(String darReferenceId){
-        List<Integer> dataSets = describeDataAccessRequestById(darReferenceId).get(DarConstants.DATASET_ID, List.class);
+        List<Integer> dataSets =  DarUtil.getIntegerList(describeDataAccessRequestById(darReferenceId), DarConstants.DATASET_ID);
         List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
         if(CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
@@ -506,7 +507,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
-        List<Integer> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+        List<Integer> dataSets = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         List<DataSet> dataSetList = dataSetDAO.searchDataSetsByIds(dataSets);
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
@@ -709,13 +710,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private void sendResearcherNotification(String referenceId) throws Exception {
         BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
         Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-        List<Integer> dataSetIdList = dar.get(DarConstants.DATASET_ID, List.class);
+        List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         if(CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<DataSet> dataSets = dataSetDAO.searchDataSetsByIds(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
-            dataSets.forEach(ds -> {
-                datasetsDetail.add(new DatasetMailDTO(ds.getName(), DatasetUtil.parseAlias(ds.getAlias())));
-            });
+            dataSets.forEach(ds ->
+                datasetsDetail.add(new DatasetMailDTO(ds.getName(), DatasetUtil.parseAlias(ds.getAlias())))
+            );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
             emailNotifierAPI.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
         }

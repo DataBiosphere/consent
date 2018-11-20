@@ -15,18 +15,17 @@ import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -76,8 +75,6 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         this.datasetDAO = datasetDAO;
         this.matchDAO = matchDAO;
         this.mongo = mongo;
-        this.datasetDAO = datasetDAO;
-
     }
 
     @Override
@@ -232,7 +229,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     FindIterable<Document> dataAccessRequests = findDataAccessRequests(darIds);
                     HashSet<Integer> datasetIds = new HashSet<>();
                     dataAccessRequests.forEach((Block<Document>) dar -> {
-                        List<Integer> ids =  dar.get(DarConstants.DATASET_ID, List.class);
+                        List<Integer> ids = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                         datasetIds.addAll(ids);
                     });
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
@@ -279,8 +276,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                             match = null;
                         }
                         Document dar = findAssociatedDAR(dataAccessRequests, election.getReferenceId());
-                        if ( !dar.isEmpty() ){
-                            List<Integer> datasetId =  dar.get(DarConstants.DATASET_ID, List.class);
+                        if ( dar != null && !dar.isEmpty() ){
+                            List<Integer> datasetId =   DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                             if(CollectionUtils.isNotEmpty(datasetId)) {
                                 Association association = associations.stream().filter((as) -> as.getDataSetId().equals(datasetId.get(0))).collect(singletonCollector());
                                 Election consentElection = reviewedConsentElections.stream().filter(re -> re.getReferenceId().equals(association.getConsentId())).collect(singletonCollector());

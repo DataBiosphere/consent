@@ -90,8 +90,14 @@ public class FreeMarkerTemplateHelper {
         Template temp = freeMarkerConfig.getTemplate("researcher-dar-approved.html");
         return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
     }
+
     private Writer generateResearcherApprovedTemplate(List<DatasetMailDTO> datasets,  String dataUseRestriction, String darCode, String researcherName, String email, Template temp) throws IOException, TemplateException {
-        ResearcherDarApprovedModel model = new ResearcherDarApprovedModel(researcherName, darCode, datasets, dataUseRestriction, email);
+        ResearcherDarApprovedModel model = new ResearcherDarApprovedModel()
+                .setResearcherName(researcherName)
+                .setDarCode(darCode)
+                .setDatasets(datasets)
+                .setDataUseRestriction(dataUseRestriction)
+                .setResearcherEmail(email);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

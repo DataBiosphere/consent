@@ -11,52 +11,49 @@ public class ResearcherDarApprovedModel {
     private String dataUseRestriction;
     private String researcherEmail;
 
-    public ResearcherDarApprovedModel(String researcherName, String darCode, List<DatasetMailDTO> datasets, String dataUseRestriction, String researcherEmail) {
-        this.researcherName = researcherName;
-        this.darCode = darCode;
-        this.datasets = datasets;
-        this.dataUseRestriction = dataUseRestriction;
-        this.researcherEmail = researcherEmail;
-    }
-
     public String getResearcherName() {
         return researcherName;
     }
 
-    public void setResearcherName(String researcherName) {
+    public ResearcherDarApprovedModel setResearcherName(String researcherName) {
         this.researcherName = researcherName;
+        return this;
     }
 
     public String getDarCode() {
         return darCode;
     }
 
-    public void setDarCode(String darCode) {
+    public ResearcherDarApprovedModel setDarCode(String darCode) {
         this.darCode = darCode;
+        return this;
     }
 
     public List<DatasetMailDTO> getDatasets() {
         return datasets;
     }
 
-    public void setDatasets(List<DatasetMailDTO> datasets) {
+    public ResearcherDarApprovedModel setDatasets(List<DatasetMailDTO> datasets) {
         this.datasets = datasets;
+        return this;
     }
 
     public String getDataUseRestriction() {
         return dataUseRestriction;
     }
 
-    public void setDataUseRestriction(String dataUseRestriction) {
+    public ResearcherDarApprovedModel setDataUseRestriction(String dataUseRestriction) {
         this.dataUseRestriction = dataUseRestriction;
+        return this;
     }
 
     public String getResearcherEmail() {
         return researcherEmail;
     }
 
-    public void setResearcherEmail(String email) {
+    public ResearcherDarApprovedModel setResearcherEmail(String email) {
         this.researcherEmail = email;
+        return this;
     }
 }
 
