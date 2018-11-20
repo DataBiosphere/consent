@@ -212,7 +212,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ResearcherResource(researcherAPI));
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
-        env.jersey().register(new NihAccountResource(nihAuthApi));
+        env.jersey().register(new NihAccountResource(nihAuthApi, DatabaseDACUserAPI.getInstance()));
 
         // Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()

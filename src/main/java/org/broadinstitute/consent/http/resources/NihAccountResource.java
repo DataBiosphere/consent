@@ -1,7 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.NihAuthApi;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
 
 import javax.annotation.security.RolesAllowed;
 
@@ -12,34 +16,36 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.core.Response;
 
-@Path("api/nih/")
+@Path("api/nih")
 public class NihAccountResource extends Resource {
 
     private NihAuthApi nihAuthApi;
+    private DACUserAPI dacUserAPI;
 
-    public NihAccountResource(NihAuthApi nihAuthApi) {
+    public NihAccountResource(NihAuthApi nihAuthApi, DACUserAPI dacUserAPI) {
         this.nihAuthApi = nihAuthApi;
+        this.dacUserAPI = dacUserAPI;
     }
 
     @POST
-    @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed("RESEARCHER")
-    public Response registerResearcher(@PathParam("userId") Integer userId, NIHUserAccount nihAccount) {
+    public Response registerResearcher(NIHUserAccount nihAccount, @Auth User user) {
         try {
-            return Response.ok(nihAuthApi.authenticateNih(nihAccount, userId)).build();
+            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            return Response.ok(nihAuthApi.authenticateNih(nihAccount, dacUser.getDacUserId())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
     }
 
     @DELETE
-    @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed("RESEARCHER")
-    public Response deleteNihAccount(@PathParam("userId") Integer userId) {
+    public Response deleteNihAccount(@Auth User user) {
         try {
-            nihAuthApi.deleteNihAccountById(userId);
+            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            nihAuthApi.deleteNihAccountById(dacUser.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
