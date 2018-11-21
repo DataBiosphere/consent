@@ -281,4 +281,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @Mapper(DateMapper.class)
     Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
 
+    @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where e.status = 'Closed' group by referenceId) " +
+            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+            "AND e.referenceId = :referenceId " +
+            "inner join vote v on v.electionId = e.electionId and v.vote = true  and v.type = 'CHAIRPERSON'")
+    @Mapper(DatabaseElectionMapper.class)
+    Election findDULApprovedElectionByReferenceId(@Bind("referenceId") String referenceId);
+
 }

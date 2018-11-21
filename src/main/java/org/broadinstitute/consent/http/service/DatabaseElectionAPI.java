@@ -477,7 +477,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
 
-    private Election validateAndGetDULElection(String referenceId, ElectionType electionType) throws Exception {
+    public Election validateAndGetDULElection(String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = null;
         if(electionType.equals(ElectionType.DATA_ACCESS)){
             Document dar = describeDataAccessRequestById(referenceId);

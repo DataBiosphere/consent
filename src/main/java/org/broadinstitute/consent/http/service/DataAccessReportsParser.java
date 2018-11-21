@@ -1,9 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DatasetUtil;
@@ -64,7 +62,7 @@ public class DataAccessReportsParser {
         String content2 = rusSummary + DEFAULT_SEPARATOR +
                 formatTimeToDate(dar.getDate(DarConstants.SORT_DATE).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
-                " ";
+                "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
     }
 
