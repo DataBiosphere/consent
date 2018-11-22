@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -132,8 +133,12 @@ public class DataAccessRequestResource extends Resource {
     public Response storeDAA (
             @FormDataParam("data") InputStream uploadedDAA,
             @FormDataParam("data") FormDataBodyPart part,
-            @QueryParam("fileName") String fileName) {
+            @QueryParam("fileName") String fileName,
+            @QueryParam("existentFileUrl") String existentFileUrl) {
         try {
+            if(StringUtils.isNotEmpty(existentFileUrl)) {
+                store.deleteStorageDocument(existentFileUrl);
+            }
             String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
             Document dataAccessAgreement = new Document();
             dataAccessAgreement.put("urlDAA", store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));
