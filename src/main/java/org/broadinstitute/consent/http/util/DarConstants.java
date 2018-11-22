@@ -27,7 +27,7 @@ public class DarConstants {
 
     public static final String RESTRICTION = "restriction";
 
-    public static final String TRANSLATED_RESTRICTION = "translated_restriction";
+    public static final String TRANSLATED_RESTRICTION = "translatedUseRestriction";
 
     public static final String PARTIAL_DAR_CODE = "partial_dar_code";
 
@@ -69,7 +69,7 @@ public class DarConstants {
 
     public static final String PI_EMAIL = "piEmail";
 
-    public static final String NON_TECH_RUS = "non_tech_rus";
+    public static final String NON_TECH_RUS = "nonTechRus";
 
     public static final String DISEASES = "diseases";
 
@@ -124,6 +124,10 @@ public class DarConstants {
     public static final String RESEARCHER_GATE = "researcherGate";
 
     public static final String DATA_ACCESS_AGREEMENT = "dataAccessAgreement";
+
+    public static final String DATA_ACCESS_AGREEMENT_URL = "urlDAA";
+
+    public static final String DATA_ACCESS_AGREEMENT_NAME = "nameDAA";
 
     public static final String HEALTH = "health";
 

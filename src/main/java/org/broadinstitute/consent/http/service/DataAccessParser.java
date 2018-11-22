@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DataAccessParser {
-
     public PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, PDAcroForm acroForm) throws IOException {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
@@ -228,8 +227,13 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.DATA_ACCESS_AGREEMENT: {
-                    Boolean existDataAccessAgreement = dar.getString(DarConstants.DATA_ACCESS_AGREEMENT) == null? false: true;
+                    Boolean existDataAccessAgreement = (dar.getString(DarConstants.DATA_ACCESS_AGREEMENT_URL) != null &&
+                            dar.getString(DarConstants.DATA_ACCESS_AGREEMENT_NAME) != null);
                     field.setValue(getYesOrNoValue(existDataAccessAgreement));
+                    break;
+                }
+                case DarConstants.TRANSLATED_RESTRICTION: {
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.TRANSLATED_RESTRICTION)).replaceAll("<[^>]*>","."));
                     break;
                 }
             }
