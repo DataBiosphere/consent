@@ -233,7 +233,7 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.TRANSLATED_RESTRICTION: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.TRANSLATED_RESTRICTION)).replaceAll("<[^>]*>","."));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.TRANSLATED_RESTRICTION)).replaceAll("<[^>]*>","\n"));
                     break;
                 }
             }
@@ -252,7 +252,7 @@ public class DataAccessParser {
 
         return datasetDetailMap.entrySet().stream()
                 .map(name -> name.getKey() + name.getValue())
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining("\n"));
     }
 
     private String getYesOrNoValue(Boolean value){
