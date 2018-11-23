@@ -2,7 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
+
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -119,36 +120,9 @@ public class DataAccessRequestResource extends Resource {
             }
             return Response.created(uri).build();
         } catch (Exception e) {
-            store.deleteStorageDocument(dar.getString("urlDAA"));
+            store.deleteStorageDocument(dar.getString(ResearcherFields.URL_DAA.getValue()));
             return createExceptionResponse(e);
         }
-    }
-
-
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/storeDAA")
-    @RolesAllowed({"RESEARCHER", "ADMIN"})
-    public Response storeDAA (
-            @FormDataParam("data") InputStream uploadedDAA,
-            @FormDataParam("data") FormDataBodyPart part,
-            @QueryParam("fileName") String fileName,
-            @QueryParam("existentFileUrl") String existentFileUrl) {
-        try {
-            if(StringUtils.isNotEmpty(existentFileUrl)) {
-                store.deleteStorageDocument(existentFileUrl);
-            }
-            String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
-            Document dataAccessAgreement = new Document();
-            dataAccessAgreement.put("urlDAA", store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));
-            dataAccessAgreement.put("nameDAA", fileName);
-            return Response.ok(dataAccessAgreement).build();
-        }
-        catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-
     }
 
     @PUT

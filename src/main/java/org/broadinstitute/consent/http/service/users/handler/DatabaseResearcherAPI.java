@@ -129,8 +129,8 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.getOrDefault(ResearcherFields.RESEARCHER_GATE.getValue(), null));
         rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.getOrDefault(ResearcherFields.ORCID.getValue(), null));
         rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), null));
-        rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(ResearcherFields.NAME_DAA.getValue(), null));
-        rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(ResearcherFields.URL_DAA.getValue(), null));
+        rpForDAR.put(ResearcherFields.NAME_DAA.getValue(), properties.getOrDefault(ResearcherFields.NAME_DAA.getValue(), null));
+        rpForDAR.put(ResearcherFields.URL_DAA.getValue(), properties.getOrDefault(ResearcherFields.URL_DAA.getValue(), null));
         return rpForDAR;
     }
 

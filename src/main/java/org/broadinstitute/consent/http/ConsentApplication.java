@@ -210,6 +210,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new UserResource(userAPI));
         env.jersey().register(new ResearcherResource(researcherAPI));
         env.jersey().register(WorkspaceResource.class);
+        env.jersey().register(new DataAccessAgreementResource(googleStore, researcherAPI));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
 
         // Authentication filters
