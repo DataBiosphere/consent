@@ -61,10 +61,6 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.UUID;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import java.io.InputStream;
 
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
