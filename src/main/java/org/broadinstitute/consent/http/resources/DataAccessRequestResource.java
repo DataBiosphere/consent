@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
+
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -28,6 +30,7 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
+import org.broadinstitute.consent.http.cloudstore.GCSStore;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -71,8 +74,9 @@ public class DataAccessRequestResource extends Resource {
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
+    private final GCSStore store;
 
-    public DataAccessRequestResource(DACUserAPI dacUserAPI, ElectionAPI electionAPI) {
+    public DataAccessRequestResource(DACUserAPI dacUserAPI, ElectionAPI electionAPI, GCSStore store) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
@@ -80,6 +84,7 @@ public class DataAccessRequestResource extends Resource {
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
         this.dacUserAPI = dacUserAPI;
         this.electionAPI = electionAPI;
+        this.store = store;
     }
 
     @POST
@@ -87,39 +92,33 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @RolesAllowed("RESEARCHER")
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
-        URI uri;
-        List<Document> result;
         UseRestriction useRestriction;
         try {
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
-            if (!needsManualReview) {
-                // generates research purpose, if needed, and store it on Document rus
-                useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                useRestrictionValidatorAPI.validateUseRestriction(useRestriction.toString());
-                dar.append(DarConstants.VALID_RESTRICTION, true);
+            try {
+                if (!needsManualReview) {
+                    useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
+                    dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
+                    useRestrictionValidatorAPI.validateUseRestriction(useRestriction.toString());
+                    dar.append(DarConstants.VALID_RESTRICTION, true);
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error creating use restriction for data access request " + dar.toJson(), e);
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
-
-        }catch (IllegalArgumentException ex) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
-        }
-        catch (Exception ex) {
-            logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), ex);
-        }
-        dar.append(DarConstants.SORT_DATE, new Date());
-        result = dataAccessRequestAPI.createDataAccessRequest(dar);
-        uri = info.getRequestUriBuilder().build();
-        result.forEach(r -> {
-            try {
+            dar.append(DarConstants.SORT_DATE, new Date());
+            List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
+            URI uri = info.getRequestUriBuilder().build();
+            for (Document r : results) {
                 matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
                 emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE));
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, " Couldn't send email notification to CHAIRPERSON for new DAR request case id " + r.getString(DarConstants.DAR_CODE) + ". Error caused by:", e);
             }
-        });
-        return Response.created(uri).build();
-
+            return Response.created(uri).build();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error creating data access request ", e);
+            store.deleteStorageDocument(dar.getString(ResearcherFields.URL_DAA.getValue()));
+            return createExceptionResponse(e);
+        }
     }
 
     @PUT
