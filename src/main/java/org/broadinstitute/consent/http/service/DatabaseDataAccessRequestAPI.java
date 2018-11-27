@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -548,7 +549,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         documents.forEach((Block<Document>) dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<Integer> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+            List<Integer> dataSets =  DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
             List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
             Election election = electionList.get(id.toString());
             darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));

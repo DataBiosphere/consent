@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.joda.time.DateTime;
@@ -269,6 +270,15 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
                 mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());
             }
+        }
+    }
+
+    @Override
+    public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
+        if(isServiceActive){
+            DACUser user = dacUserDAO.findDACUserById(researcherId);
+            Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
+            mailService.sendNewResearcherApprovedMessage(getEmails(Collections.singletonList(user)), template, darCode);
         }
     }
 
