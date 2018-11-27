@@ -28,6 +28,7 @@ public class MailService extends AbstractMailServiceAPI {
     private DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
     private HelpReportMessage helpReportMessage = new HelpReportMessage();
+    private ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
 
     private Logger logger() {
         return Logger.getLogger("MailService");
@@ -133,6 +134,12 @@ public class MailService extends AbstractMailServiceAPI {
     @Override
     public void sendNewHelpReportMessage(Set<String> usersAddress,  Writer template, String username) throws MessagingException {
         Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template, username);
+        sendMessages(messages);
+    }
+
+    @Override
+    public void sendNewResearcherApprovedMessage(Set<String> researcherEmails, Writer template, String darCode) throws MessagingException {
+        Collection<Mail> messages = researcherApprovedMessage.researcherApprovedMessage(researcherEmails, fromAccount, template, darCode);
         sendMessages(messages);
     }
 
