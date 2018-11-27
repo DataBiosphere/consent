@@ -348,10 +348,27 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, DACUser user, int daysToApprove, String URL) throws IOException, TemplateException {
         List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
-        for(DataSet ds: dataSets){
+        for (DataSet ds: dataSets) {
             dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName()));
         }
-        DARModalDetailsDTO details = new DARModalDetailsDTO(access);
+
+        DARModalDetailsDTO details = new DARModalDetailsDTO()
+            .setDarCode(access.getString(DarConstants.DAR_CODE))
+            .setPrincipalInvestigator(access.getString(DarConstants.INVESTIGATOR))
+            .setInstitutionName(access.getString(DarConstants.INSTITUTION))
+            .setProjectTitle(access.getString(DarConstants.PROJECT_TITLE))
+            .setDepartment(access.getString(DarConstants.DEPARTMENT))
+            .setCity(access.getString(DarConstants.CITY))
+            .setCountry(access.getString(DarConstants.COUNTRY))
+            .setNihUsername(access.getString(DarConstants.NIH_USERNAME))
+            .setHaveNihUsername(StringUtils.isNotEmpty(access.getString(DarConstants.NIH_USERNAME)))
+            .setIsThereDiseases(false)
+            .setIsTherePurposeStatements(false)
+            .setResearchType(access)
+            .setDiseases(access)
+            .setPurposeStatements(access)
+            .setDatasetDetail((ArrayList<Document>) access.get(DarConstants.DATASET_DETAIL));
+
         List<String> checkedSentences = (details.getPurposeStatements()).stream().map(SummaryItem::getDescription).collect(Collectors.toList());
         return templateHelper.getApprovedDarTemplate(
                 user.getDisplayName(),

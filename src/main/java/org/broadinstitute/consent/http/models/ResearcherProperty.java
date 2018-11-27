@@ -36,6 +36,11 @@ public class ResearcherProperty {
         this.propertyValue = propertyValue;
     }
 
+    public ResearcherProperty(Integer userId, String propertyKey) {
+        this.userId = userId;
+        this.propertyKey = propertyKey;
+    }
+
     public Integer getPropertyId() {
         return propertyId;
     }
