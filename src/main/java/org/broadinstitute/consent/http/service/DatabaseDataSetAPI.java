@@ -308,17 +308,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         throw new NotFoundException();
     }
 
-    @Override
-    public void updateDataSetAlias() {
-        List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
-        if(CollectionUtils.isNotEmpty(dsList)) {
-            synchronized (aliasDBValueLock) {
-                Integer lastAlias = dsDAO.findLastAlias();
-                parser.createAlias(dsList, lastAlias, predefinedDatasets);
-                dsDAO.updateAll(dsList);
-            }
-        }
-    }
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();

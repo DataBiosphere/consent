@@ -31,14 +31,12 @@ public interface DataSetAPI {
 
     List<Map<String, String>> getCompleteDataSet(String dataSetName);
 
-    void deleteDataset(Integer datasetId, Integer dacUserId) throws IllegalStateException;
+    void deleteDataset(Integer datasetId, Integer dacUserId);
 
     void disableDataset(Integer dataSetId, Boolean active);
 
     DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval);
 
     List<DataSet>findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList);
-
-    void updateDataSetAlias();
 
 }
