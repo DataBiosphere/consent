@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.bson.Document;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 public class DarUtil {
 
@@ -38,13 +36,11 @@ public class DarUtil {
     }
 
     public static  List<Integer> getIntegerList(Document dar, String key) {
-        List<Integer> result = new ArrayList<>();
-        List datasets = dar.get(key, List.class);
-        for(Object value : datasets){
-            if(value instanceof Integer) {
-                result.add((Integer)value);
-            }
-        }
-        return result;
+        List<Object> datasets = dar.get(key, List.class);
+        return datasets.stream().
+                filter(Integer.class::isInstance).
+                map(Integer.class::cast).
+                collect(Collectors.toList());
     }
+
 }
