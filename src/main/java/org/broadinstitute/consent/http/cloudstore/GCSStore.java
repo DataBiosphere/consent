@@ -79,7 +79,7 @@ public class GCSStore implements CloudStore {
             response = request.execute();
             return true;
         } catch (Exception e) {
-            logger().error("Error deleting document.", e);
+            logger().error("Error deleting document for the following url: " + documentUrl, e);
             return false;
         } finally {
             if (response != null) {

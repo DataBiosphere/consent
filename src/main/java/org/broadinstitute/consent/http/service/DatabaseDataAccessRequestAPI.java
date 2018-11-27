@@ -632,7 +632,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         if(CollectionUtils.isNotEmpty(rpList)) {
            researcherPropertyDAO.insertAll(rpList);
         }
-         return rpList;
+        return rpList;
     }
 
 }

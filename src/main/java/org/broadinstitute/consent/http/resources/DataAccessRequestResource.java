@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.apache.commons.io.FilenameUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 
 import javax.annotation.security.PermitAll;
@@ -104,7 +103,7 @@ public class DataAccessRequestResource extends Resource {
                     dar.append(DarConstants.VALID_RESTRICTION, true);
                 }
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "while creating useRestriction " + dar.toJson(), e);
+                logger.log(Level.SEVERE, "Error creating use restriction for data access request " + dar.toJson(), e);
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar.append(DarConstants.SORT_DATE, new Date());
@@ -116,6 +115,7 @@ public class DataAccessRequestResource extends Resource {
             }
             return Response.created(uri).build();
         } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error creating data access request ", e);
             store.deleteStorageDocument(dar.getString(ResearcherFields.URL_DAA.getValue()));
             return createExceptionResponse(e);
         }

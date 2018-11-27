@@ -11,8 +11,16 @@ import org.bson.Document;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -73,8 +81,7 @@ public class DataAccessAgreementResource extends Resource {
             dataAccessAgreement.put(ResearcherFields.URL_DAA.getValue(), store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));
             dataAccessAgreement.put(ResearcherFields.NAME_DAA.getValue(), fileName);
             return Response.ok(dataAccessAgreement).build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
 
