@@ -2060,14 +2060,14 @@ paths:
         - Nih
       responses:
         '200':
-          description: Returns an empty response if the operation was successfully
+          description: Returns an empty response if the operation was successful
     post:
       summary: Store NIH information
-      description: Save user's eRA commons account in MySql and return saved values.
+      description: Save user's eRA Commons account
       parameters:
         - name: nihAccount
           in: body
-          description: Account object received from Firecloud
+          description: NIH Account information
           required: true
           schema:
             $ref: '#/definitions/NIHUserAccount'
@@ -2078,7 +2078,7 @@ paths:
         - Nih
       responses:
         '200':
-          description: Returns Era Commons Account properties. Map<String, String> format
+          description: Returns eRA Commons Account information. Map<String, String> format
           schema:
             $ref: '#/definitions/EraProperties'
         '404':
@@ -2108,7 +2108,7 @@ definitions:
         description: Nih account associated name.
       datasetPermissions:
         type: array
-        description: Attribute comming from Firecloud that indicates the names and access status of NIH datasets.
+        description: NIH dataset access permissions.
       status:
         type: string
         description: Flag to determine if a user is authorized.
