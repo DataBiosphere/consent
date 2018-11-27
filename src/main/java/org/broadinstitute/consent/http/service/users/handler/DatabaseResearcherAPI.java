@@ -45,12 +45,11 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     @Override
     public List<ResearcherProperty> registerResearcher(Map<String, String> researcherPropertiesMap, Integer userId, Boolean validate) throws NotFoundException, UnsupportedOperationException {
         validateUser(userId);
-        checkExistentProperties(userId);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
-        if(validate) validateRequiredFields(researcherPropertiesMap);
+        if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
-        researcherPropertyDAO.insertAll(properties);
+        saveProperties(properties);
         notifyAdmins(userId, ACTION_REGISTERED);
         return describeResearcherProperties(userId);
     }
@@ -59,30 +58,31 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     public List<ResearcherProperty> updateResearcher(Map<String, String> researcherPropertiesMap, Integer userId, Boolean validate) throws NotFoundException {
         validateUser(userId);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
-        if(validate) validateRequiredFields(researcherPropertiesMap);
+        if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         Boolean isUpdatedProfileCompleted = Boolean.valueOf(researcherPropertiesMap.get(ResearcherFields.COMPLETED.getValue()));
         String completed = researcherPropertyDAO.isProfileCompleted(userId);
         Boolean isProfileCompleted = Boolean.valueOf(completed);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
-        if(!isProfileCompleted && isUpdatedProfileCompleted){
-            saveProperties(userId, properties);
+        if (!isProfileCompleted && isUpdatedProfileCompleted) {
+            saveProperties(properties);
             notifyAdmins(userId, ACTION_REGISTERED);
-        }else if(hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)){
-            saveProperties(userId, properties);
+        } else if (hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)) {
+            deleteResearcherProperties(userId);
+            saveProperties(properties);
             DACUserRole dacUserRole = new DACUserRole();
             dacUserRole.setStatus(RoleStatus.PENDING.toString());
             dacUserRole.setRoleId(5);
             dacUserAPI.updateRoleStatus(dacUserRole, userId);
             notifyAdmins(userId, ACTION_UPDATED);
-        }else{
-            saveProperties(userId, properties);
+        } else {
+            saveProperties(properties);
         }
         return describeResearcherProperties(userId);
     }
 
-    private void saveProperties(Integer userId, List<ResearcherProperty> properties) {
-        researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+    private void saveProperties(List<ResearcherProperty> properties) {
+        researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
         researcherPropertyDAO.insertAll(properties);
     }
 
@@ -95,6 +95,11 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     @Override
     public void deleteResearcherProperties(Integer userId) {
         researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+    }
+
+    @Override
+    public void deleteResearcherSpecificProperties(List<ResearcherProperty> properties) {
+        researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
     }
 
     @Override
@@ -129,6 +134,9 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.getOrDefault(ResearcherFields.RESEARCHER_GATE.getValue(), null));
         rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.getOrDefault(ResearcherFields.ORCID.getValue(), null));
         rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), null));
+        rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.getOrDefault(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), null));
+        rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.getOrDefault(ResearcherFields.ERA_USERNAME.getValue(), null));
+        rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.getOrDefault(ResearcherFields.ERA_STATUS.getValue(), null));
         rpForDAR.put(ResearcherFields.NAME_DAA.getValue(), properties.getOrDefault(ResearcherFields.NAME_DAA.getValue(), null));
         rpForDAR.put(ResearcherFields.URL_DAA.getValue(), properties.getOrDefault(ResearcherFields.URL_DAA.getValue(), null));
         return rpForDAR;
@@ -136,7 +144,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
 
     private void validateUser(Integer userId) {
         if(dacUserDAO.findDACUserById(userId) == null){
-            throw new NotFoundException("User with id: " + userId + "does not exists");
+           throw new NotFoundException("User with id: " + userId + "does not exists");
         }
     }
 
@@ -148,13 +156,13 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     private void validateRequiredFields(Map<String, String> properties) {
         List<ResearcherFields> requiredFields = ResearcherFields.getRequiredFields();
         requiredFields.forEach(rf -> {
-            if(properties.get(rf.getValue()) == null) {
+            if (properties.get(rf.getValue()) == null) {
                 throw new IllegalArgumentException(rf.getValue() + " is required.");
             }
         });
     }
 
-    private void validateExistentFields(Map<String, String> properties){
+    private void validateExistentFields(Map<String, String> properties) {
         properties.forEach((propertyKey, propertyValue) -> {
             if (!ResearcherFields.containsValue(propertyKey)) {
                 throw new IllegalArgumentException(propertyKey + " is not a valid property.");
@@ -170,13 +178,7 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         return properties;
     }
 
-    private void checkExistentProperties(Integer userId) {
-        if(!CollectionUtils.isEmpty(researcherPropertyDAO.findResearcherPropertiesByUser(userId))){
-            throw new UnsupportedOperationException("User have already created properties");
-        }
-    }
-
-    private Boolean hasUpdatedFields(Integer userId, Map<String, String> researcherPropertiesMap, Boolean isUpdatedProfileCompleted){
+    private Boolean hasUpdatedFields(Integer userId, Map<String, String> researcherPropertiesMap, Boolean isUpdatedProfileCompleted) {
         Boolean hasUpdatedFields = false;
         if(isUpdatedProfileCompleted){
             String institutionName = researcherPropertiesMap.getOrDefault(ResearcherFields.INSTITUTION.getValue(), "");
@@ -187,18 +189,18 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
             String scientificURL = researcherPropertiesMap.getOrDefault(ResearcherFields.SCIENTIFIC_URL.getValue(), "");
             if(StringUtils.isNotEmpty(eRACommonsID) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.ERA_COMMONS_ID.getValue())) ||
                StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.PUBMED_ID.getValue())) ||
-               StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.SCIENTIFIC_URL.getValue()))){
+               StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.SCIENTIFIC_URL.getValue()))) {
                 hasUpdatedFields = true;
-            } else if(CollectionUtils.isNotEmpty(researcherPropertyDAO.findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))){
+            } else if (CollectionUtils.isNotEmpty(researcherPropertyDAO.findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
                 hasUpdatedFields = true;
             }
         }
         return hasUpdatedFields;
     }
 
-    private void notifyAdmins(Integer userId, String action){
+    private void notifyAdmins(Integer userId, String action) {
         String completed = researcherPropertyDAO.isProfileCompleted(userId);
-        if(completed != null && Boolean.valueOf(completed)){
+        if (completed != null && Boolean.valueOf(completed)) {
             try {
                 emailApi.sendNewResearcherCreatedMessage(userId, action);
             } catch (IOException | TemplateException | MessagingException e) {

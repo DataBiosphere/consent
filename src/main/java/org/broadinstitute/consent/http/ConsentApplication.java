@@ -182,6 +182,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherAPI researcherAPI = new DatabaseResearcherAPI(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
         final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance, researcherPropertyDAO);
+        final NihAuthApi nihAuthApi = new NihServiceAPI(researcherAPI);
 
         // How register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
@@ -212,6 +213,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherAPI));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
+        env.jersey().register(new NihAccountResource(nihAuthApi, DatabaseDACUserAPI.getInstance()));
 
         // Authentication filters
         AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()

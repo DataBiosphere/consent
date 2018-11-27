@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.*;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -478,6 +479,32 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         darWriter.flush();
         return file;
+    }
+
+    @Override
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, DACUserRole role) {
+        DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
+        return darModalDetailsDTO
+            .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
+            .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
+            .setStatus(role.getStatus())
+            .setRationale(role.getRationale())
+            .setUserId(dar.getInteger(DarConstants.USER_ID))
+            .setDarCode(dar.getString(DarConstants.DAR_CODE))
+            .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
+            .setInstitutionName(dar.getString(DarConstants.INSTITUTION))
+            .setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE))
+            .setDepartment(dar.getString(DarConstants.DEPARTMENT))
+            .setCity(dar.getString(DarConstants.CITY))
+            .setCountry(dar.getString(DarConstants.COUNTRY))
+            .setNihUsername(dar.getString(DarConstants.NIH_USERNAME))
+            .setHaveNihUsername(StringUtils.isNotEmpty(dar.getString(DarConstants.NIH_USERNAME)))
+            .setIsThereDiseases(false)
+            .setIsTherePurposeStatements(false)
+            .setResearchType(dar)
+            .setDiseases(dar)
+            .setPurposeStatements(dar)
+            .setDatasetDetail((ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL));
     }
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {

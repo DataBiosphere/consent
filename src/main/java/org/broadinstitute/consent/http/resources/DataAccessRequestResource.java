@@ -155,7 +155,7 @@ public class DataAccessRequestResource extends Resource {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
         DACUserRole role = dacUserAPI.getRoleStatus(userId);
-        return new DARModalDetailsDTO(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role.getStatus(), role.getRationale());
+        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role);
     }
 
     @GET

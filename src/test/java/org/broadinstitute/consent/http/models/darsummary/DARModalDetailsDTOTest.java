@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Before;
@@ -71,7 +72,22 @@ public class DARModalDetailsDTOTest {
 
     @Test
     public void generateModalDetailsDTO(){
-        DARModalDetailsDTO modalDetailsDTO = new DARModalDetailsDTO(darDocument);
+        DARModalDetailsDTO modalDetailsDTO = new DARModalDetailsDTO()
+            .setDarCode(darDocument.getString(DarConstants.DAR_CODE))
+            .setPrincipalInvestigator(darDocument.getString(DarConstants.INVESTIGATOR))
+            .setInstitutionName(darDocument.getString(DarConstants.INSTITUTION))
+            .setProjectTitle(darDocument.getString(DarConstants.PROJECT_TITLE))
+            .setDepartment(darDocument.getString(DarConstants.DEPARTMENT))
+            .setCity(darDocument.getString(DarConstants.CITY))
+            .setCountry(darDocument.getString(DarConstants.COUNTRY))
+            .setNihUsername(darDocument.getString(DarConstants.NIH_USERNAME))
+            .setHaveNihUsername(StringUtils.isNotEmpty(darDocument.getString(DarConstants.NIH_USERNAME)))
+            .setIsThereDiseases(false)
+            .setIsTherePurposeStatements(false)
+            .setResearchType(darDocument)
+            .setDiseases(darDocument)
+            .setPurposeStatements(darDocument)
+            .setDatasetDetail((ArrayList<Document>) darDocument.get(DarConstants.DATASET_DETAIL));
         modalDetailsDTO.getDarCode();
         assertTrue(modalDetailsDTO.getDarCode().equals(DAR_CODE));
         assertTrue(modalDetailsDTO.getInstitutionName().equals(INSTITUTION));
