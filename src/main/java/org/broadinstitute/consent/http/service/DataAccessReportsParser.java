@@ -63,7 +63,7 @@ public class DataAccessReportsParser {
         String content2 = rusSummary + DEFAULT_SEPARATOR +
                 formatTimeToDate(dar.getDate(DarConstants.SORT_DATE).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
-                " ";
+                "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
     }
 
