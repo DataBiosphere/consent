@@ -29,8 +29,8 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     private DACUserDAO dacUserDAO;
     private final EmailNotifierAPI emailApi;
     private DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
-    private final String ACTION_REGISTERED = "registered";
-    private final String ACTION_UPDATED = "updated";
+    private static final String ACTION_REGISTERED = "registered";
+    private static final String ACTION_UPDATED = "updated";
 
     protected org.apache.log4j.Logger logger() {
         return org.apache.log4j.Logger.getLogger("DatabaseResearcherAPI");
@@ -45,12 +45,11 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     @Override
     public List<ResearcherProperty> registerResearcher(Map<String, String> researcherPropertiesMap, Integer userId, Boolean validate) throws NotFoundException, UnsupportedOperationException {
         validateUser(userId);
-        checkExistentProperties(userId);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
-        if(validate) validateRequiredFields(researcherPropertiesMap);
+        if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
-        researcherPropertyDAO.insertAll(properties);
+        saveProperties(properties);
         notifyAdmins(userId, ACTION_REGISTERED);
         return describeResearcherProperties(userId);
     }
@@ -59,35 +58,36 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     public List<ResearcherProperty> updateResearcher(Map<String, String> researcherPropertiesMap, Integer userId, Boolean validate) throws NotFoundException {
         validateUser(userId);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
-        if(validate) validateRequiredFields(researcherPropertiesMap);
+        if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         Boolean isUpdatedProfileCompleted = Boolean.valueOf(researcherPropertiesMap.get(ResearcherFields.COMPLETED.getValue()));
         String completed = researcherPropertyDAO.isProfileCompleted(userId);
-        Boolean isProfileCompleted = StringUtils.isEmpty(completed) ? false : Boolean.valueOf(completed);
+        Boolean isProfileCompleted = Boolean.valueOf(completed);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
-        if(!isProfileCompleted && isUpdatedProfileCompleted){
-            saveProperties(userId, properties);
+        if (!isProfileCompleted && isUpdatedProfileCompleted) {
+            saveProperties(properties);
             notifyAdmins(userId, ACTION_REGISTERED);
-        }else if(hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)){
-            saveProperties(userId, properties);
+        } else if (hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)) {
+            deleteResearcherProperties(userId);
+            saveProperties(properties);
             DACUserRole dacUserRole = new DACUserRole();
             dacUserRole.setStatus(RoleStatus.PENDING.toString());
             dacUserRole.setRoleId(5);
             dacUserAPI.updateRoleStatus(dacUserRole, userId);
             notifyAdmins(userId, ACTION_UPDATED);
-        }else{
-            saveProperties(userId, properties);
+        } else {
+            saveProperties(properties);
         }
         return describeResearcherProperties(userId);
     }
 
-    private void saveProperties(Integer userId, List<ResearcherProperty> properties) {
-        researcherPropertyDAO.deleteAllPropertiesByUser(userId);
+    private void saveProperties(List<ResearcherProperty> properties) {
+        researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
         researcherPropertyDAO.insertAll(properties);
     }
 
     @Override
-    public Map<String, String> describeResearcherPropertiesMap(Integer userId) throws NotFoundException {
+    public Map<String, String> describeResearcherPropertiesMap(Integer userId) {
         return describeResearcherProperties(userId).stream().collect(Collectors.toMap(ResearcherProperty::getPropertyKey,
                 ResearcherProperty::getPropertyValue));
     }
@@ -98,6 +98,11 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
     }
 
     @Override
+    public void deleteResearcherSpecificProperties(List<ResearcherProperty> properties) {
+        researcherPropertyDAO.deletePropertiesByUserAndKey(properties);
+    }
+
+    @Override
     public Map<String, String> describeResearcherPropertiesForDAR(Integer userId) {
         Map<String, String> properties = describeResearcherPropertiesMap(userId);
         return getResearcherPropertiesForDAR(properties, userId);
@@ -105,54 +110,59 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
 
     private Map<String, String> getResearcherPropertiesForDAR(Map<String, String> properties, Integer userId) {
         Map<String, String> rpForDAR = new HashMap<>();
-        rpForDAR.put(ResearcherFields.INVESTIGATOR.getValue(), properties.containsKey(ResearcherFields.PI_NAME.getValue()) ? properties.get(ResearcherFields.PI_NAME.getValue()) : dacUserDAO.findDACUserById(userId).getDisplayName());
-        rpForDAR.put(ResearcherFields.INSTITUTION.getValue(), properties.containsKey(ResearcherFields.INSTITUTION.getValue()) ? properties.get(ResearcherFields.INSTITUTION.getValue()) : null);
-        rpForDAR.put(ResearcherFields.DEPARTMENT.getValue(), properties.containsKey(ResearcherFields.DEPARTMENT.getValue()) ? properties.get(ResearcherFields.DEPARTMENT.getValue()) : null);
-        rpForDAR.put(ResearcherFields.STREET_ADDRESS_1.getValue(), properties.containsKey(ResearcherFields.STREET_ADDRESS_1.getValue()) ? properties.get(ResearcherFields.STREET_ADDRESS_1.getValue()) : null);
-        rpForDAR.put(ResearcherFields.CITY.getValue(), properties.containsKey(ResearcherFields.CITY.getValue()) ? properties.get(ResearcherFields.CITY.getValue()) : null);
-        rpForDAR.put(ResearcherFields.ZIP_POSTAL_CODE.getValue(), properties.containsKey(ResearcherFields.ZIP_POSTAL_CODE.getValue()) ? properties.get(ResearcherFields.ZIP_POSTAL_CODE.getValue()) : null);
-        rpForDAR.put(ResearcherFields.COUNTRY.getValue(), properties.containsKey(ResearcherFields.COUNTRY.getValue()) ? properties.get(ResearcherFields.COUNTRY.getValue()) : null);
-        rpForDAR.put(ResearcherFields.STATE.getValue(), properties.containsKey(ResearcherFields.STATE.getValue()) ? properties.get(ResearcherFields.STATE.getValue()) : null);
-        rpForDAR.put(ResearcherFields.STREET_ADDRESS_2.getValue(), properties.containsKey(ResearcherFields.STREET_ADDRESS_2.getValue()) ? properties.get(ResearcherFields.STREET_ADDRESS_2.getValue()) : null);
-        rpForDAR.put(ResearcherFields.DIVISION.getValue(), properties.containsKey(ResearcherFields.DIVISION.getValue()) ? properties.get(ResearcherFields.DIVISION.getValue()) : null);
-        rpForDAR.put(ResearcherFields.ERA_COMMONS_ID.getValue(), properties.containsKey(ResearcherFields.ERA_COMMONS_ID.getValue()) ? properties.get(ResearcherFields.ERA_COMMONS_ID.getValue()) : null);
-        rpForDAR.put(ResearcherFields.PUBMED_ID.getValue(), properties.containsKey(ResearcherFields.PUBMED_ID.getValue()) ? properties.get(ResearcherFields.PUBMED_ID.getValue()) : null);
-        rpForDAR.put(ResearcherFields.PROFILE_NAME.getValue(), properties.containsKey(ResearcherFields.PROFILE_NAME.getValue()) ? properties.get(ResearcherFields.PROFILE_NAME.getValue()) : null);
-        rpForDAR.put(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.containsKey(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue()) ? properties.get(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue()) : null);
-        rpForDAR.put(ResearcherFields.SCIENTIFIC_URL.getValue(), properties.containsKey(ResearcherFields.SCIENTIFIC_URL.getValue()) ? properties.get(ResearcherFields.SCIENTIFIC_URL.getValue()) : null);
-        rpForDAR.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), properties.containsKey(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()) ? properties.get(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()) : null);
-        rpForDAR.put(ResearcherFields.PI_NAME.getValue(), properties.containsKey(ResearcherFields.PI_NAME.getValue()) ? properties.get(ResearcherFields.PI_NAME.getValue()) : null);
-        rpForDAR.put(ResearcherFields.PI_EMAIL.getValue(), properties.containsKey(ResearcherFields.PI_EMAIL.getValue()) ? properties.get(ResearcherFields.PI_EMAIL.getValue()) : null);
-        rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.containsKey(ResearcherFields.COMPLETED.getValue()) ? properties.get(ResearcherFields.COMPLETED.getValue()) : null);
-        rpForDAR.put(ResearcherFields.DO_YOU_HAVE_PI.getValue(), properties.containsKey(ResearcherFields.DO_YOU_HAVE_PI.getValue()) ? properties.get(ResearcherFields.DO_YOU_HAVE_PI.getValue()) : null);
-        rpForDAR.put(ResearcherFields.LINKEDIN_PROFILE.getValue(), properties.containsKey(ResearcherFields.LINKEDIN_PROFILE.getValue()) ? properties.get(ResearcherFields.LINKEDIN_PROFILE.getValue()) : null);
-        rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.containsKey(ResearcherFields.RESEARCHER_GATE.getValue()) ? properties.get(ResearcherFields.RESEARCHER_GATE.getValue()) : null);
-        rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.containsKey(ResearcherFields.ORCID.getValue()) ? properties.get(ResearcherFields.ORCID.getValue()) : null);
-        rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.containsKey(ResearcherFields.CHECK_NOTIFICATIONS.getValue()) ? properties.get(ResearcherFields.CHECK_NOTIFICATIONS.getValue()) : null);
+        rpForDAR.put(ResearcherFields.INVESTIGATOR.getValue(), properties.getOrDefault(ResearcherFields.PI_NAME.getValue(), dacUserDAO.findDACUserById(userId).getDisplayName()));
+        rpForDAR.put(ResearcherFields.INSTITUTION.getValue(), properties.getOrDefault(ResearcherFields.INSTITUTION.getValue(),  null));
+        rpForDAR.put(ResearcherFields.DEPARTMENT.getValue(), properties.getOrDefault(ResearcherFields.DEPARTMENT.getValue(), null));
+        rpForDAR.put(ResearcherFields.STREET_ADDRESS_1.getValue(), properties.getOrDefault(ResearcherFields.STREET_ADDRESS_1.getValue(), null));
+        rpForDAR.put(ResearcherFields.CITY.getValue(), properties.getOrDefault(ResearcherFields.CITY.getValue(), null));
+        rpForDAR.put(ResearcherFields.ZIP_POSTAL_CODE.getValue(), properties.getOrDefault(ResearcherFields.ZIP_POSTAL_CODE.getValue(), null));
+        rpForDAR.put(ResearcherFields.COUNTRY.getValue(), properties.getOrDefault(ResearcherFields.COUNTRY.getValue(), null));
+        rpForDAR.put(ResearcherFields.STATE.getValue(), properties.getOrDefault(ResearcherFields.STATE.getValue(), null));
+        rpForDAR.put(ResearcherFields.STREET_ADDRESS_2.getValue(), properties.getOrDefault(ResearcherFields.STREET_ADDRESS_2.getValue(), null));
+        rpForDAR.put(ResearcherFields.DIVISION.getValue(), properties.getOrDefault(ResearcherFields.DIVISION.getValue(),  null));
+        rpForDAR.put(ResearcherFields.ERA_COMMONS_ID.getValue(), properties.getOrDefault(ResearcherFields.ERA_COMMONS_ID.getValue(), null));
+        rpForDAR.put(ResearcherFields.PUBMED_ID.getValue(), properties.getOrDefault(ResearcherFields.PUBMED_ID.getValue(), null));
+        rpForDAR.put(ResearcherFields.PROFILE_NAME.getValue(), properties.getOrDefault(ResearcherFields.PROFILE_NAME.getValue(), null));
+        rpForDAR.put(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), properties.getOrDefault(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue(), null));
+        rpForDAR.put(ResearcherFields.SCIENTIFIC_URL.getValue(), properties.getOrDefault(ResearcherFields.SCIENTIFIC_URL.getValue(), null));
+        rpForDAR.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), properties.getOrDefault(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null));
+        rpForDAR.put(ResearcherFields.PI_NAME.getValue(), properties.getOrDefault(ResearcherFields.PI_NAME.getValue(), null));
+        rpForDAR.put(ResearcherFields.PI_EMAIL.getValue(), properties.getOrDefault(ResearcherFields.PI_EMAIL.getValue(), null));
+        rpForDAR.put(ResearcherFields.COMPLETED.getValue(), properties.getOrDefault(ResearcherFields.COMPLETED.getValue(), null));
+        rpForDAR.put(ResearcherFields.DO_YOU_HAVE_PI.getValue(), properties.getOrDefault(ResearcherFields.DO_YOU_HAVE_PI.getValue(), null));
+        rpForDAR.put(ResearcherFields.LINKEDIN_PROFILE.getValue(), properties.getOrDefault(ResearcherFields.LINKEDIN_PROFILE.getValue(), null));
+        rpForDAR.put(ResearcherFields.RESEARCHER_GATE.getValue(), properties.getOrDefault(ResearcherFields.RESEARCHER_GATE.getValue(), null));
+        rpForDAR.put(ResearcherFields.ORCID.getValue(), properties.getOrDefault(ResearcherFields.ORCID.getValue(), null));
+        rpForDAR.put(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), properties.getOrDefault(ResearcherFields.CHECK_NOTIFICATIONS.getValue(), null));
+        rpForDAR.put(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), properties.getOrDefault(ResearcherFields.ERA_EXPIRATION_DATE.getValue(), null));
+        rpForDAR.put(ResearcherFields.ERA_USERNAME.getValue(), properties.getOrDefault(ResearcherFields.ERA_USERNAME.getValue(), null));
+        rpForDAR.put(ResearcherFields.ERA_STATUS.getValue(), properties.getOrDefault(ResearcherFields.ERA_STATUS.getValue(), null));
+        rpForDAR.put(ResearcherFields.NAME_DAA.getValue(), properties.getOrDefault(ResearcherFields.NAME_DAA.getValue(), null));
+        rpForDAR.put(ResearcherFields.URL_DAA.getValue(), properties.getOrDefault(ResearcherFields.URL_DAA.getValue(), null));
         return rpForDAR;
     }
 
-    private void validateUser(Integer userId) throws NotFoundException{
+    private void validateUser(Integer userId) {
         if(dacUserDAO.findDACUserById(userId) == null){
-            throw new NotFoundException("User with id: " + userId + "does not exists");
+           throw new NotFoundException("User with id: " + userId + "does not exists");
         }
     }
 
-    private List<ResearcherProperty> describeResearcherProperties(Integer userId) throws NotFoundException {
+    private List<ResearcherProperty> describeResearcherProperties(Integer userId) {
         validateUser(userId);
         return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 
     private void validateRequiredFields(Map<String, String> properties) {
         List<ResearcherFields> requiredFields = ResearcherFields.getRequiredFields();
-        requiredFields.stream().forEach(rf -> {
-            if(properties.get(rf.getValue()) == null) {
+        requiredFields.forEach(rf -> {
+            if (properties.get(rf.getValue()) == null) {
                 throw new IllegalArgumentException(rf.getValue() + " is required.");
             }
         });
     }
 
-    private void validateExistentFields(Map<String, String> properties){
+    private void validateExistentFields(Map<String, String> properties) {
         properties.forEach((propertyKey, propertyValue) -> {
             if (!ResearcherFields.containsValue(propertyKey)) {
                 throw new IllegalArgumentException(propertyKey + " is not a valid property.");
@@ -162,41 +172,35 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
 
     private List<ResearcherProperty> getResearcherProperties(Map<String, String> researcherPropertiesMap, Integer userId) {
         List<ResearcherProperty> properties = new ArrayList<>();
-        researcherPropertiesMap.forEach((propertyKey, propertyValue) -> {
-            properties.add(new ResearcherProperty(userId, propertyKey, propertyValue));
-        });
+        researcherPropertiesMap.forEach((propertyKey, propertyValue) ->
+            properties.add(new ResearcherProperty(userId, propertyKey, propertyValue))
+        );
         return properties;
     }
 
-    private void checkExistentProperties(Integer userId) {
-        if(!CollectionUtils.isEmpty(researcherPropertyDAO.findResearcherPropertiesByUser(userId))){
-            throw new UnsupportedOperationException("User have already created properties");
-        }
-    }
-
-    private Boolean hasUpdatedFields(Integer userId, Map<String, String> researcherPropertiesMap, Boolean isUpdatedProfileCompleted){
+    private Boolean hasUpdatedFields(Integer userId, Map<String, String> researcherPropertiesMap, Boolean isUpdatedProfileCompleted) {
         Boolean hasUpdatedFields = false;
         if(isUpdatedProfileCompleted){
-            String institutionName = researcherPropertiesMap.containsKey(ResearcherFields.INSTITUTION.getValue()) ? researcherPropertiesMap.get(ResearcherFields.INSTITUTION.getValue()) : "";
-            String isThePI = researcherPropertiesMap.containsKey(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()) ? researcherPropertiesMap.get(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue()) : null;
-            String havePI = researcherPropertiesMap.containsKey(ResearcherFields.DO_YOU_HAVE_PI.getValue()) ? researcherPropertiesMap.get(ResearcherFields.DO_YOU_HAVE_PI.getValue()) : null;
-            String eRACommonsID = researcherPropertiesMap.containsKey(ResearcherFields.ERA_COMMONS_ID.getValue()) ? researcherPropertiesMap.get(ResearcherFields.ERA_COMMONS_ID.getValue()) : "";
-            String pubmedID = researcherPropertiesMap.containsKey(ResearcherFields.PUBMED_ID.getValue()) ? researcherPropertiesMap.get(ResearcherFields.PUBMED_ID.getValue()) : "";
-            String scientificURL = researcherPropertiesMap.containsKey(ResearcherFields.SCIENTIFIC_URL.getValue()) ? researcherPropertiesMap.get(ResearcherFields.SCIENTIFIC_URL.getValue()) : "";
+            String institutionName = researcherPropertiesMap.getOrDefault(ResearcherFields.INSTITUTION.getValue(), "");
+            String isThePI = researcherPropertiesMap.getOrDefault(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), null);
+            String havePI = researcherPropertiesMap.getOrDefault(ResearcherFields.DO_YOU_HAVE_PI.getValue(), null);
+            String eRACommonsID = researcherPropertiesMap.getOrDefault(ResearcherFields.ERA_COMMONS_ID.getValue(), "");
+            String pubmedID = researcherPropertiesMap.getOrDefault(ResearcherFields.PUBMED_ID.getValue(), "");
+            String scientificURL = researcherPropertiesMap.getOrDefault(ResearcherFields.SCIENTIFIC_URL.getValue(), "");
             if(StringUtils.isNotEmpty(eRACommonsID) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.ERA_COMMONS_ID.getValue())) ||
                StringUtils.isNotEmpty(pubmedID) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.PUBMED_ID.getValue())) ||
-               StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.SCIENTIFIC_URL.getValue()))){
+               StringUtils.isNotEmpty(scientificURL) && StringUtils.isEmpty(researcherPropertyDAO.findPropertyValueByPK(userId, ResearcherFields.SCIENTIFIC_URL.getValue()))) {
                 hasUpdatedFields = true;
-            } else if(CollectionUtils.isNotEmpty(researcherPropertyDAO.findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))){
+            } else if (CollectionUtils.isNotEmpty(researcherPropertyDAO.findResearcherProperties(userId, institutionName, isThePI, havePI, eRACommonsID, pubmedID, scientificURL))) {
                 hasUpdatedFields = true;
             }
         }
         return hasUpdatedFields;
     }
 
-    private void notifyAdmins(Integer userId, String action){
+    private void notifyAdmins(Integer userId, String action) {
         String completed = researcherPropertyDAO.isProfileCompleted(userId);
-        if(completed != null && Boolean.valueOf(completed)){
+        if (completed != null && Boolean.valueOf(completed)) {
             try {
                 emailApi.sendNewResearcherCreatedMessage(userId, action);
             } catch (IOException | TemplateException | MessagingException e) {

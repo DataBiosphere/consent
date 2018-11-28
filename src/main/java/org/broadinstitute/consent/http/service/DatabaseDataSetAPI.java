@@ -308,41 +308,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         throw new NotFoundException();
     }
 
-    @Override
-    public String updateDataSetIdToDAR() {
-        List<Document> dars = accessAPI.describeDataAccessRequests();
-        try {
-            for (Document dar : dars) {
-                List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-                if (CollectionUtils.isNotEmpty(dataSets)) {
-                    DataSet ds = dsDAO.findDataSetByObjectId(dataSets.get(0));
-                    List<Integer> dsId = Arrays.asList(ds.getDataSetId());
-                    dar.append(DarConstants.DATASET_ID, dsId);
-                    ArrayList<Document> datasetDetail = (ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL);
-                    datasetDetail.get(0).getString("name");
-                    datasetDetail.get(0).put("datasetId", ds.getDataSetId());
-                    dar.append(DarConstants.DATASET_DETAIL, datasetDetail);
-                    accessAPI.updateDataAccessRequest(dar, dar.getString(DarConstants.DAR_CODE));
-
-                }
-            }
-        } catch (Exception e) {
-            return "DARs have already been updated";
-        }
-        return "DARs have been updated successful.";
-    }
-
-    @Override
-    public void updateDataSetAlias() {
-        List<DataSet> dsList = dsDAO.getDataSetsWithoutAlias();
-        if(CollectionUtils.isNotEmpty(dsList)) {
-            synchronized (aliasDBValueLock) {
-                Integer lastAlias = dsDAO.findLastAlias();
-                parser.createAlias(dsList, lastAlias, predefinedDatasets);
-                dsDAO.updateAll(dsList);
-            }
-        }
-    }
 
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();

@@ -177,6 +177,4 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select MAX(alias) from dataset")
     Integer findLastAlias();
 
-    @SqlQuery("select *  from dataset where alias is null or alias = 0 ")
-    List<DataSet> getDataSetsWithoutAlias();
 }

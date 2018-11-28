@@ -30,4 +30,6 @@ public interface MailServiceAPI {
 
     void sendNewHelpReportMessage(Set<String> usersAddress, Writer template, String username) throws MessagingException;
 
+    void sendNewResearcherApprovedMessage(Set<String> researcherEmails, Writer template, String darCode) throws MessagingException;
+
 }

@@ -9,7 +9,6 @@ import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterColumnMapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
@@ -281,4 +280,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @Mapper(DateMapper.class)
     Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
 
+    @SqlQuery("select  v.vote from vote v where v.electionId = :electionId and v.type = 'FINAL'")
+    Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
 }
