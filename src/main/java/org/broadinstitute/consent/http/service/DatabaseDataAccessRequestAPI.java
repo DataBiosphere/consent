@@ -668,9 +668,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
         Election election = electionDAO.findElectionById(electionId);
         if(election == null) {
-            List<Integer> datasetIds = dar.get(DarConstants.DATASET_ID, List.class);
-            Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
-            election = electionDAO.findDULApprovedElectionByReferenceId(consent.getConsentId());
+            List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            if(CollectionUtils.isNotEmpty(datasetIds)) {
+                Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
+                election = electionDAO.findDULApprovedElectionByReferenceId(consent.getConsentId());
+            }
         }
         return election;
     }
