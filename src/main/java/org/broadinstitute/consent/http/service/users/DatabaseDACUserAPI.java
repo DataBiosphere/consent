@@ -244,7 +244,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
             List<Integer> dataOwnersPerDataSet = dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId);
-            if (dataOwnersPerDataSet.stream().anyMatch((dataOwners) -> (dataOwners == 1))) {
+            if (dataOwnersPerDataSet.stream().anyMatch(dataOwners -> (dataOwners == 1))) {
                 return true;
             }
         }
