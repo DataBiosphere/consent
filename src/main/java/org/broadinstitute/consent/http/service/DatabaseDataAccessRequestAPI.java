@@ -109,7 +109,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) {
         List<Document> dataAccessList = new ArrayList<>();
-        if(dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
+        if (dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
             mongo.getPartialDataAccessRequestCollection().findOneAndDelete(new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequest.getString(DarConstants.PARTIAL_DAR_CODE)));
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
@@ -148,10 +148,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Document dar = mongo.getDataAccessRequestCollection().find(query).first();
         Document result = new Document();
         for (String field : fields) {
-            if(field.equals(DarConstants.DATASET_ID)){
+            if (field.equals(DarConstants.DATASET_ID)){
                 List<String> dataSets = dar.get(field, List.class);
                 result.append(field, dataSets);
-            }else{
+            } else{
                 String content = (String) dar.getOrDefault(field.replaceAll("\\s", ""), "Not found");
                 result.append(field, content);
             }
@@ -311,7 +311,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 : mongo.getPartialDataAccessRequestCollection().find(new BasicDBObject(DarConstants.USER_ID, userId)).sort(new BasicDBObject("sortDate", -1));
         List<Document> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
-        if(CollectionUtils.isNotEmpty(accessRequestIds)){
+        if (CollectionUtils.isNotEmpty(accessRequestIds)){
             for(Document doc: accessList){
                 doc.append("dataRequestId", doc.get(DarConstants.ID).toString());
                 darManage.add(doc);
@@ -335,7 +335,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
         updateElection(access, rp);
         List<DACUser> dacUsers = new ArrayList<>();
-        if(access != null){
+        if (access != null){
             List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
             dacUsers.addAll(dacUserDAO.findUsers(userIds));
@@ -386,11 +386,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private void updateElection(Election access, Election rp) {
-        if(access != null) {
+        if (access != null) {
             access.setStatus(ElectionStatus.CANCELED.getValue());
             electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(access.getElectionId())), access.getStatus());
         }
-        if(rp != null){
+        if (rp != null){
             rp.setStatus(ElectionStatus.CANCELED.getValue());
             electionDAO.updateElectionStatus(new ArrayList<>(Collections.singletonList(rp.getElectionId())), rp.getStatus());
         }
@@ -423,7 +423,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         if (CollectionUtils.isNotEmpty(elections)) {
             for (Election election : elections) {
                 Document dar = describeDataAccessRequestById(election.getReferenceId());
-                if(dar != null) {
+                if (dar != null) {
                     String profileName = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
                     String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
                     String consentName = consentDAO.findConsentNameFromDatasetID(dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString());
@@ -449,7 +449,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         if (CollectionUtils.isNotEmpty(elections)) {
             for (Election election : elections) {
                 Document dar = describeDataAccessRequestById(election.getReferenceId());
-                if(dar != null) {
+                if (dar != null) {
                     String consentName = consentDAO.findConsentNameFromDatasetID(dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString());
                     Election consentElection = getConsentElection(election.getElectionId(), dar);
                     dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consentName, consentElection.getTranslatedUseRestriction());
@@ -467,10 +467,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         FileWriter darWriter = new FileWriter(file);
         List<Document> darList = describeDataAccessByDataSetId(dataSetId);
         dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
-        if(CollectionUtils.isNotEmpty(darList)){
+        if (CollectionUtils.isNotEmpty(darList)){
             for(Document dar: darList){
                 Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.get(DarConstants.ID).toString());
-                if(approvalDate != null) {
+                if (approvalDate != null) {
                     String email = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
                     String name = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
                     String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
@@ -516,14 +516,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
-        if(CollectionUtils.isNotEmpty(dataAccessRequestList)){
+        if (CollectionUtils.isNotEmpty(dataAccessRequestList)){
             String seq = mongo.getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
             if (dataAccessRequestList.size() > 1) {
                 IntStream.range(0, dataAccessRequestList.size())
                         .forEach(idx -> {
                                     dataAccessRequestList.get(idx).append(DarConstants.DAR_CODE, "DAR-" + seq + SUFFIX + idx);
                                     dataAccessRequestList.get(idx).remove(DarConstants.ID);
-                                    if(dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE) != null){
+                                    if (dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE) != null){
                                         BasicDBObject query = new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE));
                                         mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
                                         dataAccessRequestList.get(idx).remove(DarConstants.PARTIAL_DAR_CODE);
@@ -584,7 +584,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private String consolidateDataSetElectionsResult(List<Election> datasetElections) {
-        if(CollectionUtils.isNotEmpty(datasetElections)) {
+        if (CollectionUtils.isNotEmpty(datasetElections)) {
             for (Election election : datasetElections) {
                 if (!election.getFinalAccessVote()) {
                     return DENIED;
@@ -625,7 +625,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             document.put("name", v);
             dataSetList.add(document);
             String objectId = dataSetDAO.findObjectIdByDataSetId(Integer.valueOf(k));
-            if(StringUtils.isNotEmpty(objectId)) {
+            if (StringUtils.isNotEmpty(objectId)) {
                 document.put("objectId", objectId);
             }
         });
@@ -643,22 +643,22 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         String nameDAA = dataAccessRequest.getString(ResearcherFields.NAME_DAA.getValue());
         List<ResearcherProperty> rpList = new ArrayList<>();
         researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue(), ResearcherFields.NAME_DAA.getValue(), ResearcherFields.URL_DAA.getValue()), userId);
-        if(StringUtils.isNotEmpty(linkedIn)) {
+        if (StringUtils.isNotEmpty(linkedIn)) {
           rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
         }
-        if(StringUtils.isNotEmpty(orcId)) {
+        if (StringUtils.isNotEmpty(orcId)) {
           rpList.add(new ResearcherProperty(userId, ResearcherFields.ORCID.getValue(), orcId));
         }
-        if(StringUtils.isNotEmpty(researcherGate)) {
+        if (StringUtils.isNotEmpty(researcherGate)) {
            rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
         }
-        if(StringUtils.isNotEmpty(nameDAA)) {
+        if (StringUtils.isNotEmpty(nameDAA)) {
             rpList.add(new ResearcherProperty(userId, ResearcherFields.NAME_DAA.getValue(), nameDAA));
         }
-        if(StringUtils.isNotEmpty(urlDAA)) {
+        if (StringUtils.isNotEmpty(urlDAA)) {
             rpList.add(new ResearcherProperty(userId, ResearcherFields.URL_DAA.getValue(), urlDAA));
         }
-        if(CollectionUtils.isNotEmpty(rpList)) {
+        if (CollectionUtils.isNotEmpty(rpList)) {
            researcherPropertyDAO.insertAll(rpList);
         }
         return rpList;
@@ -667,9 +667,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private Election getConsentElection(Integer darElectionId, Document dar) {
         Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
         Election election = electionDAO.findElectionById(electionId);
-        if(election == null) {
+        if (election == null) {
             List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-            if(CollectionUtils.isNotEmpty(datasetIds)) {
+            if (CollectionUtils.isNotEmpty(datasetIds)) {
                 Consent consent = consentDAO.findConsentFromDatasetID(datasetIds.get(0));
                 election = electionDAO.findDULApprovedElectionByReferenceId(consent.getConsentId());
             }
