@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.joda.time.DateTime;
@@ -272,6 +273,15 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
+    @Override
+    public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
+        if(isServiceActive){
+            DACUser user = dacUserDAO.findDACUserById(researcherId);
+            Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
+            mailService.sendNewResearcherApprovedMessage(getEmails(Collections.singletonList(user)), template, darCode);
+        }
+    }
+
     private Set<String> getEmails(List<DACUser> users) {
         Set<String> emails = users.stream()
                 .map(u -> new ArrayList<String>(){{add(u.getEmail()); add(u.getAdditionalEmail());}})
@@ -338,10 +348,27 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, DACUser user, int daysToApprove, String URL) throws IOException, TemplateException {
         List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
-        for(DataSet ds: dataSets){
+        for (DataSet ds: dataSets) {
             dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName()));
         }
-        DARModalDetailsDTO details = new DARModalDetailsDTO(access);
+
+        DARModalDetailsDTO details = new DARModalDetailsDTO()
+            .setDarCode(access.getString(DarConstants.DAR_CODE))
+            .setPrincipalInvestigator(access.getString(DarConstants.INVESTIGATOR))
+            .setInstitutionName(access.getString(DarConstants.INSTITUTION))
+            .setProjectTitle(access.getString(DarConstants.PROJECT_TITLE))
+            .setDepartment(access.getString(DarConstants.DEPARTMENT))
+            .setCity(access.getString(DarConstants.CITY))
+            .setCountry(access.getString(DarConstants.COUNTRY))
+            .setNihUsername(access.getString(DarConstants.NIH_USERNAME))
+            .setHaveNihUsername(StringUtils.isNotEmpty(access.getString(DarConstants.NIH_USERNAME)))
+            .setIsThereDiseases(false)
+            .setIsTherePurposeStatements(false)
+            .setResearchType(access)
+            .setDiseases(access)
+            .setPurposeStatements(access)
+            .setDatasetDetail((ArrayList<Document>) access.get(DarConstants.DATASET_DETAIL));
+
         List<String> checkedSentences = (details.getPurposeStatements()).stream().map(SummaryItem::getDescription).collect(Collectors.toList());
         return templateHelper.getApprovedDarTemplate(
                 user.getDisplayName(),

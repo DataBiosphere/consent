@@ -26,10 +26,15 @@ public enum ResearcherFields {
     PI_eRA_COMMONS_ID("piERACommonsID", false),
     COMPLETED("completed", false),
     INVESTIGATOR("investigator", false),
+    ERA_EXPIRATION_DATE("eraExpiration",false),
+    ERA_STATUS("eraAuthorized",false),
+    ERA_USERNAME("nihUsername", false),
     LINKEDIN_PROFILE("linkedIn", false),
     RESEARCHER_GATE("researcherGate", false),
     ORCID("orcid", false),
-    CHECK_NOTIFICATIONS("checkNotifications", false);
+    CHECK_NOTIFICATIONS("checkNotifications", false),
+    URL_DAA("urlDAA", false),
+    NAME_DAA("nameDAA", false);
 
 
     private String value;

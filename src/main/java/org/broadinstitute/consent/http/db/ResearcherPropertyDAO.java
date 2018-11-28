@@ -38,6 +38,9 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     @SqlUpdate("delete from researcher_property where  userId = :userId")
     void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
+    @SqlBatch("delete from researcher_property where userId = :userId and propertyKey = :propertyKey")
+    void deletePropertiesByUserAndKey(@BindBean Collection<ResearcherProperty> researcherProperties);
+
     @SqlUpdate("delete from researcher_property where  userId = :userId and propertyKey IN (<propertyKeyList>)")
     void deletePropertyByUser(@BindIn("propertyKeyList") List<String> propertyKeyList, @Bind("userId") Integer userId);
 
