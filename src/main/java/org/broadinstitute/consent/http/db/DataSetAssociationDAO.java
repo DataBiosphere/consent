@@ -40,7 +40,7 @@ public interface DataSetAssociationDAO extends Transactional<DataSetAssociationD
               " dua.dacUserId = :dacuserId and ds.needs_approval = true")
     List<Integer> getDataSetsIdOfDataOwnerNeedsApproval(@Bind("dacuserId") Integer dacuserId);
 
-    @SqlQuery("select count(*) from dataset_user_association where dataSetId in (<dataSetIdList>)")
+    @SqlQuery("select count(*) from dataset_user_association where dataSetId in (<dataSetIdList>)  group by dataSetId")
     List<Integer> getCountOfDataOwnersPerDataSet(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
 
     @SqlQuery("select * from dataset_user_association ds where ds.dacuserId = :dacUserId")
