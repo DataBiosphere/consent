@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DataAccessParser {
-    public PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, PDAcroForm acroForm) throws IOException {
+    public PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, PDAcroForm acroForm, String sDul) throws IOException {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {
@@ -233,7 +233,7 @@ public class DataAccessParser {
                     break;
                 }
                 case DarConstants.TRANSLATED_RESTRICTION: {
-                    field.setValue(getDefaultValue(dar.getString(DarConstants.TRANSLATED_RESTRICTION)).replaceAll("<[^>]*>","\n"));
+                    field.setValue(getDefaultValue(sDul.replaceAll("<[^>]*>","\n")));
                     break;
                 }
             }

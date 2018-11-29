@@ -104,7 +104,7 @@ public class DataAccessParserTest {
         this.manualReview = false;
         this.role.setStatus("approved");
         this.role.setRationale("granted bonafide");
-        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
+        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm(), TRANSLATED_USE_RESTRICTION);
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
         Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));

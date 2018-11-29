@@ -397,14 +397,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDul) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream is = classLoader.getResourceAsStream(PATH);
             darDOC = PDDocument.load(is);
-            new DataAccessParser().fillDARForm(dar, researcherProperties, role, manualReview, darDOC.getDocumentCatalog().getAcroForm());
+            new DataAccessParser().fillDARForm(dar, researcherProperties, role, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDul);
             darDOC.save(output);
             return output.toByteArray();
         } finally {
@@ -412,6 +412,31 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darDOC.close();
         }
 
+    }
+
+    /**
+     * Description: this method returns the correct structured Data Use Restriction, also handles the old elections.
+     * */
+    @Override
+    public String getStructuredDulForPdf(Document dar) {
+        List<Integer> dataSetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+        String consentId = dataSetDAO.getConsentAssociationByDataSetId(dataSetId.get(0));//obtains consentId from consentAssociations table using its dataSetId
+        Election accessElection = electionDAO.findLastElectionVersionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue()); // obtains access election, if doesn't exists one it will be null. This happens for unreviewed elections
+        String sDul;
+        if (accessElection != null) { //closed, open and cancelled access elections
+            Election dulElection;
+            Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(accessElection.getElectionId());
+            dulElection = electionId != null ? electionDAO.findElectionById(electionId) : null; //Obtains consent election from AccessElection_ConsentElections relation table.
+            if (dulElection != null) {
+                sDul = dulElection.getTranslatedUseRestriction();
+            } else {
+                dulElection = electionDAO.findDULApprovedElectionByReferenceId(consentId);
+                sDul = dulElection != null ? dulElection.getTranslatedUseRestriction() : consentDAO.findConsentByName(consentId).getTranslatedUseRestriction(); // If for some reason there is no consent election relation, sdul comes directly from consent's table.
+            }
+        } else { // Unreviewed Elections
+            sDul = electionDAO.findDULApprovedElectionByReferenceId(consentId).getTranslatedUseRestriction(); // obtiene sdul desde la ultima eleccion aprobada de dul asociado al datasetid
+        }
+        return sDul;
     }
 
     @Override
