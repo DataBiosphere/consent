@@ -69,7 +69,7 @@ public class DarConstants {
 
     public static final String PI_EMAIL = "piEmail";
 
-    public static final String NON_TECH_RUS = "nonTechRus";
+    public static final String NON_TECH_RUS = "non_tech_rus";
 
     public static final String DISEASES = "diseases";
 
