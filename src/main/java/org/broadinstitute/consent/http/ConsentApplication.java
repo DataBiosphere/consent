@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http;
 
-import com.github.fakemongo.Fongo;
-import com.mongodb.MongoClient;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -9,30 +9,117 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.chained.ChainedAuthFilter;
-import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.forms.MultiPartBundle;
-import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
-import org.broadinstitute.consent.http.authentication.*;
+import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
+import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
+import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
+import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
+import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
+import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
+import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.configurations.MongoConfiguration;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
+import org.broadinstitute.consent.http.db.AssociationDAO;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.HelpReportDAO;
+import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.MailServiceDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.resources.*;
-import org.broadinstitute.consent.http.service.*;
-import org.broadinstitute.consent.http.service.ontology.*;
+import org.broadinstitute.consent.http.resources.AllAssociationsResource;
+import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
+import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
+import org.broadinstitute.consent.http.resources.ConsentCasesResource;
+import org.broadinstitute.consent.http.resources.ConsentElectionResource;
+import org.broadinstitute.consent.http.resources.ConsentManageResource;
+import org.broadinstitute.consent.http.resources.ConsentResource;
+import org.broadinstitute.consent.http.resources.ConsentVoteResource;
+import org.broadinstitute.consent.http.resources.ConsentsResource;
+import org.broadinstitute.consent.http.resources.DACUserResource;
+import org.broadinstitute.consent.http.resources.DataAccessAgreementResource;
+import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
+import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
+import org.broadinstitute.consent.http.resources.DataRequestElectionResource;
+import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
+import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
+import org.broadinstitute.consent.http.resources.DataSetAssociationsResource;
+import org.broadinstitute.consent.http.resources.DataSetResource;
+import org.broadinstitute.consent.http.resources.DataUseLetterResource;
+import org.broadinstitute.consent.http.resources.ElectionResource;
+import org.broadinstitute.consent.http.resources.ElectionReviewResource;
+import org.broadinstitute.consent.http.resources.EmailNotifierResource;
+import org.broadinstitute.consent.http.resources.HelpReportResource;
+import org.broadinstitute.consent.http.resources.IndexerResource;
+import org.broadinstitute.consent.http.resources.MatchResource;
+import org.broadinstitute.consent.http.resources.NihAccountResource;
+import org.broadinstitute.consent.http.resources.ResearcherResource;
+import org.broadinstitute.consent.http.resources.StatusResource;
+import org.broadinstitute.consent.http.resources.SwaggerResource;
+import org.broadinstitute.consent.http.resources.UserResource;
+import org.broadinstitute.consent.http.resources.WorkspaceResource;
+import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
+import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
+import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
+import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.DatabaseAuditServiceAPI;
+import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
+import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DatabaseDataSetAPI;
+import org.broadinstitute.consent.http.service.DatabaseDataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
+import org.broadinstitute.consent.http.service.DatabaseElectionCaseAPI;
+import org.broadinstitute.consent.http.service.DatabaseHelpReportAPI;
+import org.broadinstitute.consent.http.service.DatabaseMatchAPI;
+import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
+import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
+import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
+import org.broadinstitute.consent.http.service.DatabaseSummaryAPI;
+import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.NihAuthApi;
+import org.broadinstitute.consent.http.service.NihServiceAPI;
+import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
+import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
+import org.broadinstitute.consent.http.service.ontology.IndexerService;
+import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
+import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
@@ -55,8 +142,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration.Dynamic;
+import javax.ws.rs.client.Client;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -90,52 +177,40 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     @Override
     public void run(ConsentConfiguration config, Environment env) {
 
-        // Client to consume another services
-        final javax.ws.rs.client.Client client = new JerseyClientBuilder(env).using(config.getJerseyClientConfiguration())
-                .build(getName());
-        // Set up the ConsentAPI and the ConsentDAO.  We are working around a dropwizard+Guice issue
-        // with singletons and JDBI (see AbstractConsentAPI).
+        // TODO: Update all services to use an injector.
+        // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI (see AbstractConsentAPI).
+        final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
-        final MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
-        final MongoClient mongoClient;
+        // Clients
+        final DBI jdbi = injector.getProvider(DBI.class).get();
+        final MongoConsentDB mongoInstance = injector.getProvider(MongoConsentDB.class).get();
+        final Client client = injector.getProvider(Client.class).get();
+        final UseRestrictionConverter useRestrictionConverter = injector.getProvider(UseRestrictionConverter.class).get();
+        final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
 
-        if (mongoConfiguration.isTestMode()) {
-            Fongo fongo = new Fongo("TestServer");
-            mongoClient = fongo.getMongo();
-        } else {
-            mongoClient = mongoConfiguration.getMongoClient();
-        }
+        // DAOs
+        // TODO: Eventually, when all services can be constructed with injection, these should all go away.
+        final ConsentDAO consentDAO = injector.getProvider(ConsentDAO.class).get();
+        final ElectionDAO electionDAO = injector.getProvider(ElectionDAO.class).get();
+        final HelpReportDAO helpReportDAO = injector.getProvider(HelpReportDAO.class).get();
+        final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
+        final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
+        final DataSetAssociationDAO dataSetAssociationDAO = injector.getProvider(DataSetAssociationDAO.class).get();
+        final DACUserDAO dacUserDAO = injector.getProvider(DACUserDAO.class).get();
+        final DACUserRoleDAO dacUserRoleDAO = injector.getProvider(DACUserRoleDAO.class).get();
+        final MatchDAO matchDAO = injector.getProvider(MatchDAO.class).get();
+        final MailMessageDAO emailDAO = injector.getProvider(MailMessageDAO.class).get();
+        final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = injector.getProvider(ApprovalExpirationTimeDAO.class).get();
+        final DataSetAuditDAO dataSetAuditDAO = injector.getProvider(DataSetAuditDAO.class).get();
+        final MailServiceDAO mailServiceDAO = injector.getProvider(MailServiceDAO.class).get();
+        final ResearcherPropertyDAO  researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
+        final WorkspaceAuditDAO workspaceAuditDAO = injector.getProvider(WorkspaceAuditDAO.class).get();
+        final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
-        final MongoConsentDB mongoInstance = new MongoConsentDB(mongoClient, mongoConfiguration.getDbName());
-        mongoInstance.configureMongo();
-
-        env.healthChecks().register("mongodb", new MongoHealthCheck(mongoClient, mongoConfiguration.getDbName()));
-
-        final DBIFactory factory = new DBIFactory();
-        final DBI jdbi = factory.build(env, config.getDataSourceFactory(), "mysql"); // display name for health checks
-        final ConsentDAO consentDAO = jdbi.onDemand(ConsentDAO.class);
-        final ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
-        final HelpReportDAO helpReportDAO = jdbi.onDemand(HelpReportDAO.class);
-        final VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
-        final DataSetDAO dataSetDAO = jdbi.onDemand(DataSetDAO.class);
-        final DataSetAssociationDAO dataSetAssociationDAO = jdbi.onDemand(DataSetAssociationDAO.class);
-        final DACUserDAO dacUserDAO = jdbi.onDemand(DACUserDAO.class);
-        final DACUserRoleDAO dacUserRoleDAO = jdbi.onDemand(DACUserRoleDAO.class);
-        final MatchDAO matchDAO = jdbi.onDemand(MatchDAO.class);
-        final MailMessageDAO emailDAO = jdbi.onDemand(MailMessageDAO.class);
-        final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = jdbi.onDemand(ApprovalExpirationTimeDAO.class);
-        final DataSetAuditDAO dataSetAuditDAO = jdbi.onDemand(DataSetAuditDAO.class);
-        final MailServiceDAO mailServiceDAO = jdbi.onDemand(MailServiceDAO.class);
-        final ResearcherPropertyDAO  researcherPropertyDAO = jdbi.onDemand(ResearcherPropertyDAO.class);
-        final WorkspaceAuditDAO workspaceAuditDAO = jdbi.onDemand(WorkspaceAuditDAO.class);
-        final AssociationDAO associationDAO = jdbi.onDemand(AssociationDAO.class);
-
+        // Services
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
-        UseRestrictionConverter structResearchPurposeConv = new UseRestrictionConverter(client, config.getServicesConfiguration());
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, structResearchPurposeConv, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
-
+        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, mongoInstance, voteDAO, dataSetDAO);
-
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
         DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO);
@@ -155,7 +230,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), structResearchPurposeConv);
+        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), useRestrictionConverter);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
@@ -166,9 +241,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
-        GCSStore googleStore;
-        googleStore = getGoogleStore(config.getCloudStoreConfiguration());
-
+        // Health Checks
+        env.healthChecks().register("mongodb", new MongoHealthCheck(mongoInstance.getMongoClient(), config.getMongoConfiguration().getDbName()));
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
 
@@ -184,7 +258,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance, researcherPropertyDAO);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherAPI);
 
-        // How register our resources.
+        // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new DataAccessRequestResource(DatabaseDACUserAPI.getInstance(), DatabaseElectionAPI.getInstance(), googleStore));
         env.jersey().register(DataSetResource.class);
@@ -263,17 +337,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 super.lifeCycleStopped(event);
             }
         });
-    }
-
-    private GCSStore getGoogleStore(StoreConfiguration config) {
-        GCSStore googleStore;
-        try {
-            googleStore = new GCSStore(config);
-        } catch (GeneralSecurityException | IOException e) {
-            LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
-            throw new IllegalStateException(e);
-        }
-        return googleStore;
     }
 
     @Override
