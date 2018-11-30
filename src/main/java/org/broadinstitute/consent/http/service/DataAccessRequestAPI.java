@@ -78,9 +78,9 @@ public interface DataAccessRequestAPI {
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
-    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDul) throws IOException;
+    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDUR) throws IOException;
 
-    String getStructuredDulForPdf(Document dar) throws UnknownIdentifierException;
+    String getStructuredDURForPdf(Document dar);
 
     File createApprovedDARDocument() throws NotFoundException, IOException;
 

@@ -397,14 +397,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDul) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDUR) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream is = classLoader.getResourceAsStream(PATH);
             darDOC = PDDocument.load(is);
-            new DataAccessParser().fillDARForm(dar, researcherProperties, role, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDul);
+            new DataAccessParser().fillDARForm(dar, researcherProperties, role, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDUR);
             darDOC.save(output);
             return output.toByteArray();
         } finally {
@@ -416,27 +416,41 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     /**
      * Description: this method returns the correct structured Data Use Restriction, also handles the old elections.
-     * */
+     * If there is no Access Election with the corresponding DAR reference Id, it will return Consent election's sDul
+     * associated with its DatasetId.
+     *
+     * On the other hand if accessElection is not null, we use its electionId to query our accesselection_consentelection table in mysql
+     * which contains its consent election id related. After we obtained consent election id, we try to get sdul from it.
+     *
+     * It might happen that there's no relation in this table (due to a very old election), in that case we bring the consent election
+     * by its reference Id (consentId).
+     *
+     * Finally, if for some reason there's no consent election realted to a given consentId we use sDul in consents table, gotten by
+     * its id.
+     *
+     * @param dar Mongo document correponding to a specific its reference Id
+     * @return sDUR Structured Data Use Restriction
+     */
     @Override
-    public String getStructuredDulForPdf(Document dar) {
+    public String getStructuredDURForPdf(Document dar) {
         List<Integer> dataSetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        String consentId = dataSetDAO.getConsentAssociationByDataSetId(dataSetId.get(0));//obtains consentId from consentAssociations table using its dataSetId
-        Election accessElection = electionDAO.findLastElectionVersionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue()); // obtains access election, if doesn't exists one it will be null. This happens for unreviewed elections
-        String sDul;
-        if (accessElection != null) { //closed, open and cancelled access elections
-            Election dulElection;
+        Election accessElection = electionDAO.findLastElectionVersionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue());
+        String sDUR;
+        if (accessElection != null) {
             Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(accessElection.getElectionId());
-            dulElection = electionId != null ? electionDAO.findElectionById(electionId) : null; //Obtains consent election from AccessElection_ConsentElections relation table.
+            Election dulElection = electionId != null ? electionDAO.findElectionById(electionId) : null;
             if (dulElection != null) {
-                sDul = dulElection.getTranslatedUseRestriction();
+                sDUR = dulElection.getTranslatedUseRestriction();
             } else {
+                String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(dataSetId.get(0));
                 dulElection = electionDAO.findDULApprovedElectionByReferenceId(consentId);
-                sDul = dulElection != null ? dulElection.getTranslatedUseRestriction() : consentDAO.findConsentByName(consentId).getTranslatedUseRestriction(); // If for some reason there is no consent election relation, sdul comes directly from consent's table.
+                sDUR = dulElection != null ? dulElection.getTranslatedUseRestriction() : consentDAO.findConsentById(consentId).getTranslatedUseRestriction();
             }
-        } else { // Unreviewed Elections
-            sDul = electionDAO.findDULApprovedElectionByReferenceId(consentId).getTranslatedUseRestriction(); // obtiene sdul desde la ultima eleccion aprobada de dul asociado al datasetid
+        } else {
+            String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(dataSetId.get(0));
+            sDUR = electionDAO.findDULApprovedElectionByReferenceId(consentId).getTranslatedUseRestriction();
         }
-        return sDul;
+        return sDUR;
     }
 
     @Override
