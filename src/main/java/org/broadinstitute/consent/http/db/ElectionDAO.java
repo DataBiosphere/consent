@@ -9,7 +9,6 @@ import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterColumnMapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
@@ -280,5 +279,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "where v.vote = true  and e.electionType = 'DataAccess' and referenceId = :referenceId GROUP BY e.createDate")
     @Mapper(DateMapper.class)
     Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
+
+    @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where e.status = 'Closed' group by referenceId) " +
+            "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
+            "AND e.referenceId = :referenceId " +
+            "inner join vote v on v.electionId = e.electionId and v.vote = true  and v.type = 'CHAIRPERSON'")
+    @Mapper(DatabaseElectionMapper.class)
+    Election findDULApprovedElectionByReferenceId(@Bind("referenceId") String referenceId);
+
+    @SqlQuery("select  v.vote from vote v where v.electionId = :electionId and v.type = 'FINAL'")
+    Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
 
 }

@@ -1,11 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import java.io.*;
@@ -64,7 +63,7 @@ public class DataAccessReportsParser {
         String content2 = rusSummary + DEFAULT_SEPARATOR +
                 formatTimeToDate(dar.getDate(DarConstants.SORT_DATE).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
-                " ";
+                "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);
     }
 
@@ -101,7 +100,7 @@ public class DataAccessReportsParser {
         for(Document detail : dataSetDetails) {
             datasetNames.add(StringUtils.defaultString(detail.getString("name")));
         }
-        List<Integer> dataSetIds = dar.get(DarConstants.DATASET_ID, ArrayList.class);
+        List<Integer> dataSetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         List<String> dataSetUUIds = new ArrayList<>();
         for(Integer id : dataSetIds) {
             dataSetUUIds.add(DatasetUtil.parseAlias(id));

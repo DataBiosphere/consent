@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
 import javax.annotation.security.PermitAll;
@@ -82,7 +83,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             Vote vote = api.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
-            List<Integer> dataSets = access.get(DarConstants.DATASET_ID, List.class);
+            List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
             if(access.containsKey(DarConstants.RESTRICTION)){
                 List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
                 if(vote.getVote() != null && votes.get(0).getVote() != null){
