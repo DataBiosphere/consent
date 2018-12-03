@@ -415,18 +415,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     /**
-     * Description: this method returns the correct structured Data Use Restriction, also handles the old elections.
-     * If there is no Access Election with the corresponding DAR reference Id, it will return Consent election's sDul
-     * associated with its DatasetId.
+     * Description: this method returns the correct structured Data Use Restriction for an election.
+     * If there is no Access Election with the corresponding DAR reference Id, it will return Consent
+     * Election's sDUR associated with its DatasetId.
      *
-     * On the other hand if accessElection is not null, we use its electionId to query our accesselection_consentelection table in mysql
-     * which contains its consent election id related. After we obtained consent election id, we try to get sdul from it.
+     * If there is a valid Access Election, we find the consent associated to it by the electionId
+     * and try to get the sDUR from there.
      *
-     * It might happen that there's no relation in this table (due to a very old election), in that case we bring the consent election
-     * by its reference Id (consentId).
+     * If there is no Access Election relationship to be found, we treat the reference id (a loose
+     * reference to an ID) as a consent id and look up the Consent Election's sDUR.
      *
-     * Finally, if for some reason there's no consent election realted to a given consentId we use sDul in consents table, gotten by
-     * its id.
+     * Finally, if for some reason there's no Election related to a given Consent we use DUR in
+     * consents table, we look for the DUR on the consent itself.
      *
      * @param dar Mongo document correponding to a specific its reference Id
      * @return sDUR Structured Data Use Restriction
