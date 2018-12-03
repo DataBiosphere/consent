@@ -42,9 +42,10 @@ public class DataRequestReportsResource extends Resource {
         DACUserRole role = dacUserAPI.getRoleStatus(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try{
+            String sDUR = darApi.getStructuredDURForPdf(dar);
             Boolean manualReview = DarUtil.requiresManualReview(dar);
             return Response
-                    .ok(darApi.createDARDocument(dar, researcherProperties, role, manualReview), MediaType.APPLICATION_OCTET_STREAM)
+                    .ok(darApi.createDARDocument(dar, researcherProperties, role, manualReview, sDUR), MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename =" + fileName + ".pdf")
                     .header(HttpHeaders.ACCEPT, "application/pdf")
                     .header("Access-Control-Expose-Headers", HttpHeaders.CONTENT_DISPOSITION)

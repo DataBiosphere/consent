@@ -397,14 +397,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDUR) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream is = classLoader.getResourceAsStream(PATH);
             darDOC = PDDocument.load(is);
-            new DataAccessParser().fillDARForm(dar, researcherProperties, role, manualReview, darDOC.getDocumentCatalog().getAcroForm());
+            new DataAccessParser().fillDARForm(dar, researcherProperties, role, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDUR);
             darDOC.save(output);
             return output.toByteArray();
         } finally {
@@ -412,6 +412,45 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             darDOC.close();
         }
 
+    }
+
+    /**
+     * Description: this method returns the correct structured Data Use Restriction for an election.
+     * If there is no Access Election with the corresponding DAR reference Id, it will return Consent
+     * Election's sDUR associated with its DatasetId.
+     *
+     * If there is a valid Access Election, we find the consent associated to it by the electionId
+     * and try to get the sDUR from there.
+     *
+     * If there is no Access Election relationship to be found, we treat the reference id (a loose
+     * reference to an ID) as a consent id and look up the Consent Election's sDUR.
+     *
+     * Finally, if for some reason there's no Election related to a given Consent we use DUR in
+     * consents table, we look for the DUR on the consent itself.
+     *
+     * @param dar Mongo document correponding to a specific its reference Id
+     * @return sDUR Structured Data Use Restriction
+     */
+    @Override
+    public String getStructuredDURForPdf(Document dar) {
+        List<Integer> dataSetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+        Election accessElection = electionDAO.findLastElectionVersionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue());
+        String sDUR;
+        if (accessElection != null) {
+            Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(accessElection.getElectionId());
+            Election dulElection = electionId != null ? electionDAO.findElectionById(electionId) : null;
+            if (dulElection != null) {
+                sDUR = dulElection.getTranslatedUseRestriction();
+            } else {
+                String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(dataSetId.get(0));
+                dulElection = electionDAO.findDULApprovedElectionByReferenceId(consentId);
+                sDUR = dulElection != null ? dulElection.getTranslatedUseRestriction() : consentDAO.findConsentById(consentId).getTranslatedUseRestriction();
+            }
+        } else {
+            String consentId = dataSetDAO.getAssociatedConsentIdByDataSetId(dataSetId.get(0));
+            sDUR = electionDAO.findDULApprovedElectionByReferenceId(consentId).getTranslatedUseRestriction();
+        }
+        return sDUR;
     }
 
     @Override
