@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.configurations;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
@@ -10,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsentConfiguration extends Configuration {
 
     public ConsentConfiguration() {
