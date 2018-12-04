@@ -47,6 +47,8 @@ public class DatabaseDataAccessRequestAPITest {
 
     private final String RESEARCHER_GATE = "researcher_gate";
 
+    private final String TRANSLATED_USE_RESTRICTION = "Translated use restriction.";
+
     DatabaseDataAccessRequestAPI databaseDataAccessRequestAPI;
 
     @Before
@@ -97,7 +99,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Test
     public void testCreateDARDocument() throws Exception {
         Document dar = getDocument(null, "845246551313515", null);
-        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new DACUserRole(), true);
+        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new DACUserRole(), true, TRANSLATED_USE_RESTRICTION);
         Assert.assertNotNull(doc);
     }
 

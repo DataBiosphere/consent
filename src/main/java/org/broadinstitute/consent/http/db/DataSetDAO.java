@@ -158,6 +158,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT ca.associationId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId = :objectId")
     Integer getConsentAssociationByObjectId(@Bind("objectId") String objectId);
 
+    @SqlQuery("SELECT ca.consentId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId = :dataSetId")
+    String getAssociatedConsentIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
+
     @SqlQuery("SELECT dataSetId FROM dataset WHERE name = :name")
     Integer getDataSetByName(@Bind("name") String name);
 

@@ -49,7 +49,9 @@ public class DataAccessParserTest {
     private final String LINKEDIN = "linkedin-test-id";
     private final String ORCID = "0001-0002-00122";
     private final String RESEARCHER_GATE = "researcher-gate-0001-test";
-    private final String DATA_ACCESS_AGREEMENT = "/url/bucket/id-bucket-test";
+    private final String DATA_ACCESS_AGREEMENT_URL = "/url/bucket/id-bucket-test";
+    private final String DATA_ACCESS_AGREEMENT_NAME = "Researcher Name";
+    private final String TRANSLATED_USE_RESTRICTION = "Translated use restriction.";
     public DataAccessParserTest() {
         this.dataAccessParser = new DataAccessParser();
         this.researcherProperties = new HashMap<>();
@@ -96,11 +98,13 @@ public class DataAccessParserTest {
         dar.put(DarConstants.LINKEDIN, LINKEDIN);
         dar.put(DarConstants.ORCID, ORCID);
         dar.put(DarConstants.RESEARCHER_GATE, RESEARCHER_GATE);
-        dar.put(DarConstants.DATA_ACCESS_AGREEMENT, DATA_ACCESS_AGREEMENT);
+        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_URL, DATA_ACCESS_AGREEMENT_URL);
+        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_NAME, DATA_ACCESS_AGREEMENT_NAME);
+        dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
         this.manualReview = false;
         this.role.setStatus("approved");
         this.role.setRationale("granted bonafide");
-        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm());
+        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm(), TRANSLATED_USE_RESTRICTION);
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
         Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
@@ -135,6 +139,7 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.MANUAL_REVIEW).getValueAsString().equals(MANUAL_REVIEW));
         Assert.isTrue(acroForm.getField(DarConstants.USER_STATUS).getValueAsString().equals(USER_STATUS));
         Assert.isTrue(acroForm.getField(DarConstants.ADMIN_COMMENT).getValueAsString().equals(ADMIN_COMMENT));
+        Assert.isTrue(acroForm.getField(DarConstants.TRANSLATED_RESTRICTION).getValueAsString().equals(TRANSLATED_USE_RESTRICTION));
     }
 
     private Document generateDatasetDetails(Integer datasetId, String datasetName, String objectId) {
