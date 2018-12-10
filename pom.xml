@@ -610,13 +610,17 @@
     <dependency>
       <groupId>net.vz.mongodb.jackson</groupId>
       <artifactId>mongo-jackson-mapper</artifactId>
-      <version>1.4.2</version><exclusions>
-      <exclusion>
-        <groupId>org.mongodb</groupId>
-        <artifactId>mongo-java-driver</artifactId>
-      </exclusion>
-    </exclusions>
-
+      <version>1.4.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.mongodb</groupId>
+          <artifactId>mongo-java-driver</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
