@@ -450,6 +450,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <version>3.6.2</version>
+    </dependency>
+
+    <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-migrations</artifactId>
       <version>${dropwizard.version}</version>
@@ -457,6 +463,10 @@
         <exclusion>
           <groupId>com.mattbertolini</groupId>
           <artifactId>liquibase-slf4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.liquibase</groupId>
+          <artifactId>liquibase-core</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
