@@ -4,7 +4,6 @@ import javax.validation.constraints.NotNull;
 
 public class ServicesConfiguration {
 
-
     @NotNull
     private String ontologyURL;
 
@@ -12,8 +11,6 @@ public class ServicesConfiguration {
     private String localURL;
 
     private final String MATCH = "match";
-
-    private final String TRANSLATE = "translate";
 
     private final String VALIDATE_USE_RESTRICTION = "validate/userestriction";
 
@@ -33,10 +30,6 @@ public class ServicesConfiguration {
         this.localURL = localURL;
     }
 
-    public String getTranslateURL() {
-        return getOntologyURL() + TRANSLATE;
-    }
-
     public String getMatchURL() {
         return getOntologyURL() + MATCH;
     }
@@ -48,7 +41,5 @@ public class ServicesConfiguration {
     public String getDARTranslateUrl() {
         return getOntologyURL() + "schemas/data-use/dar/translate";
     }
-
-
 
 }
