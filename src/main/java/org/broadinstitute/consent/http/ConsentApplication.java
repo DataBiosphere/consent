@@ -93,7 +93,7 @@ import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseAuditServiceAPI;
@@ -109,7 +109,7 @@ import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
 import org.broadinstitute.consent.http.service.DatabaseSummaryAPI;
-import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.NihAuthApi;
@@ -230,7 +230,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseDACUserAPI.initInstance(dacUserDAO, dacUserRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
-        DatabaseTranslateServiceAPI.initInstance(client, config.getServicesConfiguration(), useRestrictionConverter);
+        TranslateServiceImpl.initInstance(useRestrictionConverter);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, dacUserRoleDAO);
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
@@ -312,7 +312,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 LOGGER.debug("**** ConsentApplication Server Stopped ****");
-                AbstractTranslateServiceAPI.clearInstance();
+                AbstractTranslateService.clearInstance();
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();

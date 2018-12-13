@@ -16,14 +16,14 @@ import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AbstractTranslateServiceAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
-import org.broadinstitute.consent.http.service.TranslateServiceAPI;
+import org.broadinstitute.consent.http.service.TranslateService;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
@@ -68,7 +68,7 @@ public class DataAccessRequestResource extends Resource {
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
-    private final TranslateServiceAPI translateServiceAPI = AbstractTranslateServiceAPI.getInstance();
+    private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
@@ -105,7 +105,7 @@ public class DataAccessRequestResource extends Resource {
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error creating use restriction for data access request " + dar.toJson(), e);
             }
-            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
+            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar.append(DarConstants.SORT_DATE, new Date());
             List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
             URI uri = info.getRequestUriBuilder().build();
@@ -137,7 +137,7 @@ public class DataAccessRequestResource extends Resource {
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
             }
-            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateServiceAPI.generateStructuredTranslatedRestriction(dar, needsManualReview));
+            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
             matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();

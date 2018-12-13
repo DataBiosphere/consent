@@ -1,10 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
-public abstract class AbstractTranslateServiceAPI implements TranslateServiceAPI {
-
+public abstract class AbstractTranslateService implements TranslateService {
 
     protected static class TranslateAPIHolder {
-        private static TranslateServiceAPI theInstance = null;
+        private static TranslateService theInstance = null;
 
         /**
          * Initialize the singleton API instance. This method should only be
@@ -15,7 +14,7 @@ public abstract class AbstractTranslateServiceAPI implements TranslateServiceAPI
          *
          * @param api The instance of an API class that should be used.
          */
-        public static void setInstance(TranslateServiceAPI api) {
+        public static void setInstance(TranslateService api) {
             if (theInstance != null)
                 throw new IllegalStateException();
             theInstance = api;
@@ -27,7 +26,7 @@ public abstract class AbstractTranslateServiceAPI implements TranslateServiceAPI
          *
          * @return The API instance.
          */
-        public static TranslateServiceAPI getInstance() {
+        public static TranslateService getInstance() {
             if (theInstance == null)
                 throw new IllegalStateException();
             return theInstance;
@@ -53,7 +52,7 @@ public abstract class AbstractTranslateServiceAPI implements TranslateServiceAPI
      *
      * @return The API instance.
      */
-    public static TranslateServiceAPI getInstance() {
+    public static TranslateService getInstance() {
         return TranslateAPIHolder.getInstance();
     }
 

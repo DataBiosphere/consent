@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentBuilder;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.service.DatabaseTranslateServiceAPI;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
@@ -54,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 abstract public class AbstractTest extends ResourcedTest {
 
-    private final Logger logger = Logger.getLogger("AbstractTest");
+    private final Logger logger = Logger.getLogger(AbstractTest.class);
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
     static final int CONFLICT = Response.Status.CONFLICT.getStatusCode();
     static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
@@ -143,7 +142,6 @@ abstract public class AbstractTest extends ResourcedTest {
         final Client clientMock= Mockito.mock(Client.class);
         Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
         Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
-        DatabaseTranslateServiceAPI.getInstance().setClient(clientMock);
     }
 
     void mockValidateResponse(){
@@ -227,20 +225,6 @@ abstract public class AbstractTest extends ResourcedTest {
         } catch (IOException e) {
             logger.error("Unable to remove target/mongo directory");
         }
-    }
-
-    Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse, String consentId) {
-        Timestamp createDate = new Timestamp(new Date().getTime());
-        return new ConsentBuilder().
-                setConsentId(consentId).
-                setRequiresManualReview(false).
-                setUseRestriction(useRestriction).
-                setDataUse(dataUse).
-                setName(UUID.randomUUID().toString()).
-                setCreateDate(createDate).
-                setLastUpdate(createDate).
-                setSortDate(createDate).
-                build();
     }
 
 }
