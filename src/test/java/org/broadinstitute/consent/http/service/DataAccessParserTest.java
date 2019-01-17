@@ -8,16 +8,18 @@ import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
-import java.io.IOException;
-import java.util.*;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@SuppressWarnings("FieldCanBeLocal")
 public class DataAccessParserTest {
 
-    private DataAccessParser dataAccessParser;
-    private Map<String, String> researcherProperties;
-    private DACUserRole role;
-    private Boolean manualReview;
-    private Document dar;
     private final String INSTITUTION = "Institution Test";
     private final String DEPARTMENT = "Department Test";
     private final String STREET_1 = "Lombard Street 1254";
@@ -35,7 +37,7 @@ public class DataAccessParserTest {
     private final String PI_EMAIL = "vvtest@gmail.com";
     private final String PROJECT_TITLE = "Tittle Test";
     private final String OBJECT_ID = "SC-01253";
-    private final String DATASET_NAME = "Dataset Name1";
+    private final String DATASET_NAME = "Dataset Name";
     private final Integer DATASET_ID = 111;
     private final String RUS = "Purpose";
     private final String NON_TECH_RUS = "Summary";
@@ -52,59 +54,17 @@ public class DataAccessParserTest {
     private final String DATA_ACCESS_AGREEMENT_URL = "/url/bucket/id-bucket-test";
     private final String DATA_ACCESS_AGREEMENT_NAME = "Researcher Name";
     private final String TRANSLATED_USE_RESTRICTION = "Translated use restriction.";
-    public DataAccessParserTest() {
-        this.dataAccessParser = new DataAccessParser();
-        this.researcherProperties = new HashMap<>();
-        this.dar = new Document();
-        this.role = new DACUserRole();
-    }
 
     @Test
     public void testDataAccessParserCompleted() throws IOException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        researcherProperties.put(ResearcherFields.INSTITUTION.getValue(), INSTITUTION);
-        researcherProperties.put(ResearcherFields.DEPARTMENT.getValue(), DEPARTMENT);
-        researcherProperties.put(ResearcherFields.STREET_ADDRESS_1.getValue(), STREET_1);
-        researcherProperties.put(ResearcherFields.CITY.getValue(), CITY);
-        researcherProperties.put(ResearcherFields.ZIP_POSTAL_CODE.getValue(), POSTAL_CODE);
-        researcherProperties.put(ResearcherFields.COUNTRY.getValue(), COUNTRY);
-        researcherProperties.put(ResearcherFields.STATE.getValue(), STATE);
-        researcherProperties.put(ResearcherFields.STREET_ADDRESS_2.getValue(), STREET_2);
-        researcherProperties.put(ResearcherFields.DIVISION.getValue(), DIVISION);
-        researcherProperties.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, ACADEMIC_BUSINESS_EMAIL);
-        researcherProperties.put(DarConstants.ERA_COMMONS_ID, ERA_COMMONS_ID);
-        researcherProperties.put(DarConstants.PUBMED_ID, PUBMED_ID);
-        researcherProperties.put(DarConstants.SCIENTIFIC_URL, SCIENTIFIC_URL);
-        researcherProperties.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
-        researcherProperties.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME);
-        dar.put(DarConstants.INVESTIGATOR, INVESTIGATOR);
-        dar.put(DarConstants.PI_EMAIL, PI_EMAIL);
-        dar.put(DarConstants.PROJECT_TITLE, PROJECT_TITLE);
-        List<Integer> dataSets = Arrays.asList(DATASET_ID);
-        dar.put(DarConstants.DATASET_ID, dataSets);
-        ArrayList<Document> content = new ArrayList<>();
-        content.add(generateDatasetDetails(DATASET_ID, DATASET_NAME, OBJECT_ID));
-        dar.put(DarConstants.DATASET_DETAIL, content);
-        dar.put(DarConstants.RUS, RUS);
-        dar.put(DarConstants.NON_TECH_RUS, NON_TECH_RUS);
-        dar.put(DarConstants.METHODS, true);
-        dar.put(DarConstants.CONTROLS, true);
-        dar.put(DarConstants.OTHER, true);
-        dar.put(DarConstants.POA, true);
-        dar.put(DarConstants.HMB, true);
-        dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
-        dar.put(DarConstants.CHECK_COLLABORATOR, true);
-        dar.put(DarConstants.NIH_USERNAME, NIH_USERNAME);
-        dar.put(DarConstants.LINKEDIN, LINKEDIN);
-        dar.put(DarConstants.ORCID, ORCID);
-        dar.put(DarConstants.RESEARCHER_GATE, RESEARCHER_GATE);
-        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_URL, DATA_ACCESS_AGREEMENT_URL);
-        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_NAME, DATA_ACCESS_AGREEMENT_NAME);
-        dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
-        this.manualReview = false;
-        this.role.setStatus("approved");
-        this.role.setRationale("granted bonafide");
-        PDAcroForm acroForm = dataAccessParser.fillDARForm(dar, researcherProperties,role, manualReview, PDDocument.load(classLoader.getResourceAsStream(PATH)).getDocumentCatalog().getAcroForm(), TRANSLATED_USE_RESTRICTION);
+        PDAcroForm acroForm = new DataAccessParser().
+                fillDARForm(
+                        populateDocument(),
+                        populateProps(),
+                        populateRole(),
+                        false,
+                        PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
+                        TRANSLATED_USE_RESTRICTION);
         Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
         Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
@@ -121,7 +81,7 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString().equals(SCIENTIFIC_URL));
         Assert.isTrue(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
         Assert.isTrue(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString().equals(PROJECT_TITLE));
-        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals("Dataset Name1 | " + OBJECT_ID));
+        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(DATASET_NAME + " | " + OBJECT_ID));
         Assert.isTrue(acroForm.getField(DarConstants.RUS).getValueAsString().equals(RUS));
         Assert.isTrue(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString().equals(NON_TECH_RUS));
         Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
@@ -142,12 +102,91 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.TRANSLATED_RESTRICTION).getValueAsString().equals(TRANSLATED_USE_RESTRICTION));
     }
 
-    private Document generateDatasetDetails(Integer datasetId, String datasetName, String objectId) {
+    @Test
+    public void testInvalidFieldValue() throws Exception {
+        Map<String, String> props = populateProps();
+        props.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME + "\u200B");
+        props.put(ResearcherFields.DEPARTMENT.getValue(), "\u0009" + DEPARTMENT);
+        props.put(ResearcherFields.STREET_ADDRESS_1.getValue(), "\u200B" + STREET_1 + "\u00A0");
+        PDAcroForm acroForm = new DataAccessParser().
+                fillDARForm(
+                        populateDocument(),
+                        props,
+                        populateRole(),
+                        false,
+                        PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
+                        TRANSLATED_USE_RESTRICTION);
+        Assert.isTrue(acroForm.getField(ResearcherFields.PROFILE_NAME.getValue()).getValueAsString().equals(PROFILE_NAME));
+        Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
+        Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
+    }
+
+    private InputStream getTemplateResource() {
+        return getClass().getClassLoader().getResourceAsStream(PATH);
+    }
+
+    private Document generateDatasetDetails(Integer datasetId) {
         Document datasetDetails = new Document();
         datasetDetails.put("datasetId", datasetId.toString());
-        datasetDetails.put("name", datasetName);
-        datasetDetails.put("objectId", objectId);
+        datasetDetails.put("name", DATASET_NAME);
+        datasetDetails.put("objectId", "SC-01253");
         return datasetDetails;
+    }
+
+    private DACUserRole populateRole() {
+        DACUserRole role = new DACUserRole();
+        role.setStatus("approved");
+        role.setRationale("granted bonafide");
+        return role;
+    }
+
+    private Map<String, String> populateProps() {
+        Map<String, String> props = new HashMap<>();
+        props.put(ResearcherFields.INSTITUTION.getValue(), INSTITUTION);
+        props.put(ResearcherFields.DEPARTMENT.getValue(), DEPARTMENT);
+        props.put(ResearcherFields.STREET_ADDRESS_1.getValue(), STREET_1);
+        props.put(ResearcherFields.CITY.getValue(), CITY);
+        props.put(ResearcherFields.ZIP_POSTAL_CODE.getValue(), POSTAL_CODE);
+        props.put(ResearcherFields.COUNTRY.getValue(), COUNTRY);
+        props.put(ResearcherFields.STATE.getValue(), STATE);
+        props.put(ResearcherFields.STREET_ADDRESS_2.getValue(), STREET_2);
+        props.put(ResearcherFields.DIVISION.getValue(), DIVISION);
+        props.put(DarConstants.ACADEMIC_BUSINESS_EMAIL, ACADEMIC_BUSINESS_EMAIL);
+        props.put(DarConstants.ERA_COMMONS_ID, ERA_COMMONS_ID);
+        props.put(DarConstants.PUBMED_ID, PUBMED_ID);
+        props.put(DarConstants.SCIENTIFIC_URL, SCIENTIFIC_URL);
+        props.put(ResearcherFields.ARE_YOU_PRINCIPAL_INVESTIGATOR.getValue(), "true");
+        props.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME);
+        return props;
+    }
+
+    private Document populateDocument() {
+        Document dar = new Document();
+        dar.put(DarConstants.INVESTIGATOR, INVESTIGATOR);
+        dar.put(DarConstants.PI_EMAIL, PI_EMAIL);
+        dar.put(DarConstants.PROJECT_TITLE, PROJECT_TITLE);
+        List<Integer> dataSets = Collections.singletonList(DATASET_ID);
+        dar.put(DarConstants.DATASET_ID, dataSets);
+        ArrayList<Document> documentArrayList = new ArrayList<>();
+        documentArrayList.add(generateDatasetDetails(DATASET_ID));
+        dar.put(DarConstants.DATASET_DETAIL, documentArrayList);
+        dar.put(DarConstants.RUS, RUS);
+        dar.put(DarConstants.NON_TECH_RUS, NON_TECH_RUS);
+        dar.put(DarConstants.METHODS, true);
+        dar.put(DarConstants.CONTROLS, true);
+        dar.put(DarConstants.OTHER, true);
+        dar.put(DarConstants.POA, true);
+        dar.put(DarConstants.HMB, true);
+        dar.put(DarConstants.OTHER_TEXT, RESEARCH_OTHER_TEXT);
+        dar.put(DarConstants.CHECK_COLLABORATOR, true);
+        dar.put(DarConstants.NIH_USERNAME, NIH_USERNAME);
+        dar.put(DarConstants.LINKEDIN, LINKEDIN);
+        dar.put(DarConstants.ORCID, ORCID);
+        dar.put(DarConstants.RESEARCHER_GATE, RESEARCHER_GATE);
+        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_URL, DATA_ACCESS_AGREEMENT_URL);
+        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_NAME, DATA_ACCESS_AGREEMENT_NAME);
+        dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
+        return dar;
     }
 
 }
