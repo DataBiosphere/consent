@@ -107,6 +107,7 @@ public class DataAccessParserTest {
         Map<String, String> props = populateProps();
         props.put(ResearcherFields.PROFILE_NAME.getValue(), PROFILE_NAME + "\u200B");
         props.put(ResearcherFields.DEPARTMENT.getValue(), "\u0009" + DEPARTMENT);
+        props.put(ResearcherFields.STREET_ADDRESS_1.getValue(), "\u200B" + STREET_1 + "\u00A0");
         PDAcroForm acroForm = new DataAccessParser().
                 fillDARForm(
                         populateDocument(),
@@ -117,6 +118,7 @@ public class DataAccessParserTest {
                         TRANSLATED_USE_RESTRICTION);
         Assert.isTrue(acroForm.getField(ResearcherFields.PROFILE_NAME.getValue()).getValueAsString().equals(PROFILE_NAME));
         Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
+        Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
     }
 
     private InputStream getTemplateResource() {
