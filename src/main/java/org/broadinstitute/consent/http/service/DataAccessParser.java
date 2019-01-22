@@ -259,7 +259,6 @@ class DataAccessParser {
     private String filterNonPrintableValue(Document dar, String value) {
         String NON_PRINTABLE_PATTERN = "\\P{Print}";
         if (Pattern.compile(NON_PRINTABLE_PATTERN).matcher(value).find()) {
-            log.warn("Value '" + value + "' contains non-printable characters. Review DAR: " + dar.getString(DarConstants.PROJECT_TITLE));
             return value.replaceAll(NON_PRINTABLE_PATTERN, "");
         }
         return value;
