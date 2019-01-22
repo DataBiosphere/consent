@@ -7,8 +7,6 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,46 +18,44 @@ import java.util.stream.Collectors;
 
 class DataAccessParser {
 
-    private static final Logger log = LoggerFactory.getLogger(DataAccessParser.class);
-
     PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, PDAcroForm acroForm, String sDUR) throws IOException {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {
                  case DarConstants.INSTITUTION: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.INSTITUTION)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.INSTITUTION)));
                     break;
                 }
                 case DarConstants.DEPARTMENT: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.DEPARTMENT)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.DEPARTMENT)));
                     break;
                 }
                 case DarConstants.DIVISION: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.DIVISION)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.DIVISION)));
                     break;
                 }
                 case DarConstants.STREET_ADDRESS_1: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.STREET_ADDRESS_1)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STREET_ADDRESS_1)));
                     break;
                 }
                 case DarConstants.STREET_ADDRESS_2: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.STREET_ADDRESS_2)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STREET_ADDRESS_2)));
                     break;
                 }
                 case DarConstants.CITY: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.CITY)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.CITY)));
                     break;
                 }
                 case DarConstants.ZIP_POSTAL_CODE: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.ZIP_POSTAL_CODE)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ZIP_POSTAL_CODE)));
                     break;
                 }
                 case DarConstants.COUNTRY: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.COUNTRY)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.COUNTRY)));
                     break;
                 }
                 case DarConstants.STATE: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.STATE)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.STATE)));
                     break;
                 }
                 case DarConstants.CONTROLS: {
@@ -83,48 +79,48 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.OTHER_TEXT: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.OTHER_TEXT)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.OTHER_TEXT)));
                     break;
                 }
                 case DarConstants.PROFILE_NAME: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.PROFILE_NAME)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
                     break;
                 }
                 case DarConstants.ACADEMIC_BUSINESS_EMAIL: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     break;
                 }
                 case DarConstants.ERA_COMMONS_ID: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.ERA_COMMONS_ID)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ERA_COMMONS_ID)));
                     break;
                 }
                 case DarConstants.PUBMED_ID: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.PUBMED_ID)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PUBMED_ID)));
                     break;
                 }
                 case DarConstants.SCIENTIFIC_URL: {
-                    field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.SCIENTIFIC_URL)));
+                    field.setValue(getDefaultValue(researcherProperties.get(DarConstants.SCIENTIFIC_URL)));
                     break;
                 }
                 case DarConstants.PI_EMAIL: {
                     if(Boolean.valueOf(researcherProperties.get("isThePI"))){
-                        field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.ACADEMIC_BUSINESS_EMAIL)));
                     } else {
-                        field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.PI_EMAIL)));
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PI_EMAIL)));
                     }
 
                     break;
                 }
                 case DarConstants.INVESTIGATOR: {
                     if(Boolean.valueOf(researcherProperties.get("isThePI"))){
-                        field.setValue(getDefaultValue(dar, researcherProperties.get(DarConstants.PROFILE_NAME)));
+                        field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
                     } else {
-                        field.setValue(getDefaultValue(dar, dar.getString(DarConstants.INVESTIGATOR)));
+                        field.setValue(getDefaultValue(dar.getString(DarConstants.INVESTIGATOR)));
                     }
                     break;
                 }
                 case DarConstants.PROJECT_TITLE: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.PROJECT_TITLE)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.PROJECT_TITLE)));
                     break;
                 }
                 case DarConstants.DATASET_ID: {
@@ -133,11 +129,11 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.RUS: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.RUS)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.RUS)));
                     break;
                 }
                 case DarConstants.NON_TECH_RUS: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.NON_TECH_RUS)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.NON_TECH_RUS)));
                     break;
                 }
                 case DarConstants.ONTOLOGIES: {
@@ -154,7 +150,7 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.GENDER: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.GENDER)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.GENDER)));
                     break;
                 }
                 case DarConstants.PEDIATRIC: {
@@ -206,31 +202,31 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.USER_STATUS: {
-                    field.setValue(getDefaultValue(dar, StringUtils.capitalize(role.getStatus())));
+                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getStatus())));
                     break;
                 }
                 case DarConstants.ADMIN_COMMENT: {
-                    field.setValue(getDefaultValue(dar, StringUtils.capitalize(role.getRationale())));
+                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getRationale())));
                     break;
                 }
                 case DarConstants.MANUAL_REVIEW: {
-                    field.setValue(getDefaultValue(dar, checkRequiresManualReview(manualReview)));
+                    field.setValue(getDefaultValue(checkRequiresManualReview(manualReview)));
                     break;
                 }
                 case DarConstants.NIH_USERNAME: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.NIH_USERNAME)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.NIH_USERNAME)));
                     break;
                 }
                 case DarConstants.LINKEDIN: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.LINKEDIN)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.LINKEDIN)));
                     break;
                 }
                 case DarConstants.ORCID: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.ORCID)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.ORCID)));
                     break;
                 }
                 case DarConstants.RESEARCHER_GATE: {
-                    field.setValue(getDefaultValue(dar, dar.getString(DarConstants.RESEARCHER_GATE)));
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.RESEARCHER_GATE)));
                     break;
                 }
                 case DarConstants.DATA_ACCESS_AGREEMENT: {
@@ -240,7 +236,7 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.TRANSLATED_RESTRICTION: {
-                    field.setValue(getDefaultValue(dar, sDUR.replaceAll("<[^>]*>","\n")));
+                    field.setValue(getDefaultValue(sDUR.replaceAll("<[^>]*>","\n")));
                     break;
                 }
             }
@@ -252,11 +248,10 @@ class DataAccessParser {
      * PDFBox has a lot of trouble with non-printable characters. Strip from the PDF content and
      * log a warning so we can follow up with the user and/or clean up the Data Access Request.
      *
-     * @param dar Data Access Request Document
      * @param value String value to filter
      * @return Filtered string value
      */
-    private String filterNonPrintableValue(Document dar, String value) {
+    private String filterNonPrintableValue(String value) {
         String NON_PRINTABLE_PATTERN = "\\P{Print}";
         if (Pattern.compile(NON_PRINTABLE_PATTERN).matcher(value).find()) {
             return value.replaceAll(NON_PRINTABLE_PATTERN, "");
@@ -275,7 +270,6 @@ class DataAccessParser {
         });
 
         return filterNonPrintableValue(
-                dar,
                 datasetDetailMap.
                         entrySet().
                         stream().
@@ -287,8 +281,8 @@ class DataAccessParser {
         return value == null || !value ? "No" : "Yes";
     }
 
-    private String getDefaultValue(Document dar, String value){
-        return StringUtils.isEmpty(value) ? "--" : filterNonPrintableValue(dar, value);
+    private String getDefaultValue(String value){
+        return StringUtils.isEmpty(value) ? "--" : filterNonPrintableValue(value);
     }
 
     @SuppressWarnings("unchecked")
@@ -297,7 +291,7 @@ class DataAccessParser {
         List<String> diseases = new ArrayList<>();
         if(!CollectionUtils.isEmpty(ontologies)) {
            for (Map<String, String> ontology : ontologies) {
-                diseases.add(filterNonPrintableValue(darDocument, ontology.get("label")));
+                diseases.add(filterNonPrintableValue(ontology.get("label")));
             }
         }
         return diseases;
