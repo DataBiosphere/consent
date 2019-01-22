@@ -245,8 +245,7 @@ class DataAccessParser {
     }
 
     /**
-     * PDFBox has a lot of trouble with non-printable characters. Strip from the PDF content and
-     * log a warning so we can follow up with the user and/or clean up the Data Access Request.
+     * PDFBox has a lot of trouble with non-printable characters - remove them.
      *
      * @param value String value to filter
      * @return Filtered string value
