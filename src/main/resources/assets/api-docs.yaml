@@ -2732,14 +2732,12 @@ definitions:
       profileCompleted:
         type: boolean
         description: The profile is completed. Researchers only.
-
   ErrorResponse:
     required:
       - "message"
     properties:
       message:
         type: string
-
   HelpReport:
     type: object
     properties:
