@@ -2079,12 +2079,12 @@ paths:
       responses:
         '200':
           description: Returns eRA Commons Account information. Map<String, String> format
-          schema:
-            $ref: '#/definitions/EraProperties'
+#          schema:
+#            $ref: '#/definitions/EraProperties'
         '404':
           description: The user doesn't exist in the system
           schema:
-          $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
   /status:
     get:
       summary: System Health Status
@@ -2094,6 +2094,20 @@ paths:
       responses:
         200: All systems are OK
         500: Some number of subsystems are not OK.
+
+  /version:
+    get:
+      summary: Current application version
+      description: The current short hash and version of the application.
+      tags:
+        - Status
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/Version'
+        500: Internal Server Error
+
 definitions:
   UserProperties:
     type: array
@@ -2718,12 +2732,14 @@ definitions:
       profileCompleted:
         type: boolean
         description: The profile is completed. Researchers only.
+
   ErrorResponse:
     required:
       - "message"
     properties:
       message:
         type: string
+
   HelpReport:
     type: object
     properties:
@@ -2775,3 +2791,12 @@ definitions:
       ontology_file:
         type: object
         $ref: '#/definitions/OntologyFileMetaData'
+  Version:
+    type: object
+    properties:
+      hash:
+        type: string
+        description: Current short hash of this version
+      version:
+        type: string
+        description: Current version
