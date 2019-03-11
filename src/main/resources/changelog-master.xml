@@ -47,4 +47,5 @@
     <include file="changesets/changelog-consent-42.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-43.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-44.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-45.0.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
