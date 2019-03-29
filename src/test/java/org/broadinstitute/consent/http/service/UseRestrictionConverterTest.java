@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
@@ -17,18 +18,17 @@ import javax.ws.rs.core.MediaType;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class UseRestrictionConverterTest {
+public class UseRestrictionConverterTest implements WithMockServer {
 
     private ClientAndServer mockServer;
     private Integer port = 9000;
 
     @Before
     public void startUp() {
-        mockServer = startClientAndServer(port);
+        mockServer = startMockServer(port);
     }
 
     @After

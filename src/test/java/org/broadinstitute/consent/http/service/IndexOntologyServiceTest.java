@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.common.io.Resources;
+import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
 import org.broadinstitute.consent.http.models.ontology.Term;
@@ -30,11 +31,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class IndexOntologyServiceTest {
+public class IndexOntologyServiceTest implements WithMockServer {
 
     private static final String INDEX_NAME = "test-index";
     private IndexOntologyService ontologyService;
@@ -49,7 +49,7 @@ public class IndexOntologyServiceTest {
         configuration.setServers(Collections.singletonList("localhost"));
         client = ElasticSearchSupport.createRestClient(configuration);
         this.ontologyService = new IndexOntologyService(configuration);
-        server = startClientAndServer(9200);
+        server = startMockServer(9200);
         server.when(request()).respond(response().withStatusCode(200));
     }
 
