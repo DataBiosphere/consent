@@ -44,7 +44,8 @@ public class DataRequestSamplesHolder {
             "            \"name\" : \"test\"\n" +
             "        }\n" +
             "    ],\n" +
-            "    \"dar_code\" : \"DAR-1\"\n" +
+            "    \"dar_code\" : \"DAR-1\",\n" +
+            "    \"_id\" : \"5c9ba56146e0fb0001c09466\"\n" +
             "}";
 
     public static Document getSampleDar() throws IOException {

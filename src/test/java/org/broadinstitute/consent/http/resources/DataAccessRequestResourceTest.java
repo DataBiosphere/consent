@@ -23,10 +23,11 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
-public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
+public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest {
 
     private static final String TEST_DATABASE_NAME = "TestConsent";
     private long mongoDocuments;
@@ -65,9 +66,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         checkStatus(CREATED, post(client, darPath(), sampleDar));
         List<Document> created = retrieveDars(client, darPath());
         assertTrue(created.size() == ++mongoDocuments);
-        Document insertedDocument = created.get(created.size()-1);
-        System.out.println(insertedDocument.get("_id"));
-
     }
 
     @Test
@@ -117,9 +115,24 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         assertTrue(res.equals("{\"useRestriction\":\"Manual Review\"}"));
     }
 
+    @Test
+    public void testDarFound() throws Exception {
+        Client client = ClientBuilder.newClient();
+        String darId = DataRequestSamplesHolder.getSampleDar().getString(DarConstants.ID);
+        System.out.println("DAR ID: " + darId);
+        Response response = getJson(client, darPath(darId));
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testDarNotFound() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Response response = getJson(client, darPath("invalid-5998-id"));
+        assertEquals(404, response.getStatus());
+    }
 
     private List<Document> retrieveDars(Client client, String url) throws IOException {
-        return getJson(client, url).readEntity(new GenericType<List<Document>>(){});
+        return getJson(client, url).readEntity(new GenericType<List<Document>>() {});
     }
 
 }
