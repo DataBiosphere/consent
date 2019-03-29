@@ -14,17 +14,15 @@ import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -33,7 +31,6 @@ import static org.mockito.Mockito.doReturn;
 
 public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest {
 
-    private final static Logger log = LoggerFactory.getLogger(DataAccessRequestResourceTest.class);
     private static final String TEST_DATABASE_NAME = "TestConsent";
 
     @ClassRule
@@ -62,7 +59,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
     }
 
 
-    @Ignore
     @Test
     public void testDarOperations() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -73,7 +69,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
         assertTrue(created.size() == ++mongoDocuments);
     }
 
-    @Ignore
     @Test
     public void testPartialDarOperations() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -84,7 +79,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
         assertTrue(created.size() == ++partialDocumentsCount);
     }
 
-    @Ignore
     @Test
     public void testInvalidDars() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -92,8 +86,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
         assertTrue(dtos.size() == 0);
     }
 
-
-    @Ignore
     @Test
     public void testManageDars() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -105,7 +97,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
 
     }
 
-    @Ignore
     @Test
     public void testManagePartialDars() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -116,7 +107,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
         assertTrue(manageDars.size() == 1);
     }
 
-    @Ignore
     @Test
     public void testRestrictionFromQuestions() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -129,37 +119,15 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
     public void testDarFound() throws Exception {
         // Create a DAR
         Client client = ClientBuilder.newClient();
-        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, darPath(), sampleDar));
-        List<Document> created = retrieveDars(client, darPath());
-        System.out.println("Created Size: " + created.size());
-        assertEquals(1, created.size());
-        Document newDoc = created.get(0);
+        post(client, darPath(), DataRequestSamplesHolder.getSampleDar());
+        Document newDoc = retrieveDars(client, darPath()).get(0);
+        ObjectId objectId = getObjectIdFromDocument(newDoc);
 
-        // TODO: Figure out how to
-//        System.out.println(newDoc.toJson());
-//        System.out.println("***********************************************************");
-
-//        System.out.println(newDoc.get(DarConstants.ID).toString());
-//        System.out.println("***********************************************************");
-
-//        System.out.println(newDoc.get(DarConstants.ID, ObjectId.class).toString());
-//        System.out.println("***********************************************************");
-
-//        Object id = newDoc.get(DarConstants.ID);
-//        ObjectId objectId = newDoc.getObjectId(DarConstants.ID);
-//        ObjectId objectId = new ObjectId(id.toString());
-
-//        System.out.println(objectId);
-//        System.out.println("***********************************************************");
-
-        // TODO: This is the test I want to pass:
-//        Response response = getJson(client, darPath(newDoc.getString(DarConstants.ID)));
-//        assertEquals(200, response.getStatus());
-
+        // Make sure the DAR can be retrieved using the ID
+        Response response = getJson(client, darPath(objectId.toHexString()));
+        assertEquals(200, response.getStatus());
     }
 
-    @Ignore
     @Test
     public void testDarNotFound() throws Exception {
         Client client = ClientBuilder.newClient();
@@ -169,6 +137,16 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
 
     private List<Document> retrieveDars(Client client, String url) throws IOException {
         return getJson(client, url).readEntity(new GenericType<List<Document>>() {});
+    }
+
+    private ObjectId getObjectIdFromDocument(Document document) {
+        LinkedHashMap id = (LinkedHashMap) document.get(DarConstants.ID);
+        return new ObjectId(
+                Integer.valueOf(id.get("timestamp").toString()),
+                Integer.valueOf(id.get("machineIdentifier").toString()),
+                Short.valueOf(id.get("processIdentifier").toString()),
+                Integer.valueOf(id.get("counter").toString())
+        );
     }
 
 }
