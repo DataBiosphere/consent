@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import java.io.IOException;
@@ -44,11 +45,10 @@ public class DataRequestSamplesHolder {
             "            \"name\" : \"test\"\n" +
             "        }\n" +
             "    ],\n" +
-            "    \"dar_code\" : \"DAR-1\",\n" +
-            "    \"_id\" : \"5c9ba56146e0fb0001c09466\"\n" +
+            "    \"dar_code\" : \"DAR-1\"\n" +
             "}";
 
-    public static Document getSampleDar() throws IOException {
+    static Document getSampleDar() throws IOException {
         Document document = new Document();
         document.putAll(jsonAsMap(completeDARJson));
         return document;
