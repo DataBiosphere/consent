@@ -63,7 +63,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
     public void testDarOperations() throws IOException {
         Client client = ClientBuilder.newClient();
         Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        long  mongoDocuments = retrieveDars(client, darPath()).size();
+        long mongoDocuments = retrieveDars(client, darPath()).size();
         checkStatus(CREATED, post(client, darPath(), sampleDar));
         List<Document> created = retrieveDars(client, darPath());
         assertTrue(created.size() == ++mongoDocuments);
@@ -120,8 +120,8 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
         // Create a DAR
         Client client = ClientBuilder.newClient();
         post(client, darPath(), DataRequestSamplesHolder.getSampleDar());
-        Document newDoc = retrieveDars(client, darPath()).get(0);
-        ObjectId objectId = getObjectIdFromDocument(newDoc);
+        Document created = retrieveDars(client, darPath()).get(0);
+        ObjectId objectId = getObjectIdFromDocument(created);
 
         // Make sure the DAR can be retrieved using the ID
         Response response = getJson(client, darPath(objectId.toHexString()));

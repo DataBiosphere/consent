@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public class DataRequestSamplesHolder {
+class DataRequestSamplesHolder {
 
     private static final String completeDARJson = "{\n" +
             "    \"investigator\" : \"Somenone\",\n" +
@@ -48,15 +47,12 @@ public class DataRequestSamplesHolder {
             "    \"dar_code\" : \"DAR-1\"\n" +
             "}";
 
+    @SuppressWarnings("unchecked")
     static Document getSampleDar() throws IOException {
+        HashMap<String, Object> jsonMap = new ObjectMapper().readValue(completeDARJson, HashMap.class);
         Document document = new Document();
-        document.putAll(jsonAsMap(completeDARJson));
+        document.putAll(jsonMap);
         return document;
-    }
-
-    private static HashMap<String,Object> jsonAsMap(String jsonSource) throws IOException {
-        HashMap<String,Object> result = new ObjectMapper().readValue(jsonSource, HashMap.class);
-        return result;
     }
 
 }
