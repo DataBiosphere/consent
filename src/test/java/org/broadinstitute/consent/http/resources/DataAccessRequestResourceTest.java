@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -21,15 +22,16 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
-public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
+public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest {
 
     private static final String TEST_DATABASE_NAME = "TestConsent";
-    private long mongoDocuments;
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -61,13 +63,10 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
     public void testDarOperations() throws IOException {
         Client client = ClientBuilder.newClient();
         Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        mongoDocuments = retrieveDars(client, darPath()).size();
+        long mongoDocuments = retrieveDars(client, darPath()).size();
         checkStatus(CREATED, post(client, darPath(), sampleDar));
         List<Document> created = retrieveDars(client, darPath());
         assertTrue(created.size() == ++mongoDocuments);
-        Document insertedDocument = created.get(created.size()-1);
-        System.out.println(insertedDocument.get("_id"));
-
     }
 
     @Test
@@ -86,7 +85,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         List<UseRestrictionDTO> dtos = getJson(client, invalidDarsPath()).readEntity(new GenericType<List<UseRestrictionDTO>>() {});
         assertTrue(dtos.size() == 0);
     }
-
 
     @Test
     public void testManageDars() throws IOException {
@@ -117,9 +115,46 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest{
         assertTrue(res.equals("{\"useRestriction\":\"Manual Review\"}"));
     }
 
+    @Test
+    public void testDarFound() throws Exception {
+        // Create a DAR
+        Client client = ClientBuilder.newClient();
+        post(client, darPath(), DataRequestSamplesHolder.getSampleDar());
+        Document created = retrieveDars(client, darPath()).get(0);
+        ObjectId objectId = getObjectIdFromDocument(created);
+
+        // Make sure the DAR can be retrieved using the ID
+        Response response = getJson(client, darPath(objectId.toHexString()));
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testInvalidDARFormat() throws Exception {
+        Client client = ClientBuilder.newClient();
+        Response response = getJson(client, darPath("invalid-5998-id"));
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void testDARNotFound() throws Exception {
+        ObjectId id = new ObjectId();
+        Client client = ClientBuilder.newClient();
+        Response response = getJson(client, darPath(id.toHexString()));
+        assertEquals(404, response.getStatus());
+    }
 
     private List<Document> retrieveDars(Client client, String url) throws IOException {
-        return getJson(client, url).readEntity(new GenericType<List<Document>>(){});
+        return getJson(client, url).readEntity(new GenericType<List<Document>>() {});
+    }
+
+    private ObjectId getObjectIdFromDocument(Document document) {
+        LinkedHashMap id = (LinkedHashMap) document.get(DarConstants.ID);
+        return new ObjectId(
+                Integer.valueOf(id.get("timestamp").toString()),
+                Integer.valueOf(id.get("machineIdentifier").toString()),
+                Short.valueOf(id.get("processIdentifier").toString()),
+                Integer.valueOf(id.get("counter").toString())
+        );
     }
 
 }

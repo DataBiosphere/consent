@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
-
+import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -30,7 +30,7 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
+import org.bson.types.ObjectId;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -51,12 +51,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Arrays;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -163,9 +163,9 @@ public class DataAccessRequestResource extends Resource {
     @Path("/invalid")
     @RolesAllowed("ADMIN")
     public Response getInvalidDataAccessRequest() {
-        try{
+        try {
             return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
 
@@ -182,10 +182,32 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     @Produces("application/json")
     @PermitAll
-    public Document describe(@PathParam("id") String id) {
-        return dataAccessRequestAPI.describeDataAccessRequestById(id);
+    public Response describe(@PathParam("id") String id) {
+        try {
+            new ObjectId(id);
+        } catch (IllegalArgumentException e) {
+            String message = "The provided id is not a valid Data Access Request Id: " + id;
+            logger.log(Level.INFO, message + "; " + e.getMessage());
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new Error(message, Response.Status.BAD_REQUEST.getStatusCode()))
+                    .build();
+        }
+        try {
+            Document document = dataAccessRequestAPI.describeDataAccessRequestById(id);
+            if (document != null) {
+                return Response.status(Response.Status.OK).entity(document).build();
+            }
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new Error(
+                                    "Unable to find Data Access Request with id: " + id,
+                                    Response.Status.NOT_FOUND.getStatusCode()))
+                    .build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
-
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
@@ -268,15 +290,14 @@ public class DataAccessRequestResource extends Resource {
     public Response createPartialDataAccessRequest(@Context UriInfo info, Document dar) {
         URI uri;
         Document result = null;
-        if((dar.size() == 1 && dar.containsKey("userId")) || (dar.size() == 0)){
+        if ((dar.size() == 1 && dar.containsKey("userId")) || (dar.size() == 0)) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
         try {
             result = savePartialDarRequest(dar);
             uri = info.getRequestUriBuilder().path("{id}").build(result.get(DarConstants.ID));
             return Response.created(uri).entity(result).build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
             return createExceptionResponse(e);
         }
@@ -290,7 +311,7 @@ public class DataAccessRequestResource extends Resource {
     /*
      * Note: Run this endpoint only once, in order to apply datasets correspondent alias Id
      * in MySql and replace objectId to datasetId in Mongodb
-    */
+     */
     public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<Integer> datasetIds) {
         Document dar = new Document();
         Collection<DataSetDTO> dataSets = dataSetAPI.describeDataSetsByReceiveOrder(datasetIds);
@@ -298,14 +319,14 @@ public class DataAccessRequestResource extends Resource {
         dar.append(DarConstants.USER_ID, userId);
         try {
             List<Map<String, String>> datasets = new ArrayList<>();
-            for(String datasetName: dataSetNames){
+            for (String datasetName : dataSetNames) {
                 List<Map<String, String>> ds = dataSetAPI.getCompleteDataSet(datasetName);
                 datasets.add(ds.get(0));
             }
             dar.append(DarConstants.DATASET_ID, datasets);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, " while fetching dataset details to export to DAR formulary. UserId: " + userId + ", datasets: " + datasetIds.toString()+". Cause: "+ e.getLocalizedMessage());
+            logger.log(Level.SEVERE, " while fetching dataset details to export to DAR formulary. UserId: " + userId + ", datasets: " + datasetIds.toString() + ". Cause: " + e.getLocalizedMessage());
             return createExceptionResponse(e);
         }
     }
@@ -356,7 +377,6 @@ public class DataAccessRequestResource extends Resource {
     }
 
 
-
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
@@ -366,13 +386,13 @@ public class DataAccessRequestResource extends Resource {
         try {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
-            if(CollectionUtils.isNotEmpty(usersToNotify)) {
+            if (CollectionUtils.isNotEmpty(usersToNotify)) {
                 emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
             }
             return Response.ok().entity(dar).build();
         } catch (MessagingException | TemplateException | IOException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal server error on delete. Please try again later. ", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
@@ -382,10 +402,10 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/hasUseRestriction/{referenceId}")
     @PermitAll
-    public Response hasUseRestriction(@PathParam("referenceId") String referenceId){
-        try{
-            return Response.ok("{\"hasUseRestriction\":"+dataAccessRequestAPI.hasUseRestriction(referenceId)+"}").build();
-        }catch (Exception e){
+    public Response hasUseRestriction(@PathParam("referenceId") String referenceId) {
+        try {
+            return Response.ok("{\"hasUseRestriction\":" + dataAccessRequestAPI.hasUseRestriction(referenceId) + "}").build();
+        } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
@@ -396,29 +416,29 @@ public class DataAccessRequestResource extends Resource {
     @Path("/restriction")
     @PermitAll
     public Response getUseRestrictionFromQuestions(Document dar) {
-        try{
+        try {
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
-            if (!needsManualReview){
+            if (!needsManualReview) {
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
                 return Response.ok(useRestriction).build();
-            }else{
+            } else {
                 return Response.ok("{\"useRestriction\":\"Manual Review\"}").build();
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
 
-    private Document savePartialDarRequest(Document dar) throws Exception{
-        dar.append(DarConstants.SORT_DATE,new Date());
+    private Document savePartialDarRequest(Document dar) throws Exception {
+        dar.append(DarConstants.SORT_DATE, new Date());
         return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
     }
 
-    private Integer obtainUserId (Document dar) {
-        try{
+    private Integer obtainUserId(Document dar) {
+        try {
             return dar.getInteger("userId");
-        }catch (Exception e) {
+        } catch (Exception e) {
             return Integer.valueOf(dar.getString("userId"));
         }
     }

@@ -1,14 +1,18 @@
 package org.broadinstitute.consent.http;
 
 import com.mongodb.MongoClient;
+import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Storage;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.config.IRuntimeConfig;
+import de.flapdoodle.embed.process.config.io.ProcessOutput;
 import de.flapdoodle.embed.process.runtime.Network;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.FileUtils;
@@ -23,8 +27,17 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentBuilder;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.models.validate.ValidateResponse;
+import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.mockito.Mockito;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -34,15 +47,6 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.models.validate.ValidateResponse;
-import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -202,7 +206,14 @@ abstract public class AbstractTest extends ResourcedTest {
         int port = 27017;
         String bindIp = "localhost";
         // Creating Mongodbruntime instance
-        MongodStarter starter = MongodStarter.getDefaultInstance();
+        // Make flapdoodle/mongo respect dropwizard's logging framework
+        // See https://github.com/flapdoodle-oss/de.flapdoodle.embed.mongo#usage---custom-mongod-process-output
+        org.slf4j.Logger slf4jLogger = org.slf4j.LoggerFactory.getLogger(getClass().getName());
+        IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
+                .defaultsWithLogger(Command.MongoD, slf4jLogger)
+                .processOutput(ProcessOutput.getDefaultInstanceSilent())
+                .build();
+        MongodStarter starter = MongodStarter.getInstance(runtimeConfig);
         // Creating MongodbExecutable
         Storage replication = new Storage("target/mongo",null,0);
         IMongodConfig config = new MongodConfigBuilder()
