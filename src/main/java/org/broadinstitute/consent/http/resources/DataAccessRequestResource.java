@@ -184,15 +184,22 @@ public class DataAccessRequestResource extends Resource {
     public Response describe(@PathParam("id") String id) {
         try {
             Document document = dataAccessRequestAPI.describeDataAccessRequestById(id);
-            return Response.status(Response.Status.OK).entity(document).build();
+            if (document != null) {
+                return Response.status(Response.Status.OK).entity(document).build();
+            }
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity("Unable to find Data Access Request with id: " + id)
+                    .build();
         } catch (IllegalArgumentException e) {
+            // This exception is thrown when mongo can't coerce the string value to an ObjectId.
             logger.log(Level.INFO, "Returning DAR not found response to client from exception: " + e.getMessage());
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity("Unable to find Data Access Request with id: " + id)
                     .build();
         } catch (Exception e) {
-            return createExceptionResponse(new NotFoundException("Unable to find Data Access Request with id: " + id));
+            return createExceptionResponse(e);
         }
     }
 
