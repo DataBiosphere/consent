@@ -186,12 +186,11 @@ public class DataAccessRequestResource extends Resource {
         try {
             new ObjectId(id);
         } catch (IllegalArgumentException e) {
-            logger.log(Level.INFO, "Returning DAR not found response to client from exception: " + e.getMessage());
+            String message = "The provided id is not a valid Data Access Request Id: " + id;
+            logger.log(Level.INFO, message + "; " + e.getMessage());
             return Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity(new Error(
-                            "The provided id is not a valid Data Access Request Id: " + id,
-                            Response.Status.BAD_REQUEST.getStatusCode()))
+                    .entity(new Error(message, Response.Status.BAD_REQUEST.getStatusCode()))
                     .build();
         }
         try {
