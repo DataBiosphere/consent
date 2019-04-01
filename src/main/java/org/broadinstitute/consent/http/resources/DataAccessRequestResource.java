@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -183,20 +184,26 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public Response describe(@PathParam("id") String id) {
         try {
+            new ObjectId(id);
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.INFO, "Returning DAR not found response to client from exception: " + e.getMessage());
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new Error(
+                            "The provided id is not a valid Data Access Request Id: " + id,
+                            Response.Status.BAD_REQUEST.getStatusCode()))
+                    .build();
+        }
+        try {
             Document document = dataAccessRequestAPI.describeDataAccessRequestById(id);
             if (document != null) {
                 return Response.status(Response.Status.OK).entity(document).build();
             }
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity("Unable to find Data Access Request with id: " + id)
-                    .build();
-        } catch (IllegalArgumentException e) {
-            // This exception is thrown when mongo can't coerce the string value to an ObjectId.
-            logger.log(Level.INFO, "Returning DAR not found response to client from exception: " + e.getMessage());
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity("Unable to find Data Access Request with id: " + id)
+                    .entity(new Error(
+                                    "Unable to find Data Access Request with id: " + id,
+                                    Response.Status.NOT_FOUND.getStatusCode()))
                     .build();
         } catch (Exception e) {
             return createExceptionResponse(e);

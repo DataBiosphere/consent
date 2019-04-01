@@ -875,7 +875,15 @@ paths:
         - Data Access Request
       responses:
         '200':
-          description: Returns the DAR collection, an array where each field is a json object that represents a DAR.
+          description: Returns a Data Access Request
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+        '400':
+          description: The provided ID is not a valid DAR identifier
+        '404':
+          description: No DAR can be found with the provided identifier
+        '500':
+          description: Server Error
     put:
           summary: updateDataAccessRequest
           description: Updates the DAR identified by the dar_code.

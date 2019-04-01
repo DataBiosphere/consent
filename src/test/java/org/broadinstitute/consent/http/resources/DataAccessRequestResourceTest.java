@@ -129,9 +129,17 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
     }
 
     @Test
-    public void testDarNotFound() throws Exception {
+    public void testInvalidDARFormat() throws Exception {
         Client client = ClientBuilder.newClient();
         Response response = getJson(client, darPath("invalid-5998-id"));
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void testDARNotFound() throws Exception {
+        ObjectId id = new ObjectId();
+        Client client = ClientBuilder.newClient();
+        Response response = getJson(client, darPath(id.toHexString()));
         assertEquals(404, response.getStatus());
     }
 
