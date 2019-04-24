@@ -162,7 +162,7 @@ public class DARModalDetailsDTO {
             manualReviewIsTrue();
         }
         if(darDocument.containsKey("hmb") && darDocument.getBoolean("hmb")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL, true));
+            researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL, false));
         }
         if(darDocument.containsKey("poa") && darDocument.getBoolean("poa")){
             researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL, true));
