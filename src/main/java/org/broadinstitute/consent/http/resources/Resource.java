@@ -23,6 +23,10 @@ import java.util.Map;
  */
 abstract public class Resource {
 
+    // Resource based role names
+    protected final static String ADMIN = "ADMIN";
+    protected final static String CHAIRPERSON = "CHAIRPERSON";
+
     protected Logger logger() {
         return Logger.getLogger("consent");
     }

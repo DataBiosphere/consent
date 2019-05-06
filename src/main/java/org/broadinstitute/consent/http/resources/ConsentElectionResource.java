@@ -34,7 +34,7 @@ public class ConsentElectionResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response createConsentElection(@Context UriInfo info, Election rec,
                                           @PathParam("consentId") String consentId) {
         URI uri;
@@ -76,7 +76,7 @@ public class ConsentElectionResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response deleteElection(@PathParam("consentId") String consentId, @Context UriInfo info, @PathParam("id") Integer id) {
         try {
             api.deleteElection(consentId, id);
