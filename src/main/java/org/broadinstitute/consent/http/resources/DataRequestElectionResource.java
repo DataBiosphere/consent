@@ -40,7 +40,7 @@ public class DataRequestElectionResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response createDataRequestElection(@Context UriInfo info, Election rec,
                                               @PathParam("requestId") String requestId) {
         URI uri;
@@ -80,7 +80,7 @@ public class DataRequestElectionResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response deleteElection(@PathParam("requestId") String requestId, @PathParam("id") Integer id, @Context UriInfo info) {
         try {
             api.deleteElection(requestId, id);
