@@ -150,9 +150,9 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         assertThat(createdLocation).isNotEmpty();
 
         // Reset DAC roles
-        userRoleDAO.insertSingleUserRole(member, 2, false);
-        userRoleDAO.insertSingleUserRole(member, 3, false);
-        userRoleDAO.insertSingleUserRole(member, 4, false);
+        userRoleDAO.insertSingleUserRole(member, 2, true);
+        userRoleDAO.insertSingleUserRole(member, 3, true);
+        userRoleDAO.insertSingleUserRole(member, 4, true);
     }
 
     @Test
@@ -172,10 +172,10 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         checkStatus(BADREQUEST, post(client, electionConsentPath(CONSENT_ID), election));
 
         // Reset DAC roles
-        userRoleDAO.insertSingleUserRole(chair, 1, false);
-        userRoleDAO.insertSingleUserRole(member, 2, false);
-        userRoleDAO.insertSingleUserRole(member, 3, false);
-        userRoleDAO.insertSingleUserRole(member, 4, false);
+        userRoleDAO.insertSingleUserRole(chair, 1, true);
+        userRoleDAO.insertSingleUserRole(member, 2, true);
+        userRoleDAO.insertSingleUserRole(member, 3, true);
+        userRoleDAO.insertSingleUserRole(member, 4, true);
     }
 
     @Test
@@ -192,7 +192,7 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         checkStatus(BADREQUEST, post(client, electionConsentPath(CONSENT_ID), election));
 
         // Reset DAC roles
-        userRoleDAO.insertSingleUserRole(chair, 1, false);
+        userRoleDAO.insertSingleUserRole(chair, 1, true);
     }
 
     public Election createElection(String consentId) throws IOException {
