@@ -25,8 +25,8 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
@@ -651,27 +651,19 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void validateAvailableUsers(ElectionType electionType) {
-        if(!electionType.equals(ElectionType.DATA_SET)){
+        if (!electionType.equals(ElectionType.DATA_SET)) {
             Set<DACUser> dacUsers = dacUserDAO.findDACUsersEnabledToVote();
-            if (dacUsers != null && dacUsers.size() >= 4) {
-                boolean existChairperson = false;
-                for (DACUser user : dacUsers) {
-                    if (user.getRoles().stream().anyMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()))) {
-                        existChairperson = true;
-                        break;
-                    }
-                }
-                if (!existChairperson) {
-                    throw new IllegalArgumentException("There has to be a Chairperson.");
-                }
-            } else {
-                throw new IllegalArgumentException(
-                        "There has to be a Chairperson and at least 4 Members cataloged in the system to create an election.");
+            if (dacUsers == null || dacUsers.isEmpty()) {
+                throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
+            }
+            boolean chairpersonExists = dacUsers.stream()
+                    .flatMap(u -> u.getRoles().stream())
+                    .anyMatch(r -> r.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()));
+            if (!chairpersonExists) {
+                throw new IllegalArgumentException("There has to be a Chairperson.");
             }
         }
-
     }
-
 
     private void updateSortDate(String referenceId, Date createDate){
         if(consentDAO.checkConsentbyId(referenceId) != null){
