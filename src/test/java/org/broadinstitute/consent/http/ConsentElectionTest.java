@@ -2,18 +2,23 @@ package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +35,9 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     private static final String INVALID_CONSENT_ID = "invalidId";
     private static final String INVALID_STATUS = "testStatus";
     private static final String FINAL_RATIONALE = "Test";
+    private DACUserRoleDAO userRoleDAO = getApplicationJdbi().onDemand(DACUserRoleDAO.class);
+    private static final int member = 1;
+    private static final int chair = 2;
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -38,6 +46,23 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
     @Override
     public DropwizardAppRule<ConsentConfiguration> rule() {
         return RULE;
+    }
+
+    @After
+    public void resetDACMemberRoles() {
+        // to avoid integrity constraint violations on insert, delete them all first.
+        List<Integer> roleList = Arrays.asList(member, chair);
+        userRoleDAO.removeUserRoles(1, roleList);
+        userRoleDAO.removeUserRoles(2, roleList);
+        userRoleDAO.removeUserRoles(3, roleList);
+        userRoleDAO.removeUserRoles(4, roleList);
+
+        // now reset to original seed data.
+        userRoleDAO.insertSingleUserRole(chair, 1, false);
+        userRoleDAO.insertSingleUserRole(member, 1, false);
+        userRoleDAO.insertSingleUserRole(member, 2, false);
+        userRoleDAO.insertSingleUserRole(member, 3, false);
+        userRoleDAO.insertSingleUserRole(member, 4, false);
     }
 
     @Test
@@ -120,6 +145,57 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         // should return 400 bad request because status is invalid
         checkStatus(BAD_REQUEST,
                 post(client, electionConsentPath(CONSENT_ID_2), election));
+    }
+
+    @Test
+    public void createElectionWithSingleChairperson() throws IOException {
+        // Test Seed Data creates 3 DAC members and 1 chairperson.
+        // We need to remove the DAC member roles for this test
+        List<Integer> roleList = Collections.singletonList(member);
+        userRoleDAO.removeUserRoles(2, roleList);
+        userRoleDAO.removeUserRoles(3, roleList);
+        userRoleDAO.removeUserRoles(4, roleList);
+
+        Client client = ClientBuilder.newClient();
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        Response response = checkStatus(CREATED,
+                post(client, electionConsentPath(CONSENT_ID), election));
+        String createdLocation = checkHeader(response, "Location");
+        assertThat(createdLocation).isNotNull();
+        assertThat(createdLocation).isNotEmpty();
+    }
+
+    @Test
+    public void createElectionWithNoDACMembersOrChair() throws IOException {
+        // Test Seed Data creates 3 DAC members and 1 chairperson.
+        // We need to remove all roles for this test
+        List<Integer> roleList = Arrays.asList(member, chair);
+        userRoleDAO.removeUserRoles(1, roleList);
+        userRoleDAO.removeUserRoles(2, roleList);
+        userRoleDAO.removeUserRoles(3, roleList);
+        userRoleDAO.removeUserRoles(4, roleList);
+
+        Client client = ClientBuilder.newClient();
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        checkStatus(BADREQUEST, post(client, electionConsentPath(CONSENT_ID), election));
+    }
+
+    @Test
+    public void createElectionWithNoChair() throws IOException {
+        // Test Seed Data creates 3 DAC members and 1 chairperson.
+        // We need to remove the chairperson role for this test
+        List<Integer> roleList = Collections.singletonList(chair);
+        userRoleDAO.removeUserRoles(1, roleList);
+
+        Client client = ClientBuilder.newClient();
+        Election election = new Election();
+        election.setStatus(ElectionStatus.OPEN.getValue());
+        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+        checkStatus(BADREQUEST, post(client, electionConsentPath(CONSENT_ID), election));
     }
 
     public Election createElection(String consentId) throws IOException {

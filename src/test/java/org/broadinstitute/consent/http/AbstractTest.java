@@ -14,6 +14,8 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
 import de.flapdoodle.embed.process.config.io.ProcessOutput;
 import de.flapdoodle.embed.process.runtime.Network;
+import io.dropwizard.jdbi.DBIFactory;
+import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -30,6 +32,7 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.validate.ValidateResponse;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.mockito.Mockito;
+import org.skife.jdbi.v2.DBI;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -236,6 +239,12 @@ abstract public class AbstractTest extends ResourcedTest {
         } catch (IOException e) {
             logger.error("Unable to remove target/mongo directory");
         }
+    }
+
+    DBI getApplicationJdbi() {
+        ConsentConfiguration configuration = rule().getConfiguration();
+        Environment environment = rule().getEnvironment();
+        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), "mysql");
     }
 
 }
