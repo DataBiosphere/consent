@@ -7,6 +7,7 @@ import com.mongodb.client.MongoCursor;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.assertj.core.util.VisibleForTesting;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -89,7 +90,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+    @VisibleForTesting
+    DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
