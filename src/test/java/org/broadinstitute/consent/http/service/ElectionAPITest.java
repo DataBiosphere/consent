@@ -82,10 +82,7 @@ public class ElectionAPITest extends AbstractTest {
         when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
         when(consentDAO.checkConsentbyId(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);
-        Election election = new Election();
-        election.setStatus(ElectionStatus.OPEN.getValue());
-        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-        election.setReferenceId(consentId);
+        Election election = createConsentElection();
         when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);
         Election savedElection = electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
         assertNotNull(savedElection);
@@ -94,10 +91,7 @@ public class ElectionAPITest extends AbstractTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentElectionNoDACMembers() throws Exception {
         when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(Collections.emptySet());
-        Election election = new Election();
-        election.setStatus(ElectionStatus.OPEN.getValue());
-        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-        election.setReferenceId(consentId);
+        Election election = createConsentElection();
         electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
     }
 
@@ -115,11 +109,16 @@ public class ElectionAPITest extends AbstractTest {
                 .filter(u -> u.getRoles().contains(MEMBER))
                 .collect(Collectors.toSet());
         when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(membersWithRoles);
+        Election election = createConsentElection();
+        electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
+    }
+
+    private Election createConsentElection() {
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
         election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
         election.setReferenceId(consentId);
-        electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
+        return election;
     }
 
 }
