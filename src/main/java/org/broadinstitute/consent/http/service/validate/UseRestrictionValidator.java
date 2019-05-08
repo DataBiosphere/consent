@@ -1,9 +1,5 @@
 package org.broadinstitute.consent.http.service.validate;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import com.google.gson.Gson;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
@@ -20,6 +16,10 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +53,8 @@ public class UseRestrictionValidator extends AbstractUseRestrictionValidatorAPI{
             if (!entity.isValid()) {
                 throw new IllegalArgumentException(entity.getErrors().toString());
             }
-        }else{
-            throw new IllegalArgumentException("There was an error posting the use restriction" + (res.readEntity(ValidateResponse.class)).getErrors().toString());
+        } else {
+            throw new IllegalArgumentException("There was an error posting the use restriction" + (res.readEntity(String.class)));
         }
     }
 
