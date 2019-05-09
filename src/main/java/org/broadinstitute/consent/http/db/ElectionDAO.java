@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -18,7 +19,7 @@ import org.skife.jdbi.v2.unstable.BindIn;
 @RegisterMapper({ElectionMapper.class})
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
-    String CHAIRPERSON = "CHAIRPERSON";
+    String CHAIRPERSON = Resource.CHAIRPERSON;
     String FINAL = "FINAL";
     String DATASET = "DataSet";
     String OPEN = "Open";

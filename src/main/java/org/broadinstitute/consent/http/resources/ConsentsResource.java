@@ -133,7 +133,7 @@ public class ConsentsResource extends Resource {
     @POST
     @Path("group-names")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response updateGroupNames(@Context UriInfo info, @Auth User user, List<ConsentGroupNameDTO> data) {
         try {
             List<ConsentGroupNameDTO> errors = api.verifyConsentGroupNames(data);

@@ -29,7 +29,7 @@ public class NihAccountResource extends Resource {
 
     @POST
     @Produces("application/json")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth User user) {
         try {
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
@@ -41,7 +41,7 @@ public class NihAccountResource extends Resource {
 
     @DELETE
     @Produces("application/json")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response deleteNihAccount(@Auth User user) {
         try {
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());

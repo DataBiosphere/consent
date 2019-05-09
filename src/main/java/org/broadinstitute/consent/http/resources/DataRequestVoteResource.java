@@ -55,7 +55,7 @@ public class DataRequestVoteResource extends Resource {
     @POST
     @Consumes("application/json")
     @Path("/{id}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
+    @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
     public Response createDataRequestVote(@Context UriInfo info, Vote rec,
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
@@ -77,7 +77,7 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}/final")
-    @RolesAllowed("CHAIRPERSON")
+    @RolesAllowed(CHAIRPERSON)
     public Response updateFinalAccessVote(Vote rec,
                                                  @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
@@ -104,7 +104,7 @@ public class DataRequestVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
+    @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
     public Response updateDataRequestVote(Vote rec,
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
@@ -159,7 +159,7 @@ public class DataRequestVoteResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response deleteVote(@PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
             api.deleteVote(id, requestId);
@@ -171,7 +171,7 @@ public class DataRequestVoteResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response deleteVotes(@PathParam("requestId") String requestId) {
         try {
             if (requestId == null)

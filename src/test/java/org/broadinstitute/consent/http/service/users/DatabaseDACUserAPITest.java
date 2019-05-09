@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service.users;
 
 import org.broadinstitute.consent.http.db.*;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -66,11 +66,11 @@ public class DatabaseDACUserAPITest {
         DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setDacUserId(3);
-        DACUserRole role = new DACUserRole(1, DACUserRoles.RESEARCHER.getValue());
+        DACUserRole role = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
         List<DACUserRole> roles = new ArrayList<>(Arrays.asList(role));
         user.setRoles(roles);
         when(dacUserDAO.findDACUserById(3)).thenReturn(user);
-        when(roleDAO.findRoleIdByName(DACUserRoles.RESEARCHER.getValue())).thenReturn(1);
+        when(roleDAO.findRoleIdByName(UserRoles.RESEARCHER.getValue())).thenReturn(1);
         when(roleDAO.findRolesByUserId(3)).thenReturn(roles);
         user = databaseDACUserAPI.createDACUser(user);
         assertTrue(user != null);
@@ -153,7 +153,7 @@ public class DatabaseDACUserAPITest {
         when(electionDAO.findNonDataSetOpenElectionIds(dacUser.getDacUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
         when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new DACUser(5, EMAIL, DISPLAY_NAME, new Date(), null))));
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.MEMBER.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 1);
@@ -167,7 +167,7 @@ public class DatabaseDACUserAPITest {
         when(electionDAO.findNonDataSetOpenElectionIds(dacUser.getDacUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
         when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>());
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.MEMBER.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);
@@ -177,7 +177,7 @@ public class DatabaseDACUserAPITest {
     public void validateNeedsDelegationMemberFalse() {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.MEMBER.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertFalse(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);
@@ -187,7 +187,7 @@ public class DatabaseDACUserAPITest {
     public void validateNeedsDelegationChairpersonFalse() {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.CHAIRPERSON.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.CHAIRPERSON.getValue());
         assertNotNull(response);
         assertFalse(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);
@@ -201,7 +201,7 @@ public class DatabaseDACUserAPITest {
         when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(dacUser.getDacUserId())).thenReturn(associatedDataSetId);
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId)).thenReturn(dataOwnersPerDataSet);
         when(dacUserDAO.getDataOwnersApprovedToReplace(dacUser.getDacUserId())).thenReturn(new ArrayList<>());
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, DACUserRoles.DATAOWNER.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.DATAOWNER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);

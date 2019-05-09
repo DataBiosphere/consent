@@ -41,7 +41,7 @@ public class DataAccessAgreementResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"ADMIN", "RESEARCHER"})
+    @RolesAllowed({ADMIN, RESEARCHER})
     @Path("/downloadDAA/{researcherId}")
     public Response getDAA(@PathParam("researcherId") Integer researcherId) {
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(researcherId);
@@ -66,7 +66,7 @@ public class DataAccessAgreementResource extends Resource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/storeDAA")
-    @RolesAllowed({"RESEARCHER", "ADMIN"})
+    @RolesAllowed({RESEARCHER, ADMIN})
     public Response storeDAA (
             @FormDataParam("data") InputStream uploadedDAA,
             @FormDataParam("data") FormDataBodyPart part,

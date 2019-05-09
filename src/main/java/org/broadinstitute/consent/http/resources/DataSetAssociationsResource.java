@@ -22,7 +22,7 @@ public class DataSetAssociationsResource extends Resource {
     @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response associateDatasetWithUsers(@PathParam("dataSetId") Integer dataSetId, List<Integer> usersIdList) {
         try {
             return  Response.status(Response.Status.CREATED).entity(api.createDatasetUsersAssociation(dataSetId, usersIdList)).build() ;
@@ -48,7 +48,7 @@ public class DataSetAssociationsResource extends Resource {
     @Path("/{dataSetId}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response updateDatasetAssociations(@PathParam("dataSetId") Integer dataSetId, List<Integer> usersIdList) {
         try {
             return  Response.ok(api.updateDatasetAssociations(dataSetId, usersIdList)).build() ;

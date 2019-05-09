@@ -34,7 +34,7 @@ public class IndexerResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getIndexedFiles() {
         try {
             indexerService.getIndexedFiles();
@@ -47,7 +47,7 @@ public class IndexerResource extends Resource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response saveAndIndex(FormDataMultiPart formParams) {
         try {
             List<StreamRec> fileCompList = elasticSearchHelper.filesCompBuilder(formParams);
@@ -59,7 +59,7 @@ public class IndexerResource extends Resource {
 
     @PUT
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response deleteIndexedFile(String fileURL) {
         if (fileURL == null || fileURL.isEmpty()) {
             return createExceptionResponse(new BadRequestException("Query Parameter 'fileURL' cannot be empty."));
@@ -94,7 +94,7 @@ public class IndexerResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("types")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getOntologyTypes() {
         return Response.ok().entity(OntologyTypes.values()).build();
     }

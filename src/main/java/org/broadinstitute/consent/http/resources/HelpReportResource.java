@@ -29,7 +29,7 @@ public class HelpReportResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI","RESEARCHER","DATAOWNER"})
+    @PermitAll
     public Response createdHelpReport(@Context UriInfo info, HelpReport helpReport) {
         try {
             helpReport = helpReportAPI.create(helpReport);
@@ -44,7 +44,7 @@ public class HelpReportResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response delete(@PathParam("id") Integer id) {
         helpReportAPI.deleteHelpReportById(id);
         return Response.ok().entity("Report was deleted").build();

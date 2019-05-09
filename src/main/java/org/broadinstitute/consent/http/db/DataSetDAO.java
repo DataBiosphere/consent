@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.BindBean;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
@@ -25,7 +26,7 @@ import java.util.Set;
 @RegisterMapper({DataSetMapper.class})
 public interface DataSetDAO extends Transactional<DataSetDAO> {
 
-    String CHAIRPERSON = "CHAIRPERSON";
+    String CHAIRPERSON = Resource.CHAIRPERSON;
 
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);

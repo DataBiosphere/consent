@@ -19,7 +19,7 @@ public class ConsentManageResource extends Resource {
 
     @GET
     @Path("/manage")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getConsentManage() {
         return Response.ok(api.describeConsentManage())
                 .build();
@@ -27,7 +27,7 @@ public class ConsentManageResource extends Resource {
 
     @GET
     @Path("/unreviewed")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getTotalUnreviewedConsent() {
         return Response.ok("{\"dulUnReviewedCases\":"+api.getUnReviewedConsents()+"}").build();
     }

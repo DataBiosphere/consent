@@ -1,12 +1,19 @@
 package org.broadinstitute.consent.http.enumeration;
 
-public enum DACUserRoles {
+import org.broadinstitute.consent.http.resources.Resource;
 
-    MEMBER("MEMBER"), CHAIRPERSON("CHAIRPERSON"), ALUMNI("ALUMNI"), ADMIN("ADMIN"), RESEARCHER("RESEARCHER"), DATAOWNER("DATAOWNER");
+public enum UserRoles {
+
+    MEMBER(Resource.MEMBER),
+    CHAIRPERSON(Resource.CHAIRPERSON),
+    ALUMNI(Resource.ALUMNI),
+    ADMIN(Resource.ADMIN),
+    RESEARCHER(Resource.RESEARCHER),
+    DATAOWNER(Resource.DATAOWNER);
 
     private String value;
 
-    DACUserRoles(String value) {
+    UserRoles(String value) {
         this.value = value;
     }
 
@@ -15,7 +22,7 @@ public enum DACUserRoles {
     }
 
     public static String getValue(String value) {
-        for (DACUserRoles e : DACUserRoles.values()) {
+        for (UserRoles e : UserRoles.values()) {
             if (e.getValue().equalsIgnoreCase(value)) {
                 return e.getValue();
             }

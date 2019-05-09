@@ -4,7 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
@@ -70,7 +70,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         }
         Map<String, Collection<DACUser>> usersMap = new HashMap<>();
         usersMap.put("associated_users",associated_users);
-        Collection<DACUser> dataOwnersList = dacUserDAO.describeUsersByRole(DACUserRoles.DATAOWNER.getValue());
+        Collection<DACUser> dataOwnersList = dacUserDAO.describeUsersByRole(UserRoles.DATAOWNER.getValue());
         usersMap.put("not_associated_users",CollectionUtils.subtract(dataOwnersList, associated_users));
         return usersMap;
     }
@@ -125,7 +125,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         Collection<DACUser> dacUserList = dacUserDAO.findUsersWithRoles(usersIdList);
         if(dacUserList.size() == usersIdList.size()){
                 for (DACUser user : dacUserList) {
-                    if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(DACUserRoles.DATAOWNER.getValue()))) {
+                    if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue()))) {
                         throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getDacUserId()));
                     }
                 }

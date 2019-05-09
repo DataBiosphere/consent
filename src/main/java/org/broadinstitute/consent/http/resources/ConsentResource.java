@@ -72,7 +72,7 @@ public class ConsentResource extends Resource {
     @Path("invalid")
     @GET
     @Produces("application/json")
-    @RolesAllowed({"ADMIN"})
+    @RolesAllowed({ADMIN})
     public Response describeInvalidConsents() {
         try {
             return Response.ok(api.getInvalidConsents()).build();
@@ -83,7 +83,7 @@ public class ConsentResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
+    @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth User user) {
         try {
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
@@ -110,7 +110,7 @@ public class ConsentResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed({"ADMIN", "RESEARCHER", "DATAOWNER"})
+    @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response update(@PathParam("id") String id, Consent updated, @Auth User user) {
         try {
             checkConsentElection(id);
@@ -137,7 +137,7 @@ public class ConsentResource extends Resource {
     @DELETE
     @Produces("application/json")
     @Path("{id}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response delete(@PathParam("id") String consentId) {
         try {
             api.delete(consentId);

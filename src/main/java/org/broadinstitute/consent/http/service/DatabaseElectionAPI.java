@@ -15,7 +15,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -660,7 +660,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             }
             boolean chairpersonExists = dacUsers.stream()
                     .flatMap(u -> u.getRoles().stream())
-                    .anyMatch(r -> r.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue()));
+                    .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getValue()));
             if (!chairpersonExists) {
                 throw new IllegalArgumentException("There has to be a Chairperson.");
             }

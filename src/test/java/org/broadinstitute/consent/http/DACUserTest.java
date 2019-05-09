@@ -3,10 +3,11 @@ package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -35,7 +36,7 @@ public class DACUserTest extends DACUserServiceTest {
     private static final String DAC_USER_EMAIL = "dacmember@broad.com";
     private static final String CHAIR_USER_EMAIL = "chairperson@broad.com";
     private static final String CHAIR_2_USER_EMAIL = "chairperson2@broad.com";
-    private static final String CHAIRPERSON = "CHAIRPERSON";
+    private static final String CHAIRPERSON = Resource.CHAIRPERSON;
     private static final String DACMEMBER = "DACMEMBER";
     private static String DACMEMBERMAIL;
 
@@ -123,11 +124,11 @@ public class DACUserTest extends DACUserServiceTest {
         DACUser user = getJson(client, dacUserPathByEmail(DAC_USER_EMAIL)).readEntity(DACUser.class);
         user.setEmail(DAC_USER_EMAIL);
         DACUserRole role = new DACUserRole();
-        role.setName(DACUserRoles.MEMBER.getValue());
+        role.setName(UserRoles.MEMBER.getValue());
         user.setRoles(new ArrayList<>(Arrays.asList(role)));
         Map<String, Object> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser",user);
-        HashMap response = post(client, validateDelegationPath(DACUserRoles.MEMBER.getValue()), user).readEntity(HashMap.class);
+        HashMap response = post(client, validateDelegationPath(UserRoles.MEMBER.getValue()), user).readEntity(HashMap.class);
         boolean needsDelegation = (Boolean)response.get("needsDelegation");
         List<DACUser> dacUsers = (List<DACUser>)response.get("delegateCandidates");
         assertThat(dacUsers).isEmpty();
@@ -158,7 +159,7 @@ public class DACUserTest extends DACUserServiceTest {
         checkStatus(OK, response);
         DACUser user = response.readEntity(DACUser.class);
         DACUserRole researcher = user.getRoles().stream().filter(userRole ->
-                userRole.getName().equalsIgnoreCase(DACUserRoles.RESEARCHER.getValue()))
+                userRole.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getValue()))
                 .findFirst().get();
         assertThat(researcher.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
     }

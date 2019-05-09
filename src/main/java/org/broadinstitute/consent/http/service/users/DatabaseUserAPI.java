@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
@@ -106,9 +106,9 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
     private void validateRoles(List<DACUserRole> roles) {
         if (CollectionUtils.isNotEmpty(roles)) {
             roles.forEach(role -> {
-                if (!(role.getName().equalsIgnoreCase(DACUserRoles.DATAOWNER.getValue())
-                        || role.getName().equalsIgnoreCase(DACUserRoles.RESEARCHER.getValue()))) {
-                    throw new IllegalArgumentException("Invalid role: " + role.getName() + ". Valid roles are: " + DACUserRoles.DATAOWNER.getValue() + " and " + DACUserRoles.RESEARCHER.getValue());
+                if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue())
+                        || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getValue()))) {
+                    throw new IllegalArgumentException("Invalid role: " + role.getName() + ". Valid roles are: " + UserRoles.DATAOWNER.getValue() + " and " + UserRoles.RESEARCHER.getValue());
                 }
             });
         }else{
@@ -129,8 +129,8 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         });
     }
     private void updateDataOwnerRole(List<DACUserRole> existentRoles, List<DACUserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
-        boolean isDO = containsRole(existentRoles, DACUserRoles.DATAOWNER.getValue());
-        boolean isNewDO = containsRole(newRoles, DACUserRoles.DATAOWNER.getValue());
+        boolean isDO = containsRole(existentRoles, UserRoles.DATAOWNER.getValue());
+        boolean isNewDO = containsRole(newRoles, UserRoles.DATAOWNER.getValue());
         //remove data owner
         if (isDO && !isNewDO) {
             if (hasDataSetAssociation(user)) {
@@ -140,19 +140,19 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
                 throw new UserRoleHandlerException("Role can not be removed. There are open dataset elections for this user.");
             }
             else{
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(DACUserRoles.DATAOWNER.getValue()));
+                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
             }
         }
         //add data owner
         if (!isDO && isNewDO) {
-            rolesToAdd.put(user.getDacUserId(), roleIdMap.get(DACUserRoles.DATAOWNER.getValue()));
+            rolesToAdd.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
 
         }
     }
 
     private void updateResearcherRole(List<DACUserRole> existentRoles, List<DACUserRole> newRoles, DACUser user,Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
-        boolean isResearcher = containsRole(existentRoles, DACUserRoles.RESEARCHER.getValue());
-        boolean isNewResearcher = containsRole(newRoles, DACUserRoles.RESEARCHER.getValue());
+        boolean isResearcher = containsRole(existentRoles, UserRoles.RESEARCHER.getValue());
+        boolean isNewResearcher = containsRole(newRoles, UserRoles.RESEARCHER.getValue());
         //remove researcher
         if (isResearcher && !isNewResearcher) {
             BasicDBObject query = new BasicDBObject(DarConstants.STATUS, new BasicDBObject("$ne",ElectionStatus.CANCELED.getValue()));
@@ -161,15 +161,15 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
             if (dar != null) {
                 throw new UserRoleHandlerException("Role can not be removed. The specified user has open DAR.");
             }else{
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(DACUserRoles.RESEARCHER.getValue()));
+                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
             }
         }
         //add researcher
         if (!isResearcher && isNewResearcher) {
-            if (containsRole(existentRoles, DACUserRoles.CHAIRPERSON.getValue()) || containsRole(existentRoles, DACUserRoles.MEMBER.getValue())) {
+            if (containsRole(existentRoles, UserRoles.CHAIRPERSON.getValue()) || containsRole(existentRoles, UserRoles.MEMBER.getValue())) {
                 throw new UserRoleHandlerException("Role can not be added. Researcher  is incompatible with  Member and Chairperson role.");
             } else {
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(DACUserRoles.RESEARCHER.getValue()));
+                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
             }
         }
     }

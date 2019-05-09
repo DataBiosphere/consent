@@ -7,16 +7,8 @@ import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AuditServiceAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 
@@ -52,7 +44,7 @@ public class ConsentAssociationResource extends Resource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"RESEARCHER", "DATAOWNER", "ADMIN"})
+    @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
     public Response createAssociation(@Auth User user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
@@ -78,7 +70,7 @@ public class ConsentAssociationResource extends Resource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"RESEARCHER", "DATAOWNER", "ADMIN"})
+    @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
     public Response updateAssociation(@Auth User user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
@@ -115,7 +107,7 @@ public class ConsentAssociationResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response deleteAssociation(@PathParam("id") String consentId, @QueryParam("associationType") String atype, @QueryParam("id") String objectId) {
         try {
             String msg = String.format("DELETEing association for id '%s' with associationType='%s' and id='%s'", consentId, (atype == null ? "<null>" : atype), (objectId == null ? "<null>" : objectId));

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.BindBean;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
@@ -22,7 +23,7 @@ import org.skife.jdbi.v2.unstable.BindIn;
 public interface VoteDAO extends Transactional<VoteDAO> {
 
     String OPEN = "Open";
-    String CHAIRPERSON = "CHAIRPERSON";
+    String CHAIRPERSON = Resource.CHAIRPERSON;
     String FINAL = "FINAL";
     String DAC = "DAC";
     String CLOSED = "Closed";

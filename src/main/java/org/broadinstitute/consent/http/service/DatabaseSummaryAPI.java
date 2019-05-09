@@ -7,13 +7,26 @@ import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.AccessRP;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
@@ -23,9 +36,19 @@ import org.bson.types.ObjectId;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -181,7 +204,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         List<Integer> electionVotesUserIds = electionVotes.stream().map(e -> e.getDacUserId()).collect(Collectors.toList());
                         Collection<DACUser> electionDacUsers = dacUsers.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
                         List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
-                        Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals("CHAIRPERSON")).collect(singletonCollector());
+                        Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
                         DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
                         summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
                         summaryWriter.write(election.getVersion() + SEPARATOR);

@@ -90,7 +90,7 @@ public class DataAccessRequestResource extends Resource {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {
@@ -125,7 +125,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response updateDataAccessRequest(Document dar, @PathParam("id") String id) {
         try {
             if (dar.containsKey(DarConstants.RESTRICTION)) {
@@ -161,7 +161,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/invalid")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getInvalidDataAccessRequest() {
         try {
             return Response.status(Response.Status.OK).entity(dataAccessRequestAPI.getInvalidDataAccessRequest()).build();
@@ -212,7 +212,7 @@ public class DataAccessRequestResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed({"RESEARCHER", "ADMIN"})
+    @RolesAllowed({RESEARCHER, ADMIN})
     public Response delete(@PathParam("id") String id) {
         try {
             dataAccessRequestAPI.deleteDataAccessRequestById(id);
@@ -259,7 +259,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage")
-    @RolesAllowed({"RESEARCHER", "ADMIN"})
+    @RolesAllowed({RESEARCHER, ADMIN})
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage(userId)).build();
     }
@@ -267,7 +267,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Path("cases/unreviewed")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getTotalUnReviewedDAR() {
         return Response.ok("{\"darUnReviewedCases\":" + dataAccessRequestAPI.getTotalUnReviewedDAR() + "}").build();
     }
@@ -277,7 +277,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partials")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public List<Document> describePartialDataAccessRequests() {
         return dataAccessRequestAPI.describePartialDataAccessRequests();
     }
@@ -286,7 +286,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/partial")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response createPartialDataAccessRequest(@Context UriInfo info, Document dar) {
         URI uri;
         Document result = null;
@@ -307,7 +307,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/partial/datasetCatalog")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     /*
      * Note: Run this endpoint only once, in order to apply datasets correspondent alias Id
      * in MySql and replace objectId to datasetId in Mongodb
@@ -336,7 +336,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/partial")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
         try {
             dar = dataAccessRequestAPI.updatePartialDataAccessRequest(dar);
@@ -349,7 +349,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partial/{id}")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Document describePartialDar(@PathParam("id") String id) {
         return dataAccessRequestAPI.describePartialDataAccessRequestById(id);
     }
@@ -358,7 +358,7 @@ public class DataAccessRequestResource extends Resource {
     @DELETE
     @Produces("application/json")
     @Path("/partial/{id}")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response deletePartialDar(@PathParam("id") String id, @Context UriInfo info) {
         try {
             dataAccessRequestAPI.deletePartialDataAccessRequestById(id);
@@ -371,7 +371,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/partials/manage")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response describePartialManageDataAccessRequests(@QueryParam("userId") Integer userId) {
         return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
     }
@@ -381,7 +381,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/cancel/{referenceId}")
-    @RolesAllowed("RESEARCHER")
+    @RolesAllowed(RESEARCHER)
     public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
         try {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
