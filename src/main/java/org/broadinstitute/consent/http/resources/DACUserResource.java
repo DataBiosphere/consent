@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Election;
@@ -13,6 +12,7 @@ import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -48,7 +48,7 @@ public class DACUserResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response createdDACUser(@Context UriInfo info, DACUser dac) {
         URI uri;
         DACUser dacUser;
@@ -68,7 +68,7 @@ public class DACUserResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Collection<DACUser> describeAllUsers() {
         return dacUserAPI.describeUsers();
     }
@@ -85,7 +85,7 @@ public class DACUserResource extends Resource {
     @Path("/{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response update(@Context UriInfo info, Map<String, DACUser> dac, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
@@ -116,7 +116,7 @@ public class DACUserResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{email}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
         dacUserAPI.deleteDACUser(email);
         return Response.ok().entity("User was deleted").build();
@@ -143,7 +143,7 @@ public class DACUserResource extends Resource {
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response updateStatus(@PathParam("userId") Integer userId, DACUserRole dACUserRole) {
         try {
             return Response.ok(dacUserAPI.updateRoleStatus(dACUserRole, userId)).build();
@@ -156,7 +156,7 @@ public class DACUserResource extends Resource {
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
             return Response.ok(dacUserAPI.getRoleStatus(userId)).build();
@@ -169,7 +169,7 @@ public class DACUserResource extends Resource {
     @Path("/name/{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","RESEARCHER"})
+    @RolesAllowed({ADMIN, RESEARCHER})
     public Response updateName(DACUser user, @PathParam("id") Integer id) {
         try {
             DACUser dacUser = dacUserAPI.updateNameById(user, id);
@@ -182,7 +182,7 @@ public class DACUserResource extends Resource {
     private boolean isChairPerson(List<DACUserRole> roles) {
         boolean isChairPerson = false;
         for (DACUserRole role : roles) {
-            if (role.getName().equalsIgnoreCase(DACUserRoles.CHAIRPERSON.getValue())) {
+            if (role.getName().equalsIgnoreCase(CHAIRPERSON)) {
                 isChairPerson = true;
                 break;
             }

@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.consent.http.enumeration.DACUserRoles.MEMBER;
+import static org.broadinstitute.consent.http.enumeration.UserRoles.MEMBER;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;

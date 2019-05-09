@@ -5,7 +5,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.*;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -35,8 +35,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     private final VoteDAO voteDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
     private final ResearcherPropertyDAO researcherPropertyDAO;
-    private final String CHAIRPERSON = DACUserRoles.CHAIRPERSON.getValue();
-    private final String RESEARCHER = DACUserRoles.RESEARCHER.getValue();
+    private final String CHAIRPERSON = UserRoles.CHAIRPERSON.getValue();
+    private final String RESEARCHER = UserRoles.RESEARCHER.getValue();
     private final Integer MINIMUM_DAC_USERS = 3;
 
     public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
@@ -94,7 +94,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public List<DACUser> describeAdminUsersThatWantToReceiveMails() {
-        return dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+        return dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
     }
 
     @Override
@@ -112,7 +112,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     public ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role) {
         ValidateDelegationResponse response = new ValidateDelegationResponse(false, new ArrayList<>());
         role = role.toUpperCase();
-        switch (DACUserRoles.valueOf(role)) {
+        switch (UserRoles.valueOf(role)) {
             case MEMBER:
                 if (dacMemberMustDelegate(user)) {
                     response = new ValidateDelegationResponse(true, findDacUserReplacementCandidates(user));
@@ -162,7 +162,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     @Override
     public DACUserRole getRoleStatus(Integer userId) {
         validateExistentUserById(userId);
-        Integer roleId = roleIdMap.get(DACUserRoles.RESEARCHER.getValue());
+        Integer roleId = roleIdMap.get(UserRoles.RESEARCHER.getValue());
         return roleDAO.findRoleByUserIdAndRoleId(userId, roleId);
     }
 
@@ -296,10 +296,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public void updateExistentChairPersonToAlumni(Integer dacUserID) {
-        Integer existentRoleId = roleDAO.findRoleIdByName(DACUserRoles.CHAIRPERSON.getValue());
+        Integer existentRoleId = roleDAO.findRoleIdByName(UserRoles.CHAIRPERSON.getValue());
         Integer chairPersonId = dacUserDAO.findDACUserIdByRole(existentRoleId, dacUserID);
         if (chairPersonId != null) {
-            Integer newRoleId = roleDAO.findRoleIdByName(DACUserRoles.ALUMNI.getValue());
+            Integer newRoleId = roleDAO.findRoleIdByName(UserRoles.ALUMNI.getValue());
             roleDAO.updateUserRoles(newRoleId, chairPersonId, existentRoleId);
         }
     }

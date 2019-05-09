@@ -17,7 +17,7 @@ import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -37,12 +37,12 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final VoteDAO voteDAO;
     private final DACUserRoleDAO userRoleDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
-    private final String MEMBER = DACUserRoles.MEMBER.getValue();
-    private final String ADMIN = DACUserRoles.ADMIN.getValue();
-    private final String CHAIRPERSON = DACUserRoles.CHAIRPERSON.getValue();
-    private final String RESEARCHER = DACUserRoles.RESEARCHER.getValue();
-    private final String DATA_OWNER = DACUserRoles.DATAOWNER.getValue();
-    private final String ALUMNI = DACUserRoles.ALUMNI.getValue();
+    private final String MEMBER = UserRoles.MEMBER.getValue();
+    private final String ADMIN = UserRoles.ADMIN.getValue();
+    private final String CHAIRPERSON = UserRoles.CHAIRPERSON.getValue();
+    private final String RESEARCHER = UserRoles.RESEARCHER.getValue();
+    private final String DATA_OWNER = UserRoles.DATAOWNER.getValue();
+    private final String ALUMNI = UserRoles.ALUMNI.getValue();
     private final Map<String, Integer> roleIdMap;
     private final EmailNotifierAPI emailNotifierAPI;
     private final DataAccessRequestAPI dataAccessRequestAPI;
@@ -120,7 +120,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             }
             // removing deleted roles
             for (DACUserRole role : rolesToRemove) {
-                switch (DACUserRoles.valueOf(role.getName().toUpperCase())) {
+                switch (UserRoles.valueOf(role.getName().toUpperCase())) {
 
                     case CHAIRPERSON:
                         changeChairPerson(updatedUser, delegateMember, userToDelegate);
@@ -144,7 +144,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             }
             // adding new roles
             for (DACUserRole role : rolesToAdd) {
-                switch (DACUserRoles.valueOf(role.getName().toUpperCase())) {
+                switch (UserRoles.valueOf(role.getName().toUpperCase())) {
                     case CHAIRPERSON:
                         addChairPerson(updatedUser);
                         break;

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.authentication;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -37,12 +38,12 @@ public class UserAuthorizerTest {
 
     @Test
     public void testAuthorizeNotAuthorized() throws Exception {
-        assertFalse(authorizer.authorize(unauthorizedUser, "MEMBER"));
+        assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER));
     }
 
     @Test
     public void testAuthorizeAuthorized() throws Exception {
-        assertTrue(authorizer.authorize(authorizedUser, "CHAIRPERSON"));
+        assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON));
     }
 
     /* Helper Methods */

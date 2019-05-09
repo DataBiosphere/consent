@@ -27,7 +27,7 @@ public class ConsentCasesResource extends Resource {
 
     @GET
     @Path("/pending/{dacUserId}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON"})
+    @RolesAllowed({MEMBER, CHAIRPERSON})
     public Response getConsentPendingCases(@PathParam("dacUserId") Integer dacUserId) {
         return Response.ok(api.describeConsentPendingCases(dacUserId))
                 .build();
@@ -62,7 +62,7 @@ public class ConsentCasesResource extends Resource {
     @GET
     @Path("/closed")
     @Produces("application/json")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON", "ALUMNI", "ADMIN"})
+    @RolesAllowed({MEMBER, CHAIRPERSON, ALUMNI, ADMIN})
     public List<Election> describeClosedElections() {
         return electionApi.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue());
     }

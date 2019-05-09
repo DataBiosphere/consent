@@ -55,7 +55,7 @@ public class DataSetResource extends Resource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
     @Path("/{userId}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response createDataSet(
             @FormDataParam("data") InputStream uploadedDataSet,
             @FormDataParam("data") FormDataBodyPart part,
@@ -196,7 +196,7 @@ public class DataSetResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{datasetObjectId}/{dacUserId}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response delete(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
         try{
             api.deleteDataset(dataSetId, dacUserId);
@@ -209,7 +209,7 @@ public class DataSetResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/disable/{datasetObjectId}/{active}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response disableDataSet(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("active") Boolean active, @Context UriInfo info) {
         api.disableDataset(dataSetId, active);
         return Response.ok().build();
@@ -234,7 +234,7 @@ public class DataSetResource extends Resource {
 
     @PUT
     @Produces("application/json")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
         try{
             DataSet dataSet = api.updateNeedsReviewDataSets(dataSetId, needsApproval);

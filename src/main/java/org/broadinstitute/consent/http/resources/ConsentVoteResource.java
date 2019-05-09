@@ -32,7 +32,7 @@ public class ConsentVoteResource extends Resource {
     @POST
     @Consumes("application/json")
     @Path("/{id}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
+    @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
     public Response firstVoteUpdate(Vote rec,
                                     @PathParam("consentId") String consentId, @PathParam("id") Integer voteId){
         try {
@@ -54,7 +54,7 @@ public class ConsentVoteResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/{id}")
-    @RolesAllowed({"MEMBER", "CHAIRPERSON", "DATAOWNER"})
+    @RolesAllowed({MEMBER, CHAIRPERSON, DATAOWNER})
     public Response updateConsentVote(Vote rec,
                                       @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
@@ -84,7 +84,7 @@ public class ConsentVoteResource extends Resource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response deleteVote(@PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
             api.deleteVote(id, consentId);
@@ -96,7 +96,7 @@ public class ConsentVoteResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Response deleteVotes(@PathParam("consentId") String consentId) {
         try {
             if (consentId == null) {

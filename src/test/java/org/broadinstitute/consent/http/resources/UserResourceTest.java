@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.User;
@@ -58,9 +58,9 @@ public class UserResourceTest {
         user.setEmail(TEST_EMAIL);
         List<DACUserRole> roles = new ArrayList<>();
         DACUserRole admin = new DACUserRole();
-        admin.setName(DACUserRoles.ADMIN.getValue());
+        admin.setName(UserRoles.ADMIN.getValue());
         DACUserRole researcher = new DACUserRole();
-        researcher.setName(DACUserRoles.RESEARCHER.getValue());
+        researcher.setName(UserRoles.RESEARCHER.getValue());
         roles.add(researcher);
         roles.add(admin);
         user.setRoles(roles);
@@ -78,7 +78,7 @@ public class UserResourceTest {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
         DACUserRole admin = new DACUserRole();
-        admin.setName(DACUserRoles.ADMIN.getValue());
+        admin.setName(UserRoles.ADMIN.getValue());
         IllegalArgumentException ie = new IllegalArgumentException("Roles are required.");
         when(userAPI.createUser(user, TEST_EMAIL)).thenThrow(ie);
         Response response = userResource.createUser(uriInfo, user, new User(TEST_EMAIL));
@@ -94,7 +94,7 @@ public class UserResourceTest {
         user.setDisplayName("Test");
         DACUserRole researcher = new DACUserRole();
         List<DACUserRole> roles = new ArrayList<>();
-        researcher.setName(DACUserRoles.RESEARCHER.getValue());
+        researcher.setName(UserRoles.RESEARCHER.getValue());
         roles.add(researcher);
         user.setRoles(roles);
         when(userAPI.createUser(user, TEST_EMAIL)).thenReturn(user);
@@ -108,9 +108,9 @@ public class UserResourceTest {
         user.setDisplayName(TEST_EMAIL);
         List<DACUserRole> roles = new ArrayList<>();
         DACUserRole admin = new DACUserRole();
-        admin.setName(DACUserRoles.CHAIRPERSON.getValue());
+        admin.setName(UserRoles.CHAIRPERSON.getValue());
         DACUserRole researcher = new DACUserRole();
-        researcher.setName(DACUserRoles.RESEARCHER.getValue());
+        researcher.setName(UserRoles.RESEARCHER.getValue());
         roles.add(researcher);
         roles.add(admin);
         user.setRoles(roles);
@@ -125,7 +125,7 @@ public class UserResourceTest {
         user.setDisplayName(TEST_EMAIL);
         List<DACUserRole> roles = new ArrayList<>();
         DACUserRole researcher = new DACUserRole();
-        researcher.setName(DACUserRoles.RESEARCHER.getValue());
+        researcher.setName(UserRoles.RESEARCHER.getValue());
         roles.add(researcher);
         user.setRoles(roles);
         when(userAPI.updateUser(user, "invalid_mail@gmail.com")).thenThrow(NotAuthorizedException.class);
@@ -139,7 +139,7 @@ public class UserResourceTest {
         user.setDisplayName(TEST_EMAIL);
         List<DACUserRole> roles = new ArrayList<>();
         DACUserRole researcher = new DACUserRole();
-        researcher.setName(DACUserRoles.RESEARCHER.getValue());
+        researcher.setName(UserRoles.RESEARCHER.getValue());
         roles.add(researcher);
         user.setRoles(roles);
         when(userAPI.updateUser(user, "invalid_mail@gmail.com")).thenThrow(NotFoundException.class);

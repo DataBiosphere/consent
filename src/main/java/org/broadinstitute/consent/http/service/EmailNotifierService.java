@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.mail.MailService;
@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
+import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.bson.Document;
@@ -129,7 +130,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
-            List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+            List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isEmpty(users)) return;
             List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
             Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
@@ -209,7 +210,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
                 reviewedDatasets.put(dar_code, dsElections);
             }
-            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
                 mailService.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
@@ -252,7 +253,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
         DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
-        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
         if(isServiceActive){
             String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
             for(DACUser admin: admins){
@@ -265,7 +266,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
-            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(DACUserRoles.ADMIN.getValue(), true);
+            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
                 mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());
@@ -325,11 +326,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     private String delegateURL(String newUserRole) {
         switch (newUserRole) {
-            case "MEMBER":
+            case Resource.MEMBER:
                 return MEMBER_CONSOLE_URL;
-            case "CHAIRPERSON":
+            case Resource.CHAIRPERSON:
                 return CHAIR_CONSOLE_URL;
-            case "DATAOWNER":
+            case Resource.DATAOWNER:
                 return DATA_OWNER_CONSOLE_URL;
             default:
                 return "";

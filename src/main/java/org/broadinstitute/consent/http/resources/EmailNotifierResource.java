@@ -20,7 +20,7 @@ public class EmailNotifierResource extends Resource {
 
     @POST
     @Path("/reminderMessage/{voteId}")
-    @RolesAllowed({"ADMIN", "CHAIRPERSON"})
+    @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response sendReminderMessage(@PathParam("voteId") String voteId) {
         try {
             emailApi.sendReminderMessage(Integer.valueOf(voteId));

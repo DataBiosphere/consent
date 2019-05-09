@@ -64,7 +64,7 @@ public class DataUseLetterResource extends Resource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"RESEARCHER", "DATAOWNER", "ADMIN"})
+    @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
     public Consent createDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
@@ -95,7 +95,7 @@ public class DataUseLetterResource extends Resource {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Consent updateDUL(
             @FormDataParam("data") InputStream uploadedDUL,
             @FormDataParam("data") FormDataBodyPart part,
@@ -125,7 +125,7 @@ public class DataUseLetterResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"ADMIN","CHAIRPERSON","MEMBER","DATAOWNER"})
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATAOWNER})
     public Response getDUL(@PathParam("id") String consentId, @QueryParam("electionId") Integer electionId) {
         String msg = String.format("GETing Data Use Letter for consent with id '%s' and Election Id '%s", consentId, electionId);
         logger().debug(msg);
@@ -156,7 +156,7 @@ public class DataUseLetterResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("ADMIN")
+    @RolesAllowed(ADMIN)
     public Consent deleteDUL(@PathParam("id") String consentId) {
         String msg = String.format("DELETEing Data Use Letter for consent with id '%s'", consentId);
         logger().debug(msg);

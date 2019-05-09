@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Path("{api : (api/)?}electionReview")
-public class ElectionReviewResource {
+public class ElectionReviewResource extends Resource {
 
     private final ReviewResultsAPI api;
     private final ElectionAPI electionAPI;
@@ -33,7 +33,7 @@ public class ElectionReviewResource {
 
     @GET
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getCollectElectionReview(@QueryParam("referenceId") String referenceId, @QueryParam("type") String type) {
         return api.describeLastElectionReviewByReferenceIdAndType(referenceId, type);
     }
@@ -50,7 +50,7 @@ public class ElectionReviewResource {
     @GET
     @Path("/{electionId}")
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getElectionReviewByElectionId(@PathParam("electionId") Integer electionId) {
         return api.describeElectionReviewByElectionId(electionId, null);
     }
@@ -60,7 +60,7 @@ public class ElectionReviewResource {
     @GET
     @Path("access/{electionId}")
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getAccessElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Election election = electionAPI.describeElectionById(electionId);
         Election consentElection = electionAPI.getConsentElectionByDARElectionId(election.getElectionId());
@@ -77,7 +77,7 @@ public class ElectionReviewResource {
     @GET
     @Path("rp/{electionId}")
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getRPElectionReviewByReferenceId(@PathParam("electionId") Integer electionId, @QueryParam("isFinalAccess") Boolean isFinalAccess) {
         Integer rpElectionId = electionAPI.findRPElectionByElectionAccessId(electionId);
         if (Objects.nonNull(rpElectionId)) {
@@ -90,7 +90,7 @@ public class ElectionReviewResource {
     @GET
     @Path("last/{referenceId}")
     @Produces("application/json")
-    @RolesAllowed({"ADMIN","MEMBER","CHAIRPERSON","ALUMNI"})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, ALUMNI})
     public ElectionReview getElectionReviewByReferenceId(@PathParam("referenceId") String referenceId) {
         return api.describeElectionReviewByReferenceId(referenceId);
     }

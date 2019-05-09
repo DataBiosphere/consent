@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
 import org.broadinstitute.consent.http.db.HelpReportDAO;
-import org.broadinstitute.consent.http.enumeration.DACUserRoles;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.HelpReport;
 
 import java.util.Date;
@@ -40,7 +40,7 @@ public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
 
     @Override
     public List<HelpReport> findHelpReportsByUserId(Integer userId) {
-        return  dsRoleDAO.findRoleByNameAndUser(DACUserRoles.ADMIN.getValue(), userId) != null
+        return  dsRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getValue(), userId) != null
                 ? helpReportDAO.findHelpReports() : helpReportDAO.findHelpReportsByUserId(userId);
     }
 
