@@ -434,7 +434,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public String getStructuredDURForPdf(Document dar) {
         List<Integer> dataSetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        Election accessElection = electionDAO.findLastElectionVersionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue());
+        Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue());
         String sDUR;
         if (accessElection != null) {
             Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(accessElection.getElectionId());

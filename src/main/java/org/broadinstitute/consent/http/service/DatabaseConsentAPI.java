@@ -112,7 +112,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             throw new UnknownIdentifierException(String.format("Could not find consent with id %s", id));
         }
 
-        Election election = electionDAO.findLastElectionVersionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
+        Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
         if (election != null) {
             consent.setLastElectionStatus(election.getStatus());
             consent.setLastElectionArchived(election.getArchived());
