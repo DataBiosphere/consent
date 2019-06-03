@@ -139,4 +139,48 @@ public class UseRestrictionConverterTest implements WithMockServer {
         assertTrue(dto.getGender().equalsIgnoreCase("Female"));
     }
 
+    /*
+     * Test that when the DTO parser does not set false values incorrectly
+     */
+    @Test
+    public void testTranslateFalseValues() {
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        String json = "{ " +
+                "\"methods\":false, " +
+                "\"population\":false, " +
+                "\"controls\":false, " +
+                "\"poa\":false, " +
+                "\"hmb\":false " +
+                "}";
+        DataUseDTO dto = converter.parseDataUsePurpose(json);
+        assertNull(dto.getMethodsResearch());
+        assertNull(dto.getPopulationStructure());
+        assertNull(dto.getControlSetOption());
+        assertNull(dto.getPopulationOriginsAncestry());
+        assertNull(dto.getHmbResearch());
+    }
+
+    /*
+     * Test that when the DTO parser sets true values correctly
+     */
+    @Test
+    public void testTranslateTrueValues() {
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        String json = "{ " +
+                "\"methods\":true, " +
+                "\"population\":true, " +
+                "\"controls\":true, " +
+                "\"poa\":true, " +
+                "\"hmb\":true " +
+                "}";
+        DataUseDTO dto = converter.parseDataUsePurpose(json);
+        assertTrue(dto.getMethodsResearch());
+        assertTrue(dto.getPopulationStructure());
+        assertTrue(dto.getControlSetOption().equalsIgnoreCase("Yes"));
+        assertTrue(dto.getPopulationOriginsAncestry());
+        assertTrue(dto.getHmbResearch());
+    }
+
 }
