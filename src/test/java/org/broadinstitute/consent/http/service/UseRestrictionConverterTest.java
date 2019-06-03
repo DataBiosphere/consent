@@ -80,7 +80,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        DataUseDTO dto = converter.parseDataUseDto("{  }");
+        DataUseDTO dto = converter.parseDataUsePurpose("{  }");
         UseRestriction restriction = converter.parseUseRestriction(dto);
         assertNotNull(restriction);
         assertTrue(restriction.equals(new Everything()));
@@ -95,7 +95,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        DataUseDTO dto = converter.parseDataUseDto("{  }");
+        DataUseDTO dto = converter.parseDataUsePurpose("{  }");
         UseRestriction restriction = converter.parseUseRestriction(dto);
         assertNull(restriction);
     }
@@ -128,7 +128,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        DataUseDTO dto = converter.parseDataUseDto(json);
+        DataUseDTO dto = converter.parseDataUsePurpose(json);
         assertNotNull(dto);
         assertTrue(dto.getMethodsResearch());
         assertTrue(dto.getPopulationStructure());
