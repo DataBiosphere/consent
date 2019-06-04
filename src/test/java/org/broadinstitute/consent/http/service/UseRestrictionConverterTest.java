@@ -140,7 +140,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
     }
 
     /*
-     * Test that when the DTO parser does not set false values incorrectly
+     * Test that the DTO parser does not set false values incorrectly
      */
     @Test
     public void testTranslateFalseValues() {
@@ -162,7 +162,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
     }
 
     /*
-     * Test that when the DTO parser sets true values correctly
+     * Test that the DTO parser sets true values correctly
      */
     @Test
     public void testTranslateTrueValues() {
