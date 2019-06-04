@@ -34,7 +34,7 @@ public class UseRestrictionConverter {
     }
 
     @SuppressWarnings("unchecked")
-    public DataUseDTO parseDataUseDto(String json) {
+    public DataUseDTO parseDataUsePurpose(String json) {
         Map<String, Object> form = parseAsMap(json);
         DataUseDTO dataUseDTO = new DataUseDTO();
 
@@ -43,18 +43,12 @@ public class UseRestrictionConverter {
         //
         if (Boolean.valueOf(form.getOrDefault("methods", false).toString())) {
             dataUseDTO.setMethodsResearch(true);
-        } else {
-            dataUseDTO.setMethodsResearch(false);
         }
         if (Boolean.valueOf(form.getOrDefault("population", false).toString())) {
             dataUseDTO.setPopulationStructure(true);
-        } else {
-            dataUseDTO.setPopulationStructure(false);
         }
         if (Boolean.valueOf(form.getOrDefault("controls", false).toString())) {
             dataUseDTO.setControlSetOption("Yes");
-        } else {
-            dataUseDTO.setControlSetOption("No");
         }
 
         //
@@ -91,14 +85,10 @@ public class UseRestrictionConverter {
 
         if (Boolean.valueOf(form.getOrDefault("poa", false).toString())) {
             dataUseDTO.setPopulationOriginsAncestry(true);
-        } else {
-            dataUseDTO.setPopulationOriginsAncestry(false);
         }
 
         if (Boolean.valueOf(form.getOrDefault("hmb", false).toString())) {
             dataUseDTO.setHmbResearch(true);
-        } else {
-            dataUseDTO.setHmbResearch(false);
         }
 
         return dataUseDTO;
