@@ -117,6 +117,11 @@ public class DataUseBuilder {
         du.setEthicsApprovalRequired(ethicsApprovalRequired);
         return this;
     }
+
+    public DataUseBuilder setCollaboratorRequired(Boolean collaboratorRequired) {
+        du.setCollaboratorRequired(collaboratorRequired);
+        return this;
+    }
     
     public DataUseBuilder setGeographicalRestrictions(String geographicalRestrictions) {
         du.setGeographicalRestrictions(geographicalRestrictions);
