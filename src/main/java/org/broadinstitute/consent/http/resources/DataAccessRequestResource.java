@@ -239,6 +239,14 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    /**
+     * Note that this method assumes a single consent for a DAR. The UI doesn't curently handle the
+     * case where there are multiple datasets associated to a DAR.
+     * See https://broadinstitute.atlassian.net/browse/BTRX-717 to handle that condition.
+     *
+     * @param id The Data Access Request ID
+     * @return consent The consent associated to the first dataset id the DAR refers to.
+     */
     @GET
     @Path("/find/{id}/consent")
     @Produces("application/json")
