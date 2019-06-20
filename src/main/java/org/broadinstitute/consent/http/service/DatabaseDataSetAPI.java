@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 
 import org.bson.Document;
+import org.skife.jdbi.v2.sqlobject.Bind;
 
 /**
  * Implementation class for DataSetAPI database support.
@@ -298,6 +299,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
         return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
+    }
+
+    @Override
+    public DataSet findDataSetByObjectId(String objectId) {
+        return dsDAO.findDataSetByObjectId(objectId);
     }
 
     public DataSetDTO getDataSetDTO(Integer dataSetId) {
