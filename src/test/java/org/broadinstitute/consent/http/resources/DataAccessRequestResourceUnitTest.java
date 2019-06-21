@@ -48,26 +48,20 @@ public class DataAccessRequestResourceUnitTest {
 
     @Mock
     DACUserAPI dacUserAPI;
-
     @Mock
     ElectionAPI electionAPI;
-
     @Mock
     GCSStore store;
-
     @Mock
     ConsentAPI consentAPI;
-
     @Mock
     DataAccessRequestAPI dataAccessRequestAPI;
-
     @Mock
     DataSetAPI dataSetAPI;
 
     private DataAccessRequestResource resource;
     private Document dar;
     private String darId;
-    private DataSet dataSet;
 
     @Before
     public void setUp() {
@@ -106,7 +100,7 @@ public class DataAccessRequestResourceUnitTest {
         dar = DataRequestSamplesHolder.getSampleDarWithId();
         dar.put(DarConstants.DATASET_ID, Collections.singletonList("SC-12345"));
         darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
-        dataSet = new DataSet();
+        DataSet dataSet = new DataSet();
         dataSet.setDataSetId(1);
         when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
@@ -124,8 +118,14 @@ public class DataAccessRequestResourceUnitTest {
      */
     @Test(expected = NotFoundException.class)
     public void testDescribeConsentForDAR_case3() throws Exception {
-
-        throw new NotFoundException();
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
+        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+        when(consentAPI.getConsentFromDatasetID(any())).thenReturn(null);
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
+        resource = new DataAccessRequestResource(dacUserAPI, electionAPI, store);
+        resource.describeConsentForDAR(darId);
     }
 
     /**
@@ -133,8 +133,13 @@ public class DataAccessRequestResourceUnitTest {
      */
     @Test(expected = NotFoundException.class)
     public void testDescribeConsentForDAR_case4() throws Exception {
-
-        throw new NotFoundException();
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
+        dar.remove(DarConstants.DATASET_ID);
+        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        resource = new DataAccessRequestResource(dacUserAPI, electionAPI, store);
+        resource.describeConsentForDAR(darId);
     }
 
 

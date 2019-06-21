@@ -464,7 +464,7 @@ public class DataAccessRequestResource extends Resource {
         List datasetIdList = dataAccessRequestAPI.
                 describeDataAccessRequestFieldsById(id, Collections.singletonList(DarConstants.DATASET_ID)).
                 get("datasetId", List.class);
-        if (datasetIdList.isEmpty()) {
+        if (datasetIdList == null || datasetIdList.isEmpty()) {
             return Optional.empty();
         } else {
             Object datasetId = datasetIdList.get(0);
