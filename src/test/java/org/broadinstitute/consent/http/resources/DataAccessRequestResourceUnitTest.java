@@ -70,8 +70,7 @@ public class DataAccessRequestResourceUnitTest {
     private DataSet dataSet;
 
     @Before
-    public void setUp() throws Exception {
-
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
         PowerMockito.mockStatic(AbstractConsentAPI.class);
@@ -80,8 +79,6 @@ public class DataAccessRequestResourceUnitTest {
         PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
         PowerMockito.mockStatic(AbstractTranslateService.class);
         PowerMockito.mockStatic(AbstractDataSetAPI.class);
-
-
     }
 
     /**
@@ -89,7 +86,7 @@ public class DataAccessRequestResourceUnitTest {
      */
     @Test
     public void testDescribeConsentForDAR_case1() throws Exception {
-        dar = DataRequestSamplesHolder.getSampleDar();
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
         darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
         when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
@@ -106,7 +103,7 @@ public class DataAccessRequestResourceUnitTest {
      */
     @Test
     public void testDescribeConsentForDAR_case2() throws Exception {
-        dar = DataRequestSamplesHolder.getSampleDar();
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
         dar.put(DarConstants.DATASET_ID, Collections.singletonList("SC-12345"));
         darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
         dataSet = new DataSet();
