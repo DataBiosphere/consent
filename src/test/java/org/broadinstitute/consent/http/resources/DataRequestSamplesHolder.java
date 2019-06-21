@@ -9,15 +9,6 @@ import java.util.HashMap;
 class DataRequestSamplesHolder {
 
     private static final String completeDARJson = "{\n" +
-            "    \"_id\": {\n" +
-            "        \"timestamp\": 1559053204,\n" +
-            "        \"machineIdentifier\": 4645115,\n" +
-            "        \"processIdentifier\": 1,\n" +
-            "        \"counter\": 16183289,\n" +
-            "        \"time\": 1559053204000,\n" +
-            "        \"date\": 1559053204000,\n" +
-            "        \"timeSecond\": 1559053204\n" +
-            "      }," +
             "    \"investigator\" : \"Somenone\",\n" +
             "    \"institution\" : \"npsrpn\",\n" +
             "    \"department\" : \"pnifnpvdpi\",\n" +
