@@ -26,7 +26,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     @GetGeneratedKeys
     Integer createDac(@Bind("name") String name, @Bind("description") String description, @Bind("createDate") Date createDate);
 
-    @SqlUpdate("update dac set name = :name, description = :description, update_date = :updateDate) where dac_id = :dacId")
+    @SqlUpdate("update dac set name = :name, description = :description, update_date = :updateDate where dac_id = :dacId")
     void updateDac(
             @Bind("name") String name,
             @Bind("description") String description,
