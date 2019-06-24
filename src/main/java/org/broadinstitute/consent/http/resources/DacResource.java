@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.service.DacService;
 
