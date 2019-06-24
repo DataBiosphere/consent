@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -29,6 +30,7 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
@@ -56,6 +58,7 @@ public class ConsentModule extends AbstractModule {
     private final VoteDAO voteDAO;
     private final DataSetDAO datasetDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
+    private final DacDAO dacDAO;
     private final DACUserDAO dacUserDAO;
     private final DACUserRoleDAO dacUserRoleDAO;
     private final MatchDAO matchDAO;
@@ -83,6 +86,7 @@ public class ConsentModule extends AbstractModule {
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
         this.datasetDAO = this.jdbi.onDemand(DataSetDAO.class);
         this.datasetAssociationDAO = this.jdbi.onDemand(DataSetAssociationDAO.class);
+        this.dacDAO = this.jdbi.onDemand(DacDAO.class);
         this.dacUserDAO = this.jdbi.onDemand(DACUserDAO.class);
         this.dacUserRoleDAO= this.jdbi.onDemand(DACUserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
@@ -159,6 +163,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DataSetAssociationDAO providesDataSetAssociationDAO() {
         return datasetAssociationDAO;
+    }
+
+    @Provides
+    DacDAO providesDacDAO() {
+        return dacDAO;
+    }
+
+    @Provides
+    DacService providesDacService() {
+        return new DacService(providesDacDAO());
     }
 
     @Provides

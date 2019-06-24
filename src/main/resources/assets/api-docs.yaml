@@ -2,11 +2,11 @@ swagger: '2.0'
 info:
   title: Consent
   description: A set of web-services containing methods for ingesting and retrieving expressions representing data use restrictions found within consent forms.
-  version: 0.0.1
+  version: 1.0.1
   license:
     name: BSD
     url: 'http://opensource.org/licenses/BSD-3-Clause'
-  termsOfService: 'https://github.com/broadinstitute/consent'
+  termsOfService: 'https://github.com/DataBiosphere/consent'
 
 securityDefinitions:
   consent_auth:
@@ -32,15 +32,17 @@ paths:
       summary: Upload Ontology File
       description: Uploads and indexes an ontology file
       consumes:
-        - multipart/form-data  # and/or application/x-www-form-urlencoded
+        - multipart/form-data
       parameters:
         - name: metadata
-          type: object
+          type: string
           in: formData
-          description: 'JSON object specifying the ontology file metadata. Prefix is "DUOS" or "DOID" and type is "Organization" or "Disease"'
+          description: |
+            JSON object specifying the ontology file metadata. Prefix is "DUOS" or "DOID" and type is "Organization" or "Disease"
+            Examples:
+              `{ "ontology_file": { "prefix": "DUOS", "type": "Organization" } }`
+              `{ "ontology_file": { "prefix": "DOID", "type": "Disease" } }`
           required: true
-          schema:
-            $ref: '#/definitions/OntologyFile'
         - name: ontology_file
           type: file
           in: formData
@@ -67,7 +69,7 @@ paths:
           description: There was a problem deleting the file.
       parameters:
         - name: fileURL
-          in: body
+          in: formData
           description: Storage URL of the file to delete.
           required: true
           type: string
@@ -121,19 +123,19 @@ paths:
         - Consent
         - Association
       responses:
-        '200':
+        200:
           description: A list of Consent IDs
           schema:
             type: array
             items:
               type: string
-        '400':
+        400:
           description: Required parameter is null
         default:
           description: Unexpected error
   /api/consent/{consentId}/association:
     get:
-      summary: getAssociation
+      summary: Get Associations for Consent
       description: Returns the associations identified by the parameters.
       parameters:
         - name: consentId
@@ -155,18 +157,18 @@ paths:
         - Consent
         - Association
       responses:
-        '200':
+        200:
           description: An array of Consent Associations
           schema:
             type: array
             items:
               $ref: '#/definitions/ConsentAssociation'
-        '400':
+        400:
           description: Required parameter is null
         default:
           description: Unexpected error
     post:
-      summary: createAssociation
+      summary: Create Associations for Consent
       description: Create the associations sent as parameters.
       parameters:
         - name: consentId
@@ -186,7 +188,7 @@ paths:
         - Consent
         - Association
       responses:
-        '200':
+        200:
           description: An array of created consent associations
           schema:
             type: array
@@ -195,7 +197,7 @@ paths:
         default:
           description: Unexpected error
     put:
-      summary: updateAssociation
+      summary: Update Associations for Consent
       description: Update the association identified by the parameters
       parameters:
         - name: consentId
@@ -215,7 +217,7 @@ paths:
         - Consent
         - Association
       responses:
-        '200':
+        200:
           description: An array with the updated consent associations
           schema:
             type: array
@@ -224,7 +226,7 @@ paths:
         default:
           description: Unexpected error
     delete:
-      summary: deleteAssociation
+      summary: Delete Associations for Consent
       description: Deletes the association identified by the parameters
       parameters:
         - name: consentId
@@ -246,7 +248,7 @@ paths:
         - Consent
         - Association
       responses:
-        '200':
+        200:
           description: An array with the deleted consent associations
           schema:
             type: array
@@ -256,7 +258,7 @@ paths:
           description: Unexpected error
   /api/consent/cases/pending/{dacUserId}:
     get:
-      summary: getConsentPendingCases
+      summary: Get Consent Pending Cases
       description: Describes the cases that the user has without logging his vote.
       parameters:
         - name: dacUserId
@@ -268,7 +270,7 @@ paths:
       tags:
         - Pending Case
       responses:
-        '200':
+        200:
           description: An array of products
           schema:
             type: array
@@ -280,18 +282,18 @@ paths:
             $ref: '#/definitions/ErrorResponse'
   /api/consent/cases/summary:
     get:
-      summary: getConsentSummaryCases
+      summary: Get Consent Summary Cases
       description: Returns number of denied, approved and pending cases.
       tags:
         - Consent Summary
       responses:
-        '200':
+        200:
           description: Returns the summary of cases.
           schema:
             $ref: '#/definitions/Summary'
   /api/consent/cases/summary/file:
       get:
-        summary: getConsentSummaryDetailFile
+        summary: Get Consent Summary Detail File
         description: Returns a file with the detail of the reviewed cases whose type will be specified by fileType param.
         produces:
         - text/plain
@@ -304,31 +306,31 @@ paths:
         tags:
           - Summary File
         responses:
-          '200':
+          200:
             schema:
               type: file
             description: Export data to a txt file.
   /api/consent/cases/closed:
     get:
-      summary: describeClosedElections
+      summary: Describe Closed Elections
       description: Returns number of denied, approved and pending cases.
       tags:
         - Election
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the list of closed consent cases.
           schema:
             type: array
             items:
               $ref: '#/definitions/Election'
-        '404':
+        404:
           description: unexpected error
           schema:
            $ref: '#/definitions/ErrorResponse'
   /api/consent/{consentId}/election:
     post:
-      summary: createConsentElection
+      summary: Create Consent Election
       description: Creates an election for the consent ID sent as parameter.
       parameters:
         - name: consentId
@@ -346,14 +348,14 @@ paths:
         - Election
         - Consent
       responses:
-        '201':
+        201:
           description: Returns the URI to access the newly created object.
-        '400':
+        400:
           description: There is an existent Open election for that consent.
-        '404':
+        404:
           description: The consent sent as a parameter doesn't exist.
     get:
-       summary: describe
+       summary: Describe Consent Election
        description: Returns the election for the consent sent as a parameter.
        parameters:
          - name: consentId
@@ -365,7 +367,7 @@ paths:
          - Election
          - Consent
        responses:
-         '200':
+         200:
            description: Returns the election.
            schema:
              $ref: '#/definitions/Election'
@@ -375,7 +377,7 @@ paths:
              $ref: '#/definitions/ErrorResponse'
   /api/consent/{consentId}/election/{id}:
     put:
-      summary: updateConsentElection
+      summary: Update Consent Election
       description: Updates the election for the consent ID sent as parameter.
       parameters:
         - name: consentId
@@ -399,14 +401,14 @@ paths:
         - Election
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the updated election.
           schema:
             $ref: '#/definitions/Election'
-        '404':
+        404:
           description: "The Election/Consent doesn't exist."
     delete:
-      summary: deleteElection
+      summary: Delete Election
       description: Deletes the election identified by the IDs.
       parameters:
         - name: consentId
@@ -424,18 +426,18 @@ paths:
         - Election
         - Consent
       responses:
-        '200':
+        200:
           description: The election was deleted.
-        '404':
+        404:
           description: "The Election/Consent doesn't exist."
   /api/consent/manage:
     get:
-      summary: describe
+      summary: Manage Consents
       description: Returns the list of consents available to be managed.
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: The list of consents available to be managed.
           schema:
             type: array
@@ -443,7 +445,7 @@ paths:
               $ref: '#/definitions/ConsentManage'
   /api/consent:
     get:
-      summary: Find consent by name
+      summary: Find Consent by name
       description: Returns the Consent identified by the name.
       produces:
         - application/json
@@ -465,7 +467,7 @@ paths:
         404:
           description: The consent associated with the provided name could not be found.
     post:
-      summary: createConsent
+      summary: Create new Consent
       description: Creates the consent sent with the request.
       parameters:
         - name: rec
@@ -477,13 +479,13 @@ paths:
       tags:
         - Consent
       responses:
-        '201':
+        201:
           description: Returns the URL to find the created consent.
-        '500':
+        500:
           description: Internal Server Error.
   /api/consent/{id}:
     get:
-      summary: describe
+      summary: Get Consent by ID
       description: Returns the consent identified by the ID.
       parameters:
         - name: id
@@ -494,14 +496,14 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the requested consent.
           schema:
             $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: The consent associated with the ID couldn't be found.
     put:
-      summary: update
+      summary: Update Consent by ID
       description: Updates the consent identified by the ID.
       parameters:
         - name: id
@@ -518,18 +520,18 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the requested consent.
           schema:
             $ref: '#/definitions/Consent'
-        '400':
+        400:
           description:
             Consent updates are only allowed when
               1-There have been no previous elections created for this consent
               2-The most recent election has been closed/cancelled AND archived
-        '404':
+        404:
           description: The consent associated with the ID couldn't be found.
-        '500':
+        500:
           description: Internal server error
   /api/consent/{id}/matches:
     get:
@@ -545,13 +547,13 @@ paths:
         - Match
         - Consent
       responses:
-        '200':
+        200:
           description: Returns a list of matches.
           schema:
             type: array
             items:
               $ref: '#/definitions/Match'
-        '404':
+        404:
           description: The consent for the id couldn't be found.
   /api/consents:
     get:
@@ -568,13 +570,13 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the list of found consents.
           schema:
             type: array
             items:
               $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: The consent IDs list wasn't send, or some consents couldn't be found.
   /api/consents/{associationType}:
     get:
@@ -589,13 +591,13 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the list of found consents.
           schema:
             type: array
             items:
               $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
   /api/consent/{consentId}/vote/{id}:
     post:
@@ -621,13 +623,13 @@ paths:
       tags:
         - Vote
       responses:
-        '200':
+        200:
           description: Returns the created vote.
           schema:
             $ref: '#/definitions/Vote'
-        '400':
+        400:
           description: 'Bad request, malformed entity, etc'
-        '404':
+        404:
           description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
     put:
       summary: updateConsentVote
@@ -652,11 +654,11 @@ paths:
       tags:
         - Vote
       responses:
-        '200':
+        200:
           description: Returns the created vote.
           schema:
             $ref: '#/definitions/Vote'
-        '400':
+        400:
           description: Bad request, malformed entity, etc.
     get:
       summary: describe
@@ -676,7 +678,7 @@ paths:
       tags:
         - Vote
       responses:
-        '200':
+        200:
           description: Returns the required vote.
           schema:
             $ref: '#/definitions/Vote'
@@ -698,11 +700,11 @@ paths:
       tags:
         - Vote
       responses:
-        '200':
+        200:
           description: Response = Vote was deleted
           schema:
             type: string
-        '404':
+        404:
           description: The vote couldn't be found
   /api/consent/{consentId}/vote:
     delete:
@@ -718,11 +720,11 @@ paths:
         - Vote
         - Consent
       responses:
-        '200':
+        200:
           description: Response = Votes for specified consent have been deleted
           schema:
             type: string
-        '404':
+        404:
           description: The votes for the consent ID couldn't be found
     get:
       summary: describeAllVotes
@@ -737,12 +739,108 @@ paths:
         - Vote
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the list of found votes.
           schema:
             type: array
             items:
               $ref: '#/definitions/Vote'
+  /api/dac:
+    post:
+      summary: Create a DAC
+      description: Create a Data Access Committee
+      parameters:
+        - name: dac
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Dac'
+      tags:
+        - DAC
+      responses:
+        200:
+          description: Successfully created a DAC
+          schema:
+            $ref: '#/definitions/Dac'
+        400:
+          description: Bad Request. DAC Name and Description are required.
+        500:
+          description: Internal Server Error
+    put:
+      summary: Update a DAC
+      description: Update a Data Access Committee
+      parameters:
+        - name: dac
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Dac'
+      tags:
+        - DAC
+      responses:
+        200:
+          description: Successfully upated a DAC
+          schema:
+            $ref: '#/definitions/Dac'
+        400:
+          description: Bad Request. DAC ID, Name, and Description are required.
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get all DACs
+      description: Get all Data Access Committees
+      tags:
+        - DAC
+      responses:
+        200:
+          description: List of all Data Access Committees
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Dac'
+        500:
+          description: Internal Server Error
+  /api/dac/{dacId}:
+    get:
+      summary: Get DAC by ID
+      description: Get Data Access Committee by Id
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The Data Access Committee matching the provided ID
+          schema:
+            $ref: '#/definitions/Dac'
+        404:
+          description: No DAC found with the given ID
+        500:
+          description: Internal Server Error
+    delete:
+      summary: Delete DAC by ID
+      description: Delete Data Access Committee by Id
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The Data Access Committee matching the provided ID was deleted
+          schema:
+            $ref: '#/definitions/Dac'
+        404:
+          description: No DAC found with the given ID
+        500:
+          description: Internal Server Error
   /api/dacuser:
     post:
       summary: createdDACUser
@@ -757,11 +855,11 @@ paths:
         - Roles
         - DACUser
       responses:
-        '200':
+        200:
           description: Returns the created user.
           schema:
             $ref: '#/definitions/DACUser'
-        '400':
+        400:
           description: Malformed user entity.
     get:
       summary: describeAllUsers
@@ -770,7 +868,7 @@ paths:
         - Roles
         - DACUser
       responses:
-        '200':
+        200:
           description: Returns the collection of all the users and their permissions.
           schema:
             type: array
@@ -790,7 +888,7 @@ paths:
         - DACUser
         - Roles
       responses:
-        '200':
+        200:
           description: Returns the user.
           schema:
             $ref: '#/definitions/DACUser'
@@ -807,7 +905,7 @@ paths:
         - DACUser
         - Roles
       responses:
-        '200':
+        200:
           description: Response = User was deleted
           schema:
             type: string
@@ -829,11 +927,11 @@ paths:
         - DACUser
         - Roles
       responses:
-        '200':
+        200:
           description: Returns the updated user.
           schema:
             $ref: '#/definitions/DACUser'
-        '400':
+        400:
           description: Malformed entity.
   /api/dar:
     post:
@@ -849,9 +947,9 @@ paths:
       tags:
         - Data Access Request
       responses:
-        '200':
+        200:
           description: Returns the created Data Access Request, json file.
-        '500':
+        500:
           description: Internal Server Error.
     get:
       summary: describeDataAccessRequests
@@ -859,7 +957,7 @@ paths:
       tags:
         - Data Access Request
       responses:
-        '200':
+        200:
           description: Returns the DAR collection
   /api/dar/{id}:
     get:
@@ -874,15 +972,15 @@ paths:
       tags:
         - Data Access Request
       responses:
-        '200':
+        200:
           description: Returns a Data Access Request
           schema:
             $ref: '#/definitions/DataAccessRequest'
-        '400':
+        400:
           description: The provided ID is not a valid DAR identifier
-        '404':
+        404:
           description: No DAR can be found with the provided identifier
-        '500':
+        500:
           description: Server Error
     put:
           summary: updateDataAccessRequest
@@ -901,9 +999,9 @@ paths:
           tags:
             - Data Access Request
           responses:
-            '200':
+            200:
               description: Returns the updated DAR.
-            '400':
+            400:
               description: Bad request.
     delete:
       summary: delete
@@ -917,11 +1015,11 @@ paths:
       tags:
         - Data Access Request
       responses:
-        '200':
+        200:
           description: Response = Research Purpose was deleted
           schema:
             type: string
-        '404':
+        404:
           description: The requested DAR couldn't be found.
   /api/dar/modalSummary/{id}:
         get:
@@ -936,7 +1034,7 @@ paths:
           tags:
             - Data Access Request
           responses:
-            '200':
+            200:
               description: 'Returns a DARModalDetailsDTO initialized with the DAR associated with the provided Id.'
   /api/dar/find/{id}:
     get:
@@ -956,11 +1054,11 @@ paths:
       tags:
         - Data Access Request
       responses:
-        '200':
+        200:
           description: A JSON with the requested fields or the whole DAR if there wasn't any requested fields in the parameter.
           schema:
             type: file
-        '404':
+        404:
           description: The requested DAR couldn't be found.
   /api/dar/find/{id}/consent:
     get:
@@ -976,11 +1074,11 @@ paths:
         - Data Access Request
         - Consent
       responses:
-        '200':
+        200:
           description: Returns the Consent.
           schema:
             $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: The requested couldn't be found or the DAR doesn't exist.
   /api/dar/manage:
       get:
@@ -989,7 +1087,7 @@ paths:
         tags:
           - Data Access Request
         responses:
-          '200':
+          200:
             description: A list of DAR elections.
             schema:
               type: array
@@ -1002,7 +1100,7 @@ paths:
         tags:
           - Data Access Request
         responses:
-         '200':
+         200:
            description: 'Returns an integer corresponding to the amount of unreviwed DAR.'
   /api/dataRequest/cases/pending/{dacUserId}:
     get:
@@ -1018,7 +1116,7 @@ paths:
         - Data Access Request
         - Pending Case
       responses:
-        '200':
+        200:
           description: A list of Pending Cases.
           schema:
             type: array
@@ -1032,7 +1130,7 @@ paths:
         - Summary
         - Data Access Request
       responses:
-        '200':
+        200:
           description: A summary of cases
           schema:
             $ref: '#/definitions/Summary'
@@ -1044,7 +1142,7 @@ paths:
         - Summary
         - Research Purpose
       responses:
-        '200':
+        200:
           description: A summary of cases
           schema:
             $ref: '#/definitions/Summary'
@@ -1056,13 +1154,13 @@ paths:
         - Data Access Request
         - Election
       responses:
-        '200':
+        200:
           description: A list of closed DAR elections.
           schema:
             type: array
             items:
               $ref: '#/definitions/Election'
-        '404':
+        404:
           description: Election was not found.
   /api/dataRequest/{requestId}/election:
     get:
@@ -1078,11 +1176,11 @@ paths:
         - Data Access Request
         - Election
       responses:
-        '200':
+        200:
           description: Returns the requested election
           schema:
             $ref: '#/definitions/Election'
-        '404':
+        404:
           description: The election or the DAR couldn't be found.
     post:
       summary: createDataRequestElection
@@ -1102,13 +1200,13 @@ paths:
         - Data Access Request
         - Election
       responses:
-        '200':
+        200:
           description: The created election
           schema:
             $ref: '#/definitions/Election'
-        '400':
+        400:
           description: Bad request.
-        '404':
+        404:
           description: The DAR couldn't be found.
   /api/dataRequest/{requestId}/election/{id}:
     delete:
@@ -1129,11 +1227,11 @@ paths:
         - Data Access Request
         - Election
       responses:
-        '200':
+        200:
           description: Response = Election was deleted
           schema:
             type: string
-        '404':
+        404:
           description: The DAR or the election couldn't be found.
   /api/consent/{id}/dul:
     get:
@@ -1150,7 +1248,7 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: Data Use Letter file
           schema:
             type: file
@@ -1158,7 +1256,7 @@ paths:
             Content-Disposition:
               type: string
               description: attachment; filename= targetFile name
-        '404':
+        404:
           description: Could not find consent with the specified Id
     post:
       summary: createDUL
@@ -1184,11 +1282,11 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: The modified Consent with dataUseLetter field empty
           schema:
             $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: Could not find consent with the specified Id
     put:
       summary: updateDUL
@@ -1214,11 +1312,11 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: The updated Consent
           schema:
             $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: Could not find consent with the specified Id
     delete:
       summary: deleteDUL
@@ -1232,11 +1330,11 @@ paths:
       tags:
         - Consent
       responses:
-        '200':
+        200:
           description: The updated Consent with empty dataUseLetter property.
           schema:
             $ref: '#/definitions/Consent'
-        '404':
+        404:
           description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
     get:
@@ -1252,7 +1350,7 @@ paths:
         - Votes
         - DataRequest
       responses:
-        '200':
+        200:
           description: Returns the DataRequest.
           schema:
             type: array
@@ -1271,9 +1369,9 @@ paths:
         - Votes
         - DataRequest
       responses:
-        '200':
+        200:
           description: The Votes were deleted.
-        '404':
+        404:
           description: The Election doesn't exist.
   /api/dataRequest/{requestId}/vote/{id}:
     get:
@@ -1295,11 +1393,11 @@ paths:
         - Vote
         - DataRequest
       responses:
-        '200':
+        200:
           description: Returns the requested Vote.
           schema:
             $ref: '#/definitions/Vote'
-        '404':
+        404:
           description: The Vote doesn't exist.
     post:
       summary: createDataRequestVote
@@ -1326,11 +1424,11 @@ paths:
         - Vote
         - DataRequest
       responses:
-        '201':
+        201:
           description: Returns the updated Vote.
-        '400':
+        400:
           description: Required parameter is null
-        '404':
+        404:
           description: The \"to update\" vote doesn't exist.
     put:
       summary: updateDataRequestVote
@@ -1357,11 +1455,11 @@ paths:
         - Vote
         - DataRequest
       responses:
-        '201':
+        201:
           description: Returns the updated Vote.
-        '400':
+        400:
           description: Required parameter is null
-        '404':
+        404:
           description: The \"to update\" vote doesn't exist.
     delete:
       summary: deleteVote
@@ -1382,9 +1480,9 @@ paths:
         - Vote
         - DataRequest
       responses:
-        '200':
+        200:
           description: The Vote was deleted.
-        '404':
+        404:
           description: Could not find vote with this Vote ID.
   /api/dataRequest/{requestId}/vote/{id}/final:
     post:
@@ -1412,13 +1510,13 @@ paths:
         - Vote
         - DataRequest
       responses:
-        '200':
+        200:
           description: Returns the updated Vote.
           schema:
             $ref: '#/definitions/Vote'
-        '400':
+        400:
           description: Required parameter is null
-        '404':
+        404:
           description: Election for specified id does not exist
   /api/dataRequest/{requestId}/vote/final:
     get:
@@ -1435,11 +1533,11 @@ paths:
         - Vote
         - DataRequest
       responses:
-        '200':
+        200:
           description: Returns the requested Vote.
           schema:
             $ref: '#/definitions/Vote'
-        '404':
+        404:
           description: Could not find a vote with this id.
   /api/dataset:
     get:
@@ -1455,13 +1553,13 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: An array of DatasetDTO
           schema:
             type: array
             items:
               $ref: '#/definitions/DatasetDTO'
-        '404':
+        404:
           description: Required parameter is null.
     post:
       summary: createDataSet
@@ -1482,13 +1580,13 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: An array of created Datasets
           schema:
             type: array
             items:
               $ref: '#/definitions/DatasetDTO'
-        '400':
+        400:
           description: Array of the errors found with a brief description of each one.
           schema:
             type: array
@@ -1503,7 +1601,7 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: .tsv sample
           schema:
             type: file
@@ -1514,7 +1612,7 @@ paths:
             Content-Disposition:
               type: string
               description: attachment; filename=DataSetSample.tsv
-        '500':
+        500:
           description: Server error.
   /api/dataset/dictionary:
     get:
@@ -1523,13 +1621,13 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: An array of the existent dictionaries
           schema:
             type: array
             items:
               $ref: '#/definitions/Dictionary'
-        '500':
+        500:
           description: Server error.
   /api/dataset/{datasetObjectId}:
     delete:
@@ -1544,9 +1642,9 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: The Dataset was deleted.
-        '500':
+        500:
           description: Server error.
   /api/dataset/download:
     post:
@@ -1564,9 +1662,9 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: The Dataset was deleted.
-        '500':
+        500:
           description: Server error.
   /api/dataset/autocomplete/{partial}:
     get:
@@ -1581,13 +1679,13 @@ paths:
       tags:
         - Datasets
       responses:
-        '200':
+        200:
           description: An array of Dataset objectIds
           schema:
             type: array
             items:
               type: string
-        '500':
+        500:
           description: Server error.
   /api/dataset/disable/{datasetObjectId}/{active}:
         delete:
@@ -1606,13 +1704,13 @@ paths:
           tags:
             - Datasets
           responses:
-            '200':
+            200:
               description: An array of Dataset objectIds
               schema:
                 type: array
                 items:
                   type: string
-            '500':
+            500:
               description: Server error.
   /api/election/{id}:
     get:
@@ -1628,11 +1726,11 @@ paths:
       tags:
         - Election
       responses:
-        '200':
+        200:
           description: Election
           schema:
             $ref: '#/definitions/Election'
-        '400':
+        400:
           description: Could not find Election with the specified Id
     put:
       summary: updateElection
@@ -1653,11 +1751,11 @@ paths:
       tags:
         - Election
       responses:
-        '200':
+        200:
           description: updated Election
           schema:
             $ref: '#/definitions/Election'
-        '400':
+        400:
           description: Illegal Argument Exception
   /api/electionReview:
     get:
@@ -1672,7 +1770,7 @@ paths:
       tags:
         - ElectionReview
       responses:
-        '200':
+        200:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
@@ -1683,7 +1781,7 @@ paths:
       tags:
         - Election
       responses:
-        '200':
+        200:
           description: Returns TRUE if there is at least one Open election otherwise return FALSE.
           schema:
             type: string
@@ -1701,7 +1799,7 @@ paths:
       tags:
         - ElectionReview
       responses:
-        '200':
+        200:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
@@ -1725,7 +1823,7 @@ paths:
       tags:
         - ElectionReview
       responses:
-        '200':
+        200:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
@@ -1742,7 +1840,7 @@ paths:
       tags:
         - ElectionReview
       responses:
-        '200':
+        200:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
@@ -1766,12 +1864,12 @@ paths:
         - Data Access Request
         - Match
       responses:
-        '200':
+        200:
           description: Returns a match result of the stuctured use restrictions of the Consent
             and Data Access Request. If no results are found, no data is returned.
           schema:
             $ref: '#/definitions/MatchResult'
-        '500':
+        500:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -1789,11 +1887,11 @@ paths:
         tags:
           - Report
         responses:
-          '200':
+          200:
             description: HelpReport
             schema:
               $ref: '#/definitions/HelpReport'
-          '400':
+          400:
             description: Bad Request
   /api/report/{id}:
       get:
@@ -1809,11 +1907,11 @@ paths:
         tags:
           - Report
         responses:
-           '200':
+           200:
               description: HelpReport
               schema:
                 $ref: '#/definitions/HelpReport'
-           '400':
+           400:
               description: HelpReport not found.
       delete:
         summary: delete
@@ -1828,7 +1926,7 @@ paths:
         tags:
             - Report
         responses:
-          '200':
+          200:
             description: Report was deleted
   /api/report/user/{userId}:
         get:
@@ -1844,7 +1942,7 @@ paths:
           tags:
             - Report
           responses:
-             '200':
+             200:
                 description: An array of the HelpReports made by the user.
                 schema:
                   type: array
@@ -1863,13 +1961,13 @@ paths:
       tags:
         - User
       responses:
-        '200':
+        200:
           description: Returns the created user.
           schema:
             $ref: '#/definitions/DACUser'
-        '400':
+        400:
           description: Malformed user entity.
-        '409':
+        409:
           description: Email should be unique.
     put:
       summary: updatedUser
@@ -1883,15 +1981,15 @@ paths:
       tags:
         - User
       responses:
-        '200':
+        200:
           description: Returns the updated user.
           schema:
             $ref: '#/definitions/DACUser'
-        '400':
+        400:
           description: Malformed user entity.
-        '401':
+        401:
           description: Unauthorized.
-        '409':
+        409:
           description: Conflict with specified roles.
     patch:
       summary: partialUpdateUser
@@ -1905,15 +2003,15 @@ paths:
       tags:
         - User
       responses:
-        '200':
+        200:
           description: Returns the updated user.
           schema:
             $ref: '#/definitions/DACUser'
-        '400':
+        400:
           description: Malformed user entity.
-        '401':
+        401:
           description: Unauthorized.
-        '409':
+        409:
           description: Conflict with specified roles.
   /api/researcher/{userId}:
     post:
@@ -1941,17 +2039,17 @@ paths:
         - User
         - Researcher
       responses:
-        '201':
+        201:
           description: The researcher was created.
-        '400':
+        400:
           description: Malformed researcher entity.
           schema:
             $ref: '#/definitions/ErrorResponse'
-        '409':
+        409:
           description: Unsupported operation.
           schema:
             $ref: '#/definitions/ErrorResponse'
-        '500':
+        500:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -1979,19 +2077,19 @@ paths:
         - User
         - Researcher
       responses:
-        '200':
+        200:
           description: The researcher was updated, and returns the properties.
           schema:
             $ref: '#/definitions/UserProperties'
-        '400':
+        400:
           description: Malformed researcher entity.
           schema:
             $ref: '#/definitions/ErrorResponse'
-        '404':
+        404:
           description: The requested user doesn't exist in the system.
           schema:
             $ref: '#/definitions/ErrorResponse'
-        '500':
+        500:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -2008,11 +2106,11 @@ paths:
         - User
         - Researcher
       responses:
-        '200':
+        200:
           description: Returns the user properties. Map<String, String> format.
           schema:
             $ref: '#/definitions/UserProperties'
-        '404':
+        404:
           description: The requested user doesn't exist in the system.
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -2029,9 +2127,9 @@ paths:
         - User
         - Researcher
       responses:
-        '200':
+        200:
           description: The properties were deleted. No response object, just 200 response.
-        '404':
+        404:
           description: The requested user doesn't exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -2049,11 +2147,11 @@ paths:
         - User
         - Researcher
       responses:
-        '200':
+        200:
           description: Returns the user properties. Map<String, String> format
           schema:
             $ref: '#/definitions/UserProperties'
-        '404':
+        404:
           description: The requested user doesnt exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -2067,7 +2165,7 @@ paths:
         - eRA Commons
         - Nih
       responses:
-        '200':
+        200:
           description: Returns an empty response if the operation was successful
     post:
       summary: Store NIH information
@@ -2085,11 +2183,11 @@ paths:
         - eRA Commons
         - Nih
       responses:
-        '200':
+        200:
           description: Returns eRA Commons Account information. Map<String, String> format
 #          schema:
 #            $ref: '#/definitions/EraProperties'
-        '404':
+        404:
           description: The user doesn't exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
@@ -2100,8 +2198,10 @@ paths:
       tags:
         - Status
       responses:
-        200: All systems are OK
-        500: Some number of subsystems are not OK.
+        200: 
+          description: All systems are OK
+        500: 
+          description: Some number of subsystems are not OK.
 
   /version:
     get:
@@ -2114,7 +2214,8 @@ paths:
           description: Successful Response
           schema:
             $ref: '#/definitions/Version'
-        500: Internal Server Error
+        500: 
+          description: Internal Server Error
 
 definitions:
   UserProperties:
@@ -2123,8 +2224,8 @@ definitions:
       type: object
       $ref: '#/definitions/UserProperties'
   NIHUserAccount:
-    type: array
-    properies:
+    type: object
+    properties:
       nihUsername:
         type: string
         description: Nih account associated name.
@@ -2698,6 +2799,26 @@ definitions:
       email:
         type: string
         description: Email of the voter.
+  Dac:
+    type: object
+    properties:
+      dacId:
+        type: integer
+        description: The DAC Id
+      name:
+        type: string
+        description: The DAC Name
+      description:
+        type: string
+        description: The DAC Description
+      createDate:
+        type: string
+        format: date
+        description: Date created
+      updateDate:
+        type: string
+        format: date
+        description: Date last updated
   DACUser:
     type: object
     properties:

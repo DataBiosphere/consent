@@ -57,6 +57,7 @@ import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.ConsentVoteResource;
 import org.broadinstitute.consent.http.resources.ConsentsResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
+import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DataAccessAgreementResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
@@ -275,6 +276,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestVoteResource.class);
         env.jersey().register(ConsentCasesResource.class);
         env.jersey().register(DataRequestCasesResource.class);
+        env.jersey().register(DacResource.class);
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
