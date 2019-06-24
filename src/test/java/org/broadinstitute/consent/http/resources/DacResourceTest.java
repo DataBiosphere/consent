@@ -13,7 +13,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
