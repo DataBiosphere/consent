@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.junit.After;
@@ -121,7 +122,7 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
         Client client = ClientBuilder.newClient();
         post(client, darPath(), DataRequestSamplesHolder.getSampleDar());
         Document created = retrieveDars(client, darPath()).get(0);
-        ObjectId objectId = getObjectIdFromDocument(created);
+        ObjectId objectId = DarUtil.getObjectIdFromDocument(created);
 
         // Make sure the DAR can be retrieved using the ID
         Response response = getJson(client, darPath(objectId.toHexString()));
@@ -145,16 +146,6 @@ public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest 
 
     private List<Document> retrieveDars(Client client, String url) throws IOException {
         return getJson(client, url).readEntity(new GenericType<List<Document>>() {});
-    }
-
-    private ObjectId getObjectIdFromDocument(Document document) {
-        LinkedHashMap id = (LinkedHashMap) document.get(DarConstants.ID);
-        return new ObjectId(
-                Integer.valueOf(id.get("timestamp").toString()),
-                Integer.valueOf(id.get("machineIdentifier").toString()),
-                Short.valueOf(id.get("processIdentifier").toString()),
-                Integer.valueOf(id.get("counter").toString())
-        );
     }
 
 }

@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -54,9 +55,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -236,16 +239,23 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    /**
+     * Note that this method assumes a single consent for a DAR. The UI doesn't curently handle the
+     * case where there are multiple datasets associated to a DAR.
+     * See https://broadinstitute.atlassian.net/browse/BTRX-717 to handle that condition.
+     *
+     * @param id The Data Access Request ID
+     * @return consent The consent associated to the first dataset id the DAR refers to.
+     */
     @GET
     @Path("/find/{id}/consent")
     @Produces("application/json")
     @PermitAll
     public Consent describeConsentForDAR(@PathParam("id") String id) {
-        List<Integer> dataSetIdList = (dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
-        Integer dataSetId = dataSetIdList.get(0);
+        Optional<Integer> dataSetId = getDatasetIdForDarId(id);
         Consent c;
-        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            c = consentAPI.getConsentFromDatasetID(dataSetId);
+        if (dataSetId.isPresent()) {
+            c = consentAPI.getConsentFromDatasetID(dataSetId.get());
             if (c == null) {
                 throw new NotFoundException("Unable to find the consent related to the datasetId present in the DAR.");
             }
@@ -443,5 +453,31 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    /**
+     * Data Access Requests have a `datasetId` that can refer to either a numeric id (newer model) or to
+     * a string value pointing to the sample collection id (legacy model).
+     *
+     * @param id The DAR document id
+     * @return Optional integer value of the referenced dataset.
+     */
+    private Optional<Integer> getDatasetIdForDarId(String id) {
+        List datasetIdList = dataAccessRequestAPI.
+                describeDataAccessRequestFieldsById(id, Collections.singletonList(DarConstants.DATASET_ID)).
+                get("datasetId", List.class);
+        if (datasetIdList == null || datasetIdList.isEmpty()) {
+            return Optional.empty();
+        } else {
+            Object datasetId = datasetIdList.get(0);
+            try {
+                return Optional.of(Integer.valueOf(datasetId.toString()));
+            } catch (NumberFormatException e) {
+                DataSet dataset = dataSetAPI.findDataSetByObjectId(datasetId.toString());
+                if (dataset != null) {
+                    return Optional.of(dataset.getDataSetId());
+                }
+            }
+        }
+        return Optional.empty();
+    }
 
 }
