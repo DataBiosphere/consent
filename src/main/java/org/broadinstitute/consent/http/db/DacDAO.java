@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @UseStringTemplate3StatementLocator
-@RegisterMapper({DACUserMapper.class})
+@RegisterMapper({DacMapper.class})
 public interface DacDAO extends Transactional<DacDAO> {
 
     @SqlQuery("select * from dac")
