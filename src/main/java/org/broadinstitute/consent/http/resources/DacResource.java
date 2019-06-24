@@ -1,9 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DacService;
 
 import javax.annotation.security.RolesAllowed;
@@ -16,9 +14,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 @Path("api/dac")
@@ -42,7 +38,7 @@ public class DacResource extends Resource {
     @POST
     @Produces("application/json")
     @RolesAllowed({ADMIN})
-    public Response createDac(@Context UriInfo info, @Auth User user, Dac dac) throws Exception {
+    public Response createDac(Dac dac) throws Exception {
         if (dac == null) {
             throw new BadRequestException("DAC is required");
         }
@@ -63,7 +59,7 @@ public class DacResource extends Resource {
     @PUT
     @Produces("application/json")
     @RolesAllowed({ADMIN})
-    public Response updateDac(@Context UriInfo info, @Auth User user, Dac dac) {
+    public Response updateDac(Dac dac) {
         if (dac == null) {
             throw new BadRequestException("DAC is required");
         }
@@ -97,7 +93,7 @@ public class DacResource extends Resource {
     @Path("{dacId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN})
-    public Response deleteDac(@Context UriInfo info, @Auth User user, @PathParam("dacId") Integer dacId) {
+    public Response deleteDac(@PathParam("dacId") Integer dacId) {
         Dac dac = dacService.findById(dacId);
         if (dac == null) {
             throw new NotFoundException("Unable to find Data Access Committee with the provided id: " + dacId);

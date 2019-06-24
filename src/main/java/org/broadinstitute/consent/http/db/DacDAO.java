@@ -33,7 +33,6 @@ public interface DacDAO extends Transactional<DacDAO> {
             @Bind("updateDate") Date updateDate,
             @Bind("dacId") Integer dacId);
 
-
     @SqlUpdate("delete from dac where dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 

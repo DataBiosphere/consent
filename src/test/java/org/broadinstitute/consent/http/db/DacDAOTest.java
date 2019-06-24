@@ -18,6 +18,7 @@ import java.util.List;
 
 public class DacDAOTest extends AbstractTest {
 
+    @SuppressWarnings("UnstableApiUsage")
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
             ConsentApplication.class, Resources.getResource("consent-config.yml").getFile());
@@ -27,9 +28,7 @@ public class DacDAOTest extends AbstractTest {
         return RULE;
     }
 
-
     private DacDAO dacDAO;
-
 
     @Before
     public void setUp() {

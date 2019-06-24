@@ -13,7 +13,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
@@ -67,7 +66,7 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        Response response = dacResource.createDac(null, null, dac);
+        Response response = dacResource.createDac(dac);
         Assert.assertEquals(200, response.getStatus());
     }
 
@@ -77,7 +76,7 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        dacResource.createDac(null, null, dac);
+        dacResource.createDac(dac);
     }
 
     @Test(expected = BadRequestException.class)
@@ -89,7 +88,7 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        dacResource.createDac(null, null, dac);
+        dacResource.createDac(dac);
     }
 
     @Test(expected = BadRequestException.class)
@@ -101,7 +100,7 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        dacResource.createDac(null, null, dac);
+        dacResource.createDac(dac);
     }
 
 
@@ -115,14 +114,13 @@ public class DacResourceTest {
         doNothing().when(dacService).updateDac(isA(String.class), isA(String.class), isA(Integer.class));
         when(dacService.findById(1)).thenReturn(dac);
 
-        Response response = dacResource.updateDac(null, null, dac);
+        Response response = dacResource.updateDac(dac);
         Assert.assertEquals(200, response.getStatus());
     }
 
     @Test(expected = BadRequestException.class)
     public void testUpdateDac_badRequest_1() {
-        Dac dac = null;
-        dacResource.updateDac(null, null, dac);
+        dacResource.updateDac(null);
     }
 
     @Test(expected = BadRequestException.class)
@@ -132,7 +130,7 @@ public class DacResourceTest {
                 .setName("name")
                 .setDescription("description")
                 .build();
-        dacResource.updateDac(null, null, dac);
+        dacResource.updateDac(dac);
     }
 
     @Test(expected = BadRequestException.class)
@@ -142,7 +140,7 @@ public class DacResourceTest {
                 .setName(null)
                 .setDescription("description")
                 .build();
-        dacResource.updateDac(null, null, dac);
+        dacResource.updateDac(dac);
     }
 
     @Test(expected = BadRequestException.class)
@@ -152,7 +150,7 @@ public class DacResourceTest {
                 .setName("name")
                 .setDescription(null)
                 .build();
-        dacResource.updateDac(null, null, dac);
+        dacResource.updateDac(dac);
     }
 
     @Test
@@ -184,7 +182,7 @@ public class DacResourceTest {
                 .build();
         when(dacService.findById(1)).thenReturn(dac);
 
-        Response response = dacResource.deleteDac(null, null, dac.getDacId());
+        Response response = dacResource.deleteDac(dac.getDacId());
         Assert.assertEquals(200, response.getStatus());
 
     }
@@ -193,7 +191,7 @@ public class DacResourceTest {
     public void testDeleteDac_failure() {
         when(dacService.findById(1)).thenReturn(null);
 
-        dacResource.deleteDac(null, null, 1);
+        dacResource.deleteDac(1);
     }
 
 }

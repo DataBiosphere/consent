@@ -2,6 +2,9 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
 
+/**
+ * Convenience class for building Dacs.
+ */
 public class DacBuilder {
 
     private Dac dac;
