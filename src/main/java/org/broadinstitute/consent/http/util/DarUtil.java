@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.bson.Document;
+import org.bson.types.ObjectId;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +43,16 @@ public class DarUtil {
                 filter(Integer.class::isInstance).
                 map(Integer.class::cast).
                 collect(Collectors.toList());
+    }
+
+    public static ObjectId getObjectIdFromDocument(Document document) {
+        LinkedHashMap id = (LinkedHashMap) document.get(DarConstants.ID);
+        return new ObjectId(
+                Integer.valueOf(id.get("timestamp").toString()),
+                Integer.valueOf(id.get("machineIdentifier").toString()),
+                Short.valueOf(id.get("processIdentifier").toString()),
+                Integer.valueOf(id.get("counter").toString())
+        );
     }
 
 }
