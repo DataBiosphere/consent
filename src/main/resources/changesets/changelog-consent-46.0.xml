@@ -18,7 +18,7 @@
             <column name="create_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="upate_date" type="DATETIME">
+            <column name="update_date" type="DATETIME">
                 <constraints nullable="true"/>
             </column>
         </createTable>
