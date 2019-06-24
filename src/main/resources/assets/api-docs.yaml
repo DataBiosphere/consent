@@ -60,6 +60,8 @@ paths:
     put:
       summary: Delete Indexed File
       description: Delete an indexed ontology file.
+      consumes:
+        - multipart/form-data
       tags:
         - Ontology
       responses:
@@ -2231,6 +2233,8 @@ definitions:
         description: Nih account associated name.
       datasetPermissions:
         type: array
+        items:
+          type: string
         description: NIH dataset access permissions.
       status:
         type: string
