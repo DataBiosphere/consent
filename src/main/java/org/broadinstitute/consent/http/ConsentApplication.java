@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -97,6 +98,7 @@ import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseAuditServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
@@ -210,6 +212,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
         // Services
+        final DacService dacService = injector.getProvider(DacService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, mongoInstance, voteDAO, dataSetDAO);
@@ -276,7 +279,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestVoteResource.class);
         env.jersey().register(ConsentCasesResource.class);
         env.jersey().register(DataRequestCasesResource.class);
-        env.jersey().register(DacResource.class);
+        env.jersey().register(new DacResource(dacService));
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
