@@ -24,8 +24,12 @@ import java.util.List;
 @Path("api/dac")
 public class DacResource extends Resource {
 
-    @Inject
     private DacService dacService;
+
+    @Inject
+    public DacResource(DacService dacService) {
+        this.dacService = dacService;
+    }
 
     @GET
     @Produces("application/json")

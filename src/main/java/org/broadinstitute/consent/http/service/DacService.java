@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.models.Dac;
 
@@ -11,12 +10,10 @@ import java.util.List;
 public class DacService {
 
     private DacDAO dacDAO;
-    private final Logger logger;
 
     @Inject
     public DacService(DacDAO dacDAO) {
         this.dacDAO = dacDAO;
-        this.logger = Logger.getLogger("DacService");
     }
 
     public List<Dac> findAll() {
