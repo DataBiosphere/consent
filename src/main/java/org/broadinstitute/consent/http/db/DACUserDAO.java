@@ -97,9 +97,9 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     List<DACUser> getMembersApprovedToReplace(@Bind("dacUserId") Integer dacUserId, @BindIn("roleIds") List<Integer> includedRoles);
 
     @SqlQuery("SELECT * FROM dacuser du "
-            + " INNER JOIN user_role ur ON du.user_id = ur.dacUserId "
-            + " INNER JOIN roles r ON ur.roleId = r.roleId "
-            + " WHERE du.user_id != :dacUserId "
+            + " INNER JOIN user_role ur ON du.dacUserId = ur.user_id "
+            + " INNER JOIN roles r ON ur.role_id = r.roleId "
+            + " WHERE du.dacUserId != :dacUserId "
             + " AND r.name = 'DataOwner'")
     List<DACUser> getDataOwnersApprovedToReplace(@Bind("dacUserId") Integer dacUserId);
 

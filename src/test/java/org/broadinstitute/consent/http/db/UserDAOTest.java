@@ -197,7 +197,7 @@ public class UserDAOTest extends AbstractTest {
     @Test
     public void testGetMembersApprovedToReplace() {
         // There are 3 Members set up in insert.sql, users 2, 3, and 4
-        
+
         Collection<DACUser> users2 = userDAO.getMembersApprovedToReplace(2, Collections.singletonList(1));
         Assert.assertFalse(users2.isEmpty());
 
@@ -206,6 +206,21 @@ public class UserDAOTest extends AbstractTest {
 
         Collection<DACUser> users4 = userDAO.getMembersApprovedToReplace(4, Collections.singletonList(1));
         Assert.assertFalse(users4.isEmpty());
+    }
+
+    @Test
+    public void testGetDataOwnersApprovedToReplace() {
+        // There are 3 DataOwners set up in insert.sql, users 1, 2, and 5
+
+        Collection<DACUser> users2 = userDAO.getDataOwnersApprovedToReplace(1);
+        Assert.assertFalse(users2.isEmpty());
+
+        Collection<DACUser> users3 = userDAO.getDataOwnersApprovedToReplace(2);
+        Assert.assertFalse(users3.isEmpty());
+
+        Collection<DACUser> users4 = userDAO.getDataOwnersApprovedToReplace(5);
+        Assert.assertFalse(users4.isEmpty());
+
     }
 
 }
