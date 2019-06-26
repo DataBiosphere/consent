@@ -186,4 +186,12 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertTrue(count > 0);
     }
 
+    @Test
+    public void testDescribeUsersByRoleAndEmailPreference() {
+        Collection<DACUser> noEmailUsers = userDAO.describeUsersByRoleAndEmailPreference("Member", false);
+        Collection<DACUser> yesEmailUsers = userDAO.describeUsersByRoleAndEmailPreference("Member", true);
+        Assert.assertTrue(noEmailUsers.isEmpty());
+        Assert.assertFalse(yesEmailUsers.isEmpty());
+    }
+
 }

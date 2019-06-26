@@ -1,3 +1,5 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
 UPDATE dictionary d SET d.key = 'Sample Collection ID' where d.key = 'Dataset ID';
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now(),'','dataUseLetter-link-01.here','dulName-01.pdf');
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now(),'','dataUseLetter-link-02.here','dulName-02.pdf');

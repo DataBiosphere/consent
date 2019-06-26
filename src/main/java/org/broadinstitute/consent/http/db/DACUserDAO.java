@@ -55,9 +55,9 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlUpdate("update dacuser set email=:email, displayName=:displayName, additional_email=:additionalEmail where dacUserId=:id")
     void updateDACUser(@Bind("email") String email,
-                          @Bind("displayName") String displayName,
-                          @Bind("id") Integer id,
-                          @Bind("additionalEmail") String additionalEmail);
+                       @Bind("displayName") String displayName,
+                       @Bind("id") Integer id,
+                       @Bind("additionalEmail") String additionalEmail);
 
     @SqlUpdate("delete from dacuser where email = :email")
     void deleteDACUserByEmail(@Bind("email") String email);
