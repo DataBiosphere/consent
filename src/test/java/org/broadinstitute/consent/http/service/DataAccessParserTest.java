@@ -4,7 +4,7 @@ import com.vividsolutions.jts.util.Assert;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
@@ -133,8 +133,8 @@ public class DataAccessParserTest {
         return datasetDetails;
     }
 
-    private DACUserRole populateRole() {
-        DACUserRole role = new DACUserRole();
+    private UserRole populateRole() {
+        UserRole role = new UserRole();
         role.setStatus("approved");
         role.setRationale("granted bonafide");
         return role;

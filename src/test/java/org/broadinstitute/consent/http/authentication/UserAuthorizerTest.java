@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.authentication;
 
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +20,7 @@ public class UserAuthorizerTest {
 
     UserAuthorizer authorizer;
     @Mock
-    DACUserRoleDAO dacUserRoleDAO;
+    UserRoleDAO userRoleDAO;
     @Mock
     AuthUser authorizedUser;
     @Mock
@@ -31,9 +31,9 @@ public class UserAuthorizerTest {
         MockitoAnnotations.initMocks(this);
         when(authorizedUser.getName()).thenReturn("Authorized User");
         when(unauthorizedUser.getName()).thenReturn("Unauthorized User");
-        when(dacUserRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
-        when(dacUserRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
-        authorizer = new UserAuthorizer(dacUserRoleDAO);
+        when(userRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
+        when(userRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
+        authorizer = new UserAuthorizer(userRoleDAO);
     }
 
     @Test
@@ -48,8 +48,8 @@ public class UserAuthorizerTest {
 
     /* Helper Methods */
 
-    private DACUserRole getChairpersonRole(){
-        return new DACUserRole(1, "CHAIRPERSON", false);
+    private UserRole getChairpersonRole(){
+        return new UserRole(1, "CHAIRPERSON", false);
     }
 
 }

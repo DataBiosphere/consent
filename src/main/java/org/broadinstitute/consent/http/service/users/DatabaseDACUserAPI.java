@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
@@ -28,7 +28,7 @@ import java.util.*;
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final DACUserDAO dacUserDAO;
-    protected final DACUserRoleDAO roleDAO;
+    protected final UserRoleDAO roleDAO;
     private final UserHandlerAPI rolesHandler;
     protected final Map<String, Integer> roleIdMap;
     private final ElectionDAO electionDAO;
@@ -39,7 +39,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     private final String RESEARCHER = UserRoles.RESEARCHER.getValue();
     private final Integer MINIMUM_DAC_USERS = 3;
 
-    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
         DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, researcherPropertyDAO));
     }
 
@@ -53,7 +53,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    protected DatabaseDACUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
         this.dacUserDAO = userDAO;
         this.roleDAO = roleDAO;
         this.electionDAO = electionDAO;
@@ -139,7 +139,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateRoleStatus(DACUserRole userRole, Integer userId) {
+    public DACUser updateRoleStatus(UserRole userRole, Integer userId) {
         Integer statusId = RoleStatus.getValueByStatus(userRole.getStatus());
         validateExistentUserById(userId);
         if (statusId == null) {
@@ -160,7 +160,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUserRole getRoleStatus(Integer userId) {
+    public UserRole getRoleStatus(Integer userId) {
         validateExistentUserById(userId);
         Integer roleId = roleIdMap.get(UserRoles.RESEARCHER.getValue());
         return roleDAO.findRoleByUserIdAndRoleId(userId, roleId);
@@ -308,7 +308,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     public Collection<DACUser> describeUsers() {
         Collection<DACUser> users = dacUserDAO.findUsers();
         users.stream().forEach(user -> {
-            for(DACUserRole role : user.getRoles()){
+            for(UserRole role : user.getRoles()){
                 if (role.getRoleId() == 5) {
                     String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
                     role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
@@ -350,7 +350,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     private void insertUserRoles(DACUser dacUser, Integer dacUserId) {
-        List<DACUserRole> roles = dacUser.getRoles();
+        List<UserRole> roles = dacUser.getRoles();
         roles.forEach(r -> {
             r.setRoleId(roleDAO.findRoleIdByName(r.getName()));
             if (Objects.isNull(r.getEmailPreference())) {

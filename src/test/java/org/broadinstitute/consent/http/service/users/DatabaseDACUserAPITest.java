@@ -4,7 +4,7 @@ import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.junit.Before;
@@ -36,7 +36,7 @@ public class DatabaseDACUserAPITest {
     DACUserDAO dacUserDAO;
 
     @Mock
-    DACUserRoleDAO roleDAO;
+    UserRoleDAO roleDAO;
 
     @Mock
     ElectionDAO electionDAO;
@@ -66,8 +66,8 @@ public class DatabaseDACUserAPITest {
         DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setDacUserId(3);
-        DACUserRole role = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(role));
+        UserRole role = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(role));
         user.setRoles(roles);
         when(dacUserDAO.findDACUserById(3)).thenReturn(user);
         when(roleDAO.findRoleIdByName(UserRoles.RESEARCHER.getValue())).thenReturn(1);

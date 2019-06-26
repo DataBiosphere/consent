@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 
@@ -27,13 +27,13 @@ public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
                     r.getDate("createDate"), new ArrayList<>(),
                     r.getString("additional_email"));
             String status = getStatus(r);
-            DACUserRole role = new DACUserRole(r.getInt("roleId"), r.getString("name"), null, null, status);
+            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null, null, status);
             user.getRoles().add(role);
             users.put(user.getDacUserId(), user);
         } else {
             user = users.get(r.getInt("dacUserId"));
             String status = getStatus(r);
-            DACUserRole role = new DACUserRole(r.getInt("roleId"), r.getString("name"), null, null, status);
+            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null, null, status);
             user.getRoles().add(role);
         }
         return user;

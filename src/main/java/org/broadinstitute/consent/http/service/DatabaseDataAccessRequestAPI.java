@@ -397,7 +397,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDUR) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, UserRole role, Boolean manualReview, String sDUR) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
@@ -523,7 +523,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, DACUserRole role) {
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, UserRole role) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))

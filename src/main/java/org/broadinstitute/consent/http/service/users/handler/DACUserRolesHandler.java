@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import javax.mail.MessagingException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -22,7 +22,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
@@ -35,7 +35,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final DACUserDAO dacUserDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
-    private final DACUserRoleDAO userRoleDAO;
+    private final UserRoleDAO userRoleDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
     private final String MEMBER = UserRoles.MEMBER.getValue();
     private final String ADMIN = UserRoles.ADMIN.getValue();
@@ -48,7 +48,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final DataAccessRequestAPI dataAccessRequestAPI;
 
 
-    public DACUserRolesHandler(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
+    public DACUserRolesHandler(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
         this.dacUserDAO = userDao;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
@@ -59,7 +59,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         this.dataAccessRequestAPI = dataAccessRequestAPI;
     }
 
-    public static void initInstance(DACUserDAO userDao, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
         UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierAPI, dataAccessRequestAPI));
     }
 
@@ -92,16 +92,16 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             boolean delegateOwner = usersMap.containsKey("alternativeDataOwnerUser");
             updatedUser = usersMap.get("updatedUser");
             // roles as should be ..
-            List<DACUserRole> updatedRoles = updatedUser.getRoles();
+            List<UserRole> updatedRoles = updatedUser.getRoles();
 
             // roles as currently are ...
-            List<DACUserRole> originalRoles = userRoleDAO.findRolesByUserId(updatedUser.getDacUserId());
+            List<UserRole> originalRoles = userRoleDAO.findRolesByUserId(updatedUser.getDacUserId());
 
             // roles required to remove ...
-            List<DACUserRole> rolesToRemove = substractAllRoles(originalRoles, updatedRoles);
+            List<UserRole> rolesToRemove = substractAllRoles(originalRoles, updatedRoles);
 
             // roles to add ..
-            List<DACUserRole> rolesToAdd = substractAllRoles(updatedRoles, originalRoles);
+            List<UserRole> rolesToAdd = substractAllRoles(updatedRoles, originalRoles);
 
 
             updateAdminEmailPreference(originalRoles,updatedRoles,updatedUser.getDacUserId());
@@ -119,7 +119,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                 doUserToDelegate.setRoles(userRoleDAO.findRolesByUserId(doUserToDelegate.getDacUserId()));
             }
             // removing deleted roles
-            for (DACUserRole role : rolesToRemove) {
+            for (UserRole role : rolesToRemove) {
                 switch (UserRoles.valueOf(role.getName().toUpperCase())) {
 
                     case CHAIRPERSON:
@@ -143,24 +143,24 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                 }
             }
             // adding new roles
-            for (DACUserRole role : rolesToAdd) {
+            for (UserRole role : rolesToAdd) {
                 switch (UserRoles.valueOf(role.getName().toUpperCase())) {
                     case CHAIRPERSON:
                         addChairPerson(updatedUser);
                         break;
                     case MEMBER:
-                        assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(MEMBER), MEMBER, true));
+                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(MEMBER), MEMBER, true));
                         break;
                     case ALUMNI:
                         if (containsAnyRole(updatedRoles, new String[]{MEMBER, CHAIRPERSON})) {
                             throw new UserRoleHandlerException("User to delegate: " + (userToDelegate != null ? userToDelegate.getDisplayName() : null) + " has a role: "
                                     + " [Member] or [Chairperson] that is incompatible with the role you want to assign.");
                         } else {
-                            assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(ALUMNI), ALUMNI, true));
+                            assignNewRole(updatedUser, new UserRole(roleIdMap.get(ALUMNI), ALUMNI, true));
                         }
                         break;
                     case ADMIN:
-                        assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(ADMIN), ADMIN, role.getEmailPreference() == null ? true : role.getEmailPreference()));
+                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(ADMIN), ADMIN, role.getEmailPreference() == null ? true : role.getEmailPreference()));
                         break;
                     case RESEARCHER:
                         if (containsAnyRole(updatedRoles, new String[]{MEMBER, CHAIRPERSON})) {
@@ -168,11 +168,11 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                             throw new UserRoleHandlerException("User to delegate: " + (userToDelegate != null ? userToDelegate.getDisplayName() : null) + " has a role: "
                                     + " [Member] or [Chairperson] that is incompatible with the role you want to assign.");
                         } else {
-                            assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(RESEARCHER), RESEARCHER, true));
+                            assignNewRole(updatedUser, new UserRole(roleIdMap.get(RESEARCHER), RESEARCHER, true));
                         }
                         break;
                     case DATAOWNER:
-                        assignNewRole(updatedUser, new DACUserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER, true));
+                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER, true));
                         break;
                 }
             }
@@ -185,14 +185,14 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         }
     }
 
-    private void updateAdminEmailPreference(List<DACUserRole> originalRoles, List<DACUserRole> updatedRoles, Integer dacUserId) throws UserRoleHandlerException {
+    private void updateAdminEmailPreference(List<UserRole> originalRoles, List<UserRole> updatedRoles, Integer dacUserId) throws UserRoleHandlerException {
         try{
             boolean isAdminRole = originalRoles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(ADMIN));
-            List<DACUserRole> newAdminRole =  updatedRoles.stream().filter(r -> r.getName().equalsIgnoreCase(ADMIN)).collect(Collectors.toList());
+            List<UserRole> newAdminRole =  updatedRoles.stream().filter(r -> r.getName().equalsIgnoreCase(ADMIN)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(newAdminRole)) {
                 return;
             }
-            DACUserRole updatedAdminRole = newAdminRole.get(0);
+            UserRole updatedAdminRole = newAdminRole.get(0);
             if(isAdminRole){
                 userRoleDAO.updateEmailPreferenceUserRole(updatedAdminRole, dacUserId);
             }
@@ -209,7 +209,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         removeRole(updatedUser.getDacUserId(), DATA_OWNER);
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (delegate) {
-            assignNewRole(doUserToDelegate, new DACUserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER, true));
+            assignNewRole(doUserToDelegate, new UserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER, true));
             verifyAndDelegateElections(updatedUser, doUserToDelegate, openElectionIdsForThisUser, 1, VoteType.DATA_OWNER.getValue());
             updateDataSetsOwnership(updatedUser, doUserToDelegate);
         } else {
@@ -274,8 +274,8 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         DACUser currentChairPerson = dacUserDAO.findChairpersonUser();
         if(currentChairPerson != null){
             removeRole(currentChairPerson.getDacUserId(), CHAIRPERSON);
-            addRole(currentChairPerson.getDacUserId(), new DACUserRole(roleIdMap.get(ALUMNI), ALUMNI, true));
-            addRole(newChairperson.getDacUserId(), new DACUserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON, true));
+            addRole(currentChairPerson.getDacUserId(), new UserRole(roleIdMap.get(ALUMNI), ALUMNI, true));
+            addRole(newChairperson.getDacUserId(), new UserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON, true));
             delegateChairPersonVotes(currentChairPerson.getDacUserId(), newChairperson.getDacUserId());
         }
     }
@@ -325,16 +325,16 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
      * @param userToAssignRole User whose roles will be updated.
      * @param role New role to add to @userToAssignRole .
      */
-    private void assignNewRole(DACUser userToAssignRole, DACUserRole role) {
-        List<DACUserRole> roles = userRoleDAO.findRolesByUserId(userToAssignRole.getDacUserId());
+    private void assignNewRole(DACUser userToAssignRole, UserRole role) {
+        List<UserRole> roles = userRoleDAO.findRolesByUserId(userToAssignRole.getDacUserId());
         if (!containsRole(roles, role.getName())) {
-            List<DACUserRole> newRoles = new ArrayList<>();
+            List<UserRole> newRoles = new ArrayList<>();
             newRoles.add(role);
             userRoleDAO.insertUserRoles(newRoles, userToAssignRole.getDacUserId());
         }
     }
 
-    private List<DACUserRole> generateRoleIdList(List<DACUserRole> roleList) {
+    private List<UserRole> generateRoleIdList(List<UserRole> roleList) {
         roleList.stream().forEach((r) -> r.setRoleId(roleIdMap.get(r.getName().toUpperCase())));
         return roleList;
     }
@@ -344,7 +344,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     }
 
 
-    private void changeRolesWithoutDelegation(DACUser updatedUser, List<DACUserRole> removedRoles, List<DACUserRole> newRoles, boolean delegateChairperson) throws UserRoleHandlerException, MessagingException, IOException, TemplateException {
+    private void changeRolesWithoutDelegation(DACUser updatedUser, List<UserRole> removedRoles, List<UserRole> newRoles, boolean delegateChairperson) throws UserRoleHandlerException, MessagingException, IOException, TemplateException {
         if (CollectionUtils.isNotEmpty(removedRoles)) {
             userRoleDAO.removeUserRoles(updatedUser.getDacUserId(),
                     removedRoles.stream().map(dacUserRole -> dacUserRole.getRoleId()).collect(Collectors.toList()));
@@ -389,7 +389,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             if (containsAnyRole(newChairPerson.getRoles(), new String[]{MEMBER})) {
                 removeRole(newChairPerson.getDacUserId(), MEMBER);
             }
-            assignNewRole(newChairPerson, new DACUserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON, true));
+            assignNewRole(newChairPerson, new UserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON, true));
 
             // update DATA_ACCESS elections status from FINAL to OPEN.
             List<Integer> toUpdateFinalStatusElections = electionDAO.findElectionsIdByTypeAndStatus(
@@ -411,7 +411,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         verifyAndUpdateAccessElection(oldMember, newMember, accessRpElectionIds);
         if (delegateMember) {
             verifyAndDelegateElections(oldMember, newMember, openDULElectionIdsForThisUser, 4, VoteType.DAC.getValue());
-            assignNewRole(newMember, new DACUserRole(roleIdMap.get(MEMBER), MEMBER, true));
+            assignNewRole(newMember, new UserRole(roleIdMap.get(MEMBER), MEMBER, true));
             if (containsAnyRole(newMember.getRoles(), new String[]{ALUMNI})) {
                 removeAlumni(newMember);
             }
@@ -471,7 +471,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         return votesOnPendingElections;
     }
 
-    private List<DACUserRole> substractAllRoles(List<DACUserRole> roles, List<DACUserRole> toSubstractRoles) {
+    private List<UserRole> substractAllRoles(List<UserRole> roles, List<UserRole> toSubstractRoles) {
         List<String> toSubstractRolesNames = toSubstractRoles.stream().map(role -> role.getName().toUpperCase()).collect(Collectors.toList());
         return roles.stream().filter(rol -> !toSubstractRolesNames.contains(rol.getName().toUpperCase())).collect(Collectors.toList());
     }
@@ -480,15 +480,15 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         userRoleDAO.removeSingleUserRole(dacUserId, roleIdMap.get(role));
     }
 
-    private void addRole(Integer dacUserId, DACUserRole role) {
+    private void addRole(Integer dacUserId, UserRole role) {
         userRoleDAO.insertSingleUserRole(role.getRoleId(), dacUserId, role.getEmailPreference());
     }
 
-    public boolean containsRole(Collection<DACUserRole> roles, String role) {
+    public boolean containsRole(Collection<UserRole> roles, String role) {
         return roles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(role));
     }
 
-    public boolean containsAnyRole(Collection<DACUserRole> roles, String[] rolesToMatch) {
+    public boolean containsAnyRole(Collection<UserRole> roles, String[] rolesToMatch) {
         for (String role : rolesToMatch) {
             if (containsRole(roles, role)) {
                 return true;

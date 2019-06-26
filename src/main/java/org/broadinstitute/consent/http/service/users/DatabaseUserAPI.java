@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -30,7 +30,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
     private final String ROLES = "roles";
 
-    public DatabaseUserAPI(DACUserDAO userDAO, DACUserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, MongoConsentDB mongo,  ResearcherPropertyDAO  researcherPropertyDAO) {
+    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO, UserHandlerAPI userHandlerAPI, MongoConsentDB mongo, ResearcherPropertyDAO  researcherPropertyDAO) {
         super(userDAO, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, researcherPropertyDAO);
         this.mongo = mongo;
     }
@@ -74,15 +74,15 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
     private void setRoles(DACUser user, PatchOperation action) {
         String roles [] = action.getValue().split(",");
-        List<DACUserRole> dacUserRoles = getRoles(roles);
+        List<UserRole> userRoles = getRoles(roles);
         if(action.getOp().contains(Actions.REPLACE.getValue())){
-            user.setRoles(dacUserRoles);
+            user.setRoles(userRoles);
         }
         else if(action.getOp().contains(Actions.ADD.getValue())){
-            user.getRoles().addAll(dacUserRoles);
+            user.getRoles().addAll(userRoles);
         }
         else if(action.getOp().contains(Actions.REMOVE.getValue())){
-            dacUserRoles.stream().forEach(role -> user.getRoles().remove(role));
+            userRoles.stream().forEach(role -> user.getRoles().remove(role));
         }
         else{
             throw new IllegalArgumentException("Operation is not allowed. Allowed operations are: replace, remove and add");
@@ -103,7 +103,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         }
     }
 
-    private void validateRoles(List<DACUserRole> roles) {
+    private void validateRoles(List<UserRole> roles) {
         if (CollectionUtils.isNotEmpty(roles)) {
             roles.forEach(role -> {
                 if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue())
@@ -116,7 +116,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         }
     }
 
-    private void validateAndUpdateRoles(List<DACUserRole> existentRoles, List<DACUserRole> newRoles, DACUser user) throws UserRoleHandlerException {
+    private void validateAndUpdateRoles(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user) throws UserRoleHandlerException {
         Map<Integer, Integer>  rolesToRemove = new HashedMap();
         Map<Integer, Integer>  rolesToAdd = new HashedMap();
         updateDataOwnerRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
@@ -128,7 +128,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
             roleDAO.insertSingleUserRole(roleId,userId, false);
         });
     }
-    private void updateDataOwnerRole(List<DACUserRole> existentRoles, List<DACUserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
+    private void updateDataOwnerRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
         boolean isDO = containsRole(existentRoles, UserRoles.DATAOWNER.getValue());
         boolean isNewDO = containsRole(newRoles, UserRoles.DATAOWNER.getValue());
         //remove data owner
@@ -150,7 +150,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         }
     }
 
-    private void updateResearcherRole(List<DACUserRole> existentRoles, List<DACUserRole> newRoles, DACUser user,Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
+    private void updateResearcherRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
         boolean isResearcher = containsRole(existentRoles, UserRoles.RESEARCHER.getValue());
         boolean isNewResearcher = containsRole(newRoles, UserRoles.RESEARCHER.getValue());
         //remove researcher
@@ -174,7 +174,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         }
     }
 
-    private boolean containsRole(List<DACUserRole> roles, String roleName) {
+    private boolean containsRole(List<UserRole> roles, String roleName) {
         boolean result = false;
         if (CollectionUtils.isNotEmpty(roles)) {
             result = roles.parallelStream().anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
@@ -182,17 +182,17 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         return result;
     }
 
-    private List<DACUserRole> getRoles(String[] roles){
-        List<DACUserRole> dacUserRoles = new ArrayList<>();
+    private List<UserRole> getRoles(String[] roles){
+        List<UserRole> userRoles = new ArrayList<>();
         if(roles != null && roles.length > 0){
             for(int i=0; i < roles.length; i++){
-                DACUserRole role = new DACUserRole();
+                UserRole role = new UserRole();
                 role.setName(roles[i].trim());
                 role.setRoleId(roleIdMap.get(roles[i].toUpperCase()));
-                dacUserRoles.add(role);
+                userRoles.add(role);
             }
         }
-        return dacUserRoles;
+        return userRoles;
     }
 
 }

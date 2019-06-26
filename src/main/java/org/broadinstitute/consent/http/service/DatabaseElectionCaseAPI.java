@@ -23,18 +23,18 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
-    private DACUserRoleDAO rolesDAO;
+    private UserRoleDAO rolesDAO;
     private DACUserDAO userDAO;
     private ConsentDAO consentDAO;
     private DataSetDAO dataSetDAO;
     private final MongoConsentDB mongo;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO ,MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, UserRoleDAO rolesDAO, ConsentDAO consentDAO , MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
         PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO, consentDAO, mongoDB, dataSetDAO));
 
     }
 
-    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, UserRoleDAO rolesDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
@@ -61,8 +61,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
             }
         }
         if (userDAO.findDACUserById(dacUserId) != null) {
-            List<DACUserRole> roles = rolesDAO.findRolesByUserId(dacUserId);
-            if (roles.contains(new DACUserRole(0, "Chairperson"))) {
+            List<UserRole> roles = rolesDAO.findRolesByUserId(dacUserId);
+            if (roles.contains(new UserRole(0, "Chairperson"))) {
                 return orderPendingCasesForChairperson(pendingCases);
             } else {
                 return orderPendingCasesForMember(pendingCases);

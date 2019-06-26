@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +34,7 @@ public class OAuthCustomAuthFilterTest {
     @Mock
     OAuthAuthenticator authenticator;
     @Mock
-    DACUserRoleDAO dacUserRoleDAO;
+    UserRoleDAO userRoleDAO;
 
     Optional principal;
 

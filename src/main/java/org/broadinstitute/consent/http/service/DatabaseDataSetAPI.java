@@ -5,7 +5,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -47,7 +47,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final DataSetFileParser parser = new DataSetFileParser();
     private final DataSetDAO dsDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
-    private final DACUserRoleDAO dsRoleDAO;
+    private final UserRoleDAO dsRoleDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
     private DataSetAuditDAO dataSetAuditDAO;
@@ -69,11 +69,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
         DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, dsRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.dsRoleDAO = dsRoleDAO;
