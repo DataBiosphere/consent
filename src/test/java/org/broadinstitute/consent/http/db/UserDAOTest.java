@@ -194,4 +194,18 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertFalse(yesEmailUsers.isEmpty());
     }
 
+    @Test
+    public void testGetMembersApprovedToReplace() {
+        // There are 3 Members set up in insert.sql, users 2, 3, and 4
+        
+        Collection<DACUser> users2 = userDAO.getMembersApprovedToReplace(2, Collections.singletonList(1));
+        Assert.assertFalse(users2.isEmpty());
+
+        Collection<DACUser> users3 = userDAO.getMembersApprovedToReplace(3, Collections.singletonList(1));
+        Assert.assertFalse(users3.isEmpty());
+
+        Collection<DACUser> users4 = userDAO.getMembersApprovedToReplace(4, Collections.singletonList(1));
+        Assert.assertFalse(users4.isEmpty());
+    }
+
 }
