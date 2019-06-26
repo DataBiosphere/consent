@@ -97,4 +97,15 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertFalse(dataOwners.isEmpty());
     }
 
+    @Test
+    public void testCheckChairpersonUser() {
+        // insert.sql sets up users 1 and 5 as chair persons
+        Assert.assertNotNull(userDAO.checkChairpersonUser(1));
+        Assert.assertNull(userDAO.checkChairpersonUser(2));
+        Assert.assertNull(userDAO.checkChairpersonUser(3));
+        Assert.assertNull(userDAO.checkChairpersonUser(4));
+        Assert.assertNotNull(userDAO.checkChairpersonUser(5));
+        Assert.assertNull(userDAO.checkChairpersonUser(6));
+    }
+
 }
