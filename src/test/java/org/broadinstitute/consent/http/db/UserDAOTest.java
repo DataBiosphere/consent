@@ -140,7 +140,7 @@ public class UserDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testUpdateDACUser() {
+    public void testUpdateDACUser_case1() {
         Integer userId = userDAO.insertDACUser("dac_user_test@broad.org", "Dac User Test", new Date());
         Assert.assertNotNull(userId);
         userDAO.updateDACUser(
@@ -220,7 +220,15 @@ public class UserDAOTest extends AbstractTest {
 
         Collection<DACUser> users4 = userDAO.getDataOwnersApprovedToReplace(5);
         Assert.assertFalse(users4.isEmpty());
+    }
 
+    @Test
+    public void testUpdateDACUser_case2() {
+        Integer userId = userDAO.insertDACUser("dac_user_test@broad.org", "Dac User Test", new Date());
+        Assert.assertNotNull(userId);
+        userDAO.updateDACUser("Updated Dac User Test", userId);
+        DACUser user = userDAO.findDACUserById(userId);
+        Assert.assertEquals(user.getDisplayName(), "Updated Dac User Test");
     }
 
 }
