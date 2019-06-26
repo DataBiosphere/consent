@@ -163,4 +163,13 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertNull(deletedUser);
     }
 
+    @Test
+    public void testFindDACUserIdByRole() {
+        int userId = 5;
+        int dataOwnerId = 6;
+        Integer foundUserId = userDAO.findDACUserIdByRole(userId, dataOwnerId);
+        Assert.assertNotNull(foundUserId);
+        Assert.assertNotEquals(userId, foundUserId.intValue());
+    }
+
 }

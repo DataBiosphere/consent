@@ -62,7 +62,8 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlUpdate("delete from dacuser where email = :email")
     void deleteDACUserByEmail(@Bind("email") String email);
 
-    @SqlQuery("select dr.dacUserId from user_role dr inner join roles r on r.roleId = dr.roleId where dr.dacUserId != :dacUserId and r.roleId = :roleId")
+    // TODO: This query can return many user ids, not a single one. See: DUOS-392
+    @SqlQuery("select dr.user_id from user_role dr inner join roles r on r.roleId = dr.role_id where dr.user_id != :dacUserId and r.roleId = :roleId")
     Integer findDACUserIdByRole(@Bind("roleId") Integer roleId, @Bind("dacUserId") Integer dacUserId);
 
     @Mapper(DACUserRoleMapper.class)
