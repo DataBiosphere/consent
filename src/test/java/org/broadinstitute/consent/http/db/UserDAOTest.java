@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import com.google.common.io.Resources;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -133,7 +134,8 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testInsertDACUser() {
-        Integer userId = userDAO.insertDACUser("dac_user_test@broad.org", "Dac User Test", new Date());
+        String email = getRandomEmailAddress();
+        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
         DACUser user = userDAO.findDACUserById(userId);
         Assert.assertNotNull(user);
@@ -141,15 +143,17 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testUpdateDACUser_case1() {
-        Integer userId = userDAO.insertDACUser("dac_user_test@broad.org", "Dac User Test", new Date());
+        String email = getRandomEmailAddress();
+        String newEmail = getRandomEmailAddress();
+        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
         userDAO.updateDACUser(
-                "dac_user_test2@broad.org",
+                newEmail,
                 "Dac User Test",
                 userId,
-                "dac_user_test@broad.org");
+                email);
         DACUser user = userDAO.findDACUserById(userId);
-        Assert.assertEquals(user.getEmail(), "dac_user_test2@broad.org");
+        Assert.assertEquals(user.getEmail(), newEmail);
     }
 
     @Test
@@ -224,11 +228,19 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testUpdateDACUser_case2() {
-        Integer userId = userDAO.insertDACUser("dac_user_test@broad.org", "Dac User Test", new Date());
+        String email = getRandomEmailAddress();
+        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
         userDAO.updateDACUser("Updated Dac User Test", userId);
         DACUser user = userDAO.findDACUserById(userId);
         Assert.assertEquals(user.getDisplayName(), "Updated Dac User Test");
+    }
+
+
+    private String getRandomEmailAddress() {
+        String user = RandomStringUtils.randomAlphanumeric(20);
+        String domain = RandomStringUtils.randomAlphanumeric(10);
+        return user + "@" + domain + ".org";
     }
 
 }

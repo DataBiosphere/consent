@@ -104,7 +104,6 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     List<DACUser> getDataOwnersApprovedToReplace(@Bind("dacUserId") Integer dacUserId);
 
     @SqlUpdate("update dacuser set displayName=:displayName where dacUserId = :id")
-    @GetGeneratedKeys
-    Integer updateDACUser(@Bind("displayName") String displayName,
+    void updateDACUser(@Bind("displayName") String displayName,
                           @Bind("id") Integer id);
 }
