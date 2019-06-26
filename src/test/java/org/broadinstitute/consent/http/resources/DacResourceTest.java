@@ -73,8 +73,6 @@ public class DacResourceTest {
     @Test(expected = BadRequestException.class)
     public void testCreateDac_badRequest_1() throws Exception {
         Dac dac = null;
-        when(dacService.createDac(any(), any())).thenReturn(1);
-        when(dacService.findById(1)).thenReturn(dac);
 
         dacResource.createDac(dac);
     }
