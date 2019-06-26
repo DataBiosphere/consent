@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -111,6 +112,13 @@ public class UserDAOTest extends AbstractTest {
     public void testFindDACUsersEnabledToVote() {
         Collection<DACUser> users = userDAO.findDACUsersEnabledToVote();
         Assert.assertFalse(users.isEmpty());
+    }
+
+    @Test
+    public void testFindUsersWithRoles() {
+        Collection<Integer> userIds = Arrays.asList(1, 2, 3, 4, 5, 6);
+        Collection<DACUser> users = userDAO.findUsersWithRoles(userIds);
+        users.forEach(u -> Assert.assertFalse("User: " + u.getDacUserId() + " has no roles", u.getRoles().isEmpty()));
     }
 
 }
