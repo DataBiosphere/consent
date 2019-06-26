@@ -15,6 +15,7 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
+// TODO: Rename this class to UserDAO - see DUOS-344
 @UseStringTemplate3StatementLocator
 @RegisterMapper({DACUserMapper.class})
 public interface DACUserDAO extends Transactional<DACUserDAO> {
@@ -22,7 +23,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select * from dacuser  where dacUserId = :dacUserId")
     DACUser findDACUserById(@Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select  *  from dacuser where  dacUserId IN (<dacUserIds>)")
+    @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")
     Collection<DACUser> findUsers(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
     @SqlQuery("select u.* from dacuser u inner join user_role du on du.user_id = u.dacUserId inner join roles r on r.roleId = du.role_id where r.name = 'Chairperson'")
@@ -91,7 +92,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
             + "        )"
             + "    ) "
             + "group by v.dacUserId"
-            + ") AND d.dacUserId NOT IN (Select ur.dacUserId from user_role ur where ur.roleId in (<roleIds>))")
+            + ") AND d.dacUserId NOT IN (Select ur.user_id from user_role ur where ur.role_id in (<roleIds>))")
     List<DACUser> getMembersApprovedToReplace(@Bind("dacUserId") Integer dacUserId, @BindIn("roleIds") List<Integer> includedRoles);
 
     @SqlQuery("SELECT * FROM dacuser du "

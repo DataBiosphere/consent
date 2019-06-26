@@ -47,7 +47,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final DataSetFileParser parser = new DataSetFileParser();
     private final DataSetDAO dsDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
-    private final UserRoleDAO dsRoleDAO;
+    private final UserRoleDAO userRoleDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
     private DataSetAuditDAO dataSetAuditDAO;
@@ -69,14 +69,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, dsRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
+    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
-        this.dsRoleDAO = dsRoleDAO;
+        this.userRoleDAO = userRoleDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAuditDAO = dataSetAuditDAO;
@@ -461,11 +461,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
 
-    private boolean userIs(String rol, Integer dacUserId) {
-        if (dsRoleDAO.findRoleByNameAndUser(rol, dacUserId) != null) {
-            return true;
-        }
-        return false;
+    private boolean userIs(String roleName, Integer dacUserId) {
+        return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
     }
 
 

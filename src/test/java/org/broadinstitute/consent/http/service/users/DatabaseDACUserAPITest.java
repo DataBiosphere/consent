@@ -36,7 +36,7 @@ public class DatabaseDACUserAPITest {
     DACUserDAO dacUserDAO;
 
     @Mock
-    UserRoleDAO roleDAO;
+    UserRoleDAO userRoleDAO;
 
     @Mock
     ElectionDAO electionDAO;
@@ -58,7 +58,7 @@ public class DatabaseDACUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, null);
+        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, null);
     }
 
     @Test
@@ -70,8 +70,8 @@ public class DatabaseDACUserAPITest {
         List<UserRole> roles = new ArrayList<>(Arrays.asList(role));
         user.setRoles(roles);
         when(dacUserDAO.findDACUserById(3)).thenReturn(user);
-        when(roleDAO.findRoleIdByName(UserRoles.RESEARCHER.getValue())).thenReturn(1);
-        when(roleDAO.findRolesByUserId(3)).thenReturn(roles);
+        when(userRoleDAO.findRoleIdByName(UserRoles.RESEARCHER.getValue())).thenReturn(1);
+        when(userRoleDAO.findRolesByUserId(3)).thenReturn(roles);
         user = databaseDACUserAPI.createDACUser(user);
         assertTrue(user != null);
         assertTrue(user.getDisplayName() != null);

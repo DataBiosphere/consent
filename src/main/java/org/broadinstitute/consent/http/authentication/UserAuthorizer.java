@@ -15,7 +15,7 @@ public class UserAuthorizer implements Authorizer<AuthUser> {
 
     private UserRoleDAO userRoleDAO;
 
-    public UserAuthorizer(UserRoleDAO userRoleDAO){
+    UserAuthorizer(UserRoleDAO userRoleDAO) {
         this.userRoleDAO = userRoleDAO;
     }
 
@@ -28,7 +28,7 @@ public class UserAuthorizer implements Authorizer<AuthUser> {
                     .filter(r -> r.getName().equalsIgnoreCase(role))
                     .map(UserRole::getName)
                     .collect(Collectors.toCollection(ArrayList::new));
-            if(CollectionUtils.isNotEmpty(existentRole)){
+            if (CollectionUtils.isNotEmpty(existentRole)) {
                 authorize = true;
             }
         }

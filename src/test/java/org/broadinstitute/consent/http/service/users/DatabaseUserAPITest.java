@@ -33,7 +33,7 @@ public class DatabaseUserAPITest {
     DACUserDAO dacUserDAO;
 
     @Mock
-    UserRoleDAO roleDAO;
+    UserRoleDAO userRoleDAO;
 
     @Mock
     ElectionDAO electionDAO;
@@ -63,7 +63,7 @@ public class DatabaseUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        userAPI = new DatabaseUserAPI(dacUserDAO, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, mongo, null);
+        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, mongo, null);
     }
 
 
@@ -129,7 +129,7 @@ public class DatabaseUserAPITest {
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(anyList())).thenReturn(Arrays.asList(1));
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
         try {
             userAPI.updateUser(dacUser, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -153,7 +153,7 @@ public class DatabaseUserAPITest {
         when(voteDAO.findVoteCountForElections(Arrays.asList(2), VoteType.DATA_OWNER.getValue())).thenReturn(Arrays.asList(1));
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
         try {
             userAPI.updateUser(dacUser, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -173,7 +173,7 @@ public class DatabaseUserAPITest {
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         userAPI.updateUser(dacUser, EMAIL);
-        verify(roleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt(), anyBoolean());
+        verify(userRoleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt(), anyBoolean());
         verify(dacUserDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
     }
 
@@ -207,7 +207,7 @@ public class DatabaseUserAPITest {
 
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
         try {
             userAPI.updateUser(dacUser, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -260,7 +260,7 @@ public class DatabaseUserAPITest {
         patchOperation.setValue("newDisplayName");
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(1)).thenReturn(roles);
+        when(userRoleDAO.findRolesByUserId(1)).thenReturn(roles);
         existentUser = userAPI.updatePartialUser(new ArrayList<>(Arrays.asList(patchOperation)), EMAIL);
         assertTrue(existentUser.getDisplayName().equals("newDisplayName"));
     }

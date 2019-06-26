@@ -167,7 +167,7 @@ public class UserRoleDAOTest extends AbstractTest {
     public void testUpdateUserRoleStatus() {
         int dataOwnerId = 6;
         int userId = 5;
-        int roleStatusId = getValueByStatus(APPROVED.name());
+        Integer roleStatusId = getValueByStatus(APPROVED.name());
         String roleStatusName = getStatusByValue(roleStatusId);
         String rationale = "Approved";
         userRoleDAO.updateUserRoleStatus(

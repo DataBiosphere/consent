@@ -9,8 +9,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,7 +17,7 @@ import static org.mockito.Mockito.when;
 
 public class UserAuthorizerTest {
 
-    UserAuthorizer authorizer;
+    private UserAuthorizer authorizer;
     @Mock
     UserRoleDAO userRoleDAO;
     @Mock
@@ -27,22 +26,22 @@ public class UserAuthorizerTest {
     AuthUser unauthorizedUser;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         when(authorizedUser.getName()).thenReturn("Authorized User");
         when(unauthorizedUser.getName()).thenReturn("Unauthorized User");
-        when(userRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
-        when(userRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
+        when(userRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(Collections.singletonList(getChairpersonRole()));
+        when(userRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(Collections.singletonList(getChairpersonRole()));
         authorizer = new UserAuthorizer(userRoleDAO);
     }
 
     @Test
-    public void testAuthorizeNotAuthorized() throws Exception {
+    public void testAuthorizeNotAuthorized() {
         assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER));
     }
 
     @Test
-    public void testAuthorizeAuthorized() throws Exception {
+    public void testAuthorizeAuthorized() {
         assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON));
     }
 

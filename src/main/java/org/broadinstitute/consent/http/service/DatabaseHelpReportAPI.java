@@ -12,7 +12,7 @@ import java.util.List;
 public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
 
     private HelpReportDAO helpReportDAO;
-    private UserRoleDAO dsRoleDAO;
+    private UserRoleDAO userRoleDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
@@ -32,15 +32,15 @@ public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseHelpReportAPI(HelpReportDAO dao, UserRoleDAO dsRoleDAO) {
+    private DatabaseHelpReportAPI(HelpReportDAO dao, UserRoleDAO userRoleDAO) {
         this.helpReportDAO = dao;
-        this.dsRoleDAO = dsRoleDAO;
+        this.userRoleDAO = userRoleDAO;
     }
 
 
     @Override
     public List<HelpReport> findHelpReportsByUserId(Integer userId) {
-        return  dsRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getValue(), userId) != null
+        return  userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getValue(), userId) != null
                 ? helpReportDAO.findHelpReports() : helpReportDAO.findHelpReportsByUserId(userId);
     }
 

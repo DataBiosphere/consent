@@ -122,10 +122,10 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         updateDataOwnerRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
         updateResearcherRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
         rolesToRemove.forEach((userId,roleId)->{
-           roleDAO.removeSingleUserRole(userId, roleId);
+           userRoleDAO.removeSingleUserRole(userId, roleId);
         });
         rolesToAdd.forEach((userId,roleId) ->{
-            roleDAO.insertSingleUserRole(roleId,userId, false);
+            userRoleDAO.insertSingleUserRole(roleId,userId, false);
         });
     }
     private void updateDataOwnerRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
