@@ -16,11 +16,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Path("api/dac")
 public class DacResource extends Resource {
 
     private DacService dacService;
+    private static final Logger logger = Logger.getLogger(DacResource.class.getName());
 
     @Inject
     public DacResource(DacService dacService) {
@@ -98,7 +101,12 @@ public class DacResource extends Resource {
         if (dac == null) {
             throw new NotFoundException("Unable to find Data Access Committee with the provided id: " + dacId);
         }
-        dacService.deleteDac(dacId);
+        try {
+            dacService.deleteDac(dacId);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deleting DAC with id: " + dacId + "; " + e);
+            return Response.status(500).entity("Unable to delete Data Access Committee with the provided id: " + dacId).build();
+        }
         return Response.ok().build();
     }
 
