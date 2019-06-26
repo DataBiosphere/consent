@@ -35,10 +35,12 @@ public class UserDAOTest extends AbstractTest {
     }
 
     private DACUserDAO userDAO;
+    private UserRoleDAO userRoleDAO;
 
     @Before
     public void setUp() {
         userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
+        userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
     }
 
     @After
@@ -192,11 +194,17 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testDescribeUsersByRoleAndEmailPreference() {
-        Collection<DACUser> chairpersons = userDAO.describeUsersByRoleAndEmailPreference("Chairperson", true);
-        Assert.assertFalse(chairpersons.isEmpty());
+        String email = getRandomEmailAddress();
+        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
+        userRoleDAO.insertSingleUserRole(5, userId, true);
+        Collection<DACUser> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
+        Assert.assertFalse(researchers.isEmpty());
 
-        Collection<DACUser> members = userDAO.describeUsersByRoleAndEmailPreference("Researcher", false);
-        Assert.assertFalse(members.isEmpty());
+        String email2 = getRandomEmailAddress();
+        Integer userId2 = userDAO.insertDACUser(email2, "Dac User Test", new Date());
+        userRoleDAO.insertSingleUserRole(6, userId2, false);
+        Collection<DACUser> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
+        Assert.assertFalse(dataOwners.isEmpty());
     }
 
     @Test
