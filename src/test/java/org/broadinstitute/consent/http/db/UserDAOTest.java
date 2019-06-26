@@ -74,6 +74,27 @@ public class UserDAOTest extends AbstractTest {
                 collect(Collectors.toList());
         Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getValue().toLowerCase()));
     }
-    
+
+    @Test
+    public void testDescribeUsersByRole() {
+        List<DACUser> members = userDAO.describeUsersByRole("Member");
+        Assert.assertFalse(members.isEmpty());
+
+        List<DACUser> chairs = userDAO.describeUsersByRole("Chairperson");
+        Assert.assertFalse(chairs.isEmpty());
+
+        // Only case where we don't set up users by default.
+        List<DACUser> alumni = userDAO.describeUsersByRole("Alumni");
+        Assert.assertTrue(alumni.isEmpty());
+
+        List<DACUser> admins = userDAO.describeUsersByRole("Admin");
+        Assert.assertFalse(admins.isEmpty());
+
+        List<DACUser> researchers = userDAO.describeUsersByRole("Researcher");
+        Assert.assertFalse(researchers.isEmpty());
+
+        List<DACUser> dataOwners = userDAO.describeUsersByRole("DataOwner");
+        Assert.assertFalse(dataOwners.isEmpty());
+    }
 
 }
