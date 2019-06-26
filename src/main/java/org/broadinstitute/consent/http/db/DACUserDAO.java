@@ -71,7 +71,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
               "inner join roles r on r.roleId = du.role_id order by createDate desc")
     Set<DACUser> findUsers();
 
-    @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.roleId where r.name = 'Admin'")
+    @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.role_id where r.name = 'Admin'")
     Integer verifyAdminUsers();
 
     @Mapper(DACUserRoleMapper.class)

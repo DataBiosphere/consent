@@ -55,7 +55,7 @@ public class UserDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testFindUsers() {
+    public void testFindUsers_withIdCollection() {
         Collection<DACUser> users = userDAO.findUsers(Collections.singletonList(1));
         Assert.assertNotNull(users);
         Assert.assertFalse(users.isEmpty());
@@ -170,6 +170,20 @@ public class UserDAOTest extends AbstractTest {
         Integer foundUserId = userDAO.findDACUserIdByRole(userId, dataOwnerId);
         Assert.assertNotNull(foundUserId);
         Assert.assertNotEquals(userId, foundUserId.intValue());
+    }
+
+    @Test
+    public void testFindUsers_noArgs() {
+        Collection<DACUser> users = userDAO.findUsers();
+        Assert.assertNotNull(users);
+        Assert.assertFalse(users.isEmpty());
+    }
+
+    @Test
+    public void testVerifyAdminUsers() {
+        Integer count = userDAO.verifyAdminUsers();
+        Assert.assertNotNull(count);
+        Assert.assertTrue(count > 0);
     }
 
 }
