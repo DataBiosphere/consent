@@ -152,5 +152,15 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertEquals(user.getEmail(), "dac_user_test2@broad.org");
     }
 
+    @Test
+    public void testDeleteDACUserByEmail() {
+        Integer userId = userDAO.insertDACUser("delete_test@broad.org", "Dac User Delete Test", new Date());
+        Assert.assertNotNull(userId);
+        DACUser user = userDAO.findDACUserById(userId);
+        Assert.assertNotNull(user);
+        userDAO.deleteDACUserByEmail(user.getEmail());
+        DACUser deletedUser = userDAO.findDACUserById(userId);
+        Assert.assertNull(deletedUser);
+    }
 
 }
