@@ -20,7 +20,7 @@ import org.skife.jdbi.v2.unstable.BindIn;
 @RegisterMapper({DACUserMapper.class})
 public interface DACUserDAO extends Transactional<DACUserDAO> {
 
-    @SqlQuery("select * from dacuser  where dacUserId = :dacUserId")
+    @SqlQuery("select * from dacuser where dacUserId = :dacUserId")
     DACUser findDACUserById(@Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")

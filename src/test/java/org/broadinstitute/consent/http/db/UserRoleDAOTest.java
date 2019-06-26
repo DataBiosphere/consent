@@ -187,7 +187,10 @@ public class UserRoleDAOTest extends AbstractTest {
 
     @Test
     public void testFindRoleByUserIdAndRoleId() {
-        // TODO: flesh this out
+        int userId = 5;
+        int dataOwnerId = 6;
+        UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(userId, dataOwnerId);
+        Assert.assertNotNull(userRole);
     }
 
 }
