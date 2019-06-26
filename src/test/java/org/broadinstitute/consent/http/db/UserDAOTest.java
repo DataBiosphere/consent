@@ -121,4 +121,13 @@ public class UserDAOTest extends AbstractTest {
         users.forEach(u -> Assert.assertFalse("User: " + u.getDacUserId() + " has no roles", u.getRoles().isEmpty()));
     }
 
+    @Test
+    public void testFindDACUserByEmail() {
+        DACUser user = userDAO.findDACUserByEmail("test@broad.com");
+        Assert.assertNotNull(user);
+
+        DACUser user2 = userDAO.findDACUserByEmail("no.one@nowhere.com");
+        Assert.assertNull(user2);
+    }
+
 }
