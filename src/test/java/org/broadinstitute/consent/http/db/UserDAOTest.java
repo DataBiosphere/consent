@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.After;
 import org.junit.Assert;
@@ -106,6 +105,12 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertNull(userDAO.checkChairpersonUser(4));
         Assert.assertNotNull(userDAO.checkChairpersonUser(5));
         Assert.assertNull(userDAO.checkChairpersonUser(6));
+    }
+
+    @Test
+    public void testFindDACUsersEnabledToVote() {
+        Collection<DACUser> users = userDAO.findDACUsersEnabledToVote();
+        Assert.assertFalse(users.isEmpty());
     }
 
 }
