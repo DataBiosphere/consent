@@ -54,8 +54,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
                           @Bind("createDate") Date createDate);
 
     @SqlUpdate("update dacuser set email=:email, displayName=:displayName, additional_email=:additionalEmail where dacUserId=:id")
-    @GetGeneratedKeys
-    Integer updateDACUser(@Bind("email") String email,
+    void updateDACUser(@Bind("email") String email,
                           @Bind("displayName") String displayName,
                           @Bind("id") Integer id,
                           @Bind("additionalEmail") String additionalEmail);
