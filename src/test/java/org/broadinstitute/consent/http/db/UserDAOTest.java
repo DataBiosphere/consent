@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -128,6 +129,14 @@ public class UserDAOTest extends AbstractTest {
 
         DACUser user2 = userDAO.findDACUserByEmail("no.one@nowhere.com");
         Assert.assertNull(user2);
+    }
+
+    @Test
+    public void testInsertDACUser() {
+        Integer userId = userDAO.insertDACUser("dac_user_test@broad.org", "Dac User Test", new Date());
+        Assert.assertNotNull(userId);
+        DACUser user = userDAO.findDACUserById(userId);
+        Assert.assertNotNull(user);
     }
 
 }
