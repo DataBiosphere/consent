@@ -5,12 +5,20 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserDAOTest extends AbstractTest {
 
@@ -45,6 +53,27 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertNull(user2);
     }
 
+    @Test
+    public void testFindUsers() {
+        Collection<DACUser> users = userDAO.findUsers(Collections.singletonList(1));
+        Assert.assertNotNull(users);
+        Assert.assertFalse(users.isEmpty());
+        Assert.assertEquals(1, users.size());
+    }
+
+    @Test
+    public void testFindChairpersonUser() {
+        DACUser user = userDAO.findChairpersonUser();
+        Assert.assertNotNull(user);
+        Assert.assertNotNull(user.getRoles());
+        Assert.assertFalse(user.getRoles().isEmpty());
+        List<String> roleNames = user.getRoles().
+                stream().
+                map(UserRole::getName).
+                map(String::toLowerCase).
+                collect(Collectors.toList());
+        Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getValue().toLowerCase()));
+    }
     
 
 }
