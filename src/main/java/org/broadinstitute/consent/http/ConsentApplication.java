@@ -31,7 +31,6 @@ import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -47,7 +46,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.AllAssociationsResource;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -113,11 +112,11 @@ import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
 import org.broadinstitute.consent.http.service.DatabaseSummaryAPI;
-import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.NihServiceAPI;
+import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
@@ -297,7 +296,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(injector.getInstance(VersionResource.class));
 
         // Authentication filters
-        AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<User>()
+        AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<AuthUser>()
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
                 .buildAuthFilter();
@@ -307,7 +306,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 new OAuthCustomAuthFilter(AbstractOAuthAuthenticator.getInstance(), dacUserRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
         env.jersey().register(RolesAllowedDynamicFeature.class);
-        env.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
+        env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
         env.jersey().register(new DataRequestReportsResource(researcherAPI, DatabaseDACUserAPI.getInstance()));
         // Register a listener to catch an application stop and clear out the API instance created above.

@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class OAuthCustomAuthFilterTest {
 
     AuthFilter filter;
 
-    User user;
+    AuthUser user;
 
     @Before
     public void setUp(){
@@ -50,7 +50,7 @@ public class OAuthCustomAuthFilterTest {
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
         filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, dacUserRoleDAO));
-        user = new User("test@gmail.com");
+        user = new AuthUser("test@gmail.com");
     }
 
     @Test

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.authentication;
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.DefaultUnauthorizedHandler;
 import io.dropwizard.auth.UnauthorizedHandler;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class DefaultAuthFilterTest {
     @Spy
     UnauthorizedHandler unauthorizedHandler = new DefaultUnauthorizedHandler();
 
-    AuthFilter filter = new DefaultAuthFilter.Builder<User>()
+    AuthFilter filter = new DefaultAuthFilter.Builder<AuthUser>()
             .setAuthenticator(authenticator)
             .setRealm(" ")
             .setUnauthorizedHandler(unauthorizedHandler)

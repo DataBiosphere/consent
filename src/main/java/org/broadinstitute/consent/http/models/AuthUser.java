@@ -2,11 +2,11 @@ package org.broadinstitute.consent.http.models;
 
 import java.security.Principal;
 
-public class User implements Principal {
+public class AuthUser implements Principal {
 
     private String name;
 
-    public User(String name){
+    public AuthUser(String name){
         this.name = name;
     }
 
