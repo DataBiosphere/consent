@@ -49,7 +49,7 @@ public class OAuthCustomAuthFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
-        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, dacUserRoleDAO));
+        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         user = new AuthUser("test@gmail.com");
     }
 
