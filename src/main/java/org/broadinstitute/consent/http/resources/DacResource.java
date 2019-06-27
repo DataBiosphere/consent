@@ -30,11 +30,6 @@ public class DacResource extends Resource {
         this.dacService = dacService;
     }
 
-    @Inject
-    public DacResource(DacService dacService) {
-        this.dacService = dacService;
-    }
-
     @GET
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
