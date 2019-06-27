@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -84,7 +84,7 @@ public class ConsentResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
-    public Response createConsent(@Context UriInfo info, Consent rec, @Auth User user) {
+    public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
         try {
             DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             if(rec.getUseRestriction() != null){
@@ -111,7 +111,7 @@ public class ConsentResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
-    public Response update(@PathParam("id") String id, Consent updated, @Auth User user) {
+    public Response update(@PathParam("id") String id, Consent updated, @Auth AuthUser user) {
         try {
             checkConsentElection(id);
             if(updated.getUseRestriction() != null) {

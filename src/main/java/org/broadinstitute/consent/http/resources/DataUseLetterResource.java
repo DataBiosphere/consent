@@ -10,10 +10,10 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -70,7 +70,7 @@ public class DataUseLetterResource extends Resource {
             @FormDataParam("data") FormDataBodyPart part,
             @PathParam("id") String consentId,
             @QueryParam("fileName") String fileName,
-            @Auth User user) {
+            @Auth AuthUser user) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -101,7 +101,7 @@ public class DataUseLetterResource extends Resource {
             @FormDataParam("data") FormDataBodyPart part,
             @PathParam("id") String consentId,
             @QueryParam("fileName") String fileName,
-            @Auth User user) {
+            @Auth AuthUser user) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {

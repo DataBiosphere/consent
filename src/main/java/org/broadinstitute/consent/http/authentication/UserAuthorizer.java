@@ -4,14 +4,14 @@ import io.dropwizard.auth.Authorizer;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class UserAuthorizer implements Authorizer<User> {
+public class UserAuthorizer implements Authorizer<AuthUser> {
 
     private DACUserRoleDAO dacUserRoleDAO;
 
@@ -20,7 +20,7 @@ public class UserAuthorizer implements Authorizer<User> {
     }
 
     @Override
-    public boolean authorize(User user, String role) {
+    public boolean authorize(AuthUser user, String role) {
         boolean authorize = false;
         if (StringUtils.isNotEmpty(role)) {
             List<DACUserRole> roles = dacUserRoleDAO.findRolesByUserEmail(user.getName());

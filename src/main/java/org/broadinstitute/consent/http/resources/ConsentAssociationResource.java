@@ -3,9 +3,9 @@ package org.broadinstitute.consent.http.resources;
 import io.dropwizard.auth.Auth;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
@@ -45,7 +45,7 @@ public class ConsentAssociationResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
-    public Response createAssociation(@Auth User user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    public Response createAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
             for (ConsentAssociation association : body) {
@@ -71,7 +71,7 @@ public class ConsentAssociationResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
-    public Response updateAssociation(@Auth User user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    public Response updateAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
             for (ConsentAssociation association : body) {

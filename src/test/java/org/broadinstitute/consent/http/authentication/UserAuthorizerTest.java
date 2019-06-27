@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.authentication;
 
 import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,9 +22,9 @@ public class UserAuthorizerTest {
     @Mock
     DACUserRoleDAO dacUserRoleDAO;
     @Mock
-    User authorizedUser;
+    AuthUser authorizedUser;
     @Mock
-    User unauthorizedUser;
+    AuthUser unauthorizedUser;
 
     @Before
     public void setUp() throws Exception {

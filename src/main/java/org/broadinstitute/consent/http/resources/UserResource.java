@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.UserAPI;
@@ -30,7 +30,7 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response createUser(@Context UriInfo info, DACUser userToCreate, @Auth User user) {
+    public Response createUser(@Context UriInfo info, DACUser userToCreate, @Auth AuthUser user) {
         try {
             URI uri;
             userToCreate = userAPI.createUser(userToCreate, user.getName());
@@ -50,7 +50,7 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response update(DACUser userToUpdate, @Auth User user) {
+    public Response update(DACUser userToUpdate, @Auth AuthUser user) {
         try {
             return Response.ok().entity(userAPI.updateUser(userToUpdate, user.getName())).build();
         } catch (Exception e){
@@ -62,7 +62,7 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response partialUpdate(List<PatchOperation> patchOperations, @Auth User user) {
+    public Response partialUpdate(List<PatchOperation> patchOperations, @Auth AuthUser user) {
         try {
             return Response.ok().entity(userAPI.updatePartialUser(patchOperations, user.getName())).build();
         } catch (Exception e){

@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.Authenticator;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 
-public abstract class AbstractOAuthAuthenticator implements Authenticator<String, User> {
+public abstract class AbstractOAuthAuthenticator implements Authenticator<String, AuthUser> {
 
     protected static class AuthenticatorAPIHolder {
         private static OAuthAuthenticator  theInstance = null;

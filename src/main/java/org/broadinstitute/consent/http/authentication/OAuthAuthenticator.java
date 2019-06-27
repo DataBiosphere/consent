@@ -9,7 +9,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,10 +39,10 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
     }
 
     @Override
-    public Optional<User> authenticate(String bearer){
+    public Optional<AuthUser> authenticate(String bearer){
         try{
             String email = validateAccessToken(bearer);
-            User user = new User(email);
+            AuthUser user = new AuthUser(email);
             return Optional.of(user);
         }catch (Exception e){
             logger.error("Error authenticating credentials.");

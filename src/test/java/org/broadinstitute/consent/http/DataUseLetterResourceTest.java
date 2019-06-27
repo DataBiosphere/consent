@@ -3,10 +3,10 @@ package org.broadinstitute.consent.http;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.DataUseDTO;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -26,9 +26,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -42,7 +39,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     @Mock
     FormDataContentDisposition ct;
     @Mock
-    User user;
+    AuthUser user;
 
     DataUseLetterResource dulResource;
 
