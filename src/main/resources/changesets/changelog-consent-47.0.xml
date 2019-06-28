@@ -5,13 +5,14 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="grushton" id="134">
+        <dropAllForeignKeyConstraints baseTableName="user_role" />
+        <dropPrimaryKey tableName="user_role" />
         <addColumn tableName="user_role">
             <column name="user_role_id"
                     type="int"
                     autoIncrement="true"
                     incrementBy="1" />
         </addColumn>
-        <dropPrimaryKey tableName="user_role" />
         <addPrimaryKey tableName="user_role"
                        columnNames="user_role_id" />
         <renameColumn tableName="user_role"
@@ -30,6 +31,18 @@
                                  onUpdate="RESTRICT"
                                  referencedTableName="dac"
                                  referencedColumnNames="dac_id" />
+        <addForeignKeyConstraint baseTableName="user_role"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_user_role_user_id"
+                                 onUpdate="RESTRICT"
+                                 referencedTableName="dacuser"
+                                 referencedColumnNames="dacUserId" />
+        <addForeignKeyConstraint baseTableName="user_role"
+                                 baseColumnNames="role_id"
+                                 constraintName="fk_user_role_role_id"
+                                 onUpdate="RESTRICT"
+                                 referencedTableName="roles"
+                                 referencedColumnNames="roleId" />
     </changeSet>
 
 </databaseChangeLog>
