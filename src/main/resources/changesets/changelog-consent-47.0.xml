@@ -11,25 +11,25 @@
                     autoIncrement="true"
                     incrementBy="1" />
         </addColumn>
-        <dropPrimaryKey tableName="user_role"/>
-        <addPrimaryKey columnNames="user_role_id"
-                       tableName="user_role"/>
-        <renameColumn newColumnName="role_id"
-                      oldColumnName="roleId"
-                      tableName="user_role"/>
-        <renameColumn newColumnName="user_id"
-                      oldColumnName="dacUserId"
-                      tableName="user_role"/>
+        <dropPrimaryKey tableName="user_role" />
+        <addPrimaryKey tableName="user_role"
+                       columnNames="user_role_id" />
+        <renameColumn tableName="user_role"
+                      newColumnName="role_id"
+                      oldColumnName="roleId" />
+        <renameColumn tableName="user_role"
+                      newColumnName="user_id"
+                      oldColumnName="dacUserId" />
         <addColumn tableName="user_role">
             <column name="dac_id"
-                    type="int"/>
+                    type="int" />
         </addColumn>
-        <addForeignKeyConstraint baseColumnNames="dac_id"
-                                 baseTableName="user_role"
+        <addForeignKeyConstraint baseTableName="user_role"
+                                 baseColumnNames="dac_id"
                                  constraintName="fk_user_role_dac_id"
                                  onUpdate="RESTRICT"
-                                 referencedColumnNames="dac_id"
-                                 referencedTableName="dac"/>
+                                 referencedTableName="dac"
+                                 referencedColumnNames="dac_id" />
     </changeSet>
 
 </databaseChangeLog>
