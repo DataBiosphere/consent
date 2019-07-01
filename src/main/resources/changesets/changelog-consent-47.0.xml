@@ -5,42 +5,54 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="grushton" id="134">
-        <dropAllForeignKeyConstraints baseTableName="user_role" />
+        <dropForeignKeyConstraint baseTableName="user_role" constraintName="fkRole" />
+        <dropForeignKeyConstraint baseTableName="user_role" constraintName="fkUser" />
         <dropPrimaryKey tableName="user_role" />
         <addColumn tableName="user_role">
             <column name="user_role_id"
-                    type="int"
+                    type="bigint"
                     autoIncrement="true"
-                    incrementBy="1" />
+                    incrementBy="1"
+                    beforeColumn="0">
+                <constraints primaryKey="true"
+                             nullable="false"
+                             deferrable="true"
+                             initiallyDeferred="false" />
+            </column>
         </addColumn>
-        <addPrimaryKey tableName="user_role"
-                       columnNames="user_role_id" />
         <renameColumn tableName="user_role"
                       newColumnName="role_id"
-                      oldColumnName="roleId" />
+                      oldColumnName="roleId"
+                      columnDataType="bigint" />
         <renameColumn tableName="user_role"
                       newColumnName="user_id"
-                      oldColumnName="dacUserId" />
+                      oldColumnName="dacUserId"
+                      columnDataType="bigint" />
+
+
         <addColumn tableName="user_role">
-            <column name="dac_id"
-                    type="int" />
+            <column name="dac_id" type="bigint" >
+                <constraints
+                        foreignKeyName="fk_user_role_dac_id"
+                        deleteCascade="false"
+                        deferrable="false"
+                        initiallyDeferred="false"
+                        referencedTableName="dac"
+                        referencedColumnNames="dac_id"/>
+            </column>
         </addColumn>
-        <addForeignKeyConstraint baseTableName="user_role"
-                                 baseColumnNames="dac_id"
-                                 constraintName="fk_user_role_dac_id"
-                                 onUpdate="RESTRICT"
-                                 referencedTableName="dac"
-                                 referencedColumnNames="dac_id" />
         <addForeignKeyConstraint baseTableName="user_role"
                                  baseColumnNames="user_id"
                                  constraintName="fk_user_role_user_id"
-                                 onUpdate="RESTRICT"
+                                 onDelete="NO ACTION"
+                                 onUpdate="NO ACTION"
                                  referencedTableName="dacuser"
                                  referencedColumnNames="dacUserId" />
         <addForeignKeyConstraint baseTableName="user_role"
                                  baseColumnNames="role_id"
                                  constraintName="fk_user_role_role_id"
-                                 onUpdate="RESTRICT"
+                                 onDelete="NO ACTION"
+                                 onUpdate="NO ACTION"
                                  referencedTableName="roles"
                                  referencedColumnNames="roleId" />
     </changeSet>
