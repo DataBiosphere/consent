@@ -5,56 +5,45 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="grushton" id="134">
-        <dropForeignKeyConstraint baseTableName="user_role" constraintName="fkRole" />
-        <dropForeignKeyConstraint baseTableName="user_role" constraintName="fkUser" />
-        <dropPrimaryKey tableName="user_role" />
-        <addColumn tableName="user_role">
-            <column name="user_role_id"
-                    type="bigint"
-                    autoIncrement="true"
-                    incrementBy="1"
-                    beforeColumn="0">
-                <constraints primaryKey="true"
-                             nullable="false"
-                             deferrable="true"
-                             initiallyDeferred="false" />
+        <createTable tableName="user_role_new">
+            <column name="user_role_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
             </column>
-        </addColumn>
-        <renameColumn tableName="user_role"
-                      newColumnName="role_id"
-                      oldColumnName="roleId"
-                      columnDataType="bigint" />
-        <renameColumn tableName="user_role"
-                      newColumnName="user_id"
-                      oldColumnName="dacUserId"
-                      columnDataType="bigint" />
-
-
-        <addColumn tableName="user_role">
-            <column name="dac_id" type="bigint" >
-                <constraints
-                        foreignKeyName="fk_user_role_dac_id"
-                        deleteCascade="false"
-                        deferrable="false"
-                        initiallyDeferred="false"
-                        referencedTableName="dac"
-                        referencedColumnNames="dac_id"/>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_user_role_user_id"
+                             referencedColumnNames="dacUserid"
+                             referencedTableName="dacuser" />
             </column>
-        </addColumn>
-        <addForeignKeyConstraint baseTableName="user_role"
-                                 baseColumnNames="user_id"
-                                 constraintName="fk_user_role_user_id"
-                                 onDelete="NO ACTION"
-                                 onUpdate="NO ACTION"
-                                 referencedTableName="dacuser"
-                                 referencedColumnNames="dacUserId" />
-        <addForeignKeyConstraint baseTableName="user_role"
-                                 baseColumnNames="role_id"
-                                 constraintName="fk_user_role_role_id"
-                                 onDelete="NO ACTION"
-                                 onUpdate="NO ACTION"
-                                 referencedTableName="roles"
-                                 referencedColumnNames="roleId" />
+            <column name="role_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_user_role_role_id"
+                             referencedColumnNames="roleId"
+                             referencedTableName="roles" />
+            </column>
+            <column name="dac_id" type="bigint">
+                <constraints nullable="true"
+                             foreignKeyName="fk_user_role_dac_id"
+                             referencedColumnNames="dac_id"
+                             referencedTableName="dac" />
+            </column>
+            <column name="email_preference" type="boolean" defaultValueBoolean="true" />
+            <column name="status" type="int" defaultValue="0"/>
+            <column name="rationale" type="text"/>
+        </createTable>
+        <sql>
+            insert into user_role_new (user_id, role_id, email_preference, status, rationale) select distinct dacUserId, roleId, email_preference, status, rationale from user_role
+        </sql>
+        <rollback>
+            <dropTable tableName="user_role_new"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet author="grushton" id="135">
+        <renameTable newTableName="user_role_bak"
+                     oldTableName="user_role" />
+        <renameTable newTableName="user_role"
+                     oldTableName="user_role_new" />
     </changeSet>
 
 </databaseChangeLog>
