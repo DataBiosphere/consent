@@ -4,7 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 class DataAccessParser {
 
-    PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, PDAcroForm acroForm, String sDUR) throws IOException {
+    PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, UserRole role, Boolean manualReview, PDAcroForm acroForm, String sDUR) throws IOException {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {

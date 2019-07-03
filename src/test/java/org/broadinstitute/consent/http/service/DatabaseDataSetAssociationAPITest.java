@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.junit.Before;
@@ -105,28 +105,28 @@ public class DatabaseDataSetAssociationAPITest {
     DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
     DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
 
-    private List<DACUserRole> chairpersonList(){
+    private List<UserRole> chairpersonList(){
         return Arrays.asList(getChairpersonRole());
     }
 
-    private List<DACUserRole> memberList(){
+    private List<UserRole> memberList(){
         return Arrays.asList(getMemberRole());
     }
 
-    private List<DACUserRole> dataownerList(){
+    private List<UserRole> dataownerList(){
         return Arrays.asList(getDataOwnerRole());
     }
 
-    private DACUserRole getMemberRole() {
-        return new DACUserRole(1, DACMEMBER);
+    private UserRole getMemberRole() {
+        return new UserRole(1, DACMEMBER);
     }
 
-    private DACUserRole getChairpersonRole() {
-        return new DACUserRole(2, CHAIRPERSON);
+    private UserRole getChairpersonRole() {
+        return new UserRole(2, CHAIRPERSON);
     }
 
-    private DACUserRole getDataOwnerRole() {
-        return new DACUserRole(6, DATAOWNER);
+    private UserRole getDataOwnerRole() {
+        return new UserRole(6, DATAOWNER);
     }
 
 }

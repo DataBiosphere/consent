@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
@@ -144,9 +144,9 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response updateStatus(@PathParam("userId") Integer userId, DACUserRole dACUserRole) {
+    public Response updateStatus(@PathParam("userId") Integer userId, UserRole userRole) {
         try {
-            return Response.ok(dacUserAPI.updateRoleStatus(dACUserRole, userId)).build();
+            return Response.ok(dacUserAPI.updateRoleStatus(userRole, userId)).build();
         }catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -179,9 +179,9 @@ public class DACUserResource extends Resource {
         }
     }
 
-    private boolean isChairPerson(List<DACUserRole> roles) {
+    private boolean isChairPerson(List<UserRole> userRoles) {
         boolean isChairPerson = false;
-        for (DACUserRole role : roles) {
+        for (UserRole role : userRoles) {
             if (role.getName().equalsIgnoreCase(CHAIRPERSON)) {
                 isChairPerson = true;
                 break;
@@ -191,4 +191,3 @@ public class DACUserResource extends Resource {
     }
 
 }
-

@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -33,7 +33,7 @@ public class DatabaseUserAPITest {
     DACUserDAO dacUserDAO;
 
     @Mock
-    DACUserRoleDAO roleDAO;
+    UserRoleDAO userRoleDAO;
 
     @Mock
     ElectionDAO electionDAO;
@@ -63,7 +63,7 @@ public class DatabaseUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        userAPI = new DatabaseUserAPI(dacUserDAO, roleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, mongo, null);
+        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, mongo, null);
     }
 
 
@@ -80,9 +80,9 @@ public class DatabaseUserAPITest {
     @Test
     public void testCreateUserWithInvalidRoles() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        DACUserRole roleMember = new DACUserRole(1, UserRoles.MEMBER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher, roleMember));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        UserRole roleMember = new UserRole(1, UserRoles.MEMBER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher, roleMember));
         dacUser.setRoles(roles);
         try {
             userAPI.createUser(dacUser, EMAIL);
@@ -104,9 +104,9 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdateUserWithInvalidRoles() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        DACUserRole roleMember = new DACUserRole(1, UserRoles.MEMBER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher, roleMember));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        UserRole roleMember = new UserRole(1, UserRoles.MEMBER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher, roleMember));
         dacUser.setRoles(roles);
         try {
             userAPI.updateUser(dacUser, EMAIL);
@@ -119,17 +119,17 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdateUserRemoveDataOwnerWithDataSetAssociations() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         dacUser.setRoles(roles);
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole dataOwnerRole = new DACUserRole(1, UserRoles.DATAOWNER.getValue());
+        UserRole dataOwnerRole = new UserRole(1, UserRoles.DATAOWNER.getValue());
         existentUser.setRoles(new ArrayList<>(Arrays.asList(dataOwnerRole)));
         when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(anyInt())).thenReturn(Arrays.asList(1));
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(anyList())).thenReturn(Arrays.asList(1));
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
         try {
             userAPI.updateUser(dacUser, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -141,11 +141,11 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdateUserRemoveDataOwnerWithOpenElections() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         dacUser.setRoles(roles);
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole dataOwnerRole = new DACUserRole(1, UserRoles.DATAOWNER.getValue());
+        UserRole dataOwnerRole = new UserRole(1, UserRoles.DATAOWNER.getValue());
         existentUser.setRoles(new ArrayList<>(Arrays.asList(dataOwnerRole)));
         when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(anyInt())).thenReturn(Arrays.asList(1));
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(anyList())).thenReturn(Arrays.asList(6));
@@ -153,7 +153,7 @@ public class DatabaseUserAPITest {
         when(voteDAO.findVoteCountForElections(Arrays.asList(2), VoteType.DATA_OWNER.getValue())).thenReturn(Arrays.asList(1));
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
         try {
             userAPI.updateUser(dacUser, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -164,28 +164,28 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdateUserAddDataOwnerRole() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.DATAOWNER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.DATAOWNER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         dacUser.setRoles(roles);
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole researcherRole = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
+        UserRole researcherRole = new UserRole(1, UserRoles.RESEARCHER.getValue());
         existentUser.setRoles(new ArrayList<>(Arrays.asList(researcherRole)));
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         userAPI.updateUser(dacUser, EMAIL);
-        verify(roleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt(), anyBoolean());
+        verify(userRoleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt(), anyBoolean());
         verify(dacUserDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
     }
 
     @Test
     public void testUpdateDACUserSuccess() throws UserRoleHandlerException {
         DACUser existentDacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         existentDacUser.setRoles(roles);
         DACUser dacUserToUpdate =  new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleDO =  new DACUserRole(2, UserRoles.DATAOWNER.getValue());
-        List<DACUserRole> newRoles = new ArrayList<>(Arrays.asList(roleResearcher, roleDO));
+        UserRole roleDO =  new UserRole(2, UserRoles.DATAOWNER.getValue());
+        List<UserRole> newRoles = new ArrayList<>(Arrays.asList(roleResearcher, roleDO));
         dacUserToUpdate.setRoles(newRoles);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentDacUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(dacUserToUpdate);
@@ -198,16 +198,16 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdateUserAddResearcherWithIncompatiblesRoles() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         dacUser.setRoles(roles);
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole dataOwnerRole = new DACUserRole(1, UserRoles.MEMBER.getValue());
+        UserRole dataOwnerRole = new UserRole(1, UserRoles.MEMBER.getValue());
         existentUser.setRoles(new ArrayList<>(Arrays.asList(dataOwnerRole)));
 
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(dacUser.getDacUserId())).thenReturn(Arrays.asList(dataOwnerRole));
         try {
             userAPI.updateUser(dacUser, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -218,11 +218,11 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdateUserAddResearcherRole() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         dacUser.setRoles(roles);
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole dataOwner = new DACUserRole(1, UserRoles.DATAOWNER.getValue());
+        UserRole dataOwner = new UserRole(1, UserRoles.DATAOWNER.getValue());
         existentUser.setRoles(new ArrayList<>(Arrays.asList(dataOwner)));
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
@@ -233,8 +233,8 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdatePartialUserDisplayNameInvalidOperation() throws UserRoleHandlerException {
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         existentUser.setRoles(roles);
         PatchOperation  patchOperation = new PatchOperation();
         patchOperation.setPath(DISPLAY_NAME_FIELD);
@@ -251,8 +251,8 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdatePartialUserDisplayNameSuccess() throws UserRoleHandlerException {
         DACUser existentUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
-        List<DACUserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher));
         existentUser.setRoles(roles);
         PatchOperation  patchOperation = new PatchOperation();
         patchOperation.setPath(DISPLAY_NAME_FIELD);
@@ -260,7 +260,7 @@ public class DatabaseUserAPITest {
         patchOperation.setValue("newDisplayName");
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
-        when(roleDAO.findRolesByUserId(1)).thenReturn(roles);
+        when(userRoleDAO.findRolesByUserId(1)).thenReturn(roles);
         existentUser = userAPI.updatePartialUser(new ArrayList<>(Arrays.asList(patchOperation)), EMAIL);
         assertTrue(existentUser.getDisplayName().equals("newDisplayName"));
     }
@@ -283,7 +283,7 @@ public class DatabaseUserAPITest {
     @Test
     public void testUpdatePartialUserReplaceRoleSuccess() throws UserRoleHandlerException {
         DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        DACUserRole roleResearcher = new DACUserRole(1, UserRoles.RESEARCHER.getValue());
+        UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getValue());
         dacUser.setRoles(new ArrayList<>(Arrays.asList(roleResearcher)));
         PatchOperation  patchOperation = new PatchOperation();
         patchOperation.setPath("roles");

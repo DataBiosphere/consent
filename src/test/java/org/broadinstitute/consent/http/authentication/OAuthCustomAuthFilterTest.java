@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +34,7 @@ public class OAuthCustomAuthFilterTest {
     @Mock
     OAuthAuthenticator authenticator;
     @Mock
-    DACUserRoleDAO dacUserRoleDAO;
+    UserRoleDAO userRoleDAO;
 
     Optional principal;
 
@@ -49,7 +49,7 @@ public class OAuthCustomAuthFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
-        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, dacUserRoleDAO));
+        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         user = new AuthUser("test@gmail.com");
     }
 

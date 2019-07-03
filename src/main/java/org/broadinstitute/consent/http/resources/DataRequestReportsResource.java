@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
@@ -39,7 +39,7 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-        DACUserRole role = dacUserAPI.getRoleStatus(dar.getInteger(DarConstants.USER_ID));
+        UserRole role = dacUserAPI.getRoleStatus(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try{
             String sDUR = darApi.getStructuredDURForPdf(dar);

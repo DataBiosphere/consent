@@ -4,7 +4,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -99,7 +99,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Test
     public void testCreateDARDocument() throws Exception {
         Document dar = getDocument(null, "845246551313515", null);
-        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new DACUserRole(), true, TRANSLATED_USE_RESTRICTION);
+        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new UserRole(), true, TRANSLATED_USE_RESTRICTION);
         Assert.assertNotNull(doc);
     }
 

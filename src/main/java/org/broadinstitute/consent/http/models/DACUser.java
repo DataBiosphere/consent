@@ -23,7 +23,7 @@ public class DACUser {
     private String additionalEmail;
 
     @JsonProperty
-    private List<DACUserRole> roles;
+    private List<UserRole> roles;
 
     public DACUser() {
     }
@@ -44,7 +44,7 @@ public class DACUser {
     }
 
     public DACUser(Integer dacUserId, String email, String displayName,
-                   String isApproved, Date createDate, List<DACUserRole> roles, String additionalEmail) {
+                   String isApproved, Date createDate, List<UserRole> roles, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
@@ -77,11 +77,11 @@ public class DACUser {
         this.displayName = displayName;
     }
 
-    public List<DACUserRole> getRoles() {
+    public List<UserRole> getRoles() {
         return roles;
     }
 
-    public void setRoles(List<DACUserRole> roles) {
+    public void setRoles(List<UserRole> roles) {
         this.roles = roles;
     }
 

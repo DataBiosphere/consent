@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
@@ -60,7 +60,7 @@ public class ConsentModule extends AbstractModule {
     private final DataSetAssociationDAO datasetAssociationDAO;
     private final DacDAO dacDAO;
     private final DACUserDAO dacUserDAO;
-    private final DACUserRoleDAO dacUserRoleDAO;
+    private final UserRoleDAO userRoleDAO;
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
@@ -88,7 +88,7 @@ public class ConsentModule extends AbstractModule {
         this.datasetAssociationDAO = this.jdbi.onDemand(DataSetAssociationDAO.class);
         this.dacDAO = this.jdbi.onDemand(DacDAO.class);
         this.dacUserDAO = this.jdbi.onDemand(DACUserDAO.class);
-        this.dacUserRoleDAO= this.jdbi.onDemand(DACUserRoleDAO.class);
+        this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
@@ -181,8 +181,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    DACUserRoleDAO providesDACUserRoleDAO() {
-        return dacUserRoleDAO;
+    UserRoleDAO providesDACUserRoleDAO() {
+        return userRoleDAO;
     }
 
     @Provides

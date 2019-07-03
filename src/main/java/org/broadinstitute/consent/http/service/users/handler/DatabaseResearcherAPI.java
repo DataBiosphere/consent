@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.DACUserRole;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -70,10 +70,10 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
         } else if (hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)) {
             deleteResearcherProperties(userId);
             saveProperties(properties);
-            DACUserRole dacUserRole = new DACUserRole();
-            dacUserRole.setStatus(RoleStatus.PENDING.toString());
-            dacUserRole.setRoleId(5);
-            dacUserAPI.updateRoleStatus(dacUserRole, userId);
+            UserRole userRole = new UserRole();
+            userRole.setStatus(RoleStatus.PENDING.toString());
+            userRole.setRoleId(5);
+            dacUserAPI.updateRoleStatus(userRole, userId);
             notifyAdmins(userId, ACTION_UPDATED);
         } else {
             saveProperties(properties);

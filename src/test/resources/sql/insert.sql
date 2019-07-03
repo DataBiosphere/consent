@@ -1,3 +1,5 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
 UPDATE dictionary d SET d.key = 'Sample Collection ID' where d.key = 'Dataset ID';
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId',true,'{"type":"everything"}',true,'testName',now(),now(),now(),'','dataUseLetter-link-01.here','dulName-01.pdf');
 insert into consents(consentId, requiresManualReview,useRestriction,active,name,createDate,lastUpdate,sortDate,dataUse,dataUseLetter,dulName) values ('testId2',true,'{"type":"everything"}',true,'testName1',now(),now(),now(),'','dataUseLetter-link-02.here','dulName-02.pdf');
@@ -22,15 +24,15 @@ insert into dacuser(dacUserId,email,displayName,createDate) values(5,'oauthuser@
 insert into election(electionId, electionType, status, createDate, referenceId) values (130, '2', 'Closed', '2015-11-06 17:52:18', 'testId4');
 INSERT INTO vote(voteId, vote, dacUserId, createDate, electionId, rationale, reminderSent, type) VALUES (2000, 1, 1, '2015-08-05 13:58:50', 130, 'Empty', 0, 'CHAIRPERSON');
 insert into researchpurpose (purposeId,purpose) values(1,'General Use');
-insert into user_role(roleId, dacUserId) values(2,1);
-insert into user_role(roleId, dacUserId, status) values(5,1,0);
-insert into user_role(roleId, dacUserId) values(1,2);
-insert into user_role(roleId, dacUserId) values(1,3);
-insert into user_role(roleId, dacUserId) values(1,4);
-insert into user_role(roleId, dacUserId) values(4,4);
-insert into user_role(roleId, dacUserId) values(6,1);
-insert into user_role(roleId, dacUserId) values(6,2);
-insert into user_role(roleId, dacUserId) values(6,5);
-insert into user_role(roleId, dacUserId) values(5,5);
-insert into user_role(roleId, dacUserId) values(4,5);
-insert into user_role(roleId, dacUserId) values(2,5);
+insert into user_role(role_id, user_id) values(2,1);
+insert into user_role(role_id, user_id, status) values(5,1,0);
+insert into user_role(role_id, user_id) values(1,2);
+insert into user_role(role_id, user_id) values(1,3);
+insert into user_role(role_id, user_id) values(1,4);
+insert into user_role(role_id, user_id) values(4,4);
+insert into user_role(role_id, user_id) values(6,1);
+insert into user_role(role_id, user_id) values(6,2);
+insert into user_role(role_id, user_id) values(6,5);
+insert into user_role(role_id, user_id) values(5,5);
+insert into user_role(role_id, user_id) values(4,5);
+insert into user_role(role_id, user_id) values(2,5);

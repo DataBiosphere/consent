@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-public class DACUserRole {
+public class UserRole {
 
     @JsonProperty
     private Integer roleId;
@@ -24,22 +24,22 @@ public class DACUserRole {
     private Boolean profileCompleted;
 
 
-    public DACUserRole(){
+    public UserRole(){
     }
 
-    public DACUserRole(Integer roleId, String name){
+    public UserRole(Integer roleId, String name){
         this.roleId = roleId;
         this.name = name;
         this.emailPreference = true;
     }
 
-    public DACUserRole(Integer roleId, String name, Boolean emailPreference){
+    public UserRole(Integer roleId, String name, Boolean emailPreference){
         this.roleId = roleId;
         this.name = name;
         this.emailPreference = emailPreference;
     }
 
-    public DACUserRole(Integer roleId, String name, Boolean emailPreference, String rationale, String status){
+    public UserRole(Integer roleId, String name, Boolean emailPreference, String rationale, String status){
         this.roleId = roleId;
         this.name = name;
         this.emailPreference = emailPreference;
@@ -102,8 +102,8 @@ public class DACUserRole {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof DACUserRole)) { return false; }
-        DACUserRole otherConsent = (DACUserRole) o;
+        if(!(o instanceof UserRole)) { return false; }
+        UserRole otherConsent = (UserRole) o;
         return Objects.equal(this.getRoleId(), otherConsent.getRoleId());
     }
 

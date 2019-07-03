@@ -23,22 +23,22 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
-    private DACUserRoleDAO rolesDAO;
+    private UserRoleDAO userRoleDAO;
     private DACUserDAO userDAO;
     private ConsentDAO consentDAO;
     private DataSetDAO dataSetDAO;
     private final MongoConsentDB mongo;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO ,MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
-        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, rolesDAO, consentDAO, mongoDB, dataSetDAO));
+    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO , MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+        PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, userRoleDAO, consentDAO, mongoDB, dataSetDAO));
 
     }
 
-    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, DACUserRoleDAO rolesDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
-        this.rolesDAO = rolesDAO;
+        this.userRoleDAO = userRoleDAO;
         this.consentDAO = consentDAO;
         this.mongo = mongoDB;
         this.dataSetDAO = dataSetDAO;
@@ -61,8 +61,8 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
             }
         }
         if (userDAO.findDACUserById(dacUserId) != null) {
-            List<DACUserRole> roles = rolesDAO.findRolesByUserId(dacUserId);
-            if (roles.contains(new DACUserRole(0, "Chairperson"))) {
+            List<UserRole> roles = userRoleDAO.findRolesByUserId(dacUserId);
+            if (roles.contains(new UserRole(0, "Chairperson"))) {
                 return orderPendingCasesForChairperson(pendingCases);
             } else {
                 return orderPendingCasesForMember(pendingCases);
