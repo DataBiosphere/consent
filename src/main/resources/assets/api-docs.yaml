@@ -852,15 +852,15 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
       tags:
         - Roles
-        - DACUser
+        - User
       responses:
         200:
           description: Returns the created user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed user entity.
     get:
@@ -868,14 +868,14 @@ paths:
       description: Returns all the users
       tags:
         - Roles
-        - DACUser
+        - User
       responses:
         200:
           description: Returns the collection of all the users and their permissions.
           schema:
             type: array
             items:
-              $ref: '#/definitions/DACUser'
+              $ref: '#/definitions/User'
   /api/dacuser/{email}:
     get:
       summary: describe
@@ -887,13 +887,13 @@ paths:
           required: true
           type: string
       tags:
-        - DACUser
+        - User
         - Roles
       responses:
         200:
           description: Returns the user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
     delete:
       summary: delete
       description: Deletes the user identified by the email.
@@ -904,7 +904,7 @@ paths:
           required: true
           type: string
       tags:
-        - DACUser
+        - User
         - Roles
       responses:
         200:
@@ -924,15 +924,15 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
       tags:
-        - DACUser
+        - User
         - Roles
       responses:
         200:
           description: Returns the updated user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed entity.
   /api/dar:
@@ -1959,14 +1959,14 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
       tags:
         - User
       responses:
         200:
           description: Returns the created user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed user entity.
         409:
@@ -1979,14 +1979,14 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
       tags:
         - User
       responses:
         200:
           description: Returns the updated user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed user entity.
         401:
@@ -2008,7 +2008,7 @@ paths:
         200:
           description: Returns the updated user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed user entity.
         401:
@@ -2706,7 +2706,7 @@ definitions:
         description: The owner of the DAR
         type: object
         items:
-          $ref: '#/definitions/DACUser'
+          $ref: '#/definitions/User'
   DatasetDTO:
     type: object
     properties:
@@ -2823,7 +2823,7 @@ definitions:
         type: string
         format: date
         description: Date last updated
-  DACUser:
+  User:
     type: object
     properties:
       dacUserId:
@@ -2842,8 +2842,8 @@ definitions:
       roles:
         type: array
         items:
-          $ref: '#/definitions/DACUserRole'
-  DACUserRole:
+          $ref: '#/definitions/UserRole'
+  UserRole:
     type: object
     properties:
       roleId:

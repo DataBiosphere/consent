@@ -5,7 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -394,7 +394,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
         try {
-            List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
+            List<User> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
             if (CollectionUtils.isNotEmpty(usersToNotify)) {
                 emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));

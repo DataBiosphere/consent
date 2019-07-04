@@ -330,19 +330,19 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public List<DACUser> getUserEmailAndCancelElection(String referenceId) {
+    public List<User> getUserEmailAndCancelElection(String referenceId) {
         Election access = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
         Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
         updateElection(access, rp);
-        List<DACUser> dacUsers = new ArrayList<>();
+        List<User> users = new ArrayList<>();
         if (access != null){
             List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-            dacUsers.addAll(dacUserDAO.findUsers(userIds));
+            users.addAll(dacUserDAO.findUsers(userIds));
         } else {
-            dacUsers =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
         }
-        return dacUsers;
+        return users;
     }
 
     @Override
@@ -523,11 +523,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, UserRole role) {
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi, UserRole role) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
-            .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
+            .setResearcherName(user, dar.getString(DarConstants.INVESTIGATOR))
             .setStatus(role.getStatus())
             .setRationale(role.getRationale())
             .setUserId(dar.getInteger(DarConstants.USER_ID))
@@ -578,8 +578,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
     }
 
-    private DACUser getOwnerUser(Integer dacUserId){
-        List<DACUser> users = new ArrayList<>();
+    private User getOwnerUser(Integer dacUserId){
+        List<User> users = new ArrayList<>();
         users.addAll(dacUserDAO.findUsersWithRoles(new ArrayList<>(Collections.singletonList(dacUserId))));
         return users.get(0);
     }

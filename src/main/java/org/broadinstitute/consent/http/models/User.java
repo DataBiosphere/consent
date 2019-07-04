@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public class DACUser {
+public class User {
 
     @JsonProperty
     private Integer dacUserId;
@@ -25,17 +25,17 @@ public class DACUser {
     @JsonProperty
     private List<UserRole> roles;
 
-    public DACUser() {
+    public User() {
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName, Date createDate) {
+    public User(Integer dacUserId, String email, String displayName, Date createDate) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
+    public User(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
@@ -43,8 +43,8 @@ public class DACUser {
         this.additionalEmail = additionalEmail;
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName,
-                   String isApproved, Date createDate, List<UserRole> roles, String additionalEmail) {
+    public User(Integer dacUserId, String email, String displayName,
+                String isApproved, Date createDate, List<UserRole> roles, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
@@ -115,7 +115,7 @@ public class DACUser {
         if (getClass() != obj.getClass())
             return false;
 
-        DACUser other = (DACUser) obj;
+        User other = (User) obj;
         return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
     }
 }

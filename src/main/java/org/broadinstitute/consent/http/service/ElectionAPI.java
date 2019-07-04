@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -49,7 +49,7 @@ public interface ElectionAPI {
 
     List<Election> findExpiredElections(String electionType);
 
-    List<Election> createDataSetElections(String referenceId, Map<DACUser, List<DataSet>> dataOwnerDataSet);
+    List<Election> createDataSetElections(String referenceId, Map<User, List<DataSet>> dataOwnerDataSet);
 
     boolean isDataSetElectionOpen();
 

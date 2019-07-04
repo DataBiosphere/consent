@@ -22,7 +22,7 @@ import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -130,9 +130,9 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
-            List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            List<User> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isEmpty(users)) return;
-            List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
+            List<Integer> usersId = users.stream().map(User::getDacUserId).collect(Collectors.toList());
             Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
             Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
             mailService.sendNewDARRequests(getEmails(users), data.get("entityId"), data.get("electionType"), template);
@@ -173,7 +173,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             String entityId = election.getReferenceId();
             String entityName = retrieveReferenceId(election.getElectionType(), election.getReferenceId());
             for(Vote vote: votes){
-                DACUser user = describeDACUserById(vote.getDacUserId());
+                User user = describeDACUserById(vote.getDacUserId());
                 if(electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
                     rpVoteId = findRpVoteId(election.getElectionId(), user.getDacUserId());
                 }
@@ -185,7 +185,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendDisabledDatasetsMessage(DACUser user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
+    public void sendDisabledDatasetsMessage(User user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVER_URL);
             mailService.sendDisabledDatasetMessage(getEmails(Collections.singletonList(user)), dataAcessRequestId, null, template);
@@ -193,7 +193,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendCancelDARRequestMessage(List<DACUser> users, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
+    public void sendCancelDARRequestMessage(List<User> users, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Writer template = templateHelper.getCancelledDarTemplate("DAC Member", dataAcessRequestId, SERVER_URL);
             mailService.sendCancelDARRequestMessage(getEmails(users), dataAcessRequestId, null, template);
@@ -210,7 +210,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
                 reviewedDatasets.put(dar_code, dsElections);
             }
-            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            List<User> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
                 mailService.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
@@ -220,9 +220,9 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
+    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
         if(isServiceActive){
-            for(DACUser admin: admins) {
+            for(User admin: admins) {
                 Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
                 mailService.sendFlaggedDarAdminApprovedMessage(getEmails(Collections.singletonList(admin)), darCode, SERVER_URL, template);
             }
@@ -230,9 +230,9 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSetMap, Document access, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
+    public void sendNeedsPIApprovalMessage(Map<User, List<DataSet>> dataSetMap, Document access, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
-            for(DACUser owner: dataSetMap.keySet()){
+            for(User owner: dataSetMap.keySet()){
                 String dataOwnerConsoleURL = SERVER_URL + DATA_OWNER_CONSOLE_URL;
                 Writer template =  getPIApprovalMessageTemplate(access, dataSetMap.get(owner), owner, amountOfTime, dataOwnerConsoleURL);
                 mailService.sendFlaggedDarAdminApprovedMessage(getEmails(Collections.singletonList(owner)), access.getString(DarConstants.DAR_CODE), SERVER_URL, template);
@@ -241,7 +241,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     @Override
-    public void sendUserDelegateResponsibilitiesMessage(DACUser user, Integer oldUser,  String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
+    public void sendUserDelegateResponsibilitiesMessage(User user, Integer oldUser, String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             String delegateURL = SERVER_URL + delegateURL(newRole);
             List<VoteAndElectionModel> votesInformation = findVotesDelegationInfo(delegatedVotes.stream().map(vote -> vote.getVoteId()).collect(Collectors.toList()), oldUser);
@@ -252,11 +252,11 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     @Override
     public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
-        DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
-        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+        User createdResearcher = dacUserDAO.findDACUserById(researcherId);
+        List<User> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
         if(isServiceActive){
             String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
-            for(DACUser admin: admins){
+            for(User admin: admins){
                 Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
                 mailService.sendNewResearcherCreatedMessage(getEmails(Collections.singletonList(admin)), template);
             }
@@ -266,7 +266,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
-            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            List<User> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
                 mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());
@@ -277,13 +277,13 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
         if(isServiceActive){
-            DACUser user = dacUserDAO.findDACUserById(researcherId);
+            User user = dacUserDAO.findDACUserById(researcherId);
             Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
             mailService.sendNewResearcherApprovedMessage(getEmails(Collections.singletonList(user)), template, darCode);
         }
     }
 
-    private Set<String> getEmails(List<DACUser> users) {
+    private Set<String> getEmails(List<User> users) {
         Set<String> emails = users.stream()
                 .map(u -> new ArrayList<String>(){{add(u.getEmail()); add(u.getAdditionalEmail());}})
                 .flatMap(Collection::stream)
@@ -316,12 +316,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         return new ArrayList<>();
     }
 
-    private DACUser describeDACUserById(Integer id) throws IllegalArgumentException {
-        DACUser dacUser = dacUserDAO.findDACUserById(id);
-        if (dacUser == null) {
-            throw new NotFoundException("Could not find dacUser for specified id : " + id);
+    private User describeDACUserById(Integer id) throws IllegalArgumentException {
+        User user = dacUserDAO.findDACUserById(id);
+        if (user == null) {
+            throw new NotFoundException("Could not find user for specified id : " + id);
         }
-        return dacUser;
+        return user;
     }
 
     private String delegateURL(String newUserRole) {
@@ -342,12 +342,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
 
-    private Writer getUserDelegateResponsibilitiesTemplate(DACUser user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
+    private Writer getUserDelegateResponsibilitiesTemplate(User user, String newRole, List<VoteAndElectionModel> delegatedVotes, String URL) throws IOException, TemplateException {
         return templateHelper.getUserDelegateResponsibilitiesTemplate(user.getDisplayName(), delegatedVotes, newRole, URL);
     }
 
 
-    private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, DACUser user, int daysToApprove, String URL) throws IOException, TemplateException {
+    private Writer getPIApprovalMessageTemplate(Document access, List<DataSet> dataSets, User user, int daysToApprove, String URL) throws IOException, TemplateException {
         List<DataSetPIMailModel> dsPIModelList = new ArrayList<>();
         for (DataSet ds: dataSets) {
             dsPIModelList.add(new DataSetPIMailModel(ds.getObjectId(), ds.getName()));
@@ -432,7 +432,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private Map<String, String> retrieveForVote(Integer voteId){
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-        DACUser user = describeDACUserById(vote.getDacUserId());
+        User user = describeDACUserById(vote.getDacUserId());
 
         Map<String, String> dataMap = new HashMap();
         dataMap.put("userName", user.getDisplayName());
@@ -469,7 +469,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         if(election.getElectionType().equals(ElectionType.RP.getValue())){
             election = electionDAO.findElectionById(electionDAO.findAccessElectionByElectionRPId(electionId));
         }
-        DACUser user = dacUserDAO.findChairpersonUser();
+        User user = dacUserDAO.findChairpersonUser();
         return createDataMap(user.getDisplayName(),
                 election.getElectionType(),
                 election.getReferenceId(),
@@ -493,7 +493,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     private Map<String, String> retrieveForNewDAR(String dataAccessRequestId){
-        DACUser user = dacUserDAO.findChairpersonUser();
+        User user = dacUserDAO.findChairpersonUser();
         Map<String, String> dataMap = new HashMap();
         dataMap.put("userName", user.getDisplayName());
         dataMap.put("electionType", "New Data Access Request Case");
@@ -533,10 +533,10 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         return ElectionTypeString.DATA_ACCESS.getValue();
     }
 
-    private List<String> getAcademicEmails(List<DACUser> users) {
+    private List<String> getAcademicEmails(List<User> users) {
         List<String> academicEmails = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(users)) {
-            List<Integer> userIds = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
+            List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
             List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUserIds(userIds);
             Map<Integer, List<ResearcherProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(userProperty -> userProperty.getUserId()));
             researcherPropertiesMap.forEach((userId, properties) -> {

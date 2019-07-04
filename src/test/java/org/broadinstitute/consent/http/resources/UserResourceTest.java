@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.users.UserService;
@@ -53,7 +53,7 @@ public class UserResourceTest {
 
     @Test
     public void testCreateUserWithInvalidRole(){
-        DACUser user = new DACUser();
+        User user = new User();
         user.setEmail(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
         UserRole admin = new UserRole();
@@ -74,7 +74,7 @@ public class UserResourceTest {
 
     @Test
     public void testCreateUserWithoutRoles(){
-        DACUser user = new DACUser();
+        User user = new User();
         user.setEmail(TEST_EMAIL);
         UserRole admin = new UserRole();
         admin.setName(UserRoles.ADMIN.getValue());
@@ -89,7 +89,7 @@ public class UserResourceTest {
 
     @Test
     public void createUserSuccess(){
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDisplayName("Test");
         UserRole researcher = new UserRole();
         List<UserRole> roles = new ArrayList<>();
@@ -103,7 +103,7 @@ public class UserResourceTest {
 
     @Test
     public void testUpdateUserWithInvalidRole() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDisplayName(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
         UserRole admin = new UserRole();
@@ -120,7 +120,7 @@ public class UserResourceTest {
 
     @Test
     public void testUpdateUserWithInvalidEmail() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDisplayName(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
         UserRole researcher = new UserRole();
@@ -134,7 +134,7 @@ public class UserResourceTest {
 
     @Test
     public void testUpdateNotExistentUser() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDisplayName(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
         UserRole researcher = new UserRole();

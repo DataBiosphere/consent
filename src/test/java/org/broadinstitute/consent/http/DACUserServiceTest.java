@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http;
 
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 
 import javax.ws.rs.client.Client;
 import java.io.IOException;
@@ -11,8 +11,8 @@ public abstract class DACUserServiceTest extends AbstractTest {
         return path2Url("/dacuser");
     }
 
-    public DACUser retrieveDacUser(Client client, String url) throws IOException {
-        return getJson(client, url).readEntity(DACUser.class);
+    public User retrieveDacUser(Client client, String url) throws IOException {
+        return getJson(client, url).readEntity(User.class);
     }
 
     public String dacUserPathByEmail(String email) {

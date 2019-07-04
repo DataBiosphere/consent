@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.UserService;
@@ -36,7 +36,7 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response createUser(@Context UriInfo info, DACUser userToCreate, @Auth AuthUser user) {
+    public Response createUser(@Context UriInfo info, User userToCreate, @Auth AuthUser user) {
         try {
             URI uri;
             userToCreate = userService.createUser(userToCreate, user.getName());
@@ -56,7 +56,7 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response update(DACUser userToUpdate, @Auth AuthUser user) {
+    public Response update(User userToUpdate, @Auth AuthUser user) {
         try {
             return Response.ok().entity(userService.updateUser(userToUpdate, user.getName())).build();
         } catch (Exception e){

@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -86,7 +86,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
         try {
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -123,7 +123,7 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             updated = api.update(id, updated);
             auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchProcessAPI.processMatchesForConsent(id);

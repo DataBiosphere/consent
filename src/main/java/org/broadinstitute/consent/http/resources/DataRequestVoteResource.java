@@ -199,14 +199,14 @@ public class DataRequestVoteResource extends Resource {
             List<DataSet> needsApprovedDataSets = dataSetAPI.findNeedsApprovalDataSetByObjectId(dataSets);
             List<Integer> dataSetIds = needsApprovedDataSets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(needsApprovedDataSets)){
-                Map<DACUser, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(dataSetIds);
+                Map<User, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(dataSetIds);
                 List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
                     elections.stream().forEach(election -> {
                         api.createDataOwnersReviewVotes(election);
                     });
                 }
-                List<DACUser> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
+                List<User> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierAPI.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }

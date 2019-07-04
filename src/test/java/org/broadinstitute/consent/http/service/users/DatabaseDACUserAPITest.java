@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service.users;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
@@ -63,7 +63,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUser() {
-        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setDacUserId(3);
         UserRole role = new UserRole(1, UserRoles.RESEARCHER.getValue());
@@ -79,7 +79,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithExistentEmail() {
-        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
         try {
             databaseDACUserAPI.createDACUser(user);
@@ -90,7 +90,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithoutDisplayName() {
-        DACUser user = new DACUser(null, EMAIL, null, new Date(), null);
+        User user = new User(null, EMAIL, null, new Date(), null);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -100,7 +100,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithoutEmail() {
-        DACUser user = new DACUser(null, null, DISPLAY_NAME, new Date(), null);
+        User user = new User(null, null, DISPLAY_NAME, new Date(), null);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -120,9 +120,9 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void describeUserByEmail() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User dacUser = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(dacUser);
-        DACUser user = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
+        User user = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         assertNotNull(user);
     }
 
@@ -139,21 +139,21 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void describeUserById() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User dacUser = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.findDACUserById(1)).thenReturn(dacUser);
-        DACUser user = databaseDACUserAPI.describeDACUserById(1);
+        User user = databaseDACUserAPI.describeDACUserById(1);
         assertNotNull(user);
     }
 
     @Test
     public void validateNeedsDelegationMemberTrue() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         List<Integer> openElectionIdsForThisUser = new ArrayList<>(Arrays.asList(2));
         when(electionDAO.verifyOpenElections()).thenReturn(3);
-        when(electionDAO.findNonDataSetOpenElectionIds(dacUser.getDacUserId())).thenReturn(openElectionIdsForThisUser);
+        when(electionDAO.findNonDataSetOpenElectionIds(user.getDacUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
-        when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new DACUser(5, EMAIL, DISPLAY_NAME, new Date(), null))));
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.MEMBER.getValue());
+        when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new User(5, EMAIL, DISPLAY_NAME, new Date(), null))));
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 1);
@@ -161,13 +161,13 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationMemberTrueWithEmptyCandidates() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         List<Integer> openElectionIdsForThisUser = new ArrayList<>(Arrays.asList(2));
         when(electionDAO.verifyOpenElections()).thenReturn(3);
-        when(electionDAO.findNonDataSetOpenElectionIds(dacUser.getDacUserId())).thenReturn(openElectionIdsForThisUser);
+        when(electionDAO.findNonDataSetOpenElectionIds(user.getDacUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
         when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>());
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.MEMBER.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);
@@ -175,9 +175,9 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationMemberFalse() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.MEMBER.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertFalse(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);
@@ -185,9 +185,9 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationChairpersonFalse() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.CHAIRPERSON.getValue());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.CHAIRPERSON.getValue());
         assertNotNull(response);
         assertFalse(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);
@@ -195,13 +195,13 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void validateNeedsDelegationDataOwnerTrueWithEmptyCandidates() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
         List<Integer> associatedDataSetId = new ArrayList<>(Arrays.asList(2));
         List<Integer> dataOwnersPerDataSet = new ArrayList<>(Arrays.asList(1));
-        when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(dacUser.getDacUserId())).thenReturn(associatedDataSetId);
+        when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(user.getDacUserId())).thenReturn(associatedDataSetId);
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId)).thenReturn(dataOwnersPerDataSet);
-        when(dacUserDAO.getDataOwnersApprovedToReplace(dacUser.getDacUserId())).thenReturn(new ArrayList<>());
-        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(dacUser, UserRoles.DATAOWNER.getValue());
+        when(dacUserDAO.getDataOwnersApprovedToReplace(user.getDacUserId())).thenReturn(new ArrayList<>());
+        ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.DATAOWNER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
         assertTrue(response.getDelegateCandidates().size() == 0);

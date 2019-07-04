@@ -15,7 +15,7 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Election;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -77,8 +77,8 @@ public class ElectionAPITest extends AbstractTest {
     @Test
     public void testCreateConsentElectionSingleChairperson() throws Exception {
         DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
-        DACUser chair = userDAO.findChairpersonUser();
-        Set<DACUser> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getDacUserId()));
+        User chair = userDAO.findChairpersonUser();
+        Set<User> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getDacUserId()));
         when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
         when(consentDAO.checkConsentbyId(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);
@@ -101,10 +101,10 @@ public class ElectionAPITest extends AbstractTest {
         List<Integer> memberIds = userDAO
                 .findDACUsersEnabledToVote()
                 .stream()
-                .map(DACUser::getDacUserId)
+                .map(User::getDacUserId)
                 .collect(Collectors.toList());
-        Set<DACUser> dacMembersWithRoles = userDAO.findUsersWithRoles(memberIds);
-        Set<DACUser> membersWithRoles = dacMembersWithRoles
+        Set<User> dacMembersWithRoles = userDAO.findUsersWithRoles(memberIds);
+        Set<User> membersWithRoles = dacMembersWithRoles
                 .stream()
                 .filter(u -> u.getRoles().contains(MEMBER))
                 .collect(Collectors.toSet());

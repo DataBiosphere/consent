@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -31,7 +31,7 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser user) {
         try {
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             return Response.ok(nihAuthApi.authenticateNih(nihAccount, dacUser.getDacUserId())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
@@ -43,7 +43,7 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response deleteNihAccount(@Auth AuthUser user) {
         try {
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
             nihAuthApi.deleteNihAccountById(dacUser.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {

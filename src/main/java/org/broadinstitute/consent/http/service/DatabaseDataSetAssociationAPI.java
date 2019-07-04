@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
@@ -61,16 +61,16 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     }
 
     @Override
-    public Map<String, Collection<DACUser>> findDataOwnersRelationWithDataset(Integer dataSetId){
+    public Map<String, Collection<User>> findDataOwnersRelationWithDataset(Integer dataSetId){
         List<DatasetAssociation> associationList = dsAssociationDAO.getDatasetAssociation(dsDAO.findDataSetById(dataSetId).getDataSetId());
-        Collection<DACUser> associated_users = new ArrayList<>();
+        Collection<User> associated_users = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(associationList)){
             Collection<Integer> usersIdList  = associationList.stream().map(DatasetAssociation::getDacuserId).collect(Collectors.toList());
             associated_users = dacUserDAO.findUsers(usersIdList);
         }
-        Map<String, Collection<DACUser>> usersMap = new HashMap<>();
+        Map<String, Collection<User>> usersMap = new HashMap<>();
         usersMap.put("associated_users",associated_users);
-        Collection<DACUser> dataOwnersList = dacUserDAO.describeUsersByRole(UserRoles.DATAOWNER.getValue());
+        Collection<User> dataOwnersList = dacUserDAO.describeUsersByRole(UserRoles.DATAOWNER.getValue());
         usersMap.put("not_associated_users",CollectionUtils.subtract(dataOwnersList, associated_users));
         return usersMap;
     }
@@ -99,11 +99,11 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     }
 
     @Override
-    public Map<DACUser, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList){
+    public Map<User, List<DataSet>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList){
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
-        Map<DACUser, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
+        Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
         dataSetAssociations.stream().forEach(dsa ->{
-            DACUser dataOwner = dacUserDAO.findDACUserById(dsa.getDacuserId());
+            User dataOwner = dacUserDAO.findDACUserById(dsa.getDacuserId());
             if(!dataOwnerDataSetMap.containsKey(dataOwner)){
                 dataOwnerDataSetMap.put(dacUserDAO.findDACUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
             }else{
@@ -120,16 +120,16 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         }
     }
 
-    private Collection<DACUser> getAndVerifyUsers(List<Integer> usersIdList){
+    private Collection<User> getAndVerifyUsers(List<Integer> usersIdList){
         if(usersIdList.isEmpty()) return null;
-        Collection<DACUser> dacUserList = dacUserDAO.findUsersWithRoles(usersIdList);
-        if(dacUserList.size() == usersIdList.size()){
-                for (DACUser user : dacUserList) {
+        Collection<User> userList = dacUserDAO.findUsersWithRoles(usersIdList);
+        if(userList.size() == usersIdList.size()){
+                for (User user : userList) {
                     if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue()))) {
                         throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getDacUserId()));
                     }
                 }
-                return  dacUserList;
+                return userList;
         }else{
         throw new BadRequestException("Invalid UserId list.");}
     }

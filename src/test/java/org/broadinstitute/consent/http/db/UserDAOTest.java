@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,16 +50,16 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindDACUserById() {
-        DACUser user = userDAO.findDACUserById(1);
+        User user = userDAO.findDACUserById(1);
         Assert.assertNotNull(user);
 
-        DACUser user2 = userDAO.findDACUserById(100000);
+        User user2 = userDAO.findDACUserById(100000);
         Assert.assertNull(user2);
     }
 
     @Test
     public void testFindUsers_withIdCollection() {
-        Collection<DACUser> users = userDAO.findUsers(Collections.singletonList(1));
+        Collection<User> users = userDAO.findUsers(Collections.singletonList(1));
         Assert.assertNotNull(users);
         Assert.assertFalse(users.isEmpty());
         Assert.assertEquals(1, users.size());
@@ -67,7 +67,7 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindChairpersonUser() {
-        DACUser user = userDAO.findChairpersonUser();
+        User user = userDAO.findChairpersonUser();
         Assert.assertNotNull(user);
         Assert.assertNotNull(user.getRoles());
         Assert.assertFalse(user.getRoles().isEmpty());
@@ -81,23 +81,23 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testDescribeUsersByRole() {
-        List<DACUser> members = userDAO.describeUsersByRole("Member");
+        List<User> members = userDAO.describeUsersByRole("Member");
         Assert.assertFalse(members.isEmpty());
 
-        List<DACUser> chairs = userDAO.describeUsersByRole("Chairperson");
+        List<User> chairs = userDAO.describeUsersByRole("Chairperson");
         Assert.assertFalse(chairs.isEmpty());
 
         // Only case where we don't set up users by default.
-        List<DACUser> alumni = userDAO.describeUsersByRole("Alumni");
+        List<User> alumni = userDAO.describeUsersByRole("Alumni");
         Assert.assertTrue(alumni.isEmpty());
 
-        List<DACUser> admins = userDAO.describeUsersByRole("Admin");
+        List<User> admins = userDAO.describeUsersByRole("Admin");
         Assert.assertFalse(admins.isEmpty());
 
-        List<DACUser> researchers = userDAO.describeUsersByRole("Researcher");
+        List<User> researchers = userDAO.describeUsersByRole("Researcher");
         Assert.assertFalse(researchers.isEmpty());
 
-        List<DACUser> dataOwners = userDAO.describeUsersByRole("DataOwner");
+        List<User> dataOwners = userDAO.describeUsersByRole("DataOwner");
         Assert.assertFalse(dataOwners.isEmpty());
     }
 
@@ -114,23 +114,23 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindDACUsersEnabledToVote() {
-        Collection<DACUser> users = userDAO.findDACUsersEnabledToVote();
+        Collection<User> users = userDAO.findDACUsersEnabledToVote();
         Assert.assertFalse(users.isEmpty());
     }
 
     @Test
     public void testFindUsersWithRoles() {
         Collection<Integer> userIds = Arrays.asList(1, 2, 3, 4, 5, 6);
-        Collection<DACUser> users = userDAO.findUsersWithRoles(userIds);
+        Collection<User> users = userDAO.findUsersWithRoles(userIds);
         users.forEach(u -> Assert.assertFalse("User: " + u.getDacUserId() + " has no roles", u.getRoles().isEmpty()));
     }
 
     @Test
     public void testFindDACUserByEmail() {
-        DACUser user = userDAO.findDACUserByEmail("test@broad.com");
+        User user = userDAO.findDACUserByEmail("test@broad.com");
         Assert.assertNotNull(user);
 
-        DACUser user2 = userDAO.findDACUserByEmail("no.one@nowhere.com");
+        User user2 = userDAO.findDACUserByEmail("no.one@nowhere.com");
         Assert.assertNull(user2);
     }
 
@@ -139,7 +139,7 @@ public class UserDAOTest extends AbstractTest {
         String email = getRandomEmailAddress();
         Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
-        DACUser user = userDAO.findDACUserById(userId);
+        User user = userDAO.findDACUserById(userId);
         Assert.assertNotNull(user);
     }
 
@@ -154,7 +154,7 @@ public class UserDAOTest extends AbstractTest {
                 "Dac User Test",
                 userId,
                 email);
-        DACUser user = userDAO.findDACUserById(userId);
+        User user = userDAO.findDACUserById(userId);
         Assert.assertEquals(user.getEmail(), newEmail);
     }
 
@@ -162,10 +162,10 @@ public class UserDAOTest extends AbstractTest {
     public void testDeleteDACUserByEmail() {
         Integer userId = userDAO.insertDACUser("delete_test@broad.org", "Dac User Delete Test", new Date());
         Assert.assertNotNull(userId);
-        DACUser user = userDAO.findDACUserById(userId);
+        User user = userDAO.findDACUserById(userId);
         Assert.assertNotNull(user);
         userDAO.deleteDACUserByEmail(user.getEmail());
-        DACUser deletedUser = userDAO.findDACUserById(userId);
+        User deletedUser = userDAO.findDACUserById(userId);
         Assert.assertNull(deletedUser);
     }
 
@@ -180,7 +180,7 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindUsers_noArgs() {
-        Collection<DACUser> users = userDAO.findUsers();
+        Collection<User> users = userDAO.findUsers();
         Assert.assertNotNull(users);
         Assert.assertFalse(users.isEmpty());
     }
@@ -197,13 +197,13 @@ public class UserDAOTest extends AbstractTest {
         String email = getRandomEmailAddress();
         Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
         userRoleDAO.insertSingleUserRole(5, userId, true);
-        Collection<DACUser> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
+        Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
         Assert.assertFalse(researchers.isEmpty());
 
         String email2 = getRandomEmailAddress();
         Integer userId2 = userDAO.insertDACUser(email2, "Dac User Test", new Date());
         userRoleDAO.insertSingleUserRole(6, userId2, false);
-        Collection<DACUser> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
+        Collection<User> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
         Assert.assertFalse(dataOwners.isEmpty());
     }
 
@@ -211,13 +211,13 @@ public class UserDAOTest extends AbstractTest {
     public void testGetMembersApprovedToReplace() {
         // There are 3 Members set up in insert.sql, users 2, 3, and 4
 
-        Collection<DACUser> users2 = userDAO.getMembersApprovedToReplace(2, Collections.singletonList(1));
+        Collection<User> users2 = userDAO.getMembersApprovedToReplace(2, Collections.singletonList(1));
         Assert.assertFalse(users2.isEmpty());
 
-        Collection<DACUser> users3 = userDAO.getMembersApprovedToReplace(3, Collections.singletonList(1));
+        Collection<User> users3 = userDAO.getMembersApprovedToReplace(3, Collections.singletonList(1));
         Assert.assertFalse(users3.isEmpty());
 
-        Collection<DACUser> users4 = userDAO.getMembersApprovedToReplace(4, Collections.singletonList(1));
+        Collection<User> users4 = userDAO.getMembersApprovedToReplace(4, Collections.singletonList(1));
         Assert.assertFalse(users4.isEmpty());
     }
 
@@ -225,13 +225,13 @@ public class UserDAOTest extends AbstractTest {
     public void testGetDataOwnersApprovedToReplace() {
         // There are 3 DataOwners set up in insert.sql, users 1, 2, and 5
 
-        Collection<DACUser> users2 = userDAO.getDataOwnersApprovedToReplace(1);
+        Collection<User> users2 = userDAO.getDataOwnersApprovedToReplace(1);
         Assert.assertFalse(users2.isEmpty());
 
-        Collection<DACUser> users3 = userDAO.getDataOwnersApprovedToReplace(2);
+        Collection<User> users3 = userDAO.getDataOwnersApprovedToReplace(2);
         Assert.assertFalse(users3.isEmpty());
 
-        Collection<DACUser> users4 = userDAO.getDataOwnersApprovedToReplace(5);
+        Collection<User> users4 = userDAO.getDataOwnersApprovedToReplace(5);
         Assert.assertFalse(users4.isEmpty());
     }
 
@@ -241,7 +241,7 @@ public class UserDAOTest extends AbstractTest {
         Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
         userDAO.updateDACUser("Updated Dac User Test", userId);
-        DACUser user = userDAO.findDACUserById(userId);
+        User user = userDAO.findDACUserById(userId);
         Assert.assertEquals(user.getDisplayName(), "Updated Dac User Test");
     }
 

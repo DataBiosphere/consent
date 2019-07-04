@@ -1,14 +1,14 @@
 package org.broadinstitute.consent.http.models.user;
 
 import java.util.List;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 
 public class ValidateDelegationResponse {
 
     private boolean needsDelegation;
-    private List<DACUser> delegateCandidates;
+    private List<User> delegateCandidates;
 
-    public ValidateDelegationResponse(boolean needsDelegation, List<DACUser> delegateCandidates) {
+    public ValidateDelegationResponse(boolean needsDelegation, List<User> delegateCandidates) {
         this.needsDelegation = needsDelegation;
         this.delegateCandidates = delegateCandidates;
     }
@@ -17,7 +17,7 @@ public class ValidateDelegationResponse {
         return needsDelegation;
     }
 
-    public List<DACUser> getDelegateCandidates() {
+    public List<User> getDelegateCandidates() {
         return delegateCandidates;
     }
 

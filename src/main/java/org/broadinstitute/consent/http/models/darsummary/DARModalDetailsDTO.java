@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models.darsummary;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -54,7 +54,7 @@ public class DARModalDetailsDTO {
         return researcherName;
     }
 
-    public DARModalDetailsDTO setResearcherName(DACUser owner, String principalInvestigator) {
+    public DARModalDetailsDTO setResearcherName(User owner, String principalInvestigator) {
         if(owner.getDisplayName().equals(principalInvestigator)){
             researcherName = principalInvestigator;
         } else {

@@ -4,10 +4,10 @@ import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.util.Map;
 import javax.mail.MessagingException;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 
 public interface UserHandlerAPI {
 
-    void updateRoles(Map<String, DACUser> rec) throws UserRoleHandlerException, MessagingException, IOException, TemplateException;
+    void updateRoles(Map<String, User> rec) throws UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
 }

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -66,7 +66,7 @@ public interface DataAccessRequestAPI {
 
     Document cancelDataAccessRequest(String referenceId);
 
-    List<DACUser> getUserEmailAndCancelElection(String referenceId);
+    List<User> getUserEmailAndCancelElection(String referenceId);
 
     boolean hasUseRestriction(String referenceId);
 
@@ -88,7 +88,7 @@ public interface DataAccessRequestAPI {
 
     File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException;
 
-    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar,DACUser dacUser, ElectionAPI electionApi, UserRole role);
+    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi, UserRole role);
 
 }
 

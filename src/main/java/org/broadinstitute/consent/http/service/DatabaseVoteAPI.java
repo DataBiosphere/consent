@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
@@ -129,10 +129,10 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
-        Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
+        Set<User> userList = dacUserDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
-        if (dacUserList != null) {
-            for (DACUser user : dacUserList) {
+        if (userList != null) {
+            for (User user : userList) {
                 Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
                 votes.add(voteDAO.findVoteById(id));
                 if(isChairPerson(user.getDacUserId())){

@@ -22,7 +22,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -303,7 +303,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public boolean validateCollectEmailCondition(Vote vote){
         List<Vote> votes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
-        DACUser chairperson = dacUserDAO.findChairpersonUser();
+        User chairperson = dacUserDAO.findChairpersonUser();
         if((votes.size() == 0) &&(vote.getDacUserId() != chairperson.getDacUserId())){
             return true;
         } else if((votes.size() == 1)) {
@@ -328,7 +328,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         List<Vote> rpElectionVotes = voteDAO.findPendingVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingVotesByElectionId(darElectionId);
-        DACUser chairperson = dacUserDAO.findChairpersonUser();
+        User chairperson = dacUserDAO.findChairpersonUser();
         Integer exists = mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId);
         if((exists == null)){
             if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (!vote.getDacUserId().equals(chairperson.getDacUserId())))){
@@ -450,7 +450,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public List<Election> createDataSetElections(String referenceId, Map<DACUser, List<DataSet>> dataOwnerDataSet){
+    public List<Election> createDataSetElections(String referenceId, Map<User, List<DataSet>> dataOwnerDataSet){
         List<Integer> electionsIds = new ArrayList<>();
         dataOwnerDataSet.forEach((user,dataSets) -> {
             dataSets.stream().forEach(dataSet -> {
@@ -514,13 +514,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
-            DACUser dacUser = dacUserDAO.findDACUserById(dar.getInteger("userId"));
+            User user = dacUserDAO.findDACUserById(dar.getInteger("userId"));
             if(!createElection){
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
             }else{
                 updateDataAccessRequest(dataSetList, dar, dar.getString(DarConstants.DAR_CODE));
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
             }
         }
         return dataSetList;
@@ -654,11 +654,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private void validateAvailableUsers(ElectionType electionType) {
         if (!electionType.equals(ElectionType.DATA_SET)) {
-            Set<DACUser> dacUsers = dacUserDAO.findDACUsersEnabledToVote();
-            if (dacUsers == null || dacUsers.isEmpty()) {
+            Set<User> users = dacUserDAO.findDACUsersEnabledToVote();
+            if (users == null || users.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
             }
-            boolean chairpersonExists = dacUsers.stream()
+            boolean chairpersonExists = users.stream()
                     .flatMap(u -> u.getRoles().stream())
                     .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getValue()));
             if (!chairpersonExists) {

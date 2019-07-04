@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -49,18 +49,18 @@ public class DACUserResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed(ADMIN)
-    public Response createdDACUser(@Context UriInfo info, DACUser dac) {
+    public Response createdDACUser(@Context UriInfo info, User dac) {
         URI uri;
-        DACUser dacUser;
+        User user;
         try {
-            dacUser = dacUserAPI.createDACUser(dac);
-            if (isChairPerson(dacUser.getRoles())) {
-                dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
+            user = dacUserAPI.createDACUser(dac);
+            if (isChairPerson(user.getRoles())) {
+                dacUserAPI.updateExistentChairPersonToAlumni(user.getDacUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
                 voteAPI.createVotesForElections(elections, true);
             }
-            uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
-            return Response.created(uri).entity(dacUser).build();
+            uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
+            return Response.created(uri).entity(user).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
@@ -69,7 +69,7 @@ public class DACUserResource extends Resource {
     @GET
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Collection<DACUser> describeAllUsers() {
+    public Collection<User> describeAllUsers() {
         return dacUserAPI.describeUsers();
     }
 
@@ -77,7 +77,7 @@ public class DACUserResource extends Resource {
     @Path("/{email}")
     @Produces("application/json")
     @PermitAll
-    public DACUser describe(@PathParam("email") String email) {
+    public User describe(@PathParam("email") String email) {
         return dacUserAPI.describeDACUserByEmail(email);
     }
 
@@ -86,11 +86,11 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response update(@Context UriInfo info, Map<String, DACUser> dac, @PathParam("id") Integer id) {
+    public Response update(@Context UriInfo info, Map<String, User> dac, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-            DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
-            return Response.ok(uri).entity(dacUser).build();
+            User user = dacUserAPI.updateDACUserById(dac, id);
+            return Response.ok(uri).entity(user).build();
         } catch (UserRoleHandlerException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
@@ -103,11 +103,11 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response updateMainFields(@Context UriInfo info, DACUser dac, @PathParam("id") Integer id) {
+    public Response updateMainFields(@Context UriInfo info, User dac, @PathParam("id") Integer id) {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-            DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
-            return Response.ok(uri).entity(dacUser).build();
+            User user = dacUserAPI.updateDACUserById(dac, id);
+            return Response.ok(uri).entity(user).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -128,11 +128,11 @@ public class DACUserResource extends Resource {
     @Produces("application/json")
     @Path("/validateDelegation")
     @PermitAll
-    public Response validateDelegation(@QueryParam("role") String role, DACUser dac) {
-        DACUser dacUser;
+    public Response validateDelegation(@QueryParam("role") String role, User dac) {
+        User user;
         try {
-            dacUser = dacUserAPI.describeDACUserByEmail(dac.getEmail());
-            ValidateDelegationResponse delegationResponse = dacUserAPI.validateNeedsDelegation(dacUser, role);
+            user = dacUserAPI.describeDACUserByEmail(dac.getEmail());
+            ValidateDelegationResponse delegationResponse = dacUserAPI.validateNeedsDelegation(user, role);
             return Response.ok().entity(delegationResponse).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -170,9 +170,9 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER})
-    public Response updateName(DACUser user, @PathParam("id") Integer id) {
+    public Response updateName(User user, @PathParam("id") Integer id) {
         try {
-            DACUser dacUser = dacUserAPI.updateNameById(user, id);
+            User dacUser = dacUserAPI.updateNameById(user, id);
             return Response.ok().entity(dacUser).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

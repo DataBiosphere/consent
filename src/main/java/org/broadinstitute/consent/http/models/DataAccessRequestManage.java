@@ -54,7 +54,7 @@ public class DataAccessRequestManage {
     private String dataSetElectionResult;
 
     @JsonProperty
-    private DACUser ownerUser;
+    private User ownerUser;
 
     public DataAccessRequestManage() {
     }
@@ -163,11 +163,11 @@ public class DataAccessRequestManage {
         this.dataSetElectionResult = dataSetElectionResult;
     }
 
-    public DACUser getOwnerUser() {
+    public User getOwnerUser() {
         return ownerUser;
     }
 
-    public void setOwnerUser(DACUser ownerUser) {
+    public void setOwnerUser(User ownerUser) {
         this.ownerUser = ownerUser;
     }
 }

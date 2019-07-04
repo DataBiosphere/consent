@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
@@ -12,14 +12,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
+public class DACUserRoleMapper implements ResultSetMapper<User> {
 
-    private Map<Integer, DACUser> users = new HashMap<>();
+    private Map<Integer, User> users = new HashMap<>();
 
-    public DACUser map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-        DACUser user;
+    public User map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+        User user;
         if (index == 0 || !users.containsKey(r.getInt("dacUserId"))) {
-            user = new DACUser(r.getInt("dacUserId"),
+            user = new User(r.getInt("dacUserId"),
                     r.getString("email"),
                     r.getString("displayName"),
                     null,

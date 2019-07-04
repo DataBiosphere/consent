@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
@@ -63,14 +63,14 @@ public class UserService {
         this.roleIdMap = createRoleMap(userRoleDAO.findRoles());
     }
 
-    public DACUser createUser(DACUser user, String userEmail) {
+    public User createUser(User user, String userEmail) {
         validateEmail(user.getEmail(), userEmail);
         user.setEmail(userEmail);
         validateRoles(user.getRoles());
         return createDACUser(user);
     }
 
-    public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
+    public User createDACUser(User dacUser) throws IllegalArgumentException {
         validateRequiredFields(dacUser);
         Integer dacUserID;
         try {
@@ -81,23 +81,23 @@ public class UserService {
         if (dacUser.getRoles() != null) {
             insertUserRoles(dacUser, dacUserID);
         }
-        DACUser user = dacUserDAO.findDACUserById(dacUserID);
+        User user = dacUserDAO.findDACUserById(dacUserID);
         user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
     }
 
-    public DACUser updateUser(DACUser user, String userEmail) throws IllegalArgumentException, UserRoleHandlerException {
+    public User updateUser(User user, String userEmail) throws IllegalArgumentException, UserRoleHandlerException {
         validateEmail(user.getEmail(), userEmail);
         user.setEmail(userEmail);
         validateRoles(user.getRoles());
-        DACUser existentUser = dacUserDAO.findDACUserByEmail(user.getEmail());
+        User existentUser = dacUserDAO.findDACUserByEmail(user.getEmail());
         validateAndUpdateRoles(existentUser.getRoles(), user.getRoles(), existentUser);
         dacUserDAO.updateDACUser(user.getDisplayName(), existentUser.getDacUserId());
         return dacUserDAO.findDACUserById(existentUser.getDacUserId());
     }
 
-    public DACUser updatePartialUser(List<PatchOperation> patchOperations, String name) throws UserRoleHandlerException {
-        DACUser user = dacUserDAO.findDACUserByEmail(name);
+    public User updatePartialUser(List<PatchOperation> patchOperations, String name) throws UserRoleHandlerException {
+        User user = dacUserDAO.findDACUserByEmail(name);
         patchOperations.stream().forEach(action -> {
             if (action.getPath().equalsIgnoreCase(DISPLAY_NAME)) {
                 setDisplayName(user, action);
@@ -135,7 +135,7 @@ public class UserService {
         }
     }
 
-    private void validateRequiredFields(DACUser newDac) {
+    private void validateRequiredFields(User newDac) {
         if (StringUtils.isEmpty(newDac.getDisplayName())) {
             throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
         }
@@ -144,8 +144,8 @@ public class UserService {
         }
     }
 
-    private void insertUserRoles(DACUser dacUser, Integer dacUserId) {
-        List<UserRole> roles = dacUser.getRoles();
+    private void insertUserRoles(User user, Integer dacUserId) {
+        List<UserRole> roles = user.getRoles();
         roles.forEach(r -> {
             r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
             if (Objects.isNull(r.getEmailPreference())) {
@@ -155,7 +155,7 @@ public class UserService {
         userRoleDAO.insertUserRoles(roles, dacUserId);
     }
 
-    private void validateAndUpdateRoles(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user) throws UserRoleHandlerException {
+    private void validateAndUpdateRoles(List<UserRole> existentRoles, List<UserRole> newRoles, User user) throws UserRoleHandlerException {
         Map<Integer, Integer> rolesToRemove = new HashedMap();
         Map<Integer, Integer> rolesToAdd = new HashedMap();
         updateDataOwnerRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
@@ -168,7 +168,7 @@ public class UserService {
         });
     }
 
-    private void updateDataOwnerRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer> rolesToRemove, Map<Integer, Integer> rolesToAdd) throws UserRoleHandlerException {
+    private void updateDataOwnerRole(List<UserRole> existentRoles, List<UserRole> newRoles, User user, Map<Integer, Integer> rolesToRemove, Map<Integer, Integer> rolesToAdd) throws UserRoleHandlerException {
         boolean isDO = containsRole(existentRoles, UserRoles.DATAOWNER.getValue());
         boolean isNewDO = containsRole(newRoles, UserRoles.DATAOWNER.getValue());
         //remove data owner
@@ -188,7 +188,7 @@ public class UserService {
         }
     }
 
-    private void updateResearcherRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer> rolesToRemove, Map<Integer, Integer> rolesToAdd) throws UserRoleHandlerException {
+    private void updateResearcherRole(List<UserRole> existentRoles, List<UserRole> newRoles, User user, Map<Integer, Integer> rolesToRemove, Map<Integer, Integer> rolesToAdd) throws UserRoleHandlerException {
         boolean isResearcher = containsRole(existentRoles, UserRoles.RESEARCHER.getValue());
         boolean isNewResearcher = containsRole(newRoles, UserRoles.RESEARCHER.getValue());
         //remove researcher
@@ -220,7 +220,7 @@ public class UserService {
         return result;
     }
 
-    private boolean hasDataSetAssociation(DACUser updatedUser) {
+    private boolean hasDataSetAssociation(User updatedUser) {
         List<Integer> associatedDataSetId = dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(updatedUser.getDacUserId());
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
@@ -232,7 +232,7 @@ public class UserService {
         return false;
     }
 
-    private boolean hasOpenElections(DACUser updatedUser) {
+    private boolean hasOpenElections(User updatedUser) {
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
             List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
@@ -253,7 +253,7 @@ public class UserService {
         return rolesMap;
     }
 
-    private void setDisplayName(DACUser user, PatchOperation action) {
+    private void setDisplayName(User user, PatchOperation action) {
         if (action.getOp().equalsIgnoreCase(Actions.REPLACE.getValue())) {
             user.setDisplayName(action.getValue());
         } else {
@@ -261,7 +261,7 @@ public class UserService {
         }
     }
 
-    private void setRoles(DACUser user, PatchOperation action) {
+    private void setRoles(User user, PatchOperation action) {
         String roles[] = action.getValue().split(",");
         List<UserRole> userRoles = getRoles(roles);
         if (action.getOp().contains(Actions.REPLACE.getValue())) {
