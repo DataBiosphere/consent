@@ -14,10 +14,6 @@ import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerExce
 
 public interface DACUserAPI {
 
-    List<User> describeAdminUsersThatWantToReceiveMails();
-
-    User describeDACUserById(Integer id) throws IllegalArgumentException;
-
     User updateDACUserById(Map<String, User> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
     User updateDACUserById(User dac, Integer userId) throws IllegalArgumentException, NotFoundException;

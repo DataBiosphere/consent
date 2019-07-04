@@ -263,7 +263,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
-        env.jersey().register(new DataAccessRequestResource(DatabaseDACUserAPI.getInstance(), DatabaseElectionAPI.getInstance(), googleStore));
+        env.jersey().register(new DataAccessRequestResource(DatabaseDACUserAPI.getInstance(), DatabaseElectionAPI.getInstance(), googleStore, userService));
         env.jersey().register(DataSetResource.class);
         env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(new ConsentResource(userService));
@@ -274,7 +274,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ConsentElectionResource.class);
         env.jersey().register(DataRequestElectionResource.class);
         env.jersey().register(ConsentVoteResource.class);
-        env.jersey().register(DataRequestVoteResource.class);
+        env.jersey().register(new DataRequestVoteResource(userService));
         env.jersey().register(ConsentCasesResource.class);
         env.jersey().register(DataRequestCasesResource.class);
         env.jersey().register(new DacResource(dacService));

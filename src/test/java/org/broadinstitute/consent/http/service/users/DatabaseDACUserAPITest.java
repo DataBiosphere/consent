@@ -132,24 +132,26 @@ public class DatabaseDACUserAPITest {
 //        assertNotNull(foundUser);
 //    }
 
-    @Test
-    public void describeUserByNonExistentId() {
-        int id = 1;
-        when(userDAO.findUserById(id)).thenReturn(null);
-        try {
-            databaseDACUserAPI.describeDACUserById(id);
-        } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find user for specified id : " + id));
-        }
-    }
+    // TODO: Rewrite in UserServiceTest
+//    @Test
+//    public void describeUserByNonExistentId() {
+//        int id = 1;
+//        when(userDAO.findUserById(id)).thenReturn(null);
+//        try {
+//            databaseDACUserAPI.describeDACUserById(id);
+//        } catch (NotFoundException e) {
+//            assertTrue(e.getMessage().equals("Could not find user for specified id : " + id));
+//        }
+//    }
 
-    @Test
-    public void describeUserById() {
-        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(userDAO.findUserById(1)).thenReturn(user);
-        User foundUser = databaseDACUserAPI.describeDACUserById(1);
-        assertNotNull(foundUser);
-    }
+    // TODO: Rewrite in UserServiceTest
+//    @Test
+//    public void describeUserById() {
+//        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
+//        when(userDAO.findUserById(1)).thenReturn(user);
+//        User foundUser = databaseDACUserAPI.describeDACUserById(1);
+//        assertNotNull(foundUser);
+//    }
 
     @Test
     public void validateNeedsDelegationMemberTrue() {

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -26,6 +27,7 @@ import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateService;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -67,6 +69,8 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
 
+    private UserService userService;
+
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
@@ -79,7 +83,9 @@ public class DataAccessRequestResource extends Resource {
     private final ElectionAPI electionAPI;
     private final GCSStore store;
 
-    public DataAccessRequestResource(DACUserAPI dacUserAPI, ElectionAPI electionAPI, GCSStore store) {
+    @Inject
+    public DataAccessRequestResource(DACUserAPI dacUserAPI, ElectionAPI electionAPI, GCSStore store, UserService userService) {
+        this.userService = userService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
@@ -158,7 +164,7 @@ public class DataAccessRequestResource extends Resource {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
         UserRole role = dacUserAPI.getRoleStatus(userId);
-        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role);
+        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, userService.findUserById(dar.getInteger("userId")), electionAPI, role);
     }
 
     @GET

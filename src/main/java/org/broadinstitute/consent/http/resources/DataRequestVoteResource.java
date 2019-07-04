@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -7,6 +8,7 @@ import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -29,6 +31,8 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
+    private UserService userService;
+
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;
@@ -40,7 +44,9 @@ public class DataRequestVoteResource extends Resource {
     private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
-    public DataRequestVoteResource() {
+    @Inject
+    public DataRequestVoteResource(UserService userService) {
+        this.userService = userService;
         this.api = AbstractVoteAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.emailAPI = AbstractEmailNotifierAPI.getInstance();
@@ -206,7 +212,7 @@ public class DataRequestVoteResource extends Resource {
                         api.createDataOwnersReviewVotes(election);
                     });
                 }
-                List<User> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
+                List<User> admins = userService.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierAPI.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }

@@ -121,6 +121,18 @@ public class UserService {
         return user;
     }
 
+    public List<User> describeAdminUsersThatWantToReceiveMails() {
+        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+    }
+
+    public User findUserById(Integer id) throws IllegalArgumentException {
+        User user = userDAO.findUserById(id);
+        if (user == null) {
+            throw new NotFoundException("Could not find user for specified id : " + id);
+        }
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
+        return user;
+    }
 
     // Helper Methods
     // TODO: All of these are copied from DatabaseUserAPI and DatabaseDACUserApi

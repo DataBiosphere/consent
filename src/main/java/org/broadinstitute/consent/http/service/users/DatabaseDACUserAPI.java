@@ -64,20 +64,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
-    @Override
-    public List<User> describeAdminUsersThatWantToReceiveMails() {
-        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
-    }
-
-    @Override
-    public User describeDACUserById(Integer id) throws IllegalArgumentException {
-        User user = userDAO.findUserById(id);
-        if (user == null) {
-            throw new NotFoundException("Could not find user for specified id : " + id);
-        }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
-        return user;
-    }
+//    @Override
+//    public List<User> describeAdminUsersThatWantToReceiveMails() {
+//        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+//    }
 
 
     @Override
@@ -136,6 +126,15 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateExistentUserById(userId);
         Integer roleId = roleIdMap.get(UserRoles.RESEARCHER.getValue());
         return userRoleDAO.findRoleByUserIdAndRoleId(userId, roleId);
+    }
+
+    private User describeDACUserById(Integer id) throws IllegalArgumentException {
+        User user = userDAO.findUserById(id);
+        if (user == null) {
+            throw new NotFoundException("Could not find user for specified id : " + id);
+        }
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
+        return user;
     }
 
     private User describeDACUserByEmail(String email) throws IllegalArgumentException {
