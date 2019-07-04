@@ -70,7 +70,7 @@ public class DataUseLetterResource extends Resource {
             @FormDataParam("data") FormDataBodyPart part,
             @PathParam("id") String consentId,
             @QueryParam("fileName") String fileName,
-            @Auth AuthUser user) {
+            @Auth AuthUser authUser) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -79,7 +79,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId, dulUrl, name);
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             auditServiceAPI.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {
@@ -101,7 +101,7 @@ public class DataUseLetterResource extends Resource {
             @FormDataParam("data") FormDataBodyPart part,
             @PathParam("id") String consentId,
             @QueryParam("fileName") String fileName,
-            @Auth AuthUser user) {
+            @Auth AuthUser authUser) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -110,7 +110,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId,dulUrl, name);
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {

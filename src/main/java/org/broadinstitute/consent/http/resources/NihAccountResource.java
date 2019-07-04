@@ -29,9 +29,9 @@ public class NihAccountResource extends Resource {
     @POST
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
-    public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser user) {
+    public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
         try {
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             return Response.ok(nihAuthApi.authenticateNih(nihAccount, dacUser.getUserId())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
@@ -41,9 +41,9 @@ public class NihAccountResource extends Resource {
     @DELETE
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
-    public Response deleteNihAccount(@Auth AuthUser user) {
+    public Response deleteNihAccount(@Auth AuthUser authUser) {
         try {
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             nihAuthApi.deleteNihAccountById(dacUser.getUserId());
             return Response.ok().build();
         } catch (Exception e) {

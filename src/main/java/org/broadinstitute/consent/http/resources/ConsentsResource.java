@@ -126,7 +126,7 @@ public class ConsentsResource extends Resource {
      *     }
      * ]
      * @param info
-     * @param user
+     * @param authUser
      * @param data
      * @return
      */
@@ -134,7 +134,7 @@ public class ConsentsResource extends Resource {
     @Path("group-names")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(ADMIN)
-    public Response updateGroupNames(@Context UriInfo info, @Auth AuthUser user, List<ConsentGroupNameDTO> data) {
+    public Response updateGroupNames(@Context UriInfo info, @Auth AuthUser authUser, List<ConsentGroupNameDTO> data) {
         try {
             List<ConsentGroupNameDTO> errors = api.verifyConsentGroupNames(data);
             if (errors.isEmpty()) {

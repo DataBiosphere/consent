@@ -45,7 +45,7 @@ public class ConsentAssociationResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
-    public Response createAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    public Response createAssociation(@Auth AuthUser authUser, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("POSTing association to id '%s' with body '%s'", consentId, body.toString());
             for (ConsentAssociation association : body) {
@@ -54,7 +54,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             List<ConsentAssociation> result = api.createAssociation(consentId, body, dacUser.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
@@ -71,7 +71,7 @@ public class ConsentAssociationResource extends Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({RESEARCHER, DATAOWNER, ADMIN})
-    public Response updateAssociation(@Auth AuthUser user, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
+    public Response updateAssociation(@Auth AuthUser authUser, @PathParam("id") String consentId, ArrayList<ConsentAssociation> body) {
         try {
             String msg = String.format("PUTing association to id '%s' with body '%s'", consentId, body.toString());
             for (ConsentAssociation association : body) {
@@ -80,7 +80,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            List<ConsentAssociation> result = api.updateAssociation(consentId, body, user.getName());
+            List<ConsentAssociation> result = api.updateAssociation(consentId, body, authUser.getName());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {

@@ -42,8 +42,8 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
     public Optional<AuthUser> authenticate(String bearer){
         try{
             String email = validateAccessToken(bearer);
-            AuthUser user = new AuthUser(email);
-            return Optional.of(user);
+            AuthUser authUser = new AuthUser(email);
+            return Optional.of(authUser);
         }catch (Exception e){
             logger.error("Error authenticating credentials.");
             return Optional.empty();

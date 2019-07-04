@@ -40,7 +40,7 @@ public class OAuthCustomAuthFilterTest {
 
     AuthFilter filter;
 
-    AuthUser user;
+    AuthUser authUser;
 
     @Before
     public void setUp(){
@@ -50,12 +50,12 @@ public class OAuthCustomAuthFilterTest {
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
         filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
-        user = new AuthUser("test@gmail.com");
+        authUser = new AuthUser("test@gmail.com");
     }
 
     @Test
     public void testFilterSuccessful() throws Exception {
-        principal = Optional.of(user);
+        principal = Optional.of(authUser);
         when(uriInfo.getPath()).thenReturn("api/something");
         when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
         filter.filter(requestContext);

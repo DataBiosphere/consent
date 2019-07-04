@@ -36,10 +36,10 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response createUser(@Context UriInfo info, User userToCreate, @Auth AuthUser user) {
+    public Response createUser(@Context UriInfo info, User userToCreate, @Auth AuthUser authUser) {
         try {
             URI uri;
-            userToCreate = userService.createUser(userToCreate, user.getName());
+            userToCreate = userService.createUser(userToCreate, authUser.getName());
             uri = info.getRequestUriBuilder().path("{email}").build(userToCreate.getEmail());
             return Response.created(new URI(uri.toString().replace("user","dacuser"))).entity(userToCreate).build();
         } catch (IllegalArgumentException e) {
@@ -56,9 +56,9 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response update(User userToUpdate, @Auth AuthUser user) {
+    public Response update(User userToUpdate, @Auth AuthUser authUser) {
         try {
-            return Response.ok().entity(userService.updateUser(userToUpdate, user.getName())).build();
+            return Response.ok().entity(userService.updateUser(userToUpdate, authUser.getName())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -68,9 +68,9 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response partialUpdate(List<PatchOperation> patchOperations, @Auth AuthUser user) {
+    public Response partialUpdate(List<PatchOperation> patchOperations, @Auth AuthUser authUser) {
         try {
-            return Response.ok().entity(userService.updatePartialUser(patchOperations, user.getName())).build();
+            return Response.ok().entity(userService.updatePartialUser(patchOperations, authUser.getName())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

@@ -39,7 +39,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     @Mock
     FormDataContentDisposition ct;
     @Mock
-    AuthUser user;
+    AuthUser authUser;
 
     DataUseLetterResource dulResource;
 
@@ -60,7 +60,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         mockTranslateResponse();
         mockValidateResponse();
 
-        when(user.getName()).thenReturn("oauthuser@broadinstitute.org");
+        when(authUser.getName()).thenReturn("oauthuser@broadinstitute.org");
     }
 
     @Test
@@ -76,7 +76,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp.pdf", user);
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp.pdf", authUser);
         assertEquals(c.consentId, id);
         assertEquals(c.getDataUseLetter(), consentDulPath(id));
         assertFalse(c.getRequiresManualReview());
@@ -95,7 +95,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, null, user);
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, null, authUser);
         assertEquals(c.getDulName(), "temp.pdf");
     }
 
@@ -111,7 +111,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "test.pdf", user);
+        Consent c = dulResource.createDUL(new FileInputStream(fileToUpload), bodyPart, id, "test.pdf", authUser);
         assertEquals(c.getDulName(), "test.pdf");
     }
 
@@ -128,7 +128,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp", user);
+        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, "temp", authUser);
         assertEquals(c.consentId, id);
         assertEquals(c.getDataUseLetter(), consentDulPath(id));
         assertFalse(c.getRequiresManualReview());
@@ -149,7 +149,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, null, user);
+        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, null, authUser);
         assertEquals(c.getDulName(), dulName);
     }
 
@@ -165,7 +165,7 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
         FormDataBodyPart bodyPart = new FormDataBodyPart();
         bodyPart.setContentDisposition(ct);
         bodyPart.setMediaType(MediaType.valueOf("application/pdf"));
-        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, "test.pdf", user);
+        Consent c = dulResource.updateDUL(new FileInputStream(fileToUpload), bodyPart, id, "test.pdf", authUser);
         assertEquals(c.getDulName(), "test.pdf");
     }
 

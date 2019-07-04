@@ -84,9 +84,9 @@ public class ConsentResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
-    public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
+    public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser authUser) {
         try {
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -111,7 +111,7 @@ public class ConsentResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
-    public Response update(@PathParam("id") String id, Consent updated, @Auth AuthUser user) {
+    public Response update(@PathParam("id") String id, Consent updated, @Auth AuthUser authUser) {
         try {
             checkConsentElection(id);
             if(updated.getUseRestriction() != null) {
@@ -123,7 +123,7 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
             updated = api.update(id, updated);
             auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
