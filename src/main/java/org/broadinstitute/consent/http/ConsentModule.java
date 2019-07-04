@@ -106,6 +106,10 @@ public class ConsentModule extends AbstractModule {
         bind(Environment.class).toInstance(environment);
     }
 
+    /*
+     * Infrastructure
+     */
+
     @Provides
     Client providesClient() {
         return client;
@@ -135,6 +139,33 @@ public class ConsentModule extends AbstractModule {
             throw new IllegalStateException(e);
         }
     }
+
+    /*
+     * Services
+     */
+    
+    @Provides
+    DacService providesDacService() {
+        return new DacService(providesDacDAO());
+    }
+
+    @Provides
+    UserService providesUserService() {
+        return new UserService(
+                providesUserDAO(),
+                providesDACUserRoleDAO(),
+                providesElectionDAO(),
+                providesVoteDAO(),
+                providesDataSetAssociationDAO(),
+                providesResearcherPropertyDAO(),
+                providesMongoConsentDB()
+        );
+    }
+
+
+    /*
+     * DAOs
+     */
 
     @Provides
     ConsentDAO providesConsentDAO() {
@@ -172,25 +203,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    DacService providesDacService() {
-        return new DacService(providesDacDAO());
-    }
-
-    @Provides
-    UserService providesUserService() {
-        return new UserService(
-                providesDACUserDAO(),
-                providesDACUserRoleDAO(),
-                providesElectionDAO(),
-                providesVoteDAO(),
-                providesDataSetAssociationDAO(),
-                providesResearcherPropertyDAO(),
-                providesMongoConsentDB()
-        );
-    }
-
-    @Provides
-    UserDAO providesDACUserDAO() {
+    UserDAO providesUserDAO() {
         return userDAO;
     }
 
