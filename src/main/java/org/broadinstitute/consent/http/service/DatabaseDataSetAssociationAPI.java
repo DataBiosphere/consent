@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI {
 
     private final DataSetAssociationDAO dsAssociationDAO;
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final DataSetDAO dsDAO;
 
 
@@ -31,13 +31,13 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO,DataSetAssociationDAO dsAssociationDAO,DACUserDAO dacUserDAO) {
-        DataSetAssociationAPIHolder.setInstance(new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, dacUserDAO));
+    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dsAssociationDAO, UserDAO userDAO) {
+        DataSetAssociationAPIHolder.setInstance(new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, userDAO));
     }
 
-    protected DatabaseDataSetAssociationAPI(DataSetDAO dsDAO,DataSetAssociationDAO dsAssociationDAO,DACUserDAO dacUserDAO) {
+    protected DatabaseDataSetAssociationAPI(DataSetDAO dsDAO, DataSetAssociationDAO dsAssociationDAO, UserDAO userDAO) {
         this.dsAssociationDAO = dsAssociationDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dsDAO = dsDAO;
     }
 
@@ -66,11 +66,11 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         Collection<User> associated_users = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(associationList)){
             Collection<Integer> usersIdList  = associationList.stream().map(DatasetAssociation::getDacuserId).collect(Collectors.toList());
-            associated_users = dacUserDAO.findUsers(usersIdList);
+            associated_users = userDAO.findUsers(usersIdList);
         }
         Map<String, Collection<User>> usersMap = new HashMap<>();
         usersMap.put("associated_users",associated_users);
-        Collection<User> dataOwnersList = dacUserDAO.describeUsersByRole(UserRoles.DATAOWNER.getValue());
+        Collection<User> dataOwnersList = userDAO.describeUsersByRole(UserRoles.DATAOWNER.getValue());
         usersMap.put("not_associated_users",CollectionUtils.subtract(dataOwnersList, associated_users));
         return usersMap;
     }
@@ -103,11 +103,11 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
         Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
         dataSetAssociations.stream().forEach(dsa ->{
-            User dataOwner = dacUserDAO.findDACUserById(dsa.getDacuserId());
+            User dataOwner = userDAO.findDACUserById(dsa.getDacuserId());
             if(!dataOwnerDataSetMap.containsKey(dataOwner)){
-                dataOwnerDataSetMap.put(dacUserDAO.findDACUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
+                dataOwnerDataSetMap.put(userDAO.findDACUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
             }else{
-                dataOwnerDataSetMap.get(dacUserDAO.findDACUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
+                dataOwnerDataSetMap.get(userDAO.findDACUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
             }
         });
         return dataOwnerDataSetMap;
@@ -122,7 +122,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
 
     private Collection<User> getAndVerifyUsers(List<Integer> usersIdList){
         if(usersIdList.isEmpty()) return null;
-        Collection<User> userList = dacUserDAO.findUsersWithRoles(usersIdList);
+        Collection<User> userList = userDAO.findUsersWithRoles(usersIdList);
         if(userList.size() == usersIdList.size()){
                 for (User user : userList) {
                     if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue()))) {

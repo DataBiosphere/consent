@@ -5,7 +5,7 @@ import com.mongodb.BasicDBObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
@@ -37,7 +37,7 @@ import java.util.Objects;
 // TODO: Once all user functions are migrated here, remove other duplicate code.
 public class UserService {
 
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private UserRoleDAO userRoleDAO;
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
@@ -50,10 +50,10 @@ public class UserService {
     private final String ROLES = "roles";
 
     @Inject
-    public UserService(DACUserDAO dacUserDAO, UserRoleDAO userRoleDAO, ElectionDAO electionDAO,
+    public UserService(UserDAO userDAO, UserRoleDAO userRoleDAO, ElectionDAO electionDAO,
                        VoteDAO voteDAO, DataSetAssociationDAO dataSetAssociationDAO,
                        ResearcherPropertyDAO researcherPropertyDAO, MongoConsentDB mongoDB) {
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -67,21 +67,21 @@ public class UserService {
         validateEmail(user.getEmail(), userEmail);
         user.setEmail(userEmail);
         validateRoles(user.getRoles());
-        return createDACUser(user);
+        return createUser(user);
     }
 
-    public User createDACUser(User user) throws IllegalArgumentException {
+    public User createUser(User user) throws IllegalArgumentException {
         validateRequiredFields(user);
         Integer dacUserID;
         try {
-            dacUserID = dacUserDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
+            dacUserID = userDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
         if (user.getRoles() != null) {
             insertUserRoles(user, dacUserID);
         }
-        User savedUser = dacUserDAO.findDACUserById(dacUserID);
+        User savedUser = userDAO.findDACUserById(dacUserID);
         savedUser.setRoles(userRoleDAO.findRolesByUserId(savedUser.getUserId()));
         return savedUser;
     }
@@ -90,14 +90,14 @@ public class UserService {
         validateEmail(user.getEmail(), userEmail);
         user.setEmail(userEmail);
         validateRoles(user.getRoles());
-        User existentUser = dacUserDAO.findDACUserByEmail(user.getEmail());
+        User existentUser = userDAO.findDACUserByEmail(user.getEmail());
         validateAndUpdateRoles(existentUser.getRoles(), user.getRoles(), existentUser);
-        dacUserDAO.updateDACUser(user.getDisplayName(), existentUser.getUserId());
-        return dacUserDAO.findDACUserById(existentUser.getUserId());
+        userDAO.updateDACUser(user.getDisplayName(), existentUser.getUserId());
+        return userDAO.findDACUserById(existentUser.getUserId());
     }
 
     public User updatePartialUser(List<PatchOperation> patchOperations, String name) throws UserRoleHandlerException {
-        User user = dacUserDAO.findDACUserByEmail(name);
+        User user = userDAO.findDACUserByEmail(name);
         patchOperations.stream().forEach(action -> {
             if (action.getPath().equalsIgnoreCase(DISPLAY_NAME)) {
                 setDisplayName(user, action);

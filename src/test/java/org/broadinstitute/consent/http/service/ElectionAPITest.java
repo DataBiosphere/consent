@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -42,7 +42,7 @@ public class ElectionAPITest extends AbstractTest {
     @Mock
     private ConsentDAO consentDAO;
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     @Mock
     private MongoConsentDB mongo;
     @Mock
@@ -69,17 +69,17 @@ public class ElectionAPITest extends AbstractTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        electionAPI = Mockito.spy(new DatabaseElectionAPI(electionDAO, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
+        electionAPI = Mockito.spy(new DatabaseElectionAPI(electionDAO, consentDAO, userDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
         consent.setConsentId(consentId);
         consent.setTranslatedUseRestriction("Translated");
     }
 
     @Test
     public void testCreateConsentElectionSingleChairperson() throws Exception {
-        DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
+        UserDAO userDAO = getApplicationJdbi().onDemand(UserDAO.class);
         User chair = userDAO.findChairpersonUser();
         Set<User> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getUserId()));
-        when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
+        when(this.userDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
         when(consentDAO.checkConsentbyId(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);
         Election election = createConsentElection();
@@ -90,14 +90,14 @@ public class ElectionAPITest extends AbstractTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentElectionNoDACMembers() throws Exception {
-        when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(Collections.emptySet());
+        when(userDAO.findDACUsersEnabledToVote()).thenReturn(Collections.emptySet());
         Election election = createConsentElection();
         electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentElectionNoChair() throws Exception {
-        DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
+        UserDAO userDAO = getApplicationJdbi().onDemand(UserDAO.class);
         List<Integer> memberIds = userDAO
                 .findDACUsersEnabledToVote()
                 .stream()
@@ -108,7 +108,7 @@ public class ElectionAPITest extends AbstractTest {
                 .stream()
                 .filter(u -> u.getRoles().contains(MEMBER))
                 .collect(Collectors.toSet());
-        when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(membersWithRoles);
+        when(this.userDAO.findDACUsersEnabledToVote()).thenReturn(membersWithRoles);
         Election election = createConsentElection();
         electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
     }

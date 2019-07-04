@@ -15,10 +15,9 @@ import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
 
-// TODO: Rename this class to UserDAO - see DUOS-344
 @UseStringTemplate3StatementLocator
-@RegisterMapper({DACUserMapper.class})
-public interface DACUserDAO extends Transactional<DACUserDAO> {
+@RegisterMapper({UserMapper.class})
+public interface UserDAO extends Transactional<UserDAO> {
 
     @SqlQuery("select * from dacuser where dacUserId = :dacUserId")
     User findDACUserById(@Bind("dacUserId") Integer dacUserId);

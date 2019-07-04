@@ -33,7 +33,7 @@ public class DatabaseDACUserAPITest {
     private DatabaseDACUserAPI databaseDACUserAPI;
 
     @Mock
-    DACUserDAO dacUserDAO;
+    UserDAO userDAO;
 
     @Mock
     UserRoleDAO userRoleDAO;
@@ -58,18 +58,18 @@ public class DatabaseDACUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, null);
+        databaseDACUserAPI = new DatabaseDACUserAPI(userDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, userHandlerAPI, null);
     }
 
     @Test
     public void createDACUser() {
         User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
+        when(userDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setUserId(3);
         UserRole role = new UserRole(1, UserRoles.RESEARCHER.getValue());
         List<UserRole> roles = new ArrayList<>(Arrays.asList(role));
         user.setRoles(roles);
-        when(dacUserDAO.findDACUserById(3)).thenReturn(user);
+        when(userDAO.findDACUserById(3)).thenReturn(user);
         when(userRoleDAO.findRoleIdByName(UserRoles.RESEARCHER.getValue())).thenReturn(1);
         when(userRoleDAO.findRolesByUserId(3)).thenReturn(roles);
         user = databaseDACUserAPI.createDACUser(user);
@@ -80,7 +80,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void createDACUserWithExistentEmail() {
         User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
+        when(userDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -110,7 +110,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void describeUserByNonExistentEmail() {
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(null);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(null);
         try {
             databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         } catch (NotFoundException e) {
@@ -121,7 +121,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void describeUserByEmail() {
         User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(user);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(user);
         User foundUser = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         assertNotNull(foundUser);
     }
@@ -129,7 +129,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void describeUserByNonExistentId() {
         int id = 1;
-        when(dacUserDAO.findDACUserById(id)).thenReturn(null);
+        when(userDAO.findDACUserById(id)).thenReturn(null);
         try {
             databaseDACUserAPI.describeDACUserById(id);
         } catch (NotFoundException e) {
@@ -140,7 +140,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void describeUserById() {
         User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(user);
+        when(userDAO.findDACUserById(1)).thenReturn(user);
         User foundUser = databaseDACUserAPI.describeDACUserById(1);
         assertNotNull(foundUser);
     }
@@ -152,7 +152,7 @@ public class DatabaseDACUserAPITest {
         when(electionDAO.verifyOpenElections()).thenReturn(3);
         when(electionDAO.findNonDataSetOpenElectionIds(user.getUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
-        when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new User(5, EMAIL, DISPLAY_NAME, new Date(), null))));
+        when(userDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>(Arrays.asList(new User(5, EMAIL, DISPLAY_NAME, new Date(), null))));
         ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
@@ -166,7 +166,7 @@ public class DatabaseDACUserAPITest {
         when(electionDAO.verifyOpenElections()).thenReturn(3);
         when(electionDAO.findNonDataSetOpenElectionIds(user.getUserId())).thenReturn(openElectionIdsForThisUser);
         when(voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue())).thenReturn(openElectionIdsForThisUser);
-        when(dacUserDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>());
+        when(userDAO.getMembersApprovedToReplace(anyInt(), anyList())).thenReturn(new ArrayList<>());
         ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.MEMBER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());
@@ -200,7 +200,7 @@ public class DatabaseDACUserAPITest {
         List<Integer> dataOwnersPerDataSet = new ArrayList<>(Arrays.asList(1));
         when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(user.getUserId())).thenReturn(associatedDataSetId);
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId)).thenReturn(dataOwnersPerDataSet);
-        when(dacUserDAO.getDataOwnersApprovedToReplace(user.getUserId())).thenReturn(new ArrayList<>());
+        when(userDAO.getDataOwnersApprovedToReplace(user.getUserId())).thenReturn(new ArrayList<>());
         ValidateDelegationResponse response = databaseDACUserAPI.validateNeedsDelegation(user, UserRoles.DATAOWNER.getValue());
         assertNotNull(response);
         assertTrue(response.isNeedsDelegation());

@@ -24,17 +24,17 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
     private UserRoleDAO userRoleDAO;
-    private DACUserDAO userDAO;
+    private UserDAO userDAO;
     private ConsentDAO consentDAO;
     private DataSetDAO dataSetDAO;
     private final MongoConsentDB mongo;
 
-    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO , MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+    public static void initInstance(ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO , MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
         PendingCaseAPIHolder.setInstance(new DatabaseElectionCaseAPI(electionDAO, voteDAO, userDAO, userRoleDAO, consentDAO, mongoDB, dataSetDAO));
 
     }
 
-    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, DACUserDAO userDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
+    private DatabaseElectionCaseAPI(ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, MongoConsentDB mongoDB, DataSetDAO dataSetDAO) {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;

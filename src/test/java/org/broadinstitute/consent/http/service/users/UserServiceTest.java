@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.service.users;
 
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 public class UserServiceTest {
 
     @Mock
-    DACUserDAO dacUserDAO;
+    UserDAO userDAO;
 
     @Mock
     UserRoleDAO userRoleDAO;
@@ -74,7 +74,7 @@ public class UserServiceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        userService = new UserService(dacUserDAO, userRoleDAO,  electionDAO, voteDAO, dataSetAssociationDAO, researcherPropertyDAO, mongoDB);
+        userService = new UserService(userDAO, userRoleDAO,  electionDAO, voteDAO, dataSetAssociationDAO, researcherPropertyDAO, mongoDB);
     }
 
 
@@ -138,8 +138,8 @@ public class UserServiceTest {
         existentUser.setRoles(Collections.singletonList(dataOwnerRole));
         when(dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(anyInt())).thenReturn(Collections.singletonList(1));
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(anyList())).thenReturn(Collections.singletonList(1));
-        when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
         try {
             userService.updateUser(user, EMAIL);
@@ -162,8 +162,8 @@ public class UserServiceTest {
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(anyList())).thenReturn(Collections.singletonList(6));
         when(electionDAO.findDataSetOpenElectionIds(any())).thenReturn(Collections.singletonList(2));
         when(voteDAO.findVoteCountForElections(Collections.singletonList(2), VoteType.DATA_OWNER.getValue())).thenReturn(Collections.singletonList(1));
-        when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
         try {
             userService.updateUser(user, EMAIL);
@@ -182,11 +182,11 @@ public class UserServiceTest {
         User existentUser = new User(1, EMAIL, DISPLAY_NAME, new Date());
         UserRole researcherRole = new UserRole(1, UserRoles.RESEARCHER.getValue());
         existentUser.setRoles(new ArrayList<>(Collections.singletonList(researcherRole)));
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(existentUser);
         userService.updateUser(user, EMAIL);
         verify(userRoleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt(), anyBoolean());
-        verify(dacUserDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
+        verify(userDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
     }
 
     @Test
@@ -199,8 +199,8 @@ public class UserServiceTest {
         UserRole roleDO =  new UserRole(2, UserRoles.DATAOWNER.getValue());
         List<UserRole> newRoles = new ArrayList<>(Arrays.asList(roleResearcher, roleDO));
         userToUpdate.setRoles(newRoles);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(userToUpdate);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(userToUpdate);
         userService.updateUser(userToUpdate, EMAIL);
         assertNotNull(userToUpdate);
         assertEquals(2, userToUpdate.getRoles().size());
@@ -217,8 +217,8 @@ public class UserServiceTest {
         UserRole dataOwnerRole = new UserRole(1, UserRoles.MEMBER.getValue());
         existentUser.setRoles(new ArrayList<>(Collections.singletonList(dataOwnerRole)));
 
-        when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
         try {
             userService.updateUser(user, EMAIL);
@@ -236,10 +236,10 @@ public class UserServiceTest {
         User existentUser = new User(1, EMAIL, DISPLAY_NAME, new Date());
         UserRole dataOwner = new UserRole(1, UserRoles.DATAOWNER.getValue());
         existentUser.setRoles(new ArrayList<>(Collections.singletonList(dataOwner)));
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(existentUser);
         userService.updateUser(user, EMAIL);
-        verify(dacUserDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
+        verify(userDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
     }
 
     @Test
@@ -252,7 +252,7 @@ public class UserServiceTest {
         patchOperation.setPath(DISPLAY_NAME_FIELD);
         patchOperation.setOp(Actions.ADD.getValue());
         patchOperation.setValue("newDisplayName");
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         try {
             userService.updatePartialUser(new ArrayList<>(Collections.singletonList(patchOperation)), EMAIL);
         } catch (IllegalArgumentException e) {
@@ -270,8 +270,8 @@ public class UserServiceTest {
         patchOperation.setPath(DISPLAY_NAME_FIELD);
         patchOperation.setOp(Actions.REPLACE.getValue());
         patchOperation.setValue("newDisplayName");
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserById(1)).thenReturn(existentUser);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(roles);
         existentUser = userService.updatePartialUser(new ArrayList<>(Collections.singletonList(patchOperation)), EMAIL);
         assertEquals("newDisplayName", existentUser.getDisplayName());
@@ -284,7 +284,7 @@ public class UserServiceTest {
         patchOperation.setPath("test");
         patchOperation.setOp(Actions.ADD.getValue());
         patchOperation.setValue("newDisplayName");
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         try {
             userService.updatePartialUser(new ArrayList<>(Collections.singletonList(patchOperation)), EMAIL);
         } catch (IllegalArgumentException e) {
@@ -301,10 +301,10 @@ public class UserServiceTest {
         patchOperation.setPath("roles");
         patchOperation.setOp(Actions.REPLACE.getValue());
         patchOperation.setValue(UserRoles.DATAOWNER.getValue());
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(user);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(user);
+        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(user);
+        when(userDAO.findDACUserById(1)).thenReturn(user);
         userService.updatePartialUser(new ArrayList<>(Collections.singletonList(patchOperation)), EMAIL);
-        verify(dacUserDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
+        verify(userDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
 
     }
 

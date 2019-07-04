@@ -9,7 +9,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.util.VisibleForTesting;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -59,7 +59,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private ElectionDAO electionDAO;
     private ConsentDAO consentDAO;
     private VoteDAO voteDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private MongoConsentDB mongo;
     private DataSetDAO dataSetDAO;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
@@ -80,8 +80,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
+    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, UserDAO userDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, userDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
     }
 
     /**
@@ -91,10 +91,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object used to read/write data.
      */
     @VisibleForTesting
-    DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+    DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, UserDAO userDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.mongo = mongo;
         this.voteDAO = voteDAO;
         this.mailMessageDAO = mailMessageDAO;
@@ -303,7 +303,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public boolean validateCollectEmailCondition(Vote vote){
         List<Vote> votes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
-        User chairperson = dacUserDAO.findChairpersonUser();
+        User chairperson = userDAO.findChairpersonUser();
         if((votes.size() == 0) &&(vote.getDacUserId() != chairperson.getUserId())){
             return true;
         } else if((votes.size() == 1)) {
@@ -328,7 +328,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         List<Vote> rpElectionVotes = voteDAO.findPendingVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingVotesByElectionId(darElectionId);
-        User chairperson = dacUserDAO.findChairpersonUser();
+        User chairperson = userDAO.findChairpersonUser();
         Integer exists = mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId);
         if((exists == null)){
             if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (!vote.getDacUserId().equals(chairperson.getUserId())))){
@@ -514,7 +514,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
-            User user = dacUserDAO.findDACUserById(dar.getInteger("userId"));
+            User user = userDAO.findDACUserById(dar.getInteger("userId"));
             if(!createElection){
                 emailNotifierAPI.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
@@ -654,7 +654,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private void validateAvailableUsers(ElectionType electionType) {
         if (!electionType.equals(ElectionType.DATA_SET)) {
-            Set<User> users = dacUserDAO.findDACUsersEnabledToVote();
+            Set<User> users = userDAO.findDACUsersEnabledToVote();
             if (users == null || users.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
             }

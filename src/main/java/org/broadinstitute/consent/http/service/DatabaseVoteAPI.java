@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     private VoteDAO voteDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private ElectionDAO electionDAO;
     private DataSetAssociationDAO dataSetAssociationDAO;
 
@@ -37,8 +37,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
-        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, dacUserDAO, electionDAO, dataSetAssociationDAO));
+    public static void initInstance(VoteDAO dao, UserDAO userDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
+        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, userDAO, electionDAO, dataSetAssociationDAO));
 
     }
 
@@ -48,9 +48,9 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseVoteAPI(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
+    private DatabaseVoteAPI(VoteDAO dao, UserDAO userDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
         this.voteDAO = dao;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.electionDAO = electionDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
     }
@@ -129,7 +129,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
-        Set<User> userList = dacUserDAO.findDACUsersEnabledToVote();
+        Set<User> userList = userDAO.findDACUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
         if (userList != null) {
             for (User user : userList) {
@@ -186,7 +186,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     private boolean isChairPerson(Integer dacUserId) {
         boolean isCherperson = false;
-        if (dacUserDAO.checkChairpersonUser(dacUserId) != null) {
+        if (userDAO.checkChairpersonUser(dacUserId) != null) {
             isCherperson = true;
         }
         return isCherperson;

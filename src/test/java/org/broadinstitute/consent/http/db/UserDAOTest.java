@@ -34,12 +34,12 @@ public class UserDAOTest extends AbstractTest {
         return RULE;
     }
 
-    private DACUserDAO userDAO;
+    private UserDAO userDAO;
     private UserRoleDAO userRoleDAO;
 
     @Before
     public void setUp() {
-        userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
+        userDAO = getApplicationJdbi().onDemand(UserDAO.class);
         userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
     }
 

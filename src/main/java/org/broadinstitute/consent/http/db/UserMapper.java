@@ -7,7 +7,7 @@ import org.skife.jdbi.v2.tweak.ResultSetMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DACUserMapper implements ResultSetMapper<User> {
+public class UserMapper implements ResultSetMapper<User> {
 
     public User map(int index, ResultSet r, StatementContext ctx) throws SQLException {
 

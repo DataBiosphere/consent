@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections.ListUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 public class UserRolesHandlerTest {
 
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     @Mock
     private ElectionDAO electionDAO;
     @Mock
@@ -50,7 +50,7 @@ public class UserRolesHandlerTest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        handler = new DACUserRolesHandler(dacUserDAO, userRoleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailService, dataAccessRequestAPI);
+        handler = new DACUserRolesHandler(userDAO, userRoleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailService, dataAccessRequestAPI);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class UserRolesHandlerTest {
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
         when(voteDAO.findVotesOnOpenElections(originalChairperson.getUserId())).thenReturn(randomVotesList(originalChairperson.getUserId()));
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
-        when(dacUserDAO.findDACUserByEmail("delegatedChairperson@broad.com")).thenReturn(delegatedChairperson);
+        when(userDAO.findDACUserByEmail("delegatedChairperson@broad.com")).thenReturn(delegatedChairperson);
         when(electionDAO.verifyOpenElections()).thenReturn(1);
         Map<String, User> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser", originalChairperson);
@@ -83,7 +83,7 @@ public class UserRolesHandlerTest {
         User delegatedMember = new User(2, "delegatedMember@broad.com", "Delegated Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
+        when(userDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, User> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser", originalMember);
@@ -98,7 +98,7 @@ public class UserRolesHandlerTest {
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
         when(voteDAO.findVotesOnOpenElections(originalMember.getUserId())).thenReturn(randomVotesList(originalMember.getUserId()));
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(alumniList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
+        when(userDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
         when(electionDAO.verifyOpenElections()).thenReturn(1);
         Map<String, User> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser", originalMember);
@@ -112,7 +112,7 @@ public class UserRolesHandlerTest {
         User delegatedDO = new User(2, "delegatedDO@broad.com", "Delegated Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(dataownerList());
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(ListUtils.union(researcherList(), adminList()));
-        when(dacUserDAO.findDACUserByEmail("delegatedDO@broad.com")).thenReturn(delegatedDO);
+        when(userDAO.findDACUserByEmail("delegatedDO@broad.com")).thenReturn(delegatedDO);
         when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, User> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser", originalDO);
@@ -145,10 +145,10 @@ public class UserRolesHandlerTest {
         User originalAlumni = new User(1, "originalAlumni@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), ListUtils.union(researcherList(), memberList()), null);
         User delegatedMember = new User(2, "delegatedMember@broad.com", "Delegated Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(alumniList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
+        when(userDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        when(dacUserDAO.verifyAdminUsers()).thenReturn(2);
+        when(userDAO.verifyAdminUsers()).thenReturn(2);
         Map<String, User> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser", originalAlumni);
         updateUserMap.put("userToDelegate", delegatedMember);
@@ -160,7 +160,7 @@ public class UserRolesHandlerTest {
         User originalAlumni = new User(1, "originalAlumni@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), ListUtils.union(alumniList(), memberList()), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
         when(electionDAO.verifyOpenElections()).thenReturn(0);
-        when(dacUserDAO.verifyAdminUsers()).thenReturn(2);
+        when(userDAO.verifyAdminUsers()).thenReturn(2);
         Map<String, User> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser", originalAlumni);
         handler.updateRoles(updateUserMap);

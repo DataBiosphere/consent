@@ -8,7 +8,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -57,7 +57,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private ConsentDAO consentDAO;
     private DataSetDAO datasetDAO;
     private MatchDAO matchDAO;
@@ -79,7 +79,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO userDAO, ConsentDAO consentDAO ,DataSetDAO datasetDAO, MatchDAO matchDAO, MongoConsentDB mongo, DataSetDAO dataSetDAO) {
+    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO, MongoConsentDB mongo, DataSetDAO dataSetDAO) {
         SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dao, electionDAO, userDAO, consentDAO, datasetDAO, matchDAO,  mongo, dataSetDAO));
 
     }
@@ -90,10 +90,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    protected DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO ,MongoConsentDB mongo, DataSetDAO dataSetDAO) {
+    protected DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO , MongoConsentDB mongo, DataSetDAO dataSetDAO) {
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.consentDAO = consentDAO;
         this.datasetDAO = datasetDAO;
         this.matchDAO = matchDAO;
@@ -197,7 +197,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
                     Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
-                    Collection<User> users = dacUserDAO.findUsers(dacUserIds);
+                    Collection<User> users = userDAO.findUsers(dacUserIds);
                     for (Election election : reviewedElections) {
                         Consent electionConsent = consents.stream().filter(c -> c.getConsentId().equals(election.getReferenceId())).collect(singletonCollector());
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
@@ -270,7 +270,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
                     List<Match> matchList = matchDAO.findMatchesPurposeId(darIds);
                     Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
-                    Collection<User> users = dacUserDAO.findUsers(dacUserIds);
+                    Collection<User> users = userDAO.findUsers(dacUserIds);
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(darElectionIds);
                     setSummaryHeaderDataAccessRequest(summaryWriter, maxNumberOfDACMembers);
                     for (Election election : reviewedElections) {
@@ -402,7 +402,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
                     List<Vote> votes = electionsData.get(election.getElectionId());
                     for(Vote datasetVote : votes){
-                        User user = dacUserDAO.findDACUserById(datasetVote.getDacUserId());
+                        User user = userDAO.findDACUserById(datasetVote.getDacUserId());
                         summaryWriter.write(user.getDisplayName() + SEPARATOR);
                         summaryWriter.write(user.getEmail() + SEPARATOR);
                         summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);

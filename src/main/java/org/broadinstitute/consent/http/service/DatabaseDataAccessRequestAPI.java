@@ -54,7 +54,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final VoteDAO voteDAO;
 
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
 
     private final DataSetDAO dataSetDAO;
 
@@ -78,8 +78,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *                  read/write data.
      * @param converter
      */
-    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
@@ -88,13 +88,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    protected DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
         this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
         this.voteDAO = voteDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.dataAccessReportsParser = new DataAccessReportsParser();
         this.researcherPropertyDAO = researcherPropertyDAO;
@@ -338,9 +338,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         if (access != null){
             List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-            users.addAll(dacUserDAO.findUsers(userIds));
+            users.addAll(userDAO.findUsers(userIds));
         } else {
-            users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            users =  userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
         }
         return users;
     }
@@ -580,7 +580,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private User getOwnerUser(Integer dacUserId){
         List<User> users = new ArrayList<>();
-        users.addAll(dacUserDAO.findUsersWithRoles(new ArrayList<>(Collections.singletonList(dacUserId))));
+        users.addAll(userDAO.findUsersWithRoles(new ArrayList<>(Collections.singletonList(dacUserId))));
         return users.get(0);
     }
 
