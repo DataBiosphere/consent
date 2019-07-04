@@ -32,7 +32,7 @@ public class NihAccountResource extends Resource {
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser user) {
         try {
             User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
-            return Response.ok(nihAuthApi.authenticateNih(nihAccount, dacUser.getDacUserId())).build();
+            return Response.ok(nihAuthApi.authenticateNih(nihAccount, dacUser.getUserId())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -44,7 +44,7 @@ public class NihAccountResource extends Resource {
     public Response deleteNihAccount(@Auth AuthUser user) {
         try {
             User dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
-            nihAuthApi.deleteNihAccountById(dacUser.getDacUserId());
+            nihAuthApi.deleteNihAccountById(dacUser.getUserId());
             return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);

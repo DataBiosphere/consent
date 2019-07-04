@@ -55,7 +55,7 @@ public class DACUserResource extends Resource {
         try {
             user = dacUserAPI.createDACUser(dac);
             if (isChairPerson(user.getRoles())) {
-                dacUserAPI.updateExistentChairPersonToAlumni(user.getDacUserId());
+                dacUserAPI.updateExistentChairPersonToAlumni(user.getUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
                 voteAPI.createVotesForElections(elections, true);
             }

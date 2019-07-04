@@ -202,10 +202,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         Consent electionConsent = consents.stream().filter(c -> c.getConsentId().equals(election.getReferenceId())).collect(singletonCollector());
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().map(e -> e.getDacUserId()).collect(Collectors.toList());
-                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
+                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getUserId())).collect(Collectors.toSet());
                         List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
-                        User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
+                        User chairPerson =  users.stream().filter(du -> du.getUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
                         summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
                         summaryWriter.write(election.getVersion() + SEPARATOR);
                         summaryWriter.write(election.getStatus() + SEPARATOR);
@@ -217,7 +217,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
                         if (electionDACVotes != null && electionDACVotes.size() > 0) {
                             for (Vote vote : electionDACVotes) {
-                                List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
+                                List<User> user = electionUsers.stream().filter(du -> du.getUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
                                 summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
                                 summaryWriter.write( booleanToString(vote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(vote.getRationale())+ SEPARATOR);
@@ -277,7 +277,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equals("DAC")).map(e -> e.getDacUserId()).collect(Collectors.toList());
-                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
+                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getUserId())).collect(Collectors.toSet());
 
                         Vote finalVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.FINAL.getValue())).collect(singletonCollector());
                         Vote chairPersonVote =  electionVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
@@ -291,7 +291,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 chairPersonRPVote = electionRPVotes.stream().filter(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
                             }
                         }
-                        User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
+                        User chairPerson =  users.stream().filter(du -> du.getUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
                         Match match;
                         try {
                             match = matchList.stream().filter(m -> m.getPurpose().equals(election.getReferenceId())).collect(singletonCollector());

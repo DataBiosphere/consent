@@ -126,7 +126,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         if(userList.size() == usersIdList.size()){
                 for (User user : userList) {
                     if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue()))) {
-                        throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getDacUserId()));
+                        throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getUserId()));
                     }
                 }
                 return userList;

@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 public class User {
 
     @JsonProperty
-    private Integer dacUserId;
+    private Integer userId;
 
     @JsonProperty
     private String email;
@@ -28,24 +28,24 @@ public class User {
     public User() {
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate) {
-        this.dacUserId = dacUserId;
+    public User(Integer userId, String email, String displayName, Date createDate) {
+        this.userId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
     }
 
-    public User(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
-        this.dacUserId = dacUserId;
+    public User(Integer userId, String email, String displayName, Date createDate, String additionalEmail) {
+        this.userId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.additionalEmail = additionalEmail;
     }
 
-    public User(Integer dacUserId, String email, String displayName,
+    public User(Integer userId, String email, String displayName,
                 String isApproved, Date createDate, List<UserRole> roles, String additionalEmail) {
-        this.dacUserId = dacUserId;
+        this.userId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
@@ -53,12 +53,12 @@ public class User {
         this.additionalEmail = additionalEmail;
     }
 
-    public Integer getDacUserId() {
-        return dacUserId;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setDacUserId(Integer dacUserId) {
-        this.dacUserId = dacUserId;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getEmail() {
@@ -103,7 +103,7 @@ public class User {
 
     @Override
     public int hashCode(){
-        return  dacUserId;
+        return userId;
     }
 
     @Override
@@ -116,6 +116,6 @@ public class User {
             return false;
 
         User other = (User) obj;
-        return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
+        return new EqualsBuilder().append(userId, other.userId).isEquals();
     }
 }

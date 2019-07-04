@@ -77,7 +77,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             insertUserRoles(dacUser, dacUserID);
         }
         User user = dacUserDAO.findDACUserById(dacUserID);
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return user;
 
     }
@@ -88,7 +88,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (user == null) {
             throw new NotFoundException("Could not find user for specified email : " + email);
         }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return user;
     }
 
@@ -103,7 +103,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (user == null) {
             throw new NotFoundException("Could not find user for specified id : " + id);
         }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return user;
     }
 
@@ -170,7 +170,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         List<User> userList = new ArrayList<>();
         List<Integer> candidateRoles = Arrays.asList(roleIdMap.get(RESEARCHER), roleIdMap.get(CHAIRPERSON));
         try {
-            userList = dacUserDAO.getMembersApprovedToReplace(user.getDacUserId(), candidateRoles);
+            userList = dacUserDAO.getMembersApprovedToReplace(user.getUserId(), candidateRoles);
         } catch (UnableToExecuteStatementException e) {
             String state = ((SQLException) e.getCause()).getSQLState();
             logger().error(String.format("%s - while in findDacUserReplacementCandidates", state), e);
@@ -181,7 +181,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     private List<User> findDataSetOwnersReplacementCandidates(User user) {
         List<User> userList;
-        userList = dacUserDAO.getDataOwnersApprovedToReplace(user.getDacUserId());
+        userList = dacUserDAO.getDataOwnersApprovedToReplace(user.getUserId());
         return userList;
     }
 
@@ -195,7 +195,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (electionDAO.verifyOpenElections() == 0) {
             return false;
         }
-        List<Integer> openElectionIdsForThisUser = electionDAO.findNonDataSetOpenElectionIds(updatedUser.getDacUserId());
+        List<Integer> openElectionIdsForThisUser = electionDAO.findNonDataSetOpenElectionIds(updatedUser.getUserId());
         if (!CollectionUtils.isEmpty(openElectionIdsForThisUser)) {
             List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue());
             if (voteCount.stream().anyMatch((votes) -> ((votes - 1) <= MINIMUM_DAC_USERS))) {
@@ -229,7 +229,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     protected boolean hasOpenElections(User updatedUser) {
-        List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
+        List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getUserId());
         if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
             List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
             if (voteCount.stream().anyMatch((votes) -> ((votes) == 1))) {
@@ -240,7 +240,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     protected boolean hasDataSetAssociation(User updatedUser) {
-        List<Integer> associatedDataSetId = dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(updatedUser.getDacUserId());
+        List<Integer> associatedDataSetId = dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(updatedUser.getUserId());
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
             List<Integer> dataOwnersPerDataSet = dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId);
@@ -271,7 +271,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
         User user = describeDACUserByEmail(updatedUser.getEmail());
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return user;
     }
 
@@ -310,7 +310,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         users.stream().forEach(user -> {
             for(UserRole role : user.getRoles()){
                 if (role.getRoleId() == 5) {
-                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
+                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getUserId());
                     role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
                 }
             }

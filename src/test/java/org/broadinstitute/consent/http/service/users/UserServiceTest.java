@@ -140,7 +140,7 @@ public class UserServiceTest {
         when(dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(anyList())).thenReturn(Collections.singletonList(1));
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(userRoleDAO.findRolesByUserId(user.getDacUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
         try {
             userService.updateUser(user, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -164,7 +164,7 @@ public class UserServiceTest {
         when(voteDAO.findVoteCountForElections(Collections.singletonList(2), VoteType.DATA_OWNER.getValue())).thenReturn(Collections.singletonList(1));
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(userRoleDAO.findRolesByUserId(user.getDacUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
         try {
             userService.updateUser(user, EMAIL);
         } catch (UserRoleHandlerException e) {
@@ -219,7 +219,7 @@ public class UserServiceTest {
 
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
-        when(userRoleDAO.findRolesByUserId(user.getDacUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
+        when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(Collections.singletonList(dataOwnerRole));
         try {
             userService.updateUser(user, EMAIL);
         } catch (UserRoleHandlerException e) {

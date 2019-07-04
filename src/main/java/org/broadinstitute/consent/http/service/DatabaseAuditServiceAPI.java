@@ -4,7 +4,6 @@ import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
-import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.WorkspaceAudit;
 
 import java.util.ArrayList;
@@ -29,14 +28,14 @@ public class DatabaseAuditServiceAPI extends AbstractAuditServiceAPI{
 
     @Override
     public void saveAssociationAudit(String workspaceId, String modifiedTable, String changeAction, String modifiedByUserEmail){
-        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getUserId();
         String modifiedObjectId = associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId).toString();
         saveAuditInfo(new WorkspaceAudit(modifiedObjectId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 
     @Override
     public void saveAssociationAuditList(List<String> ids, String modifiedTable, String changeAction, String modifiedByUserEmail){
-        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getUserId();
         List<WorkspaceAudit> auditList = createAuditList(ids, modifiedTable, changeAction, modifiedByUserId);
         workspaceAuditDAO.batchInsertWorkspaceAudit(auditList);
     }
@@ -52,7 +51,7 @@ public class DatabaseAuditServiceAPI extends AbstractAuditServiceAPI{
 
     @Override
     public void saveConsentAudit(String consentId, String modifiedTable, String changeAction, String modifiedByUserEmail){
-        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getUserId();
         saveAuditInfo(new WorkspaceAudit(consentId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 

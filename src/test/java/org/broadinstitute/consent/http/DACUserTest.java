@@ -113,7 +113,7 @@ public class DACUserTest extends DACUserServiceTest {
         User user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
         Map<String, Object> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser",user);
-        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), updateUserMap));
+        checkStatus(OK, put(client, dacUserPathById(user.getUserId()), updateUserMap));
         user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(User.class);
         assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
     }
@@ -189,7 +189,7 @@ public class DACUserTest extends DACUserServiceTest {
         Client client = ClientBuilder.newClient();
         User user = new User();
         user.setDisplayName(displayName);
-        user.setDacUserId(4);
+        user.setUserId(4);
         Response response = put(client, dacUserPath()+ "/name/4", user);
         checkStatus(OK, response);
         User dacUser = response.readEntity(User.class);
@@ -202,7 +202,7 @@ public class DACUserTest extends DACUserServiceTest {
         Client client = ClientBuilder.newClient();
         User user = new User();
         user.setDisplayName(displayName);
-        user.setDacUserId(4);
+        user.setUserId(4);
         Response response = put(client, dacUserPath()+ "/name/99", user);
         checkStatus(NOT_FOUND, response);
     }
@@ -212,7 +212,7 @@ public class DACUserTest extends DACUserServiceTest {
     public void testUpdateDisplayNameWithEmptyName() throws IOException {
         Client client = ClientBuilder.newClient();
         User user = new User();
-        user.setDacUserId(4);
+        user.setUserId(4);
         Response response = put(client, dacUserPath() + "/name/4", user);
         checkStatus(BAD_REQUEST, response);
     }

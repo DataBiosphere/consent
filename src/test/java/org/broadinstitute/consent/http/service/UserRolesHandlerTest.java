@@ -67,7 +67,7 @@ public class UserRolesHandlerTest {
         User originalChairperson = new User(1, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
         User delegatedChairperson = new User(2, "delegatedChairperson@broad.com", "Delegated Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
-        when(voteDAO.findVotesOnOpenElections(originalChairperson.getDacUserId())).thenReturn(randomVotesList(originalChairperson.getDacUserId()));
+        when(voteDAO.findVotesOnOpenElections(originalChairperson.getUserId())).thenReturn(randomVotesList(originalChairperson.getUserId()));
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
         when(dacUserDAO.findDACUserByEmail("delegatedChairperson@broad.com")).thenReturn(delegatedChairperson);
         when(electionDAO.verifyOpenElections()).thenReturn(1);
@@ -96,7 +96,7 @@ public class UserRolesHandlerTest {
         User originalMember = new User(1, "originalMember@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), alumniList(), null);
         User delegatedMember = new User(2, "delegatedMember@broad.com", "Delegated Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
-        when(voteDAO.findVotesOnOpenElections(originalMember.getDacUserId())).thenReturn(randomVotesList(originalMember.getDacUserId()));
+        when(voteDAO.findVotesOnOpenElections(originalMember.getUserId())).thenReturn(randomVotesList(originalMember.getUserId()));
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(alumniList());
         when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
         when(electionDAO.verifyOpenElections()).thenReturn(1);

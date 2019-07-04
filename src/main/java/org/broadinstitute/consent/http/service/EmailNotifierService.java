@@ -132,7 +132,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         if(isServiceActive) {
             List<User> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
             if(CollectionUtils.isEmpty(users)) return;
-            List<Integer> usersId = users.stream().map(User::getDacUserId).collect(Collectors.toList());
+            List<Integer> usersId = users.stream().map(User::getUserId).collect(Collectors.toList());
             Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
             Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL);
             mailService.sendNewDARRequests(getEmails(users), data.get("entityId"), data.get("electionType"), template);
@@ -175,7 +175,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             for(Vote vote: votes){
                 User user = describeDACUserById(vote.getDacUserId());
                 if(electionType.equals(ElectionTypeString.DATA_ACCESS.getValue())) {
-                    rpVoteId = findRpVoteId(election.getElectionId(), user.getDacUserId());
+                    rpVoteId = findRpVoteId(election.getElectionId(), user.getUserId());
                 }
                 String serverUrl = generateUserVoteUrl(SERVER_URL, electionType, vote.getVoteId().toString(), entityId, rpVoteId);
                 Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType, entityName, serverUrl);
@@ -255,7 +255,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         User createdResearcher = dacUserDAO.findDACUserById(researcherId);
         List<User> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
         if(isServiceActive){
-            String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
+            String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getUserId().toString();
             for(User admin: admins){
                 Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
                 mailService.sendNewResearcherCreatedMessage(getEmails(Collections.singletonList(admin)), template);
@@ -440,13 +440,13 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         dataMap.put("entityId", election.getReferenceId());
         dataMap.put("entityName", retrieveReferenceId(election.getElectionType(), election.getReferenceId()));
         dataMap.put("electionId",  election.getElectionId().toString());
-        dataMap.put("dacUserId", user.getDacUserId().toString());
+        dataMap.put("dacUserId", user.getUserId().toString());
         dataMap.put("email",  user.getEmail());
         dataMap.put("additionalEmail",  user.getAdditionalEmail());
         if(dataMap.get("electionType").equals(ElectionTypeString.DATA_ACCESS.getValue())){
-            dataMap.put("rpVoteId", findRpVoteId(election.getElectionId(), user.getDacUserId()));
+            dataMap.put("rpVoteId", findRpVoteId(election.getElectionId(), user.getUserId()));
         } else if(dataMap.get("electionType").equals(ElectionTypeString.RP.getValue())){
-            dataMap.put("voteId", findDataAccessVoteId(election.getElectionId(), user.getDacUserId()));
+            dataMap.put("voteId", findDataAccessVoteId(election.getElectionId(), user.getUserId()));
             dataMap.put("rpVoteId", voteId.toString());
         } else {
             dataMap.put("voteId", voteId.toString());
@@ -474,7 +474,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 election.getElectionType(),
                 election.getReferenceId(),
                 election.getElectionId().toString(),
-                user.getDacUserId().toString(),
+                user.getUserId().toString(),
                 user.getEmail(),
                 user.getAdditionalEmail());
     }
@@ -498,7 +498,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         dataMap.put("userName", user.getDisplayName());
         dataMap.put("electionType", "New Data Access Request Case");
         dataMap.put("entityId", dataAccessRequestId);
-        dataMap.put("dacUserId", user.getDacUserId().toString());
+        dataMap.put("dacUserId", user.getUserId().toString());
         dataMap.put("email", user.getEmail());
         return dataMap;
     }
@@ -536,7 +536,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private List<String> getAcademicEmails(List<User> users) {
         List<String> academicEmails = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(users)) {
-            List<Integer> userIds = users.stream().map(User::getDacUserId).collect(Collectors.toList());
+            List<Integer> userIds = users.stream().map(User::getUserId).collect(Collectors.toList());
             List<ResearcherProperty> researcherProperties = researcherPropertyDAO.findResearcherPropertiesByUserIds(userIds);
             Map<Integer, List<ResearcherProperty>> researcherPropertiesMap = researcherProperties.stream().collect(Collectors.groupingBy(userProperty -> userProperty.getUserId()));
             researcherPropertiesMap.forEach((userId, properties) -> {

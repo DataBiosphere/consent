@@ -304,10 +304,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public boolean validateCollectEmailCondition(Vote vote){
         List<Vote> votes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
         User chairperson = dacUserDAO.findChairpersonUser();
-        if((votes.size() == 0) &&(vote.getDacUserId() != chairperson.getDacUserId())){
+        if((votes.size() == 0) &&(vote.getDacUserId() != chairperson.getUserId())){
             return true;
         } else if((votes.size() == 1)) {
-            Vote chairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getDacUserId());
+            Vote chairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getUserId());
             if(chairVote.getCreateDate() == null){
                 return true;
             }
@@ -331,11 +331,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         User chairperson = dacUserDAO.findChairpersonUser();
         Integer exists = mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId);
         if((exists == null)){
-            if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (!vote.getDacUserId().equals(chairperson.getDacUserId())))){
+            if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (!vote.getDacUserId().equals(chairperson.getUserId())))){
                 return true;
             } else {
-                Vote rpChairVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, chairperson.getDacUserId());
-                Vote darChairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getDacUserId());
+                Vote rpChairVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, chairperson.getUserId());
+                Vote darChairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getUserId());
                 if ((((rpElectionVotes.size() == 1) && (CollectionUtils.isEmpty(darVotes))))) {
                     if (rpChairVote.getCreateDate() == null) {
                         return true;

@@ -122,7 +122,7 @@ public class UserDAOTest extends AbstractTest {
     public void testFindUsersWithRoles() {
         Collection<Integer> userIds = Arrays.asList(1, 2, 3, 4, 5, 6);
         Collection<User> users = userDAO.findUsersWithRoles(userIds);
-        users.forEach(u -> Assert.assertFalse("User: " + u.getDacUserId() + " has no roles", u.getRoles().isEmpty()));
+        users.forEach(u -> Assert.assertFalse("User: " + u.getUserId() + " has no roles", u.getRoles().isEmpty()));
     }
 
     @Test

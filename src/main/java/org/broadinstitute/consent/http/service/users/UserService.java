@@ -82,7 +82,7 @@ public class UserService {
             insertUserRoles(dacUser, dacUserID);
         }
         User user = dacUserDAO.findDACUserById(dacUserID);
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return user;
     }
 
@@ -92,8 +92,8 @@ public class UserService {
         validateRoles(user.getRoles());
         User existentUser = dacUserDAO.findDACUserByEmail(user.getEmail());
         validateAndUpdateRoles(existentUser.getRoles(), user.getRoles(), existentUser);
-        dacUserDAO.updateDACUser(user.getDisplayName(), existentUser.getDacUserId());
-        return dacUserDAO.findDACUserById(existentUser.getDacUserId());
+        dacUserDAO.updateDACUser(user.getDisplayName(), existentUser.getUserId());
+        return dacUserDAO.findDACUserById(existentUser.getUserId());
     }
 
     public User updatePartialUser(List<PatchOperation> patchOperations, String name) throws UserRoleHandlerException {
@@ -178,12 +178,12 @@ public class UserService {
             } else if (hasOpenElections(user)) {
                 throw new UserRoleHandlerException("Role can not be removed. There are open dataset elections for this user.");
             } else {
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
+                rolesToRemove.put(user.getUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
             }
         }
         //add data owner
         if (!isDO && isNewDO) {
-            rolesToAdd.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
+            rolesToAdd.put(user.getUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
 
         }
     }
@@ -194,12 +194,12 @@ public class UserService {
         //remove researcher
         if (isResearcher && !isNewResearcher) {
             BasicDBObject query = new BasicDBObject(DarConstants.STATUS, new BasicDBObject("$ne", ElectionStatus.CANCELED.getValue()));
-            query.append("userId", user.getDacUserId());
+            query.append("userId", user.getUserId());
             Document dar = mongoDB.getDataAccessRequestCollection().find(query).first();
             if (dar != null) {
                 throw new UserRoleHandlerException("Role can not be removed. The specified user has open DAR.");
             } else {
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
+                rolesToRemove.put(user.getUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
             }
         }
         //add researcher
@@ -207,7 +207,7 @@ public class UserService {
             if (containsRole(existentRoles, UserRoles.CHAIRPERSON.getValue()) || containsRole(existentRoles, UserRoles.MEMBER.getValue())) {
                 throw new UserRoleHandlerException("Role can not be added. Researcher  is incompatible with  Member and Chairperson role.");
             } else {
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
+                rolesToRemove.put(user.getUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
             }
         }
     }
@@ -221,7 +221,7 @@ public class UserService {
     }
 
     private boolean hasDataSetAssociation(User updatedUser) {
-        List<Integer> associatedDataSetId = dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(updatedUser.getDacUserId());
+        List<Integer> associatedDataSetId = dataSetAssociationDAO.getDataSetsIdOfDataOwnerNeedsApproval(updatedUser.getUserId());
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
             List<Integer> dataOwnersPerDataSet = dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId);
@@ -233,7 +233,7 @@ public class UserService {
     }
 
     private boolean hasOpenElections(User updatedUser) {
-        List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
+        List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getUserId());
         if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
             List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
             if (voteCount.stream().anyMatch((votes) -> ((votes) == 1))) {

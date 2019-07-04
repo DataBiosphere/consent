@@ -78,7 +78,7 @@ public class ElectionAPITest extends AbstractTest {
     public void testCreateConsentElectionSingleChairperson() throws Exception {
         DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         User chair = userDAO.findChairpersonUser();
-        Set<User> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getDacUserId()));
+        Set<User> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getUserId()));
         when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
         when(consentDAO.checkConsentbyId(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);
@@ -101,7 +101,7 @@ public class ElectionAPITest extends AbstractTest {
         List<Integer> memberIds = userDAO
                 .findDACUsersEnabledToVote()
                 .stream()
-                .map(User::getDacUserId)
+                .map(User::getUserId)
                 .collect(Collectors.toList());
         Set<User> dacMembersWithRoles = userDAO.findUsersWithRoles(memberIds);
         Set<User> membersWithRoles = dacMembersWithRoles

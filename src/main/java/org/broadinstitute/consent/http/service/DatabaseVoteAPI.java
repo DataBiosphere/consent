@@ -133,17 +133,17 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         List<Vote> votes = new ArrayList<>();
         if (userList != null) {
             for (User user : userList) {
-                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
+                Integer id = voteDAO.insertVote(user.getUserId(), electionId, VoteType.DAC.getValue(), false);
                 votes.add(voteDAO.findVoteById(id));
-                if(isChairPerson(user.getDacUserId())){
-                    Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
+                if(isChairPerson(user.getUserId())){
+                    Integer chairPersonVoteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
                     votes.add(voteDAO.findVoteById(chairPersonVoteId));
                 }
-                if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
+                if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getUserId())) {
+                    id = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));
                     if(!isManualReview){
-                        id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
+                        id = voteDAO.insertVote(user.getUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
                         votes.add(voteDAO.findVoteById(id));
                     }
                 }
