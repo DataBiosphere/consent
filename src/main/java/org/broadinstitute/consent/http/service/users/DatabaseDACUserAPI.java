@@ -65,34 +65,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public User createDACUser(User user) throws IllegalArgumentException {
-        validateRequiredFields(user);
-        Integer userId;
-        try {
-            userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
-        } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email should be unique.", e);
-        }
-        if (user.getRoles() != null) {
-            insertUserRoles(user, userId);
-        }
-        User foundUser = userDAO.findUserById(userId);
-        foundUser.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
-        return foundUser;
-
-    }
-
-    @Override
-    public User describeDACUserByEmail(String email) throws IllegalArgumentException {
-        User user = userDAO.findUserByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("Could not find user for specified email : " + email);
-        }
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
-        return user;
-    }
-
-    @Override
     public List<User> describeAdminUsersThatWantToReceiveMails() {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
     }
@@ -164,6 +136,15 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateExistentUserById(userId);
         Integer roleId = roleIdMap.get(UserRoles.RESEARCHER.getValue());
         return userRoleDAO.findRoleByUserIdAndRoleId(userId, roleId);
+    }
+
+    private User describeDACUserByEmail(String email) throws IllegalArgumentException {
+        User user = userDAO.findUserByEmail(email);
+        if (user == null) {
+            throw new NotFoundException("Could not find user for specified email : " + email);
+        }
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
+        return user;
     }
 
     private List<User> findDacUserReplacementCandidates(User user) {

@@ -266,10 +266,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessRequestResource(DatabaseDACUserAPI.getInstance(), DatabaseElectionAPI.getInstance(), googleStore));
         env.jersey().register(DataSetResource.class);
         env.jersey().register(DataSetAssociationsResource.class);
-        env.jersey().register(ConsentResource.class);
+        env.jersey().register(new ConsentResource(userService));
         env.jersey().register(ConsentsResource.class);
-        env.jersey().register(ConsentAssociationResource.class);
-        env.jersey().register(new DataUseLetterResource(googleStore));
+        env.jersey().register(new ConsentAssociationResource(userService));
+        env.jersey().register(new DataUseLetterResource(googleStore, userService));
         env.jersey().register(AllAssociationsResource.class);
         env.jersey().register(ConsentElectionResource.class);
         env.jersey().register(DataRequestElectionResource.class);
@@ -278,7 +278,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ConsentCasesResource.class);
         env.jersey().register(DataRequestCasesResource.class);
         env.jersey().register(new DacResource(dacService));
-        env.jersey().register(DACUserResource.class);
+        env.jersey().register(new DACUserResource(userService));
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
         env.jersey().register(ElectionResource.class);
@@ -291,7 +291,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherAPI));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
-        env.jersey().register(new NihAccountResource(nihAuthApi, DatabaseDACUserAPI.getInstance()));
+        env.jersey().register(new NihAccountResource(nihAuthApi, userService));
         env.jersey().register(injector.getInstance(VersionResource.class));
 
         // Authentication filters

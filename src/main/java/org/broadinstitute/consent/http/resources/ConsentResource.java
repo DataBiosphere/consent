@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
@@ -24,6 +25,7 @@ import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 
@@ -47,6 +49,8 @@ import java.net.URI;
 
 @Path("{auth: (basic/|api/)?}consent")
 public class ConsentResource extends Resource {
+
+    private UserService userService;
 
     private final ConsentAPI api;
     private final DACUserAPI dacUserAPI;
@@ -86,7 +90,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser authUser) {
         try {
-            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getName());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -123,7 +127,7 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getName());
             updated = api.update(id, updated);
             auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), user.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
@@ -188,8 +192,9 @@ public class ConsentResource extends Resource {
         return api.retrieve(id);
     }
 
-
-    public ConsentResource() {
+    @Inject
+    public ConsentResource(UserService userService) {
+        this.userService = userService;
         this.api = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();

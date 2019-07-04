@@ -26,6 +26,7 @@ import org.bson.Document;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -109,6 +110,15 @@ public class UserService {
         });
         if (user.getRoles().size() == 0) throw new IllegalArgumentException("Roles are required");
         return updateUser(user, name);
+    }
+
+    public User findUserByEmail(String email) throws IllegalArgumentException {
+        User user = userDAO.findUserByEmail(email);
+        if (user == null) {
+            throw new NotFoundException("Could not find user for specified email : " + email);
+        }
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
+        return user;
     }
 
 

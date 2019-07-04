@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Election;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 import javax.annotation.security.PermitAll;
@@ -36,11 +38,14 @@ import java.util.Map;
 @Path("{api : (api/)?}dacuser")
 public class DACUserResource extends Resource {
 
+    private UserService userService;
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
     private final VoteAPI voteAPI;
 
-    public DACUserResource() {
+    @Inject
+    public DACUserResource(UserService userService) {
+        this.userService = userService;
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.voteAPI = AbstractVoteAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
@@ -49,18 +54,18 @@ public class DACUserResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed(ADMIN)
-    public Response createdDACUser(@Context UriInfo info, User dac) {
+    public Response createdDACUser(@Context UriInfo info, User user) {
         URI uri;
-        User user;
+        User savedUser;
         try {
-            user = dacUserAPI.createDACUser(dac);
-            if (isChairPerson(user.getRoles())) {
-                dacUserAPI.updateExistentChairPersonToAlumni(user.getUserId());
+            savedUser = userService.createUser(user);
+            if (isChairPerson(savedUser.getRoles())) {
+                dacUserAPI.updateExistentChairPersonToAlumni(savedUser.getUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
                 voteAPI.createVotesForElections(elections, true);
             }
-            uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
-            return Response.created(uri).entity(user).build();
+            uri = info.getRequestUriBuilder().path("{email}").build(savedUser.getEmail());
+            return Response.created(uri).entity(savedUser).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
@@ -78,7 +83,7 @@ public class DACUserResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public User describe(@PathParam("email") String email) {
-        return dacUserAPI.describeDACUserByEmail(email);
+        return userService.findUserByEmail(email);
     }
 
     @PUT
@@ -131,7 +136,7 @@ public class DACUserResource extends Resource {
     public Response validateDelegation(@QueryParam("role") String role, User dac) {
         User user;
         try {
-            user = dacUserAPI.describeDACUserByEmail(dac.getEmail());
+            user = userService.findUserByEmail(dac.getEmail());
             ValidateDelegationResponse delegationResponse = dacUserAPI.validateNeedsDelegation(user, role);
             return Response.ok().entity(delegationResponse).build();
         } catch (Exception e) {

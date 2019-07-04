@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -33,10 +35,13 @@ import java.util.List;
 @Path("{auth: (basic/|api/)?}consent/{id}/association")
 public class ConsentAssociationResource extends Resource {
 
+    private UserService userService;
     private final ConsentAPI api;
     private final DACUserAPI dacUserAPI;
 
-    public ConsentAssociationResource() {
+    @Inject
+    public ConsentAssociationResource(UserService userService) {
+        this.userService = userService;
         this.api = AbstractConsentAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
     }
@@ -54,7 +59,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getName());
             List<ConsentAssociation> result = api.createAssociation(consentId, body, user.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();

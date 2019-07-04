@@ -143,7 +143,7 @@ public class ConsentModule extends AbstractModule {
     /*
      * Services
      */
-    
+
     @Provides
     DacService providesDacService() {
         return new DacService(providesDacDAO());

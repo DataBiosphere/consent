@@ -14,10 +14,6 @@ import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerExce
 
 public interface DACUserAPI {
 
-    User createDACUser(User user) throws IllegalArgumentException;
-
-    User describeDACUserByEmail(String email) throws NotFoundException;
-
     List<User> describeAdminUsersThatWantToReceiveMails();
 
     User describeDACUserById(Integer id) throws IllegalArgumentException;

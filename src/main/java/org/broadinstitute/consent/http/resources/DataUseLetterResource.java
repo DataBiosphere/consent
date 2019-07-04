@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -33,12 +35,16 @@ import java.util.UUID;
 @Path("{auth: (basic/|api/)?}consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
 
+    private UserService userService;
+
     private final ConsentAPI api;
     private final GCSStore store;
     private final DACUserAPI dacUserAPI;
     private final AuditServiceAPI auditServiceAPI;
 
-    public DataUseLetterResource(GCSStore store) {
+    @Inject
+    public DataUseLetterResource(GCSStore store, UserService userService) {
+        this.userService = userService;
         this.api = AbstractConsentAPI.getInstance();
         this.store = store;
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
@@ -79,7 +85,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId, dulUrl, name);
-            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getName());
             auditServiceAPI.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), user.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {
@@ -110,7 +116,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId,dulUrl, name);
-            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getName());
             auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), user.getEmail());
             return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {

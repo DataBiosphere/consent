@@ -7,8 +7,10 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.resources.DataUseLetterResource;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -40,6 +42,8 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     FormDataContentDisposition ct;
     @Mock
     AuthUser authUser;
+    @Mock
+    UserService userService;
 
     DataUseLetterResource dulResource;
 
@@ -56,11 +60,13 @@ public class DataUseLetterResourceTest extends ConsentServiceTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        dulResource = new DataUseLetterResource(storage);
+        dulResource = new DataUseLetterResource(storage, userService);
         mockTranslateResponse();
         mockValidateResponse();
-
-        when(authUser.getName()).thenReturn("oauthuser@broadinstitute.org");
+        User user = new User();
+        user.setEmail("oauthuser@broadinstitute.org");
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(authUser.getName()).thenReturn(user.getEmail());
     }
 
     @Test
