@@ -3,12 +3,11 @@ package org.broadinstitute.consent.http.service.users;
 import com.google.inject.Inject;
 import com.mongodb.BasicDBObject;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -16,8 +15,8 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -28,6 +27,7 @@ import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -99,7 +99,7 @@ public class UserService {
 
     public User updatePartialUser(List<PatchOperation> patchOperations, String name) throws UserRoleHandlerException {
         User user = userDAO.findUserByEmail(name);
-        patchOperations.stream().forEach(action -> {
+        patchOperations.forEach(action -> {
             if (action.getPath().equalsIgnoreCase(DISPLAY_NAME)) {
                 setDisplayName(user, action);
             } else if (action.getPath().equalsIgnoreCase(ROLES)) {
@@ -132,6 +132,19 @@ public class UserService {
         }
         user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return user;
+    }
+
+    public Collection<User> findUsers() {
+        Collection<User> users = userDAO.findUsers();
+        users.forEach(user -> {
+            for(UserRole role : user.getRoles()){
+                if (role.getRoleId() == 5) {
+                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getUserId());
+                    role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
+                }
+            }
+        });
+        return users;
     }
 
     // Helper Methods
@@ -178,8 +191,8 @@ public class UserService {
     }
 
     private void validateAndUpdateRoles(List<UserRole> existentRoles, List<UserRole> newRoles, User user) throws UserRoleHandlerException {
-        Map<Integer, Integer> rolesToRemove = new HashedMap();
-        Map<Integer, Integer> rolesToAdd = new HashedMap();
+        Map<Integer, Integer> rolesToRemove = new HashMap<>();
+        Map<Integer, Integer> rolesToAdd = new HashMap<>();
         updateDataOwnerRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
         updateResearcherRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
         rolesToRemove.forEach((userId, roleId) -> {
@@ -270,8 +283,8 @@ public class UserService {
      * database on class initialization. Entry: Role name (UPPERCASE) -> Role ID
      */
     private Map<String, Integer> createRoleMap(List<Role> roles) {
-        Map<String, Integer> rolesMap = new HashMap();
-        roles.stream().forEach((r) -> rolesMap.put(r.getName().toUpperCase(), r.getRoleId()));
+        Map<String, Integer> rolesMap = new HashMap<>();
+        roles.forEach((r) -> rolesMap.put(r.getName().toUpperCase(), r.getRoleId()));
         return rolesMap;
     }
 
@@ -300,10 +313,10 @@ public class UserService {
     private List<UserRole> getRoles(String[] roles) {
         List<UserRole> userRoles = new ArrayList<>();
         if (roles != null && roles.length > 0) {
-            for (int i = 0; i < roles.length; i++) {
+            for (String s : roles) {
                 UserRole role = new UserRole();
-                role.setName(roles[i].trim());
-                role.setRoleId(roleIdMap.get(roles[i].toUpperCase()));
+                role.setName(s.trim());
+                role.setRoleId(roleIdMap.get(s.toUpperCase()));
                 userRoles.add(role);
             }
         }

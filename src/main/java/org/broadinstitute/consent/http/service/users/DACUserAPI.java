@@ -22,8 +22,6 @@ public interface DACUserAPI {
 
     void updateExistentChairPersonToAlumni(Integer dacUserID);
 
-    Collection<User> describeUsers();
-
     ValidateDelegationResponse validateNeedsDelegation(User user, String role);
 
     User updateRoleStatus(UserRole dACUserRole, Integer userId);
@@ -31,7 +29,5 @@ public interface DACUserAPI {
     UserRole getRoleStatus(Integer userId);
 
     User updateNameById(User user, Integer id);
-
-    public boolean hasUserRole(String userRole, User user);
 
 }

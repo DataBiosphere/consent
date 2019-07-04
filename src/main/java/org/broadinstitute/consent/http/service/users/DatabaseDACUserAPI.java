@@ -64,12 +64,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
-//    @Override
-//    public List<User> describeAdminUsersThatWantToReceiveMails() {
-//        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
-//    }
-
-
     @Override
     public ValidateDelegationResponse validateNeedsDelegation(User user, String role) {
         ValidateDelegationResponse response = new ValidateDelegationResponse(false, new ArrayList<>());
@@ -232,12 +226,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public boolean hasUserRole(String userRole, User user) {
-        return user.getRoles().stream().filter(role -> role.getName().equalsIgnoreCase(userRole)).findAny().isPresent();
-    }
-
-
-    @Override
     public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException {
         User updatedUser = dac.get("updatedUser");
         // validate user exists
@@ -282,20 +270,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             Integer newRoleId = userRoleDAO.findRoleIdByName(UserRoles.ALUMNI.getValue());
             userRoleDAO.updateUserRoles(newRoleId, chairPersonId, existentRoleId);
         }
-    }
-
-    @Override
-    public Collection<User> describeUsers() {
-        Collection<User> users = userDAO.findUsers();
-        users.stream().forEach(user -> {
-            for(UserRole role : user.getRoles()){
-                if (role.getRoleId() == 5) {
-                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getUserId());
-                    role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
-                }
-            }
-        });
-        return users;
     }
 
     /**

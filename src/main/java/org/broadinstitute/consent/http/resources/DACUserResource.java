@@ -75,7 +75,7 @@ public class DACUserResource extends Resource {
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Collection<User> describeAllUsers() {
-        return dacUserAPI.describeUsers();
+        return userService.findUsers();
     }
 
     @GET
