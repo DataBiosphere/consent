@@ -1,16 +1,21 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.PATCH;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
-import org.broadinstitute.consent.http.service.users.UserAPI;
+import org.broadinstitute.consent.http.service.users.UserService;
 
 import javax.annotation.security.PermitAll;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -20,10 +25,11 @@ import java.util.List;
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
 
-    private final UserAPI userAPI;
+    private UserService userService;
 
-    public UserResource(UserAPI userAPI) {
-        this.userAPI = userAPI;
+    @Inject
+    public UserResource(UserService userService) {
+        this.userService = userService;
     }
 
     @POST
@@ -33,7 +39,7 @@ public class UserResource extends Resource {
     public Response createUser(@Context UriInfo info, DACUser userToCreate, @Auth AuthUser user) {
         try {
             URI uri;
-            userToCreate = userAPI.createUser(userToCreate, user.getName());
+            userToCreate = userService.createUser(userToCreate, user.getName());
             uri = info.getRequestUriBuilder().path("{email}").build(userToCreate.getEmail());
             return Response.created(new URI(uri.toString().replace("user","dacuser"))).entity(userToCreate).build();
         } catch (IllegalArgumentException e) {
@@ -52,7 +58,7 @@ public class UserResource extends Resource {
     @PermitAll
     public Response update(DACUser userToUpdate, @Auth AuthUser user) {
         try {
-            return Response.ok().entity(userAPI.updateUser(userToUpdate, user.getName())).build();
+            return Response.ok().entity(userService.updateUser(userToUpdate, user.getName())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -64,7 +70,7 @@ public class UserResource extends Resource {
     @PermitAll
     public Response partialUpdate(List<PatchOperation> patchOperations, @Auth AuthUser user) {
         try {
-            return Response.ok().entity(userAPI.updatePartialUser(patchOperations, user.getName())).build();
+            return Response.ok().entity(userService.updatePartialUser(patchOperations, user.getName())).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

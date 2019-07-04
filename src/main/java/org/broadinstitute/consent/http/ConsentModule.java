@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.users.UserService;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,6 +174,19 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DacService providesDacService() {
         return new DacService(providesDacDAO());
+    }
+
+    @Provides
+    UserService providesUserService() {
+        return new UserService(
+                providesDACUserDAO(),
+                providesDACUserRoleDAO(),
+                providesElectionDAO(),
+                providesVoteDAO(),
+                providesDataSetAssociationDAO(),
+                providesResearcherPropertyDAO(),
+                providesMongoConsentDB()
+        );
     }
 
     @Provides
