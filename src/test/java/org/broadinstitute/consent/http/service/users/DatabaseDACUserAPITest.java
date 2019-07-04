@@ -114,16 +114,16 @@ public class DatabaseDACUserAPITest {
         try {
             databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find dacUser for specified email : " + EMAIL));
+            assertTrue(e.getMessage().equals("Could not find user for specified email : " + EMAIL));
         }
     }
 
     @Test
     public void describeUserByEmail() {
-        User dacUser = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(dacUser);
-        User user = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
-        assertNotNull(user);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(user);
+        User foundUser = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
+        assertNotNull(foundUser);
     }
 
     @Test
@@ -133,16 +133,16 @@ public class DatabaseDACUserAPITest {
         try {
             databaseDACUserAPI.describeDACUserById(id);
         } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find dacUser for specified id : " + id));
+            assertTrue(e.getMessage().equals("Could not find user for specified id : " + id));
         }
     }
 
     @Test
     public void describeUserById() {
-        User dacUser = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(dacUser);
-        User user = databaseDACUserAPI.describeDACUserById(1);
-        assertNotNull(user);
+        User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
+        when(dacUserDAO.findDACUserById(1)).thenReturn(user);
+        User foundUser = databaseDACUserAPI.describeDACUserById(1);
+        assertNotNull(foundUser);
     }
 
     @Test

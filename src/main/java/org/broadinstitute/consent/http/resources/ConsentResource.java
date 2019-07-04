@@ -86,7 +86,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser authUser) {
         try {
-            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -97,7 +97,7 @@ public class ConsentResource extends Resource {
                 checkValidDUL(rec);
             }
             Consent consent = api.create(rec);
-            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
+            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), user.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
@@ -123,9 +123,9 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
             updated = api.update(id, updated);
-            auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), user.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (Exception e) {

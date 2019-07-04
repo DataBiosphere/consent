@@ -79,8 +79,8 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId, dulUrl, name);
-            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
-            auditServiceAPI.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            auditServiceAPI.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), user.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -110,8 +110,8 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId,dulUrl, name);
-            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
-            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), user.getEmail());
             return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));

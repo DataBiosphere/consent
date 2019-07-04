@@ -54,8 +54,8 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            User dacUser = dacUserAPI.describeDACUserByEmail(authUser.getName());
-            List<ConsentAssociation> result = api.createAssociation(consentId, body, dacUser.getEmail());
+            User user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            List<ConsentAssociation> result = api.createAssociation(consentId, body, user.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();
         }catch (Exception e) {

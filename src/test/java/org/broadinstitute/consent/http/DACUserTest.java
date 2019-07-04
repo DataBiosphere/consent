@@ -192,8 +192,8 @@ public class DACUserTest extends DACUserServiceTest {
         user.setUserId(4);
         Response response = put(client, dacUserPath()+ "/name/4", user);
         checkStatus(OK, response);
-        User dacUser = response.readEntity(User.class);
-        assertThat(dacUser.getDisplayName().equals(displayName));
+        User updatedUser = response.readEntity(User.class);
+        assertThat(updatedUser.getDisplayName().equals(displayName));
     }
 
     @Test

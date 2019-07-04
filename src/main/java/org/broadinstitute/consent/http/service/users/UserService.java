@@ -70,20 +70,20 @@ public class UserService {
         return createDACUser(user);
     }
 
-    public User createDACUser(User dacUser) throws IllegalArgumentException {
-        validateRequiredFields(dacUser);
+    public User createDACUser(User user) throws IllegalArgumentException {
+        validateRequiredFields(user);
         Integer dacUserID;
         try {
-            dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
+            dacUserID = dacUserDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
-        if (dacUser.getRoles() != null) {
-            insertUserRoles(dacUser, dacUserID);
+        if (user.getRoles() != null) {
+            insertUserRoles(user, dacUserID);
         }
-        User user = dacUserDAO.findDACUserById(dacUserID);
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
-        return user;
+        User savedUser = dacUserDAO.findDACUserById(dacUserID);
+        savedUser.setRoles(userRoleDAO.findRolesByUserId(savedUser.getUserId()));
+        return savedUser;
     }
 
     public User updateUser(User user, String userEmail) throws IllegalArgumentException, UserRoleHandlerException {

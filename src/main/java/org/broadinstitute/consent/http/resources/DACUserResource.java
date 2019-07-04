@@ -172,8 +172,8 @@ public class DACUserResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER})
     public Response updateName(User user, @PathParam("id") Integer id) {
         try {
-            User dacUser = dacUserAPI.updateNameById(user, id);
-            return Response.ok().entity(dacUser).build();
+            User updatedUser = dacUserAPI.updateNameById(user, id);
+            return Response.ok().entity(updatedUser).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

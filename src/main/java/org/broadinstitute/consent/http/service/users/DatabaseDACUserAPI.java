@@ -65,20 +65,20 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public User createDACUser(User dacUser) throws IllegalArgumentException {
-        validateRequiredFields(dacUser);
-        Integer dacUserID;
+    public User createDACUser(User user) throws IllegalArgumentException {
+        validateRequiredFields(user);
+        Integer userId;
         try {
-            dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
+            userId = dacUserDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
-        if (dacUser.getRoles() != null) {
-            insertUserRoles(dacUser, dacUserID);
+        if (user.getRoles() != null) {
+            insertUserRoles(user, userId);
         }
-        User user = dacUserDAO.findDACUserById(dacUserID);
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
-        return user;
+        User foundUser = dacUserDAO.findDACUserById(userId);
+        foundUser.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
+        return foundUser;
 
     }
 
