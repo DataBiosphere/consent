@@ -79,7 +79,7 @@ public class ElectionAPITest extends AbstractTest {
         UserDAO userDAO = getApplicationJdbi().onDemand(UserDAO.class);
         User chair = userDAO.findChairpersonUser();
         Set<User> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getUserId()));
-        when(this.userDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
+        when(this.userDAO.findUsersEnabledToVote()).thenReturn(chairsWithRoles);
         when(consentDAO.checkConsentbyId(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);
         Election election = createConsentElection();
@@ -90,7 +90,7 @@ public class ElectionAPITest extends AbstractTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentElectionNoDACMembers() throws Exception {
-        when(userDAO.findDACUsersEnabledToVote()).thenReturn(Collections.emptySet());
+        when(userDAO.findUsersEnabledToVote()).thenReturn(Collections.emptySet());
         Election election = createConsentElection();
         electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
     }
@@ -99,7 +99,7 @@ public class ElectionAPITest extends AbstractTest {
     public void testCreateConsentElectionNoChair() throws Exception {
         UserDAO userDAO = getApplicationJdbi().onDemand(UserDAO.class);
         List<Integer> memberIds = userDAO
-                .findDACUsersEnabledToVote()
+                .findUsersEnabledToVote()
                 .stream()
                 .map(User::getUserId)
                 .collect(Collectors.toList());
@@ -108,7 +108,7 @@ public class ElectionAPITest extends AbstractTest {
                 .stream()
                 .filter(u -> u.getRoles().contains(MEMBER))
                 .collect(Collectors.toSet());
-        when(this.userDAO.findDACUsersEnabledToVote()).thenReturn(membersWithRoles);
+        when(this.userDAO.findUsersEnabledToVote()).thenReturn(membersWithRoles);
         Election election = createConsentElection();
         electionAPI.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
     }

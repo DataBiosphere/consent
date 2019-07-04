@@ -92,7 +92,7 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
         if(approvalExpirationTime.getUserId() == null){
             throw new IllegalArgumentException("User id is required");
         }else{
-            if(userDAO.findDACUserById(approvalExpirationTime.getUserId()) == null){
+            if(userDAO.findUserById(approvalExpirationTime.getUserId()) == null){
                 throw new IllegalArgumentException("The specified user id does not exist");
             }
         }

@@ -111,11 +111,11 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                 changeRolesWithoutDelegation(updatedUser, rolesToRemove, rolesToAdd, delegateMember);
             }
             if (delegateMember) {
-                userToDelegate = userDAO.findDACUserByEmail(usersMap.get("userToDelegate").getEmail());
+                userToDelegate = userDAO.findUserByEmail(usersMap.get("userToDelegate").getEmail());
                 userToDelegate.setRoles(userRoleDAO.findRolesByUserId(userToDelegate.getUserId()));
             }
             if (delegateOwner) {
-                doUserToDelegate = userDAO.findDACUserByEmail(usersMap.get("alternativeDataOwnerUser").getEmail());
+                doUserToDelegate = userDAO.findUserByEmail(usersMap.get("alternativeDataOwnerUser").getEmail());
                 doUserToDelegate.setRoles(userRoleDAO.findRolesByUserId(doUserToDelegate.getUserId()));
             }
             // removing deleted roles

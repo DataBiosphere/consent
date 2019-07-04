@@ -252,7 +252,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
     @Override
     public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
-        User createdResearcher = userDAO.findDACUserById(researcherId);
+        User createdResearcher = userDAO.findUserById(researcherId);
         List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
         if(isServiceActive){
             String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getUserId().toString();
@@ -277,7 +277,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
         if(isServiceActive){
-            User user = userDAO.findDACUserById(researcherId);
+            User user = userDAO.findUserById(researcherId);
             Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
             mailService.sendNewResearcherApprovedMessage(getEmails(Collections.singletonList(user)), template, darCode);
         }
@@ -317,7 +317,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     }
 
     private User describeDACUserById(Integer id) throws IllegalArgumentException {
-        User user = userDAO.findDACUserById(id);
+        User user = userDAO.findUserById(id);
         if (user == null) {
             throw new NotFoundException("Could not find user for specified id : " + id);
         }

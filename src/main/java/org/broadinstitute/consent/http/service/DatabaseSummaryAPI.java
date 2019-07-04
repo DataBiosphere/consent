@@ -402,7 +402,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
                     List<Vote> votes = electionsData.get(election.getElectionId());
                     for(Vote datasetVote : votes){
-                        User user = userDAO.findDACUserById(datasetVote.getDacUserId());
+                        User user = userDAO.findUserById(datasetVote.getDacUserId());
                         summaryWriter.write(user.getDisplayName() + SEPARATOR);
                         summaryWriter.write(user.getEmail() + SEPARATOR);
                         summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);

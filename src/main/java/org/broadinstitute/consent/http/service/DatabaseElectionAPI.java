@@ -514,7 +514,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
-            User user = userDAO.findDACUserById(dar.getInteger("userId"));
+            User user = userDAO.findUserById(dar.getInteger("userId"));
             if(!createElection){
                 emailNotifierAPI.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
@@ -654,7 +654,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private void validateAvailableUsers(ElectionType electionType) {
         if (!electionType.equals(ElectionType.DATA_SET)) {
-            Set<User> users = userDAO.findDACUsersEnabledToVote();
+            Set<User> users = userDAO.findUsersEnabledToVote();
             if (users == null || users.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
             }

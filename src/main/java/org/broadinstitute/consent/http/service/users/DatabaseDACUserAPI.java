@@ -69,14 +69,14 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateRequiredFields(user);
         Integer userId;
         try {
-            userId = userDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
+            userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
         if (user.getRoles() != null) {
             insertUserRoles(user, userId);
         }
-        User foundUser = userDAO.findDACUserById(userId);
+        User foundUser = userDAO.findUserById(userId);
         foundUser.setRoles(userRoleDAO.findRolesByUserId(user.getUserId()));
         return foundUser;
 
@@ -84,7 +84,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public User describeDACUserByEmail(String email) throws IllegalArgumentException {
-        User user = userDAO.findDACUserByEmail(email);
+        User user = userDAO.findUserByEmail(email);
         if (user == null) {
             throw new NotFoundException("Could not find user for specified email : " + email);
         }
@@ -99,7 +99,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public User describeDACUserById(Integer id) throws IllegalArgumentException {
-        User user = userDAO.findDACUserById(id);
+        User user = userDAO.findUserById(id);
         if (user == null) {
             throw new NotFoundException("Could not find user for specified id : " + id);
         }
@@ -155,7 +155,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (StringUtils.isEmpty(user.getDisplayName())) {
             throw new IllegalArgumentException();
         }
-        userDAO.updateDACUser(user.getDisplayName(), id);
+        userDAO.updateUser(user.getDisplayName(), id);
         return describeDACUserById(id);
     }
 
@@ -266,7 +266,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateRequiredFields(updatedUser);
         rolesHandler.updateRoles(dac);
         try {
-            userDAO.updateDACUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
+            userDAO.updateUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
@@ -280,7 +280,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateExistentUserById(id);
         validateRequiredFields(dac);
         try {
-            userDAO.updateDACUser(dac.getEmail(), dac.getDisplayName(), id, dac.getAdditionalEmail());
+            userDAO.updateUser(dac.getEmail(), dac.getDisplayName(), id, dac.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
@@ -291,13 +291,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     @Override
     public void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException {
         validateExistentUser(email);
-        userDAO.deleteDACUserByEmail(email);
+        userDAO.deleteUserByEmail(email);
     }
 
     @Override
     public void updateExistentChairPersonToAlumni(Integer dacUserID) {
         Integer existentRoleId = userRoleDAO.findRoleIdByName(UserRoles.CHAIRPERSON.getValue());
-        Integer chairPersonId = userDAO.findDACUserIdByRole(existentRoleId, dacUserID);
+        Integer chairPersonId = userDAO.findUserIdByRole(existentRoleId, dacUserID);
         if (chairPersonId != null) {
             Integer newRoleId = userRoleDAO.findRoleIdByName(UserRoles.ALUMNI.getValue());
             userRoleDAO.updateUserRoles(newRoleId, chairPersonId, existentRoleId);
@@ -329,13 +329,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     private void validateExistentUserById(Integer id) {
-        if (userDAO.findDACUserById(id) == null) {
+        if (userDAO.findUserById(id) == null) {
             throw new NotFoundException("The user for the specified id does not exist");
         }
     }
 
     private void validateExistentUser(String email) {
-        if (userDAO.findDACUserByEmail(email) == null) {
+        if (userDAO.findUserByEmail(email) == null) {
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
     }

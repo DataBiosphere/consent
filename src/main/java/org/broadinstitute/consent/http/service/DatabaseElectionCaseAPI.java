@@ -60,7 +60,7 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
                 pendingCases.add(pendingCase);
             }
         }
-        if (userDAO.findDACUserById(dacUserId) != null) {
+        if (userDAO.findUserById(dacUserId) != null) {
             List<UserRole> roles = userRoleDAO.findRolesByUserId(dacUserId);
             if (roles.contains(new UserRole(0, "Chairperson"))) {
                 return orderPendingCasesForChairperson(pendingCases);

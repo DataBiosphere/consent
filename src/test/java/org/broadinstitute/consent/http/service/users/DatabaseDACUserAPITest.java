@@ -64,12 +64,12 @@ public class DatabaseDACUserAPITest {
     @Test
     public void createDACUser() {
         User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(userDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
+        when(userDAO.insertUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setUserId(3);
         UserRole role = new UserRole(1, UserRoles.RESEARCHER.getValue());
         List<UserRole> roles = new ArrayList<>(Arrays.asList(role));
         user.setRoles(roles);
-        when(userDAO.findDACUserById(3)).thenReturn(user);
+        when(userDAO.findUserById(3)).thenReturn(user);
         when(userRoleDAO.findRoleIdByName(UserRoles.RESEARCHER.getValue())).thenReturn(1);
         when(userRoleDAO.findRolesByUserId(3)).thenReturn(roles);
         user = databaseDACUserAPI.createDACUser(user);
@@ -80,7 +80,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void createDACUserWithExistentEmail() {
         User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(userDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
+        when(userDAO.insertUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -110,7 +110,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void describeUserByNonExistentEmail() {
-        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(null);
+        when(userDAO.findUserByEmail(EMAIL)).thenReturn(null);
         try {
             databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         } catch (NotFoundException e) {
@@ -121,7 +121,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void describeUserByEmail() {
         User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(userDAO.findDACUserByEmail(EMAIL)).thenReturn(user);
+        when(userDAO.findUserByEmail(EMAIL)).thenReturn(user);
         User foundUser = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
         assertNotNull(foundUser);
     }
@@ -129,7 +129,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void describeUserByNonExistentId() {
         int id = 1;
-        when(userDAO.findDACUserById(id)).thenReturn(null);
+        when(userDAO.findUserById(id)).thenReturn(null);
         try {
             databaseDACUserAPI.describeDACUserById(id);
         } catch (NotFoundException e) {
@@ -140,7 +140,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void describeUserById() {
         User user = new User(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(userDAO.findDACUserById(1)).thenReturn(user);
+        when(userDAO.findUserById(1)).thenReturn(user);
         User foundUser = databaseDACUserAPI.describeDACUserById(1);
         assertNotNull(foundUser);
     }

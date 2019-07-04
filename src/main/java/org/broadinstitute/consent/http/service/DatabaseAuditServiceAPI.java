@@ -28,14 +28,14 @@ public class DatabaseAuditServiceAPI extends AbstractAuditServiceAPI{
 
     @Override
     public void saveAssociationAudit(String workspaceId, String modifiedTable, String changeAction, String modifiedByUserEmail){
-        int modifiedByUserId = userDAO.findDACUserByEmail(modifiedByUserEmail).getUserId();
+        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getUserId();
         String modifiedObjectId = associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId).toString();
         saveAuditInfo(new WorkspaceAudit(modifiedObjectId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 
     @Override
     public void saveAssociationAuditList(List<String> ids, String modifiedTable, String changeAction, String modifiedByUserEmail){
-        int modifiedByUserId = userDAO.findDACUserByEmail(modifiedByUserEmail).getUserId();
+        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getUserId();
         List<WorkspaceAudit> auditList = createAuditList(ids, modifiedTable, changeAction, modifiedByUserId);
         workspaceAuditDAO.batchInsertWorkspaceAudit(auditList);
     }
@@ -51,7 +51,7 @@ public class DatabaseAuditServiceAPI extends AbstractAuditServiceAPI{
 
     @Override
     public void saveConsentAudit(String consentId, String modifiedTable, String changeAction, String modifiedByUserEmail){
-        int modifiedByUserId = userDAO.findDACUserByEmail(modifiedByUserEmail).getUserId();
+        int modifiedByUserId = userDAO.findUserByEmail(modifiedByUserEmail).getUserId();
         saveAuditInfo(new WorkspaceAudit(consentId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 

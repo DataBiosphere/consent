@@ -129,7 +129,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     @Override
     public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
-        Set<User> userList = userDAO.findDACUsersEnabledToVote();
+        Set<User> userList = userDAO.findUsersEnabledToVote();
         List<Vote> votes = new ArrayList<>();
         if (userList != null) {
             for (User user : userList) {

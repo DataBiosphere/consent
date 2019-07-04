@@ -50,10 +50,10 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindDACUserById() {
-        User user = userDAO.findDACUserById(1);
+        User user = userDAO.findUserById(1);
         Assert.assertNotNull(user);
 
-        User user2 = userDAO.findDACUserById(100000);
+        User user2 = userDAO.findUserById(100000);
         Assert.assertNull(user2);
     }
 
@@ -114,7 +114,7 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindDACUsersEnabledToVote() {
-        Collection<User> users = userDAO.findDACUsersEnabledToVote();
+        Collection<User> users = userDAO.findUsersEnabledToVote();
         Assert.assertFalse(users.isEmpty());
     }
 
@@ -127,19 +127,19 @@ public class UserDAOTest extends AbstractTest {
 
     @Test
     public void testFindDACUserByEmail() {
-        User user = userDAO.findDACUserByEmail("test@broad.com");
+        User user = userDAO.findUserByEmail("test@broad.com");
         Assert.assertNotNull(user);
 
-        User user2 = userDAO.findDACUserByEmail("no.one@nowhere.com");
+        User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
         Assert.assertNull(user2);
     }
 
     @Test
     public void testInsertDACUser() {
         String email = getRandomEmailAddress();
-        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
+        Integer userId = userDAO.insertUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
-        User user = userDAO.findDACUserById(userId);
+        User user = userDAO.findUserById(userId);
         Assert.assertNotNull(user);
     }
 
@@ -147,25 +147,25 @@ public class UserDAOTest extends AbstractTest {
     public void testUpdateDACUser_case1() {
         String email = getRandomEmailAddress();
         String newEmail = getRandomEmailAddress();
-        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
+        Integer userId = userDAO.insertUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
-        userDAO.updateDACUser(
+        userDAO.updateUser(
                 newEmail,
                 "Dac User Test",
                 userId,
                 email);
-        User user = userDAO.findDACUserById(userId);
+        User user = userDAO.findUserById(userId);
         Assert.assertEquals(user.getEmail(), newEmail);
     }
 
     @Test
     public void testDeleteDACUserByEmail() {
-        Integer userId = userDAO.insertDACUser("delete_test@broad.org", "Dac User Delete Test", new Date());
+        Integer userId = userDAO.insertUser("delete_test@broad.org", "Dac User Delete Test", new Date());
         Assert.assertNotNull(userId);
-        User user = userDAO.findDACUserById(userId);
+        User user = userDAO.findUserById(userId);
         Assert.assertNotNull(user);
-        userDAO.deleteDACUserByEmail(user.getEmail());
-        User deletedUser = userDAO.findDACUserById(userId);
+        userDAO.deleteUserByEmail(user.getEmail());
+        User deletedUser = userDAO.findUserById(userId);
         Assert.assertNull(deletedUser);
     }
 
@@ -173,7 +173,7 @@ public class UserDAOTest extends AbstractTest {
     public void testFindDACUserIdByRole() {
         int userId = 5;
         int dataOwnerId = 6;
-        Integer foundUserId = userDAO.findDACUserIdByRole(userId, dataOwnerId);
+        Integer foundUserId = userDAO.findUserIdByRole(userId, dataOwnerId);
         Assert.assertNotNull(foundUserId);
         Assert.assertNotEquals(userId, foundUserId.intValue());
     }
@@ -195,13 +195,13 @@ public class UserDAOTest extends AbstractTest {
     @Test
     public void testDescribeUsersByRoleAndEmailPreference() {
         String email = getRandomEmailAddress();
-        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
+        Integer userId = userDAO.insertUser(email, "Dac User Test", new Date());
         userRoleDAO.insertSingleUserRole(5, userId, true);
         Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
         Assert.assertFalse(researchers.isEmpty());
 
         String email2 = getRandomEmailAddress();
-        Integer userId2 = userDAO.insertDACUser(email2, "Dac User Test", new Date());
+        Integer userId2 = userDAO.insertUser(email2, "Dac User Test", new Date());
         userRoleDAO.insertSingleUserRole(6, userId2, false);
         Collection<User> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
         Assert.assertFalse(dataOwners.isEmpty());
@@ -238,10 +238,10 @@ public class UserDAOTest extends AbstractTest {
     @Test
     public void testUpdateDACUser_case2() {
         String email = getRandomEmailAddress();
-        Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
+        Integer userId = userDAO.insertUser(email, "Dac User Test", new Date());
         Assert.assertNotNull(userId);
-        userDAO.updateDACUser("Updated Dac User Test", userId);
-        User user = userDAO.findDACUserById(userId);
+        userDAO.updateUser("Updated Dac User Test", userId);
+        User user = userDAO.findUserById(userId);
         Assert.assertEquals(user.getDisplayName(), "Updated Dac User Test");
     }
 

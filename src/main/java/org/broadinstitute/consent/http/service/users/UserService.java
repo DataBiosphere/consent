@@ -74,14 +74,14 @@ public class UserService {
         validateRequiredFields(user);
         Integer dacUserID;
         try {
-            dacUserID = userDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
+            dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
         if (user.getRoles() != null) {
             insertUserRoles(user, dacUserID);
         }
-        User savedUser = userDAO.findDACUserById(dacUserID);
+        User savedUser = userDAO.findUserById(dacUserID);
         savedUser.setRoles(userRoleDAO.findRolesByUserId(savedUser.getUserId()));
         return savedUser;
     }
@@ -90,14 +90,14 @@ public class UserService {
         validateEmail(user.getEmail(), userEmail);
         user.setEmail(userEmail);
         validateRoles(user.getRoles());
-        User existentUser = userDAO.findDACUserByEmail(user.getEmail());
+        User existentUser = userDAO.findUserByEmail(user.getEmail());
         validateAndUpdateRoles(existentUser.getRoles(), user.getRoles(), existentUser);
-        userDAO.updateDACUser(user.getDisplayName(), existentUser.getUserId());
-        return userDAO.findDACUserById(existentUser.getUserId());
+        userDAO.updateUser(user.getDisplayName(), existentUser.getUserId());
+        return userDAO.findUserById(existentUser.getUserId());
     }
 
     public User updatePartialUser(List<PatchOperation> patchOperations, String name) throws UserRoleHandlerException {
-        User user = userDAO.findDACUserByEmail(name);
+        User user = userDAO.findUserByEmail(name);
         patchOperations.stream().forEach(action -> {
             if (action.getPath().equalsIgnoreCase(DISPLAY_NAME)) {
                 setDisplayName(user, action);

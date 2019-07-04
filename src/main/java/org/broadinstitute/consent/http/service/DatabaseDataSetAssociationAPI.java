@@ -103,11 +103,11 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
         Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
         dataSetAssociations.stream().forEach(dsa ->{
-            User dataOwner = userDAO.findDACUserById(dsa.getDacuserId());
+            User dataOwner = userDAO.findUserById(dsa.getDacuserId());
             if(!dataOwnerDataSetMap.containsKey(dataOwner)){
-                dataOwnerDataSetMap.put(userDAO.findDACUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
+                dataOwnerDataSetMap.put(userDAO.findUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
             }else{
-                dataOwnerDataSetMap.get(userDAO.findDACUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
+                dataOwnerDataSetMap.get(userDAO.findUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
             }
         });
         return dataOwnerDataSetMap;
