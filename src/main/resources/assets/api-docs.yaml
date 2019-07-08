@@ -2832,6 +2832,9 @@ definitions:
       email:
         type: string
         description: Email of the user
+      emailPreference:
+        type: boolean
+        description: The user wants email notifications
       displayName:
         type: string
         description: Name of the user
@@ -2853,9 +2856,6 @@ definitions:
       name:
         type: string
         description: Name of the role
-      emailPreference:
-        type: boolean
-        description: The user wants email notifications
       status:
         type: string
         description: Status of the role, approved or not.

@@ -10,12 +10,13 @@ import java.sql.SQLException;
 public class DACUserMapper implements ResultSetMapper<DACUser> {
 
     public DACUser map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-
-        return new DACUser(
-                r.getInt("dacUserId"),
-                r.getString("email"),
-                r.getString("displayName"),
-                r.getDate("createDate"),
-                r.getString("additional_email"));
+        DACUser user = new DACUser();
+        user.setDacUserId(r.getInt("dacUserId"));
+        user.setEmail(r.getString("email"));
+        user.setEmailPreference(r.getBoolean("email_preference"));
+        user.setDisplayName(r.getString("displayName"));
+        user.setCreateDate(r.getDate("createDate"));
+        user.setAdditionalEmail(r.getString("additional_email"));
+        return user;
     }
 }

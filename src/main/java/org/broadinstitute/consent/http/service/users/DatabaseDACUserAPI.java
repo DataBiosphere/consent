@@ -353,9 +353,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         List<UserRole> roles = dacUser.getRoles();
         roles.forEach(r -> {
             r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
-            if (Objects.isNull(r.getEmailPreference())) {
-                r.setEmailPreference(true);
-            }
         });
         userRoleDAO.insertUserRoles(roles, dacUserId);
     }

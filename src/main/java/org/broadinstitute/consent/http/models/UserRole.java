@@ -12,9 +12,6 @@ public class UserRole {
     private String name;
 
     @JsonProperty
-    private Boolean emailPreference;
-
-    @JsonProperty
     private String status;
 
     @JsonProperty
@@ -24,25 +21,17 @@ public class UserRole {
     private Boolean profileCompleted;
 
 
-    public UserRole(){
+    public UserRole() {
     }
 
-    public UserRole(Integer roleId, String name){
+    public UserRole(Integer roleId, String name) {
         this.roleId = roleId;
         this.name = name;
-        this.emailPreference = true;
     }
 
-    public UserRole(Integer roleId, String name, Boolean emailPreference){
+    public UserRole(Integer roleId, String name, String rationale, String status) {
         this.roleId = roleId;
         this.name = name;
-        this.emailPreference = emailPreference;
-    }
-
-    public UserRole(Integer roleId, String name, Boolean emailPreference, String rationale, String status){
-        this.roleId = roleId;
-        this.name = name;
-        this.emailPreference = emailPreference;
         this.rationale = rationale;
         this.status = status;
     }
@@ -61,14 +50,6 @@ public class UserRole {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Boolean getEmailPreference() {
-        return emailPreference;
-    }
-
-    public void setEmailPreference(Boolean emailPreference) {
-        this.emailPreference = emailPreference;
     }
 
     public String getStatus() {
@@ -102,7 +83,9 @@ public class UserRole {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof UserRole)) { return false; }
+        if (!(o instanceof UserRole)) {
+            return false;
+        }
         UserRole otherConsent = (UserRole) o;
         return Objects.equal(this.getRoleId(), otherConsent.getRoleId());
     }

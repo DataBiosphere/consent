@@ -25,6 +25,9 @@ public class DACUser {
     @JsonProperty
     private List<UserRole> roles;
 
+    @JsonProperty
+    private Boolean emailPreference;
+
     public DACUser() {
     }
 
@@ -99,6 +102,14 @@ public class DACUser {
 
     public void setAdditionalEmail(String additionalEmail) {
         this.additionalEmail = additionalEmail;
+    }
+
+    public Boolean getEmailPreference() {
+        return emailPreference;
+    }
+
+    public void setEmailPreference(Boolean emailPreference) {
+        this.emailPreference = emailPreference;
     }
 
     @Override

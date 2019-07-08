@@ -1,0 +1,34 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="grushton" id="48.0-1">
+        <addColumn tableName="dacuser">
+            <column name="email_preference" type="boolean" defaultValueBoolean="true" />
+            <column name="status" type="int" defaultValue="0"/>
+            <column name="rationale" type="text"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="grushton" id="48.0-2">
+        <sql>
+            update dacuser set email_preference = true where dacUserId in (select user_id from user_role where email_preference = true)
+        </sql>
+        <sql>
+            update dacuser set status = 1 where dacUserId in (select user_id from user_role where status = 1)
+        </sql>
+        <sql>
+            update dacuser set status = 2 where dacUserId in (select user_id from user_role where status = 2)
+        </sql>
+        <sql>
+            update dacuser u
+            set u.rationale = (
+                select r.rationale
+                from user_role r
+                where r.user_id = u.dacUserId
+                and r.rationale is not null )
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

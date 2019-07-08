@@ -44,19 +44,19 @@ public class UserRoleDAOTest extends AbstractTest {
         // TODO: In concept, I don't like this approach and hope to migrate all db tests to be
         // independant of one another
         userRoleDAO.deleteAllUserRoles();
-        userRoleDAO.insertSingleUserRole(2, 1, false);
-        userRoleDAO.insertSingleUserRole(5, 1, false);
+        userRoleDAO.insertSingleUserRole(2, 1);
+        userRoleDAO.insertSingleUserRole(5, 1);
         userRoleDAO.updateUserRoleStatus(5, 1, 0, "");
-        userRoleDAO.insertSingleUserRole(1, 2, false);
-        userRoleDAO.insertSingleUserRole(1, 3, false);
-        userRoleDAO.insertSingleUserRole(1, 4, false);
-        userRoleDAO.insertSingleUserRole(4, 4, false);
-        userRoleDAO.insertSingleUserRole(6, 1, false);
-        userRoleDAO.insertSingleUserRole(6, 2, false);
-        userRoleDAO.insertSingleUserRole(6, 5, false);
-        userRoleDAO.insertSingleUserRole(5, 5, false);
-        userRoleDAO.insertSingleUserRole(4, 5, false);
-        userRoleDAO.insertSingleUserRole(2, 5, false);
+        userRoleDAO.insertSingleUserRole(1, 2);
+        userRoleDAO.insertSingleUserRole(1, 3);
+        userRoleDAO.insertSingleUserRole(1, 4);
+        userRoleDAO.insertSingleUserRole(4, 4);
+        userRoleDAO.insertSingleUserRole(6, 1);
+        userRoleDAO.insertSingleUserRole(6, 2);
+        userRoleDAO.insertSingleUserRole(6, 5);
+        userRoleDAO.insertSingleUserRole(5, 5);
+        userRoleDAO.insertSingleUserRole(4, 5);
+        userRoleDAO.insertSingleUserRole(2, 5);
     }
 
     @Before
@@ -104,7 +104,6 @@ public class UserRoleDAOTest extends AbstractTest {
     @Test
     public void testInsertUserRoles() {
         UserRole r = new UserRole();
-        r.setEmailPreference(false);
         r.setRoleId(1);
         userRoleDAO.insertUserRoles(Collections.singletonList(r), 1);
     }
@@ -132,14 +131,14 @@ public class UserRoleDAOTest extends AbstractTest {
         // No-op: tested in set up and tear down
     }
 
-    @Test
-    public void testUpdateEmailPreferenceUserRole() {
-        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(1);
-        currentRoles.forEach(r -> r.setEmailPreference(true));
-        currentRoles.forEach(r -> userRoleDAO.updateEmailPreferenceUserRole(r, 1));
-        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(1);
-        newRoles.forEach(r -> Assert.assertTrue(r.getEmailPreference()));
-    }
+//    @Test
+//    public void testUpdateEmailPreferenceUserRole() {
+//        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(1);
+//        currentRoles.forEach(r -> r.setEmailPreference(true));
+//        currentRoles.forEach(r -> userRoleDAO.updateEmailPreferenceUserRole(r, 1));
+//        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(1);
+//        newRoles.forEach(r -> Assert.assertTrue(r.getEmailPreference()));
+//    }
 
     @Test
     public void testRemoveSingleUserRole() {

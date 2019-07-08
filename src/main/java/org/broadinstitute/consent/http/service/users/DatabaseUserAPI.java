@@ -2,13 +2,17 @@ package org.broadinstitute.consent.http.service.users;
 
 import com.mongodb.BasicDBObject;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.PatchOperation;
@@ -16,8 +20,10 @@ import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+
 import javax.ws.rs.NotAuthorizedException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -117,17 +123,16 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
     }
 
     private void validateAndUpdateRoles(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user) throws UserRoleHandlerException {
-        Map<Integer, Integer>  rolesToRemove = new HashedMap();
-        Map<Integer, Integer>  rolesToAdd = new HashedMap();
+        Map<Integer, Integer> rolesToRemove = new HashMap<>();
+        Map<Integer, Integer> rolesToAdd = new HashMap<>();
         updateDataOwnerRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
         updateResearcherRole(existentRoles, newRoles, user, rolesToRemove, rolesToAdd);
-        rolesToRemove.forEach((userId,roleId)->{
-           userRoleDAO.removeSingleUserRole(userId, roleId);
-        });
-        rolesToAdd.forEach((userId,roleId) ->{
-            userRoleDAO.insertSingleUserRole(roleId,userId, false);
+        rolesToRemove.forEach(userRoleDAO::removeSingleUserRole);
+        rolesToAdd.forEach((userId, roleId) -> {
+            userRoleDAO.insertSingleUserRole(roleId, userId);
         });
     }
+
     private void updateDataOwnerRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
         boolean isDO = containsRole(existentRoles, UserRoles.DATAOWNER.getValue());
         boolean isNewDO = containsRole(newRoles, UserRoles.DATAOWNER.getValue());

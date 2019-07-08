@@ -173,7 +173,7 @@ public class DatabaseUserAPITest {
         when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(existentUser);
         when(dacUserDAO.findDACUserById(1)).thenReturn(existentUser);
         userAPI.updateUser(dacUser, EMAIL);
-        verify(userRoleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt(), anyBoolean());
+        verify(userRoleDAO, times(1)).insertSingleUserRole(anyInt(), anyInt());
         verify(dacUserDAO, times(1)).updateDACUser(DISPLAY_NAME, 1);
     }
 

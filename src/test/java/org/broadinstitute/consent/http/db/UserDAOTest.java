@@ -196,13 +196,15 @@ public class UserDAOTest extends AbstractTest {
     public void testDescribeUsersByRoleAndEmailPreference() {
         String email = getRandomEmailAddress();
         Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
-        userRoleDAO.insertSingleUserRole(5, userId, true);
+        userDAO.updateEmailPreference(true, userId);
+        userRoleDAO.insertSingleUserRole(5, userId);
         Collection<DACUser> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
         Assert.assertFalse(researchers.isEmpty());
 
         String email2 = getRandomEmailAddress();
         Integer userId2 = userDAO.insertDACUser(email2, "Dac User Test", new Date());
-        userRoleDAO.insertSingleUserRole(6, userId2, false);
+        userDAO.updateEmailPreference(false, userId2);
+        userRoleDAO.insertSingleUserRole(6, userId2);
         Collection<DACUser> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
         Assert.assertFalse(dataOwners.isEmpty());
     }
