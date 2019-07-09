@@ -38,6 +38,11 @@ public class UserRole {
         this.status = status;
     }
 
+    /**
+     * Convenience method for backwards compatibility support for older clients.
+     *
+     * @param json A json string that may or may not be correctly structured as a UserRole
+     */
     public UserRole(String json) {
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
         if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {

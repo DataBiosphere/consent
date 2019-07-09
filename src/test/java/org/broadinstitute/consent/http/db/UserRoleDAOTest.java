@@ -131,15 +131,6 @@ public class UserRoleDAOTest extends AbstractTest {
         // No-op: tested in set up and tear down
     }
 
-//    @Test
-//    public void testUpdateEmailPreferenceUserRole() {
-//        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(1);
-//        currentRoles.forEach(r -> r.setEmailPreference(true));
-//        currentRoles.forEach(r -> userRoleDAO.updateEmailPreferenceUserRole(r, 1));
-//        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(1);
-//        newRoles.forEach(r -> Assert.assertTrue(r.getEmailPreference()));
-//    }
-
     @Test
     public void testRemoveSingleUserRole() {
         List<UserRole> userRoles = userRoleDAO.findRolesByUserId(2);

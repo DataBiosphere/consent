@@ -140,7 +140,7 @@ public class DACUserResource extends Resource {
     }
 
     /**
-     * For backwards compatibility, we are manually handling the user role construction
+     * For backwards compatibility with older clients, we manually handle the UserRole construction
      * instead of relying on Jersey to enforce object correctness.
      *
      * @param userId The DACUserId

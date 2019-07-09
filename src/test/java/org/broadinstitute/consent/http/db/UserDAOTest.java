@@ -247,6 +247,14 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertEquals(user.getDisplayName(), "Updated Dac User Test");
     }
 
+    @Test
+    public void testUpdateEmailPreference() {
+        userDAO.findUsers().forEach(u -> userDAO.updateEmailPreference(true, u.getDacUserId()));
+        userDAO.findUsers().forEach(u -> Assert.assertTrue(u.getEmailPreference()));
+
+        userDAO.findUsers().forEach(u -> userDAO.updateEmailPreference(false, u.getDacUserId()));
+        userDAO.findUsers().forEach(u -> Assert.assertFalse(u.getEmailPreference()));
+    }
 
     private String getRandomEmailAddress() {
         String user = RandomStringUtils.randomAlphanumeric(20);
