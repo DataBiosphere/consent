@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserRole {
 
@@ -45,20 +47,41 @@ public class UserRole {
      */
     public UserRole(String json) {
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
-            this.setStatus(jsonObject.get("status").getAsString());
-        }
+        Logger log = LoggerFactory.getLogger(UserRole.class.getName());
         if (jsonObject.has("roleId") && !jsonObject.get("roleId").isJsonNull()) {
-            this.setRoleId(jsonObject.get("roleId").getAsInt());
+            try {
+                this.setRoleId(jsonObject.get("roleId").getAsInt());
+            } catch (Exception e) {
+                log.debug(e.getMessage());
+            }
         }
         if (jsonObject.has("name") && !jsonObject.get("name").isJsonNull()) {
-            this.setName(jsonObject.get("name").getAsString());
+            try {
+                this.setName(jsonObject.get("name").getAsString());
+            } catch (Exception e) {
+                log.debug(e.getMessage());
+            }
+        }
+        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
+            try {
+                this.setStatus(jsonObject.get("status").getAsString());
+            } catch (Exception e) {
+                log.debug(e.getMessage());
+            }
         }
         if (jsonObject.has("rationale") && !jsonObject.get("rationale").isJsonNull()) {
-            this.setRationale(jsonObject.get("rationale").getAsString());
+            try {
+                this.setRationale(jsonObject.get("rationale").getAsString());
+            } catch (Exception e) {
+                log.debug(e.getMessage());
+            }
         }
         if (jsonObject.has("profileCompleted") && !jsonObject.get("profileCompleted").isJsonNull()) {
-            this.setProfileCompleted(jsonObject.get("profileCompleted").getAsBoolean());
+            try {
+                this.setProfileCompleted(jsonObject.get("profileCompleted").getAsBoolean());
+            } catch (Exception e) {
+                log.debug(e.getMessage());
+            }
         }
     }
 
