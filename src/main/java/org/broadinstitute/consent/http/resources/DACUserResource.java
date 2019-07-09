@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -49,7 +49,7 @@ public class DACUserResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed(ADMIN)
-    public Response createdDACUser(@Context UriInfo info, DACUser dac) {
+    public Response createDACUser(@Context UriInfo info, DACUser dac) {
         URI uri;
         DACUser dacUser;
         try {
@@ -139,15 +139,24 @@ public class DACUserResource extends Resource {
         }
     }
 
+    /**
+     * For backwards compatibility, we are manually handling the user role construction
+     * instead of relying on Jersey to enforce object correctness.
+     *
+     * @param userId The DACUserId
+     * @param json   A UserRole object that may or may not be correctly formed
+     * @return An appropriate response
+     */
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response updateStatus(@PathParam("userId") Integer userId, UserRole userRole) {
+    public Response updateStatus(@PathParam("userId") Integer userId, String json) {
+        UserRole userRole = new UserRole(json);
         try {
             return Response.ok(dacUserAPI.updateRoleStatus(userRole, userId)).build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

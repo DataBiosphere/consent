@@ -845,7 +845,7 @@ paths:
           description: Internal Server Error
   /api/dacuser:
     post:
-      summary: createdDACUser
+      summary: createDACUser
       description: Creates a DAC User
       parameters:
         - name: dac
@@ -2834,7 +2834,7 @@ definitions:
         description: Email of the user
       emailPreference:
         type: boolean
-        description: The user wants email notifications
+        description: The user wants email notifications.
       displayName:
         type: string
         description: Name of the user
@@ -2845,8 +2845,8 @@ definitions:
       roles:
         type: array
         items:
-          $ref: '#/definitions/DACUserRole'
-  DACUserRole:
+          $ref: '#/definitions/UserRole'
+  UserRole:
     type: object
     properties:
       roleId:
@@ -2856,6 +2856,9 @@ definitions:
       name:
         type: string
         description: Name of the role
+      emailPreference:
+        type: boolean
+        description: Deprecated. See DACUser.emailPreference
       status:
         type: string
         description: Status of the role, approved or not.

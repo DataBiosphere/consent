@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
@@ -165,7 +165,7 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Test
-    public void testUpdateStatusUsrNotFound() throws IOException {
+    public void testUpdateStatusUserNotFound() throws IOException {
         Client client = ClientBuilder.newClient();
         UserRole role = new UserRole();
         role.setStatus(RoleStatus.REJECTED.name());

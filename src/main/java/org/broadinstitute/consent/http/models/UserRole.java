@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class UserRole {
 
@@ -34,6 +36,25 @@ public class UserRole {
         this.name = name;
         this.rationale = rationale;
         this.status = status;
+    }
+
+    public UserRole(String json) {
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
+            this.setStatus(jsonObject.get("status").getAsString());
+        }
+        if (jsonObject.has("roleId") && !jsonObject.get("roleId").isJsonNull()) {
+            this.setRoleId(jsonObject.get("roleId").getAsInt());
+        }
+        if (jsonObject.has("name") && !jsonObject.get("name").isJsonNull()) {
+            this.setName(jsonObject.get("name").getAsString());
+        }
+        if (jsonObject.has("rationale") && !jsonObject.get("rationale").isJsonNull()) {
+            this.setRationale(jsonObject.get("rationale").getAsString());
+        }
+        if (jsonObject.has("profileCompleted") && !jsonObject.get("profileCompleted").isJsonNull()) {
+            this.setProfileCompleted(jsonObject.get("profileCompleted").getAsBoolean());
+        }
     }
 
     public Integer getRoleId() {
