@@ -2867,9 +2867,6 @@ definitions:
       name:
         type: string
         description: Name of the role
-      emailPreference:
-        type: boolean
-        description: Deprecated. See DACUser.emailPreference
       status:
         type: string
         description: Status of the role, approved or not.
