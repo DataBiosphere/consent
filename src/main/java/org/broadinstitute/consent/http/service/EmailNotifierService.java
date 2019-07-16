@@ -130,7 +130,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
-            List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            List<DACUser> users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isEmpty(users)) return;
             List<Integer> usersId = users.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
             Map<String, String> data = retrieveForNewDAR(dataAccessRequestId);
@@ -210,7 +210,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                 String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
                 reviewedDatasets.put(dar_code, dsElections);
             }
-            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "", SERVER_URL);
                 mailService.sendClosedDatasetElectionsMessage(getEmails(users), "", "", template);
@@ -253,7 +253,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
         DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
-        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+        List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
         if(isServiceActive){
             String researcherProfileURL = SERVER_URL + REVIEW_RESEARCHER_URL + "/" + createdResearcher.getDacUserId().toString();
             for(DACUser admin: admins){
@@ -266,7 +266,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     @Override
     public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
-            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isNotEmpty(users)) {
                 Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
                 mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());

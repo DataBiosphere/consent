@@ -124,11 +124,11 @@ public class DACUserTest extends DACUserServiceTest {
         DACUser user = getJson(client, dacUserPathByEmail(DAC_USER_EMAIL)).readEntity(DACUser.class);
         user.setEmail(DAC_USER_EMAIL);
         UserRole role = new UserRole();
-        role.setName(UserRoles.MEMBER.getValue());
+        role.setName(UserRoles.MEMBER.getRoleName());
         user.setRoles(new ArrayList<>(Arrays.asList(role)));
         Map<String, Object> updateUserMap = new HashMap<>();
         updateUserMap.put("updatedUser",user);
-        HashMap response = post(client, validateDelegationPath(UserRoles.MEMBER.getValue()), user).readEntity(HashMap.class);
+        HashMap response = post(client, validateDelegationPath(UserRoles.MEMBER.getRoleName()), user).readEntity(HashMap.class);
         boolean needsDelegation = (Boolean)response.get("needsDelegation");
         List<DACUser> dacUsers = (List<DACUser>)response.get("delegateCandidates");
         assertThat(dacUsers).isEmpty();
@@ -159,7 +159,7 @@ public class DACUserTest extends DACUserServiceTest {
         checkStatus(OK, response);
         DACUser user = response.readEntity(DACUser.class);
         UserRole researcher = user.getRoles().stream().filter(userRole ->
-                userRole.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getValue()))
+                userRole.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))
                 .findFirst().get();
         assertThat(researcher.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
     }

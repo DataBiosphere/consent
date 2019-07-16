@@ -175,7 +175,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
         Collection<DataSetDTO> dataSetDTOList;
-        if (userIs(UserRoles.RESEARCHER.getValue(), dacUserId)) {
+        if (userIs(UserRoles.RESEARCHER.getRoleName(), dacUserId)) {
             dataSetDTOList = dsDAO.findDataSetsForResearcher();
         } else {
 
@@ -195,7 +195,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 datasetsAssociatedToOpenElections = accessAPI.getDatasetsInDARs(dataAccessElectionsReferenceId);
             }
             dataSetDTOList = dsDAO.findDataSets();
-            if (userIs(UserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
+            if (userIs(UserRoles.ADMIN.getRoleName(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
                 List<Integer> dataSetIdList = new ArrayList<>();
 

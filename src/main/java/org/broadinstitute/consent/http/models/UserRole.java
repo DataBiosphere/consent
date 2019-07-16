@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +85,12 @@ public class UserRole {
                 log.debug(e.getMessage());
             }
         }
+        if (this.getRoleId() == null) {
+            UserRoles r = UserRoles.getUserRoleFromName(this.getName());
+            if (r != null) {
+                this.setRoleId(r.getRoleId());
+            }
+        }
     }
 
     public Integer getRoleId() {
@@ -139,5 +147,9 @@ public class UserRole {
         return Objects.equal(this.getRoleId(), otherConsent.getRoleId());
     }
 
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
+    }
 
 }

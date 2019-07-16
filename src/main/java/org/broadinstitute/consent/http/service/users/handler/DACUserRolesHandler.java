@@ -33,17 +33,21 @@ import java.util.stream.Collectors;
 
 public class DACUserRolesHandler extends AbstractUserRolesHandler {
 
+    public static final String UPDATED_USER_KEY = "updatedUser";
+    public static final String DELEGATED_USER_KEY = "userToDelegate";
+    public static final String ALTERNATIVE_OWNER_KEY = "alternativeDataOwnerUser";
+
     private final DACUserDAO dacUserDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserRoleDAO userRoleDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
-    private final String MEMBER = UserRoles.MEMBER.getValue();
-    private final String ADMIN = UserRoles.ADMIN.getValue();
-    private final String CHAIRPERSON = UserRoles.CHAIRPERSON.getValue();
-    private final String RESEARCHER = UserRoles.RESEARCHER.getValue();
-    private final String DATA_OWNER = UserRoles.DATAOWNER.getValue();
-    private final String ALUMNI = UserRoles.ALUMNI.getValue();
+    private final String MEMBER = UserRoles.MEMBER.getRoleName();
+    private final String ADMIN = UserRoles.ADMIN.getRoleName();
+    private final String CHAIRPERSON = UserRoles.CHAIRPERSON.getRoleName();
+    private final String RESEARCHER = UserRoles.RESEARCHER.getRoleName();
+    private final String DATA_OWNER = UserRoles.DATAOWNER.getRoleName();
+    private final String ALUMNI = UserRoles.ALUMNI.getRoleName();
     private final Map<String, Integer> roleIdMap;
     private final EmailNotifierAPI emailNotifierAPI;
     private final DataAccessRequestAPI dataAccessRequestAPI;
@@ -89,9 +93,9 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         try {
             userRoleDAO.begin();
             voteDAO.begin();
-            boolean delegateMember = usersMap.containsKey("userToDelegate");
-            boolean delegateOwner = usersMap.containsKey("alternativeDataOwnerUser");
-            updatedUser = usersMap.get("updatedUser");
+            boolean delegateMember = usersMap.containsKey(DELEGATED_USER_KEY);
+            boolean delegateOwner = usersMap.containsKey(ALTERNATIVE_OWNER_KEY);
+            updatedUser = usersMap.get(UPDATED_USER_KEY);
             // roles as should be ..
             List<UserRole> updatedRoles = updatedUser.getRoles();
 
@@ -148,7 +152,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                         break;
                     case MEMBER:
                         assignNewRole(updatedUser, new UserRole(roleIdMap.get(MEMBER), MEMBER));
-                        dacUserDAO.updateEmailPreference(true, updatedUser.getDacUserId());
                         break;
                     case ALUMNI:
                         if (containsAnyRole(updatedRoles, new String[]{MEMBER, CHAIRPERSON})) {
@@ -156,7 +159,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                                     + " [Member] or [Chairperson] that is incompatible with the role you want to assign.");
                         } else {
                             assignNewRole(updatedUser, new UserRole(roleIdMap.get(ALUMNI), ALUMNI));
-                            dacUserDAO.updateEmailPreference(true, updatedUser.getDacUserId());
                         }
                         break;
                     case ADMIN:
@@ -169,12 +171,10 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                                     + " [Member] or [Chairperson] that is incompatible with the role you want to assign.");
                         } else {
                             assignNewRole(updatedUser, new UserRole(roleIdMap.get(RESEARCHER), RESEARCHER));
-                            dacUserDAO.updateEmailPreference(true, updatedUser.getDacUserId());
                         }
                         break;
                     case DATAOWNER:
                         assignNewRole(updatedUser, new UserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER));
-                        dacUserDAO.updateEmailPreference(true, updatedUser.getDacUserId());
                         break;
                 }
             }
@@ -195,7 +195,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (delegate) {
             assignNewRole(doUserToDelegate, new UserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER));
-            dacUserDAO.updateEmailPreference(true, doUserToDelegate.getDacUserId());
             verifyAndDelegateElections(updatedUser, doUserToDelegate, openElectionIdsForThisUser, 1, VoteType.DATA_OWNER.getValue());
             updateDataSetsOwnership(updatedUser, doUserToDelegate);
         } else {
@@ -261,9 +260,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         if (currentChairPerson != null) {
             removeRole(currentChairPerson.getDacUserId(), CHAIRPERSON);
             addRole(currentChairPerson.getDacUserId(), new UserRole(roleIdMap.get(ALUMNI), ALUMNI));
-            dacUserDAO.updateEmailPreference(true, currentChairPerson.getDacUserId());
             addRole(newChairperson.getDacUserId(), new UserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON));
-            dacUserDAO.updateEmailPreference(true, newChairperson.getDacUserId());
             delegateChairPersonVotes(currentChairPerson.getDacUserId(), newChairperson.getDacUserId());
         }
     }
@@ -378,7 +375,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                 removeRole(newChairPerson.getDacUserId(), MEMBER);
             }
             assignNewRole(newChairPerson, new UserRole(roleIdMap.get(CHAIRPERSON), CHAIRPERSON));
-            dacUserDAO.updateEmailPreference(true, newChairPerson.getDacUserId());
 
             // update DATA_ACCESS elections status from FINAL to OPEN.
             List<Integer> toUpdateFinalStatusElections = electionDAO.findElectionsIdByTypeAndStatus(
@@ -401,7 +397,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         if (delegateMember) {
             verifyAndDelegateElections(oldMember, newMember, openDULElectionIdsForThisUser, 4, VoteType.DAC.getValue());
             assignNewRole(newMember, new UserRole(roleIdMap.get(MEMBER), MEMBER));
-            dacUserDAO.updateEmailPreference(true, newMember.getDacUserId());
             if (containsAnyRole(newMember.getRoles(), new String[]{ALUMNI})) {
                 removeAlumni(newMember);
             }

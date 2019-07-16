@@ -340,7 +340,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
             dacUsers.addAll(dacUserDAO.findUsers(userIds));
         } else {
-            dacUsers =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getValue(), true);
+            dacUsers =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
         }
         return dacUsers;
     }

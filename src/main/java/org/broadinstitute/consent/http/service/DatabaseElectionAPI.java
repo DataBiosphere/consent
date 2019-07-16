@@ -660,7 +660,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             }
             boolean chairpersonExists = dacUsers.stream()
                     .flatMap(u -> u.getRoles().stream())
-                    .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getValue()));
+                    .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()));
             if (!chairpersonExists) {
                 throw new IllegalArgumentException("There has to be a Chairperson.");
             }

@@ -76,7 +76,7 @@ public class UserDAOTest extends AbstractTest {
                 map(UserRole::getName).
                 map(String::toLowerCase).
                 collect(Collectors.toList());
-        Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getValue().toLowerCase()));
+        Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getRoleName().toLowerCase()));
     }
 
     @Test

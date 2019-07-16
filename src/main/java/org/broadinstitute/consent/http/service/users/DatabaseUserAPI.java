@@ -112,9 +112,9 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
     private void validateRoles(List<UserRole> roles) {
         if (CollectionUtils.isNotEmpty(roles)) {
             roles.forEach(role -> {
-                if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue())
-                        || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getValue()))) {
-                    throw new IllegalArgumentException("Invalid role: " + role.getName() + ". Valid roles are: " + UserRoles.DATAOWNER.getValue() + " and " + UserRoles.RESEARCHER.getValue());
+                if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
+                        || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
+                    throw new IllegalArgumentException("Invalid role: " + role.getName() + ". Valid roles are: " + UserRoles.DATAOWNER.getRoleName() + " and " + UserRoles.RESEARCHER.getRoleName());
                 }
             });
         }else{
@@ -134,8 +134,8 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
     }
 
     private void updateDataOwnerRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
-        boolean isDO = containsRole(existentRoles, UserRoles.DATAOWNER.getValue());
-        boolean isNewDO = containsRole(newRoles, UserRoles.DATAOWNER.getValue());
+        boolean isDO = containsRole(existentRoles, UserRoles.DATAOWNER.getRoleName());
+        boolean isNewDO = containsRole(newRoles, UserRoles.DATAOWNER.getRoleName());
         //remove data owner
         if (isDO && !isNewDO) {
             if (hasDataSetAssociation(user)) {
@@ -145,19 +145,19 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
                 throw new UserRoleHandlerException("Role can not be removed. There are open dataset elections for this user.");
             }
             else{
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
+                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getRoleName()));
             }
         }
         //add data owner
         if (!isDO && isNewDO) {
-            rolesToAdd.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getValue()));
+            rolesToAdd.put(user.getDacUserId(), roleIdMap.get(UserRoles.DATAOWNER.getRoleName()));
 
         }
     }
 
     private void updateResearcherRole(List<UserRole> existentRoles, List<UserRole> newRoles, DACUser user, Map<Integer, Integer>  rolesToRemove, Map<Integer, Integer>  rolesToAdd) throws UserRoleHandlerException {
-        boolean isResearcher = containsRole(existentRoles, UserRoles.RESEARCHER.getValue());
-        boolean isNewResearcher = containsRole(newRoles, UserRoles.RESEARCHER.getValue());
+        boolean isResearcher = containsRole(existentRoles, UserRoles.RESEARCHER.getRoleName());
+        boolean isNewResearcher = containsRole(newRoles, UserRoles.RESEARCHER.getRoleName());
         //remove researcher
         if (isResearcher && !isNewResearcher) {
             BasicDBObject query = new BasicDBObject(DarConstants.STATUS, new BasicDBObject("$ne",ElectionStatus.CANCELED.getValue()));
@@ -166,15 +166,15 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
             if (dar != null) {
                 throw new UserRoleHandlerException("Role can not be removed. The specified user has open DAR.");
             }else{
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
+                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getRoleName()));
             }
         }
         //add researcher
         if (!isResearcher && isNewResearcher) {
-            if (containsRole(existentRoles, UserRoles.CHAIRPERSON.getValue()) || containsRole(existentRoles, UserRoles.MEMBER.getValue())) {
+            if (containsRole(existentRoles, UserRoles.CHAIRPERSON.getRoleName()) || containsRole(existentRoles, UserRoles.MEMBER.getRoleName())) {
                 throw new UserRoleHandlerException("Role can not be added. Researcher  is incompatible with  Member and Chairperson role.");
             } else {
-                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getValue()));
+                rolesToRemove.put(user.getDacUserId(), roleIdMap.get(UserRoles.RESEARCHER.getRoleName()));
             }
         }
     }

@@ -1,11 +1,21 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DACUser {
+
+    private static final Logger logger = LoggerFactory.getLogger(DACUser.class.getName());
 
     @JsonProperty
     private Integer dacUserId;
@@ -54,6 +64,61 @@ public class DACUser {
         this.createDate = createDate;
         this.roles = roles;
         this.additionalEmail = additionalEmail;
+    }
+
+    /**
+     * Convenience method for backwards compatibility support for older clients.
+     *
+     * @param json A json string that may or may not be correctly structured as a DACUser
+     */
+    public DACUser(String json) {
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        if (jsonObject.has("dacUserId") && !jsonObject.get("dacUserId").isJsonNull()) {
+            try {
+                this.setDacUserId(jsonObject.get("dacUserId").getAsInt());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
+        if (jsonObject.has("email") && !jsonObject.get("email").isJsonNull()) {
+            try {
+                this.setEmail(jsonObject.get("email").getAsString());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
+        if (jsonObject.has("displayName") && !jsonObject.get("displayName").isJsonNull()) {
+            try {
+                this.setDisplayName(jsonObject.get("displayName").getAsString());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
+        if (jsonObject.has("additionalEmail") && !jsonObject.get("additionalEmail").isJsonNull()) {
+            try {
+                this.setAdditionalEmail(jsonObject.get("additionalEmail").getAsString());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
+        if (jsonObject.has("emailPreference") && !jsonObject.get("emailPreference").isJsonNull()) {
+            try {
+                this.setEmailPreference(jsonObject.get("emailPreference").getAsBoolean());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
+        if (jsonObject.has("roles") && !jsonObject.get("roles").isJsonNull()) {
+            this.setRoles(new ArrayList<>());
+            try {
+                jsonObject.get("roles").getAsJsonArray().forEach(jsonElement ->
+                {
+                    this.getRoles().add(new UserRole(jsonElement.toString()));
+                });
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
     }
 
     public Integer getDacUserId() {
@@ -129,4 +194,10 @@ public class DACUser {
         DACUser other = (DACUser) obj;
         return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
     }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
+    }
+
 }
