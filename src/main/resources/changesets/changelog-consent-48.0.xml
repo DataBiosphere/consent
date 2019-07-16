@@ -8,11 +8,12 @@
         <addColumn tableName="dacuser">
             <column name="email_preference" type="boolean" defaultValueBoolean="true" />
         </addColumn>
-    </changeSet>
-    <changeSet author="grushton" id="48.0-2">
         <sql>
             update dacuser set email_preference = false where dacUserId in (select distinct user_id from user_role where email_preference = false)
         </sql>
+        <rollback>
+            <dropColumn tableName="dacuser" columnName="email_preference" />
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

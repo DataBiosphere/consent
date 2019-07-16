@@ -159,14 +159,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    /**
-     * For backwards compatibility with older clients, we manually handle the UserRole construction
-     * instead of relying on Jersey to enforce object correctness.
-     *
-     * @param userId The DACUserId
-     * @param json   A UserRole object that may or may not be correctly formed
-     * @return An appropriate response
-     */
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")
@@ -230,8 +222,9 @@ public class DACUserResource extends Resource {
         Optional<Boolean> aBoolean = Optional.empty();
         try {
             JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-            if (jsonObject.has("updatedUser") && !jsonObject.get("updatedUser").isJsonNull()) {
-                JsonObject userObj = jsonObject.get("updatedUser").getAsJsonObject();
+            JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+            if (updateUser != null && !updateUser.isJsonNull()) {
+                JsonObject userObj = updateUser.getAsJsonObject();
                 if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
                     List<JsonElement> rolesElements = new ArrayList<>();
                     userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
