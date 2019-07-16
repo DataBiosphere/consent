@@ -4,6 +4,7 @@ import com.vividsolutions.jts.util.Assert;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -61,6 +62,7 @@ public class DataAccessParserTest {
                 fillDARForm(
                         populateDocument(),
                         populateProps(),
+                        populateUser(),
                         populateRole(),
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
@@ -112,6 +114,7 @@ public class DataAccessParserTest {
                 fillDARForm(
                         populateDocument(),
                         props,
+                        populateUser(),
                         populateRole(),
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
@@ -133,9 +136,14 @@ public class DataAccessParserTest {
         return datasetDetails;
     }
 
+    private DACUser populateUser() {
+        DACUser user = new DACUser();
+        user.setStatus("approved");
+        return user;
+    }
+
     private UserRole populateRole() {
         UserRole role = new UserRole();
-        role.setStatus("approved");
         role.setRationale("granted bonafide");
         return role;
     }

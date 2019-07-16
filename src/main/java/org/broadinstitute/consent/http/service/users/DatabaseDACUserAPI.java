@@ -151,13 +151,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateRoleStatus(UserRole userRole, Integer userId) {
-        Integer statusId = RoleStatus.getValueByStatus(userRole.getStatus());
+    public DACUser updateUserStatus(String status, Integer userId) {
+        Integer statusId = RoleStatus.getValueByStatus(status);
         validateExistentUserById(userId);
         if (statusId == null) {
-            throw new IllegalArgumentException(userRole.getStatus() + " is not a valid status.");
+            throw new IllegalArgumentException(status + " is not a valid status.");
         }
-        userRoleDAO.updateUserRoleStatus(userId, userRole.getRoleId(), statusId, userRole.getRationale());
+        dacUserDAO.updateUserStatus(statusId, userId);
         return describeDACUserById(userId);
     }
 
@@ -169,13 +169,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         }
         dacUserDAO.updateDACUser(user.getDisplayName(), id);
         return describeDACUserById(id);
-    }
-
-    @Override
-    public UserRole getRoleStatus(Integer userId) {
-        validateExistentUserById(userId);
-        Integer roleId = roleIdMap.get(UserRoles.RESEARCHER.getRoleName());
-        return userRoleDAO.findRoleByUserIdAndRoleId(userId, roleId);
     }
 
     private List<DACUser> findDacUserReplacementCandidates(DACUser user) {

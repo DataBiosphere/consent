@@ -19,23 +19,23 @@ public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
     public DACUser map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         DACUser user;
         if (index == 0 || !users.containsKey(r.getInt("dacUserId"))) {
-            user = new DACUser(r.getInt("dacUserId"),
-                    r.getString("email"),
-                    r.getString("displayName"),
-                    null,
-                    r.getDate("createDate"), new ArrayList<>(),
-                    r.getString("additional_email"));
+            user = new DACUser();
+            user.setDacUserId(r.getInt("dacUserId"));
+            user.setEmail(r.getString("email"));
+            user.setDisplayName(r.getString("displayName"));
+            user.setCreateDate(r.getDate("createDate"));
+            user.setAdditionalEmail(r.getString("additional_email"));
             user.setEmailPreference(r.getBoolean("email_preference"));
-            String status = getStatus(r);
+            user.setStatus(getStatus(r));
+            user.setRoles(new ArrayList<>());
             // See DUOS-393 - we should not be setting these things to null
-            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null, status);
+            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null);
             user.getRoles().add(role);
             users.put(user.getDacUserId(), user);
         } else {
             user = users.get(r.getInt("dacUserId"));
-            String status = getStatus(r);
             // See DUOS-393 - we should not be setting these things to null
-            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null, status);
+            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null);
             user.getRoles().add(role);
         }
         return user;
@@ -48,6 +48,5 @@ public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
             return null;
         }
     }
-
 
 }

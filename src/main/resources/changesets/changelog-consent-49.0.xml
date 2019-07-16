@@ -1,0 +1,22 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="grushton" id="49.0">
+        <addColumn tableName="dacuser">
+            <column name="status" type="int" defaultValue="0"/>
+        </addColumn>
+        <sql>
+            update dacuser set status = 1 where dacUserId in (select user_id from user_role where status = 1)
+        </sql>
+        <sql>
+            update dacuser set status = 2 where dacUserId in (select user_id from user_role where status = 2)
+        </sql>
+        <rollback>
+            <dropColumn tableName="dacuser" columnName="status" />
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

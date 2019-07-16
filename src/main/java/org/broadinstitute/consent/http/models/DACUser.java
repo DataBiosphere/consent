@@ -38,6 +38,9 @@ public class DACUser {
     @JsonProperty
     private Boolean emailPreference;
 
+    @JsonProperty
+    private String status;
+
     public DACUser() {
     }
 
@@ -119,6 +122,13 @@ public class DACUser {
                 logger.debug(e.getMessage());
             }
         }
+        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
+            try {
+                this.setStatus(jsonObject.get("status").getAsString());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
     }
 
     public Integer getDacUserId() {
@@ -175,6 +185,14 @@ public class DACUser {
 
     public void setEmailPreference(Boolean emailPreference) {
         this.emailPreference = emailPreference;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @Override

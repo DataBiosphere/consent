@@ -6,6 +6,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -21,6 +22,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
 
 public class UserDAOTest extends AbstractTest {
 
@@ -254,6 +257,19 @@ public class UserDAOTest extends AbstractTest {
 
         userDAO.findUsers().forEach(u -> userDAO.updateEmailPreference(false, u.getDacUserId()));
         userDAO.findUsers().forEach(u -> Assert.assertFalse(u.getEmailPreference()));
+    }
+
+    @Test
+    public void testUpdateUserStatus() {
+        int userId = 5;
+        Integer roleStatusId = RoleStatus.getValueByStatus(RoleStatus.APPROVED.name());
+        String roleStatusName = getStatusByValue(roleStatusId);
+        userDAO.updateUserStatus(roleStatusId, userId);
+        DACUser user = userDAO.findDACUserById(userId);
+        Assert.assertNotNull(user);
+        System.out.println(user.toString());
+        System.out.println(roleStatusName);
+        Assert.assertEquals(user.getStatus(), roleStatusName);
     }
 
     private String getRandomEmailAddress() {

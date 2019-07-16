@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -145,41 +146,36 @@ public class DACUserTest extends DACUserServiceTest {
     public void testGetUserStatusSuccess() throws IOException {
         Client client = ClientBuilder.newClient();
         Response response = getJson(client, statusValue(1));
-        UserRole userRole = response.readEntity(UserRole.class);
-        assertThat(userRole.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
+        DACUser user = response.readEntity(DACUser.class);
+        Assert.assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
     }
 
     @Test
     public void testUpdateStatus() throws IOException {
         Client client = ClientBuilder.newClient();
-        UserRole role = new UserRole();
-        role.setRoleId(5);
-        role.setStatus(RoleStatus.APPROVED.name());
-        Response response = put(client, statusValue(1), role);
+        DACUser postUser = new DACUser();
+        postUser.setStatus(RoleStatus.APPROVED.name());
+        Response response = put(client, statusValue(1), postUser);
         checkStatus(OK, response);
         DACUser user = response.readEntity(DACUser.class);
-        UserRole researcher = user.getRoles().stream().filter(userRole ->
-                userRole.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))
-                .findFirst().get();
-        assertThat(researcher.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
+        Assert.assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
     }
 
     @Test
     public void testUpdateStatusUserNotFound() throws IOException {
         Client client = ClientBuilder.newClient();
-        UserRole role = new UserRole();
-        role.setStatus(RoleStatus.REJECTED.name());
-        Response response = put(client, statusValue(10), role);
+        DACUser postUser = new DACUser();
+        postUser.setStatus(RoleStatus.REJECTED.name());
+        Response response = put(client, statusValue(10), postUser);
         checkStatus(NOT_FOUND, response);
     }
 
     @Test
     public void testUpdateStatusBadRequest() throws IOException {
         Client client = ClientBuilder.newClient();
-        UserRole role = new UserRole();
-        role.setRoleId(11);
-        role.setStatus("Test");
-        Response response = put(client, statusValue(4), role);
+        DACUser postUser = new DACUser();
+        postUser.setStatus("Test");
+        Response response = put(client, statusValue(4), postUser);
         checkStatus(BAD_REQUEST, response);
     }
 

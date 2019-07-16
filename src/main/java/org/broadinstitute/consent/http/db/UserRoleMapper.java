@@ -12,7 +12,6 @@ public class UserRoleMapper implements ResultSetMapper<UserRole> {
         return new UserRole(
                 r.getInt("role_id"),
                 r.getString("name"),
-                r.getString("rationale"),
-                RoleStatus.getStatusByValue(r.getInt("status")));
+                r.getString("rationale"));
     }
 }

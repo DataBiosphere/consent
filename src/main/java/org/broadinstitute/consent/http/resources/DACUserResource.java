@@ -162,20 +162,25 @@ public class DACUserResource extends Resource {
         }
     }
 
+    // TODO: Undocumented
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
-        UserRole userRole = new UserRole(json);
-        try {
-            return Response.ok(dacUserAPI.updateRoleStatus(userRole, userId)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
+        Optional<String> statusOpt = getStatusFromUserRoleJson(json);
+        if (statusOpt.isPresent()) {
+            try {
+                return Response.ok(dacUserAPI.updateUserStatus(statusOpt.get(), userId)).build();
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
         }
+        return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
     }
 
+    // TODO: Undocumented
     @GET
     @Path("/status/{userId}")
     @Consumes("application/json")
@@ -183,7 +188,7 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
-            return Response.ok(dacUserAPI.getRoleStatus(userId)).build();
+            return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -213,6 +218,25 @@ public class DACUserResource extends Resource {
             }
         }
         return isChairPerson;
+    }
+
+    /**
+     * Convenience method to find the status from legacy json structure.
+     *
+     * @param json Raw json string from client
+     * @return Optional value of "status"
+     */
+    private Optional<String> getStatusFromUserRoleJson(String json) {
+        Optional<String> aString = Optional.empty();
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
+            try {
+                aString = Optional.of(jsonObject.get("status").getAsString());
+            } catch (Exception e) {
+                logger().debug(e.getMessage());
+            }
+        }
+        return aString;
     }
 
     /**

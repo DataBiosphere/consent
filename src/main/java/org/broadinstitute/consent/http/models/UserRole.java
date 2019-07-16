@@ -18,9 +18,6 @@ public class UserRole {
     private String name;
 
     @JsonProperty
-    private String status;
-
-    @JsonProperty
     private String rationale;
 
     @JsonProperty
@@ -35,11 +32,10 @@ public class UserRole {
         this.name = name;
     }
 
-    public UserRole(Integer roleId, String name, String rationale, String status) {
+    public UserRole(Integer roleId, String name, String rationale) {
         this.roleId = roleId;
         this.name = name;
         this.rationale = rationale;
-        this.status = status;
     }
 
     /**
@@ -60,13 +56,6 @@ public class UserRole {
         if (jsonObject.has("name") && !jsonObject.get("name").isJsonNull()) {
             try {
                 this.setName(jsonObject.get("name").getAsString());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
-        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
-            try {
-                this.setStatus(jsonObject.get("status").getAsString());
             } catch (Exception e) {
                 log.debug(e.getMessage());
             }
@@ -109,13 +98,13 @@ public class UserRole {
         this.name = name;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
+//    public String getStatus() {
+//        return status;
+//    }
+//
+//    public void setStatus(String status) {
+//        this.status = status;
+//    }
 
     public String getRationale() {
         return rationale;

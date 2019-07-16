@@ -16,12 +16,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.APPROVED;
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getValueByStatus;
 
 public class UserRoleDAOTest extends AbstractTest {
 
@@ -36,6 +31,7 @@ public class UserRoleDAOTest extends AbstractTest {
     }
 
     private UserRoleDAO userRoleDAO;
+    private DACUserDAO dacUserDAO;
 
     private void resetUserRoleTable() {
         // Many legacy tests use a set of roles defined in `insert.sql`
@@ -46,7 +42,7 @@ public class UserRoleDAOTest extends AbstractTest {
         userRoleDAO.deleteAllUserRoles();
         userRoleDAO.insertSingleUserRole(2, 1);
         userRoleDAO.insertSingleUserRole(5, 1);
-        userRoleDAO.updateUserRoleStatus(5, 1, 0, "");
+        dacUserDAO.updateUserStatus(5, 1);
         userRoleDAO.insertSingleUserRole(1, 2);
         userRoleDAO.insertSingleUserRole(1, 3);
         userRoleDAO.insertSingleUserRole(1, 4);
@@ -62,6 +58,7 @@ public class UserRoleDAOTest extends AbstractTest {
     @Before
     public void setUp() {
         userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
+        dacUserDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         resetUserRoleTable();
     }
 
@@ -151,28 +148,6 @@ public class UserRoleDAOTest extends AbstractTest {
 
         Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser("Chairperson", 2);
         Assert.assertNull(invalidRoleId);
-    }
-
-    @Test
-    public void testUpdateUserRoleStatus() {
-        int dataOwnerId = 6;
-        int userId = 5;
-        Integer roleStatusId = getValueByStatus(APPROVED.name());
-        String roleStatusName = getStatusByValue(roleStatusId);
-        String rationale = "Approved";
-        userRoleDAO.updateUserRoleStatus(
-                userId,
-                dataOwnerId,
-                roleStatusId,
-                rationale);
-
-        Optional<UserRole> urOption = userRoleDAO.
-                findRolesByUserId(userId).
-                stream().
-                filter(r -> r.getRoleId() == dataOwnerId).
-                findFirst();
-        Assert.assertTrue(urOption.isPresent());
-        Assert.assertEquals(urOption.get().getStatus(), roleStatusName);
     }
 
     @Test

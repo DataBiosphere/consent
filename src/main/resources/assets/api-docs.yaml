@@ -2853,6 +2853,9 @@ definitions:
         type: string
         format: date
         description: Describes the date the User was created.
+      status:
+        type: string
+        description: Status of the user, approved or not.
       roles:
         type: array
         items:
@@ -2867,9 +2870,6 @@ definitions:
       name:
         type: string
         description: Name of the role
-      status:
-        type: string
-        description: Status of the role, approved or not.
       rationale:
         type: string
         description: Reason why the role was not approved.

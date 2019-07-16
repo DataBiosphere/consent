@@ -41,7 +41,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Set<DACUser> findDACUsersEnabledToVote();
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select u.*,r.roleId, r.name, du.status from dacuser u inner join user_role du on du.user_id = u.dacUserId inner join roles r on r.roleId = du.role_id where  u.dacUserId IN (<dacUserIds>)")
+    @SqlQuery("select u.*, r.roleId, r.name from dacuser u inner join user_role du on du.user_id = u.dacUserId inner join roles r on r.roleId = du.role_id where  u.dacUserId IN (<dacUserIds>)")
     Set<DACUser> findUsersWithRoles(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
     @SqlQuery("select * from dacuser where email = :email")
@@ -67,7 +67,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer findDACUserIdByRole(@Bind("roleId") Integer roleId, @Bind("dacUserId") Integer dacUserId);
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select u.*, r.roleId, r.name, du.status from dacuser u inner join user_role du on du.user_id = u.dacUserId " +
+    @SqlQuery("select u.*, r.roleId, r.name from dacuser u inner join user_role du on du.user_id = u.dacUserId " +
               "inner join roles r on r.roleId = du.role_id order by createDate desc")
     Set<DACUser> findUsers();
 
@@ -75,7 +75,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer verifyAdminUsers();
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select u.*, r.roleId, r.name, du.status from dacuser u inner join user_role du on du.user_id = u.dacUserId inner join roles r on r.roleId = du.role_id where r.name = :roleName and u.email_preference = :emailPreference")
+    @SqlQuery("select u.*, r.roleId, r.name from dacuser u inner join user_role du on du.user_id = u.dacUserId inner join roles r on r.roleId = du.role_id where r.name = :roleName and u.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
     @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN "
@@ -109,5 +109,8 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlUpdate("update dacuser set email_preference = :emailPreference where dacUserId = :userId")
     void updateEmailPreference(@Bind("emailPreference") Boolean emailPreference, @Bind("userId") Integer userId);
+
+    @SqlUpdate("update dacuser set status = :status where dacUserId = :userId")
+    void updateUserStatus(@Bind("status") Integer status, @Bind("userId") Integer userId);
 
 }

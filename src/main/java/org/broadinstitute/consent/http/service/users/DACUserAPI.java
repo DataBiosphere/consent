@@ -34,9 +34,7 @@ public interface DACUserAPI {
 
     ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role);
 
-    DACUser updateRoleStatus(UserRole dACUserRole, Integer userId);
-
-    UserRole getRoleStatus(Integer userId);
+    DACUser updateUserStatus(String status, Integer userId);
 
     DACUser updateNameById(DACUser user, Integer id);
 

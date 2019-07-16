@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
@@ -17,6 +18,16 @@ public class DACUserMapper implements ResultSetMapper<DACUser> {
         user.setDisplayName(r.getString("displayName"));
         user.setCreateDate(r.getDate("createDate"));
         user.setAdditionalEmail(r.getString("additional_email"));
+        user.setStatus(getStatus(r));
         return user;
     }
+
+    private String getStatus(ResultSet r) {
+        try {
+            return RoleStatus.getStatusByValue(r.getInt("status"));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }
