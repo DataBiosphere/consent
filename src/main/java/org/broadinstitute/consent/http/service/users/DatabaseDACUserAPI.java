@@ -305,7 +305,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
                 stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
-        userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
+        if (!roleIds.isEmpty()) {
+            userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
+        }
         dacUserDAO.deleteDACUserByEmail(email);
     }
 
