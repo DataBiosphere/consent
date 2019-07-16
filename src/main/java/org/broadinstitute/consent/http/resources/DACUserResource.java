@@ -62,17 +62,18 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @RolesAllowed(ADMIN)
     public Response createDACUser(@Context UriInfo info, String json) {
-        DACUser dac = new DACUser(json);
-        URI uri;
-        DACUser dacUser;
         try {
-            dacUser = dacUserAPI.createDACUser(dac);
+            DACUser dacUser = dacUserAPI.createDACUser(new DACUser(json));
             if (isChairPerson(dacUser.getRoles())) {
                 dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
                 voteAPI.createVotesForElections(elections, true);
             }
-            uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
+            // Update email preference
+            getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
+                    dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
+            );
+            URI uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(uri).entity(dacUser).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
@@ -94,7 +95,6 @@ public class DACUserResource extends Resource {
         return dacUserAPI.describeDACUserByEmail(email);
     }
 
-    // TODO: This is undocumented in swagger
     @PUT
     @Path("/{id}")
     @Consumes("application/json")
@@ -105,7 +105,10 @@ public class DACUserResource extends Resource {
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             DACUser dacUser = dacUserAPI.updateDACUserById(userMap, id);
-            getEmailPreferenceValue(json).ifPresent(aBoolean ->
+            // Update email preference
+            JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+            JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+            getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
                     dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
             );
             return Response.ok(uri).entity(dacUser).build();
@@ -218,11 +221,10 @@ public class DACUserResource extends Resource {
      * @param json Raw json string from client
      * @return Optional value of the "emailPreference" boolean value set in the legacy json structure.
      */
-    private Optional<Boolean> getEmailPreferenceValue(String json) {
+    private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
         Optional<Boolean> aBoolean = Optional.empty();
         try {
-            JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-            JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+            JsonElement updateUser = new JsonParser().parse(json).getAsJsonObject();
             if (updateUser != null && !updateUser.isJsonNull()) {
                 JsonObject userObj = updateUser.getAsJsonObject();
                 if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {

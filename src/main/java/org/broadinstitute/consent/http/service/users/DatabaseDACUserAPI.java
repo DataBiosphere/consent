@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Implementation class for DACUserAPI on top of DACUserDAO database support.
@@ -295,7 +296,16 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     @Override
     public void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException {
-        validateExistentUser(email);
+        DACUser user = dacUserDAO.findDACUserByEmail(email);
+        if (user == null) {
+            throw new NotFoundException("The user for the specified E-Mail address does not exist");
+        }
+        List<Integer> roleIds = userRoleDAO.
+                findRolesByUserId(user.getDacUserId()).
+                stream().
+                map(UserRole::getRoleId).
+                collect(Collectors.toList());
+        userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
         dacUserDAO.deleteDACUserByEmail(email);
     }
 
