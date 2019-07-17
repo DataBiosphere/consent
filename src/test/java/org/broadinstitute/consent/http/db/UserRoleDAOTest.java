@@ -5,7 +5,6 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -46,7 +45,7 @@ public class UserRoleDAOTest extends AbstractTest {
         // For the purposes of these unit tests, we will reset the table to its initial state
         // for every run, which should leave the system ready for other tests.
         // TODO: In concept, I don't like this approach and hope to migrate all db tests to be
-        // independant of one another
+        // independent of one another
         userRoleDAO.deleteAllUserRoles();
         userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), TEST_USER_1_ID);
         userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), TEST_USER_1_ID);
