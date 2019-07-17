@@ -165,7 +165,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     public DACUser updateUserRationale(String rationale, Integer userId) {
         validateExistentUserById(userId);
         if (rationale == null) {
-            throw new IllegalArgumentException(rationale + " is not required.");
+            throw new IllegalArgumentException("Rationale is required.");
         }
         dacUserDAO.updateUserRationale(rationale, userId);
         return describeDACUserById(userId);
@@ -213,9 +213,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         List<Integer> openElectionIdsForThisUser = electionDAO.findNonDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (!CollectionUtils.isEmpty(openElectionIdsForThisUser)) {
             List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DAC.getValue());
-            if (voteCount.stream().anyMatch((votes) -> ((votes - 1) <= MINIMUM_DAC_USERS))) {
-                return true;
-            }
+            return voteCount.stream().anyMatch((votes) -> ((votes - 1) <= MINIMUM_DAC_USERS));
         }
         return false;
     }
@@ -223,10 +221,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     private boolean chairPersonMustDelegate() {
         // if no open elections, no need to verify at user level ..
-        if (electionDAO.verifyOpenElections() == 0) {
-            return false;
-        }
-        return true;
+        return electionDAO.verifyOpenElections() != 0;
     }
 
     /**
@@ -238,18 +233,14 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         // verify if it's the only data owner associeted to a data set
         if (hasDataSetAssociation(updatedUser)) return true;
         // verify if exist an open election for this data owner
-        if (hasOpenElections(updatedUser)) return true;
-
-        return false;
+        return hasOpenElections(updatedUser);
     }
 
     boolean hasOpenElections(DACUser updatedUser) {
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
             List<Integer> voteCount = voteDAO.findVoteCountForElections(openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
-            if (voteCount.stream().anyMatch((votes) -> ((votes) == 1))) {
-                return true;
-            }
+            return voteCount.stream().anyMatch((votes) -> ((votes) == 1));
         }
         return false;
     }
@@ -259,9 +250,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         // verify if it's the only data owner associeted to a data set
         if (CollectionUtils.isNotEmpty(associatedDataSetId)) {
             List<Integer> dataOwnersPerDataSet = dataSetAssociationDAO.getCountOfDataOwnersPerDataSet(associatedDataSetId);
-            if (dataOwnersPerDataSet.stream().anyMatch(dataOwners -> (dataOwners == 1))) {
-                return true;
-            }
+            return dataOwnersPerDataSet.stream().anyMatch(dataOwners -> (dataOwners == 1));
         }
         return false;
     }
@@ -326,13 +315,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     @Override
     public Collection<DACUser> describeUsers() {
         Collection<DACUser> users = dacUserDAO.findUsers();
-        users.stream().forEach(user -> {
-            for(UserRole role : user.getRoles()){
-                if (role.getRoleId() == 5) {
-                    String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
-                    role.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
-                }
-            }
+        users.forEach(user -> {
+            String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
+            user.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
         });
         return users;
     }
@@ -347,20 +332,14 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      * database on class initialization. Entry: Role name (UPPERCASE) -> Role ID
      */
     private Map<String, Integer> createRoleMap(List<Role> roles) {
-        Map<String, Integer> rolesMap = new HashMap();
-        roles.stream().forEach((r) -> rolesMap.put(r.getName().toUpperCase(), r.getRoleId()));
+        Map<String, Integer> rolesMap = new HashMap<>();
+        roles.forEach((r) -> rolesMap.put(r.getName().toUpperCase(), r.getRoleId()));
         return rolesMap;
     }
 
     private void validateExistentUserById(Integer id) {
         if (dacUserDAO.findDACUserById(id) == null) {
             throw new NotFoundException("The user for the specified id does not exist");
-        }
-    }
-
-    private void validateExistentUser(String email) {
-        if (dacUserDAO.findDACUserByEmail(email) == null) {
-            throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
     }
 
@@ -375,9 +354,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     private void insertUserRoles(DACUser dacUser, Integer dacUserId) {
         List<UserRole> roles = dacUser.getRoles();
-        roles.forEach(r -> {
-            r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
-        });
+        roles.forEach(r -> r.setRoleId(userRoleDAO.findRoleIdByName(r.getName())));
         userRoleDAO.insertUserRoles(roles, dacUserId);
     }
 

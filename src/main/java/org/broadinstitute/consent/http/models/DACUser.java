@@ -44,6 +44,9 @@ public class DACUser {
     @JsonProperty
     private String rationale;
 
+    @JsonProperty
+    private Boolean profileCompleted;
+
     public DACUser() {
     }
 
@@ -201,6 +204,10 @@ public class DACUser {
         return status;
     }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getRationale() {
         return rationale;
     }
@@ -209,8 +216,12 @@ public class DACUser {
         this.rationale = rationale;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public Boolean getProfileCompleted() {
+        return profileCompleted;
+    }
+
+    public void setProfileCompleted(Boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
     }
 
     @Override

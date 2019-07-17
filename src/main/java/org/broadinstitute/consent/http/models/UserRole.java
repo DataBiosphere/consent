@@ -17,10 +17,6 @@ public class UserRole {
     @JsonProperty
     private String name;
 
-    @JsonProperty
-    private Boolean profileCompleted;
-
-
     public UserRole() {
     }
 
@@ -51,13 +47,6 @@ public class UserRole {
                 log.debug(e.getMessage());
             }
         }
-        if (jsonObject.has("profileCompleted") && !jsonObject.get("profileCompleted").isJsonNull()) {
-            try {
-                this.setProfileCompleted(jsonObject.get("profileCompleted").getAsBoolean());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
         if (this.getRoleId() == null) {
             UserRoles r = UserRoles.getUserRoleFromName(this.getName());
             if (r != null) {
@@ -80,14 +69,6 @@ public class UserRole {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Boolean getProfileCompleted() {
-        return profileCompleted;
-    }
-
-    public void setProfileCompleted(Boolean profileCompleted) {
-        this.profileCompleted = profileCompleted;
     }
 
     @Override
