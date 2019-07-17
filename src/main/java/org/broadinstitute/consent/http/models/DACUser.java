@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class DACUser {
 
-    private static final Logger logger = LoggerFactory.getLogger(DACUser.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(DACUser.class);
 
     @JsonProperty
     private Integer dacUserId;
