@@ -4,11 +4,9 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -159,13 +157,7 @@ public class DataAccessRequestResource extends Resource {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
         DACUser user = dacUserAPI.describeDACUserById(userId);
-        UserRole role = user.
-                getRoles().
-                stream().
-                filter(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())).
-                findFirst().
-                orElse(new UserRole());
-        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI, role);
+        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
     }
 
     @GET

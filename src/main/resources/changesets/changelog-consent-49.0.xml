@@ -7,6 +7,7 @@
     <changeSet author="grushton" id="49.0">
         <addColumn tableName="dacuser">
             <column name="status" type="int" defaultValue="0"/>
+            <column name="rationale" type="text"/>
         </addColumn>
         <sql>
             update dacuser set status = 1 where dacUserId in (select user_id from user_role where status = 1)
@@ -14,8 +15,17 @@
         <sql>
             update dacuser set status = 2 where dacUserId in (select user_id from user_role where status = 2)
         </sql>
+        <sql>
+            update dacuser u
+            set u.rationale = (
+            select r.rationale
+            from user_role r
+            where r.user_id = u.dacUserId
+            and r.rationale is not null )
+        </sql>
         <rollback>
             <dropColumn tableName="dacuser" columnName="status" />
+            <dropColumn tableName="dacuser" columnName="rationale" />
         </rollback>
     </changeSet>
 

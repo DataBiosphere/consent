@@ -172,15 +172,24 @@ public class DACUserResource extends Resource {
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
-        Optional<String> statusOpt = getStatusFromJson(json);
+        Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
+        Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
+        DACUser user = dacUserAPI.describeDACUserById(userId);
         if (statusOpt.isPresent()) {
             try {
-                return Response.ok(dacUserAPI.updateUserStatus(statusOpt.get(), userId)).build();
+                user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
             } catch (Exception e) {
                 return createExceptionResponse(e);
             }
         }
-        return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
+        if (rationaleOpt.isPresent()) {
+            try {
+                user = dacUserAPI.updateUserRationale(rationaleOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
+        }
+        return Response.ok(user).build();
     }
 
     @Deprecated // Use get by email instead
@@ -226,17 +235,18 @@ public class DACUserResource extends Resource {
     }
 
     /**
-     * Convenience method to find the status from legacy json structure.
+     * Convenience method to find a member from legacy json structure.
      *
      * @param json Raw json string from client
-     * @return Optional value of "status"
+     * @param memberName The name of the member to find in the json
+     * @return Optional value of memberName
      */
-    private Optional<String> getStatusFromJson(String json) {
+    private Optional<String> getMemberNameStringFromJson(String json, String memberName) {
         Optional<String> aString = Optional.empty();
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
+        if (jsonObject.has(memberName) && !jsonObject.get(memberName).isJsonNull()) {
             try {
-                aString = Optional.of(jsonObject.get("status").getAsString());
+                aString = Optional.of(jsonObject.get(memberName).getAsString());
             } catch (Exception e) {
                 logger().debug(e.getMessage());
             }

@@ -88,7 +88,7 @@ public interface DataAccessRequestAPI {
 
     File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException;
 
-    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, UserRole role);
+    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi);
 
 }
 

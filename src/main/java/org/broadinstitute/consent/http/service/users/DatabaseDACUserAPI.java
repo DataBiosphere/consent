@@ -162,6 +162,16 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
+    public DACUser updateUserRationale(String rationale, Integer userId) {
+        validateExistentUserById(userId);
+        if (rationale == null) {
+            throw new IllegalArgumentException(rationale + " is not required.");
+        }
+        dacUserDAO.updateUserRationale(rationale, userId);
+        return describeDACUserById(userId);
+    }
+
+    @Override
     public DACUser updateNameById(DACUser user, Integer id) {
         validateExistentUserById(id);
         if (StringUtils.isEmpty(user.getDisplayName())) {
@@ -281,10 +291,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         try {
             dacUserDAO.updateDACUser(dac.getEmail(), dac.getDisplayName(), id, dac.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email shoud be unique.");
+            throw new IllegalArgumentException("Email should be unique.");
         }
-        DACUser dacUser = describeDACUserByEmail(dac.getEmail());
-        return dacUser;
+        return describeDACUserByEmail(dac.getEmail());
     }
 
     @Override

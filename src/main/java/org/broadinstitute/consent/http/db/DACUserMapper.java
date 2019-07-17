@@ -19,6 +19,7 @@ public class DACUserMapper implements ResultSetMapper<DACUser> {
         user.setCreateDate(r.getDate("createDate"));
         user.setAdditionalEmail(r.getString("additional_email"));
         user.setStatus(getStatus(r));
+        user.setRationale(r.getString("rationale"));
         return user;
     }
 

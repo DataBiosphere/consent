@@ -267,9 +267,17 @@ public class UserDAOTest extends AbstractTest {
         userDAO.updateUserStatus(roleStatusId, userId);
         DACUser user = userDAO.findDACUserById(userId);
         Assert.assertNotNull(user);
-        System.out.println(user.toString());
-        System.out.println(roleStatusName);
         Assert.assertEquals(user.getStatus(), roleStatusName);
+    }
+
+    @Test
+    public void testUpdateUserRationale() {
+        int userId = 5;
+        String rationale = "New Rationale";
+        userDAO.updateUserRationale(rationale, userId);
+        DACUser user = userDAO.findDACUserById(userId);
+        Assert.assertNotNull(user);
+        Assert.assertEquals(user.getRationale(), rationale);
     }
 
     private String getRandomEmailAddress() {

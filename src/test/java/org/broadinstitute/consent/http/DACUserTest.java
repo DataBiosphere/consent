@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -18,13 +17,14 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class DACUserTest extends DACUserServiceTest {
 
@@ -83,10 +83,11 @@ public class DACUserTest extends DACUserServiceTest {
         Client client = ClientBuilder.newClient();
         delete(client, dacUserPathByEmail(CHAIR_USER_EMAIL));
         delete(client, dacUserPathByEmail(DAC_USER_EMAIL));
+        delete(client, dacUserPathByEmail(DAC_USER_EMAIL));
         delete(client, dacUserPathByEmail(CHAIR_2_USER_EMAIL));
     }
 
-    public DACUser testCreate(DACUser dacuser) throws IOException {
+    private DACUser testCreate(DACUser dacuser) throws IOException {
         Client client = ClientBuilder.newClient();
         Response response = checkStatus(CREATED, post(client, dacUserPath(), dacuser));
         String createdLocation = checkHeader(response, "Location");
@@ -126,12 +127,10 @@ public class DACUserTest extends DACUserServiceTest {
         user.setEmail(DAC_USER_EMAIL);
         UserRole role = new UserRole();
         role.setName(UserRoles.MEMBER.getRoleName());
-        user.setRoles(new ArrayList<>(Arrays.asList(role)));
-        Map<String, Object> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser",user);
+        user.setRoles(Collections.singletonList(role));
         HashMap response = post(client, validateDelegationPath(UserRoles.MEMBER.getRoleName()), user).readEntity(HashMap.class);
-        boolean needsDelegation = (Boolean)response.get("needsDelegation");
-        List<DACUser> dacUsers = (List<DACUser>)response.get("delegateCandidates");
+        boolean needsDelegation = (Boolean) response.get("needsDelegation");
+        List<DACUser> dacUsers = (List<DACUser>) response.get("delegateCandidates");
         assertThat(dacUsers).isEmpty();
         assertThat(needsDelegation).isFalse();
     }
@@ -147,7 +146,7 @@ public class DACUserTest extends DACUserServiceTest {
         Client client = ClientBuilder.newClient();
         Response response = getJson(client, statusValue(1));
         DACUser user = response.readEntity(DACUser.class);
-        Assert.assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
+        assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
     }
 
     @Test
@@ -158,7 +157,7 @@ public class DACUserTest extends DACUserServiceTest {
         Response response = put(client, statusValue(1), postUser);
         checkStatus(OK, response);
         DACUser user = response.readEntity(DACUser.class);
-        Assert.assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
+        assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
     }
 
     @Test
@@ -189,7 +188,7 @@ public class DACUserTest extends DACUserServiceTest {
         Response response = put(client, dacUserPath()+ "/name/4", user);
         checkStatus(OK, response);
         DACUser dacUser = response.readEntity(DACUser.class);
-        assertThat(dacUser.getDisplayName().equals(displayName));
+        assertEquals(dacUser.getDisplayName(), displayName);
     }
 
     @Test

@@ -11,7 +11,6 @@ public class UserRoleMapper implements ResultSetMapper<UserRole> {
     public UserRole map(int index, ResultSet r, StatementContext ctx) throws SQLException {
         return new UserRole(
                 r.getInt("role_id"),
-                r.getString("name"),
-                r.getString("rationale"));
+                r.getString("name"));
     }
 }

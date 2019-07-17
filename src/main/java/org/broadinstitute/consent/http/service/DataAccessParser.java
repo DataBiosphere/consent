@@ -207,7 +207,7 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.ADMIN_COMMENT: {
-                    field.setValue(getDefaultValue(StringUtils.capitalize(role.getRationale())));
+                    field.setValue(getDefaultValue(StringUtils.capitalize(user.getRationale())));
                     break;
                 }
                 case DarConstants.MANUAL_REVIEW: {

@@ -139,13 +139,12 @@ public class DataAccessParserTest {
     private DACUser populateUser() {
         DACUser user = new DACUser();
         user.setStatus("approved");
+        user.setRationale("granted bonafide");
         return user;
     }
 
     private UserRole populateRole() {
-        UserRole role = new UserRole();
-        role.setRationale("granted bonafide");
-        return role;
+        return new UserRole();
     }
 
     private Map<String, String> populateProps() {

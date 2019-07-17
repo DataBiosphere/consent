@@ -41,6 +41,9 @@ public class DACUser {
     @JsonProperty
     private String status;
 
+    @JsonProperty
+    private String rationale;
+
     public DACUser() {
     }
 
@@ -129,6 +132,13 @@ public class DACUser {
                 logger.debug(e.getMessage());
             }
         }
+        if (jsonObject.has("rationale") && !jsonObject.get("rationale").isJsonNull()) {
+            try {
+                this.setRationale(jsonObject.get("rationale").getAsString());
+            } catch (Exception e) {
+                logger.debug(e.getMessage());
+            }
+        }
     }
 
     public Integer getDacUserId() {
@@ -189,6 +199,14 @@ public class DACUser {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getRationale() {
+        return rationale;
+    }
+
+    public void setRationale(String rationale) {
+        this.rationale = rationale;
     }
 
     public void setStatus(String status) {

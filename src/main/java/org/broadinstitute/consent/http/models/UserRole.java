@@ -18,9 +18,6 @@ public class UserRole {
     private String name;
 
     @JsonProperty
-    private String rationale;
-
-    @JsonProperty
     private Boolean profileCompleted;
 
 
@@ -30,12 +27,6 @@ public class UserRole {
     public UserRole(Integer roleId, String name) {
         this.roleId = roleId;
         this.name = name;
-    }
-
-    public UserRole(Integer roleId, String name, String rationale) {
-        this.roleId = roleId;
-        this.name = name;
-        this.rationale = rationale;
     }
 
     /**
@@ -56,13 +47,6 @@ public class UserRole {
         if (jsonObject.has("name") && !jsonObject.get("name").isJsonNull()) {
             try {
                 this.setName(jsonObject.get("name").getAsString());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
-        if (jsonObject.has("rationale") && !jsonObject.get("rationale").isJsonNull()) {
-            try {
-                this.setRationale(jsonObject.get("rationale").getAsString());
             } catch (Exception e) {
                 log.debug(e.getMessage());
             }
@@ -96,22 +80,6 @@ public class UserRole {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-//    public String getStatus() {
-//        return status;
-//    }
-//
-//    public void setStatus(String status) {
-//        this.status = status;
-//    }
-
-    public String getRationale() {
-        return rationale;
-    }
-
-    public void setRationale(String rationale) {
-        this.rationale = rationale;
     }
 
     public Boolean getProfileCompleted() {

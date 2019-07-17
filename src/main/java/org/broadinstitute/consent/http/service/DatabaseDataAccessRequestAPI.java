@@ -523,13 +523,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, UserRole role) {
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
             .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
             .setStatus(dacUser.getStatus())
-            .setRationale(role.getRationale())
+            .setRationale(dacUser.getRationale())
             .setUserId(dar.getInteger(DarConstants.USER_ID))
             .setDarCode(dar.getString(DarConstants.DAR_CODE))
             .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))

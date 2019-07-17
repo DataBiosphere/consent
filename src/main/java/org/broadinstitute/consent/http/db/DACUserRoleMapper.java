@@ -27,15 +27,14 @@ public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
             user.setAdditionalEmail(r.getString("additional_email"));
             user.setEmailPreference(r.getBoolean("email_preference"));
             user.setStatus(getStatus(r));
+            user.setRationale(r.getString("rationale"));
             user.setRoles(new ArrayList<>());
-            // See DUOS-393 - we should not be setting these things to null
-            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null);
+            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"));
             user.getRoles().add(role);
             users.put(user.getDacUserId(), user);
         } else {
             user = users.get(r.getInt("dacUserId"));
-            // See DUOS-393 - we should not be setting these things to null
-            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"), null);
+            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"));
             user.getRoles().add(role);
         }
         return user;
