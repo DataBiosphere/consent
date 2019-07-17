@@ -3,11 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UserRole {
 
@@ -48,48 +44,27 @@ public class UserRole {
      * @param json A json string that may or may not be correctly structured as a UserRole
      */
     public UserRole(String json) {
-        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-        Logger log = LoggerFactory.getLogger(UserRole.class.getName());
-        if (jsonObject.has("roleId") && !jsonObject.get("roleId").isJsonNull()) {
-            try {
-                this.setRoleId(jsonObject.get("roleId").getAsInt());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
+        Gson gson = new Gson();
+        UserRole ur = gson.fromJson(json, UserRole.class);
+        if (ur.getName() != null) {
+            this.name = ur.getName();
         }
-        if (jsonObject.has("name") && !jsonObject.get("name").isJsonNull()) {
-            try {
-                this.setName(jsonObject.get("name").getAsString());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
-        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
-            try {
-                this.setStatus(jsonObject.get("status").getAsString());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
-        if (jsonObject.has("rationale") && !jsonObject.get("rationale").isJsonNull()) {
-            try {
-                this.setRationale(jsonObject.get("rationale").getAsString());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
-        if (jsonObject.has("profileCompleted") && !jsonObject.get("profileCompleted").isJsonNull()) {
-            try {
-                this.setProfileCompleted(jsonObject.get("profileCompleted").getAsBoolean());
-            } catch (Exception e) {
-                log.debug(e.getMessage());
-            }
-        }
-        if (this.getRoleId() == null) {
+        if (ur.getRoleId() != null) {
+            this.roleId = ur.getRoleId();
+        } else {
             UserRoles r = UserRoles.getUserRoleFromName(this.getName());
             if (r != null) {
                 this.setRoleId(r.getRoleId());
             }
+        }
+        if (ur.getRationale() != null) {
+            this.setRationale(ur.getRationale());
+        }
+        if (ur.getStatus() != null) {
+            this.setStatus(ur.getStatus());
+        }
+        if (ur.getProfileCompleted() != null) {
+            this.setProfileCompleted(ur.getProfileCompleted());
         }
     }
 

@@ -2,13 +2,16 @@ package org.broadinstitute.consent.http;
 
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
+import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -19,6 +22,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +58,10 @@ public class DACUserTest extends DACUserServiceTest {
         DACUser user = new DACUser();
         user.setDisplayName(name);
         user.setEmail(email);
+        UserRole role = new UserRole();
+        role.setRoleId(UserRoles.ALUMNI.getRoleId());
+        role.setName(StringUtils.capitalize(UserRoles.ALUMNI.getRoleName().toLowerCase()));
+        user.setRoles(Collections.singletonList(role));
         return user;
     }
 
@@ -112,7 +120,7 @@ public class DACUserTest extends DACUserServiceTest {
         mockValidateTokenResponse();
         DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
         Map<String, Object> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser",user);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, user);
         checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), updateUserMap));
         user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(DACUser.class);
         assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
@@ -207,7 +215,6 @@ public class DACUserTest extends DACUserServiceTest {
         checkStatus(NOT_FOUND, response);
     }
 
-
     @Test
     public void testUpdateDisplayNameWithEmptyName() throws IOException {
         Client client = ClientBuilder.newClient();
@@ -215,6 +222,21 @@ public class DACUserTest extends DACUserServiceTest {
         user.setDacUserId(4);
         Response response = put(client, dacUserPath() + "/name/4", user);
         checkStatus(BAD_REQUEST, response);
+    }
+
+    @Test
+    public void testConvertJsonToDACUser() {
+        String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
+        String json = "{\"dacUserId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": 1302828677828, \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
+        DACUser user = new DACUser(json);
+        Assert.assertNotNull(user);
+        Assert.assertEquals(user.getDacUserId().intValue(), 1);
+        Assert.assertEquals(user.getEmail(), "email");
+        Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
+        Assert.assertEquals(user.getEmailPreference(), false);
+        Assert.assertFalse(user.getRoles().isEmpty());
+        Assert.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+        System.out.println(user.toString());
     }
 
 }

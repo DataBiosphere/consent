@@ -1,21 +1,15 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class DACUser {
-
-    private static final Logger logger = LoggerFactory.getLogger(DACUser.class);
 
     @JsonProperty
     private Integer dacUserId;
@@ -72,52 +66,32 @@ public class DACUser {
      * @param json A json string that may or may not be correctly structured as a DACUser
      */
     public DACUser(String json) {
-        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-        if (jsonObject.has("dacUserId") && !jsonObject.get("dacUserId").isJsonNull()) {
-            try {
-                this.setDacUserId(jsonObject.get("dacUserId").getAsInt());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        GsonBuilder builder = new GsonBuilder();
+        // Register an adapter to manage the date types as long values
+        builder.registerTypeAdapter(Date.class, (JsonDeserializer<Date>)
+                (json1, typeOfT, context) -> new Date(json1.getAsJsonPrimitive().getAsLong()));
+        Gson gson = builder.create();
+        DACUser u = gson.fromJson(json, DACUser.class);
+        if (u.getDacUserId() != null) {
+            this.setDacUserId(u.getDacUserId());
         }
-        if (jsonObject.has("email") && !jsonObject.get("email").isJsonNull()) {
-            try {
-                this.setEmail(jsonObject.get("email").getAsString());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getEmail() != null) {
+            this.setEmail(u.getEmail());
         }
-        if (jsonObject.has("displayName") && !jsonObject.get("displayName").isJsonNull()) {
-            try {
-                this.setDisplayName(jsonObject.get("displayName").getAsString());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getDisplayName() != null) {
+            this.setDisplayName(u.getDisplayName());
         }
-        if (jsonObject.has("additionalEmail") && !jsonObject.get("additionalEmail").isJsonNull()) {
-            try {
-                this.setAdditionalEmail(jsonObject.get("additionalEmail").getAsString());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getCreateDate() != null) {
+            this.setCreateDate(u.getCreateDate());
         }
-        if (jsonObject.has("emailPreference") && !jsonObject.get("emailPreference").isJsonNull()) {
-            try {
-                this.setEmailPreference(jsonObject.get("emailPreference").getAsBoolean());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getAdditionalEmail() != null) {
+            this.setAdditionalEmail(u.getAdditionalEmail());
         }
-        if (jsonObject.has("roles") && !jsonObject.get("roles").isJsonNull()) {
-            this.setRoles(new ArrayList<>());
-            try {
-                jsonObject.get("roles").getAsJsonArray().forEach(jsonElement ->
-                {
-                    this.getRoles().add(new UserRole(jsonElement.toString()));
-                });
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getEmailPreference() != null) {
+            this.setEmailPreference(u.getEmailPreference());
+        }
+        if (u.getRoles() != null && !u.getRoles().isEmpty()) {
+            this.setRoles(u.getRoles());
         }
     }
 
