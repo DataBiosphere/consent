@@ -102,19 +102,11 @@ public class DACUser {
         if (u.getRoles() != null && !u.getRoles().isEmpty()) {
             this.setRoles(u.getRoles());
         }
-        if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
-            try {
-                this.setStatus(jsonObject.get("status").getAsString());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getStatus() != null) {
+            this.setStatus(u.getStatus());
         }
-        if (jsonObject.has("rationale") && !jsonObject.get("rationale").isJsonNull()) {
-            try {
-                this.setRationale(jsonObject.get("rationale").getAsString());
-            } catch (Exception e) {
-                logger.debug(e.getMessage());
-            }
+        if (u.getRationale() != null) {
+            this.setRationale(u.getRationale());
         }
     }
 
