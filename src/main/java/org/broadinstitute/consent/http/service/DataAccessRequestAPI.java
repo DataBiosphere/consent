@@ -78,7 +78,7 @@ public interface DataAccessRequestAPI {
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
-    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, UserRole role, Boolean manualReview, String sDUR) throws IOException;
+    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException;
 
     String getStructuredDURForPdf(Document dar);
 

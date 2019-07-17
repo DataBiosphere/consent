@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 class DataAccessParser {
 
-    PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUser user, UserRole role, Boolean manualReview, PDAcroForm acroForm, String sDUR) throws IOException {
+    PDAcroForm fillDARForm(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, PDAcroForm acroForm, String sDUR) throws IOException {
         for (PDField field : acroForm.getFields()) {
             String fieldName = field.getFullyQualifiedName();
             switch (fieldName) {

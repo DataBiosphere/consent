@@ -63,7 +63,6 @@ public class DataAccessParserTest {
                         populateDocument(),
                         populateProps(),
                         populateUser(),
-                        populateRole(),
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
@@ -115,7 +114,6 @@ public class DataAccessParserTest {
                         populateDocument(),
                         props,
                         populateUser(),
-                        populateRole(),
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
@@ -141,10 +139,6 @@ public class DataAccessParserTest {
         user.setStatus("approved");
         user.setRationale("granted bonafide");
         return user;
-    }
-
-    private UserRole populateRole() {
-        return new UserRole();
     }
 
     private Map<String, String> populateProps() {

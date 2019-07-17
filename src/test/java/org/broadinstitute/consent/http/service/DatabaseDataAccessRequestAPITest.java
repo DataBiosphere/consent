@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -14,12 +18,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DatabaseDataAccessRequestAPITest {
 
@@ -100,7 +109,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Test
     public void testCreateDARDocument() throws Exception {
         Document dar = getDocument(null, "845246551313515", null);
-        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new DACUser(), new UserRole(), true, TRANSLATED_USE_RESTRICTION);
+        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new DACUser(),true, TRANSLATED_USE_RESTRICTION);
         Assert.assertNotNull(doc);
     }
 

@@ -397,14 +397,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, UserRole role, Boolean manualReview, String sDUR) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream is = classLoader.getResourceAsStream(PATH);
             darDOC = PDDocument.load(is);
-            new DataAccessParser().fillDARForm(dar, researcherProperties, user, role, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDUR);
+            new DataAccessParser().fillDARForm(dar, researcherProperties, user, manualReview, darDOC.getDocumentCatalog().getAcroForm(), sDUR);
             darDOC.save(output);
             return output.toByteArray();
         } finally {
