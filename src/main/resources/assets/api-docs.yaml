@@ -946,6 +946,48 @@ paths:
             $ref: '#/definitions/DACUser'
         400:
           description: Malformed entity.
+  /api/dacuser/status/{userId}:
+    get:
+      summary: getUserStatusById
+      description: |
+        DEPRECATED: Use GET /api/dacuser/{email}
+        Get the user's status by user id
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: number
+      responses:
+        200:
+          description: Returns the user by status
+          schema:
+            $ref: '#/definitions/DACUser'
+        500:
+          description: Server Error
+    put:
+      summary: updateUserStatusById
+      description: |
+        DEPRECATED: Use PUT /api/dacuser/{id}
+        Update a user's status by user id
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: number
+        - name: json
+          in: body
+          schema:
+            type: object
+          description: |
+            JSON object with a "status" member. Statuses allowed are "pending", "approved", or
+            "rejected".
+      responses:
+        200:
+          description: Returns the updated user
+          schema:
+            $ref: '#/definitions/DACUser'
+        500:
+          description: Server Error
   /api/dar:
     post:
       summary: createdDataAccessRequest

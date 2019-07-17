@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Path("{api : (api/)?}dacuser")
+@Path("api/dacuser")
 public class DACUserResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
@@ -119,6 +119,8 @@ public class DACUserResource extends Resource {
         }
     }
 
+    // TODO: Undocumented: See DUOS-403
+    @Deprecated // Use update instead
     @PUT
     @Path("/mainFields/{id}")
     @Consumes("application/json")
@@ -145,6 +147,7 @@ public class DACUserResource extends Resource {
     }
 
 
+    // TODO: Undocumented: See DUOS-403
     @POST
     @Consumes("application/json")
     @Produces("application/json")
@@ -162,14 +165,14 @@ public class DACUserResource extends Resource {
         }
     }
 
-    // TODO: Undocumented
+    @Deprecated // Use update instead
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
-        Optional<String> statusOpt = getStatusFromUserRoleJson(json);
+        Optional<String> statusOpt = getStatusFromJson(json);
         if (statusOpt.isPresent()) {
             try {
                 return Response.ok(dacUserAPI.updateUserStatus(statusOpt.get(), userId)).build();
@@ -180,7 +183,7 @@ public class DACUserResource extends Resource {
         return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
     }
 
-    // TODO: Undocumented
+    @Deprecated // Use get by email instead
     @GET
     @Path("/status/{userId}")
     @Consumes("application/json")
@@ -194,6 +197,8 @@ public class DACUserResource extends Resource {
         }
     }
 
+    // TODO: Undocumented: See DUOS-403
+    @Deprecated // Use update instead
     @PUT
     @Path("/name/{id}")
     @Consumes("application/json")
@@ -226,7 +231,7 @@ public class DACUserResource extends Resource {
      * @param json Raw json string from client
      * @return Optional value of "status"
      */
-    private Optional<String> getStatusFromUserRoleJson(String json) {
+    private Optional<String> getStatusFromJson(String json) {
         Optional<String> aString = Optional.empty();
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
         if (jsonObject.has("status") && !jsonObject.get("status").isJsonNull()) {
