@@ -316,6 +316,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     public Collection<DACUser> describeUsers() {
         Collection<DACUser> users = dacUserDAO.findUsers();
         users.forEach(user -> {
+            // TODO: This nested dao call isn't scalable. See DUOS-404
             String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
             user.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
         });
