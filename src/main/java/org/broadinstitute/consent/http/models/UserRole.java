@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 public class UserRole {
@@ -29,7 +30,7 @@ public class UserRole {
     public UserRole(String json) {
         Gson gson = new Gson();
         UserRole ur = gson.fromJson(json, UserRole.class);
-        if (ur.getName() != null) {
+        if (!StringUtils.isEmpty(ur.getName())) {
             this.name = ur.getName();
         }
         if (ur.getRoleId() != null) {
