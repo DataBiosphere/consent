@@ -103,10 +103,10 @@ public class DACUser {
         if (u.getRoles() != null && !u.getRoles().isEmpty()) {
             this.setRoles(u.getRoles());
         }
-        if (u.getStatus() != null) {
+        if (!StringUtils.isEmpty(u.getStatus())) {
             this.setStatus(u.getStatus());
         }
-        if (u.getRationale() != null) {
+        if (!StringUtils.isEmpty(u.getRationale())) {
             this.setRationale(u.getRationale());
         }
     }
