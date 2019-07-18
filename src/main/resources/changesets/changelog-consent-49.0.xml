@@ -21,7 +21,8 @@
             select r.rationale
             from user_role r
             where r.user_id = u.dacUserId
-            and r.rationale is not null )
+            and r.rationale is not null
+            and trim(r.rationale) != '' )
         </sql>
         <rollback>
             <dropColumn tableName="dacuser" columnName="status" />
