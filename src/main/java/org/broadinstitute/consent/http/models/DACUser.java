@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.util.Date;
@@ -75,16 +76,16 @@ public class DACUser {
         if (u.getDacUserId() != null) {
             this.setDacUserId(u.getDacUserId());
         }
-        if (u.getEmail() != null) {
+        if (!StringUtils.isEmpty(u.getEmail())) {
             this.setEmail(u.getEmail());
         }
-        if (u.getDisplayName() != null) {
+        if (!StringUtils.isEmpty(u.getDisplayName())) {
             this.setDisplayName(u.getDisplayName());
         }
         if (u.getCreateDate() != null) {
             this.setCreateDate(u.getCreateDate());
         }
-        if (u.getAdditionalEmail() != null) {
+        if (!StringUtils.isEmpty(u.getAdditionalEmail())) {
             this.setAdditionalEmail(u.getAdditionalEmail());
         }
         if (u.getEmailPreference() != null) {
