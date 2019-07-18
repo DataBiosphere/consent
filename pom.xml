@@ -22,7 +22,7 @@
     <pdfbox.version>2.0.15</pdfbox.version>
     <jetty.version>9.4.14.v20181114</jetty.version>
     <owl.version>5.1.7</owl.version>
-    <jackson.version>2.9.9</jackson.version>
+    <jackson.version>2.9.9.1</jackson.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
