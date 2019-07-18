@@ -5,7 +5,7 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="grushton" id="48.0-1">
-        <dropTable tableName="user_role_bak" />
+        <dropAllForeignKeyConstraints baseTableName="user_role_bak"/>
         <addColumn tableName="dacuser">
             <column name="email_preference" type="boolean" defaultValueBoolean="true" />
         </addColumn>
