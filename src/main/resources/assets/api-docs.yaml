@@ -872,6 +872,8 @@ paths:
             $ref: '#/definitions/DACUser'
         404:
           description: No DAC or User found with the provided ID
+        409:
+          description: User is already a member of the DAC
         500:
           description: Internal Server Error
     delete:
@@ -922,6 +924,8 @@ paths:
             $ref: '#/definitions/DACUser'
         404:
           description: No DAC or User found with the provided ID
+        409:
+          description: User is already a member of the DAC
         500:
           description: Internal Server Error
     delete:

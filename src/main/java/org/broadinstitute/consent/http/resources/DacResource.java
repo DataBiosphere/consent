@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DacService;
 
 import javax.annotation.security.RolesAllowed;
@@ -18,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -110,6 +112,7 @@ public class DacResource extends Resource {
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN})
     public Response addDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+        checkMembership(dacId, userId);
         Role role = dacService.getMemberRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -132,6 +135,7 @@ public class DacResource extends Resource {
     @Path("{dacId}/chair/{userId}")
     @RolesAllowed({ADMIN})
     public Response addDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+        checkMembership(dacId, userId);
         Role role = dacService.getChairpersonRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -174,6 +178,18 @@ public class DacResource extends Resource {
             throw new NotFoundException("Unable to find Data Access Committee with the provided id: " + dacId);
         }
         return dac;
+    }
+
+    private void checkMembership(Integer dacId, Integer userId) {
+        List<DACUser> currentMembers = dacService.findMembersByDacId(dacId);
+        Optional<DACUser> isMember = currentMembers.
+                stream().
+                filter(u -> u.getDacUserId().equals(userId)).
+                findFirst();
+        if (isMember.isPresent()) {
+            // This is handled as a 409 Conflict
+            throw new UnsupportedOperationException("User with id " + userId + " is already a member of this DAC");
+        }
     }
 
 }
