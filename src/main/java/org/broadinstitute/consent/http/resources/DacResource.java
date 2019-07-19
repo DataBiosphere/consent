@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
-import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.DacService;
 
 import javax.annotation.security.RolesAllowed;

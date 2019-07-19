@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DacService {
@@ -50,7 +51,15 @@ public class DacService {
 
     public List<DACUser> findMembersByDacId(Integer dacId) {
         List<DACUser> dacUsers = dacDAO.findMembersByDacId(dacId);
-        dacUsers.forEach(u -> u.setRoles(dacDAO.findUserRolesForUser(u.getDacUserId())));
+        List<Integer> allUserIds = dacUsers.
+                stream().
+                map(DACUser::getDacUserId).
+                distinct().
+                collect(Collectors.toList());
+        Map<Integer, List<UserRole>> userRoleMap = dacDAO.findUserRolesForUsers(allUserIds).
+                stream().
+                collect(Collectors.groupingBy(UserRole::getUserId));
+        dacUsers.forEach(u -> u.setRoles(userRoleMap.get(u.getDacUserId())));
         return dacUsers;
     }
 

@@ -12,6 +12,7 @@ import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Date;
 import java.util.List;
@@ -65,5 +66,9 @@ public interface DacDAO extends Transactional<DacDAO> {
     @Mapper(UserRoleMapper.class)
     @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id = :userId")
     List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
+
+    @Mapper(UserRoleMapper.class)
+    @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id in (<userIds>)")
+    List<UserRole> findUserRolesForUsers(@BindIn("userIds") List<Integer> userIds);
 
 }

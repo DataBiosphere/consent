@@ -12,6 +12,9 @@ public class UserRole {
     private Integer userRoleId;
 
     @JsonProperty
+    private Integer userId;
+
+    @JsonProperty
     private Integer roleId;
 
     @JsonProperty
@@ -28,8 +31,9 @@ public class UserRole {
         this.name = name;
     }
 
-    public UserRole(Integer userRoleId, Integer roleId, String name, Integer dacId) {
+    public UserRole(Integer userRoleId, Integer userId, Integer roleId, String name, Integer dacId) {
         this.userRoleId = userRoleId;
+        this.userId = userId;
         this.roleId = roleId;
         this.name = name;
         this.dacId = dacId;
@@ -62,6 +66,14 @@ public class UserRole {
 
     public void setUserRoleId(Integer userRoleId) {
         this.userRoleId = userRoleId;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public Integer getRoleId() {
