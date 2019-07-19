@@ -172,7 +172,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     DacService providesDacService() {
-        return new DacService(providesDacDAO());
+        return new DacService(providesDacDAO(), providesDACUserRoleDAO());
     }
 
     @Provides

@@ -9,10 +9,16 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 public class UserRole {
 
     @JsonProperty
+    private Integer userRoleId;
+
+    @JsonProperty
     private Integer roleId;
 
     @JsonProperty
     private String name;
+
+    @JsonProperty
+    private Integer dacId;
 
     public UserRole() {
     }
@@ -20,6 +26,19 @@ public class UserRole {
     public UserRole(Integer roleId, String name) {
         this.roleId = roleId;
         this.name = name;
+    }
+
+    public UserRole(Integer roleId, String name, Integer dacId) {
+        this.roleId = roleId;
+        this.name = name;
+        this.dacId = dacId;
+    }
+
+    public UserRole(Integer userRoleId, Integer roleId, String name, Integer dacId) {
+        this.userRoleId = userRoleId;
+        this.roleId = roleId;
+        this.name = name;
+        this.dacId = dacId;
     }
 
     /**
@@ -43,6 +62,14 @@ public class UserRole {
         }
     }
 
+    public Integer getUserRoleId() {
+        return userRoleId;
+    }
+
+    public void setUserRoleId(Integer userRoleId) {
+        this.userRoleId = userRoleId;
+    }
+
     public Integer getRoleId() {
         return roleId;
     }
@@ -57,6 +84,14 @@ public class UserRole {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Integer getDacId() {
+        return dacId;
+    }
+
+    public void setDacId(Integer dacId) {
+        this.dacId = dacId;
     }
 
     @Override

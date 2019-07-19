@@ -24,12 +24,12 @@ import java.util.Map;
 abstract public class Resource {
 
     // Resource based role names
-    public final static String ADMIN = "ADMIN";
-    public final static String ALUMNI = "ALUMNI";
-    public final static String CHAIRPERSON = "CHAIRPERSON";
-    public final static String DATAOWNER = "DATAOWNER";
-    public final static String MEMBER = "MEMBER";
-    public final static String RESEARCHER = "RESEARCHER";
+    public final static String ADMIN = "Admin";
+    public final static String ALUMNI = "Alumni";
+    public final static String CHAIRPERSON = "Chairperson";
+    public final static String DATAOWNER = "DataOwner";
+    public final static String MEMBER = "Member";
+    public final static String RESEARCHER = "Researcher";
 
     protected Logger logger() {
         return Logger.getLogger("consent");

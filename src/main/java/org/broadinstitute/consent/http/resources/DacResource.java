@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.service.DacService;
 
 import javax.annotation.security.RolesAllowed;
@@ -85,11 +87,8 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findById(@PathParam("dacId") Integer dacId) {
-        Dac dac = dacService.findById(dacId);
-        if (dac != null) {
-            return Response.ok().entity(dac).build();
-        }
-        throw new NotFoundException("Unable to find Data Access Committee with the provided id: " + dacId);
+        Dac dac = findDacById(dacId);
+        return Response.ok().entity(dac).build();
     }
 
     @DELETE
@@ -97,10 +96,7 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN})
     public Response deleteDac(@PathParam("dacId") Integer dacId) {
-        Dac dac = dacService.findById(dacId);
-        if (dac == null) {
-            throw new NotFoundException("Unable to find Data Access Committee with the provided id: " + dacId);
-        }
+        findDacById(dacId);
         try {
             dacService.deleteDac(dacId);
         } catch (Exception e) {
@@ -108,6 +104,76 @@ public class DacResource extends Resource {
             return Response.status(500).entity("Unable to delete Data Access Committee with the provided id: " + dacId).build();
         }
         return Response.ok().build();
+    }
+
+    @POST
+    @Path("{dacId}/member/{userId}")
+    @RolesAllowed({ADMIN})
+    public Response addDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+        Role role = dacService.getMemberRole();
+        DACUser user = findDacUser(userId);
+        Dac dac = findDacById(dacId);
+        DACUser member = dacService.addDacMember(role, user, dac);
+        return Response.ok().entity(member).build();
+    }
+
+    @DELETE
+    @Path("{dacId}/member/{userId}")
+    @RolesAllowed({ADMIN})
+    public Response removeDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+        Role role = dacService.getMemberRole();
+        DACUser user = findDacUser(userId);
+        Dac dac = findDacById(dacId);
+        dacService.removeDacMember(role, user, dac);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("{dacId}/chair/{userId}")
+    @RolesAllowed({ADMIN})
+    public Response addDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+        Role role = dacService.getChairpersonRole();
+        DACUser user = findDacUser(userId);
+        Dac dac = findDacById(dacId);
+        DACUser chair = dacService.addDacMember(role, user, dac);
+        return Response.ok().entity(chair).build();
+    }
+
+    @DELETE
+    @Path("{dacId}/chair/{userId}")
+    @RolesAllowed({ADMIN})
+    public Response removeDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+        Role role = dacService.getChairpersonRole();
+        DACUser user = findDacUser(userId);
+        Dac dac = findDacById(dacId);
+        dacService.removeDacMember(role, user, dac);
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("{dacId}/membership")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
+    public Response findAllDacMembers(@PathParam("dacId") Integer dacId) {
+        findDacById(dacId);
+        List<DACUser> members = dacService.findMembersByDacId(dacId);
+        return Response.ok().entity(members).build();
+    }
+
+    private DACUser findDacUser(Integer userId) {
+        DACUser user = dacService.findUserById(userId);
+        if (user == null) {
+            throw new NotFoundException("Unable to find User with the provided id: " + userId);
+        }
+        return user;
+    }
+
+    private Dac findDacById(Integer dacId) {
+        Dac dac = dacService.findById(dacId);
+        if (dac == null) {
+            throw new NotFoundException("Unable to find Data Access Committee with the provided id: " + dacId);
+        }
+        return dac;
     }
 
 }
