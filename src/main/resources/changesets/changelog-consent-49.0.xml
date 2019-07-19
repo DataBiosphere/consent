@@ -10,10 +10,13 @@
             <column name="rationale" type="text"/>
         </addColumn>
         <sql>
-            update dacuser set status = 1 where dacUserId in (select user_id from user_role where status = 1)
+            update dacuser set status = 0 where dacUserId in (select user_id from user_role where status = 0 and role_id = 5)
         </sql>
         <sql>
-            update dacuser set status = 2 where dacUserId in (select user_id from user_role where status = 2)
+            update dacuser set status = 1 where dacUserId in (select user_id from user_role where status = 1 and role_id = 5)
+        </sql>
+        <sql>
+            update dacuser set status = 2 where dacUserId in (select user_id from user_role where status = 2 and role_id = 5)
         </sql>
         <sql>
             update dacuser u
@@ -21,6 +24,7 @@
             select r.rationale
             from user_role r
             where r.user_id = u.dacUserId
+            and r.role_id = 5
             and r.rationale is not null
             and trim(r.rationale) != '' )
         </sql>
