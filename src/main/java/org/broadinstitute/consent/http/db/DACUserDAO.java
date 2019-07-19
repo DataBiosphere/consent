@@ -27,7 +27,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Collection<DACUser> findUsers(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson'")
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson'")
     DACUser findChairpersonUser();
 
     @SqlQuery("select du.* from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName")
@@ -37,11 +37,11 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson' or r.name = 'Member'")
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson' or r.name = 'Member'")
     Set<DACUser> findDACUsersEnabledToVote();
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where  du.dacUserId IN (<dacUserIds>)")
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where  du.dacUserId IN (<dacUserIds>)")
     Set<DACUser> findUsersWithRoles(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
     @SqlQuery("select * from dacuser where email = :email")
@@ -67,7 +67,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer findDACUserIdByRole(@Bind("roleId") Integer roleId, @Bind("dacUserId") Integer dacUserId);
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId " +
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId " +
               "inner join roles r on r.roleId = ur.role_id order by createDate desc")
     Set<DACUser> findUsers();
 
@@ -75,7 +75,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer verifyAdminUsers();
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
     @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN "

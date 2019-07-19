@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
@@ -16,12 +15,10 @@ import java.util.stream.Collectors;
 public class DacService {
 
     private DacDAO dacDAO;
-    private UserRoleDAO userRoleDAO;
 
     @Inject
-    public DacService(DacDAO dacDAO, UserRoleDAO userRoleDAO) {
+    public DacService(DacDAO dacDAO) {
         this.dacDAO = dacDAO;
-        this.userRoleDAO = userRoleDAO;
     }
 
     public List<Dac> findAll() {
@@ -48,20 +45,18 @@ public class DacService {
     }
 
     public DACUser findUserById(Integer id) throws IllegalArgumentException {
-        DACUser dacUser = dacDAO.findUserById(id);
-        if (dacUser != null) {
-            dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        }
-        return dacUser;
+        return populatedUserById(id);
     }
 
     public List<DACUser> findMembersByDacId(Integer dacId) {
-        return dacDAO.findMembersByDacId(dacId);
+        List<DACUser> dacUsers = dacDAO.findMembersByDacId(dacId);
+        dacUsers.forEach(u -> u.setRoles(dacDAO.findUserRolesForUser(u.getDacUserId())));
+        return dacUsers;
     }
 
     public DACUser addDacMember(Role role, DACUser user, Dac dac) {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
-        return dacDAO.findUserById(user.getDacUserId());
+        return populatedUserById(user.getDacUserId());
     }
 
     public void removeDacMember(Role role, DACUser user, Dac dac) {
@@ -81,6 +76,12 @@ public class DacService {
 
     public Role getMemberRole() {
         return dacDAO.getRoleById(UserRoles.MEMBER.getRoleId());
+    }
+
+    private DACUser populatedUserById(Integer userId) {
+        DACUser user = dacDAO.findUserById(userId);
+        user.setRoles(dacDAO.findUserRolesForUser(userId));
+        return user;
     }
 
 }

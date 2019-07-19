@@ -28,12 +28,6 @@ public class UserRole {
         this.name = name;
     }
 
-    public UserRole(Integer roleId, String name, Integer dacId) {
-        this.roleId = roleId;
-        this.name = name;
-        this.dacId = dacId;
-    }
-
     public UserRole(Integer userRoleId, Integer roleId, String name, Integer dacId) {
         this.userRoleId = userRoleId;
         this.roleId = roleId;

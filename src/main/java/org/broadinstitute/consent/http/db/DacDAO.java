@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -42,12 +43,9 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlUpdate("delete from dac where dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 
-    @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du " +
-              "inner join user_role ur on ur.user_id = du.dacUserId " +
-              "inner join roles r on ur.role_id = r.roleId " +
-              "inner join dac d on d.dac_id = ur.dac_id " +
-              "where d.dac_id = :dacId")
+    @Mapper(DACUserMapper.class)
+    @SqlQuery("select du.* from dacuser du " +
+              "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId")
     List<DACUser> findMembersByDacId(@Bind("dacId") Integer dacId);
 
     @SqlUpdate("insert into user_role (role_id, user_id, dac_id) values (:roleId, :userId, :dacId)")
@@ -60,8 +58,12 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlQuery("select * from roles where roleId = :roleId")
     Role getRoleById(@Bind("roleId") Integer roleId);
 
-    @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.dac_id from dacuser du left join user_role ur on ur.user_id = :dacUserId left join roles r on r.roleId = ur.role_id where du.dacUserId = :dacUserId")
+    @Mapper(DACUserMapper.class)
+    @SqlQuery("select du.* from dacuser du where du.dacUserId = :dacUserId")
     DACUser findUserById(@Bind("dacUserId") Integer dacUserId);
+
+    @Mapper(UserRoleMapper.class)
+    @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id = :userId")
+    List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
 
 }
