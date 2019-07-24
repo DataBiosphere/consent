@@ -1,13 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -21,20 +21,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Path("{api : (api/)?}election/")
 public class ElectionResource extends Resource {
 
     private final ElectionAPI api;
-    private final VoteAPI voteApi;
 
-    public ElectionResource() {
+    private VoteService voteService;
+
+    @Inject
+    public ElectionResource(VoteService voteService) {
         this.api = AbstractElectionAPI.getInstance();
-        this.voteApi = AbstractVoteAPI.getInstance();
+        this.voteService = voteService;
     }
 
     @POST
@@ -44,20 +44,15 @@ public class ElectionResource extends Resource {
     @RolesAllowed({ADMIN})
     public Response advanceElection(@PathParam("referenceId") String referenceId, @PathParam("vote") String vote) {
         try {
-            List<Vote> voteList = voteApi.describeVotes(referenceId);
-            List<Integer> electionIds = voteList.stream().map(Vote::getElectionId).collect(Collectors.toList());
-            Date now = new Date();
-            Boolean voteValue = vote.equalsIgnoreCase("yes");
-            voteList.
-                    stream().
+            Collection<Vote> voteList = voteService.findVotesByReferenceId(referenceId).stream().
                     filter(v -> v.getVote() == null).
                     filter(v -> v.getType().equalsIgnoreCase(VoteType.DAC.getValue())).
-                    forEach(v -> {
-                        v.setCreateDate(now);
-                        v.setVote(voteValue);
-                        v.setRationale("Advanced by administrator");
-                        voteApi.updateVote(v, v.getVoteId(), referenceId);
-                    });
+                    collect(Collectors.toList());
+            boolean voteValue = vote.equalsIgnoreCase("yes");
+            voteService.advanceVotes(voteList, voteValue, "Advanced by administrator");
+            Collection<Integer> electionIds = voteList.stream().
+                    map(Vote::getElectionId).
+                    collect(Collectors.toList());
             electionIds.forEach(id -> {
                 if (api.checkDataOwnerToCloseElection(id)) {
                     api.closeDataOwnerApprovalElection(id);
