@@ -6,6 +6,8 @@ DELETE FROM election WHERE electionId IN (130);
 DELETE FROM consentassociations WHERE associationId IN (100, 101, 102, 103, 104);
 DELETE FROM consents WHERE consentId IN ('testId4');
 DELETE FROM dataset_user_association WHERE datasetId IN (1, 2);
+DELETE FROM vote;
+DELETE FROM election;
 DELETE FROM dataset WHERE datasetId IN (1, 2, 3, 4, 5, 6);
 DELETE FROM approval_expiration_time;
 DELETE FROM consentassociations;

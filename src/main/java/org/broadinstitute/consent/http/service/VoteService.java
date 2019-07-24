@@ -66,7 +66,7 @@ public class VoteService {
     }
 
     /**
-     * Convenience method to ensure Vote non-null values are valid
+     * Convenience method to ensure Vote non-nullable values are populated
      *
      * @param vote The Vote to validate
      */
