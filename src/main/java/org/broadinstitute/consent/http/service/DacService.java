@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -43,10 +44,12 @@ public class DacService {
         Map<Dac, List<DACUser>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
         return dacs.stream().map(d -> {
             List<DACUser> chairs = dacToUserMap.get(d).stream().
-                    filter(u -> u.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toList()).contains(UserRoles.CHAIRPERSON.getRoleId())).
+                    filter(u -> u.getRoles().stream().
+                            anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
                     collect(Collectors.toList());
             List<DACUser> members = dacToUserMap.get(d).stream().
-                    filter(u -> u.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toList()).contains(UserRoles.MEMBER.getRoleId())).
+                    filter(u -> u.getRoles().stream().
+                            anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
                     collect(Collectors.toList());
             return new DacDTO(d, chairs, members);
         }).collect(Collectors.toList());
