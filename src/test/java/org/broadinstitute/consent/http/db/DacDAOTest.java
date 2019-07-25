@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -52,12 +53,6 @@ public class DacDAOTest extends AbstractTest {
         });
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    private Dac createDac() {
-        Integer dacId = dacDAO.createDac(RandomStringUtils.random(10), RandomStringUtils.random(10), new Date());
-        return dacDAO.findById(dacId);
-    }
-
     @Test
     public void testCreate() {
         // No-op ... tested in `createDac()`
@@ -76,6 +71,23 @@ public class DacDAOTest extends AbstractTest {
     @Test
     public void testDelete() {
         // No-op ... tested in `tearDown()`
+    }
+
+    @Test
+    public void testFindAllDacMembers() {
+        List<Dac> dacs = new ArrayList<>();
+        dacs.add(createDac());
+        dacs.add(createDac());
+        for (Dac dac : dacs) {
+            DACUser chair = createUser();
+            dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
+            DACUser member1 = createUser();
+            dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member1.getDacUserId(), dac.getDacId());
+            DACUser member2 = createUser();
+            dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member2.getDacUserId(), dac.getDacId());
+        }
+        List<DACUser> allDacUsers = dacDAO.findAllDacMemberships();
+        Assert.assertEquals(6, allDacUsers.size());
     }
 
     @Test
@@ -175,6 +187,11 @@ public class DacDAOTest extends AbstractTest {
         List<Integer> userIds = Arrays.asList(chair.getDacUserId(), member.getDacUserId());
         List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds);
         Assert.assertEquals(userRoles.size(), 2);
+    }
+
+    private Dac createDac() {
+        Integer dacId = dacDAO.createDac(RandomStringUtils.random(10), RandomStringUtils.random(10), new Date());
+        return dacDAO.findById(dacId);
     }
 
     private DACUser createUser() {

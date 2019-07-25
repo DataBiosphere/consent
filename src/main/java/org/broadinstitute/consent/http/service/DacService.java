@@ -5,13 +5,18 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDTO;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 public class DacService {
 
@@ -24,6 +29,54 @@ public class DacService {
 
     public List<Dac> findAll() {
         return dacDAO.findAll();
+    }
+
+    /**
+     * Retrieve a list of DacDTOs that contain a Dac, the list of chairperson users for the Dac, and a
+     * list of member users for the Dac.
+     *
+     * @return List of DacDTO objects
+     */
+    public List<DacDTO> findAllDacsWithMembers() {
+        List<Dac> dacs = dacDAO.findAll();
+        List<DACUser> allDacMembers = dacDAO.findAllDacMemberships().stream().distinct().collect(Collectors.toList());
+        Map<Dac, List<DACUser>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
+        return dacs.stream().map(d -> {
+            List<DACUser> chairs = dacToUserMap.get(d).stream().
+                    filter(u -> u.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toList()).contains(UserRoles.CHAIRPERSON.getRoleId())).
+                    collect(Collectors.toList());
+            List<DACUser> members = dacToUserMap.get(d).stream().
+                    filter(u -> u.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toList()).contains(UserRoles.MEMBER.getRoleId())).
+                    collect(Collectors.toList());
+            return new DacDTO(d, chairs, members);
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Convenience method to group DACUsers into their associated Dacs. Users can be in more than
+     * a single Dac, and a Dac can have multiple types of users, either Chairpersons or Members.
+     *
+     * @param dacs List of all Dacs
+     * @param allDacMembers List of all DACUsers, i.e. users that are in any Dac.
+     * @return Map of Dac to list of DACUser
+     */
+    private Map<Dac, List<DACUser>> groupUsersByDacs(List<Dac> dacs, List<DACUser> allDacMembers) {
+        Map<Integer, Dac> dacMap = dacs.stream().collect(Collectors.toMap(Dac::getDacId, d -> d));
+        Map<Integer, DACUser> userMap = allDacMembers.stream().collect(Collectors.toMap(DACUser::getDacUserId, u -> u));
+        Map<Dac, List<DACUser>> dacToUserMap = new HashMap<>();
+        dacs.forEach(d -> dacToUserMap.put(d, new ArrayList<>()));
+        allDacMembers.stream().
+                flatMap(u -> u.getRoles().stream()).
+                filter(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) ||
+                                ur.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
+                forEach(ur -> {
+                    Dac d = dacMap.get(ur.getDacId());
+                    DACUser u = userMap.get(ur.getUserId());
+                    if (d != null && u != null && dacToUserMap.containsKey(d)) {
+                        dacToUserMap.get(d).add(u);
+                    }
+                });
+        return dacToUserMap;
     }
 
     public Dac findById(Integer dacId) {
@@ -56,10 +109,17 @@ public class DacService {
                 map(DACUser::getDacUserId).
                 distinct().
                 collect(Collectors.toList());
-        Map<Integer, List<UserRole>> userRoleMap = dacDAO.findUserRolesForUsers(allUserIds).
-                stream().
-                collect(Collectors.groupingBy(UserRole::getUserId));
-        dacUsers.forEach(u -> u.setRoles(userRoleMap.get(u.getDacUserId())));
+        Map<Integer, List<UserRole>> userRoleMap = new HashMap<>();
+        if (!allUserIds.isEmpty()) {
+            userRoleMap.putAll(dacDAO.findUserRolesForUsers(allUserIds).
+                    stream().
+                    collect(groupingBy(UserRole::getUserId)));
+        }
+        dacUsers.forEach(u -> {
+            if (userRoleMap.containsKey(u.getDacUserId())) {
+                u.setRoles(userRoleMap.get(u.getDacUserId()));
+            }
+        });
         return dacUsers;
     }
 

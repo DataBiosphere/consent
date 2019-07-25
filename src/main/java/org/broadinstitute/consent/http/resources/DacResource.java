@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDTO;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.service.DacService;
 
@@ -37,8 +38,8 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findAll() {
-        List<Dac> dacs = dacService.findAll();
-        return Response.ok().entity(dacs).build();
+        List<DacDTO> dacDTOs = dacService.findAllDacsWithMembers();
+        return Response.ok().entity(dacDTOs).build();
     }
 
     @POST
