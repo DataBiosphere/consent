@@ -24,10 +24,18 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlQuery("select * from dac")
     List<Dac> findAll();
 
-    // Note that this can return duplicates
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id is not null inner join roles r on r.roleId = ur.role_id")
-    List<DACUser> findAllDacMemberships();
+    List<DACUser> findAllDACUserMemberships();
+
+    @Mapper(DACUserRoleMapper.class)
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du " +
+              " inner join user_role ur on ur.user_id = du.dacUserId " +
+              " inner join roles r on r.roleId = ur.role_id " +
+              " where lower(du.displayName) like concat('%', lower(:term), '%') " +
+              " or lower(du.email) like concat('%', lower(:term), '%') " +
+              " or lower(du.additional_email) like concat('%', lower(:term), '%') ")
+    List<DACUser> findAllDACUsersBySearchString(@Bind("term") String term);
 
     @SqlQuery("select * from dac where dac_id = :dacId")
     Dac findById(@Bind("dacId") Integer dacId);

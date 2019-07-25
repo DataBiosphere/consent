@@ -86,7 +86,7 @@ public class DacDAOTest extends AbstractTest {
             DACUser member2 = createUser();
             dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member2.getDacUserId(), dac.getDacId());
         }
-        List<DACUser> allDacUsers = dacDAO.findAllDacMemberships();
+        List<DACUser> allDacUsers = dacDAO.findAllDACUserMemberships();
         Assert.assertEquals(6, allDacUsers.size());
     }
 

@@ -164,6 +164,15 @@ public class DacResource extends Resource {
         return Response.ok().entity(members).build();
     }
 
+    @GET
+    @Path("users/{term}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
+    public Response filterUsers(@PathParam("term") String term) {
+        List<DACUser> users = dacService.findAllDACUsersBySearchString(term);
+        return Response.ok().entity(users).build();
+    }
+
     private DACUser findDacUser(Integer userId) {
         DACUser user = dacService.findUserById(userId);
         if (user == null) {

@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +31,10 @@ public class DacService {
         return dacDAO.findAll();
     }
 
+    public List<DACUser> findAllDACUsersBySearchString(String term) {
+        return dacDAO.findAllDACUsersBySearchString(term).stream().distinct().collect(Collectors.toList());
+    }
+
     /**
      * Retrieve a list of DacDTOs that contain a Dac, the list of chairperson users for the Dac, and a
      * list of member users for the Dac.
@@ -40,7 +43,7 @@ public class DacService {
      */
     public List<DacDTO> findAllDacsWithMembers() {
         List<Dac> dacs = dacDAO.findAll();
-        List<DACUser> allDacMembers = dacDAO.findAllDacMemberships().stream().distinct().collect(Collectors.toList());
+        List<DACUser> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct().collect(Collectors.toList());
         Map<Dac, List<DACUser>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
         return dacs.stream().map(d -> {
             List<DACUser> chairs = dacToUserMap.get(d).stream().

@@ -975,6 +975,28 @@ paths:
           description: No DAC found with the provided ID
         500:
           description: Internal Server Error
+  /api/dac/users/{term}:
+    get:
+      summary: Find Users by Search Term
+      operationId: findUsersByTerm
+      description: Find all users that match the search term. Matches on name and email address.
+      parameters:
+        - name: term
+          in: path
+          description: The Search Term
+          required: true
+          type: string
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The list of users matching the term
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DACUser'
+        500:
+          description: Internal Server Error
   /api/dacuser:
     post:
       summary: createDACUser
