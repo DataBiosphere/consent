@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,6 +154,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     VoteDAO providesVoteDAO() {
         return voteDAO;
+    }
+
+    @Provides
+    VoteService providesVoteService() {
+        return new VoteService(providesVoteDAO());
     }
 
     @Provides

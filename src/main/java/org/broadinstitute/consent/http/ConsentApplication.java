@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -40,6 +39,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -118,6 +118,7 @@ import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.NihServiceAPI;
 import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
@@ -212,6 +213,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Services
         final DacService dacService = injector.getProvider(DacService.class).get();
+        final VoteService voteService = injector.getProvider(VoteService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, mongoInstance, voteDAO, dataSetDAO);
@@ -282,7 +284,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(ConsentManageResource.class);
-        env.jersey().register(ElectionResource.class);
+        env.jersey().register(new ElectionResource(voteService));
         env.jersey().register(MatchResource.class);
         env.jersey().register(EmailNotifierResource.class);
         env.jersey().register(HelpReportResource.class);
