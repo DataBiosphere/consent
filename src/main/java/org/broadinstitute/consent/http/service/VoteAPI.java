@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import javax.ws.rs.NotFoundException;
 import java.util.List;
 
+@Deprecated // Use VoteService
 public interface VoteAPI {
 
     List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) throws IllegalArgumentException;
