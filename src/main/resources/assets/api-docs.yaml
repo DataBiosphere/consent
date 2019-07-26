@@ -1759,6 +1759,34 @@ paths:
             $ref: '#/definitions/Election'
         400:
           description: Illegal Argument Exception
+  /api/election/{referenceId}/advance/{vote}:
+    post:
+      summary: Advance Elections
+      description: Advance all incomplete votes in any elections on the reference.
+      operationId: advanceElections
+      parameters:
+        - name: referenceId
+          in: path
+          description: referenceId for the Elections
+          required: true
+          type: string
+        - name: vote
+          in: path
+          description: Vote value for all votes in the Elections
+          required: true
+          type: string
+          enum:
+            - Yes
+            - No
+      tags:
+        - Election
+      responses:
+        200:
+          description: All incomplete votes for the elections have been advanced.
+        500:
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
   /api/electionReview:
     get:
       summary: getCollectElectionReview

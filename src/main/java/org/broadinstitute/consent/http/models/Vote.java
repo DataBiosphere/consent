@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 
 import java.util.Date;
 
@@ -142,5 +143,10 @@ public class Vote {
 
     public void setHasConcerns(Boolean hasConcerns) {
         this.hasConcerns = hasConcerns;
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

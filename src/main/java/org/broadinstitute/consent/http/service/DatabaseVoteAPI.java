@@ -20,6 +20,7 @@ import java.util.Set;
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
  */
+@Deprecated // Use VoteService
 public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     private VoteDAO voteDAO;
