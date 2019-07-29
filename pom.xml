@@ -776,6 +776,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.eclipse.rdf4j</groupId>
+      <artifactId>rdf4j-rio-trix</artifactId>
+      <version>2.4.1</version>
+    </dependency>
+
+    <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-distribution</artifactId>
       <version>${owl.version}</version>
@@ -783,6 +789,10 @@
         <exclusion>
           <groupId>org.eclipse.rdf4j</groupId>
           <artifactId>df4j-rio-rdfxml</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.rdf4j</groupId>
+          <artifactId>df4j-rio-trix</artifactId>
         </exclusion>
         <exclusion>
           <groupId>net.sourceforge.owlapi</groupId>
