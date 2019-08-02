@@ -7,6 +7,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.*;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
+import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -35,6 +37,10 @@ import static com.mongodb.client.model.Filters.*;
  * Implementation class for DatabaseDataAccessRequestAPI.
  */
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
+
+    private static Logger logger() {
+        return Logger.getLogger("DatabaseDataAccessRequestAPI");
+    }
 
     private MongoConsentDB mongo;
 
@@ -525,6 +531,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi, UserRole role) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
+        List<Document> datasetDetails = populateDatasetDetailDocuments(dar.get(DarConstants.DATASET_DETAIL));
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
             .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
@@ -545,7 +552,62 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setResearchType(dar)
             .setDiseases(dar)
             .setPurposeStatements(dar)
-            .setDatasetDetail((ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL));
+            .setDatasetDetail(datasetDetails);
+    }
+
+    /**
+     * Dataset Detail fields have undergone transition and can have different keys in the mongo source
+     *
+     * "datasetDetail": [
+     *     {
+     *       "datasetId": "1",
+     *       "name": "CMG_Manton",
+     *       "objectId": "SC-25537"
+     *     }
+     *   ]
+     *
+     * OR something like this ...
+     *
+     *  "datasetDetail": [
+     *     {
+     *       "datasetId": "143",
+     *       "name": "IDH-mutant astrocytoma - Suva"
+     *     },
+     *     {
+     *       "datasetId": "142",
+     *       "name": "oligodendroglioma scRNA-seq - Suva"
+     *     }
+     *   ]
+     *
+     *   For backwards compatibility, we need to recreate the "objectId" field if they are missing
+     */
+    @SuppressWarnings("unchecked")
+    private List<Document> populateDatasetDetailDocuments(Object datasetDetails) {
+        List<Document> newDetails = new ArrayList<>();
+        try {
+            ((ArrayList<Document>) datasetDetails).forEach(d -> {
+                // If we already have an objectId, we don't need to do any additional work
+                if (d.containsKey(DarConstants.OBJECT_ID)) {
+                    newDetails.add(d);
+                }
+                // If we have do have a datasetId, we can look it up and populate the object id field
+                else if (d.containsKey(DarConstants.DATASET_ID)) {
+                    DataSet dataSet = dataSetDAO.findDataSetById(Integer.valueOf(d.getString(DarConstants.DATASET_ID)));
+                    if (dataSet.getAlias() != null) {
+                        String aliasString = DatasetUtil.parseAlias(dataSet.getAlias());
+                        d.put(DarConstants.OBJECT_ID, aliasString);
+                        newDetails.add(d);
+                    }
+                }
+                // Last case - just add the doc and return.
+                else {
+                    newDetails.add(d);
+                }
+            });
+        } catch (Exception e) {
+            logger().warn(e);
+        }
+        return newDetails;
     }
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
