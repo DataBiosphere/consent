@@ -9,29 +9,59 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.*;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.ne;
 
 /**
  * Implementation class for DatabaseDataAccessRequestAPI.
@@ -589,9 +619,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 // If we are missing the object id, but have a dataset id, then we need to look it up:
                 if (d.containsKey(DarConstants.DATASET_ID) && !d.containsKey(DarConstants.OBJECT_ID)) {
                     DataSet dataSet = dataSetDAO.findDataSetById(Integer.valueOf(d.getString(DarConstants.DATASET_ID)));
-                    if (dataSet.getAlias() != null) {
-                        String aliasString = DatasetUtil.parseAlias(dataSet.getAlias());
-                        d.put(DarConstants.OBJECT_ID, aliasString);
+                    if (dataSet.getObjectId() != null) {
+                        d.put(DarConstants.OBJECT_ID, dataSet.getObjectId());
                     }
                 }
                 newDetails.add(d);
