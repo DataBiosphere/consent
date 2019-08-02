@@ -579,30 +579,22 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *     }
      *   ]
      *
-     *   For backwards compatibility, we need to recreate the "objectId" field if they are missing
+     *   For backwards compatibility, we need to recreate the "objectId" field if it is missing
      */
     @SuppressWarnings("unchecked")
     private List<Document> populateDatasetDetailDocuments(Object datasetDetails) {
         List<Document> newDetails = new ArrayList<>();
         try {
             ((ArrayList<Document>) datasetDetails).forEach(d -> {
-                // If we already have an objectId, we don't need to do any additional work
-                if (d.containsKey(DarConstants.OBJECT_ID)) {
-                    newDetails.add(d);
-                }
-                // If we have do have a datasetId, we can look it up and populate the object id field
-                else if (d.containsKey(DarConstants.DATASET_ID)) {
+                // If we are missing the object id, but have a dataset id, then we need to look it up:
+                if (d.containsKey(DarConstants.DATASET_ID) && !d.containsKey(DarConstants.OBJECT_ID)) {
                     DataSet dataSet = dataSetDAO.findDataSetById(Integer.valueOf(d.getString(DarConstants.DATASET_ID)));
                     if (dataSet.getAlias() != null) {
                         String aliasString = DatasetUtil.parseAlias(dataSet.getAlias());
                         d.put(DarConstants.OBJECT_ID, aliasString);
-                        newDetails.add(d);
                     }
                 }
-                // Last case - just add the doc and return.
-                else {
-                    newDetails.add(d);
-                }
+                newDetails.add(d);
             });
         } catch (Exception e) {
             logger().warn(e);
