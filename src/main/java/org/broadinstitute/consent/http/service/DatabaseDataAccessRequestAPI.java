@@ -586,13 +586,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     /**
-     * Dataset Detail fields have undergone transition and can have different keys in the mongo source
+     * Dataset Detail fields have undergone transition and can have different keys in the mongo source.
+     * For example, these are two examples from production:
      *
-     * "datasetDetail": [
+     *   "datasetDetail": [
      *     {
-     *       "datasetId": "1",
-     *       "name": "CMG_Manton",
-     *       "objectId": "SC-25537"
+     *       "datasetId": "7",
+     *       "name": "Melanoma_Regev",
+     *       "objectId": "SC-14319"
+     *     },
+     *     {
+     *       "datasetId": "139",
+     *       "name": "MetastaticMelanoma_Regev"
      *     }
      *   ]
      *
@@ -609,7 +614,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *     }
      *   ]
      *
-     *   For backwards compatibility, we need to recreate the "objectId" field if it is missing
+     * For backwards compatibility, we need to recreate the "objectId" field if it is missing
+     * and populate it with the dataset's objectId field
      */
     @SuppressWarnings("unchecked")
     private List<Document> populateDatasetDetailDocuments(Object datasetDetails) {
