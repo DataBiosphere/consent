@@ -18,11 +18,10 @@
     <lucene.version>7.5.0</lucene.version>
     <hsqldb.version>2.3.3</hsqldb.version>
     <liquibase.version>3.6.2</liquibase.version>
-    <dropwizard.version>1.3.7</dropwizard.version>
+    <dropwizard.version>1.3.14</dropwizard.version>
     <pdfbox.version>2.0.15</pdfbox.version>
     <jetty.version>9.4.14.v20181114</jetty.version>
     <owl.version>5.1.7</owl.version>
-    <jackson.version>2.9.9.1</jackson.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
@@ -318,6 +317,13 @@
 
   <dependencies>
 
+    <!-- Pulling in directly to evict older, transitive dependencies -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.9.3</version>
+    </dependency>
+
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
@@ -369,15 +375,15 @@
     </dependency>
 
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
       <version>4.3.0</version>
+      <exclusions>
+          <exclusion>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-databind</artifactId>
+          </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
