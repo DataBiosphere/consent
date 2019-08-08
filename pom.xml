@@ -380,7 +380,7 @@
       <version>4.3.0</version>
       <exclusions>
           <exclusion>
-              <groupId>fasterxml.jackson.core</groupId>
+              <groupId>com.fasterxml.jackson.core</groupId>
               <artifactId>jackson-databind</artifactId>
           </exclusion>
       </exclusions>
