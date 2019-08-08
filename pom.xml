@@ -317,6 +317,13 @@
 
   <dependencies>
 
+    <!-- Pulling in directly to evict older, transitive dependencies -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.9.3</version>
+    </dependency>
+
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
@@ -371,6 +378,12 @@
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
       <version>4.3.0</version>
+      <exclusions>
+          <exclusion>
+              <groupId>fasterxml.jackson.core</groupId>
+              <artifactId>jackson-databind</artifactId>
+          </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -684,10 +697,10 @@
       <artifactId>mongo-jackson-mapper</artifactId>
       <version>1.4.2</version>
       <exclusions>
-<!--        <exclusion>-->
-<!--          <groupId>fasterxml.jackson.core</groupId>-->
-<!--          <artifactId>jackson-databind</artifactId>-->
-<!--        </exclusion>-->
+        <exclusion>
+          <groupId>fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.mongodb</groupId>
           <artifactId>mongo-java-driver</artifactId>
