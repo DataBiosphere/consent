@@ -19,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +68,15 @@ public class DataAccessAgreementResourceTest {
         when(store.getStorageDocument(any())).thenReturn(response);
 
         Response response = resource.getDAA(1);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    @Test
+    public void testGetDAA_failure_case1() {
+        when(researcherAPI.describeResearcherPropertiesForDAR(anyInt())).thenReturn(Collections.emptyMap());
+
+        Response response = resource.getDAA(1);
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
@@ -82,7 +91,7 @@ public class DataAccessAgreementResourceTest {
         String existentFileUrl = "";
 
         Response response = resource.storeDAA(content, part, fileName, existentFileUrl);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
@@ -97,7 +106,7 @@ public class DataAccessAgreementResourceTest {
         String existentFileUrl = "undefined";
 
         Response response = resource.storeDAA(content, part, fileName, existentFileUrl);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
@@ -112,7 +121,7 @@ public class DataAccessAgreementResourceTest {
         String existentFileUrl = "undefined";
 
         Response response = resource.storeDAA(content, part, fileName, existentFileUrl);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
     }
 
     @Test
@@ -127,7 +136,7 @@ public class DataAccessAgreementResourceTest {
         String existentFileUrl = "";
 
         Response response = resource.storeDAA(content, part, fileName, existentFileUrl);
-        assertEquals(response.getStatus(), 500);
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
 }
