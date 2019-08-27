@@ -11,7 +11,6 @@ import org.bson.Document;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -73,9 +72,14 @@ public class DataAccessAgreementResource extends Resource {
             @QueryParam("fileName") String fileName,
             @QueryParam("existentFileUrl") String existentFileUrl) {
         try {
-            if(StringUtils.isNotEmpty(existentFileUrl)) {
+            if (StringUtils.isNotEmpty(existentFileUrl)) {
                 store.deleteStorageDocument(existentFileUrl);
             }
+        } catch (Exception e) {
+            // Warn non-fatal errors so we can manage them through support
+            logger().warn(String.format("Unable to delete storage document with url of '%s' when storing a new document of '%s'", existentFileUrl, fileName));
+        }
+        try {
             String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
             Document dataAccessAgreement = new Document();
             dataAccessAgreement.put(ResearcherFields.URL_DAA.getValue(), store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));
