@@ -80,6 +80,19 @@ public class DataAccessAgreementResourceTest {
     }
 
     @Test
+    public void testGetDAA_failure_case2() throws Exception {
+        Map<String, String> propMap = new HashMap<>();
+        propMap.put(ResearcherFields.URL_DAA.getValue(), "gs//url/to/daa");
+        propMap.put(ResearcherFields.NAME_DAA.getValue(), "daaName.txt");
+        InputStream content = IOUtils.toInputStream("content", Charset.defaultCharset());
+        when(researcherAPI.describeResearcherPropertiesForDAR(anyInt())).thenReturn(propMap);
+        doThrow(Exception.class).when(store).getStorageDocument(anyString());
+
+        Response response = resource.getDAA(1);
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
     public void testStoreDAA_success_case1() throws Exception {
         when(store.deleteStorageDocument(any())).thenReturn(true);
         when(store.postStorageDocument(any(), anyString(), anyString())).thenReturn("url");
