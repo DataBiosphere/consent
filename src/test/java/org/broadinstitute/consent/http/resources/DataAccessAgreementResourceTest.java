@@ -84,7 +84,6 @@ public class DataAccessAgreementResourceTest {
         Map<String, String> propMap = new HashMap<>();
         propMap.put(ResearcherFields.URL_DAA.getValue(), "gs//url/to/daa");
         propMap.put(ResearcherFields.NAME_DAA.getValue(), "daaName.txt");
-        InputStream content = IOUtils.toInputStream("content", Charset.defaultCharset());
         when(researcherAPI.describeResearcherPropertiesForDAR(anyInt())).thenReturn(propMap);
         doThrow(Exception.class).when(store).getStorageDocument(anyString());
 
