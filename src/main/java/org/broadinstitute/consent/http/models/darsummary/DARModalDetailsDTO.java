@@ -256,7 +256,7 @@ public class DARModalDetailsDTO {
         return this;
     }
 
-    public DARModalDetailsDTO setDatasetDetail(ArrayList<Document> datasetDetail) {
+    public DARModalDetailsDTO setDatasetDetail(List<Document> datasetDetail) {
         Map<String, String> datasetDetailMap = new HashMap<>();
         datasetDetail.forEach((doc) -> {
             String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? doc.getString(DarConstants.OBJECT_ID) : "--";
@@ -265,6 +265,7 @@ public class DARModalDetailsDTO {
         this.datasetDetail = datasetDetailMap;
         return this;
     }
+
     public String getStatus() {
         return status;
     }
