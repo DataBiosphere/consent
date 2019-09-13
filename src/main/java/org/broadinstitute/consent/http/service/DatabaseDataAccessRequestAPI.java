@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -667,10 +668,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
     }
 
-    private DACUser getOwnerUser(Integer dacUserId){
-        List<DACUser> users = new ArrayList<>();
-        users.addAll(dacUserDAO.findUsersWithRoles(new ArrayList<>(Collections.singletonList(dacUserId))));
-        return users.get(0);
+    private Optional<DACUser> getOwnerUser(Object dacUserId) {
+        try {
+            Integer userId = Integer.valueOf(dacUserId.toString());
+            Set<DACUser> users = dacUserDAO.findUsersWithRoles(Collections.singletonList(userId));
+            return users.stream().findFirst();
+        } catch (Exception e) {
+            logger().error("Unable to determine user for dacUserId: " + dacUserId.toString() + "; " + e.getMessage());
+        }
+        return Optional.empty();
     }
 
     private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
@@ -701,10 +707,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
                 darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
             }
-            try{
-                darManage.setOwnerUser(getOwnerUser(dar.getInteger(DarConstants.USER_ID)));
-            }catch (Exception e){
-                darManage.setOwnerUser(getOwnerUser(Integer.valueOf(dar.getString(DarConstants.USER_ID))));
+            darManage.setOwnerUser(getOwnerUser(dar.get(DarConstants.USER_ID)).orElse(null));
+            if (darManage.getOwnerUser() == null) {
+                logger().error("DAR: " + darManage.getFrontEndId() + " has an invalid owner");
             }
             requestsManage.add(darManage);
         });
