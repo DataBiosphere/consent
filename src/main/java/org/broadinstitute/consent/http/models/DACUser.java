@@ -33,6 +33,15 @@ public class DACUser {
     @JsonProperty
     private Boolean emailPreference;
 
+    @JsonProperty
+    private String status;
+
+    @JsonProperty
+    private String rationale;
+
+    @JsonProperty
+    private Boolean profileCompleted;
+
     public DACUser() {
     }
 
@@ -94,6 +103,12 @@ public class DACUser {
         if (u.getRoles() != null && !u.getRoles().isEmpty()) {
             this.setRoles(u.getRoles());
         }
+        if (!StringUtils.isEmpty(u.getStatus())) {
+            this.setStatus(u.getStatus());
+        }
+        if (!StringUtils.isEmpty(u.getRationale())) {
+            this.setRationale(u.getRationale());
+        }
     }
 
     public Integer getDacUserId() {
@@ -150,6 +165,30 @@ public class DACUser {
 
     public void setEmailPreference(Boolean emailPreference) {
         this.emailPreference = emailPreference;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getRationale() {
+        return rationale;
+    }
+
+    public void setRationale(String rationale) {
+        this.rationale = rationale;
+    }
+
+    public Boolean getProfileCompleted() {
+        return profileCompleted;
+    }
+
+    public void setProfileCompleted(Boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
     }
 
     @Override

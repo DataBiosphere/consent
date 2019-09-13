@@ -71,9 +71,8 @@ public class DatabaseResearcherAPI implements ResearcherAPI{
             deleteResearcherProperties(userId);
             saveProperties(properties);
             UserRole userRole = new UserRole();
-            userRole.setStatus(RoleStatus.PENDING.toString());
             userRole.setRoleId(5);
-            dacUserAPI.updateRoleStatus(userRole, userId);
+            dacUserAPI.updateUserStatus(RoleStatus.PENDING.toString(), userId);
             notifyAdmins(userId, ACTION_UPDATED);
         } else {
             saveProperties(properties);

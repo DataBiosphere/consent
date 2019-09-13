@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Path("{api : (api/)?}dacuser")
+@Path("api/dacuser")
 public class DACUserResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
@@ -119,6 +119,8 @@ public class DACUserResource extends Resource {
         }
     }
 
+    // TODO: Undocumented: See DUOS-403
+    @Deprecated // Use update instead
     @PUT
     @Path("/mainFields/{id}")
     @Consumes("application/json")
@@ -145,6 +147,7 @@ public class DACUserResource extends Resource {
     }
 
 
+    // TODO: Undocumented: See DUOS-403
     @POST
     @Consumes("application/json")
     @Produces("application/json")
@@ -162,20 +165,34 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @Deprecated // Use update instead
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
-        UserRole userRole = new UserRole(json);
-        try {
-            return Response.ok(dacUserAPI.updateRoleStatus(userRole, userId)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
+        Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
+        Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
+        DACUser user = dacUserAPI.describeDACUserById(userId);
+        if (statusOpt.isPresent()) {
+            try {
+                user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
         }
+        if (rationaleOpt.isPresent()) {
+            try {
+                user = dacUserAPI.updateUserRationale(rationaleOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
+        }
+        return Response.ok(user).build();
     }
 
+    @Deprecated // Use get by email instead
     @GET
     @Path("/status/{userId}")
     @Consumes("application/json")
@@ -183,12 +200,14 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
-            return Response.ok(dacUserAPI.getRoleStatus(userId)).build();
+            return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
 
+    // TODO: Undocumented: See DUOS-403
+    @Deprecated // Use update instead
     @PUT
     @Path("/name/{id}")
     @Consumes("application/json")
@@ -213,6 +232,26 @@ public class DACUserResource extends Resource {
             }
         }
         return isChairPerson;
+    }
+
+    /**
+     * Convenience method to find a member from legacy json structure.
+     *
+     * @param json Raw json string from client
+     * @param memberName The name of the member to find in the json
+     * @return Optional value of memberName
+     */
+    private Optional<String> getMemberNameStringFromJson(String json, String memberName) {
+        Optional<String> aString = Optional.empty();
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        if (jsonObject.has(memberName) && !jsonObject.get(memberName).isJsonNull()) {
+            try {
+                aString = Optional.of(jsonObject.get(memberName).getAsString());
+            } catch (Exception e) {
+                logger().debug(e.getMessage());
+            }
+        }
+        return aString;
     }
 
     /**

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class DACUserTest extends DACUserServiceTest {
 
@@ -93,7 +95,7 @@ public class DACUserTest extends DACUserServiceTest {
         delete(client, dacUserPathByEmail(CHAIR_2_USER_EMAIL));
     }
 
-    public DACUser testCreate(DACUser dacuser) throws IOException {
+    private DACUser testCreate(DACUser dacuser) throws IOException {
         Client client = ClientBuilder.newClient();
         Response response = checkStatus(CREATED, post(client, dacUserPath(), dacuser));
         String createdLocation = checkHeader(response, "Location");
@@ -133,12 +135,10 @@ public class DACUserTest extends DACUserServiceTest {
         user.setEmail(DAC_USER_EMAIL);
         UserRole role = new UserRole();
         role.setName(UserRoles.MEMBER.getRoleName());
-        user.setRoles(new ArrayList<>(Arrays.asList(role)));
-        Map<String, Object> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser",user);
+        user.setRoles(Collections.singletonList(role));
         HashMap response = post(client, validateDelegationPath(UserRoles.MEMBER.getRoleName()), user).readEntity(HashMap.class);
-        boolean needsDelegation = (Boolean)response.get("needsDelegation");
-        List<DACUser> dacUsers = (List<DACUser>)response.get("delegateCandidates");
+        boolean needsDelegation = (Boolean) response.get("needsDelegation");
+        List<DACUser> dacUsers = (List<DACUser>) response.get("delegateCandidates");
         assertThat(dacUsers).isEmpty();
         assertThat(needsDelegation).isFalse();
     }
@@ -153,41 +153,36 @@ public class DACUserTest extends DACUserServiceTest {
     public void testGetUserStatusSuccess() throws IOException {
         Client client = ClientBuilder.newClient();
         Response response = getJson(client, statusValue(1));
-        UserRole userRole = response.readEntity(UserRole.class);
-        assertThat(userRole.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
+        DACUser user = response.readEntity(DACUser.class);
+        assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
     }
 
     @Test
     public void testUpdateStatus() throws IOException {
         Client client = ClientBuilder.newClient();
-        UserRole role = new UserRole();
-        role.setRoleId(5);
-        role.setStatus(RoleStatus.APPROVED.name());
-        Response response = put(client, statusValue(1), role);
+        DACUser postUser = new DACUser();
+        postUser.setStatus(RoleStatus.APPROVED.name());
+        Response response = put(client, statusValue(1), postUser);
         checkStatus(OK, response);
         DACUser user = response.readEntity(DACUser.class);
-        UserRole researcher = user.getRoles().stream().filter(userRole ->
-                userRole.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))
-                .findFirst().get();
-        assertThat(researcher.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
+        assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.APPROVED.name()));
     }
 
     @Test
     public void testUpdateStatusUserNotFound() throws IOException {
         Client client = ClientBuilder.newClient();
-        UserRole role = new UserRole();
-        role.setStatus(RoleStatus.REJECTED.name());
-        Response response = put(client, statusValue(10), role);
+        DACUser postUser = new DACUser();
+        postUser.setStatus(RoleStatus.REJECTED.name());
+        Response response = put(client, statusValue(10), postUser);
         checkStatus(NOT_FOUND, response);
     }
 
     @Test
     public void testUpdateStatusBadRequest() throws IOException {
         Client client = ClientBuilder.newClient();
-        UserRole role = new UserRole();
-        role.setRoleId(11);
-        role.setStatus("Test");
-        Response response = put(client, statusValue(4), role);
+        DACUser postUser = new DACUser();
+        postUser.setStatus("Test");
+        Response response = put(client, statusValue(4), postUser);
         checkStatus(BAD_REQUEST, response);
     }
 
@@ -201,7 +196,7 @@ public class DACUserTest extends DACUserServiceTest {
         Response response = put(client, dacUserPath()+ "/name/4", user);
         checkStatus(OK, response);
         DACUser dacUser = response.readEntity(DACUser.class);
-        assertThat(dacUser.getDisplayName().equals(displayName));
+        assertEquals(dacUser.getDisplayName(), displayName);
     }
 
     @Test

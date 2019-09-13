@@ -5,7 +5,6 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -18,12 +17,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.APPROVED;
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getValueByStatus;
 
 public class UserRoleDAOTest extends AbstractTest {
 
@@ -32,7 +26,6 @@ public class UserRoleDAOTest extends AbstractTest {
     private static final int TEST_USER_3_ID = 3;
     private static final int TEST_USER_4_ID = 4;
     private static final int TEST_USER_5_ID = 5;
-    private static final int PENDING_ID = RoleStatus.getValueByStatus(RoleStatus.PENDING.name());
 
     @SuppressWarnings("UnstableApiUsage")
     @ClassRule
@@ -45,6 +38,7 @@ public class UserRoleDAOTest extends AbstractTest {
     }
 
     private UserRoleDAO userRoleDAO;
+    private DACUserDAO dacUserDAO;
 
     private void resetUserRoleTable() {
         // Many legacy tests use a set of roles defined in `insert.sql`
@@ -55,7 +49,7 @@ public class UserRoleDAOTest extends AbstractTest {
         userRoleDAO.deleteAllUserRoles();
         userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), TEST_USER_1_ID);
         userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), TEST_USER_1_ID);
-        userRoleDAO.updateUserRoleStatus(TEST_USER_5_ID, UserRoles.MEMBER.getRoleId(), PENDING_ID, "");
+        dacUserDAO.updateUserStatus(TEST_USER_5_ID, UserRoles.MEMBER.getRoleId());
         userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), TEST_USER_2_ID);
         userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), TEST_USER_3_ID);
         userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), TEST_USER_4_ID);
@@ -71,6 +65,7 @@ public class UserRoleDAOTest extends AbstractTest {
     @Before
     public void setUp() {
         userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
+        dacUserDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         resetUserRoleTable();
     }
 
@@ -163,26 +158,6 @@ public class UserRoleDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testUpdateUserRoleStatus() {
-        Integer roleStatusId = getValueByStatus(APPROVED.name());
-        String roleStatusName = getStatusByValue(roleStatusId);
-        String rationale = "Approved";
-        userRoleDAO.updateUserRoleStatus(
-                TEST_USER_5_ID,
-                UserRoles.DATAOWNER.getRoleId(),
-                roleStatusId,
-                rationale);
-
-        Optional<UserRole> urOption = userRoleDAO.
-                findRolesByUserId(TEST_USER_5_ID).
-                stream().
-                filter(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())).
-                findFirst();
-        Assert.assertTrue(urOption.isPresent());
-        Assert.assertEquals(urOption.get().getStatus(), roleStatusName);
-    }
-
-    @Test
     public void testFindRoleByUserIdAndRoleId() {
         UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(TEST_USER_5_ID, UserRoles.DATAOWNER.getRoleId());
         Assert.assertNotNull(userRole);
@@ -195,8 +170,6 @@ public class UserRoleDAOTest extends AbstractTest {
         Assert.assertNotNull(userRole);
         Assert.assertEquals(userRole.getRoleId().intValue(), 1);
         Assert.assertEquals(userRole.getName(), "name");
-        Assert.assertEquals(userRole.getRationale(), "rationale");
-        Assert.assertEquals(userRole.getStatus(), "pending");
         System.out.println(userRole.toString());
     }
 

@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -157,8 +156,8 @@ public class DataAccessRequestResource extends Resource {
     public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
-        UserRole role = dacUserAPI.getRoleStatus(userId);
-        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, dacUserAPI.describeDACUserById(dar.getInteger("userId")), electionAPI, role);
+        DACUser user = dacUserAPI.describeDACUserById(userId);
+        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
     }
 
     @GET
