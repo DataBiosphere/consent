@@ -33,7 +33,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     @SqlQuery("select roleId from roles where name = :roleName")
     Integer findRoleIdByName(@Bind("roleName") String roleName);
 
-    @SqlBatch("insert into user_role (role_id, user_id, email_preference) values (:roleId, :userId, :emailPreference)")
+    @SqlBatch("insert into user_role (role_id, user_id) values (:roleId, :userId)")
     void insertUserRoles(@BindBean List<UserRole> roles, @Bind("userId") Integer dacUserId);
 
     @SqlUpdate("update user_role set role_id = :newRoleId where user_id = :dacUserId and role_id = :existentRoleId")
@@ -45,11 +45,8 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     void removeUserRoles(@Bind("dacUserId") Integer dacUserId,
                          @BindIn("existentRoles") List<Integer> existentRoles);
 
-    @SqlUpdate("insert into user_role (role_id, user_id, email_preference) values (:roleId, :dacUserId, :emailPreference)")
-    void insertSingleUserRole(@Bind("roleId") Integer roleId, @Bind("dacUserId") Integer dacUserId, @Bind("emailPreference") Boolean emailPreference);
-
-    @SqlUpdate("update user_role set email_preference = :emailPreference where role_id =:roleId and user_id = :dacUserId")
-    void updateEmailPreferenceUserRole(@BindBean UserRole role, @Bind("dacUserId") Integer dacUserId);
+    @SqlUpdate("insert into user_role (role_id, user_id) values (:roleId, :userId)")
+    void insertSingleUserRole(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId);
 
     @SqlUpdate("delete from user_role where user_id = :dacUserId and role_id = :roleId")
     void removeSingleUserRole(@Bind("dacUserId") Integer dacUserId, @Bind("roleId") Integer roleId);

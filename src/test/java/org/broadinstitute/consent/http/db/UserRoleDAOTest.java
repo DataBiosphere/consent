@@ -5,6 +5,8 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.After;
@@ -25,6 +27,13 @@ import static org.broadinstitute.consent.http.enumeration.RoleStatus.getValueByS
 
 public class UserRoleDAOTest extends AbstractTest {
 
+    private static final int TEST_USER_1_ID = 1;
+    private static final int TEST_USER_2_ID = 2;
+    private static final int TEST_USER_3_ID = 3;
+    private static final int TEST_USER_4_ID = 4;
+    private static final int TEST_USER_5_ID = 5;
+    private static final int PENDING_ID = RoleStatus.getValueByStatus(RoleStatus.PENDING.name());
+
     @SuppressWarnings("UnstableApiUsage")
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -42,21 +51,21 @@ public class UserRoleDAOTest extends AbstractTest {
         // For the purposes of these unit tests, we will reset the table to its initial state
         // for every run, which should leave the system ready for other tests.
         // TODO: In concept, I don't like this approach and hope to migrate all db tests to be
-        // independant of one another
+        // independent of one another
         userRoleDAO.deleteAllUserRoles();
-        userRoleDAO.insertSingleUserRole(2, 1, false);
-        userRoleDAO.insertSingleUserRole(5, 1, false);
-        userRoleDAO.updateUserRoleStatus(5, 1, 0, "");
-        userRoleDAO.insertSingleUserRole(1, 2, false);
-        userRoleDAO.insertSingleUserRole(1, 3, false);
-        userRoleDAO.insertSingleUserRole(1, 4, false);
-        userRoleDAO.insertSingleUserRole(4, 4, false);
-        userRoleDAO.insertSingleUserRole(6, 1, false);
-        userRoleDAO.insertSingleUserRole(6, 2, false);
-        userRoleDAO.insertSingleUserRole(6, 5, false);
-        userRoleDAO.insertSingleUserRole(5, 5, false);
-        userRoleDAO.insertSingleUserRole(4, 5, false);
-        userRoleDAO.insertSingleUserRole(2, 5, false);
+        userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), TEST_USER_1_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), TEST_USER_1_ID);
+        userRoleDAO.updateUserRoleStatus(TEST_USER_5_ID, UserRoles.MEMBER.getRoleId(), PENDING_ID, "");
+        userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), TEST_USER_2_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), TEST_USER_3_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), TEST_USER_4_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), TEST_USER_4_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), TEST_USER_1_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), TEST_USER_2_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), TEST_USER_5_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), TEST_USER_5_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), TEST_USER_5_ID);
+        userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), TEST_USER_5_ID);
     }
 
     @Before
@@ -73,7 +82,7 @@ public class UserRoleDAOTest extends AbstractTest {
     @Test
     public void testFindRolesByUserId() {
         // See `insert.sql` - that adds 3 roles for user id 1
-        List<UserRole> roles = userRoleDAO.findRolesByUserId(1);
+        List<UserRole> roles = userRoleDAO.findRolesByUserId(TEST_USER_1_ID);
         Assert.assertEquals(3, roles.size());
     }
 
@@ -104,26 +113,25 @@ public class UserRoleDAOTest extends AbstractTest {
     @Test
     public void testInsertUserRoles() {
         UserRole r = new UserRole();
-        r.setEmailPreference(false);
-        r.setRoleId(1);
-        userRoleDAO.insertUserRoles(Collections.singletonList(r), 1);
+        r.setRoleId(UserRoles.MEMBER.getRoleId());
+        userRoleDAO.insertUserRoles(Collections.singletonList(r), TEST_USER_1_ID);
     }
 
     @Test
     public void testUpdateUserRoles() {
-        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(3);
-        userRoleDAO.updateUserRoles(2, 3, 1);
-        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(3);
+        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(TEST_USER_3_ID);
+        userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), TEST_USER_3_ID, UserRoles.MEMBER.getRoleId());
+        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(TEST_USER_3_ID);
         Assert.assertFalse(Arrays.equals(currentRoles.toArray(), newRoles.toArray()));
     }
 
     @Test
     public void testRemoveUserRoles() {
-        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(5);
+        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(TEST_USER_5_ID);
         Assert.assertFalse(currentRoles.isEmpty());
         List<Integer> roleIds = userRoleDAO.findRoles().stream().map(Role::getRoleId).collect(Collectors.toList());
-        userRoleDAO.removeUserRoles(5, roleIds);
-        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(5);
+        userRoleDAO.removeUserRoles(TEST_USER_5_ID, roleIds);
+        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(TEST_USER_5_ID);
         Assert.assertTrue(newRoles.isEmpty());
     }
 
@@ -133,53 +141,42 @@ public class UserRoleDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testUpdateEmailPreferenceUserRole() {
-        List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(1);
-        currentRoles.forEach(r -> r.setEmailPreference(true));
-        currentRoles.forEach(r -> userRoleDAO.updateEmailPreferenceUserRole(r, 1));
-        List<UserRole> newRoles = userRoleDAO.findRolesByUserId(1);
-        newRoles.forEach(r -> Assert.assertTrue(r.getEmailPreference()));
-    }
-
-    @Test
     public void testRemoveSingleUserRole() {
-        List<UserRole> userRoles = userRoleDAO.findRolesByUserId(2);
+        List<UserRole> userRoles = userRoleDAO.findRolesByUserId(TEST_USER_2_ID);
         Assert.assertFalse(userRoles.isEmpty());
         List<Role> roles = userRoleDAO.findRoles();
         roles.forEach(r ->
-                userRoleDAO.removeSingleUserRole(2, r.getRoleId())
+                userRoleDAO.removeSingleUserRole(TEST_USER_2_ID, r.getRoleId())
         );
 
-        List<UserRole> newUserRoles = userRoleDAO.findRolesByUserId(2);
+        List<UserRole> newUserRoles = userRoleDAO.findRolesByUserId(TEST_USER_2_ID);
         Assert.assertTrue(newUserRoles.isEmpty());
     }
 
     @Test
     public void testFindRoleByNameAndUser() {
-        Integer roleId = userRoleDAO.findRoleByNameAndUser("Chairperson", 1);
+        Integer roleId = userRoleDAO.findRoleByNameAndUser("Chairperson", TEST_USER_1_ID);
         Assert.assertNotNull(roleId);
 
-        Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser("Chairperson", 2);
+        Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser("Chairperson", TEST_USER_2_ID);
         Assert.assertNull(invalidRoleId);
     }
 
     @Test
     public void testUpdateUserRoleStatus() {
-        int dataOwnerId = 6;
-        int userId = 5;
         Integer roleStatusId = getValueByStatus(APPROVED.name());
         String roleStatusName = getStatusByValue(roleStatusId);
         String rationale = "Approved";
         userRoleDAO.updateUserRoleStatus(
-                userId,
-                dataOwnerId,
+                TEST_USER_5_ID,
+                UserRoles.DATAOWNER.getRoleId(),
                 roleStatusId,
                 rationale);
 
         Optional<UserRole> urOption = userRoleDAO.
-                findRolesByUserId(userId).
+                findRolesByUserId(TEST_USER_5_ID).
                 stream().
-                filter(r -> r.getRoleId() == dataOwnerId).
+                filter(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())).
                 findFirst();
         Assert.assertTrue(urOption.isPresent());
         Assert.assertEquals(urOption.get().getStatus(), roleStatusName);
@@ -187,10 +184,20 @@ public class UserRoleDAOTest extends AbstractTest {
 
     @Test
     public void testFindRoleByUserIdAndRoleId() {
-        int userId = 5;
-        int dataOwnerId = 6;
-        UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(userId, dataOwnerId);
+        UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(TEST_USER_5_ID, UserRoles.DATAOWNER.getRoleId());
         Assert.assertNotNull(userRole);
+    }
+
+    @Test
+    public void testConvertJsonToUserRole() {
+        String json = "{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}";
+        UserRole userRole = new UserRole(json);
+        Assert.assertNotNull(userRole);
+        Assert.assertEquals(userRole.getRoleId().intValue(), 1);
+        Assert.assertEquals(userRole.getName(), "name");
+        Assert.assertEquals(userRole.getRationale(), "rationale");
+        Assert.assertEquals(userRole.getStatus(), "pending");
+        System.out.println(userRole.toString());
     }
 
 }

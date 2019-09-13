@@ -2,6 +2,9 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 public class UserRole {
 
@@ -10,9 +13,6 @@ public class UserRole {
 
     @JsonProperty
     private String name;
-
-    @JsonProperty
-    private Boolean emailPreference;
 
     @JsonProperty
     private String status;
@@ -24,27 +24,49 @@ public class UserRole {
     private Boolean profileCompleted;
 
 
-    public UserRole(){
+    public UserRole() {
     }
 
-    public UserRole(Integer roleId, String name){
+    public UserRole(Integer roleId, String name) {
         this.roleId = roleId;
         this.name = name;
-        this.emailPreference = true;
     }
 
-    public UserRole(Integer roleId, String name, Boolean emailPreference){
+    public UserRole(Integer roleId, String name, String rationale, String status) {
         this.roleId = roleId;
         this.name = name;
-        this.emailPreference = emailPreference;
-    }
-
-    public UserRole(Integer roleId, String name, Boolean emailPreference, String rationale, String status){
-        this.roleId = roleId;
-        this.name = name;
-        this.emailPreference = emailPreference;
         this.rationale = rationale;
         this.status = status;
+    }
+
+    /**
+     * Convenience method for backwards compatibility support for older clients.
+     *
+     * @param json A json string that may or may not be correctly structured as a UserRole
+     */
+    public UserRole(String json) {
+        Gson gson = new Gson();
+        UserRole ur = gson.fromJson(json, UserRole.class);
+        if (!StringUtils.isEmpty(ur.getName())) {
+            this.name = ur.getName();
+        }
+        if (ur.getRoleId() != null) {
+            this.roleId = ur.getRoleId();
+        } else {
+            UserRoles r = UserRoles.getUserRoleFromName(this.getName());
+            if (r != null) {
+                this.setRoleId(r.getRoleId());
+            }
+        }
+        if (!StringUtils.isEmpty(ur.getRationale())) {
+            this.setRationale(ur.getRationale());
+        }
+        if (!StringUtils.isEmpty(ur.getStatus())) {
+            this.setStatus(ur.getStatus());
+        }
+        if (ur.getProfileCompleted() != null) {
+            this.setProfileCompleted(ur.getProfileCompleted());
+        }
     }
 
     public Integer getRoleId() {
@@ -61,14 +83,6 @@ public class UserRole {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Boolean getEmailPreference() {
-        return emailPreference;
-    }
-
-    public void setEmailPreference(Boolean emailPreference) {
-        this.emailPreference = emailPreference;
     }
 
     public String getStatus() {
@@ -102,10 +116,16 @@ public class UserRole {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof UserRole)) { return false; }
+        if (!(o instanceof UserRole)) {
+            return false;
+        }
         UserRole otherConsent = (UserRole) o;
         return Objects.equal(this.getRoleId(), otherConsent.getRoleId());
     }
 
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
+    }
 
 }

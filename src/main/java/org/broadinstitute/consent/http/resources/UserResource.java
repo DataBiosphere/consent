@@ -30,7 +30,8 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response createUser(@Context UriInfo info, DACUser userToCreate, @Auth AuthUser user) {
+    public Response createUser(@Context UriInfo info, String json, @Auth AuthUser user) {
+        DACUser userToCreate = new DACUser(json);
         try {
             URI uri;
             userToCreate = userAPI.createUser(userToCreate, user.getName());
@@ -50,7 +51,8 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response update(DACUser userToUpdate, @Auth AuthUser user) {
+    public Response update(String json, @Auth AuthUser user) {
+        DACUser userToUpdate = new DACUser(json);
         try {
             return Response.ok().entity(userAPI.updateUser(userToUpdate, user.getName())).build();
         } catch (Exception e){

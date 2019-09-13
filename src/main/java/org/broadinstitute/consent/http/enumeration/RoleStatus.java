@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.enumeration;
 
-
 public enum RoleStatus {
 
     PENDING("pending", 0),
@@ -10,26 +9,26 @@ public enum RoleStatus {
     private String status;
     private Integer value;
 
-    RoleStatus(String status, Integer value){
+    RoleStatus(String status, Integer value) {
         this.value = value;
         this.status = status;
     }
 
-    public static Integer getValueByStatus(String status){
-     if(status != null){
-         for (RoleStatus roleStatus : RoleStatus.values()) {
-             if(roleStatus.status.equalsIgnoreCase(status)){
-                 return roleStatus.value;
-             }
-         }
-     }
-     return null;
+    public static Integer getValueByStatus(String status) {
+        if (status != null) {
+            for (RoleStatus roleStatus : RoleStatus.values()) {
+                if (roleStatus.status.equalsIgnoreCase(status)) {
+                    return roleStatus.value;
+                }
+            }
+        }
+        return null;
     }
 
-    public static String getStatusByValue(Integer value){
-        if(value != null){
+    public static String getStatusByValue(Integer value) {
+        if (value != null) {
             for (RoleStatus roleStatus : RoleStatus.values()) {
-                if(roleStatus.value.equals(value)){
+                if (roleStatus.value.equals(value)) {
                     return roleStatus.status;
                 }
             }

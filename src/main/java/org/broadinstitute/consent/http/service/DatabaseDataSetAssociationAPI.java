@@ -70,7 +70,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         }
         Map<String, Collection<DACUser>> usersMap = new HashMap<>();
         usersMap.put("associated_users",associated_users);
-        Collection<DACUser> dataOwnersList = dacUserDAO.describeUsersByRole(UserRoles.DATAOWNER.getValue());
+        Collection<DACUser> dataOwnersList = dacUserDAO.describeUsersByRole(UserRoles.DATAOWNER.getRoleName());
         usersMap.put("not_associated_users",CollectionUtils.subtract(dataOwnersList, associated_users));
         return usersMap;
     }
@@ -125,7 +125,7 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         Collection<DACUser> dacUserList = dacUserDAO.findUsersWithRoles(usersIdList);
         if(dacUserList.size() == usersIdList.size()){
                 for (DACUser user : dacUserList) {
-                    if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getValue()))) {
+                    if (user.getRoles().stream().noneMatch(role -> role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName()))) {
                         throw new BadRequestException(String.format("User with id %s is not a DATA_OWNER",user.getDacUserId()));
                     }
                 }

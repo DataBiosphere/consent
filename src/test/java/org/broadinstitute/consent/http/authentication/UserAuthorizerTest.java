@@ -48,7 +48,7 @@ public class UserAuthorizerTest {
     /* Helper Methods */
 
     private UserRole getChairpersonRole(){
-        return new UserRole(1, "CHAIRPERSON", false);
+        return new UserRole(1, "CHAIRPERSON");
     }
 
 }

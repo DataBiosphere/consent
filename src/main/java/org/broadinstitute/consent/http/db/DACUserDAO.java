@@ -75,7 +75,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer verifyAdminUsers();
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select u.*, r.roleId, r.name, du.status from dacuser u inner join user_role du on du.user_id = u.dacUserId inner join roles r on r.roleId = du.role_id where r.name = :roleName and du.email_preference = :emailPreference")
+    @SqlQuery("select du.*, r.roleId, r.name from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
     @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN "
@@ -106,4 +106,8 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlUpdate("update dacuser set displayName=:displayName where dacUserId = :id")
     void updateDACUser(@Bind("displayName") String displayName,
                           @Bind("id") Integer id);
+
+    @SqlUpdate("update dacuser set email_preference = :emailPreference where dacUserId = :userId")
+    void updateEmailPreference(@Bind("emailPreference") Boolean emailPreference, @Bind("userId") Integer userId);
+
 }

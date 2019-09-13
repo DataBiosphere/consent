@@ -845,7 +845,7 @@ paths:
           description: Internal Server Error
   /api/dacuser:
     post:
-      summary: createdDACUser
+      summary: createDACUser
       description: Creates a DAC User
       parameters:
         - name: dac
@@ -911,20 +911,31 @@ paths:
           description: Response = User was deleted
           schema:
             type: string
+  /api/dacuser/{id}:
     put:
       summary: update
       description: Updates the user identified by the ID.
       parameters:
-        - name: email
+        - name: id
           in: path
-          description: The email of the user.
+          description: The id of the user.
           required: true
           type: string
         - name: dac
           in: body
           required: true
           schema:
-            $ref: '#/definitions/DACUser'
+            type: object
+            properties:
+              updatedUser:
+                description: The user that is being updated
+                $ref: '#/definitions/DACUser'
+              userToDelegate:
+                description: Required if there is a user to delegate roles to
+                $ref: '#/definitions/DACUser'
+              alternativeDataOwnerUser:
+                description: Required if there is a user to delegate ownership to
+                $ref: '#/definitions/DACUser'
       tags:
         - DACUser
         - Roles
@@ -2860,6 +2871,9 @@ definitions:
       email:
         type: string
         description: Email of the user
+      emailPreference:
+        type: boolean
+        description: The user wants email notifications.
       displayName:
         type: string
         description: Name of the user
@@ -2870,8 +2884,8 @@ definitions:
       roles:
         type: array
         items:
-          $ref: '#/definitions/DACUserRole'
-  DACUserRole:
+          $ref: '#/definitions/UserRole'
+  UserRole:
     type: object
     properties:
       roleId:
@@ -2881,9 +2895,6 @@ definitions:
       name:
         type: string
         description: Name of the role
-      emailPreference:
-        type: boolean
-        description: The user wants email notifications
       status:
         type: string
         description: Status of the role, approved or not.

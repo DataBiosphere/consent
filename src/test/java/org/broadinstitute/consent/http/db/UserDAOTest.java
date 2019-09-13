@@ -76,7 +76,7 @@ public class UserDAOTest extends AbstractTest {
                 map(UserRole::getName).
                 map(String::toLowerCase).
                 collect(Collectors.toList());
-        Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getValue().toLowerCase()));
+        Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getRoleName().toLowerCase()));
     }
 
     @Test
@@ -196,13 +196,15 @@ public class UserDAOTest extends AbstractTest {
     public void testDescribeUsersByRoleAndEmailPreference() {
         String email = getRandomEmailAddress();
         Integer userId = userDAO.insertDACUser(email, "Dac User Test", new Date());
-        userRoleDAO.insertSingleUserRole(5, userId, true);
+        userDAO.updateEmailPreference(true, userId);
+        userRoleDAO.insertSingleUserRole(5, userId);
         Collection<DACUser> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
         Assert.assertFalse(researchers.isEmpty());
 
         String email2 = getRandomEmailAddress();
         Integer userId2 = userDAO.insertDACUser(email2, "Dac User Test", new Date());
-        userRoleDAO.insertSingleUserRole(6, userId2, false);
+        userDAO.updateEmailPreference(false, userId2);
+        userRoleDAO.insertSingleUserRole(6, userId2);
         Collection<DACUser> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
         Assert.assertFalse(dataOwners.isEmpty());
     }
@@ -245,6 +247,14 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertEquals(user.getDisplayName(), "Updated Dac User Test");
     }
 
+    @Test
+    public void testUpdateEmailPreference() {
+        userDAO.findUsers().forEach(u -> userDAO.updateEmailPreference(true, u.getDacUserId()));
+        userDAO.findUsers().forEach(u -> Assert.assertTrue(u.getEmailPreference()));
+
+        userDAO.findUsers().forEach(u -> userDAO.updateEmailPreference(false, u.getDacUserId()));
+        userDAO.findUsers().forEach(u -> Assert.assertFalse(u.getEmailPreference()));
+    }
 
     private String getRandomEmailAddress() {
         String user = RandomStringUtils.randomAlphanumeric(20);

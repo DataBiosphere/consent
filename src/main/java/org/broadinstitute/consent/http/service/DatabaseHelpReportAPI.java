@@ -40,7 +40,7 @@ public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
 
     @Override
     public List<HelpReport> findHelpReportsByUserId(Integer userId) {
-        return  userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getValue(), userId) != null
+        return  userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), userId) != null
                 ? helpReportDAO.findHelpReports() : helpReportDAO.findHelpReportsByUserId(userId);
     }
 

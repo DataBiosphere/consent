@@ -40,6 +40,6 @@ public interface DACUserAPI {
 
     DACUser updateNameById(DACUser user, Integer id);
 
-    public boolean hasUserRole(String userRole, DACUser user);
+    void updateEmailPreference(boolean preference, Integer userId);
 
 }
