@@ -3097,6 +3097,12 @@ definitions:
       status:
         type: string
         description: Status of the user, approved or not.
+      rationale:
+        type: string
+        description: Reason why the role was not approved.
+      profileCompleted:
+        type: boolean
+        description: The profile is completed. Researchers only.
       roles:
         type: array
         items:
@@ -3111,12 +3117,6 @@ definitions:
       name:
         type: string
         description: Name of the role
-      rationale:
-        type: string
-        description: Reason why the role was not approved.
-      profileCompleted:
-        type: boolean
-        description: The profile is completed. Researchers only.
   ErrorResponse:
     required:
       - "message"

@@ -47,13 +47,13 @@ public class UserResourceTest {
         MockitoAnnotations.initMocks(this);
         when(uriInfo.getRequestUriBuilder())
                 .thenReturn(uriBuilder);
-       when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
-       when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
-       userResource = new UserResource(userAPI);
+        when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
+        when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
+        userResource = new UserResource(userAPI);
     }
 
     @Test
-    public void testCreateUserWithInvalidRole(){
+    public void testCreateUserWithInvalidRole() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
@@ -74,7 +74,7 @@ public class UserResourceTest {
     }
 
     @Test
-    public void testCreateUserWithoutRoles(){
+    public void testCreateUserWithoutRoles() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
         UserRole admin = new UserRole();
@@ -89,7 +89,7 @@ public class UserResourceTest {
     }
 
     @Test
-    public void createUserSuccess(){
+    public void createUserSuccess() {
         DACUser user = new DACUser();
         user.setDisplayName("Test");
         UserRole researcher = new UserRole();
