@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.users.UserAPI;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,8 +13,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -102,48 +99,4 @@ public class UserResourceTest {
         Assert.assertTrue(response.getStatus() == Response.Status.CREATED.getStatusCode());
     }
 
-    @Test
-    public void testUpdateUserWithInvalidRole() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
-        user.setDisplayName(TEST_EMAIL);
-        List<UserRole> roles = new ArrayList<>();
-        UserRole admin = new UserRole();
-        admin.setName(UserRoles.CHAIRPERSON.getRoleName());
-        UserRole researcher = new UserRole();
-        researcher.setName(UserRoles.RESEARCHER.getRoleName());
-        roles.add(researcher);
-        roles.add(admin);
-        user.setRoles(roles);
-        when(userAPI.updateUser(user, TEST_EMAIL)).thenThrow(new IllegalArgumentException());
-        Response response = userResource.update(user.toString(), new AuthUser(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode());
-    }
-
-    @Test
-    public void testUpdateUserWithInvalidEmail() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
-        user.setDisplayName(TEST_EMAIL);
-        List<UserRole> roles = new ArrayList<>();
-        UserRole researcher = new UserRole();
-        researcher.setName(UserRoles.RESEARCHER.getRoleName());
-        roles.add(researcher);
-        user.setRoles(roles);
-        when(userAPI.updateUser(user, "invalid_mail@gmail.com")).thenThrow(NotAuthorizedException.class);
-        Response response = userResource.update(user.toString(), new AuthUser("invalid_mail@gmail.com"));
-        Assert.assertTrue(response.getStatus() == Response.Status.UNAUTHORIZED.getStatusCode());
-    }
-
-    @Test
-    public void testUpdateNotExistentUser() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
-        user.setDisplayName(TEST_EMAIL);
-        List<UserRole> roles = new ArrayList<>();
-        UserRole researcher = new UserRole();
-        researcher.setName(UserRoles.RESEARCHER.getRoleName());
-        roles.add(researcher);
-        user.setRoles(roles);
-        when(userAPI.updateUser(user, "invalid_mail@gmail.com")).thenThrow(NotFoundException.class);
-        Response response = userResource.update(user.toString(), new AuthUser("invalid_mail@gmail.com"));
-        Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
-    }
 }
