@@ -2237,13 +2237,6 @@ definitions:
       eraExpiration:
         type: string
         description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
-  Property:
-    type: object
-    properties:
-      propertyName:
-        type: string
-      propertyValue:
-        type: string
   ConsentAssociation:
     type: object
     properties:
@@ -2890,18 +2883,6 @@ definitions:
          type: integer
          format: int32
          description: ID of user that made the report.
-  PatchOperation:
-    type: object
-    properties:
-      op:
-        type: string
-        description: The patch operations supported are “add”, “remove” and “replace”.
-      value:
-        type: string
-        description: Value to be used for the specified operation. Multiples roles should be separated by commas.
-      path:
-        type: string
-        description: Field to be updated. Available values are displayName or roles.
   OntologyFileMetaData:
     type: object
     properties:
