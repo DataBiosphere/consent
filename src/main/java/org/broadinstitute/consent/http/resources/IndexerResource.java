@@ -13,6 +13,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.net.URLDecoder;
 import java.util.List;
@@ -80,11 +81,10 @@ public class IndexerResource extends Resource {
         try {
             String url = URLDecoder.decode(fileUrl, "UTF-8");
             HttpResponse r = store.getStorageDocument(url);
-            File targetFile = new File(fileName);
-            FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
-            return Response.ok(targetFile)
+            StreamingOutput stream = createStreamingOutput(r.getContent());
+            return Response.ok(stream)
                 .type(r.getContentType())
-                .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                .header("Content-Disposition", "attachment; filename=" + fileName)
                 .build();
         } catch (Exception e) {
             return createExceptionResponse(e);

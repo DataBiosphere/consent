@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -10,7 +11,9 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
@@ -32,7 +35,7 @@ abstract public class Resource {
     public final static String RESEARCHER = "Researcher";
 
     protected Logger logger() {
-        return Logger.getLogger("consent");
+        return Logger.getLogger(this.getClass().getName());
     }
 
     protected Response createExceptionResponse(Exception e) {
@@ -48,6 +51,17 @@ abstract public class Resource {
             logger().error(t.getMessage());
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
+    }
+
+    StreamingOutput createStreamingOutput(InputStream inputStream) {
+        return output -> {
+            try {
+                output.write(IOUtils.toByteArray(inputStream));
+            } catch (Exception e) {
+                logger().error(e);
+                throw e;
+            }
+        };
     }
 
     private interface ExceptionHandler {

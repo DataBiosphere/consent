@@ -24,6 +24,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,11 +139,10 @@ public class DataUseLetterResource extends Resource {
             String fileUrl = election != null ? election.getDataUseLetter() : consent.getDataUseLetter();
             String fileName = election != null ? election.getDulName() : consent.getDulName();
             HttpResponse r = store.getStorageDocument(fileUrl);
-            File targetFile = new File(fileName);
-            FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
-            return Response.ok(targetFile)
+            StreamingOutput stream = createStreamingOutput(r.getContent());
+            return Response.ok(stream)
                     .type(r.getContentType())
-                    .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                    .header("Content-Disposition", "attachment; filename=" + fileName)
                     .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(e);
