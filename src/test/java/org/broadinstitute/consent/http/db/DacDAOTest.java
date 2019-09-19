@@ -123,6 +123,7 @@ public class DacDAOTest extends AbstractTest {
         dacDAO.addDacMember(memberRoleId, user3.getDacUserId(), dac.getDacId());
         DACUser user4 = createUser();
         dacDAO.addDacMember(chairRoleId, user4.getDacUserId(), dac.getDacId());
+
         List<DACUser> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
         Assert.assertNotNull(dacMembers);
         Assert.assertFalse(dacMembers.isEmpty());
@@ -130,8 +131,33 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
+    public void testFindMembersByDacIdAndRoleId() {
+        Dac dac = createDac();
+        Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
+        Integer memberRoleId = UserRoles.MEMBER.getRoleId();
+        DACUser user1 = createUser();
+        dacDAO.addDacMember(memberRoleId, user1.getDacUserId(), dac.getDacId());
+        DACUser user2 = createUser();
+        dacDAO.addDacMember(memberRoleId, user2.getDacUserId(), dac.getDacId());
+        DACUser user3 = createUser();
+        dacDAO.addDacMember(memberRoleId, user3.getDacUserId(), dac.getDacId());
+        DACUser user4 = createUser();
+        dacDAO.addDacMember(chairRoleId, user4.getDacUserId(), dac.getDacId());
+
+        List<DACUser> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
+        Assert.assertNotNull(chairs);
+        Assert.assertFalse(chairs.isEmpty());
+        Assert.assertEquals(chairs.size(), 1);
+
+        List<DACUser> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
+        Assert.assertNotNull(members);
+        Assert.assertFalse(members.isEmpty());
+        Assert.assertEquals(members.size(), 3);
+    }
+
+    @Test
     public void testRemoveDacMember() {
-        // TODO
+        // No-op ... tested in `tearDown()`
     }
 
     @Test

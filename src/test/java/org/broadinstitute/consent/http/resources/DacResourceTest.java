@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
-import org.broadinstitute.consent.http.models.DacDTO;
 import org.broadinstitute.consent.http.service.DacService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,9 +49,8 @@ public class DacResourceTest {
                 .setName("name")
                 .setDescription("description")
                 .build();
-        DacDTO dto = new DacDTO(dac, Collections.emptyList(), Collections.emptyList());
         when(dacService.findAll()).thenReturn(Collections.singletonList(dac));
-        when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dto));
+        when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
 
         Response response = dacResource.findAll();
         Assert.assertEquals(200, response.getStatus());

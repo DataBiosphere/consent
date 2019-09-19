@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DacDTO;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 
@@ -36,16 +35,16 @@ public class DacService {
     }
 
     /**
-     * Retrieve a list of DacDTOs that contain a Dac, the list of chairperson users for the Dac, and a
+     * Retrieve a list of Dacs that contain a Dac, the list of chairperson users for the Dac, and a
      * list of member users for the Dac.
      *
-     * @return List of DacDTO objects
+     * @return List of Dac objects
      */
-    public List<DacDTO> findAllDacsWithMembers() {
+    public List<Dac> findAllDacsWithMembers() {
         List<Dac> dacs = dacDAO.findAll();
         List<DACUser> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct().collect(Collectors.toList());
         Map<Dac, List<DACUser>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
-        return dacs.stream().map(d -> {
+        return dacs.stream().peek(d -> {
             List<DACUser> chairs = dacToUserMap.get(d).stream().
                     filter(u -> u.getRoles().stream().
                             anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
@@ -54,7 +53,8 @@ public class DacService {
                     filter(u -> u.getRoles().stream().
                             anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
                     collect(Collectors.toList());
-            return new DacDTO(d, chairs, members);
+            d.setChairpersons(chairs);
+            d.setMembers(members);
         }).collect(Collectors.toList());
     }
 
@@ -86,7 +86,12 @@ public class DacService {
     }
 
     public Dac findById(Integer dacId) {
-        return dacDAO.findById(dacId);
+        Dac dac = dacDAO.findById(dacId);
+        List<DACUser> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId());
+        List<DACUser> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
+        dac.setChairpersons(chairs);
+        dac.setMembers(members);
+        return dac;
     }
 
     public Integer createDac(String name, String description) {

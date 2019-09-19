@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Convenience class for building Dacs.
@@ -39,6 +40,16 @@ public class DacBuilder {
 
     public DacBuilder setUpdateDate(Date updateDate) {
         this.dac.setUpdateDate(updateDate);
+        return this;
+    }
+
+    public DacBuilder setChairpersons(List<DACUser> chairpersons) {
+        this.dac.setChairpersons(chairpersons);
+        return this;
+    }
+
+    public DacBuilder setMembers(List<DACUser> members) {
+        this.dac.setMembers(members);
         return this;
     }
 

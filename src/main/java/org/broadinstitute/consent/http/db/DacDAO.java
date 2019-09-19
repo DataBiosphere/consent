@@ -62,6 +62,11 @@ public interface DacDAO extends Transactional<DacDAO> {
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId")
     List<DACUser> findMembersByDacId(@Bind("dacId") Integer dacId);
 
+    @Mapper(DACUserMapper.class)
+    @SqlQuery("select du.* from dacuser du " +
+              "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId and ur.role_id = :roleId")
+    List<DACUser> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
+
     @SqlUpdate("insert into user_role (role_id, user_id, dac_id) values (:roleId, :userId, :dacId)")
     void addDacMember(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId, @Bind("dacId") Integer dacId);
 

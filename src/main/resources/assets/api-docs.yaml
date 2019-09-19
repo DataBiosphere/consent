@@ -801,7 +801,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/DacDTO'
+              $ref: '#/definitions/Dac'
         500:
           description: Internal Server Error
   /api/dac/{dacId}:
@@ -3038,23 +3038,6 @@ definitions:
       email:
         type: string
         description: Email of the voter.
-  DacDTO:
-    type: object
-    properties:
-      dac:
-        description: Data Access Committee
-        type: object
-        $ref: '#/definitions/Dac'
-      chairpersons:
-        description: List of Chairpersons
-        type: array
-        items:
-          $ref: '#/definitions/DACUser'
-      members:
-        description: List of Members
-        type: array
-        items:
-          $ref: '#/definitions/DACUser'
   Dac:
     type: object
     properties:
@@ -3075,6 +3058,16 @@ definitions:
         type: string
         format: date
         description: Date last updated
+      chairpersons:
+        description: List of Chairpersons
+        type: array
+        items:
+          $ref: '#/definitions/DACUser'
+      members:
+        description: List of Members
+        type: array
+        items:
+          $ref: '#/definitions/DACUser'
   DACUser:
     type: object
     properties:
