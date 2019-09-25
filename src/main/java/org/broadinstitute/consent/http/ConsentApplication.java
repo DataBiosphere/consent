@@ -261,7 +261,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherAPI researcherAPI = new DatabaseResearcherAPI(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
-        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), mongoInstance, researcherPropertyDAO);
+        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherAPI);
 
         // Now register our resources.

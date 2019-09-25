@@ -2206,50 +2206,6 @@ paths:
           description: Malformed user entity.
         409:
           description: Email should be unique.
-    put:
-      summary: updatedUser
-      description: Update a user. Only allows for the roles of RESEARCHER and DATAOWNER. It will update the current google authenticated user
-      parameters:
-        - name: dac
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/DACUser'
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the updated user.
-          schema:
-            $ref: '#/definitions/DACUser'
-        400:
-          description: Malformed user entity.
-        401:
-          description: Unauthorized.
-        409:
-          description: Conflict with specified roles.
-    patch:
-      summary: partialUpdateUser
-      description: Partial Update user. Only allows for the roles of RESEARCHER and DATAOWNER. It will update the current google authenticated user
-      parameters:
-        - name: patch
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/PatchOperation'
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the updated user.
-          schema:
-            $ref: '#/definitions/DACUser'
-        400:
-          description: Malformed user entity.
-        401:
-          description: Unauthorized.
-        409:
-          description: Conflict with specified roles.
   /api/researcher/{userId}:
     post:
       summary: Create researcher.
@@ -2477,13 +2433,6 @@ definitions:
       eraExpiration:
         type: string
         description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
-  Property:
-    type: object
-    properties:
-      propertyName:
-        type: string
-      propertyValue:
-        type: string
   ConsentAssociation:
     type: object
     properties:
@@ -3140,18 +3089,6 @@ definitions:
          type: integer
          format: int32
          description: ID of user that made the report.
-  PatchOperation:
-    type: object
-    properties:
-      op:
-        type: string
-        description: The patch operations supported are “add”, “remove” and “replace”.
-      value:
-        type: string
-        description: Value to be used for the specified operation. Multiples roles should be separated by commas.
-      path:
-        type: string
-        description: Field to be updated. Available values are displayName or roles.
   OntologyFileMetaData:
     type: object
     properties:
