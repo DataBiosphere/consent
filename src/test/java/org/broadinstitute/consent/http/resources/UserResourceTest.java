@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,18 +39,24 @@ public class UserResourceTest {
 
     private final String TEST_EMAIL = "test@gmail.com";
 
+    private AuthUser authUser;
+
     @Before
     public void setUp() throws URISyntaxException {
+        authUser = new AuthUser(TEST_EMAIL);
+        GoogleUser googleUser = new GoogleUser();
+        googleUser.setName("Test User");
+        googleUser.setEmail(authUser.getName());
+        authUser.setGoogleUser(googleUser);
         MockitoAnnotations.initMocks(this);
-        when(uriInfo.getRequestUriBuilder())
-                .thenReturn(uriBuilder);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
         userResource = new UserResource(userAPI);
     }
 
     @Test
-    public void testCreateUserWithInvalidRole() {
+    public void testCreateExistingUser() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
@@ -61,28 +67,17 @@ public class UserResourceTest {
         roles.add(researcher);
         roles.add(admin);
         user.setRoles(roles);
-        IllegalArgumentException ie = new IllegalArgumentException("Email should be unique.");
-        when(userAPI.createUser(user, TEST_EMAIL)).thenThrow(ie);
-        Response response = userResource.createUser(uriInfo, user.toString(), new AuthUser(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.CONFLICT.getStatusCode());
-        Error error = (Error) response.getEntity();
-        Assert.assertTrue(error.getCode() == Response.Status.CONFLICT.getStatusCode());
-        Assert.assertTrue(error.getMessage().contains("Email should be unique."));
+        when(userAPI.findUserByEmail(user.getEmail())).thenReturn(user);
+        Response response = userResource.createResearcher(uriInfo, user.toString(), authUser);
+        Assert.assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
     }
 
     @Test
-    public void testCreateUserWithoutRoles() {
+    public void testCreateFailingGoogleIdentity() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
-        UserRole admin = new UserRole();
-        admin.setName(UserRoles.ADMIN.getRoleName());
-        IllegalArgumentException ie = new IllegalArgumentException("Roles are required.");
-        when(userAPI.createUser(user, TEST_EMAIL)).thenThrow(ie);
-        Response response = userResource.createUser(uriInfo, user.toString(), new AuthUser(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode());
-        Error error = (Error) response.getEntity();
-        Assert.assertTrue(error.getCode() == Response.Status.BAD_REQUEST.getStatusCode());
-        Assert.assertTrue(error.getMessage().contains("Roles are required."));
+        Response response = userResource.createResearcher(uriInfo, user.toString(), new AuthUser(TEST_EMAIL));
+        Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -94,9 +89,9 @@ public class UserResourceTest {
         researcher.setName(UserRoles.RESEARCHER.getRoleName());
         roles.add(researcher);
         user.setRoles(roles);
-        when(userAPI.createUser(user, TEST_EMAIL)).thenReturn(user);
-        Response response = userResource.createUser(uriInfo, user.toString(), new AuthUser(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.CREATED.getStatusCode());
+        when(userAPI.createUser(user)).thenReturn(user);
+        Response response = userResource.createResearcher(uriInfo, user.toString(), authUser);
+        Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }
 
 }

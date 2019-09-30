@@ -22,6 +22,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -171,7 +173,10 @@ abstract public class AbstractTest extends ResourcedTest {
 
 
     public void mockValidateTokenResponse() throws IOException {
-        String result = "{ " +
+        HttpClient client = Mockito.mock(HttpClient.class);
+
+        // Mock the token response from google
+        String tokenResponse = "{ " +
                 "\"azp\": \"1234564ko.apps.googleusercontent.com\", " +
                 "\"aud\": \"clientId\", " +
                 "\"sub\": \"1234564\", " +
@@ -182,13 +187,33 @@ abstract public class AbstractTest extends ResourcedTest {
                 "\"email_verified\": \"true\", " +
                 "\"access_type\": \"online\" " +
                 " }";
-        InputStream inputStream = IOUtils.toInputStream(result, Charset.defaultCharset());
-        HttpClient client = Mockito.mock(HttpClient.class);
-        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
-        HttpEntity entity = Mockito.mock(HttpEntity.class);
-        Mockito.when(client.execute(Mockito.any())).thenReturn(mockResponse);
-        Mockito.when(mockResponse.getEntity()).thenReturn(entity);
-        Mockito.when(entity.getContent()).thenReturn(inputStream);
+        InputStream trInputStream = IOUtils.toInputStream(tokenResponse, Charset.defaultCharset());
+        HttpResponse trMockResponse = Mockito.mock(HttpResponse.class);
+        HttpEntity trEntity = Mockito.mock(HttpEntity.class);
+        Mockito.when(client.execute(Mockito.isA(HttpPost.class))).thenReturn(trMockResponse);
+        Mockito.when(trMockResponse.getEntity()).thenReturn(trEntity);
+        Mockito.when(trEntity.getContent()).thenReturn(trInputStream);
+
+        // Mock the user info response from google
+        String userProfile = "{\n" +
+                "  \"sub\": \"...\",\n" +
+                "  \"name\": \"oauth user\",\n" +
+                "  \"given_name\": \"oauth\",\n" +
+                "  \"family_name\": \"user\",\n" +
+                "  \"profile\": \"https://plus.google.com/....\",\n" +
+                "  \"picture\": \"https://lh3.googleusercontent.com/....\",\n" +
+                "  \"email\": \"oauthuser@broadinstitute.org\",\n" +
+                "  \"email_verified\": true,\n" +
+                "  \"locale\": \"en\",\n" +
+                "  \"hd\": \"broadinstitute.org\"\n" +
+                "}";
+        InputStream upInputStream = IOUtils.toInputStream(userProfile, Charset.defaultCharset());
+        HttpResponse upMockResponse = Mockito.mock(HttpResponse.class);
+        HttpEntity upEntity = Mockito.mock(HttpEntity.class);
+        Mockito.when(client.execute(Mockito.isA(HttpGet.class))).thenReturn(upMockResponse);
+        Mockito.when(upMockResponse.getEntity()).thenReturn(upEntity);
+        Mockito.when(upEntity.getContent()).thenReturn(upInputStream);
+
         OAuthAuthenticator.getInstance().setHttpClient(client);
     }
 

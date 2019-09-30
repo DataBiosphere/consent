@@ -6,6 +6,8 @@ import org.broadinstitute.consent.http.models.DACUser;
 @ImplementedBy(DatabaseUserAPI.class)
 public interface UserAPI {
 
-    DACUser createUser(DACUser user, String userEmail);
+    DACUser createUser(DACUser user);
+
+    DACUser findUserByEmail(String email);
 
 }

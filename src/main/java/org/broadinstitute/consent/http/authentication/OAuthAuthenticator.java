@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -20,9 +21,10 @@ import java.util.HashMap;
 import java.util.Optional;
 
 
-public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
+public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
 
     private static final String TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
+    private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
     private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
     private HttpClient httpClient;
 
@@ -39,16 +41,16 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
     }
 
     @Override
-    public Optional<AuthUser> authenticate(String bearer){
-        try{
+    public Optional<AuthUser> authenticate(String bearer) {
+        try {
             String email = validateAccessToken(bearer);
             AuthUser user = new AuthUser(email);
+            user.setGoogleUser(getUserInfo(bearer));
             return Optional.of(user);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.error("Error authenticating credentials.");
             return Optional.empty();
         }
-
     }
 
     private String validateAccessToken(String bearer) throws AuthenticationException {
@@ -73,7 +75,8 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
             if (entity != null) {
                 InputStream tokenInfoStream = entity.getContent();
                 String result = IOUtils.toString(tokenInfoStream, Charset.defaultCharset());
-                tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
+                tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {
+                });
                 tokenInfoStream.close();
             }
         } catch (IOException e) {
@@ -82,10 +85,25 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator  {
         return tokenInfo;
     }
 
+    private GoogleUser getUserInfo(String bearer) throws AuthenticationException {
+        GoogleUser u = null;
+        HttpGet httpGet = new HttpGet(USER_INFO_URL + bearer);
+        try {
+            HttpResponse response = httpClient.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream tokenInfoStream = entity.getContent();
+                String result = IOUtils.toString(tokenInfoStream, Charset.defaultCharset());
+                u = new GoogleUser(result);
+            }
+        } catch (IOException e) {
+            unauthorized(bearer);
+        }
+        return u;
+    }
 
     private void unauthorized(String accessToken) throws AuthenticationException {
         throw new AuthenticationException("Provided access token or user credential is either null or empty or does not have permissions to access this resource." + accessToken);
     }
-
 
 }

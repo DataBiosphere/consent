@@ -42,6 +42,8 @@ public class OAuthCustomAuthFilterTest {
 
     AuthUser user;
 
+    GoogleUser googleUser;
+
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
@@ -51,6 +53,10 @@ public class OAuthCustomAuthFilterTest {
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
         filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         user = new AuthUser("test@gmail.com");
+        googleUser = new GoogleUser();
+        googleUser.setName("Test User");
+        googleUser.setEmail(user.getName());
+        user.setGoogleUser(googleUser);
     }
 
     @Test
