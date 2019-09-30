@@ -500,7 +500,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             } else {
                 Integer openElections = electionDAO.verifyOpenElectionsForReferenceId(consent.getConsentId());
                 Vote vote = voteDAO.findVoteByElectionIdAndType(consentElection.getElectionId(), VoteType.CHAIRPERSON.getValue());
-                if((openElections != 0) || (!vote.getVote())) {
+                if((openElections != 0) || (vote != null && !vote.getVote())) {
                     throw new IllegalArgumentException(DUL_NOT_APROVED);
                 }
             }

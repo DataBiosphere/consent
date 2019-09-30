@@ -750,6 +750,7 @@ paths:
   /api/dac:
     post:
       summary: Create a DAC
+      operationId: createDac
       description: Create a Data Access Committee
       parameters:
         - name: dac
@@ -770,6 +771,7 @@ paths:
           description: Internal Server Error
     put:
       summary: Update a DAC
+      operationId: updateDac
       description: Update a Data Access Committee
       parameters:
         - name: dac
@@ -790,12 +792,12 @@ paths:
           description: Internal Server Error
     get:
       summary: Get all DACs
-      description: Get all Data Access Committees
+      description: All Data Access Committees with a list of chairpersons and members
       tags:
         - DAC
       responses:
         200:
-          description: List of all Data Access Committees
+          description: All Data Access Committees with chairpersons and members
           schema:
             type: array
             items:
@@ -805,6 +807,7 @@ paths:
   /api/dac/{dacId}:
     get:
       summary: Get DAC by ID
+      operationId: getDacById
       description: Get Data Access Committee by Id
       parameters:
         - name: dacId
@@ -825,6 +828,7 @@ paths:
           description: Internal Server Error
     delete:
       summary: Delete DAC by ID
+      operationId: deleteDac
       description: Delete Data Access Committee by Id
       parameters:
         - name: dacId
@@ -841,6 +845,156 @@ paths:
             $ref: '#/definitions/Dac'
         404:
           description: No DAC found with the given ID
+        500:
+          description: Internal Server Error
+  /api/dac/{dacId}/member/{userId}:
+    post:
+      summary: Add DAC Member
+      operationId: addDacMember
+      description: Adds a User as a Member to a Data Access Committee
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+        - name: userId
+          in: path
+          description: The User ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The added DAC Member
+          schema:
+            $ref: '#/definitions/DACUser'
+        404:
+          description: No DAC or User found with the provided ID
+        409:
+          description: User is already a member of the DAC
+        500:
+          description: Internal Server Error
+    delete:
+      summary: Remove DAC Member
+      operationId: removeDacMember
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+        - name: userId
+          in: path
+          description: The User ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: Dac member successfully removed
+        404:
+          description: No DAC or User found with the provided ID
+        500:
+          description: Internal Server Error
+  /api/dac/{dacId}/chair/{userId}:
+    post:
+      summary: Add DAC Chair
+      operationId: addDacChair
+      description: Adds a User as a Chairperson to a Data Access Committee
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+        - name: userId
+          in: path
+          description: The User ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The added DAC Chairperson
+          schema:
+            $ref: '#/definitions/DACUser'
+        404:
+          description: No DAC or User found with the provided ID
+        409:
+          description: User is already a member of the DAC
+        500:
+          description: Internal Server Error
+    delete:
+      summary: Remove DAC Chairperson
+      operationId: removeDacChair
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+        - name: userId
+          in: path
+          description: The User ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: Dac chairperson successfully removed
+        404:
+          description: No DAC or User found with the provided ID
+        500:
+          description: Internal Server Error
+  /api/dac/{dacId}/membership:
+    get:
+      summary: Get All Members of DAC
+      operationId: getDacMembership
+      description: List all members of a DAC, including Chairpersons and Members
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The list of dac members
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DACUser'
+        404:
+          description: No DAC found with the provided ID
+        500:
+          description: Internal Server Error
+  /api/dac/users/{term}:
+    get:
+      summary: Find Users by Search Term
+      operationId: findUsersByTerm
+      description: Find all users that match the search term. Matches on name and email address.
+      parameters:
+        - name: term
+          in: path
+          description: The Search Term
+          required: true
+          type: string
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The list of users matching the term
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DACUser'
         500:
           description: Internal Server Error
   /api/dacuser:
@@ -946,6 +1100,48 @@ paths:
             $ref: '#/definitions/DACUser'
         400:
           description: Malformed entity.
+  /api/dacuser/status/{userId}:
+    get:
+      summary: getUserStatusById
+      description: |
+        DEPRECATED: Use GET /api/dacuser/{email}
+        Get the user's status by user id
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: number
+      responses:
+        200:
+          description: Returns the user by status
+          schema:
+            $ref: '#/definitions/DACUser'
+        500:
+          description: Server Error
+    put:
+      summary: updateUserStatusById
+      description: |
+        DEPRECATED: Use PUT /api/dacuser/{id}
+        Update a user's status by user id
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: number
+        - name: json
+          in: body
+          schema:
+            type: object
+          description: |
+            JSON object with a "status" member. Statuses allowed are "pending", "approved", or
+            "rejected".
+      responses:
+        200:
+          description: Returns the updated user
+          schema:
+            $ref: '#/definitions/DACUser'
+        500:
+          description: Server Error
   /api/dar:
     post:
       summary: createdDataAccessRequest
@@ -2811,6 +3007,16 @@ definitions:
         type: string
         format: date
         description: Date last updated
+      chairpersons:
+        description: List of Chairpersons
+        type: array
+        items:
+          $ref: '#/definitions/DACUser'
+      members:
+        description: List of Members
+        type: array
+        items:
+          $ref: '#/definitions/DACUser'
   DACUser:
     type: object
     properties:

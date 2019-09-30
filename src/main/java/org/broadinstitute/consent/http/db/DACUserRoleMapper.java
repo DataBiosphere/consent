@@ -29,12 +29,12 @@ public class DACUserRoleMapper implements ResultSetMapper<DACUser> {
             user.setStatus(getStatus(r));
             user.setRationale(r.getString("rationale"));
             user.setRoles(new ArrayList<>());
-            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"));
+            UserRole role = new UserRole(r.getInt("user_role_id"), r.getInt("user_id"), r.getInt("roleId"), r.getString("name"), r.getInt("dac_id"));
             user.getRoles().add(role);
             users.put(user.getDacUserId(), user);
         } else {
             user = users.get(r.getInt("dacUserId"));
-            UserRole role = new UserRole(r.getInt("roleId"), r.getString("name"));
+            UserRole role = new UserRole(r.getInt("user_role_id"), r.getInt("user_id"), r.getInt("roleId"), r.getString("name"), r.getInt("dac_id"));
             user.getRoles().add(role);
         }
         return user;

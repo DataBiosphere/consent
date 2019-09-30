@@ -50,6 +50,7 @@ public class DacResourceTest {
                 .setDescription("description")
                 .build();
         when(dacService.findAll()).thenReturn(Collections.singletonList(dac));
+        when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
 
         Response response = dacResource.findAll();
         Assert.assertEquals(200, response.getStatus());

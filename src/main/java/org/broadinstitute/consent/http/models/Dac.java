@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Entity representing a Data Access Committee
@@ -23,6 +24,12 @@ public class Dac {
 
     @JsonProperty
     private Date updateDate;
+
+    @JsonProperty
+    private List<DACUser> chairpersons;
+
+    @JsonProperty
+    private List<DACUser> members;
 
     public Dac() {
     }
@@ -65,6 +72,22 @@ public class Dac {
 
     public void setUpdateDate(Date updateDate) {
         this.updateDate = updateDate;
+    }
+
+    public List<DACUser> getChairpersons() {
+        return chairpersons;
+    }
+
+    public void setChairpersons(List<DACUser> chairpersons) {
+        this.chairpersons = chairpersons;
+    }
+
+    public List<DACUser> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<DACUser> members) {
+        this.members = members;
     }
 
 }

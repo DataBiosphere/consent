@@ -19,11 +19,11 @@ import java.util.List;
 @RegisterMapper({UserRoleMapper.class})
 public interface UserRoleDAO extends Transactional<UserRoleDAO> {
 
-    @SqlQuery("select * from roles r inner join user_role du on du.role_id = r.roleId where du.user_id = :userId")
+    @SqlQuery("select * from roles r inner join user_role ur on ur.role_id = r.roleId where ur.user_id = :userId")
     List<UserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
-    @SqlQuery("select * from roles r inner join user_role du on du.role_id = r.roleId  " +
-              "inner join dacuser u on u.dacUserId = du.user_id where u.email = :email")
+    @SqlQuery("select * from roles r inner join user_role ur on ur.role_id = r.roleId  " +
+              "inner join dacuser u on u.dacUserId = ur.user_id where u.email = :email")
     List<UserRole> findRolesByUserEmail(@Bind("email") String email);
 
     @Mapper(DatabaseRoleMapper.class)
@@ -51,7 +51,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     @SqlUpdate("delete from user_role where user_id = :dacUserId and role_id = :roleId")
     void removeSingleUserRole(@Bind("dacUserId") Integer dacUserId, @Bind("roleId") Integer roleId);
 
-    @SqlQuery("select r.roleId from roles r inner join user_role du on du.role_id = r.roleId  where du.user_id = :userId and r.name = :name")
+    @SqlQuery("select r.roleId from roles r inner join user_role ur on ur.role_id = r.roleId  where ur.user_id = :userId and r.name = :name")
     Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
 
     @SqlQuery("select * from user_role ur inner join roles r on r.roleId = ur.role_id where ur.user_id = :userId and ur.role_id = :roleId")
