@@ -2200,8 +2200,14 @@ paths:
           description: Returns the created user.
           schema:
             $ref: '#/definitions/DACUser'
+        400:
+          description: Unable to validate the user's google identity.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
         409:
           description: User should be unique
+          schema:
+            $ref: '#/definitions/ErrorResponse'
         500:
           description: Server error.
           schema:
@@ -3060,11 +3066,13 @@ definitions:
         type: string
         description: Name of the role
   ErrorResponse:
-    required:
-      - "message"
     properties:
       message:
         type: string
+        description: The error message
+      code:
+        type: integer
+        description: The response status code
   HelpReport:
     type: object
     properties:
