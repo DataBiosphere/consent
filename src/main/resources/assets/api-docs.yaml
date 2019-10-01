@@ -1111,6 +1111,8 @@ paths:
           in: path
           required: true
           type: number
+      tags:
+        - DACUser
       responses:
         200:
           description: Returns the user by status
@@ -1135,6 +1137,8 @@ paths:
           description: |
             JSON object with a "status" member. Statuses allowed are "pending", "approved", or
             "rejected".
+      tags:
+        - DACUser
       responses:
         200:
           description: Returns the updated user
