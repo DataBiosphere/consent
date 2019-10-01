@@ -75,8 +75,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
             if (entity != null) {
                 InputStream tokenInfoStream = entity.getContent();
                 String result = IOUtils.toString(tokenInfoStream, Charset.defaultCharset());
-                tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {
-                });
+                tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
                 tokenInfoStream.close();
             }
         } catch (IOException e) {
