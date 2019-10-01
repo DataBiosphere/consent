@@ -2191,14 +2191,8 @@ paths:
                     $ref: '#/definitions/HelpReport'
   /api/user:
     post:
-      summary: createdUser
-      description: Create a user. Only allows for the roles of RESEARCHER and DATAOWNER so that a new user can set themselves up from within a workspace.
-      parameters:
-        - name: dac
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/DACUser'
+      summary: createResearcher
+      description: Create a user with RESEARCHER role.
       tags:
         - User
       responses:
@@ -2206,10 +2200,12 @@ paths:
           description: Returns the created user.
           schema:
             $ref: '#/definitions/DACUser'
-        400:
-          description: Malformed user entity.
         409:
-          description: Email should be unique.
+          description: User should be unique
+        500:
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
   /api/researcher/{userId}:
     post:
       summary: Create researcher.

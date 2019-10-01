@@ -68,7 +68,7 @@ public class UserResourceTest {
         roles.add(admin);
         user.setRoles(roles);
         when(userAPI.findUserByEmail(user.getEmail())).thenReturn(user);
-        Response response = userResource.createResearcher(uriInfo, user.toString(), authUser);
+        Response response = userResource.createResearcher(uriInfo, authUser);
         Assert.assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
     }
 
@@ -76,7 +76,7 @@ public class UserResourceTest {
     public void testCreateFailingGoogleIdentity() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
-        Response response = userResource.createResearcher(uriInfo, user.toString(), new AuthUser(TEST_EMAIL));
+        Response response = userResource.createResearcher(uriInfo, new AuthUser(TEST_EMAIL));
         Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
@@ -90,7 +90,7 @@ public class UserResourceTest {
         roles.add(researcher);
         user.setRoles(roles);
         when(userAPI.createUser(user)).thenReturn(user);
-        Response response = userResource.createResearcher(uriInfo, user.toString(), authUser);
+        Response response = userResource.createResearcher(uriInfo, authUser);
         Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }
 

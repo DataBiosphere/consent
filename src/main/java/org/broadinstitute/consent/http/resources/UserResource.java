@@ -34,7 +34,7 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response createResearcher(@Context UriInfo info, String json, @Auth AuthUser user) {
+    public Response createResearcher(@Context UriInfo info, @Auth AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
         if (googleUser == null || googleUser.getEmail() == null || googleUser.getName() == null) {
             return Response.
