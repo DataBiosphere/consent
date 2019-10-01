@@ -195,17 +195,17 @@ abstract public class AbstractTest extends ResourcedTest {
         Mockito.when(trEntity.getContent()).thenReturn(trInputStream);
 
         // Mock the user info response from google
-        String userProfile = "{\n" +
-                "  \"sub\": \"...\",\n" +
-                "  \"name\": \"oauth user\",\n" +
-                "  \"given_name\": \"oauth\",\n" +
-                "  \"family_name\": \"user\",\n" +
-                "  \"profile\": \"https://plus.google.com/....\",\n" +
-                "  \"picture\": \"https://lh3.googleusercontent.com/....\",\n" +
-                "  \"email\": \"oauthuser@broadinstitute.org\",\n" +
-                "  \"email_verified\": true,\n" +
-                "  \"locale\": \"en\",\n" +
-                "  \"hd\": \"broadinstitute.org\"\n" +
+        String userProfile = "{" +
+                "\"sub\": \"...\", " +
+                "\"name\": \"oauth user\", " +
+                "\"given_name\": \"oauth\", " +
+                "\"family_name\": \"user\", " +
+                "\"profile\": \"https://plus.google.com/....\", " +
+                "\"picture\": \"https://lh3.googleusercontent.com/....\", " +
+                "\"email\": \"oauthuser@broadinstitute.org\", " +
+                "\"email_verified\": true," +
+                "\"locale\": \"en\", " +
+                "\"hd\": \"broadinstitute.org\"" +
                 "}";
         InputStream upInputStream = IOUtils.toInputStream(userProfile, Charset.defaultCharset());
         HttpResponse upMockResponse = Mockito.mock(HttpResponse.class);
