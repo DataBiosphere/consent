@@ -563,8 +563,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<Document> datasetDetails = populateDatasetDetailDocuments(dar.get(DarConstants.DATASET_DETAIL));
         List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
-        String status = Optional.ofNullable(dacUser).isPresent() ? dacUser.getStatus() : "";
-        String rationale = Optional.ofNullable(dacUser).isPresent() ? dacUser.getRationale() : "";
+        Optional<DACUser> optionalUser = Optional.ofNullable(dacUser);
+        String status = optionalUser.isPresent() ? dacUser.getStatus() : "";
+        String rationale = optionalUser.isPresent() ? dacUser.getRationale() : "";
+        List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
+                researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId()) :
+                Collections.emptyList();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
             .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
@@ -586,7 +590,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setDiseases(dar)
             .setPurposeStatements(dar)
             .setDatasetDetail(datasetDetails)
-            .setDatasets(datasets);
+            .setDatasets(datasets)
+            .setResearcherProperties(researcherProperties);
     }
 
     @SuppressWarnings("unchecked")

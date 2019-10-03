@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -39,8 +40,8 @@ public class DARModalDetailsDTO {
     @Deprecated // Use datasets instead
     private Map<String, String> datasetDetail;
     private String needDOApproval = "";
-
     private List<DataSet> datasets;
+    private List<ResearcherProperty> researcherProperties;
 
 
     public DARModalDetailsDTO() {}
@@ -280,6 +281,15 @@ public class DARModalDetailsDTO {
 
     public DARModalDetailsDTO setDatasets(List<DataSet> datasets) {
         this.datasets = datasets;
+        return this;
+    }
+
+    public List<ResearcherProperty> getResearcherProperties() {
+        return researcherProperties;
+    }
+
+    public DARModalDetailsDTO setResearcherProperties(List<ResearcherProperty> researcherProperties) {
+        this.researcherProperties = researcherProperties;
         return this;
     }
 
