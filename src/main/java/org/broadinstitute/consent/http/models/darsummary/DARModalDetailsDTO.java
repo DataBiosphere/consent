@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.darsummary;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -35,8 +36,11 @@ public class DARModalDetailsDTO {
     private Integer userId;
 
     @JsonProperty
+    @Deprecated // Use datasets instead
     private Map<String, String> datasetDetail;
     private String needDOApproval = "";
+
+    private List<DataSet> datasets;
 
 
     public DARModalDetailsDTO() {}
@@ -55,7 +59,10 @@ public class DARModalDetailsDTO {
     }
 
     public DARModalDetailsDTO setResearcherName(DACUser owner, String principalInvestigator) {
-        if(owner.getDisplayName().equals(principalInvestigator)){
+        if (owner == null) {
+            return this;
+        }
+        if (owner.getDisplayName().equals(principalInvestigator)) {
             researcherName = principalInvestigator;
         } else {
             researcherName = owner.getDisplayName();
@@ -256,6 +263,7 @@ public class DARModalDetailsDTO {
         return this;
     }
 
+    @Deprecated // Use datasets instead
     public DARModalDetailsDTO setDatasetDetail(List<Document> datasetDetail) {
         Map<String, String> datasetDetailMap = new HashMap<>();
         datasetDetail.forEach((doc) -> {
@@ -263,6 +271,15 @@ public class DARModalDetailsDTO {
             datasetDetailMap.put(doc.getString("name"), objectId);
         });
         this.datasetDetail = datasetDetailMap;
+        return this;
+    }
+
+    public List<DataSet> getDatasets() {
+        return datasets;
+    }
+
+    public DARModalDetailsDTO setDatasets(List<DataSet> datasets) {
+        this.datasets = datasets;
         return this;
     }
 

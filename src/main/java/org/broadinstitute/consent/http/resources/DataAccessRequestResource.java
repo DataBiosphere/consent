@@ -153,7 +153,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/modalSummary/{id}")
     @PermitAll
-    public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
+    public Response getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
         DACUser user = null;
@@ -162,7 +162,8 @@ public class DataAccessRequestResource extends Resource {
         } catch (NotFoundException e) {
             logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
         }
-        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
+        DARModalDetailsDTO detailsDTO = dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
+        return Response.ok().entity(detailsDTO).build();
     }
 
     @GET

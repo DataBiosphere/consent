@@ -28,7 +28,6 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
@@ -563,11 +562,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<Document> datasetDetails = populateDatasetDetailDocuments(dar.get(DarConstants.DATASET_DETAIL));
+        List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
+        String status = Optional.ofNullable(dacUser).isPresent() ? dacUser.getStatus() : "";
+        String rationale = Optional.ofNullable(dacUser).isPresent() ? dacUser.getRationale() : "";
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
             .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
-            .setStatus(dacUser.getStatus())
-            .setRationale(dacUser.getRationale())
+            .setStatus(status)
+            .setRationale(rationale)
             .setUserId(dar.getInteger(DarConstants.USER_ID))
             .setDarCode(dar.getString(DarConstants.DAR_CODE))
             .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
@@ -583,7 +585,25 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setResearchType(dar)
             .setDiseases(dar)
             .setPurposeStatements(dar)
-            .setDatasetDetail(datasetDetails);
+            .setDatasetDetail(datasetDetails)
+            .setDatasets(datasets);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<DataSet> populateDatasets(Object datasetDetails) {
+        List<DataSet> datasets = new ArrayList<>();
+        try {
+            List<Integer> datasetIds = ((ArrayList<Document>) datasetDetails).
+                    stream().
+                    filter(d -> d.containsKey(DarConstants.DATASET_ID)).
+                    map(d -> d.getString(DarConstants.DATASET_ID)).
+                    map(Integer::valueOf).
+                    collect(Collectors.toList());
+            datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+        } catch (Exception e) {
+            logger().warn(e);
+        }
+        return datasets;
     }
 
     /**
