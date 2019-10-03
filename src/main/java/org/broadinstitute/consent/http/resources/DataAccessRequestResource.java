@@ -159,7 +159,7 @@ public class DataAccessRequestResource extends Resource {
         DACUser user = null;
         try {
             user = dacUserAPI.describeDACUserById(userId);
-        } catch (IllegalArgumentException e) {
+        } catch (NotFoundException e) {
             logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
         }
         return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
