@@ -561,7 +561,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<Document> datasetDetails = populateDatasetDetailDocuments(dar.get(DarConstants.DATASET_DETAIL));
         List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
         Optional<DACUser> optionalUser = Optional.ofNullable(dacUser);
         String status = optionalUser.isPresent() ? dacUser.getStatus() : "";
@@ -589,9 +588,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setResearchType(dar)
             .setDiseases(dar)
             .setPurposeStatements(dar)
-            .setDatasetDetail(datasetDetails)
             .setDatasets(datasets)
-            .setResearcherProperties(researcherProperties);
+            .setResearcherProperties(researcherProperties)
+            .setRus(DarConstants.RUS);
     }
 
     @SuppressWarnings("unchecked")
@@ -609,58 +608,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             logger().warn(e);
         }
         return datasets;
-    }
-
-    /**
-     * Dataset Detail fields have undergone transition and can have different keys in the mongo source.
-     * For example, these are two examples from production:
-     *
-     *   "datasetDetail": [
-     *     {
-     *       "datasetId": "7",
-     *       "name": "Melanoma_Regev",
-     *       "objectId": "SC-14319"
-     *     },
-     *     {
-     *       "datasetId": "139",
-     *       "name": "MetastaticMelanoma_Regev"
-     *     }
-     *   ]
-     *
-     * OR something like this ...
-     *
-     *  "datasetDetail": [
-     *     {
-     *       "datasetId": "143",
-     *       "name": "IDH-mutant astrocytoma - Suva"
-     *     },
-     *     {
-     *       "datasetId": "142",
-     *       "name": "oligodendroglioma scRNA-seq - Suva"
-     *     }
-     *   ]
-     *
-     * For backwards compatibility, we need to recreate the "objectId" field if it is missing
-     * and populate it with the dataset's objectId field
-     */
-    @SuppressWarnings("unchecked")
-    private List<Document> populateDatasetDetailDocuments(Object datasetDetails) {
-        List<Document> newDetails = new ArrayList<>();
-        try {
-            ((ArrayList<Document>) datasetDetails).forEach(d -> {
-                // If we are missing the object id, but have a dataset id, then we need to look it up:
-                if (d.containsKey(DarConstants.DATASET_ID) && !d.containsKey(DarConstants.OBJECT_ID)) {
-                    DataSet dataSet = dataSetDAO.findDataSetById(Integer.valueOf(d.getString(DarConstants.DATASET_ID)));
-                    if (dataSet.getObjectId() != null) {
-                        d.put(DarConstants.OBJECT_ID, dataSet.getObjectId());
-                    }
-                }
-                newDetails.add(d);
-            });
-        } catch (Exception e) {
-            logger().warn(e);
-        }
-        return newDetails;
     }
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
