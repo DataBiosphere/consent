@@ -156,7 +156,12 @@ public class DataAccessRequestResource extends Resource {
     public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
-        DACUser user = dacUserAPI.describeDACUserById(userId);
+        DACUser user = null;
+        try {
+            user = dacUserAPI.describeDACUserById(userId);
+        } catch (IllegalArgumentException e) {
+            logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
+        }
         return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
     }
 
