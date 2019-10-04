@@ -2192,7 +2192,7 @@ paths:
   /api/user:
     post:
       summary: createResearcher
-      description: Create a user with RESEARCHER role.
+      description: Create a user with RESEARCHER role using the user's current authentication status.
       tags:
         - User
       responses:
