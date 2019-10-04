@@ -13,6 +13,11 @@ public class AuthUser implements Principal {
         this.name = name;
     }
 
+    public AuthUser(String name, GoogleUser googleUser) {
+        this.name = name;
+        this.googleUser = googleUser;
+    }
+
     @Override
     public String getName() {
         return name;

@@ -3,20 +3,13 @@ package org.broadinstitute.consent.http.authentication;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.AuthenticationException;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -26,29 +19,28 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
     private static final String TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
     private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
-    private HttpClient httpClient;
+    private Client client;
 
     public static void initInstance() {
         AuthenticatorAPIHolder.setInstance(new OAuthAuthenticator());
     }
 
     private OAuthAuthenticator() {
-        this.httpClient = HttpClients.createDefault();
     }
 
-    public void setHttpClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
+    public void setClient(Client client) {
+        this.client = client;
     }
 
     @Override
     public Optional<AuthUser> authenticate(String bearer) {
         try {
             String email = validateAccessToken(bearer);
-            AuthUser user = new AuthUser(email);
-            user.setGoogleUser(getUserInfo(bearer));
+            GoogleUser googleUser = getUserInfo(bearer);
+            AuthUser user = new AuthUser(email, googleUser);
             return Optional.of(user);
         } catch (Exception e) {
-            logger.error("Error authenticating credentials.");
+            logger.error("Error authenticating credentials: " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -68,17 +60,15 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
 
     private HashMap<String, Object> validateToken(String accessToken) throws AuthenticationException {
         HashMap<String, Object> tokenInfo = null;
-        HttpPost httppost = new HttpPost(TOKEN_INFO_URL + accessToken);
         try {
-            HttpResponse response = httpClient.execute(httppost);
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream tokenInfoStream = entity.getContent();
-                String result = IOUtils.toString(tokenInfoStream, Charset.defaultCharset());
-                tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
-                tokenInfoStream.close();
-            }
-        } catch (IOException e) {
+            Response response = this
+                    .client
+                    .target(TOKEN_INFO_URL + accessToken)
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .get(Response.class);
+            String result = response.readEntity(String.class);
+            tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
+        } catch (Exception e) {
             unauthorized(accessToken);
         }
         return tokenInfo;
@@ -86,16 +76,15 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
 
     private GoogleUser getUserInfo(String bearer) throws AuthenticationException {
         GoogleUser u = null;
-        HttpGet httpGet = new HttpGet(USER_INFO_URL + bearer);
         try {
-            HttpResponse response = httpClient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream tokenInfoStream = entity.getContent();
-                String result = IOUtils.toString(tokenInfoStream, Charset.defaultCharset());
-                u = new GoogleUser(result);
-            }
-        } catch (IOException e) {
+            Response response = this
+                    .client
+                    .target(USER_INFO_URL + bearer)
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .get(Response.class);
+            String result = response.readEntity(String.class);
+            u = new GoogleUser(result);
+        } catch (Exception e) {
             unauthorized(bearer);
         }
         return u;

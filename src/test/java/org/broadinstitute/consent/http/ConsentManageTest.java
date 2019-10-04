@@ -81,7 +81,7 @@ public class ConsentManageTest extends ElectionVoteServiceTest {
                         OK,
                         delete(client,
                                 voteConsentIdPath(consentId, vote.getVoteId())));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         });
