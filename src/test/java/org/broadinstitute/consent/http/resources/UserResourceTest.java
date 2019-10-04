@@ -45,8 +45,8 @@ public class UserResourceTest {
     public void setUp() throws URISyntaxException {
         GoogleUser googleUser = new GoogleUser();
         googleUser.setName("Test User");
-        googleUser.setEmail(authUser.getName());
-        authUser = new AuthUser(TEST_EMAIL, googleUser);
+        googleUser.setEmail(TEST_EMAIL);
+        authUser = new AuthUser(googleUser);
         MockitoAnnotations.initMocks(this);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);

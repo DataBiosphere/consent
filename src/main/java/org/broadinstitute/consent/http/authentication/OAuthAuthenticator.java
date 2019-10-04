@@ -37,7 +37,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
         try {
             String email = validateAccessToken(bearer);
             GoogleUser googleUser = getUserInfo(bearer);
-            AuthUser user = new AuthUser(email, googleUser);
+            AuthUser user = new AuthUser(googleUser);
             return Optional.of(user);
         } catch (Exception e) {
             logger.error("Error authenticating credentials: " + e.getMessage());

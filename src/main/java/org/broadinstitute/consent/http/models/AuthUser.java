@@ -13,8 +13,8 @@ public class AuthUser implements Principal {
         this.name = name;
     }
 
-    public AuthUser(String name, GoogleUser googleUser) {
-        this.name = name;
+    public AuthUser(GoogleUser googleUser) {
+        this.name = googleUser.getEmail();
         this.googleUser = googleUser;
     }
 
@@ -25,10 +25,6 @@ public class AuthUser implements Principal {
 
     public GoogleUser getGoogleUser() {
         return googleUser;
-    }
-
-    public void setGoogleUser(GoogleUser googleUser) {
-        this.googleUser = googleUser;
     }
 
 }

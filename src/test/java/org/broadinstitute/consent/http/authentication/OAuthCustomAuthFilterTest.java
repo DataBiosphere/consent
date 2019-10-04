@@ -55,7 +55,7 @@ public class OAuthCustomAuthFilterTest {
         googleUser = new GoogleUser();
         googleUser.setName("Test User");
         googleUser.setEmail("test@gmail.com");
-        user = new AuthUser(googleUser.getEmail(), googleUser);
+        user = new AuthUser(googleUser);
     }
 
     @Test
