@@ -35,7 +35,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
     @Override
     public Optional<AuthUser> authenticate(String bearer) {
         try {
-            String email = validateAccessToken(bearer);
+            validateAudience(bearer);
             GoogleUser googleUser = getUserInfo(bearer);
             AuthUser user = new AuthUser(googleUser);
             return Optional.of(user);
@@ -45,7 +45,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
         }
     }
 
-    private String validateAccessToken(String bearer) throws AuthenticationException {
+    private void validateAudience(String bearer) throws AuthenticationException {
         HashMap<String, Object> tokenInfo = validateToken(bearer);
         try {
             String clientId = tokenInfo.containsKey("aud") ? tokenInfo.get("aud").toString() : tokenInfo.get("audience").toString();
@@ -55,7 +55,6 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
         } catch (AuthenticationException e) {
             unauthorized(bearer);
         }
-        return tokenInfo.get("email").toString();
     }
 
     private HashMap<String, Object> validateToken(String accessToken) throws AuthenticationException {
