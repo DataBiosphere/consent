@@ -2496,6 +2496,9 @@ definitions:
       updateStatus:
         type: boolean
         description: Indicates if a consent has been updated from orsp
+      dacId:
+        type: integer
+        description: The Data Access Committee ID
   Vote:
     type: object
     properties:
