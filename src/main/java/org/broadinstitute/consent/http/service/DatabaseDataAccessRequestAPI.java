@@ -639,10 +639,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
-        FindIterable<Document> filterable = mongo
+        FindIterable<Document> results = mongo
                 .getDataAccessRequestCollection()
                 .find(in(DarConstants.DATASET_ID, dataSetId));
-        return new ArrayList<>(filterable.into(new ArrayList<>()));
+        return results.into(new ArrayList<>());
     }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
