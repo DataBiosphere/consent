@@ -611,9 +611,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
-        List<Document> response = new ArrayList<>();
-        response.addAll(mongo.getDataAccessRequestCollection().find(eq(DarConstants.DATASET_ID, dataSetId.toString())).into(new ArrayList<>()));
-        return response;
+        FindIterable<Document> results = mongo
+                .getDataAccessRequestCollection()
+                .find(in(DarConstants.DATASET_ID, dataSetId));
+        return results.into(new ArrayList<>());
     }
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {

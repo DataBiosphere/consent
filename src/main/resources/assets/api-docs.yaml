@@ -1838,12 +1838,12 @@ paths:
               $ref: '#/definitions/Dictionary'
         500:
           description: Server error.
-  /api/dataset/{datasetObjectId}:
+  /api/dataset/{id}:
     delete:
       summary: delete
-      description: Deletes Dataset and DatasetProperties of the Dataset specified by datasetObjectId .
+      description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
       parameters:
-        - name: datasetObjectId
+        - name: id
           in: path
           description: ObjectId of the Dataset
           required: true
@@ -1853,6 +1853,34 @@ paths:
       responses:
         200:
           description: The Dataset was deleted.
+        500:
+          description: Server error.
+  /api/dataset/{id}/approved/users:
+    get:
+      summary: Dataset Approved Users
+      description: Dataset Approved Users
+      produces:
+        - text/plain
+      parameters:
+        - name: id
+          in: path
+          description: The dataset id
+          required: true
+          type: integer
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: Dataset Approved Users
+          schema:
+            type: file
+          headers:
+            Content-type:
+              type: string
+              description: text/plain
+            Content-Disposition:
+              type: string
+              description: attachment; filename=DatasetApprovedUsers.tsv
         500:
           description: Server error.
   /api/dataset/download:
@@ -1896,12 +1924,12 @@ paths:
               type: string
         500:
           description: Server error.
-  /api/dataset/disable/{datasetObjectId}/{active}:
+  /api/dataset/disable/{id}/{active}:
         delete:
           summary: disableDataSet
-          description: 'Updates the Active status of the Dataset specified by datasetObjectId'
+          description: 'Updates the Active status of the Dataset specified by id'
           parameters:
-            - name: datasetObjectId
+            - name: id
               in: path
               description: the Id of the Dataset to Update.
               required: true
