@@ -367,8 +367,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             .setIsTherePurposeStatements(false)
             .setResearchType(access)
             .setDiseases(access)
-            .setPurposeStatements(access)
-            .setDatasetDetail((ArrayList<Document>) access.get(DarConstants.DATASET_DETAIL));
+            .setPurposeStatements(access);
 
         List<String> checkedSentences = (details.getPurposeStatements()).stream().map(SummaryItem::getDescription).collect(Collectors.toList());
         return templateHelper.getApprovedDarTemplate(

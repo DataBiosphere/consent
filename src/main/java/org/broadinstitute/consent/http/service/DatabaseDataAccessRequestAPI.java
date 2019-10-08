@@ -28,7 +28,6 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
@@ -562,12 +561,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<Document> datasetDetails = populateDatasetDetailDocuments(dar.get(DarConstants.DATASET_DETAIL));
+        List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
+        Optional<DACUser> optionalUser = Optional.ofNullable(dacUser);
+        String status = optionalUser.isPresent() ? dacUser.getStatus() : "";
+        String rationale = optionalUser.isPresent() ? dacUser.getRationale() : "";
+        List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
+                researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId()) :
+                Collections.emptyList();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
             .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
-            .setStatus(dacUser.getStatus())
-            .setRationale(dacUser.getRationale())
+            .setStatus(status)
+            .setRationale(rationale)
             .setUserId(dar.getInteger(DarConstants.USER_ID))
             .setDarCode(dar.getString(DarConstants.DAR_CODE))
             .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
@@ -583,59 +588,26 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setResearchType(dar)
             .setDiseases(dar)
             .setPurposeStatements(dar)
-            .setDatasetDetail(datasetDetails);
+            .setDatasets(datasets)
+            .setResearcherProperties(researcherProperties)
+            .setRus(DarConstants.RUS);
     }
 
-    /**
-     * Dataset Detail fields have undergone transition and can have different keys in the mongo source.
-     * For example, these are two examples from production:
-     *
-     *   "datasetDetail": [
-     *     {
-     *       "datasetId": "7",
-     *       "name": "Melanoma_Regev",
-     *       "objectId": "SC-14319"
-     *     },
-     *     {
-     *       "datasetId": "139",
-     *       "name": "MetastaticMelanoma_Regev"
-     *     }
-     *   ]
-     *
-     * OR something like this ...
-     *
-     *  "datasetDetail": [
-     *     {
-     *       "datasetId": "143",
-     *       "name": "IDH-mutant astrocytoma - Suva"
-     *     },
-     *     {
-     *       "datasetId": "142",
-     *       "name": "oligodendroglioma scRNA-seq - Suva"
-     *     }
-     *   ]
-     *
-     * For backwards compatibility, we need to recreate the "objectId" field if it is missing
-     * and populate it with the dataset's objectId field
-     */
     @SuppressWarnings("unchecked")
-    private List<Document> populateDatasetDetailDocuments(Object datasetDetails) {
-        List<Document> newDetails = new ArrayList<>();
+    private List<DataSet> populateDatasets(Object datasetDetails) {
+        List<DataSet> datasets = new ArrayList<>();
         try {
-            ((ArrayList<Document>) datasetDetails).forEach(d -> {
-                // If we are missing the object id, but have a dataset id, then we need to look it up:
-                if (d.containsKey(DarConstants.DATASET_ID) && !d.containsKey(DarConstants.OBJECT_ID)) {
-                    DataSet dataSet = dataSetDAO.findDataSetById(Integer.valueOf(d.getString(DarConstants.DATASET_ID)));
-                    if (dataSet.getObjectId() != null) {
-                        d.put(DarConstants.OBJECT_ID, dataSet.getObjectId());
-                    }
-                }
-                newDetails.add(d);
-            });
+            List<Integer> datasetIds = ((ArrayList<Document>) datasetDetails).
+                    stream().
+                    filter(d -> d.containsKey(DarConstants.DATASET_ID)).
+                    map(d -> d.getString(DarConstants.DATASET_ID)).
+                    map(Integer::valueOf).
+                    collect(Collectors.toList());
+            datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
         } catch (Exception e) {
             logger().warn(e);
         }
-        return newDetails;
+        return datasets;
     }
 
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {

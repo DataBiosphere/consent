@@ -31,6 +31,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
 
+    @SqlQuery("select * from dataset where dataSetId in (<dataSetIdList>)")
+    List<DataSet> findDataSetsByIdList(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
+
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
