@@ -85,8 +85,11 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     void logicalDeleteConsent(@Bind("consentId") String consentId);
 
 
-    @SqlUpdate(" update consents set requiresManualReview = :requiresManualReview, " +
-            " useRestriction = :useRestriction, dataUse = :dataUse, dataUseLetter = :dataUseLetter, " +
+    @SqlUpdate(" update consents set " +
+            " requiresManualReview = :requiresManualReview, " +
+            " useRestriction = :useRestriction, " +
+            " dataUse = :dataUse, " +
+            " dataUseLetter = :dataUseLetter, " +
             " name = :name, " +
             " dulName = :dulName, " +
             " lastUpdate = :lastUpdate, " +
