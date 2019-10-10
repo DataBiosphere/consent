@@ -590,7 +590,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setPurposeStatements(dar)
             .setDatasets(datasets)
             .setResearcherProperties(researcherProperties)
-            .setRus(DarConstants.RUS);
+            .setRus(dar.getString(DarConstants.RUS));
     }
 
     @SuppressWarnings("unchecked")
