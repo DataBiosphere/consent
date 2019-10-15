@@ -13,86 +13,98 @@ import java.sql.Timestamp;
  */
 public class ConsentManage {
 
-	@JsonProperty
-	private String consentId;
+    @JsonProperty
+    private String consentId;
 
-	@JsonProperty
-	private String consentName;
+    @JsonProperty
+    private String consentName;
+
+    @JsonProperty
+    private Integer dacId;
 
     @JsonProperty
     private Boolean editable;
 
     @JsonProperty
-	private String electionStatus;
+    private String electionStatus;
 
-	@JsonProperty
-	private Integer electionId;
+    @JsonProperty
+    private Integer electionId;
 
-	@JsonProperty
-	private Timestamp createDate;
+    @JsonProperty
+    private Timestamp createDate;
 
-	@JsonProperty
-	private Timestamp sortDate;
+    @JsonProperty
+    private Timestamp sortDate;
 
-	@JsonProperty
-	private String version;
+    @JsonProperty
+    private String version;
 
-	@JsonProperty
-	private Boolean archived;
+    @JsonProperty
+    private Boolean archived;
 
-	@JsonProperty
-	private String groupName;
+    @JsonProperty
+    private String groupName;
 
-	@JsonProperty
-	private Boolean updateStatus;
+    @JsonProperty
+    private Boolean updateStatus;
 
-	@JsonProperty
-	private String vote;
+    @JsonProperty
+    private String vote;
 
-	public ConsentManage() {
-	}
-
-	public ConsentManage(Consent consent) {
-		this.consentId = consent.getConsentId();
-		this.consentName = consent.getName();
-		this.createDate = consent.getCreateDate();
-		this.sortDate = consent.getSortDate();
-	    this.editable = null;
-	    this.groupName = consent.getGroupName();
-	    this.updateStatus = consent.getUpdated();
+    public ConsentManage() {
     }
 
-	public Timestamp getCreateDate() {
-		return createDate;
-	}
+    public ConsentManage(Consent consent) {
+        this.consentId = consent.getConsentId();
+        this.consentName = consent.getName();
+        this.createDate = consent.getCreateDate();
+        this.sortDate = consent.getSortDate();
+        this.editable = null;
+        this.groupName = consent.getGroupName();
+        this.updateStatus = consent.getUpdated();
+        this.dacId = consent.getDacId();
+    }
 
-	public void setCreateDate(Timestamp createDate) {
-		this.createDate = createDate;
-	}
+    public Timestamp getCreateDate() {
+        return createDate;
+    }
 
-	public Timestamp getSortDate() {
-		return sortDate;
-	}
+    public void setCreateDate(Timestamp createDate) {
+        this.createDate = createDate;
+    }
 
-	public void setSortDate(Timestamp sortDate) {
-		this.sortDate = sortDate;
-	}
+    public Timestamp getSortDate() {
+        return sortDate;
+    }
 
-	public String getConsentId() {
-		return consentId;
-	}
+    public void setSortDate(Timestamp sortDate) {
+        this.sortDate = sortDate;
+    }
 
-	public void setConsentId(String consentId) {
-		this.consentId = consentId;
-	}
+    public String getConsentId() {
+        return consentId;
+    }
 
-	public String getConsentName() {
-		return consentName;
-	}
+    public void setConsentId(String consentId) {
+        this.consentId = consentId;
+    }
 
-	public void setConsentName(String consentName) {
-		this.consentName = consentName;
-	}
+    public String getConsentName() {
+        return consentName;
+    }
+
+    public void setConsentName(String consentName) {
+        this.consentName = consentName;
+    }
+
+    public Integer getDacId() {
+        return dacId;
+    }
+
+    public void setDacId(Integer dacId) {
+        this.dacId = dacId;
+    }
 
     public Boolean getEditable() {
         return editable;
@@ -102,55 +114,59 @@ public class ConsentManage {
         this.editable = editable;
     }
 
-	public String getElectionStatus() {
-		return electionStatus;
-	}
+    public String getElectionStatus() {
+        return electionStatus;
+    }
 
-	public void setElectionStatus(String electionStatus) {
-		this.electionStatus = electionStatus;
-	}
+    public void setElectionStatus(String electionStatus) {
+        this.electionStatus = electionStatus;
+    }
 
-	public Integer getElectionId() {
-		return electionId;
-	}
+    public Integer getElectionId() {
+        return electionId;
+    }
 
-	public void setElectionId(Integer electionId) {
-		this.electionId = electionId;
-	}
+    public void setElectionId(Integer electionId) {
+        this.electionId = electionId;
+    }
 
-	public String getVersion() {
-		return version;
-	}
+    public String getVersion() {
+        return version;
+    }
 
-	public void setVersion(String version) {
-		this.version = version;
-	}
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
-	public Boolean getArchived() {
-		return archived;
-	}
+    public Boolean getArchived() {
+        return archived;
+    }
 
-	public void setArchived(Boolean archived) {
-		this.archived = archived;
-	}
+    public void setArchived(Boolean archived) {
+        this.archived = archived;
+    }
 
-	public String getGroupName() { return groupName; }
+    public String getGroupName() {
+        return groupName;
+    }
 
-	public void setGroupName(String groupName) { this.groupName = groupName; }
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
 
-	public Boolean getUpdateStatus() {
-		return updateStatus;
-	}
+    public Boolean getUpdateStatus() {
+        return updateStatus;
+    }
 
-	public void setUpdateStatus(boolean updateStatus) {
-		this.updateStatus = updateStatus;
-	}
+    public void setUpdateStatus(boolean updateStatus) {
+        this.updateStatus = updateStatus;
+    }
 
-	public String getVote() {
-		return vote;
-	}
+    public String getVote() {
+        return vote;
+    }
 
-	public void setVote(String vote) {
-		this.vote = vote;
-	}
+    public void setVote(String vote) {
+        this.vote = vote;
+    }
 }

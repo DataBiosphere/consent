@@ -97,6 +97,7 @@ import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseAuditServiceAPI;
@@ -212,6 +213,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
         // Services
+        final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
@@ -283,7 +285,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DacResource(dacService));
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
-        env.jersey().register(ConsentManageResource.class);
+        env.jersey().register(new ConsentManageResource(consentService));
         env.jersey().register(new ElectionResource(voteService));
         env.jersey().register(MatchResource.class);
         env.jersey().register(EmailNotifierResource.class);
