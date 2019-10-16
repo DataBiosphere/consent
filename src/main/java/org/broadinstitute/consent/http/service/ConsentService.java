@@ -141,7 +141,7 @@ public class ConsentService {
     }
 
     private List<Integer> getDacIdsForUser(AuthUser authUser) {
-        return dacDAO.findDacsForUser(authUser.getName())
+        return dacDAO.findDacsForEmail(authUser.getName())
                 .stream()
                 .map(Dac::getDacId)
                 .filter(Objects::nonNull)
