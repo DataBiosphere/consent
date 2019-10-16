@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -140,10 +141,10 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     ConsentService providesConsentService() {
-        return new ConsentService(providesConsentDAO(),
+        return new ConsentService(
+                providesConsentDAO(),
                 providesDacDAO(),
                 providesDACUserDAO(),
-                providesDataSetDAO(),
                 providesElectionDAO(),
                 this.mongoInstance,
                 providesVoteDAO());
@@ -152,6 +153,19 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ConsentDAO providesConsentDAO() {
         return consentDAO;
+    }
+
+    @Provides
+    PendingCaseService providesDataAccessRequestService() {
+        return new PendingCaseService(
+                providesConsentDAO(),
+                providesDacDAO(),
+                providesDACUserDAO(),
+                providesDataSetDAO(),
+                providesElectionDAO(),
+                this.mongoInstance,
+                providesVoteDAO()
+        );
     }
 
     @Provides

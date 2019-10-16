@@ -26,6 +26,12 @@ public interface DacFilterable {
                 anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()));
     }
 
+    default boolean isAuthUserChair(DACUserDAO dacUserDAO, AuthUser authUser) {
+        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
+        return user.getRoles().stream().
+                anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
+    }
+
     default List<ConsentManage> filterConsentManageByDAC(DacDAO dacDAO, DACUserDAO dacUserDAO,
                                                          List<ConsentManage> consentManages,
                                                          AuthUser authUser) {
