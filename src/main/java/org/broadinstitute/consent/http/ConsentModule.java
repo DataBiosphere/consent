@@ -142,6 +142,7 @@ public class ConsentModule extends AbstractModule {
         return new ConsentService(providesConsentDAO(),
                 providesDacDAO(),
                 providesDACUserDAO(),
+                providesDataSetDAO(),
                 providesElectionDAO(),
                 this.mongoInstance,
                 providesVoteDAO());
@@ -198,7 +199,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    UserRoleDAO providesDACUserRoleDAO() {
+    UserRoleDAO providesUserRoleDAO() {
         return userRoleDAO;
     }
 

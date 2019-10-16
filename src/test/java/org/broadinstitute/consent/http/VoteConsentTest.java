@@ -25,7 +25,6 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     private static final String CONSENT_ID = "testId";
-    private static final Integer DAC_USER_ID = 1;
     private static final String RATIONALE = "Test";
 
     @ClassRule
@@ -57,14 +56,13 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
         assertThat(created.getUpdateDate()).isNull();
         assertThat(created.getVote()).isFalse();
         assertThat(created.getVoteId()).isNotNull();
-        testConsentPendingCase(DAC_USER_ID);
         updateVote(created);
         deleteVotes(votes);
         delete(client, electionConsentPathById(CONSENT_ID, electionId));
     }
 
 
-    public void deleteVotes(List<Vote> votes) throws IOException {
+    private void deleteVotes(List<Vote> votes) throws IOException {
         Client client = ClientBuilder.newClient();
         for (Vote vote : votes) {
             checkStatus(OK,
@@ -73,7 +71,7 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
     }
 
 
-    public void updateVote(Vote vote) throws IOException {
+    private void updateVote(Vote vote) throws IOException {
         Client client = ClientBuilder.newClient();
         vote.setVote(true);
         vote.setRationale(null);
@@ -95,16 +93,6 @@ public class VoteConsentTest extends ElectionVoteServiceTest {
         election = getJson(client, electionConsentPath(CONSENT_ID))
                 .readEntity(Election.class);
         return election.getElectionId();
-    }
-
-    public void testConsentPendingCase(Integer dacUserId) throws IOException {
-        Client client = ClientBuilder.newClient();
-        List<PendingCase> pendingCases = getJson(client, consentPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {
-        });
-        assertThat(pendingCases).isNotNull();
-        assertThat(pendingCases.size()).isEqualTo(2);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/5");
-        assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(CONSENT_ID);
     }
 
     @Test
