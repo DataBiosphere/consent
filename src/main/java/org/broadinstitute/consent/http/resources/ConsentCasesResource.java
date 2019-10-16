@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -31,6 +32,7 @@ public class ConsentCasesResource extends Resource {
     private final SummaryAPI summaryApi;
     private final ElectionAPI electionApi;
 
+    @Inject
     public ConsentCasesResource(ConsentService consentService) {
         this.consentService = consentService;
         this.summaryApi = AbstractSummaryAPI.getInstance();
