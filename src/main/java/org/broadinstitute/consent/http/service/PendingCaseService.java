@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -48,22 +49,27 @@ public class PendingCaseService implements DacFilterable {
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
+    private UserRoleDAO userRoleDAO;
     private VoteDAO voteDAO;
 
     @Inject
-    public PendingCaseService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO, MongoConsentDB mongo, VoteDAO voteDAO) {
+    public PendingCaseService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO,
+                              DataSetDAO dataSetDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
+                              UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
+        this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
         DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
-        List<Integer> roleIds = dacUser.getRoles().stream().map(UserRole::getRoleId).
+        List<Integer> roleIds = userRoleDAO.findRolesByUserEmail(authUser.getName()).stream().
+                map(UserRole::getRoleId).
                 collect(Collectors.toList());
         Integer dacUserId = dacUser.getDacUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
