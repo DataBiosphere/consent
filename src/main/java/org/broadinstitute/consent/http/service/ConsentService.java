@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -51,18 +52,20 @@ public class ConsentService {
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
+    private UserRoleDAO userRoleDAO;
     private VoteDAO voteDAO;
 
     @Inject
     public ConsentService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO,
                           DataSetDAO dataSetDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
-                          VoteDAO voteDAO) {
+                          UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
+        this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
     }
 
@@ -116,7 +119,8 @@ public class ConsentService {
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
         DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
-        List<Integer> roleIds = dacUser.getRoles().stream().map(UserRole::getRoleId).
+        List<Integer> roleIds = userRoleDAO.findRolesByUserEmail(authUser.getName()).stream().
+                map(UserRole::getRoleId).
                 collect(Collectors.toList());
         Integer dacUserId = dacUser.getDacUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
@@ -197,8 +201,7 @@ public class ConsentService {
     }
 
     private boolean isAuthUserAdmin(AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
-        return user.getRoles().stream().
+        return userRoleDAO.findRolesByUserEmail(authUser.getName()).stream().
                 anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()));
     }
 
