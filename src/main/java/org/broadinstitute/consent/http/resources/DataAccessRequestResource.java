@@ -74,14 +74,14 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
 
-    private DataAccessRequestService dataAccessRequestService;
+    private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
+    private final DataAccessRequestService dataAccessRequestService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
     private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
-    private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;

@@ -87,9 +87,7 @@ public class DataAccessRequestService implements DacFilterable {
     }
 
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
-
         boolean isAdmin = isAuthUserAdmin(dacUserDAO, authUser);
-
         BasicDBObject sort = new BasicDBObject("sortDate", -1);
         FindIterable<Document> accessList;
         if (isAdmin) {
