@@ -14,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Path("api")
+@Path("api/consent")
 public class ConsentManageResource extends Resource {
 
     private final ConsentService consentService;
@@ -24,7 +24,7 @@ public class ConsentManageResource extends Resource {
     }
 
     @GET
-    @Path("consent/manage")
+    @Path("/manage")
     @RolesAllowed(ADMIN)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getConsentManage(@Auth AuthUser authUser) {
@@ -33,7 +33,7 @@ public class ConsentManageResource extends Resource {
     }
 
     @GET
-    @Path("consent/unreviewed")
+    @Path("/unreviewed")
     @RolesAllowed(ADMIN)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTotalUnreviewedConsent(@Auth AuthUser authUser) {
