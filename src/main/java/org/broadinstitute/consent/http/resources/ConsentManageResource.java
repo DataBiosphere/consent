@@ -14,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Path("api/consent")
+@Path("{auth: (basic/|api/)?}consent")
 public class ConsentManageResource extends Resource {
 
     private final ConsentService consentService;
