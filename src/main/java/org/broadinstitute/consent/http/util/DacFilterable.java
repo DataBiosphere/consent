@@ -21,15 +21,13 @@ import java.util.stream.Collectors;
 public interface DacFilterable {
 
     default boolean isAuthUserAdmin(DACUserDAO dacUserDAO, AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
-        return user.getRoles().stream().
-                anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()));
+        DACUser user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
+        return user != null;
     }
 
     default boolean isAuthUserChair(DACUserDAO dacUserDAO, AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
-        return user.getRoles().stream().
-                anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
+        DACUser user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
+        return user != null;
     }
 
     default List<ConsentManage> filterConsentManageByDAC(DacDAO dacDAO, DACUserDAO dacUserDAO,

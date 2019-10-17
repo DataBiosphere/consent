@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -115,5 +116,12 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
 
     @SqlUpdate("update dacuser set rationale = :rationale where dacUserId = :userId")
     void updateUserRationale(@Bind("rationale") String rationale, @Bind("userId") Integer userId);
+
+    @SqlQuery("select * from dacuser du "
+            + " inner join user_role ur on du.dacUserId = ur.user_id "
+            + " inner join roles r on ur.role_id = r.roleId "
+            + " where du.email = :email "
+            + " and r.roleId = :roleId")
+    DACUser findDACUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
 
 }
