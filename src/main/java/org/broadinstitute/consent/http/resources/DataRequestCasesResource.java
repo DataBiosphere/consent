@@ -23,7 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Path("api/dataRequest/cases")
+@Path("{api : (api/)?}dataRequest/cases")
 public class DataRequestCasesResource extends Resource {
 
     private final ElectionService electionService;
