@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.service;
  * Implement a skeleton for DataAccessRequestAPI interface that implements the singleton
  * object management.
  */
+@Deprecated // Use DataAccessRequestService
 public abstract class AbstractDataAccessRequestAPI implements DataAccessRequestAPI {
 
     /**

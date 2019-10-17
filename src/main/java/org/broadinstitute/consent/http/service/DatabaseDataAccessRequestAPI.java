@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.Election;
@@ -43,13 +42,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +63,7 @@ import static com.mongodb.client.model.Filters.ne;
 /**
  * Implementation class for DatabaseDataAccessRequestAPI.
  */
+@Deprecated // Use DataAccessRequestService
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private static Logger logger() {
@@ -75,8 +73,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private MongoConsentDB mongo;
 
     private final UseRestrictionConverter converter;
-
-    private static final String UN_REVIEWED = "un-reviewed";
 
     private final ElectionDAO electionDAO;
 
@@ -93,12 +89,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final DACUserDAO dacUserDAO;
 
     private final DataSetDAO dataSetDAO;
-
-    private static final String NEEDS_APPROVAL = "Needs Approval";
-
-    private static final String APPROVED = "Approved";
-
-    private static final String DENIED = "Denied";
 
     private static final String PATH = "template/RequestApplication.pdf";
 
@@ -220,21 +210,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId) {
-        FindIterable<Document> accessList = userId == null ? mongo.getDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
-                : mongo.getDataAccessRequestCollection().find(new BasicDBObject(DarConstants.USER_ID, userId)).sort(new BasicDBObject("sortDate", -1));
-        List<DataAccessRequestManage> darManage = new ArrayList<>();
-        List<String> accessRequestIds = getRequestIds(accessList);
-        if (CollectionUtils.isNotEmpty(accessRequestIds)) {
-            List<Election> electionList = new ArrayList<>();
-            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue()));
-            HashMap electionAccessMap = createAccessRequestElectionMap(electionList);
-            darManage.addAll(createAccessRequestManage(accessList, electionAccessMap));
-        }
-        return darManage;
-    }
-
-    @Override
     public List<String> describeDataAccessIdsForOwner(Integer userId) {
         List<String> referenceIds = new ArrayList<>();
         FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find(new BasicDBObject(DarConstants.USER_ID, userId)).sort(new BasicDBObject("sortDate", -1));
@@ -283,24 +258,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             throw new NotFoundException("Data access for the specified id does not exist");
         }
         return mongo.getDataAccessRequestCollection().find(query).first();
-    }
-
-    @Override
-    public Integer getTotalUnReviewedDAR() {
-        FindIterable<Document> accessList = mongo.getDataAccessRequestCollection().find(ne(DarConstants.STATUS,ElectionStatus.CANCELED.getValue()));
-        Integer unReviewedDAR = 0;
-        List<String> accessRequestIds = getRequestIds(accessList);
-        if (CollectionUtils.isNotEmpty(accessRequestIds)) {
-            List<Election> electionList = new ArrayList<>();
-            electionList.addAll(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue()));
-            HashMap<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
-            for (Document dar : accessList) {
-                ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-                Election election = electionAccessMap.get(id.toString());
-                if (election == null) ++unReviewedDAR;
-            }
-        }
-        return unReviewedDAR;
     }
 
     // Partial Data Access Request Methods below
@@ -641,66 +598,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
     }
 
-    private Optional<DACUser> getOwnerUser(Object dacUserId) {
-        try {
-            Integer userId = Integer.valueOf(dacUserId.toString());
-            Set<DACUser> users = dacUserDAO.findUsersWithRoles(Collections.singletonList(userId));
-            return users.stream().findFirst();
-        } catch (Exception e) {
-            logger().error("Unable to determine user for dacUserId: " + dacUserId.toString() + "; " + e.getMessage());
-        }
-        return Optional.empty();
-    }
-
-    private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
-        List<DataAccessRequestManage> requestsManage = new ArrayList<>();
-        documents.forEach((Block<Document>) dar -> {
-            DataAccessRequestManage darManage = new DataAccessRequestManage();
-            ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<Integer> dataSets =  DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
-            Election election = electionList.get(id.toString());
-            darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
-            darManage.setRus(dar.getString(DarConstants.RUS));
-            darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
-            darManage.setDataRequestId(id.toString());
-            darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
-            darManage.setSortDate(dar.getDate("sortDate"));
-            darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()) ? true : false);
-            darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove) ? true : false);
-            darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
-            darManage.setElectionStatus(election == null ? UN_REVIEWED : election.getStatus());
-            darManage.setElectionId(election != null ? election.getElectionId() : null);
-            darManage.setElectionVote(election != null ? election.getFinalVote() : null);
-            if (election != null && !CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))) {
-                darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
-            }
-            else if (CollectionUtils.isNotEmpty(dataSetsToApprove) && election != null && election.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
-                List<String> referenceList = Collections.singletonList(election.getReferenceId());
-                List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
-                darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
-            }
-            darManage.setOwnerUser(getOwnerUser(dar.get(DarConstants.USER_ID)).orElse(null));
-            if (darManage.getOwnerUser() == null) {
-                logger().error("DAR: " + darManage.getFrontEndId() + " has an invalid owner");
-            }
-            requestsManage.add(darManage);
-        });
-        return requestsManage;
-    }
-
-    private String consolidateDataSetElectionsResult(List<Election> datasetElections) {
-        if (CollectionUtils.isNotEmpty(datasetElections)) {
-            for (Election election : datasetElections) {
-                if (!election.getFinalAccessVote()) {
-                    return DENIED;
-                }
-            }
-            return APPROVED;
-        }
-        return NEEDS_APPROVAL;
-    }
-
     private List getRequestIds(FindIterable<Document> access) {
         List<String> accessIds = new ArrayList<>();
         if (access != null) {
@@ -710,15 +607,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         return accessIds;
     }
-
-    private HashMap createAccessRequestElectionMap(List<Election> elections) {
-        HashMap electionMap = new HashMap<>();
-        elections.forEach(election -> {
-            electionMap.put(election.getReferenceId(), election);
-        });
-        return electionMap;
-    }
-
 
     private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
         List<Document> dataSetList = new ArrayList<>();

@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
@@ -146,7 +147,7 @@ public class ConsentModule extends AbstractModule {
                 providesDacDAO(),
                 providesDACUserDAO(),
                 providesElectionDAO(),
-                this.mongoInstance,
+                providesMongoConsentDB(),
                 providesVoteDAO());
     }
 
@@ -156,16 +157,12 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    PendingCaseService providesDataAccessRequestService() {
-        return new PendingCaseService(
-                providesConsentDAO(),
-                providesDacDAO(),
+    DataAccessRequestService providesDataAccessRequestService() {
+        return new DataAccessRequestService(
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                this.mongoInstance,
-                providesUserRoleDAO(),
-                providesVoteDAO()
+                providesMongoConsentDB()
         );
     }
 
@@ -177,7 +174,21 @@ public class ConsentModule extends AbstractModule {
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                this.mongoInstance);
+                providesMongoConsentDB());
+    }
+
+    @Provides
+    PendingCaseService providesPendingCaseService() {
+        return new PendingCaseService(
+                providesConsentDAO(),
+                providesDacDAO(),
+                providesDACUserDAO(),
+                providesDataSetDAO(),
+                providesElectionDAO(),
+                providesMongoConsentDB(),
+                providesUserRoleDAO(),
+                providesVoteDAO()
+        );
     }
 
     @Provides
