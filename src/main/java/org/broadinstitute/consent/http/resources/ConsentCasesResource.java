@@ -24,7 +24,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import java.io.File;
 import java.util.List;
 
-@Path("api/consent/cases")
+@Path("{api : (api/)?}consent/cases")
 public class ConsentCasesResource extends Resource {
 
     private final ElectionService electionService;
