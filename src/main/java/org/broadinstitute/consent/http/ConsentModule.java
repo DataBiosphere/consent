@@ -147,7 +147,6 @@ public class ConsentModule extends AbstractModule {
                 providesDACUserDAO(),
                 providesElectionDAO(),
                 this.mongoInstance,
-                providesUserRoleDAO(),
                 providesVoteDAO());
     }
 
