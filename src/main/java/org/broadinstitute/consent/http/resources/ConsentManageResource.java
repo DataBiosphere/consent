@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentManage;
@@ -38,9 +38,17 @@ public class ConsentManageResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTotalUnreviewedConsent(@Auth AuthUser authUser) {
         Integer count = consentService.getUnReviewedConsents(authUser);
-        JsonObject entity = new JsonObject();
-        entity.addProperty("dulUnReviewedCases", count);
+        UnreviewedCases entity = new UnreviewedCases(count);
         return Response.ok().entity(entity).build();
+    }
+
+    static class UnreviewedCases {
+        @JsonProperty
+        Integer dulUnReviewedCases;
+
+        UnreviewedCases(Integer dulUnReviewedCases) {
+            this.dulUnReviewedCases = dulUnReviewedCases;
+        }
     }
 
 }
