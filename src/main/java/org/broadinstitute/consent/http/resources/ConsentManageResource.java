@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentManage;
@@ -19,6 +20,7 @@ public class ConsentManageResource extends Resource {
 
     private final ConsentService consentService;
 
+    @Inject
     public ConsentManageResource(ConsentService consentService) {
         this.consentService = consentService;
     }
