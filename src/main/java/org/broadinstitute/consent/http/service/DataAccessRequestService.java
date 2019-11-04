@@ -26,12 +26,13 @@ import org.bson.types.ObjectId;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.in;
@@ -113,13 +114,25 @@ public class DataAccessRequestService implements DacFilterable {
                             sort(sort);
         }
         List<DataAccessRequestManage> darManage = new ArrayList<>();
-        List<String> accessRequestIds = getRequestIds(accessList);
+        List<String> accessRequestIds = StreamSupport.
+                stream(accessList.spliterator(), false).
+                map(d -> d.get(DarConstants.ID).toString()).
+                distinct().
+                collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = new ArrayList<>(electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue()));
-            Map<String, Election> electionAccessMap = electionList.stream().collect(Collectors.toMap(Election::getReferenceId, Function.identity()));
+            Map<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
             darManage.addAll(createAccessRequestManage(accessList, electionAccessMap));
         }
         return darManage;
+    }
+
+    private Map<String, Election> createAccessRequestElectionMap(List<Election> elections) {
+        Map<String, Election> electionMap = new HashMap<>();
+        elections.forEach(election -> {
+            electionMap.put(election.getReferenceId(), election);
+        });
+        return electionMap;
     }
 
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
@@ -134,16 +147,6 @@ public class DataAccessRequestService implements DacFilterable {
                     into(new ArrayList<>());
         }
 
-    }
-
-    private List<String> getRequestIds(FindIterable<Document> access) {
-        List<String> accessIds = new ArrayList<>();
-        if (access != null) {
-            access.forEach((Block<Document>) document ->
-                    accessIds.add(document.get(DarConstants.ID).toString())
-            );
-        }
-        return accessIds;
     }
 
     private List<DataAccessRequestManage> createAccessRequestManage(FindIterable<Document> documents, Map<String, Election> electionList) {
