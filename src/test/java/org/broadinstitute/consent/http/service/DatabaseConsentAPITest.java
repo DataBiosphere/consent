@@ -5,11 +5,14 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.ConsentServiceTest;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -19,6 +22,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +53,17 @@ public class DatabaseConsentAPITest extends ConsentServiceTest {
         return RULE;
     }
 
+    @Before
+    public void setUp() {
+        ElectionDAO electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
+        VoteDAO voteDAO = getApplicationJdbi().onDemand(VoteDAO.class);
+        Integer electionId = electionDAO.getOpenElectionIdByReferenceId(CONSENT_ID);
+        if (electionId != null) {
+            List<Vote> votes = voteDAO.findVotesByElectionIds(Collections.singletonList(electionId));
+            votes.forEach(v -> voteDAO.deleteVoteById(v.getVoteId()));
+            electionDAO.deleteElectionById(electionId);
+        }
+    }
 
     @Test (expected = UnknownIdentifierException.class)
     public void testRetrieveUnkownIdentifier() throws UnknownIdentifierException {

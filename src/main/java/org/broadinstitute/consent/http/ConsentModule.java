@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -134,6 +135,16 @@ public class ConsentModule extends AbstractModule {
             LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
             throw new IllegalStateException(e);
         }
+    }
+
+    @Provides
+    ConsentService providesConsentService() {
+        return new ConsentService(providesConsentDAO(),
+                providesDacDAO(),
+                providesDACUserDAO(),
+                providesElectionDAO(),
+                this.mongoInstance,
+                providesVoteDAO());
     }
 
     @Provides
