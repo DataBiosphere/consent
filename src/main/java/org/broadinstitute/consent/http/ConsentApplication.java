@@ -114,6 +114,7 @@ import org.broadinstitute.consent.http.service.DatabaseMatchingServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseReviewResultsAPI;
 import org.broadinstitute.consent.http.service.DatabaseSummaryAPI;
 import org.broadinstitute.consent.http.service.DatabaseVoteAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.NihServiceAPI;
@@ -215,6 +216,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
+        final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
@@ -280,8 +282,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestElectionResource.class);
         env.jersey().register(ConsentVoteResource.class);
         env.jersey().register(DataRequestVoteResource.class);
-        env.jersey().register(new ConsentCasesResource(consentService));
-        env.jersey().register(DataRequestCasesResource.class);
+        env.jersey().register(new ConsentCasesResource(consentService, electionService));
+        env.jersey().register(new DataRequestCasesResource(electionService));
         env.jersey().register(new DacResource(dacService));
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);

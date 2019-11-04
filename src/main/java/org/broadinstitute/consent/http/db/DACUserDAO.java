@@ -116,4 +116,11 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlUpdate("update dacuser set rationale = :rationale where dacUserId = :userId")
     void updateUserRationale(@Bind("rationale") String rationale, @Bind("userId") Integer userId);
 
+    @SqlQuery("select * from dacuser du "
+            + " inner join user_role ur on du.dacUserId = ur.user_id "
+            + " inner join roles r on ur.role_id = r.roleId "
+            + " where du.email = :email "
+            + " and r.roleId = :roleId")
+    DACUser findDACUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
+
 }

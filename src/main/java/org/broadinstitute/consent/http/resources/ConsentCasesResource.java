@@ -7,10 +7,9 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 
 import javax.annotation.security.PermitAll;
@@ -29,14 +28,14 @@ import java.util.List;
 public class ConsentCasesResource extends Resource {
 
     private final ConsentService consentService;
+    private final ElectionService electionService;
     private final SummaryAPI summaryApi;
-    private final ElectionAPI electionApi;
 
     @Inject
-    public ConsentCasesResource(ConsentService consentService) {
+    public ConsentCasesResource(ConsentService consentService, ElectionService electionService) {
         this.consentService = consentService;
+        this.electionService = electionService;
         this.summaryApi = AbstractSummaryAPI.getInstance();
-        this.electionApi = AbstractElectionAPI.getInstance();
     }
 
     @GET
@@ -80,7 +79,7 @@ public class ConsentCasesResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({MEMBER, CHAIRPERSON, ALUMNI, ADMIN})
     public Response describeClosedElections(@Auth AuthUser authUser) {
-        List<Election> elections = electionApi.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue());
+        List<Election> elections = electionService.describeClosedElectionsByType(ElectionType.TRANSLATE_DUL.getValue(), authUser);
         return Response.ok().entity(elections).build();
     }
 

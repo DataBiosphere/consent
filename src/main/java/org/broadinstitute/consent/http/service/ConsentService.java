@@ -20,12 +20,11 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.DacFilterable;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -34,7 +33,6 @@ import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +42,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ConsentService {
+public class ConsentService implements DacFilterable {
 
     private ConsentDAO consentDAO;
     private DacDAO dacDAO;
@@ -109,12 +107,12 @@ public class ConsentService {
                 }
             }
         }
-        return filterConsentManageByDAC(consentManageList, authUser);
+        return filterConsentManageByDAC(dacDAO, dacUserDAO, consentManageList, authUser);
     }
 
     public Integer getUnReviewedConsents(AuthUser authUser) {
         Collection<Consent> consents = consentDAO.findUnreviewedConsents();
-        return filterConsentsByDAC(consents, authUser).size();
+        return filterConsentsByDAC(dacDAO, dacUserDAO, consents, authUser).size();
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
@@ -124,7 +122,7 @@ public class ConsentService {
                 collect(Collectors.toList());
         Integer dacUserId = dacUser.getDacUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
-        List<PendingCase> pendingCases = filterElectionsByDAC(elections, authUser).
+        List<PendingCase> pendingCases = filterElectionsByDAC(dacDAO, dacUserDAO, dataSetDAO, elections, authUser).
                 stream().
                 map(e -> {
                     Vote vote = voteDAO.findVoteByElectionIdAndDACUserId(e.getElectionId(), dacUserId);
@@ -146,72 +144,12 @@ public class ConsentService {
         return pendingCases;
     }
 
-    private List<Election> filterElectionsByDAC(List<Election> elections, AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return elections;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-        if (dacIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).
-                stream().
-                map(DataSet::getDataSetId).
-                collect(Collectors.toList());
-        return elections.stream().
-                filter(e -> dataSetIds.contains(e.getDataSetId())).
-                collect(Collectors.toList());
-    }
-
-    private List<ConsentManage> filterConsentManageByDAC(List<ConsentManage> consentManages, AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return consentManages;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-        if (dacIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return consentManages.stream().
-                filter(c -> c.getDacId() != null).
-                filter(c -> dacIds.contains(c.getDacId())).
-                collect(Collectors.toList());
-    }
-
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {
         String UNREVIEWED = "un-reviewed"; // TODO: Should this be a real `ElectionStatus` enum? See what that could impact elsewhere.
         List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
         consentManageList.forEach(c -> c.setElectionStatus(UNREVIEWED));
         consentManageList.forEach(c -> c.setEditable(true));
         return consentManageList;
-    }
-
-    private Collection<Consent> filterConsentsByDAC(Collection<Consent> consents, AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            return consents;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-        if (dacIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return consents.stream().
-                filter(c -> c.getDacId() != null).
-                filter(c -> dacIds.contains(c.getDacId())).
-                collect(Collectors.toList());
-    }
-
-    private boolean isAuthUserAdmin(AuthUser authUser) {
-        return userRoleDAO.findRolesByUserEmail(authUser.getName()).stream().
-                anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()));
-    }
-
-    private List<Integer> getDacIdsForUser(AuthUser authUser) {
-        return dacDAO.findDacsForEmail(authUser.getName())
-                .stream()
-                .map(Dac::getDacId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
     }
 
     private void setGeneralFields(PendingCase pendingCase, Election election, Vote vote, boolean isReminderSent) {
