@@ -24,7 +24,7 @@ public class ElectionMapper implements ResultSetMapper<Election> {
             }
         }
 
-        return new Election(
+        Election election = new Election(
                 r.getInt(ElectionFields.ID.getValue()),
                 r.getString(ElectionFields.TYPE.getValue()),
                 (r.getString(ElectionFields.FINAL_VOTE.getValue()) == null) ? null : r.getBoolean(ElectionFields.FINAL_VOTE.getValue()),
@@ -42,5 +42,9 @@ public class ElectionMapper implements ResultSetMapper<Election> {
                 r.getInt(ElectionFields.VERSION.getValue()),
                 (r.getString(ElectionFields.ARCHIVED.getValue()) == null) ? null : r.getBoolean(ElectionFields.ARCHIVED.getValue())
         );
+        if (r.getObject(ElectionFields.DATASET_ID.getValue()) != null) {
+            election.setDataSetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
+        }
+        return election;
     }
 }
