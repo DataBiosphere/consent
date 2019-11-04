@@ -92,13 +92,13 @@ import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchingServiceAPI;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseAuditServiceAPI;
 import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
@@ -106,7 +106,6 @@ import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataSetAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
-import org.broadinstitute.consent.http.service.DatabaseElectionCaseAPI;
 import org.broadinstitute.consent.http.service.DatabaseHelpReportAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchAPI;
 import org.broadinstitute.consent.http.service.DatabaseMatchProcessAPI;
@@ -216,6 +215,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
+        final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
@@ -235,7 +235,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance, dataSetDAO);
-        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, dacUserDAO, userRoleDAO, consentDAO, mongoInstance, dataSetDAO);
+//        DatabaseElectionCaseAPI.initInstance(electionDAO, voteDAO, mongoInstance, dataSetDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractEmailNotifierAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance());
         DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
         DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
@@ -282,8 +282,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataRequestElectionResource.class);
         env.jersey().register(ConsentVoteResource.class);
         env.jersey().register(DataRequestVoteResource.class);
-        env.jersey().register(new ConsentCasesResource(consentService, electionService));
-        env.jersey().register(new DataRequestCasesResource(electionService));
+        env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService));
+        env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DacResource(dacService));
         env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
@@ -328,7 +328,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractConsentAPI.clearInstance();
                 AbstractElectionAPI.clearInstance();
                 AbstractVoteAPI.clearInstance();
-                AbstractPendingCaseAPI.clearInstance();
                 AbstractDataSetAssociationAPI.clearInstance();
                 AbstractDACUserAPI.clearInstance();
                 AbstractSummaryAPI.clearInstance();

@@ -8,10 +8,9 @@ import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractPendingCaseAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.PendingCaseAPI;
+import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 
 import javax.annotation.security.PermitAll;
@@ -27,12 +26,12 @@ import java.util.List;
 public class DataRequestCasesResource extends Resource {
 
     private final ElectionService electionService;
-    private final PendingCaseAPI api;
+    private final PendingCaseService pendingCaseService;
     private final SummaryAPI summaryApi;
 
-    public DataRequestCasesResource(ElectionService electionService) {
+    public DataRequestCasesResource(ElectionService electionService, PendingCaseService pendingCaseService) {
         this.electionService = electionService;
-        this.api = AbstractPendingCaseAPI.getInstance();
+        this.pendingCaseService = pendingCaseService;
         this.summaryApi = AbstractSummaryAPI.getInstance();
     }
 
@@ -40,7 +39,7 @@ public class DataRequestCasesResource extends Resource {
     @Path("/pending/{dacUserId}")
     @RolesAllowed({CHAIRPERSON, MEMBER})
     public Response getDataRequestPendingCases(@PathParam("dacUserId") Integer dacUserId, @Auth AuthUser authUser) {
-        List<PendingCase> pendingCases = api.describeDataRequestPendingCases(dacUserId);
+        List<PendingCase> pendingCases = pendingCaseService.describeDataRequestPendingCases(authUser);
         return Response.ok().entity(pendingCases).build();
     }
 
@@ -49,7 +48,7 @@ public class DataRequestCasesResource extends Resource {
     @RolesAllowed({CHAIRPERSON, DATAOWNER})
     public Response getDataOwnerPendingCases(@PathParam("dataOwnerId") Integer dataOwnerId, @Auth AuthUser authUser) {
         try {
-            List<DataOwnerCase> ownerCases = api.describeDataOwnerPendingCases(dataOwnerId);
+            List<DataOwnerCase> ownerCases = pendingCaseService.describeDataOwnerPendingCases(dataOwnerId, authUser);
             return Response.ok().entity(ownerCases).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).

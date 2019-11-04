@@ -8,8 +8,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 
 import javax.annotation.security.PermitAll;
@@ -27,14 +27,14 @@ import java.util.List;
 @Path("{api : (api/)?}consent/cases")
 public class ConsentCasesResource extends Resource {
 
-    private final ConsentService consentService;
     private final ElectionService electionService;
+    private final PendingCaseService pendingCaseService;
     private final SummaryAPI summaryApi;
 
     @Inject
-    public ConsentCasesResource(ConsentService consentService, ElectionService electionService) {
-        this.consentService = consentService;
+    public ConsentCasesResource(ElectionService electionService, PendingCaseService pendingCaseService) {
         this.electionService = electionService;
+        this.pendingCaseService = pendingCaseService;
         this.summaryApi = AbstractSummaryAPI.getInstance();
     }
 
@@ -42,7 +42,7 @@ public class ConsentCasesResource extends Resource {
     @Path("/pending/{dacUserId}")
     @RolesAllowed({MEMBER, CHAIRPERSON})
     public Response getConsentPendingCases(@PathParam("dacUserId") Integer dacUserId, @Auth AuthUser authUser) {
-        List<PendingCase> pendingCases = consentService.describeConsentPendingCases(authUser);
+        List<PendingCase> pendingCases = pendingCaseService.describeConsentPendingCases(authUser);
         return Response.ok().entity(pendingCases).build();
     }
 

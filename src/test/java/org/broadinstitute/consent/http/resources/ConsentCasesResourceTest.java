@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,10 +32,10 @@ import static org.mockito.Mockito.when;
 public class ConsentCasesResourceTest {
 
     @Mock
-    ConsentService consentService;
+    ElectionService electionService;
 
     @Mock
-    ElectionService electionService;
+    PendingCaseService pendingCaseService;
 
     @Mock
     SummaryAPI summaryApi;
@@ -51,7 +51,7 @@ public class ConsentCasesResourceTest {
 
     @Test
     public void testGetConsentPendingCases() {
-        when(consentService.describeConsentPendingCases(any())).thenReturn(Collections.emptyList());
+        when(pendingCaseService.describeConsentPendingCases(any())).thenReturn(Collections.emptyList());
         initResource();
         Response response = resource.getConsentPendingCases(null, null);
         Assert.assertEquals(200, response.getStatus());
@@ -111,7 +111,7 @@ public class ConsentCasesResourceTest {
     }
 
     private void initResource() {
-        resource = new ConsentCasesResource(consentService, electionService);
+        resource = new ConsentCasesResource(electionService, pendingCaseService);
     }
 
 }
