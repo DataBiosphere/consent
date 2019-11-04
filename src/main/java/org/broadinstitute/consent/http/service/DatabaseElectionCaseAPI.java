@@ -3,27 +3,35 @@ package org.broadinstitute.consent.http.service;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.PendingCase;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
 
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
-    private UserRoleDAO userRoleDAO;
     private DACUserDAO userDAO;
     private ConsentDAO consentDAO;
     private DataSetDAO dataSetDAO;
@@ -38,40 +46,10 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
-        this.userRoleDAO = userRoleDAO;
         this.consentDAO = consentDAO;
         this.mongo = mongoDB;
         this.dataSetDAO = dataSetDAO;
     }
-
-    @Override
-    public List<PendingCase> describeConsentPendingCases(Integer dacUserId) throws NotFoundException {
-        List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
-        List<PendingCase> pendingCases = new ArrayList<>();
-        if (elections != null) {
-            for (Election election : elections) {
-                Vote vote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(),
-                        dacUserId);
-                if (vote == null) {
-                    continue;
-                }
-                PendingCase pendingCase = new PendingCase();
-                setGeneralFields(pendingCase, election, vote, vote.getIsReminderSent());
-                pendingCases.add(pendingCase);
-            }
-        }
-        if (userDAO.findDACUserById(dacUserId) != null) {
-            List<UserRole> roles = userRoleDAO.findRolesByUserId(dacUserId);
-            if (roles.contains(new UserRole(0, "Chairperson"))) {
-                return orderPendingCasesForChairperson(pendingCases);
-            } else {
-                return orderPendingCasesForMember(pendingCases);
-            }
-        }
-        return pendingCases;
-    }
-
-
 
     @Override
     public List<PendingCase> describeDataRequestPendingCases(Integer dacUserId) throws NotFoundException {
@@ -190,48 +168,6 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         return logged.toString();
     }
 
-    private List<PendingCase> orderPendingCasesForMember(List<PendingCase> cases) {
-        List<PendingCase> memberCaseList = new ArrayList<>();
-        memberCaseList.addAll(cases.stream().filter(p1 -> p1.getIsReminderSent() == true).collect(Collectors.toList()));
-        memberCaseList.addAll(cases.stream().filter(p1 -> (p1.getAlreadyVoted() == false) && (p1.getIsReminderSent() == false)).collect(Collectors.toList()));
-        memberCaseList.addAll(cases.stream().filter(p1 -> p1.getAlreadyVoted() == true).collect(Collectors.toList()));
-        return memberCaseList;
-    }
-
-    private List<PendingCase> orderPendingCasesForChairperson(List<PendingCase> cases) {
-        HashMap<Integer, Queue<PendingCase>> pendingCases = new HashMap<>();
-        List<PendingCase> chairFinalList = cases.stream().filter(p1 -> p1.getTotalVotes() == p1.getVotesLogged()).collect(Collectors.toList());
-        List<PendingCase> remainingList = cases.stream().filter(p1 -> p1.getTotalVotes() != p1.getVotesLogged()).collect(Collectors.toList());
-        for (PendingCase p : remainingList) {
-            Integer key = Integer.parseInt(String.valueOf(p.getVotesLogged()) + String.valueOf(p.getTotalVotes()));
-            if (!pendingCases.containsKey(key)) {
-                pendingCases.put(key, new PriorityQueue<>());
-            }
-            Queue<PendingCase> pq = pendingCases.get(key);
-            pq.add(p);
-        }
-        return generateFinalList(chairFinalList, pendingCases);
-    }
-
-    private List<PendingCase> generateFinalList(List<PendingCase> readyToCollect, HashMap<Integer, Queue<PendingCase>> pendingCases) {
-        List<PendingCase> prevList = orderedVotedCases(orderListDecreased(pendingCases.keySet()), pendingCases);
-        readyToCollect.addAll(prevList.stream().filter(p1 -> p1.getAlreadyVoted()).collect(Collectors.toList()));
-        readyToCollect.addAll(prevList.stream().filter(p1 -> p1.getAlreadyVoted() == false).collect(Collectors.toList()));
-        return readyToCollect;
-    }
-
-    private List<Integer> orderListDecreased(Set<Integer> setOfKeys) {
-        return setOfKeys.stream().sorted((i1, i2) -> i2.compareTo(i1)).collect(Collectors.toList());
-    }
-
-    private List<PendingCase> orderedVotedCases(List<Integer> keys, HashMap<Integer, Queue<PendingCase>> pendingCases){
-        ArrayList<PendingCase> votedCases = new ArrayList<>();
-        for(Integer key: keys){
-            votedCases.addAll(pendingCases.get(key));
-        }
-        return votedCases;
-    }
-
     private boolean isChairPerson(Integer dacUserId) {
         boolean isCherperson = false;
         if (userDAO.checkChairpersonUser(dacUserId) != null) {
@@ -239,6 +175,5 @@ public class DatabaseElectionCaseAPI extends AbstractPendingCaseAPI {
         }
         return isCherperson;
     }
-
 
 }
