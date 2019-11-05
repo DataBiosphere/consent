@@ -144,11 +144,10 @@ public class ConsentModule extends AbstractModule {
     ConsentService providesConsentService() {
         return new ConsentService(
                 providesConsentDAO(),
-                providesDacDAO(),
-                providesDACUserDAO(),
                 providesElectionDAO(),
                 providesMongoConsentDB(),
-                providesVoteDAO());
+                providesVoteDAO(),
+                providesDacService());
     }
 
     @Provides
@@ -162,33 +161,30 @@ public class ConsentModule extends AbstractModule {
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesMongoConsentDB()
-        );
+                providesMongoConsentDB(),
+                providesDacService());
     }
 
     @Provides
     ElectionService providesElectionService() {
         return new ElectionService(
                 providesConsentDAO(),
-                providesDacDAO(),
-                providesDACUserDAO(),
-                providesDataSetDAO(),
                 providesElectionDAO(),
-                providesMongoConsentDB());
+                providesMongoConsentDB(),
+                providesDacService());
     }
 
     @Provides
     PendingCaseService providesPendingCaseService() {
         return new PendingCaseService(
                 providesConsentDAO(),
-                providesDacDAO(),
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesMongoConsentDB(),
                 providesUserRoleDAO(),
-                providesVoteDAO()
-        );
+                providesVoteDAO(),
+                providesDacService());
     }
 
     @Provides
@@ -228,7 +224,10 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     DacService providesDacService() {
-        return new DacService(providesDacDAO());
+        return new DacService(
+                providesDacDAO(),
+                providesDACUserDAO(),
+                providesDataSetDAO());
     }
 
     @Provides

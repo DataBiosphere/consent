@@ -5,9 +5,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -15,7 +12,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.util.DacFilterable;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -25,31 +21,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ElectionService implements DacFilterable {
+public class ElectionService {
 
     private ConsentDAO consentDAO;
-    private DacDAO dacDAO;
-    private DACUserDAO dacUserDAO;
-    private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
+    private DacService dacService;
 
     @Inject
-    public ElectionService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO,
-                           DataSetDAO dataSetDAO, ElectionDAO electionDAO, MongoConsentDB mongo) {
+    public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
+                           DacService dacService) {
         this.consentDAO = consentDAO;
-        this.dacDAO = dacDAO;
-        this.dacUserDAO = dacUserDAO;
-        this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
+        this.dacService = dacService;
     }
 
     public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
         List<Election> elections;
         if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
-            elections = filterElectionsByDAC(
-                    dacDAO, dacUserDAO, dataSetDAO,
+            elections = dacService.filterElectionsByDAC(
                     electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
             List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
@@ -71,8 +62,7 @@ public class ElectionService implements DacFilterable {
                 }
             });
         } else {
-            elections = filterElectionsByDAC(
-                    dacDAO, dacUserDAO, dataSetDAO,
+            elections = dacService.filterElectionsByDAC(
                     electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.CLOSED.getValue()),
                     authUser
             );

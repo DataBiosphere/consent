@@ -6,7 +6,6 @@ import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -25,7 +24,6 @@ import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
-import org.broadinstitute.consent.http.util.DacFilterable;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -41,29 +39,29 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class PendingCaseService implements DacFilterable {
+public class PendingCaseService {
 
     private ConsentDAO consentDAO;
-    private DacDAO dacDAO;
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
     private UserRoleDAO userRoleDAO;
     private VoteDAO voteDAO;
+    private DacService dacService;
 
     @Inject
-    public PendingCaseService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO,
-                              DataSetDAO dataSetDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
-                              UserRoleDAO userRoleDAO, VoteDAO voteDAO) {
+    public PendingCaseService(ConsentDAO consentDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+                              ElectionDAO electionDAO, MongoConsentDB mongo,
+                              UserRoleDAO userRoleDAO, VoteDAO voteDAO, DacService dacService) {
         this.consentDAO = consentDAO;
-        this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
+        this.dacService = dacService;
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
@@ -73,7 +71,7 @@ public class PendingCaseService implements DacFilterable {
                 collect(Collectors.toList());
         Integer dacUserId = dacUser.getDacUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
-        List<PendingCase> pendingCases = filterElectionsByDAC(dacDAO, dacUserDAO, dataSetDAO, elections, authUser).
+        List<PendingCase> pendingCases = dacService.filterElectionsByDAC(elections, authUser).
                 stream().
                 map(e -> {
                     Vote vote = voteDAO.findVoteByElectionIdAndDACUserId(e.getElectionId(), dacUserId);
@@ -98,11 +96,11 @@ public class PendingCaseService implements DacFilterable {
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
         DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
         Integer dacUserId = dacUser.getDacUserId();
-        boolean isChair = isAuthUserChair(dacUserDAO, authUser);
+        boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
                 electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
                 electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> elections = filterElectionsByDAC(dacDAO, dacUserDAO, dataSetDAO, unfilteredElections, authUser);
+        List<Election> elections = dacService.filterElectionsByDAC(unfilteredElections, authUser);
         List<PendingCase> pendingCases = new ArrayList<>();
         if (elections != null) {
             for (Election election : elections) {
@@ -139,8 +137,7 @@ public class PendingCaseService implements DacFilterable {
     }
 
     public List<DataOwnerCase> describeDataOwnerPendingCases(Integer dataOwnerId, AuthUser authUser) {
-        List<Election> elections = filterElectionsByDAC(
-                dacDAO, dacUserDAO, dataSetDAO,
+        List<Election> elections = dacService.filterElectionsByDAC(
                 electionDAO.getElectionByTypeAndStatus(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue()),
                 authUser
         );

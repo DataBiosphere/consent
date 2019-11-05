@@ -17,7 +17,6 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.util.DacFilterable;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -38,13 +37,14 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.ne;
 
-public class DataAccessRequestService implements DacFilterable {
+public class DataAccessRequestService {
 
     private Logger logger = Logger.getLogger(DataAccessRequestService.class.getName());
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
+    private DacService dacService;
 
     private static final String UN_REVIEWED = "un-reviewed";
     private static final String NEEDS_APPROVAL = "Needs Approval";
@@ -53,11 +53,13 @@ public class DataAccessRequestService implements DacFilterable {
 
     @Inject
     public DataAccessRequestService(DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                                    ElectionDAO electionDAO, MongoConsentDB mongo) {
+                                    ElectionDAO electionDAO, MongoConsentDB mongo,
+                                    DacService dacService) {
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
+        this.dacService = dacService;
     }
 
     /**
@@ -88,7 +90,7 @@ public class DataAccessRequestService implements DacFilterable {
     }
 
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
-        boolean isAdmin = isAuthUserAdmin(dacUserDAO, authUser);
+        boolean isAdmin = dacService.isAuthUserAdmin(authUser);
         BasicDBObject sort = new BasicDBObject("sortDate", -1);
         FindIterable<Document> accessList;
         if (isAdmin) {
@@ -129,14 +131,12 @@ public class DataAccessRequestService implements DacFilterable {
 
     private Map<String, Election> createAccessRequestElectionMap(List<Election> elections) {
         Map<String, Election> electionMap = new HashMap<>();
-        elections.forEach(election -> {
-            electionMap.put(election.getReferenceId(), election);
-        });
+        elections.forEach(election -> electionMap.put(election.getReferenceId(), election));
         return electionMap;
     }
 
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
-        if (isAuthUserAdmin(dacUserDAO, authUser)) {
+        if (dacService.isAuthUserAdmin(authUser)) {
             return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
         } else {
             List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().
@@ -209,7 +209,7 @@ public class DataAccessRequestService implements DacFilterable {
     }
 
     private List<Document> getUnReviewedDarsForUser(AuthUser authUser) {
-        if (isAuthUserAdmin(dacUserDAO, authUser)) {
+        if (dacService.isAuthUserAdmin(authUser)) {
             return mongo.
                     getDataAccessRequestCollection().
                     find(ne(DarConstants.STATUS, ElectionStatus.CANCELED.getValue())).

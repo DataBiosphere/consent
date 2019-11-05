@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.util.DacFilterable;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -27,24 +26,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ConsentService implements DacFilterable {
+public class ConsentService {
 
     private ConsentDAO consentDAO;
-    private DacDAO dacDAO;
-    private DACUserDAO dacUserDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
     private VoteDAO voteDAO;
+    private DacService dacService;
 
     @Inject
-    public ConsentService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO,
-                          ElectionDAO electionDAO, MongoConsentDB mongo, VoteDAO voteDAO) {
+    public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
+                          VoteDAO voteDAO, DacService dacService) {
         this.consentDAO = consentDAO;
-        this.dacDAO = dacDAO;
-        this.dacUserDAO = dacUserDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
         this.voteDAO = voteDAO;
+        this.dacService = dacService;
     }
 
     @SuppressWarnings("unchecked")
@@ -87,12 +84,12 @@ public class ConsentService implements DacFilterable {
                 }
             }
         }
-        return filterConsentManageByDAC(dacDAO, dacUserDAO, consentManageList, authUser);
+        return dacService.filterConsentManageByDAC(consentManageList, authUser);
     }
 
     public Integer getUnReviewedConsents(AuthUser authUser) {
         Collection<Consent> consents = consentDAO.findUnreviewedConsents();
-        return filterConsentsByDAC(dacDAO, dacUserDAO, consents, authUser).size();
+        return dacService.filterConsentsByDAC(consents, authUser).size();
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {
