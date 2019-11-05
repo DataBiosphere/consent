@@ -171,7 +171,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 SentryBootstrap.bootstrap(dsn);
                 Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
             } else {
-                LOGGER.error("Unable to boostrap sentry logging.");
+                LOGGER.error("Unable to bootstrap sentry logging.");
             }
         } catch (Exception e) {
             LOGGER.error("Exception loading sentry properties: " + e.getMessage());
@@ -217,8 +217,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
-        final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
+        final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         DatabaseDataAccessRequestAPI.initInstance(mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
