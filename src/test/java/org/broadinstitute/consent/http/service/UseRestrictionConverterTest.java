@@ -24,7 +24,7 @@ import static org.mockserver.model.HttpResponse.response;
 public class UseRestrictionConverterTest implements WithMockServer {
 
     private ClientAndServer mockServer;
-    private Integer port = 9000;
+    private Integer port = 9300;
 
     @Before
     public void startUp() {
