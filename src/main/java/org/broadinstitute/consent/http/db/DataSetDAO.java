@@ -197,15 +197,4 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join dacuser u on ur.user_id = u.dacUserId and u.email = :email ")
     List<DataSet> findDataSetsByAuthUserEmail(@Bind("email") String email);
 
-//    /**
-//     * Consents -> Consent Associations -> DataSets
-//     *
-//     * @param consentIds Consent IDs
-//     * @return List of datasets associated to consents
-//     */
-//    @SqlQuery(" select distinct d.* from dataset d " +
-//            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
-//            " where a.consentId in (<consentIds>) ")
-//    List<DataSet> findDataSetsByConsentIds(@BindIn("consentIds") List<String> consentIds);
-
 }
