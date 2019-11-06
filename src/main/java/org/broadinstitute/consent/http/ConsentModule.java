@@ -121,7 +121,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    MongoConsentDB providesMongoConsentDB() {
+    MongoConsentDB providesMongo() {
         return this.mongoInstance;
     }
 
@@ -145,7 +145,7 @@ public class ConsentModule extends AbstractModule {
         return new ConsentService(
                 providesConsentDAO(),
                 providesElectionDAO(),
-                providesMongoConsentDB(),
+                providesMongo(),
                 providesVoteDAO(),
                 providesDacService());
     }
@@ -161,7 +161,7 @@ public class ConsentModule extends AbstractModule {
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesMongoConsentDB(),
+                providesMongo(),
                 providesDacService());
     }
 
@@ -170,7 +170,7 @@ public class ConsentModule extends AbstractModule {
         return new ElectionService(
                 providesConsentDAO(),
                 providesElectionDAO(),
-                providesMongoConsentDB(),
+                providesMongo(),
                 providesDacService());
     }
 
@@ -181,7 +181,7 @@ public class ConsentModule extends AbstractModule {
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesMongoConsentDB(),
+                providesMongo(),
                 providesUserRoleDAO(),
                 providesVoteDAO(),
                 providesDacService());

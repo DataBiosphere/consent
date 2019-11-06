@@ -197,4 +197,15 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join dacuser u on ur.user_id = u.dacUserId and u.email = :email ")
     List<DataSet> findDataSetsByAuthUserEmail(@Bind("email") String email);
 
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @return List of datasets that are not owned by a DAC.
+     */
+    @SqlQuery(" select d.* from dataset d " +
+            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
+            " inner join consents c on a.consentId = c.consentId " +
+            " where c.dac_id is null ")
+    List<DataSet> findNonDACDataSets();
+
 }

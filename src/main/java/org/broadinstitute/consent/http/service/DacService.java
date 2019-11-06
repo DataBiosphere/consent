@@ -14,6 +14,8 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -194,6 +197,37 @@ public class DacService {
                 .map(Dac::getDacId)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Filter data access requests by the DAC they are associated with.
+     * DARs that are not associated to any DAC are also considered valid.
+     * In essence, we are filtering out dars associated to DACs the user is not a member of.
+     */
+    List<Document> filterDarsByDAC(List<Document> documents, AuthUser authUser) {
+        if (isAuthUserAdmin(authUser)) {
+            return documents;
+        }
+        // Non-DAC users can see datasets that they have DAC access to, or datasets that are not
+        // associated to any DAC
+        List<Integer> accessibleDatasetIds = Stream.concat(
+                dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().map(DataSet::getDataSetId),
+                dataSetDAO.findNonDACDataSets().stream().map(DataSet::getDataSetId)
+        ).collect(Collectors.toList());
+
+        return documents.
+                stream().
+                filter(d -> {
+                    @SuppressWarnings("unchecked")
+                    List<Object> datasets = d.get(DarConstants.DATASET_ID, List.class);
+                    List<Integer> datasetIds = datasets.
+                            stream().
+                            filter(Integer.class::isInstance).
+                            map(Integer.class::cast).
+                            collect(Collectors.toList());
+                    return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
+                }).
+                collect(Collectors.toList());
     }
 
     /**
