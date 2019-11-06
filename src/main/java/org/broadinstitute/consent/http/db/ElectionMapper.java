@@ -29,11 +29,11 @@ public class ElectionMapper implements ResultSetMapper<Election> {
         }
 
         Election election;
-        if (index == 0 || !electionMap.containsKey(r.getInt(ElectionFields.ID.getValue()))) {
+        if (electionMap.containsKey(r.getInt(ElectionFields.ID.getValue()))) {
+            election = electionMap.get(r.getInt(ElectionFields.ID.getValue()));
+        } else {
             election = new Election();
             election.setElectionId(r.getInt(ElectionFields.ID.getValue()));
-        } else {
-            election = electionMap.get(r.getInt(ElectionFields.ID.getValue()));
         }
         if (r.getString(ElectionFields.TYPE.getValue()) != null) {
             election.setElectionType(r.getString(ElectionFields.TYPE.getValue()));
