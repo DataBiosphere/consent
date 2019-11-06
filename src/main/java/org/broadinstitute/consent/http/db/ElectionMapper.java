@@ -66,6 +66,9 @@ public class ElectionMapper implements ResultSetMapper<Election> {
         if (r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()) != null) {
             election.setTranslatedUseRestriction(r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()));
         }
+        if (r.getObject(ElectionFields.DATASET_ID.getValue()) != null) {
+            election.setDataSetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
+        }
         if (r.getString(ElectionFields.DATA_USE_LETTER.getValue()) != null) {
             election.setDataUseLetter(r.getString(ElectionFields.DATA_USE_LETTER.getValue()));
         }
