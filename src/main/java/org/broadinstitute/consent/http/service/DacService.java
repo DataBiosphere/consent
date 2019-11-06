@@ -209,7 +209,7 @@ public class DacService {
         }
         List<Integer> dacIds = getDacIdsForUser(authUser);
 
-        // Non-DAC users can only see unassociated consents
+        // Non-DAC users can only see unassociated consent manages
         if (dacIds.isEmpty()) {
             return consentManages.
                     stream().
