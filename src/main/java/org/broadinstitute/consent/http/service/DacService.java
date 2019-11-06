@@ -219,8 +219,7 @@ public class DacService {
                 stream().
                 filter(d -> {
                     @SuppressWarnings("unchecked")
-                    List<Object> datasets = d.get(DarConstants.DATASET_ID, List.class);
-                    List<Integer> datasetIds = datasets.
+                    List<Integer> datasetIds = (List) d.get(DarConstants.DATASET_ID, List.class).
                             stream().
                             filter(Integer.class::isInstance).
                             map(Integer.class::cast).
