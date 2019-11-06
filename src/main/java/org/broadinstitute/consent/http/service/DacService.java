@@ -190,8 +190,8 @@ public class DacService {
     private List<Integer> getDacIdsForUser(AuthUser authUser) {
         return dacDAO.findDacsForEmail(authUser.getName())
                 .stream()
-                .map(Dac::getDacId)
                 .filter(Objects::nonNull)
+                .map(Dac::getDacId)
                 .distinct()
                 .collect(Collectors.toList());
     }
