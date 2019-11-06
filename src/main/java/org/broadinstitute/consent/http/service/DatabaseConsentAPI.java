@@ -44,9 +44,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Use ConsentService
+ * Implementation class for ConsentAPI on top of ConsentDAO database support.
  */
-@Deprecated
+@Deprecated // Use ConsentService
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     private final AuditServiceAPI auditServiceAPI;
