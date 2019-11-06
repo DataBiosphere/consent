@@ -197,9 +197,10 @@ public class DacService {
     }
 
     /**
-     * Filter consents by the DAC they are associated with.
-     * Consents that are not associated to any DAC are also considered valid.
-     * In essence, we are filtering out consents associated to DACs the user is not a member of.
+     * Filter consent manages by the DAC they are associated with.
+     * Consent manages that are not associated to any DAC are also considered valid.
+     * In essence, we are filtering out consent manages associated to DACs the user is not a member
+     * of.
      */
     List<ConsentManage> filterConsentManageByDAC(List<ConsentManage> consentManages,
                                                  AuthUser authUser) {
