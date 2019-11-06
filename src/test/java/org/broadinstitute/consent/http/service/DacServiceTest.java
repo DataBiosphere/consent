@@ -78,6 +78,20 @@ public class DacServiceTest {
         Assert.assertEquals(1, dacsWithMembers.size());
     }
 
+    @Test
+    public void testFindById() {
+        int dacId = 1;
+        when(dacDAO.findById(dacId)).thenReturn(getDacs().get(0));
+        when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId())).thenReturn(Collections.singletonList(getDacUsers().get(0)));
+        when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId())).thenReturn(Collections.singletonList(getDacUsers().get(1)));
+        initService();
+
+        Dac dac = service.findById(dacId);
+        Assert.assertNotNull(dac);
+        Assert.assertFalse(dac.getChairpersons().isEmpty());
+        Assert.assertFalse(dac.getMembers().isEmpty());
+    }
+
     /**
      * @return A list of 5 dacs
      */
