@@ -98,7 +98,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         if (consentDAO.getIdByName(rec.getName()) != null) {
             throw new IllegalArgumentException("Consent for the specified name already exist");
         }
-        if (StringUtils.isNotEmpty(rec.consentId) && consentDAO.checkConsentbyId(rec.consentId) != null) {
+        if (StringUtils.isNotEmpty(rec.consentId) && consentDAO.checkConsentById(rec.consentId) != null) {
             throw new IllegalArgumentException("Consent for the specified id already exist");
         }
         Date createDate = new Date();
@@ -151,7 +151,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     @Override
     public Consent update(String id, Consent rec) throws NotFoundException {
         rec = updateConsentDates(rec);
-        if (StringUtils.isEmpty(consentDAO.checkConsentbyId(id))) {
+        if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
             throw new NotFoundException();
         }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
@@ -393,7 +393,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
     // Check that the specified Consent resource exists, or throw NotFoundException.
     private void checkConsentExists(String consentId) {
-        String ck_id = consentDAO.checkConsentbyId(consentId);
+        String ck_id = consentDAO.checkConsentById(consentId);
         logger.debug(String.format("CreateAssocition, checkConsentbyId returned '%s'", (ck_id == null ? "<null>" : ck_id)));
         if (ck_id == null)
             throw new NotFoundException(String.format("Consent with id '%s' not found", consentId));

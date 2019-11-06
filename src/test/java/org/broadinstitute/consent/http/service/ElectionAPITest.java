@@ -80,7 +80,7 @@ public class ElectionAPITest extends AbstractTest {
         DACUser chair = userDAO.findChairpersonUser();
         Set<DACUser> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getDacUserId()));
         when(dacUserDAO.findDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
-        when(consentDAO.checkConsentbyId(consentId)).thenReturn(consentId);
+        when(consentDAO.checkConsentById(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);
         Election election = createConsentElection();
         when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);

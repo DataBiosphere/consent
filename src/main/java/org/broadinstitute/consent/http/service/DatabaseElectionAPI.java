@@ -179,7 +179,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     @Override
     public Election describeConsentElection(String consentId) {
-        if (consentDAO.checkConsentbyId(consentId) == null) {
+        if (consentDAO.checkConsentById(consentId) == null) {
             throw new NotFoundException("Invalid ConsentId");
         }
         Election election = electionDAO.getElectionWithFinalVoteByReferenceIdAndType(consentId, ElectionType.TRANSLATE_DUL.getValue());
@@ -638,7 +638,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void validateConsentId(String referenceId) {
-        if (referenceId == null || consentDAO.checkConsentbyId(referenceId) == null) {
+        if (referenceId == null || consentDAO.checkConsentById(referenceId) == null) {
             throw new IllegalArgumentException("Invalid id: " + referenceId);
         }
     }
@@ -668,7 +668,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void updateSortDate(String referenceId, Date createDate){
-        if(consentDAO.checkConsentbyId(referenceId) != null){
+        if(consentDAO.checkConsentById(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
             BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));

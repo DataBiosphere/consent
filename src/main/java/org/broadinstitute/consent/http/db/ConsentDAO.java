@@ -49,7 +49,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Set<ConsentDataSet> getConsentIdAndDataSets(@BindIn("datasetId") List<Integer> datasetId);
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
-    String checkConsentbyId(@Bind("consentId") String consentId);
+    String checkConsentById(@Bind("consentId") String consentId);
 
     @SqlQuery("select consentId from consents where name = :name")
     String getIdByName(@Bind("name") String name);
