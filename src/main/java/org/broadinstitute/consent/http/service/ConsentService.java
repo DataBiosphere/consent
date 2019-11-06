@@ -91,7 +91,7 @@ public class ConsentService {
     }
 
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {
-        String UNREVIEWED = "un-reviewed"; // TODO: Should this be a real `ElectionStatus` enum? See what that could impact elsewhere.
+        String UNREVIEWED = "un-reviewed"; // TODO: Fix this in https://broadinstitute.atlassian.net/browse/DUOS-469
         List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());
         consentManageList.forEach(c -> c.setElectionStatus(UNREVIEWED));
         consentManageList.forEach(c -> c.setEditable(true));
