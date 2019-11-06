@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class DacServiceTest {
@@ -90,6 +92,15 @@ public class DacServiceTest {
         Assert.assertNotNull(dac);
         Assert.assertFalse(dac.getChairpersons().isEmpty());
         Assert.assertFalse(dac.getMembers().isEmpty());
+    }
+
+    @Test
+    public void testCreateDac() {
+        when(dacDAO.createDac(anyString(), anyString(), any())).thenReturn(getDacs().get(0).getDacId());
+        initService();
+
+        Integer dacId = service.createDac("name", "description");
+        Assert.assertEquals(getDacs().get(0).getDacId(), dacId);
     }
 
     /**
