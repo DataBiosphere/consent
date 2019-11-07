@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -208,15 +209,16 @@ public class DacServiceTest {
 
     @Test
     public void testFilterDarsByDAC_adminCase() {
+        // User is an admin user
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<Document> documents = getDocuments();
         AuthUser user = new AuthUser("Admin");
 
-        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, user);
         // As an admin, all docs should be returned.
-        Assert.assertEquals(documents.size(), filteredDocs.size());
+        Assert.assertEquals(documents.size(), filtered.size());
     }
 
     @Test
@@ -235,10 +237,10 @@ public class DacServiceTest {
         List<Document> documents = getDocuments();
         AuthUser user = new AuthUser("Chair");
 
-        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, user);
 
         // Filtered documents should only contain the ones the user has direct access to:
-        Assert.assertEquals(memberDataSets.size(), filteredDocs.size());
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -258,11 +260,11 @@ public class DacServiceTest {
         List<Document> documents = getDocuments();
         AuthUser user = new AuthUser("Chair");
 
-        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, user);
 
         // Filtered documents should contain the ones the user has direct access to in addition to
         // the unassociated ones:
-        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filteredDocs.size());
+        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -282,14 +284,41 @@ public class DacServiceTest {
         List<Document> documents = getDocuments();
         AuthUser user = new AuthUser("Chair");
 
-        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, user);
 
         // Filtered documents should contain the ones the user has direct access to in addition to
         // the unassociated ones:
-        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filteredDocs.size());
+        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filtered.size());
+    }
+
+    @Test
+    public void testFilterConsentManageByDAC_adminCase() {
+        // User is an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        List<ConsentManage> manages = getConsentManages();
+        AuthUser user = new AuthUser("Admin");
+
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, user);
+        // As an admin, all consents should be returned.
+        Assert.assertEquals(manages.size(), filtered.size());
+
     }
 
     /* Helper functions */
+
+    /**
+     * @return A list of 5 consentManages
+     */
+    private List<ConsentManage> getConsentManages() {
+        return IntStream.range(1, 5).
+                mapToObj(i -> {
+                    ConsentManage manage = new ConsentManage();
+                    manage.setDacId(i);
+                    return manage;
+                }).collect(Collectors.toList());
+    }
 
     /**
      * @return A list of 5 documents
