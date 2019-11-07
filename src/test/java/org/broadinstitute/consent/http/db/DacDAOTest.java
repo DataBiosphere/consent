@@ -110,6 +110,23 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
+    public void testFindAllDACUsersBySearchString_case1() {
+        Dac dac = createDac();
+        DACUser chair = createUser();
+        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
+
+        List<DACUser> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
+        Assert.assertFalse(users.isEmpty());
+        Assert.assertEquals(1, users.size());
+    }
+
+    @Test
+    public void testFindAllDACUsersBySearchString_case2() {
+        List<DACUser> users = dacDAO.findAllDACUsersBySearchString("random");
+        Assert.assertTrue(users.isEmpty());
+    }
+
+    @Test
     public void testUpdateDac() {
         String newValue = "New Value";
         Dac dac = createDac();
