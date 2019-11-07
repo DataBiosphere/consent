@@ -509,6 +509,32 @@ public class DacServiceTest {
         Assert.assertEquals(memberDatasets.size() + unassociatedElections.size(), filtered.size());
     }
 
+    @Test
+    public void testFilterElectionsByDAC_memberCase3() {
+        // User is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+
+        // Member has no direct access to elections via DAC or DataSet
+        when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());
+        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(Collections.emptyList());
+        initService();
+
+        // There are unassociated elections:
+        List<Election> unassociatedElections = getElections().stream().
+                peek(e -> e.setDataSetId(null)).
+                collect(Collectors.toList());
+
+        List<Election> elections = getElections();
+
+        List<Election> allElections = Stream.
+                concat(unassociatedElections.stream(), elections.stream()).
+                collect(Collectors.toList());
+
+        Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
+        // As a member, both direct-associated and unassociated elections should be returned.
+        Assert.assertEquals(unassociatedElections.size(), filtered.size());
+    }
+
 
     /* Helper functions */
 
