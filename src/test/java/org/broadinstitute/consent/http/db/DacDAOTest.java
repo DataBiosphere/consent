@@ -51,6 +51,8 @@ public class DacDAOTest extends AbstractTest {
             dacDAO.deleteDacMembers(dac.getDacId());
             dacDAO.deleteDac(dac.getDacId());
         });
+        // Cannot delete all users created with this test due to the
+        // reliance on existing test data for older integration-style tests
     }
 
     @Test
@@ -183,11 +185,6 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testRemoveDacMember() {
-        // No-op ... tested in `tearDown()`
-    }
-
-    @Test
     public void testAddDacMember() {
         Dac dac = createDac();
         Integer roleId = UserRoles.MEMBER.getRoleId();
@@ -198,6 +195,11 @@ public class DacDAOTest extends AbstractTest {
         UserRole userRole = memberRoles.get(0);
         Assert.assertEquals(userRole.getDacId(), dac.getDacId());
         Assert.assertEquals(userRole.getRoleId(), roleId);
+    }
+
+    @Test
+    public void testRemoveDacMember() {
+        // No-op ... tested in `tearDown()`
     }
 
     @Test
@@ -223,6 +225,11 @@ public class DacDAOTest extends AbstractTest {
         Assert.assertEquals(
                 member.getName().toLowerCase(),
                 UserRoles.MEMBER.getRoleName().toLowerCase());
+    }
+
+    @Test
+    public void testFindUserById() {
+        // No-op ... tested in `createUser()`
     }
 
     @Test
