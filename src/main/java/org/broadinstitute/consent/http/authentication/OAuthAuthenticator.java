@@ -60,11 +60,10 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
     private HashMap<String, Object> validateToken(String accessToken) throws AuthenticationException {
         HashMap<String, Object> tokenInfo = null;
         try {
-            Response response = this
-                    .client
-                    .target(TOKEN_INFO_URL + accessToken)
-                    .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(Response.class);
+            Response response = this.client.
+                    target(TOKEN_INFO_URL + accessToken).
+                    request(MediaType.APPLICATION_JSON_TYPE).
+                    get(Response.class);
             String result = response.readEntity(String.class);
             tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
         } catch (Exception e) {
@@ -76,11 +75,10 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
     private GoogleUser getUserInfo(String bearer) throws AuthenticationException {
         GoogleUser u = null;
         try {
-            Response response = this
-                    .client
-                    .target(USER_INFO_URL + bearer)
-                    .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(Response.class);
+            Response response = this.client.
+                    target(USER_INFO_URL + bearer).
+                    request(MediaType.APPLICATION_JSON_TYPE).
+                    get(Response.class);
             String result = response.readEntity(String.class);
             u = new GoogleUser(result);
         } catch (Exception e) {
