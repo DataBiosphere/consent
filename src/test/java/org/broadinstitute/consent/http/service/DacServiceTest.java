@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -464,9 +465,34 @@ public class DacServiceTest {
         Assert.assertEquals(unassociatedConsents.size(), filtered.size());
     }
 
+    @Test
+    public void testFilterElectionsByDAC_adminCase() {
+        // User is an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        List<Election> elections = getElections();
+        AuthUser user = new AuthUser("Admin");
+
+        Collection<Election> filtered = service.filterElectionsByDAC(elections, user);
+        // As an admin, all consents should be returned.
+        Assert.assertEquals(elections.size(), filtered.size());
+    }
+
 
     /* Helper functions */
 
+    /**
+     * @return A list of 5 elections with DataSet ids
+     */
+    private List<Election> getElections() {
+        return IntStream.range(1, 5).
+                mapToObj(i -> {
+                    Election election = new Election();
+                    election.setDataSetId(i);
+                    return election;
+                }).collect(Collectors.toList());
+    }
 
     /**
      * @return A list of 5 consents with DAC ids
