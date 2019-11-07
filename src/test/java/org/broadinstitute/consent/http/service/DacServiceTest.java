@@ -303,10 +303,29 @@ public class DacServiceTest {
         List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, user);
         // As an admin, all consents should be returned.
         Assert.assertEquals(manages.size(), filtered.size());
-
     }
 
+    @Test
+    public void testFilterConsentManageByDAC_memberCase1() {
+        // User is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+
+        // Member is a member of one DAC that has a single consent
+        List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
+        when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
+        initService();
+
+        List<ConsentManage> manages = getConsentManages();
+        AuthUser user = new AuthUser("Admin");
+
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, user);
+        // As a member, only associated consents should be returned.
+        Assert.assertEquals(memberDacs.size(), filtered.size());
+    }
+
+
     /* Helper functions */
+
 
     /**
      * @return A list of 5 consentManages
