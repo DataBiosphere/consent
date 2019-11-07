@@ -130,6 +130,17 @@ public class DacServiceTest {
         }
     }
 
+    @Test
+    public void testFindUserById() {
+        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
+        when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
+        initService();
+
+        DACUser user = service.findUserById(1);
+        Assert.assertNotNull(user);
+        Assert.assertFalse(user.getRoles().isEmpty());
+    }
+
     /* Helper functions */
 
     /**
