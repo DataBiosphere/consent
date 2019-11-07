@@ -74,7 +74,26 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testFindAllDacMembers() {
+    public void testFindAll() {
+        int count = 4;
+        for (int i = 1; i <= count; i++) createDac();
+
+        List<Dac> dacList = dacDAO.findAll();
+        Assert.assertEquals(count, dacList.size());
+    }
+
+    @Test
+    public void testFindDacsForEmail() {
+        Dac dac = createDac();
+        DACUser chair = createUser();
+        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
+
+        List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
+        Assert.assertEquals(1, dacs.size());
+    }
+
+    @Test
+    public void testFindAllDacMemberships() {
         List<Dac> dacs = new ArrayList<>();
         dacs.add(createDac());
         dacs.add(createDac());
@@ -88,15 +107,6 @@ public class DacDAOTest extends AbstractTest {
         }
         List<DACUser> allDacUsers = dacDAO.findAllDACUserMemberships();
         Assert.assertEquals(6, allDacUsers.size());
-    }
-
-    @Test
-    public void testFindAll() {
-        int count = 4;
-        for (int i = 1; i <= count; i++) createDac();
-
-        List<Dac> dacList = dacDAO.findAll();
-        Assert.assertEquals(count, dacList.size());
     }
 
     @Test
