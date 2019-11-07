@@ -246,8 +246,32 @@ public class DacServiceTest {
         // Member is not an admin user
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
-        // Member has access to DataSet 1
+        // Member has access to datasets
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDataSets);
+
+        // There are additional unassociated datasets
+        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        initService();
+
+        List<Document> documents = getDocuments();
+        AuthUser user = new AuthUser("Chair");
+
+        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+
+        // Filtered documents should contain the ones the user has direct access to in addition to
+        // the unassociated ones:
+        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filteredDocs.size());
+    }
+
+    @Test
+    public void testFilterDarsByDAC_memberCase_3() {
+        // Member is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+
+        // Member no direct access to datasets
+        List<DataSet> memberDataSets = Collections.emptyList();
         when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDataSets);
 
         // There are additional unassociated datasets
