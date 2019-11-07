@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -323,6 +324,33 @@ public class DacServiceTest {
         Assert.assertEquals(memberDacs.size(), filtered.size());
     }
 
+    @Test
+    public void testFilterConsentManageByDAC_memberCase2() {
+        // User is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+
+        // Member is a member of one DAC that has a single consent
+        List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
+        when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
+        initService();
+
+        // There unassociated consent manages:
+        List<ConsentManage> unassociatedManages = getConsentManages().stream().
+                peek(c -> c.setDacId(null)).
+                collect(Collectors.toList());
+
+        List<ConsentManage> manages = getConsentManages();
+        AuthUser user = new AuthUser("Admin");
+
+        List<ConsentManage> unionedManages = Stream.
+                concat(unassociatedManages.stream(), manages.stream()).
+                collect(Collectors.toList());
+
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(unionedManages, user);
+        // As a member, associated and unassociated consents should be returned
+        Assert.assertEquals(memberDacs.size() + unassociatedManages.size(), filtered.size());
+    }
+
 
     /* Helper functions */
 
@@ -363,6 +391,7 @@ public class DacServiceTest {
                     return dataSet;
                 }).collect(Collectors.toList());
     }
+
     /**
      * @return A list of 5 dacs
      */
@@ -378,7 +407,6 @@ public class DacServiceTest {
     }
 
     /**
-     *
      * @return A list of two users in a single DAC
      */
     private List<DACUser> getDacUsers() {
