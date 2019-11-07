@@ -141,6 +141,17 @@ public class DacServiceTest {
         Assert.assertFalse(user.getRoles().isEmpty());
     }
 
+    @Test
+    public void testFindMembersByDacId() {
+        when(dacDAO.findMembersByDacId(anyInt())).thenReturn(Collections.singletonList(getDacUsers().get(0)));
+        when(dacDAO.findUserRolesForUsers(any())).thenReturn(getDacUsers().get(0).getRoles());
+        initService();
+
+        List<DACUser> users = service.findMembersByDacId(1);
+        Assert.assertNotNull(users);
+        Assert.assertFalse(users.isEmpty());
+    }
+
     /* Helper functions */
 
     /**
