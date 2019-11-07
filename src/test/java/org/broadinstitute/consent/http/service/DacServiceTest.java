@@ -180,8 +180,7 @@ public class DacServiceTest {
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        AuthUser user = new AuthUser("Admin");
-        Assert.assertTrue(service.isAuthUserAdmin(user));
+        Assert.assertTrue(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -189,8 +188,7 @@ public class DacServiceTest {
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
-        AuthUser user = new AuthUser("Admin");
-        Assert.assertFalse(service.isAuthUserAdmin(user));
+        Assert.assertFalse(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -198,8 +196,7 @@ public class DacServiceTest {
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        AuthUser user = new AuthUser("Chair");
-        Assert.assertTrue(service.isAuthUserAdmin(user));
+        Assert.assertTrue(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -207,8 +204,7 @@ public class DacServiceTest {
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
-        AuthUser user = new AuthUser("Chair");
-        Assert.assertFalse(service.isAuthUserAdmin(user));
+        Assert.assertFalse(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -218,9 +214,8 @@ public class DacServiceTest {
         initService();
 
         List<Document> documents = getDocuments();
-        AuthUser user = new AuthUser("Admin");
 
-        List<Document> filtered = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
         // As an admin, all docs should be returned.
         Assert.assertEquals(documents.size(), filtered.size());
     }
@@ -239,9 +234,8 @@ public class DacServiceTest {
         initService();
 
         List<Document> documents = getDocuments();
-        AuthUser user = new AuthUser("Chair");
 
-        List<Document> filtered = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
 
         // Filtered documents should only contain the ones the user has direct access to:
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -262,9 +256,8 @@ public class DacServiceTest {
         initService();
 
         List<Document> documents = getDocuments();
-        AuthUser user = new AuthUser("Chair");
 
-        List<Document> filtered = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
 
         // Filtered documents should contain the ones the user has direct access to in addition to
         // the unassociated ones:
@@ -286,9 +279,8 @@ public class DacServiceTest {
         initService();
 
         List<Document> documents = getDocuments();
-        AuthUser user = new AuthUser("Chair");
 
-        List<Document> filtered = service.filterDarsByDAC(documents, user);
+        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
 
         // Filtered documents should contain the ones the user has direct access to in addition to
         // the unassociated ones:
@@ -302,9 +294,8 @@ public class DacServiceTest {
         initService();
 
         List<ConsentManage> manages = getConsentManages();
-        AuthUser user = new AuthUser("Admin");
 
-        List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, user);
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, getUser());
         // As an admin, all consents should be returned.
         Assert.assertEquals(manages.size(), filtered.size());
     }
@@ -320,9 +311,8 @@ public class DacServiceTest {
         initService();
 
         List<ConsentManage> manages = getConsentManages();
-        AuthUser user = new AuthUser("Admin");
 
-        List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, user);
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(manages, getUser());
         // As a member, only direct-associated consents should be returned.
         Assert.assertEquals(memberDacs.size(), filtered.size());
     }
@@ -343,13 +333,12 @@ public class DacServiceTest {
                 collect(Collectors.toList());
 
         List<ConsentManage> manages = getConsentManages();
-        AuthUser user = new AuthUser("Admin");
 
         List<ConsentManage> allManages = Stream.
                 concat(unassociatedManages.stream(), manages.stream()).
                 collect(Collectors.toList());
 
-        List<ConsentManage> filtered = service.filterConsentManageByDAC(allManages, user);
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(allManages, getUser());
         // As a member, direct-associated and unassociated consents should be returned
         Assert.assertEquals(memberDacs.size() + unassociatedManages.size(), filtered.size());
     }
@@ -369,13 +358,12 @@ public class DacServiceTest {
                 collect(Collectors.toList());
 
         List<ConsentManage> manages = getConsentManages();
-        AuthUser user = new AuthUser("Admin");
 
         List<ConsentManage> allManages = Stream.
                 concat(unassociatedManages.stream(), manages.stream()).
                 collect(Collectors.toList());
 
-        List<ConsentManage> filtered = service.filterConsentManageByDAC(allManages, user);
+        List<ConsentManage> filtered = service.filterConsentManageByDAC(allManages, getUser());
         // As a member, unassociated consents should be returned
         Assert.assertEquals(unassociatedManages.size(), filtered.size());
     }
@@ -387,9 +375,8 @@ public class DacServiceTest {
         initService();
 
         List<Consent> consents = getConsents();
-        AuthUser user = new AuthUser("Admin");
 
-        Collection<Consent> filtered = service.filterConsentsByDAC(consents, user);
+        Collection<Consent> filtered = service.filterConsentsByDAC(consents, getUser());
         // As an admin, all consents should be returned.
         Assert.assertEquals(consents.size(), filtered.size());
     }
@@ -405,9 +392,8 @@ public class DacServiceTest {
         initService();
 
         List<Consent> consents = getConsents();
-        AuthUser user = new AuthUser("Admin");
 
-        Collection<Consent> filtered = service.filterConsentsByDAC(consents, user);
+        Collection<Consent> filtered = service.filterConsentsByDAC(consents, getUser());
         // As a member, only direct-associated consents should be returned.
         Assert.assertEquals(memberDacs.size(), filtered.size());
     }
@@ -428,13 +414,12 @@ public class DacServiceTest {
                 collect(Collectors.toList());
 
         List<Consent> consents = getConsents();
-        AuthUser user = new AuthUser("Admin");
 
         List<Consent> allConsents = Stream.
                 concat(unassociatedConsents.stream(), consents.stream()).
                 collect(Collectors.toList());
 
-        Collection<Consent> filtered = service.filterConsentsByDAC(allConsents, user);
+        Collection<Consent> filtered = service.filterConsentsByDAC(allConsents, getUser());
         // As a member, direct-associated and unassociated consents should be returned
         Assert.assertEquals(memberDacs.size() + unassociatedConsents.size(), filtered.size());
     }
@@ -454,13 +439,12 @@ public class DacServiceTest {
                 collect(Collectors.toList());
 
         List<Consent> consents = getConsents();
-        AuthUser user = new AuthUser("Admin");
 
         List<Consent> allConsents = Stream.
                 concat(unassociatedConsents.stream(), consents.stream()).
                 collect(Collectors.toList());
 
-        Collection<Consent> filtered = service.filterConsentsByDAC(allConsents, user);
+        Collection<Consent> filtered = service.filterConsentsByDAC(allConsents, getUser());
         // As a member, unassociated consents should be returned
         Assert.assertEquals(unassociatedConsents.size(), filtered.size());
     }
@@ -472,9 +456,8 @@ public class DacServiceTest {
         initService();
 
         List<Election> elections = getElections();
-        AuthUser user = new AuthUser("Admin");
 
-        Collection<Election> filtered = service.filterElectionsByDAC(elections, user);
+        Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
         // As an admin, all consents should be returned.
         Assert.assertEquals(elections.size(), filtered.size());
     }
@@ -492,14 +475,47 @@ public class DacServiceTest {
         initService();
 
         List<Election> elections = getElections();
-        AuthUser user = new AuthUser("Admin");
 
-        Collection<Election> filtered = service.filterElectionsByDAC(elections, user);
+        Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
         // As a member, only direct-associated consents should be returned.
         Assert.assertEquals(memberDatasets.size(), filtered.size());
     }
 
+    @Test
+    public void testFilterElectionsByDAC_memberCase2() {
+        // User is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+
+        // Member is a member of one DAC that has a single consented dataset
+        List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
+        List<DataSet> memberDatasets = Collections.singletonList(getDatasets().get(0));
+        when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
+        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
+        initService();
+
+        // There are unassociated elections:
+        List<Election> unassociatedElections = getElections().stream().
+                peek(e -> e.setDataSetId(null)).
+                collect(Collectors.toList());
+
+        List<Election> elections = getElections();
+
+        List<Election> allElections = Stream.
+                concat(unassociatedElections.stream(), elections.stream()).
+                collect(Collectors.toList());
+
+        Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
+        // As a member, both direct-associated and unassociated elections should be returned.
+        Assert.assertEquals(memberDatasets.size() + unassociatedElections.size(), filtered.size());
+    }
+
+
     /* Helper functions */
+
+
+    private AuthUser getUser() {
+        return new AuthUser("User");
+    }
 
     /**
      * @return A list of 5 elections with DataSet ids
