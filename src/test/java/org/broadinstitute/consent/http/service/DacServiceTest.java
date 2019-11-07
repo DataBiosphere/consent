@@ -7,8 +7,11 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -203,8 +206,67 @@ public class DacServiceTest {
         Assert.assertFalse(service.isAuthUserAdmin(user));
     }
 
+    @Test
+    public void testFilterDarsByDAC_adminCase() {
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        List<Document> documents = getDocuments();
+        AuthUser user = new AuthUser("Admin");
+
+        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+        // As an admin, all docs should be returned.
+        Assert.assertEquals(documents.size(), filteredDocs.size());
+    }
+
+    @Test
+    public void testFilterDarsByDAC_memberCase() {
+        // Member is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+
+        // Member has access to DataSet 1
+        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDataSets);
+
+        // There are no additional unassociated datasets
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(Collections.emptyList());
+        initService();
+
+        List<Document> documents = getDocuments();
+        AuthUser user = new AuthUser("Chair");
+
+        List<Document> filteredDocs = service.filterDarsByDAC(documents, user);
+
+        // Filtered documents should only contain the ones the user has direct access to:
+        Assert.assertEquals(memberDataSets.size(), filteredDocs.size());
+    }
+
     /* Helper functions */
 
+    /**
+     * @return A list of 5 documents
+     */
+    private List<Document> getDocuments() {
+        return IntStream.range(1, 5).
+                mapToObj(i -> {
+                    List<Integer> dataSetIds = Collections.singletonList(i);
+                    Document doc = new Document();
+                    doc.put(DarConstants.DATASET_ID, dataSetIds);
+                    return doc;
+                }).collect(Collectors.toList());
+    }
+
+    /**
+     * @return A list of 5 documents
+     */
+    private List<DataSet> getDatasets() {
+        return IntStream.range(1, 5).
+                mapToObj(i -> {
+                    DataSet dataSet = new DataSet();
+                    dataSet.setDataSetId(i);
+                    return dataSet;
+                }).collect(Collectors.toList());
+    }
     /**
      * @return A list of 5 dacs
      */
