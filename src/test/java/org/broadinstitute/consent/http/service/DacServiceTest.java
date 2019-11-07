@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
@@ -57,7 +58,7 @@ public class DacServiceTest {
     }
 
     @Test
-    public void testFindAllDACUsersBySearchString() {
+    public void testFindAllDACUsersBySearchString_case1() {
         when(dacDAO.findAll()).thenReturn(Collections.emptyList());
         when(dacDAO.findAllDACUserMemberships()).thenReturn(Collections.emptyList());
         initService();
@@ -66,7 +67,7 @@ public class DacServiceTest {
     }
 
     @Test
-    public void testFindAllDACUsersBySearchString_case_1() {
+    public void testFindAllDACUsersBySearchString_case2() {
         when(dacDAO.findAll()).thenReturn(getDacs());
         when(dacDAO.findAllDACUserMemberships()).thenReturn(getDacUsers());
         initService();
@@ -164,6 +165,42 @@ public class DacServiceTest {
         DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
         Assert.assertNotNull(user);
         Assert.assertFalse(user.getRoles().isEmpty());
+    }
+
+    @Test
+    public void testIsAuthUserAdmin_case1() {
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        AuthUser user = new AuthUser("Admin");
+        Assert.assertTrue(service.isAuthUserAdmin(user));
+    }
+
+    @Test
+    public void testIsAuthUserAdmin_case2() {
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        initService();
+
+        AuthUser user = new AuthUser("Admin");
+        Assert.assertFalse(service.isAuthUserAdmin(user));
+    }
+
+    @Test
+    public void testIsAuthUserChair_case1() {
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        AuthUser user = new AuthUser("Chair");
+        Assert.assertTrue(service.isAuthUserAdmin(user));
+    }
+
+    @Test
+    public void testIsAuthUserChair_case2() {
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        initService();
+
+        AuthUser user = new AuthUser("Chair");
+        Assert.assertFalse(service.isAuthUserAdmin(user));
     }
 
     /* Helper functions */
