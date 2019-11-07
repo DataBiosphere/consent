@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Before;
@@ -150,6 +151,19 @@ public class DacServiceTest {
         List<DACUser> users = service.findMembersByDacId(1);
         Assert.assertNotNull(users);
         Assert.assertFalse(users.isEmpty());
+    }
+
+    @Test
+    public void testAddDacMember() {
+        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
+        when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
+        doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt());
+        initService();
+
+        Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
+        Assert.assertNotNull(user);
+        Assert.assertFalse(user.getRoles().isEmpty());
     }
 
     /* Helper functions */
