@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -113,6 +114,19 @@ public class DacServiceTest {
             service.updateDac("name", "description", 1);
         } catch (Exception e) {
             Assert.fail("Update should not fail");
+        }
+    }
+
+    @Test
+    public void testDeleteDac() {
+        doNothing().when(dacDAO).deleteDacMembers(anyInt());
+        doNothing().when(dacDAO).deleteDac(anyInt());
+        initService();
+
+        try {
+            service.deleteDac(1);
+        } catch (Exception e) {
+            Assert.fail("Delete should not fail");
         }
     }
 
