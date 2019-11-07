@@ -21,6 +21,7 @@ import java.util.stream.IntStream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class DacServiceTest {
@@ -102,6 +103,20 @@ public class DacServiceTest {
         Integer dacId = service.createDac("name", "description");
         Assert.assertEquals(getDacs().get(0).getDacId(), dacId);
     }
+
+    @Test
+    public void testUpdateDac() {
+        doNothing().when(dacDAO).updateDac(anyString(), anyString(), any(), any());
+        initService();
+
+        try {
+            service.updateDac("name", "description", 1);
+        } catch (Exception e) {
+            Assert.fail("Update should not fail");
+        }
+    }
+
+    /* Helper functions */
 
     /**
      * @return A list of 5 dacs
