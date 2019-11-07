@@ -101,29 +101,6 @@ public class Election {
         this.dataUseLetter = dataUseLetter;
     }
 
-    public Election(Integer electionId, String electionType,
-            Boolean finalVote, String finalRationale, String status, Date createDate,
-            Date finalVoteDate, String referenceId, Date lastUpdate, Boolean finalAccessVote,
-            UseRestriction useRestriction, String translatedUseRestriction,
-            String dataUseLetter, String dulName, Integer version, Boolean archived) {
-        this.electionId = electionId;
-        this.electionType = electionType;
-        this.status = status;
-        this.createDate = createDate;
-        this.referenceId = referenceId;
-        this.lastUpdate = lastUpdate;
-        this.finalAccessVote = finalAccessVote;
-        this.finalVote = finalVote;
-        this.finalRationale = finalRationale;
-        this.finalVoteDate = finalVoteDate;
-        this.useRestriction = useRestriction;
-        this.translatedUseRestriction = translatedUseRestriction;
-        this.dataUseLetter = dataUseLetter;
-        this.dulName = dulName;
-        this.version = version;
-        this.archived = archived;
-    }
-
     public Integer getElectionId() {
         return electionId;
     }
