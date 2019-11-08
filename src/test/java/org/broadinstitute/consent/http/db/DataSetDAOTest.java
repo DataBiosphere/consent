@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class DataSetDAOTest extends AbstractTest {
 
@@ -105,7 +106,14 @@ public class DataSetDAOTest extends AbstractTest {
 
     @Test
     public void testFindNonDACDataSets() {
-        // TODO
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        List<DataSet> datasets = dataSetDAO.findNonDACDataSets();
+        Assert.assertFalse(datasets.isEmpty());
+        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
