@@ -99,9 +99,10 @@ public class DataSetDAOTest extends AbstractTest {
         DACUser user = createDacUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
-        List<DataSet> dataSets = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail());
-        Assert.assertFalse(dataSets.isEmpty());
-        Assert.assertEquals(1, dataSets.size());
+        List<DataSet> datasets = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail());
+        Assert.assertFalse(datasets.isEmpty());
+        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
     @Test
