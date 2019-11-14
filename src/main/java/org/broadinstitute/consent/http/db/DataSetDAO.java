@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.BindBean;
+import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlBatch;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
@@ -18,6 +19,7 @@ import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLoc
 import org.skife.jdbi.v2.unstable.BindIn;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +29,10 @@ import java.util.Set;
 public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     String CHAIRPERSON = Resource.CHAIRPERSON;
+
+    @SqlUpdate("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
+    @GetGeneratedKeys
+    Integer insertDataset(@Bind("name") String name, @Bind("createDate") Date createDate, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
 
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
@@ -183,5 +189,29 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlQuery("select MAX(alias) from dataset")
     Integer findLastAlias();
+
+    /**
+     * User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @param email User email
+     * @return List of datasets that are visible to the user via DACs.
+     */
+    @SqlQuery(" select d.* from dataset d " +
+            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
+            " inner join consents c on a.consentId = c.consentId " +
+            " inner join user_role ur on ur.dac_id = c.dac_id " +
+            " inner join dacuser u on ur.user_id = u.dacUserId and u.email = :email ")
+    List<DataSet> findDataSetsByAuthUserEmail(@Bind("email") String email);
+
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @return List of datasets that are not owned by a DAC.
+     */
+    @SqlQuery(" select d.* from dataset d " +
+            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
+            " inner join consents c on a.consentId = c.consentId " +
+            " where c.dac_id is null ")
+    List<DataSet> findNonDACDataSets();
 
 }

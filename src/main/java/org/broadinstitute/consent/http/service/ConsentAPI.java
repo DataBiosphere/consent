@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
@@ -63,10 +62,6 @@ public interface ConsentAPI {
     String getConsentDulUrl(String consentId) throws UnknownIdentifierException;
 
     Consent deleteConsentDul(String consentId) throws UnknownIdentifierException;
-
-    List<ConsentManage> describeConsentManage();
-
-    Integer getUnReviewedConsents();
 
     List<UseRestrictionDTO> getInvalidConsents();
 

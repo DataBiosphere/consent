@@ -5,6 +5,7 @@ package org.broadinstitute.consent.http.service;
  * <p/>
  * Implement a skeleton for ConsentAPI interface that implements the singleton object management.
  */
+@Deprecated // Use ConsentService
 public abstract class AbstractConsentAPI implements ConsentAPI {
     // Implement singleton management for the ConsentAPI.  We need to explicitly implement a singleton pattern,
     // to work around a problem with Dropwizard+GUICE lifecycle management.  Basically using GUICE to create
