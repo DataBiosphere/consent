@@ -445,6 +445,15 @@ paths:
             type: array
             items:
               $ref: '#/definitions/ConsentManage'
+  /api/consent/unreviewed:
+    get:
+      summary: Get total unreviewed DULs
+      description: Retrieves the amount of unreviewed DUL elections.
+      tags:
+        - Consent
+      responses:
+        200:
+          description: 'Returns an integer corresponding to the amount of unreviewed DULs'
   /api/consent:
     get:
       summary: Find Consent by name
@@ -1310,7 +1319,7 @@ paths:
           - Data Access Request
         responses:
          200:
-           description: 'Returns an integer corresponding to the amount of unreviwed DAR.'
+           description: 'Returns an integer corresponding to the amount of unreviewed DARs'
   /api/dataRequest/cases/pending/{dacUserId}:
     get:
       summary: getDataRequestPendingCases
@@ -2524,6 +2533,9 @@ definitions:
       updateStatus:
         type: boolean
         description: Indicates if a consent has been updated from orsp
+      dacId:
+        type: integer
+        description: The Data Access Committee ID
   Vote:
     type: object
     properties:

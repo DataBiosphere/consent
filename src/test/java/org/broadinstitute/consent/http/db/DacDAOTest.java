@@ -51,6 +51,8 @@ public class DacDAOTest extends AbstractTest {
             dacDAO.deleteDacMembers(dac.getDacId());
             dacDAO.deleteDac(dac.getDacId());
         });
+        // Cannot delete all users created with this test due to the
+        // reliance on existing test data for older integration-style tests
     }
 
     @Test
@@ -74,7 +76,26 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testFindAllDacMembers() {
+    public void testFindAll() {
+        int count = 4;
+        for (int i = 1; i <= count; i++) createDac();
+
+        List<Dac> dacList = dacDAO.findAll();
+        Assert.assertEquals(count, dacList.size());
+    }
+
+    @Test
+    public void testFindDacsForEmail() {
+        Dac dac = createDac();
+        DACUser chair = createUser();
+        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
+
+        List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
+        Assert.assertEquals(1, dacs.size());
+    }
+
+    @Test
+    public void testFindAllDacMemberships() {
         List<Dac> dacs = new ArrayList<>();
         dacs.add(createDac());
         dacs.add(createDac());
@@ -91,12 +112,20 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testFindAll() {
-        int count = 4;
-        for (int i = 1; i <= count; i++) createDac();
+    public void testFindAllDACUsersBySearchString_case1() {
+        Dac dac = createDac();
+        DACUser chair = createUser();
+        dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
 
-        List<Dac> dacList = dacDAO.findAll();
-        Assert.assertEquals(count, dacList.size());
+        List<DACUser> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
+        Assert.assertFalse(users.isEmpty());
+        Assert.assertEquals(1, users.size());
+    }
+
+    @Test
+    public void testFindAllDACUsersBySearchString_case2() {
+        List<DACUser> users = dacDAO.findAllDACUsersBySearchString("random");
+        Assert.assertTrue(users.isEmpty());
     }
 
     @Test
@@ -156,11 +185,6 @@ public class DacDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testRemoveDacMember() {
-        // No-op ... tested in `tearDown()`
-    }
-
-    @Test
     public void testAddDacMember() {
         Dac dac = createDac();
         Integer roleId = UserRoles.MEMBER.getRoleId();
@@ -171,6 +195,11 @@ public class DacDAOTest extends AbstractTest {
         UserRole userRole = memberRoles.get(0);
         Assert.assertEquals(userRole.getDacId(), dac.getDacId());
         Assert.assertEquals(userRole.getRoleId(), roleId);
+    }
+
+    @Test
+    public void testRemoveDacMember() {
+        // No-op ... tested in `tearDown()`
     }
 
     @Test
@@ -196,6 +225,11 @@ public class DacDAOTest extends AbstractTest {
         Assert.assertEquals(
                 member.getName().toLowerCase(),
                 UserRoles.MEMBER.getRoleName().toLowerCase());
+    }
+
+    @Test
+    public void testFindUserById() {
+        // No-op ... tested in `createUser()`
     }
 
     @Test
