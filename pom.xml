@@ -795,13 +795,13 @@
     <dependency>
       <groupId>org.eclipse.rdf4j</groupId>
       <artifactId>rdf4j-rio-rdfxml</artifactId>
-      <version>2.4.2</version>
+      <version>3.0.2</version>
     </dependency>
 
     <dependency>
       <groupId>org.eclipse.rdf4j</groupId>
       <artifactId>rdf4j-rio-trix</artifactId>
-      <version>2.4.1</version>
+      <version>3.0.2</version>
     </dependency>
 
     <dependency>
