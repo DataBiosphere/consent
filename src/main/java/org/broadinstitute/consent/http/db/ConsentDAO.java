@@ -205,4 +205,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     void updateConsentGroupName(@Bind("consentId") String consentId,
                                 @Bind("groupName") String groupName);
 
+    @SqlUpdate("update consents set dac_id = :dacId where consentId = :consentId")
+    void updateConsentDac(@Bind("consentId") String consentId,
+                                @Bind("dacId") Integer dacId);
+
 }

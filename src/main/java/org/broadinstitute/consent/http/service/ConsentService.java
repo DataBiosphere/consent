@@ -42,6 +42,23 @@ public class ConsentService {
         this.dacService = dacService;
     }
 
+    public Consent getById(String id) throws UnknownIdentifierException {
+        Consent consent = consentDAO.findConsentById(id);
+        if (consent == null) {
+            throw new UnknownIdentifierException(String.format("Could not find consent with id %s", id));
+        }
+        Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
+        if (election != null) {
+            consent.setLastElectionStatus(election.getStatus());
+            consent.setLastElectionArchived(election.getArchived());
+        }
+        return consent;
+    }
+
+    public void updateConsentDac(String consentId, Integer dacId) {
+        consentDAO.updateConsentDac(consentId, dacId);
+    }
+
     @SuppressWarnings("unchecked")
     public List<ConsentManage> describeConsentManage(AuthUser authUser) {
         List<ConsentManage> consentManageList = new ArrayList<>();

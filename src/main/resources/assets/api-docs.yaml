@@ -333,14 +333,14 @@ paths:
   /api/consent/{consentId}/election:
     post:
       summary: Create Consent Election
-      description: Creates an election for the consent ID sent as parameter.
+      description: Creates a consent election
       parameters:
         - name: consentId
           in: path
           description: Consent ID
           required: true
           type: string
-        - name: rec
+        - name: election
           in: body
           description: Election to be created
           required: true
@@ -351,11 +351,11 @@ paths:
         - Consent
       responses:
         201:
-          description: Returns the URI to access the newly created object.
+          description: Returns the URI to access the newly created election.
         400:
-          description: There is an existent Open election for that consent.
+          description: There is an existing open election for the consent.
         404:
-          description: The consent sent as a parameter doesn't exist.
+          description: The consent sent as a parameter does not exist.
     get:
        summary: Describe Consent Election
        description: Returns the election for the consent sent as a parameter.
@@ -377,6 +377,41 @@ paths:
            description: "Error"
            schema:
              $ref: '#/definitions/ErrorResponse'
+  /api/consent/{consentId}/election/dac/{dacId}:
+    post:
+      summary: Create Consent Election For Dac
+      description: |
+        Creates a consent election for a data access committee. Assigns the consent to the provided
+        Data Access Committee.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: dacId
+          in: path
+          description: DAC ID
+          required: true
+          type: integer
+        - name: election
+          in: body
+          description: Election to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Election'
+      tags:
+        - Election
+        - Consent
+      responses:
+        201:
+          description: Returns the URI to access the newly created election.
+        400:
+          description: |
+            There is an existing open election for the consent, or the consent is already
+            associated to an existing dac.
+        404:
+          description: The consent or dac does not exist.
   /api/consent/{consentId}/election/{id}:
     put:
       summary: Update Consent Election
