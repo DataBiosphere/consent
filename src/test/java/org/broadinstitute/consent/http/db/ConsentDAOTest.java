@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http.db;
 
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.Dac;
@@ -22,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -141,9 +144,63 @@ public class ConsentDAOTest extends AbstractTest {
         Assert.assertNotNull(consentDataSets);
         Assert.assertFalse(consentDataSets.isEmpty());
         Assert.assertEquals(2, consentDataSets.size());
-        consentDataSets.forEach(c -> {
-            Assert.assertTrue(consentIds.contains(c.getConsentId()));
+        consentDataSets.forEach(c -> Assert.assertTrue(consentIds.contains(c.getConsentId())));
+    }
+
+    @Test
+    public void testCheckConsentById_case1() {
+        Consent consent = createConsent(null);
+
+        String consentId = consentDAO.checkConsentById(consent.getConsentId());
+        Assert.assertEquals(consent.getConsentId(), consentId);
+    }
+
+    @Test
+    public void testCheckConsentById_case2() {
+        Consent consent = createConsent(null);
+        consentDAO.logicalDeleteConsent(consent.getConsentId());
+
+        String consentId = consentDAO.checkConsentById(consent.getConsentId());
+        Assert.assertNull(consentId);
+    }
+
+    @Test
+    public void testGetIdByName() {
+        Consent consent = createConsent(null);
+
+        String consentId = consentDAO.getIdByName(consent.getName());
+        Assert.assertEquals(consent.getConsentId(), consentId);
+    }
+
+    @Test
+    public void testFindConsentByName() {
+        Consent consent = createConsent(null);
+
+        Consent foundConsent = consentDAO.findConsentByName(consent.getName());
+        Assert.assertEquals(consent.getConsentId(), foundConsent.getConsentId());
+    }
+
+    @Test
+    public void testFindConsentsByAssociationType() {
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Collection<Consent> foundConsents = consentDAO.findConsentsByAssociationType(AssociationType.WORKSPACE.getValue());
+
+        Gson gson = new Gson();
+        foundConsents.forEach(c -> {
+            System.out.println(gson.toJson(c));
         });
+        System.out.println(gson.toJson(consent));
+
+        Assert.assertNotNull(foundConsents);
+        Assert.assertFalse(foundConsents.isEmpty());
+        Assert.assertEquals(1, foundConsents.size());
+
+        Optional<Consent> foundConsent = foundConsents.stream().findFirst();
+        Assert.assertTrue(foundConsent.isPresent());
+        Assert.assertEquals(consent.getConsentId(), foundConsent.get().getConsentId());
     }
 
     @Test
@@ -151,8 +208,18 @@ public class ConsentDAOTest extends AbstractTest {
         // no-op ... tested in `createConsent()`
     }
 
+    @Test
+    public void testDeleteConsent() {
+        // no-op ... tested in `tearDown()`
+    }
+
+    @Test
+    public void testLogicalDeleteConsent() {
+        // no-op ... tested in `testCheckConsentById_case2()`
+    }
+
     private void createAssociation(String consentId, Integer datasetId) {
-        consentDAO.insertConsentAssociation(consentId, "sampleSet", datasetId);
+        consentDAO.insertConsentAssociation(consentId, AssociationType.WORKSPACE.getValue(), datasetId);
     }
 
     private Consent createConsent(Integer dacId) {
