@@ -355,9 +355,9 @@ public class ConsentDAOTest extends AbstractTest {
     }
 
     @Test
-    public void testGetAssociationsConsentIdfromDataSetIds() {
+    public void testGetAssociationConsentIdsFromDatasetIds() {
         // TODO
-        // getAssociationsConsentIdfromDataSetIds
+        // getAssociationConsentIdsFromDatasetIds
     }
 
     @Test
