@@ -289,6 +289,20 @@ public class UserDAOTest extends AbstractTest {
         Assert.assertEquals(user.getRationale(), rationale);
     }
 
+    @Test
+    public void testFindDACUserByEmailAndRoleId() {
+        String name = RandomStringUtils.random(10, true, false);
+        String email = name + "@test.org";
+        Integer id = userDAO.insertDACUser(email, name, new Date());
+        Integer roleId = UserRoles.CHAIRPERSON.getRoleId();
+        userRoleDAO.insertSingleUserRole(roleId, id);
+
+        DACUser user = userDAO.findDACUserByEmailAndRoleId(email, roleId);
+        Assert.assertNotNull(user);
+        Assert.assertEquals(id, user.getDacUserId());
+        Assert.assertEquals(name, user.getDisplayName());
+    }
+
     private String getRandomEmailAddress() {
         String user = RandomStringUtils.randomAlphanumeric(20);
         String domain = RandomStringUtils.randomAlphanumeric(10);

@@ -1,11 +1,16 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -14,16 +19,19 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateService;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
@@ -66,26 +74,29 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
 
+    private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
+    private final DataAccessRequestService dataAccessRequestService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierAPI emailApi;
     private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
-    private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
     private final GCSStore store;
 
-    public DataAccessRequestResource(DACUserAPI dacUserAPI, ElectionAPI electionAPI, GCSStore store) {
+    @Inject
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, GCSStore store) {
+        this.dataAccessRequestService = dataAccessRequestService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.dacUserAPI = dacUserAPI;
-        this.electionAPI = electionAPI;
+        this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.electionAPI = AbstractElectionAPI.getInstance();
         this.store = store;
     }
 
@@ -153,11 +164,17 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/modalSummary/{id}")
     @PermitAll
-    public DARModalDetailsDTO getDataAcessRequestModalSummary(@PathParam("id") String id) {
+    public Response getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
-        DACUser user = dacUserAPI.describeDACUserById(userId);
-        return dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
+        DACUser user = null;
+        try {
+            user = dacUserAPI.describeDACUserById(userId);
+        } catch (NotFoundException e) {
+            logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
+        }
+        DARModalDetailsDTO detailsDTO = dataAccessRequestAPI.DARModalDetailsDTOBuilder(dar, user, electionAPI);
+        return Response.ok().entity(detailsDTO).build();
     }
 
     @GET
@@ -176,8 +193,9 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public List<Document> describeDataAccessRequests() {
-        return dataAccessRequestAPI.describeDataAccessRequests();
+    public Response describeDataAccessRequests(@Auth AuthUser authUser) {
+        List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
+        return Response.ok().entity(documents).build();
     }
 
     @GET
@@ -269,16 +287,19 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/manage")
     @RolesAllowed({RESEARCHER, ADMIN})
-    public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId) {
-        return Response.ok().entity(dataAccessRequestAPI.describeDataAccessRequestManage(userId)).build();
+    public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
+        List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
+        return Response.ok().entity(dars).build();
     }
 
     @GET
     @Path("cases/unreviewed")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response getTotalUnReviewedDAR() {
-        return Response.ok("{\"darUnReviewedCases\":" + dataAccessRequestAPI.getTotalUnReviewedDAR() + "}").build();
+    public Response getTotalUnReviewedDAR(@Auth AuthUser authUser) {
+        int count = dataAccessRequestService.getTotalUnReviewedDars(authUser);
+        UnreviewedCases entity = new UnreviewedCases(count);
+        return Response.ok().entity(entity).build();
     }
 
     // Partial Data Access Requests Methods
@@ -477,6 +498,15 @@ public class DataAccessRequestResource extends Resource {
             }
         }
         return Optional.empty();
+    }
+
+    static class UnreviewedCases {
+        @JsonProperty
+        Integer darUnReviewedCases;
+
+        UnreviewedCases(Integer darUnReviewedCases) {
+            this.darUnReviewedCases = darUnReviewedCases;
+        }
     }
 
 }

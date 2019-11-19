@@ -14,6 +14,6 @@ public class UserRoleMapper implements ResultSetMapper<UserRole> {
                 r.getInt("user_id"),
                 r.getInt("role_id"),
                 r.getString("name"),
-                r.getInt("dac_id"));
+                (r.getObject("dac_id") == null) ? null : r.getInt("dac_id"));
     }
 }

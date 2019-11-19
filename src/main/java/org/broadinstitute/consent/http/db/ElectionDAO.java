@@ -101,26 +101,26 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @Mapper(DatabaseElectionMapper.class)
     Election findElectionByVoteId(@Bind("voteId") Integer voteId);
 
-    @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             + "e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version from election e "
             + "inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON
             + "' where e.electionType = :type and e.status = :status order by createDate asc")
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
 
-    @SqlQuery("select * from election where electiontype = :electionType and status = '" + OPEN +"' and datediff(NOW(), createDate) > :amountOfDays")
+    @SqlQuery("select distinct * from election where electiontype = :electionType and status = '" + OPEN +"' and datediff(NOW(), createDate) > :amountOfDays")
     @Mapper(DatabaseElectionMapper.class)
     List<Election> findExpiredElections(@Bind("electionType") String electionType, @Bind("amountOfDays")Integer amountOfDays);
 
 
-    @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             +" e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + CHAIRPERSON
             +"' inner join (select referenceId, MAX(createDate) maxDate from election e where  e.electionType = :type  group by referenceId) "
             +" electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId"
             +" AND e.electionType = :type  order by createDate asc")
     List<Election> findLastElectionsWithFinalVoteByType(@Bind("type") String type);
 
-    @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
             "e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 'DataAccess' "+
             "and e.finalAccessVote is true  and v.type = 'FINAL'  and e.status = :status order by e.createDate asc")
     List<Election> findRequestElectionsWithFinalVoteByStatus(@Bind("status") String status);
@@ -131,7 +131,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "and e.status in (<status>) order by createDate desc limit 1")
     Election findLastElectionWithFinalVoteByReferenceIdAndStatus(@Bind("referenceId") String referenceId, @BindIn("status") List<String> status);
 
-    @SqlQuery("select  e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             + " e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join vote v  on v.electionId = e.electionId and v.type = '" + CHAIRPERSON
             + "' where e.electionType = :type and e.finalAccessVote = :vote and e.status != 'Canceled' order by createDate asc")
     List<Election> findElectionsByTypeAndFinalAccessVoteChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
@@ -147,7 +147,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select count(*) from election e where (e.status = '" + OPEN +"' or e.status = 'Final') and e.electionType != '" + DATASET + "'")
     Integer verifyOpenElections();
 
-    @SqlQuery("select  e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, " +
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
@@ -155,7 +155,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and v.type = '" + FINAL + "'")
     List<Election> findLastElectionsWithFinalVoteByReferenceIdsAndType(@BindIn("referenceIds") List<String> referenceIds, @Bind("type") String type);
 
-    @SqlQuery("select  e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, " +
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, " +
             "v.createDate finalVoteDate, e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.status = :status group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
@@ -163,7 +163,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "left join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON + "'")
     List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindIn("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
-    @SqlQuery("select  e.* " +
+    @SqlQuery("select distinct e.* " +
             "from election e " +
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
@@ -210,13 +210,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select electionAccessId from access_rp arp where arp.electionRPId = :electionRPId ")
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
 
-    @SqlQuery("select e.electionId, e.datasetId,  v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
+    @SqlQuery("select distinct e.electionId, e.datasetId,  v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             + " e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + CHAIRPERSON
             + "' where e.electionType = :type  and e.status in  (<status>) order by createDate asc")
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @BindIn("status") List<String> status);
 
     @Mapper(DatabaseElectionMapper.class)
-    @SqlQuery("select *  from election e where  e.electionId in  (<electionIds>)")
+    @SqlQuery("select distinct * from election e where  e.electionId in  (<electionIds>)")
     List<Election> findElectionsByIds(@BindIn("electionIds") List<Integer> electionIds);
 
     @Mapper(DatabaseElectionMapper.class)
@@ -230,11 +230,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Integer getDatasetIdByElectionId(@Bind("electionId") Integer electionId);
 
     @Mapper(DatabaseElectionMapper.class)
-    @SqlQuery("select * from election  where  status = :status and  electionType = :electionType")
+    @SqlQuery("select distinct * from election where status = :status and electionType = :electionType")
     List<Election> getElectionByTypeAndStatus(@Bind("electionType") String electionType, @Bind("status") String status);
 
     @Mapper(DatabaseElectionMapper.class)
-    @SqlQuery("select * from election  where  status = :status and  electionType = :electionType and referenceId = :referenceId")
+    @SqlQuery("select distinct * from election  where  status = :status and  electionType = :electionType and referenceId = :referenceId")
     List<Election> getElectionByTypeStatusAndReferenceId(@Bind("electionType") String electionType, @Bind("status") String status, @Bind("referenceId") String referenceId);
 
     @SqlUpdate("update election set status = :status, lastUpdate = :lastUpdate, finalAccessVote = :finalAccessVote where electionId = :electionId ")
@@ -253,11 +253,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Integer> findOpenElectionIdByTypeAndUser(@Bind("dacUserId")Integer dacUserId, @Bind("type") String type);
 
     @Mapper(DatabaseElectionMapper.class)
-    @SqlQuery("SELECT e.* FROM election e  inner join vote v on e.electionId = v.electionId where  (e.electionType = 'DataAccess' OR e.electionType = 'RP') " +
+    @SqlQuery("SELECT distinct e.* FROM election e  inner join vote v on e.electionId = v.electionId where  (e.electionType = 'DataAccess' OR e.electionType = 'RP') " +
             " and e.status = '" + OPEN +"' and v.vote is null and v.dacUserId = :dacUserId")
     List<Election> findAccessRpOpenElectionIds(@Bind("dacUserId")Integer dacUserId);
 
-    @SqlQuery("select e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
+    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
             "e.lastUpdate, e.finalAccessVote, e.electionType e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 'DataAccess' "+
             " and v.type = 'FINAL'  and e.referenceId in (<darIds>) order by e.createDate asc")
     List<Election> findRequestElectionsByReferenceIds(@BindIn("darIds") List<String> darIds);
@@ -265,7 +265,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("update election set archived = true, lastUpdate = :lastUpdate where electionId = :electionId ")
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
 
-    @SqlQuery("select e.electionId, e.datasetId,  v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
+    @SqlQuery("select distinct e.electionId, e.datasetId,  v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             + " e.lastUpdate, e.finalAccessVote, e.electionType,  e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + FINAL
             + "' where v.vote = :isApproved  and e.electionType = 'DataAccess' order by createDate asc")
     List<Election> findDataAccessClosedElectionsByFinalResult(@Bind("isApproved") Boolean isApproved);

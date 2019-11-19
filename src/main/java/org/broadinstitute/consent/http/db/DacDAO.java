@@ -24,6 +24,12 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlQuery("select * from dac")
     List<Dac> findAll();
 
+    @SqlQuery("select distinct d.* from dac d " +
+            " inner join user_role ur on ur.dac_id = d.dac_id " +
+            " inner join dacuser du on ur.user_id = du.dacUserId " +
+            " where du.email = :email ")
+    List<Dac> findDacsForEmail(@Bind("email") String email);
+
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id is not null inner join roles r on r.roleId = ur.role_id")
     List<DACUser> findAllDACUserMemberships();

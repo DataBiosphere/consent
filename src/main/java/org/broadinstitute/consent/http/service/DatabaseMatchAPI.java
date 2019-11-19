@@ -93,7 +93,7 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
 
 
     private void validateConsent(String consentId) {
-        if (StringUtils.isEmpty(consentDAO.checkConsentbyId(consentId))) {
+        if (StringUtils.isEmpty(consentDAO.checkConsentById(consentId))) {
             throw new IllegalArgumentException("Consent for the specified id does not exist");
         }
     }
