@@ -266,14 +266,7 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testFindAssociationsByType() {
-        DataSet dataset = createDataset();
-        Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-
-        List<String> associations = consentDAO.findAssociationsByType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
-        Assert.assertNotNull(associations);
-        Assert.assertFalse(associations.isEmpty());
-        Assert.assertEquals(1, associations.size());
+        // no-op ... tested in `testFindAssociationByTypeAndId()`
     }
 
     @Test
@@ -284,6 +277,123 @@ public class ConsentDAOTest extends AbstractTest {
 
         Integer associationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
         Assert.assertNotNull(associationId);
+    }
+
+    @Test
+    public void testFindAssociationByTypeAndId() {
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        List<String> associations = consentDAO.findAssociationsByType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
+        Assert.assertNotNull(associations);
+        Assert.assertFalse(associations.isEmpty());
+        String objectId = associations.get(0);
+
+        String association = consentDAO.findAssociationByTypeAndId(consent.getConsentId(), ASSOCIATION_TYPE_TEST, objectId);
+        Assert.assertNotNull(association);
+        Assert.assertEquals(objectId, association);
+    }
+
+    @Test
+    public void testDeleteOneAssociation() {
+        // TODO
+        // deleteOneAssociation
+    }
+
+    @Test
+    public void testDeleteAllAssociationsForType() {
+        // TODO
+        // deleteAllAssociationsForType
+    }
+
+    @Test
+    public void testDeleteAllAssociationsForConsent() {
+        // no-op ... tested in `tearDown()`
+    }
+
+    @Test
+    public void testDeleteAssociationsByDataSetId() {
+        // TODO
+        // deleteAssociationsByDataSetId
+    }
+
+    @Test
+    public void testFindAssociationTypesForConsent() {
+        // TODO
+        // findAssociationTypesForConsent
+    }
+
+    @Test
+    public void testFindConsentsForAssociation() {
+        // TODO
+        // findConsentsForAssociation
+    }
+
+    @Test
+    public void testFindConsentByAssociationAndObjectId() {
+        // TODO
+        // findConsentByAssociationAndObjectId
+    }
+
+    @Test
+    public void testFindUnreviewedConsents() {
+        // TODO
+        // findUnreviewedConsents
+    }
+
+    @Test
+    public void testCheckManualReview() {
+        // TODO
+        // checkManualReview
+    }
+
+    @Test
+    public void testFindConsentManageByStatus() {
+        // TODO
+        // findConsentManageByStatus
+    }
+
+    @Test
+    public void testGetAssociationsConsentIdfromDataSetIds() {
+        // TODO
+        // getAssociationsConsentIdfromDataSetIds
+    }
+
+    @Test
+    public void testFindInvalidRestrictions() {
+        // TODO
+        // findInvalidRestrictions
+    }
+
+    @Test
+    public void testFindConsentUseRestrictions() {
+        // TODO
+        // findConsentUseRestrictions
+    }
+
+    @Test
+    public void testUpdateConsentValidUseRestriction() {
+        // TODO
+        // updateConsentValidUseRestriction
+    }
+
+    @Test
+    public void testUpdateConsentUpdateStatus() {
+        // TODO
+        // updateConsentUpdateStatus
+    }
+
+    @Test
+    public void testUpdateConsentGroupName() {
+        // TODO
+        // updateConsentGroupName
+    }
+
+    @Test
+    public void testUpdateConsentDac() {
+        // TODO
+        // updateConsentDac
     }
 
     private void createAssociation(String consentId, Integer datasetId) {
