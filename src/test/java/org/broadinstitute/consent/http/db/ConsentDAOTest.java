@@ -259,10 +259,38 @@ public class ConsentDAOTest extends AbstractTest {
         Assert.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
     }
 
+    @Test
+    public void testInsertConsentAssociation() {
+        // no-op ... tested in `createAssociation()`
+    }
+
+    @Test
+    public void testFindAssociationsByType() {
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        List<String> associations = consentDAO.findAssociationsByType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
+        Assert.assertNotNull(associations);
+        Assert.assertFalse(associations.isEmpty());
+        Assert.assertEquals(1, associations.size());
+    }
+
+    @Test
+    public void testFindAssociationsByDataSetId() {
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Integer associationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
+        Assert.assertNotNull(associationId);
+    }
+
     private void createAssociation(String consentId, Integer datasetId) {
         consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Consent createConsent(Integer dacId) {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
