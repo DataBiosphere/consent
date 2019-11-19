@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -245,6 +246,15 @@ public class ConsentDAOTest extends AbstractTest {
         Consent consent = createConsent(null);
 
         consentDAO.updateConsentSortDate(consent.getConsentId(), yesterday());
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        Assert.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
+    }
+
+    @Test
+    public void testBulkUpdateConsentSortDate() {
+        Consent consent = createConsent(null);
+
+        consentDAO.bulkUpdateConsentSortDate(Collections.singletonList(consent.getConsentId()), new Date(), yesterday());
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         Assert.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
     }
