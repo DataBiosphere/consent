@@ -188,12 +188,6 @@ public class ConsentDAOTest extends AbstractTest {
 
         Collection<Consent> foundConsents = consentDAO.findConsentsByAssociationType(AssociationType.WORKSPACE.getValue());
 
-        Gson gson = new Gson();
-        foundConsents.forEach(c -> {
-            System.out.println(gson.toJson(c));
-        });
-        System.out.println(gson.toJson(consent));
-
         Assert.assertNotNull(foundConsents);
         Assert.assertFalse(foundConsents.isEmpty());
         Assert.assertEquals(1, foundConsents.size());
@@ -216,6 +210,32 @@ public class ConsentDAOTest extends AbstractTest {
     @Test
     public void testLogicalDeleteConsent() {
         // no-op ... tested in `testCheckConsentById_case2()`
+    }
+
+    @Test
+    public void testUpdateConsent() {
+        Consent consent = createConsent(null);
+        Dac dac = createDac();
+
+        consentDAO.updateConsent(
+                consent.getConsentId(),
+                false,
+                consent.getUseRestriction().toString(),
+                consent.getDataUse().toString(),
+                consent.getDataUseLetter(),
+                consent.getName(),
+                consent.getDulName(),
+                new Date(),
+                new Date(),
+                consent.getTranslatedUseRestriction(),
+                consent.getGroupName(),
+                consent.getUpdated(),
+                dac.getDacId()
+        );
+
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        Assert.assertNotNull(foundConsent.getDacId());
+        Assert.assertEquals(dac.getDacId(), foundConsent.getDacId());
     }
 
     private void createAssociation(String consentId, Integer datasetId) {
