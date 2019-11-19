@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  * <p/>
  * Created by egolin on 9/15/14.
  */
-public class AssociationTest extends ConsentServiceTest {
+public class AssociationTest extends AbstractTest {
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =

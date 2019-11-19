@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ConsentAcceptanceTest extends ConsentServiceTest {
+public class ConsentAcceptanceTest extends AbstractTest {
 
     private final UseRestriction everything = new Everything();
     private final UseRestriction nothing = new Nothing();
