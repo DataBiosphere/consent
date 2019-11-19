@@ -342,8 +342,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 summaryWriter.write( booleanToString(!dar.containsKey(DarConstants.RESTRICTION))+ SEPARATOR);
 
                                 if (Objects.nonNull(chairPersonVote)) {
-                                    summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
-                                    summaryWriter.write( nullToString(chairPersonVote.getRationale())+ SEPARATOR);
+                                    summaryWriter.write(booleanToString(chairPersonVote.getVote()) + SEPARATOR);
+                                    summaryWriter.write(nullToString(chairPersonVote.getRationale()) + SEPARATOR);
                                 } else {
                                     summaryWriter.write(nullToString(null) + SEPARATOR);
                                     summaryWriter.write(nullToString(null) + SEPARATOR);
@@ -359,7 +359,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
                                 if (Objects.nonNull(chairPersonConsentVote)) {
                                     summaryWriter.write(booleanToString(chairPersonConsentVote.getVote()) + SEPARATOR);
-                                    summaryWriter.write( nullToString(chairPersonConsentVote.getRationale())+ SEPARATOR);
+                                    summaryWriter.write(nullToString(chairPersonConsentVote.getRationale()) + SEPARATOR);
                                 } else {
                                     summaryWriter.write(nullToString(null) + SEPARATOR);
                                     summaryWriter.write(nullToString(null) + SEPARATOR);
