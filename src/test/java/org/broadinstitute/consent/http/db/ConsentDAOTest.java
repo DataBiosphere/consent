@@ -1,14 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
 import com.google.common.io.Resources;
-import com.google.gson.Gson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.Dac;
@@ -21,6 +19,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -41,6 +40,8 @@ public class ConsentDAOTest extends AbstractTest {
     private DacDAO dacDAO;
     private DataSetDAO dataSetDAO;
 
+    private String ASSOCIATION_TYPE_TEST;
+
     @SuppressWarnings("UnstableApiUsage")
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -56,6 +57,7 @@ public class ConsentDAOTest extends AbstractTest {
         consentDAO = getApplicationJdbi().onDemand(ConsentDAO.class);
         dacDAO = getApplicationJdbi().onDemand(DacDAO.class);
         dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
+        ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
     }
 
     @After
@@ -186,7 +188,7 @@ public class ConsentDAOTest extends AbstractTest {
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        Collection<Consent> foundConsents = consentDAO.findConsentsByAssociationType(AssociationType.WORKSPACE.getValue());
+        Collection<Consent> foundConsents = consentDAO.findConsentsByAssociationType(ASSOCIATION_TYPE_TEST);
 
         Assert.assertNotNull(foundConsents);
         Assert.assertFalse(foundConsents.isEmpty());
@@ -238,8 +240,17 @@ public class ConsentDAOTest extends AbstractTest {
         Assert.assertEquals(dac.getDacId(), foundConsent.getDacId());
     }
 
+    @Test
+    public void testUpdateConsentSortDate() {
+        Consent consent = createConsent(null);
+
+        consentDAO.updateConsentSortDate(consent.getConsentId(), yesterday());
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        Assert.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
+    }
+
     private void createAssociation(String consentId, Integer datasetId) {
-        consentDAO.insertConsentAssociation(consentId, AssociationType.WORKSPACE.getValue(), datasetId);
+        consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
     private Consent createConsent(Integer dacId) {
@@ -280,6 +291,12 @@ public class ConsentDAOTest extends AbstractTest {
         Integer id = dataSetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
         createdDataSetIds.add(id);
         return dataSetDAO.findDataSetById(id);
+    }
+
+    private Date yesterday() {
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        return cal.getTime();
     }
 
 }
