@@ -429,6 +429,10 @@
       <version>${dropwizard.version}</version>
       <exclusions>
         <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>com.google.code.findbugs</groupId>
           <artifactId>jsr305</artifactId>
         </exclusion>
@@ -582,7 +586,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>27.0-jre</version>
+      <version>28.1-jre</version>
     </dependency>
 
     <dependency>
@@ -783,6 +787,12 @@
       <artifactId>mockserver-netty</artifactId>
       <version>3.10.8</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -809,6 +819,10 @@
       <artifactId>owlapi-distribution</artifactId>
       <version>${owl.version}</version>
       <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.eclipse.rdf4j</groupId>
           <artifactId>df4j-rio-rdfxml</artifactId>
