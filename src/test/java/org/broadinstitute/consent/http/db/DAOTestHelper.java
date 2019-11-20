@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -25,17 +26,18 @@ import java.util.UUID;
 
 public class DAOTestHelper extends AbstractTest {
 
-    protected List<Integer> createdDataSetIds = new ArrayList<>();
-    protected List<Integer> createdDacIds = new ArrayList<>();
-    protected List<String> createdConsentIds = new ArrayList<>();
-    protected List<Integer> createdElectionIds = new ArrayList<>();
+    private List<Integer> createdDataSetIds = new ArrayList<>();
+    private List<Integer> createdDacIds = new ArrayList<>();
+    private List<String> createdConsentIds = new ArrayList<>();
+    private List<Integer> createdElectionIds = new ArrayList<>();
 
-    protected ConsentDAO consentDAO;
-    protected DacDAO dacDAO;
-    protected DataSetDAO dataSetDAO;
-    protected ElectionDAO electionDAO;
+    ConsentDAO consentDAO;
+    DacDAO dacDAO;
+    private DACUserDAO userDAO;
+    private DataSetDAO dataSetDAO;
+    private ElectionDAO electionDAO;
 
-    protected String ASSOCIATION_TYPE_TEST;
+    String ASSOCIATION_TYPE_TEST;
 
     @SuppressWarnings("UnstableApiUsage")
     @ClassRule
@@ -51,6 +53,7 @@ public class DAOTestHelper extends AbstractTest {
     public void setUp() {
         consentDAO = getApplicationJdbi().onDemand(ConsentDAO.class);
         dacDAO = getApplicationJdbi().onDemand(DacDAO.class);
+        userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
         electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
         ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
@@ -65,10 +68,13 @@ public class DAOTestHelper extends AbstractTest {
         });
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
         dataSetDAO.deleteDataSets(createdDataSetIds);
-        createdDacIds.forEach(id -> dacDAO.deleteDac(id));
+        createdDacIds.forEach(id -> {
+            dacDAO.deleteDacMembers(id);
+            dacDAO.deleteDac(id);
+        });
     }
 
-    protected void createAssociation(String consentId, Integer datasetId) {
+    void createAssociation(String consentId, Integer datasetId) {
         consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
@@ -85,7 +91,7 @@ public class DAOTestHelper extends AbstractTest {
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected Consent createConsent(Integer dacId) {
+    Consent createConsent(Integer dacId) {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
                 false,
@@ -104,7 +110,20 @@ public class DAOTestHelper extends AbstractTest {
         return consentDAO.findConsentById(consentId);
     }
 
-    protected Dac createDac() {
+    DACUser createUser() {
+        int i1 = RandomUtils.nextInt(5, 10);
+        int i2 = RandomUtils.nextInt(5, 10);
+        int i3 = RandomUtils.nextInt(3, 5);
+        String email = RandomStringUtils.randomAlphabetic(i1) +
+                "@" +
+                RandomStringUtils.randomAlphabetic(i2) +
+                "." +
+                RandomStringUtils.randomAlphabetic(i3);
+        Integer userId = userDAO.insertDACUser(email, "display name", new Date());
+        return dacDAO.findUserById(userId);
+    }
+
+    Dac createDac() {
         Integer id = dacDAO.createDac(
                 "Test_" + RandomStringUtils.random(20, true, true),
                 "Test_" + RandomStringUtils.random(20, true, true),
@@ -113,7 +132,7 @@ public class DAOTestHelper extends AbstractTest {
         return dacDAO.findById(id);
     }
 
-    protected DataSet createDataset() {
+    DataSet createDataset() {
         DataSet ds = new DataSet();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
         ds.setCreateDate(new Date());
@@ -125,7 +144,7 @@ public class DAOTestHelper extends AbstractTest {
         return dataSetDAO.findDataSetById(id);
     }
 
-    protected Date yesterday() {
+    Date yesterday() {
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
