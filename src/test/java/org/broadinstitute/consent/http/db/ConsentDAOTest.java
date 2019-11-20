@@ -331,6 +331,17 @@ public class ConsentDAOTest extends AbstractTest {
     public void testDeleteAssociationsByDataSetId() {
         // TODO
         // deleteAssociationsByDataSetId
+        DataSet dataset = createDataset();
+        DataSet dataset2 = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
+
+        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
+        Assert.assertNull(deletedAssociationId);
+        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
+        Assert.assertNotNull(remainingAssociationId);
     }
 
     @Test
