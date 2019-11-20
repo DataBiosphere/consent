@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-public class DAOTestHelper extends AbstractTest {
+public abstract class DAOTestHelper extends AbstractTest {
 
     private List<Integer> createdDataSetIds = new ArrayList<>();
     private List<Integer> createdDacIds = new ArrayList<>();
@@ -34,7 +34,7 @@ public class DAOTestHelper extends AbstractTest {
     ConsentDAO consentDAO;
     DacDAO dacDAO;
     private DACUserDAO userDAO;
-    private DataSetDAO dataSetDAO;
+    DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
 
     String ASSOCIATION_TYPE_TEST;
