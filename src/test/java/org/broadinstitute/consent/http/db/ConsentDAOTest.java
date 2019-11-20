@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -271,12 +272,7 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testFindAssociationsByDataSetId() {
-        DataSet dataset = createDataset();
-        Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-
-        Integer associationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
-        Assert.assertNotNull(associationId);
+        // no-op ... tested in `testDeleteOneAssociation()`
     }
 
     @Test
@@ -297,14 +293,33 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testDeleteOneAssociation() {
-        // TODO
-        // deleteOneAssociation
+        DataSet dataset = createDataset();
+        DataSet dataset2 = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+
+        consentDAO.deleteOneAssociation(
+                consent.getConsentId(),
+                ASSOCIATION_TYPE_TEST,
+                dataset.getDataSetId());
+        Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
+        Assert.assertNull(deletedAssociationId);
+        Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
+        Assert.assertNotNull(remainingAssociationId);
     }
 
     @Test
     public void testDeleteAllAssociationsForType() {
-        // TODO
-        // deleteAllAssociationsForType
+        DataSet dataset = createDataset();
+        DataSet dataset2 = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        consentDAO.deleteAllAssociationsForType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
+
+        List<String> associationTypes = consentDAO.findAssociationTypesForConsent(consent.getConsentId());
+        Assert.assertTrue(associationTypes.isEmpty());
     }
 
     @Test
