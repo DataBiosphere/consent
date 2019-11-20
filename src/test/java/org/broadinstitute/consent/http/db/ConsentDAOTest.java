@@ -329,8 +329,6 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testDeleteAssociationsByDataSetId() {
-        // TODO
-        // deleteAssociationsByDataSetId
         DataSet dataset = createDataset();
         DataSet dataset2 = createDataset();
         Consent consent = createConsent(null);
