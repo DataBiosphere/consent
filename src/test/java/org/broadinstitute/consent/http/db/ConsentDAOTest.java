@@ -376,8 +376,11 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testFindUnreviewedConsents() {
-        // TODO
-        // findUnreviewedConsents
+        Consent consent = createConsent(null);
+
+        List<Consent> consents = consentDAO.findUnreviewedConsents();
+        List<String> consentIds = consents.stream().map(Consent::getConsentId).collect(Collectors.toList());
+        Assert.assertTrue(consentIds.contains(consent.getConsentId()));
     }
 
     @Test
