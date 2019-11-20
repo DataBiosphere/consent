@@ -472,8 +472,41 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentUpdateStatus() {
-        // TODO
-        // updateConsentUpdateStatus
+        Consent consent1 = createConsent(null);
+        consentDAO.updateConsent(
+                consent1.getConsentId(),
+                consent1.getRequiresManualReview(),
+                consent1.getUseRestriction().toString(),
+                consent1.getDataUse().toString(),
+                consent1.getDataUseLetter(),
+                consent1.getName(),
+                consent1.getDulName(),
+                new Date(),
+                consent1.getSortDate(),
+                consent1.getTranslatedUseRestriction(),
+                consent1.getGroupName(),
+                true,
+                consent1.getDacId());
+        Consent consent2 = createConsent(null);
+        consentDAO.updateConsent(
+                consent2.getConsentId(),
+                consent2.getRequiresManualReview(),
+                consent2.getUseRestriction().toString(),
+                consent2.getDataUse().toString(),
+                consent2.getDataUseLetter(),
+                consent2.getName(),
+                consent2.getDulName(),
+                new Date(),
+                consent2.getSortDate(),
+                consent2.getTranslatedUseRestriction(),
+                consent2.getGroupName(),
+                false,
+                consent2.getDacId());
+
+        Consent consent1Found = consentDAO.findConsentById(consent1.getConsentId());
+        Assert.assertTrue(consent1Found.getUpdated());
+        Consent consent2Found = consentDAO.findConsentById(consent2.getConsentId());
+        Assert.assertFalse(consent2Found.getUpdated());
     }
 
     @Test
