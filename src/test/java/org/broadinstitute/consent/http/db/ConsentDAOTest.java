@@ -521,8 +521,12 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentDac() {
-        // TODO
-        // updateConsentDac
+        Consent consent = createConsent(null);
+        Dac dac = createDac();
+
+        consentDAO.updateConsentDac(consent.getConsentId(), dac.getDacId());
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        Assert.assertEquals(dac.getDacId(), foundConsent.getDacId());
     }
 
     private void createAssociation(String consentId, Integer datasetId) {
