@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -441,14 +442,15 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testFindInvalidRestrictions() {
-        // TODO
-        // findInvalidRestrictions
+        // no-op ... tested in `testUpdateConsentValidUseRestriction()`
     }
 
     @Test
     public void testFindConsentUseRestrictions() {
-        // TODO
-        // findConsentUseRestrictions
+        Consent consent = createConsent(null);
+
+        List<UseRestrictionDTO> useRestrictions = consentDAO.findConsentUseRestrictions();
+        Assert.assertFalse(useRestrictions.isEmpty());
     }
 
     @Test
