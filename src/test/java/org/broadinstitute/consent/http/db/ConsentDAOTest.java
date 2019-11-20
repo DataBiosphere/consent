@@ -385,8 +385,25 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testCheckManualReview() {
-        // TODO
-        // checkManualReview
+        Consent consent = createConsent(null);
+        Consent consent2 = createConsent(null);
+        consentDAO.updateConsent(
+                consent2.getConsentId(),
+                true,
+                consent2.getUseRestriction().toString(),
+                consent2.getDataUse().toString(),
+                consent2.getDataUseLetter(),
+                consent2.getName(),
+                consent2.getDulName(),
+                new Date(),
+                consent2.getSortDate(),
+                consent2.getTranslatedUseRestriction(),
+                consent2.getGroupName(),
+                consent2.getUpdated(),
+                consent2.getDacId());
+
+        Assert.assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
+        Assert.assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
     }
 
     @Test
