@@ -7,10 +7,14 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
+import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,10 +40,12 @@ public class ConsentDAOTest extends AbstractTest {
     private List<Integer> createdDataSetIds = new ArrayList<>();
     private List<Integer> createdDacIds = new ArrayList<>();
     private List<String> createdConsentIds = new ArrayList<>();
+    private List<Integer> createdElectionIds = new ArrayList<>();
 
     private ConsentDAO consentDAO;
     private DacDAO dacDAO;
     private DataSetDAO dataSetDAO;
+    private ElectionDAO electionDAO;
 
     private String ASSOCIATION_TYPE_TEST;
 
@@ -58,6 +64,7 @@ public class ConsentDAOTest extends AbstractTest {
         consentDAO = getApplicationJdbi().onDemand(ConsentDAO.class);
         dacDAO = getApplicationJdbi().onDemand(DacDAO.class);
         dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
+        electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
         ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
     }
 
@@ -68,6 +75,7 @@ public class ConsentDAOTest extends AbstractTest {
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
         });
+        createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
         dataSetDAO.deleteDataSets(createdDataSetIds);
         createdDacIds.forEach(id -> dacDAO.deleteDac(id));
     }
@@ -408,8 +416,14 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testFindConsentManageByStatus() {
-        // TODO
-        // findConsentManageByStatus
+        Consent consent = createConsent(null);
+        DataSet dataset = createDataset();
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+
+        List<ConsentManage> consentManages = consentDAO.findConsentManageByStatus(election.getStatus());
+        List<String> consentIds = consentManages.stream().map(ConsentManage::getConsentId).collect(Collectors.toList());
+        Assert.assertTrue(consentIds.contains(consent.getConsentId()));
     }
 
     @Test
@@ -456,6 +470,18 @@ public class ConsentDAOTest extends AbstractTest {
 
     private void createAssociation(String consentId, Integer datasetId) {
         consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
+    }
+
+    private Election createElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.DATA_ACCESS.getValue(),
+                ElectionStatus.OPEN.getValue(),
+                new Date(),
+                referenceId,
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
     }
 
     @SuppressWarnings("SameParameterValue")
