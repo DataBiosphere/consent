@@ -457,8 +457,17 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentValidUseRestriction() {
-        // TODO
-        // updateConsentValidUseRestriction
+        Consent consent = createConsent(null);
+        Consent consent2 = createConsent(null);
+
+        consentDAO.updateConsentValidUseRestriction(Collections.singletonList(consent.getConsentId()), true);
+        consentDAO.updateConsentValidUseRestriction(Collections.singletonList(consent2.getConsentId()), false);
+
+        List<UseRestrictionDTO> useRestrictions = consentDAO.findInvalidRestrictions();
+        List<String> consentIds = useRestrictions.stream().map(UseRestrictionDTO::getId).collect(Collectors.toList());
+        Assert.assertFalse(useRestrictions.isEmpty());
+        Assert.assertFalse(consentIds.contains(consent.getConsentId()));
+        Assert.assertTrue(consentIds.contains(consent2.getConsentId()));
     }
 
     @Test
