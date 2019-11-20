@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ConsentDAOTest extends AbstractTest {
 
@@ -428,8 +429,14 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testGetAssociationConsentIdsFromDatasetIds() {
-        // TODO
-        // getAssociationConsentIdsFromDatasetIds
+        Consent consent = createConsent(null);
+        DataSet dataset = createDataset();
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        List<String> dataSetIds = Stream.of(String.valueOf(dataset.getDataSetId())).collect(Collectors.toList());
+
+        List<String> consentIds = consentDAO.getAssociationConsentIdsFromDatasetIds(dataSetIds);
+        Assert.assertFalse(consentIds.isEmpty());
+        Assert.assertTrue(consentIds.contains(consent.getConsentId()));
     }
 
     @Test
