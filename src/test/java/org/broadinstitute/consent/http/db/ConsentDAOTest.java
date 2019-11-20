@@ -1,14 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import com.google.common.io.Resources;
-import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.AbstractTest;
-import org.broadinstitute.consent.http.ConsentApplication;
-import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
@@ -16,71 +8,20 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ConsentDAOTest extends AbstractTest {
-
-    // TODO: We have to track what we add because there are tests that rely on existing data.
-    // Once those are replaced, these can be replaced with a delete all.
-    private List<Integer> createdDataSetIds = new ArrayList<>();
-    private List<Integer> createdDacIds = new ArrayList<>();
-    private List<String> createdConsentIds = new ArrayList<>();
-    private List<Integer> createdElectionIds = new ArrayList<>();
-
-    private ConsentDAO consentDAO;
-    private DacDAO dacDAO;
-    private DataSetDAO dataSetDAO;
-    private ElectionDAO electionDAO;
-
-    private String ASSOCIATION_TYPE_TEST;
-
-    @SuppressWarnings("UnstableApiUsage")
-    @ClassRule
-    public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
-            ConsentApplication.class, Resources.getResource("consent-config.yml").getFile());
-
-    @Override
-    public DropwizardAppRule<ConsentConfiguration> rule() {
-        return RULE;
-    }
-
-    @Before
-    public void setUp() {
-        consentDAO = getApplicationJdbi().onDemand(ConsentDAO.class);
-        dacDAO = getApplicationJdbi().onDemand(DacDAO.class);
-        dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
-        electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
-        ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
-    }
-
-    @After
-    public void tearDown() {
-        // Order is important for FK constraints
-        createdConsentIds.forEach(id -> {
-            consentDAO.deleteAllAssociationsForConsent(id);
-            consentDAO.deleteConsent(id);
-        });
-        createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
-        dataSetDAO.deleteDataSets(createdDataSetIds);
-        createdDacIds.forEach(id -> dacDAO.deleteDac(id));
-    }
+public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindConsentById() {
@@ -527,69 +468,6 @@ public class ConsentDAOTest extends AbstractTest {
         consentDAO.updateConsentDac(consent.getConsentId(), dac.getDacId());
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         Assert.assertEquals(dac.getDacId(), foundConsent.getDacId());
-    }
-
-    private void createAssociation(String consentId, Integer datasetId) {
-        consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
-    }
-
-    private Election createElection(String referenceId, Integer datasetId) {
-        Integer electionId = electionDAO.insertElection(
-                ElectionType.DATA_ACCESS.getValue(),
-                ElectionStatus.OPEN.getValue(),
-                new Date(),
-                referenceId,
-                datasetId
-        );
-        createdElectionIds.add(electionId);
-        return electionDAO.findElectionById(electionId);
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private Consent createConsent(Integer dacId) {
-        String consentId = UUID.randomUUID().toString();
-        consentDAO.insertConsent(consentId,
-                false,
-                "{\"type\":\"everything\"}",
-                "{\"generalUse\": true }",
-                "dul",
-                consentId,
-                "dulName",
-                new Date(),
-                new Date(),
-                "Everything",
-                true,
-                "Group",
-                dacId);
-        createdConsentIds.add(consentId);
-        return consentDAO.findConsentById(consentId);
-    }
-
-    private Dac createDac() {
-        Integer id = dacDAO.createDac(
-                "Test_" + RandomStringUtils.random(20, true, true),
-                "Test_" + RandomStringUtils.random(20, true, true),
-                new Date());
-        createdDacIds.add(id);
-        return dacDAO.findById(id);
-    }
-
-    private DataSet createDataset() {
-        DataSet ds = new DataSet();
-        ds.setName("Name_" + RandomStringUtils.random(20, true, true));
-        ds.setCreateDate(new Date());
-        ds.setObjectId("Object ID_" + RandomStringUtils.random(20, true, true));
-        ds.setActive(true);
-        ds.setAlias(RandomUtils.nextInt(1, 1000));
-        Integer id = dataSetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
-        createdDataSetIds.add(id);
-        return dataSetDAO.findDataSetById(id);
-    }
-
-    private Date yesterday() {
-        final Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        return cal.getTime();
     }
 
 }
