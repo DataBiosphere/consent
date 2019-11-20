@@ -363,8 +363,15 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testFindConsentByAssociationAndObjectId() {
-        // TODO
-        // findConsentByAssociationAndObjectId
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        List<String> associations = consentDAO.findAssociationsByType(consent.getConsentId(), ASSOCIATION_TYPE_TEST);
+        String objectId = associations.get(0);
+
+        Consent foundConsent = consentDAO.findConsentByAssociationAndObjectId(ASSOCIATION_TYPE_TEST, objectId);
+        Assert.assertNotNull(foundConsent);
+        Assert.assertEquals(consent.getConsentId(), foundConsent.getConsentId());
     }
 
     @Test
