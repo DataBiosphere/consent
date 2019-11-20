@@ -450,7 +450,9 @@ public class ConsentDAOTest extends AbstractTest {
         Consent consent = createConsent(null);
 
         List<UseRestrictionDTO> useRestrictions = consentDAO.findConsentUseRestrictions();
+        List<String> consentIds = useRestrictions.stream().map(UseRestrictionDTO::getId).collect(Collectors.toList());
         Assert.assertFalse(useRestrictions.isEmpty());
+        Assert.assertTrue(consentIds.contains(consent.getConsentId()));
     }
 
     @Test
