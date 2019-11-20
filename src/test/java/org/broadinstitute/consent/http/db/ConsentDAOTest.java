@@ -511,8 +511,12 @@ public class ConsentDAOTest extends AbstractTest {
 
     @Test
     public void testUpdateConsentGroupName() {
-        // TODO
-        // updateConsentGroupName
+        String newGroupName = RandomStringUtils.random(10);
+        Consent consent = createConsent(null);
+
+        consentDAO.updateConsentGroupName(consent.getConsentId(), newGroupName);
+        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
+        Assert.assertEquals(newGroupName, foundConsent.getGroupName());
     }
 
     @Test
