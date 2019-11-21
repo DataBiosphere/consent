@@ -246,6 +246,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration(), consentDAO);
         OAuthAuthenticator.initInstance();
+        OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
 
         // Mail Services
         DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);

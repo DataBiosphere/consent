@@ -14,13 +14,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 public class DatabaseUserAPITest {
 
@@ -44,10 +43,6 @@ public class DatabaseUserAPITest {
 
     private UserAPI userAPI;
 
-    private final String EMAIL = "test@gmail.com";
-
-    private final String INVALID_EMAIL = "invalid_email@gmail.com";
-
     private final String DISPLAY_NAME = "test";
 
     @Before
@@ -57,28 +52,22 @@ public class DatabaseUserAPITest {
     }
 
 
-    @Test
+    @Test(expected = BadRequestException.class)
     public void testCreateUserWithInvalidEmail() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
-        try {
-            userAPI.createUser(dacUser, INVALID_EMAIL);
-        } catch (NotAuthorizedException e) {
-            assertTrue(e.getMessage().equalsIgnoreCase("You don't have permission to update the specified user."));
-        }
+        DACUser dacUser = new DACUser(1, "", DISPLAY_NAME, new Date());
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        dacUser.setRoles(Collections.singletonList(researcher));
+        userAPI.createUser(dacUser);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testCreateUserWithInvalidRoles() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date());
+        DACUser dacUser = new DACUser(1, "test@gmail.com", DISPLAY_NAME, new Date());
         UserRole roleResearcher = new UserRole(1, UserRoles.RESEARCHER.getRoleName());
         UserRole roleMember = new UserRole(1, UserRoles.MEMBER.getRoleName());
         List<UserRole> roles = new ArrayList<>(Arrays.asList(roleResearcher, roleMember));
         dacUser.setRoles(roles);
-        try {
-            userAPI.createUser(dacUser, EMAIL);
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().equalsIgnoreCase("Invalid role: " + UserRoles.MEMBER.getRoleName() + ". Valid roles are: " + UserRoles.DATAOWNER.getRoleName() + " and " + UserRoles.RESEARCHER.getRoleName()));
-        }
+        userAPI.createUser(dacUser);
     }
 
 }
