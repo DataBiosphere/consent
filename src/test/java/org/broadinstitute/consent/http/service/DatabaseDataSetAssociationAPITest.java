@@ -1,20 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
-import java.sql.BatchUpdateException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +15,16 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import static org.mockito.Mockito.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.sql.BatchUpdateException;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.when;
 
 public class DatabaseDataSetAssociationAPITest {
 
@@ -100,10 +101,10 @@ public class DatabaseDataSetAssociationAPITest {
     DataSet ds1 = new DataSet(1, "DS-001", "DS-001", new Date(), true);
     DataSet ds2 = new DataSet(2, "DS-002", "DS-002", new Date(), true);
 
-    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), chairpersonList(), null);
-    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), memberList(), null);
-    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
-    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", RoleStatus.PENDING.toString(), new Date(), dataownerList(), null);
+    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
+    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
+    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
+    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
 
     private List<UserRole> chairpersonList(){
         return Arrays.asList(getChairpersonRole());

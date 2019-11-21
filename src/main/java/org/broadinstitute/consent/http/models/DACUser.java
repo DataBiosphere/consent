@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
 
 import java.util.Date;
 import java.util.List;
@@ -60,14 +61,19 @@ public class DACUser {
         this.additionalEmail = additionalEmail;
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName,
-                   String isApproved, Date createDate, List<UserRole> roles, String additionalEmail) {
+    public DACUser(Integer dacUserId, String email, String displayName, Date createDate,
+                   List<UserRole> roles, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
         this.roles = roles;
         this.additionalEmail = additionalEmail;
+    }
+
+    public DACUser(GoogleUser googleUser) {
+        this.displayName = googleUser.getName();
+        this.email = googleUser.getEmail();
     }
 
     /**

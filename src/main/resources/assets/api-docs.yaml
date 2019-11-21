@@ -1155,6 +1155,8 @@ paths:
           in: path
           required: true
           type: number
+      tags:
+        - DACUser
       responses:
         200:
           description: Returns the user by status
@@ -1179,6 +1181,8 @@ paths:
           description: |
             JSON object with a "status" member. Statuses allowed are "pending", "approved", or
             "rejected".
+      tags:
+        - DACUser
       responses:
         200:
           description: Returns the updated user
@@ -2259,14 +2263,8 @@ paths:
                     $ref: '#/definitions/HelpReport'
   /api/user:
     post:
-      summary: createdUser
-      description: Create a user. Only allows for the roles of RESEARCHER and DATAOWNER so that a new user can set themselves up from within a workspace.
-      parameters:
-        - name: dac
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/DACUser'
+      summary: createResearcher
+      description: Create a user with RESEARCHER role using the user's current authentication status.
       tags:
         - User
       responses:
@@ -2275,9 +2273,17 @@ paths:
           schema:
             $ref: '#/definitions/DACUser'
         400:
-          description: Malformed user entity.
+          description: Unable to validate the user's google identity.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
         409:
-          description: Email should be unique.
+          description: User should be unique
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server error.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
   /api/researcher/{userId}:
     post:
       summary: Create researcher.
@@ -3135,11 +3141,13 @@ definitions:
         type: string
         description: Name of the role
   ErrorResponse:
-    required:
-      - "message"
     properties:
       message:
         type: string
+        description: The error message
+      code:
+        type: integer
+        description: The response status code
   HelpReport:
     type: object
     properties:
