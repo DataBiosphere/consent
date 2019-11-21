@@ -1,12 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.junit.Assert;
@@ -15,9 +18,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.UUID;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -34,6 +40,12 @@ public class ConsentServiceTest {
 
     @Mock
     MongoConsentDB mongo;
+
+    @Mock
+    MongoCollection collection;
+
+    @Mock
+    FindIterable iterable;
 
     @Mock
     VoteDAO voteDAO;
@@ -72,6 +84,26 @@ public class ConsentServiceTest {
 
         try {
             service.updateConsentDac(UUID.randomUUID().toString(), RandomUtils.nextInt(1, 10));
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testDescribeConsentManage() {
+        AuthUser user = new AuthUser("user@test.com");
+        when(consentDAO.findUnreviewedConsents()).thenReturn(Collections.emptyList());
+        when(consentDAO.findConsentManageByStatus(anyString())).thenReturn(Collections.emptyList());
+        when(voteDAO.findChairPersonVoteByElectionId(anyInt())).thenReturn(true);
+        when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(anyString(), anyString())).thenReturn(Collections.emptyList());
+        when(collection.find(any(BasicDBObject.class))).thenReturn(iterable);
+        when(mongo.getDataAccessRequestCollection()).thenReturn(collection);
+        when(dacService.filterConsentManageByDAC(anyList(), any(AuthUser.class))).thenReturn(Collections.emptyList());
+        initService();
+
+        try {
+            service.describeConsentManage(user);
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
