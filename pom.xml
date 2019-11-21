@@ -843,6 +843,10 @@
         </exclusion>
         <exclusion>
           <groupId>org.eclipse.rdf4j</groupId>
+          <artifactId>rdf4j-rio-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.rdf4j</groupId>
           <artifactId>rdf4j-rio-binary</artifactId>
         </exclusion>
         <exclusion>
