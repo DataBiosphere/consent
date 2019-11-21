@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -15,7 +17,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.UUID;
 
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class ConsentServiceTest {
@@ -59,6 +63,18 @@ public class ConsentServiceTest {
         Assert.assertNotNull(consent);
         Assert.assertEquals(ElectionStatus.OPEN.getValue(), consent.getLastElectionStatus());
         Assert.assertFalse(consent.getLastElectionArchived());
+    }
+
+    @Test
+    public void testUpdateConsentDac() {
+        doNothing().when(consentDAO).updateConsentDac(anyString(), anyInt());
+        initService();
+
+        try {
+            service.updateConsentDac(UUID.randomUUID().toString(), RandomUtils.nextInt(1, 10));
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
 }
