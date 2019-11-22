@@ -25,6 +25,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -78,7 +79,12 @@ public class ConsentElectionResource extends Resource {
             if (consent.getDacId() != null && !consent.getDacId().equals(dacId)) {
                 throw new BadRequestException("Consent is already associated to a DAC.");
             }
-            consentService.updateConsentDac(consentId, dacId); // Wrap with a try to keep db errors from the user
+            try {
+                consentService.updateConsentDac(consentId, dacId);
+            } catch (Exception e) {
+                logger().error("Exception updating consent id: '" + consentId + "', with dac id: '" + dacId + "'");
+                throw new InternalServerErrorException("Unable to associate consent to dac.");
+            }
             uri = createElectionURI(info, election, consentId);
         } catch (Exception e) {
             return createExceptionResponse(e);

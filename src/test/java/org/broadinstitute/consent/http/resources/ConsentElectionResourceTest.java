@@ -47,6 +47,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("deprecation")
@@ -193,6 +194,26 @@ public class ConsentElectionResourceTest {
                 election);
         Assert.assertNotNull(response);
         Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testCreateConsentElectionForDac_consentUpdateError() throws UnknownIdentifierException {
+        Election election = getElection();
+        Dac dac = getDac();
+        Consent consent = getConsent(dac.getDacId());
+        when(consentService.getById(anyString())).thenReturn(consent);
+        when(dacService.findById(anyInt())).thenReturn(dac);
+        doThrow(new RuntimeException()).when(consentService).updateConsentDac(anyString(), anyInt());
+        initResource();
+
+        Response response = resource.createConsentElectionForDac(
+                user,
+                info,
+                consent.getConsentId(),
+                dac.getDacId(),
+                election);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
     }
 
     @Test
