@@ -5,8 +5,12 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
@@ -14,6 +18,7 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,6 +34,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -91,7 +97,6 @@ public class ConsentElectionResourceTest {
         when(voteAPI.createVotes(anyInt(), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
         doNothing().when(electionAPI).deleteElection(anyString(), anyInt());
         doNothing().when(emailAPI).sendNewCaseMessageToList(anyList(), any(Election.class));
-
     }
 
     @Test
@@ -115,11 +120,52 @@ public class ConsentElectionResourceTest {
         Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
+    @Test
+    public void testCreateConsentElectionForDac() throws UnknownIdentifierException {
+        Election election = getElection();
+        Dac dac = getDac();
+        Consent consent = getConsent(dac.getDacId());
+        when(consentService.getById(anyString())).thenReturn(consent);
+        when(dacService.findById(anyInt())).thenReturn(dac);
+        initResource();
+
+        Response response = resource.createConsentElectionForDac(
+                user,
+                info,
+                consent.getConsentId(),
+                dac.getDacId(),
+                election);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    }
+
     private void initResource() {
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailAPI);
         resource = new ConsentElectionResource(consentService, dacService);
+    }
+
+    private Consent getConsent(Integer dacId) {
+        Consent consent = new Consent();
+        consent.setConsentId(UUID.randomUUID().toString());
+        consent.setCreateDate(new Timestamp(new Date().getTime()));
+        consent.setDacId(dacId);
+        consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+        consent.setRequiresManualReview(false);
+        consent.setDataUseLetter("");
+        consent.setUseRestriction(new Everything());
+        consent.setName("Name");
+        return consent;
+    }
+
+    private Dac getDac() {
+        Dac dac = new Dac();
+        dac.setDacId(RandomUtils.nextInt(1, 100));
+        dac.setName("Name");
+        dac.setDescription("Description");
+        dac.setCreateDate(new Date());
+        return dac;
     }
 
     private Election getElection() {
