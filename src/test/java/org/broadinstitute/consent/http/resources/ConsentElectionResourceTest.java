@@ -96,7 +96,6 @@ public class ConsentElectionResourceTest {
         Election election = getElection();
         when(electionAPI.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
         when(voteAPI.createVotes(anyInt(), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
-        doNothing().when(electionAPI).deleteElection(anyString(), anyInt());
         doNothing().when(emailAPI).sendNewCaseMessageToList(anyList(), any(Election.class));
     }
 
@@ -215,6 +214,16 @@ public class ConsentElectionResourceTest {
         Response response = resource.describe(UUID.randomUUID().toString());
         Assert.assertNotNull(response);
         Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testDeleteElection() {
+        doNothing().when(electionAPI).deleteElection(anyString(), anyInt());
+        initResource();
+
+        Response response = resource.deleteElection(UUID.randomUUID().toString(), info, RandomUtils.nextInt(1, 10));
+        Assert.assertNotNull(response);
+        Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
     }
 
     private void initResource() {
