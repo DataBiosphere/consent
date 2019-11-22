@@ -139,6 +139,24 @@ public class ConsentElectionResourceTest {
         Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }
 
+    @Test
+    public void testCreateConsentElectionForDac_failureCase1() throws UnknownIdentifierException {
+        Election election = getElection();
+        Dac dac = getDac();
+        Consent consent = getConsent(dac.getDacId());
+        when(consentService.getById(anyString())).thenThrow(new UnknownIdentifierException(""));
+        initResource();
+
+        Response response = resource.createConsentElectionForDac(
+                user,
+                info,
+                consent.getConsentId(),
+                dac.getDacId(),
+                election);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    }
+
     private void initResource() {
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
