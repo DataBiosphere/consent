@@ -32,32 +32,32 @@ public class ConsentElectionTest extends ElectionVoteServiceTest {
         return RULE;
     }
 
-    @Test
-    public void retrieveElectionWithInvalidConsentId() {
-        Client client = ClientBuilder.newClient();
-        checkStatus(NOT_FOUND,
-                getJson(client, electionConsentPath(INVALID_CONSENT_ID)));
-    }
+//    @Test
+//    public void retrieveElectionWithInvalidConsentId() {
+//        Client client = ClientBuilder.newClient();
+//        checkStatus(NOT_FOUND,
+//                getJson(client, electionConsentPath(INVALID_CONSENT_ID)));
+//    }
 
-    @Test
-    public void testCreateConsentElectionWithInvalidConsent() {
-        Client client = ClientBuilder.newClient();
-        Election election = new Election();
-        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-        election.setStatus(ElectionStatus.OPEN.getValue());
-        // should return 400 bad request because the consent id does not exist
-        checkStatus(BADREQUEST,
-                post(client, electionConsentPath(INVALID_CONSENT_ID), election));
-    }
+//    @Test
+//    public void testCreateConsentElectionWithInvalidConsent() {
+//        Client client = ClientBuilder.newClient();
+//        Election election = new Election();
+//        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
+//        election.setStatus(ElectionStatus.OPEN.getValue());
+//        // should return 400 bad request because the consent id does not exist
+//        checkStatus(BADREQUEST,
+//                post(client, electionConsentPath(INVALID_CONSENT_ID), election));
+//    }
 
-    @Test
-    public void testUpdateConsentElectionWithInvalidId() {
-        Client client = ClientBuilder.newClient();
-        Election election = new Election();
-        // should return 400 bad request because the election id does not exist
-        checkStatus(NOT_FOUND,
-                put(client, electionPathById(8555), election));
-    }
+//    @Test
+//    public void testUpdateConsentElectionWithInvalidId() {
+//        Client client = ClientBuilder.newClient();
+//        Election election = new Election();
+//        // should return 400 bad request because the election id does not exist
+//        checkStatus(NOT_FOUND,
+//                put(client, electionPathById(8555), election));
+//    }
 
     @Test
     public void testCreateConsentElectionWithInvalidStatus() {
