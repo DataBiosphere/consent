@@ -30,6 +30,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -193,6 +194,27 @@ public class ConsentElectionResourceTest {
                 election);
         Assert.assertNotNull(response);
         Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testDescribe() {
+        Election election = getElection();
+        when(electionAPI.describeConsentElection(anyString())).thenReturn(election);
+        initResource();
+
+        Response response = resource.describe(UUID.randomUUID().toString());
+        Assert.assertNotNull(response);
+        Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testDescribe_notFound() {
+        when(electionAPI.describeConsentElection(anyString())).thenThrow(new NotFoundException());
+        initResource();
+
+        Response response = resource.describe(UUID.randomUUID().toString());
+        Assert.assertNotNull(response);
+        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     private void initResource() {
