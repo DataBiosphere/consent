@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ public class DARModalDetailsDTOTest {
             .setResearchType(darDocument)
             .setDiseases(darDocument)
             .setPurposeStatements(darDocument)
-            .setDatasetDetail((ArrayList<Document>) darDocument.get(DarConstants.DATASET_DETAIL));
+            .setDatasets(Collections.emptyList());
         modalDetailsDTO.getDarCode();
         assertTrue(modalDetailsDTO.getDarCode().equals(DAR_CODE));
         assertTrue(modalDetailsDTO.getInstitutionName().equals(INSTITUTION));

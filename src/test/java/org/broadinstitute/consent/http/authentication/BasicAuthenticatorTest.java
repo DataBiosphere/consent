@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.basic.BasicCredentials;
 import org.broadinstitute.consent.http.configurations.BasicAuthConfig;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -37,28 +37,28 @@ public class BasicAuthenticatorTest {
     @Test
     public void testAuthenticateSuccessful() throws Exception {
         BasicCredentials credentials = new BasicCredentials("testUser", "testPassword");
-        Optional<User> user = authenticator.authenticate(credentials);
+        Optional<AuthUser> user = authenticator.authenticate(credentials);
         assertTrue(user.get().getName().equals(basicAuths.getUsers().get(0).getUser()));
     }
 
     @Test
     public void testAuthenticateBadPassword() throws Exception {
         BasicCredentials credentials = new BasicCredentials("testUser", "wrongPassword");
-        Optional<User> user = authenticator.authenticate(credentials);
+        Optional<AuthUser> user = authenticator.authenticate(credentials);
         assertTrue(user.isPresent() == false);
     }
 
     @Test
     public void testAuthenticateBadUser() throws Exception {
         BasicCredentials credentials = new BasicCredentials("wrongUser", "testPassword");
-        Optional<User> user = authenticator.authenticate(credentials);
+        Optional<AuthUser> user = authenticator.authenticate(credentials);
         assertTrue(user.isPresent() == false);
     }
 
     @Test
     public void testAuthenticateBadUserAndPassword() throws Exception {
         BasicCredentials credentials = new BasicCredentials("wrongUser", "wrongPassword");
-        Optional<User> user = authenticator.authenticate(credentials);
+        Optional<AuthUser> user = authenticator.authenticate(credentials);
         assertTrue(user.isPresent() == false);
     }
 

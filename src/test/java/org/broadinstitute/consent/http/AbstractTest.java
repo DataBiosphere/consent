@@ -18,10 +18,6 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -45,7 +41,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -74,7 +69,7 @@ abstract public class AbstractTest extends ResourcedTest {
      * Some utility methods for interacting with HTTP-services.
      */
 
-    public <T> Response post(Client client, String path, T value) throws IOException {
+    public <T> Response post(Client client, String path, T value) {
         mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
@@ -83,7 +78,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .post(Entity.json(value), Response.class);
     }
 
-    public <T> Response put(Client client, String path, T value) throws IOException {
+    public <T> Response put(Client client, String path, T value) {
         mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
@@ -92,7 +87,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .put(Entity.json(value), Response.class);
     }
 
-    public Response delete(Client client, String path) throws IOException {
+    public Response delete(Client client, String path) {
         mockValidateTokenResponse();
         return client.target(path)
                 .request(MediaType.APPLICATION_JSON_TYPE)
@@ -101,7 +96,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .delete(Response.class);
     }
 
-    public Response getJson(Client client, String path) throws IOException {
+    public Response getJson(Client client, String path) {
         mockValidateTokenResponse();
         return getWithMediaType(client, path, MediaType.APPLICATION_JSON_TYPE);
     }
@@ -170,8 +165,10 @@ abstract public class AbstractTest extends ResourcedTest {
     }
 
 
-    public void mockValidateTokenResponse() throws IOException {
-        String result = "{ " +
+    public void mockValidateTokenResponse() {
+        Client client = Mockito.mock(Client.class);
+        // Mock the token response from google
+        String tokenResponse = "{ " +
                 "\"azp\": \"1234564ko.apps.googleusercontent.com\", " +
                 "\"aud\": \"clientId\", " +
                 "\"sub\": \"1234564\", " +
@@ -182,14 +179,32 @@ abstract public class AbstractTest extends ResourcedTest {
                 "\"email_verified\": \"true\", " +
                 "\"access_type\": \"online\" " +
                 " }";
-        InputStream inputStream = IOUtils.toInputStream(result, Charset.defaultCharset());
-        HttpClient client = Mockito.mock(HttpClient.class);
-        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
-        HttpEntity entity = Mockito.mock(HttpEntity.class);
-        Mockito.when(client.execute(Mockito.any())).thenReturn(mockResponse);
-        Mockito.when(mockResponse.getEntity()).thenReturn(entity);
-        Mockito.when(entity.getContent()).thenReturn(inputStream);
-        OAuthAuthenticator.getInstance().setHttpClient(client);
+        mockUrlAndEntityResponse(client, "tokeninfo", tokenResponse);
+        // Mock the user info response from google
+        String userProfile = "{" +
+                "\"sub\": \"...\", " +
+                "\"name\": \"oauth user\", " +
+                "\"given_name\": \"oauth\", " +
+                "\"family_name\": \"user\", " +
+                "\"profile\": \"https://plus.google.com/....\", " +
+                "\"picture\": \"https://lh3.googleusercontent.com/....\", " +
+                "\"email\": \"oauthuser@broadinstitute.org\", " +
+                "\"email_verified\": true," +
+                "\"locale\": \"en\", " +
+                "\"hd\": \"broadinstitute.org\"" +
+                "}";
+        mockUrlAndEntityResponse(client, "userinfo", userProfile);
+        OAuthAuthenticator.getInstance().setClient(client);
+    }
+
+    private void mockUrlAndEntityResponse(Client client, String urlMatch, String entityString) {
+        WebTarget webTarget = Mockito.mock(WebTarget.class);
+        Invocation.Builder builder = Mockito.mock(Invocation.Builder.class);
+        Response response = Mockito.mock(Response.class);
+        Mockito.when(response.readEntity(String.class)).thenReturn(entityString);
+        Mockito.when(webTarget.request(Mockito.any(MediaType.class))).thenReturn(builder);
+        Mockito.when(builder.get(Response.class)).thenReturn(response);
+        Mockito.when(client.target(Mockito.contains(urlMatch))).thenReturn(webTarget);
     }
 
     Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {

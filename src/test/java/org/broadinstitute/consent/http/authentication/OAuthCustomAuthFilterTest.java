@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,13 +34,15 @@ public class OAuthCustomAuthFilterTest {
     @Mock
     OAuthAuthenticator authenticator;
     @Mock
-    DACUserRoleDAO dacUserRoleDAO;
+    UserRoleDAO userRoleDAO;
 
     Optional principal;
 
     AuthFilter filter;
 
-    User user;
+    AuthUser user;
+
+    GoogleUser googleUser;
 
     @Before
     public void setUp(){
@@ -49,8 +51,11 @@ public class OAuthCustomAuthFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
         when(authenticator.authenticate(anyObject())).thenReturn(principal);
-        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, dacUserRoleDAO));
-        user = new User("test@gmail.com");
+        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+        googleUser = new GoogleUser();
+        googleUser.setName("Test User");
+        googleUser.setEmail("test@gmail.com");
+        user = new AuthUser(googleUser);
     }
 
     @Test

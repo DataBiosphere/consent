@@ -1,8 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -11,6 +15,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 import javax.annotation.security.PermitAll;
@@ -29,16 +34,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-@Path("{api : (api/)?}dacuser")
+@Path("api/dacuser")
 public class DACUserResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
     private final VoteAPI voteAPI;
+    protected final Logger logger() {
+        return Logger.getLogger(this.getClass().getName());
+    }
 
     public DACUserResource() {
         this.electionAPI = AbstractElectionAPI.getInstance();
@@ -49,17 +61,19 @@ public class DACUserResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed(ADMIN)
-    public Response createdDACUser(@Context UriInfo info, DACUser dac) {
-        URI uri;
-        DACUser dacUser;
+    public Response createDACUser(@Context UriInfo info, String json) {
         try {
-            dacUser = dacUserAPI.createDACUser(dac);
+            DACUser dacUser = dacUserAPI.createDACUser(new DACUser(json));
             if (isChairPerson(dacUser.getRoles())) {
                 dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
                 voteAPI.createVotesForElections(elections, true);
             }
-            uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
+            // Update email preference
+            getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
+                    dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
+            );
+            URI uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(uri).entity(dacUser).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
@@ -86,10 +100,17 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response update(@Context UriInfo info, Map<String, DACUser> dac, @PathParam("id") Integer id) {
+    public Response update(@Context UriInfo info, String json, @PathParam("id") Integer id) {
+        Map<String, DACUser> userMap = constructUserMapFromJson(json);
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-            DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
+            DACUser dacUser = dacUserAPI.updateDACUserById(userMap, id);
+            // Update email preference
+            JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+            JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+            getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
+                    dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
+            );
             return Response.ok(uri).entity(dacUser).build();
         } catch (UserRoleHandlerException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
@@ -98,12 +119,15 @@ public class DACUserResource extends Resource {
         }
     }
 
+    // TODO: Undocumented: See DUOS-403
+    @Deprecated // Use update instead
     @PUT
     @Path("/mainFields/{id}")
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response updateMainFields(@Context UriInfo info, DACUser dac, @PathParam("id") Integer id) {
+    public Response updateMainFields(@Context UriInfo info, String json, @PathParam("id") Integer id) {
+        DACUser dac = new DACUser(json);
         try {
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
@@ -123,12 +147,14 @@ public class DACUserResource extends Resource {
     }
 
 
+    // TODO: Undocumented: See DUOS-403
     @POST
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/validateDelegation")
     @PermitAll
-    public Response validateDelegation(@QueryParam("role") String role, DACUser dac) {
+    public Response validateDelegation(@QueryParam("role") String role, String json) {
+        DACUser dac = new DACUser(json);
         DACUser dacUser;
         try {
             dacUser = dacUserAPI.describeDACUserByEmail(dac.getEmail());
@@ -139,19 +165,34 @@ public class DACUserResource extends Resource {
         }
     }
 
+    @Deprecated // Use update instead
     @PUT
     @Path("/status/{userId}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response updateStatus(@PathParam("userId") Integer userId, DACUserRole dACUserRole) {
-        try {
-            return Response.ok(dacUserAPI.updateRoleStatus(dACUserRole, userId)).build();
-        }catch (Exception e) {
-            return createExceptionResponse(e);
+    public Response updateStatus(@PathParam("userId") Integer userId, String json) {
+        Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
+        Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
+        DACUser user = dacUserAPI.describeDACUserById(userId);
+        if (statusOpt.isPresent()) {
+            try {
+                user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
         }
+        if (rationaleOpt.isPresent()) {
+            try {
+                user = dacUserAPI.updateUserRationale(rationaleOpt.get(), userId);
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
+        }
+        return Response.ok(user).build();
     }
 
+    @Deprecated // Use get by email instead
     @GET
     @Path("/status/{userId}")
     @Consumes("application/json")
@@ -159,18 +200,21 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
-            return Response.ok(dacUserAPI.getRoleStatus(userId)).build();
+            return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
 
+    // TODO: Undocumented: See DUOS-403
+    @Deprecated // Use update instead
     @PUT
     @Path("/name/{id}")
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER})
-    public Response updateName(DACUser user, @PathParam("id") Integer id) {
+    public Response updateName(String json, @PathParam("id") Integer id) {
+        DACUser user = new DACUser(json);
         try {
             DACUser dacUser = dacUserAPI.updateNameById(user, id);
             return Response.ok().entity(dacUser).build();
@@ -179,9 +223,9 @@ public class DACUserResource extends Resource {
         }
     }
 
-    private boolean isChairPerson(List<DACUserRole> roles) {
+    private boolean isChairPerson(List<UserRole> userRoles) {
         boolean isChairPerson = false;
-        for (DACUserRole role : roles) {
+        for (UserRole role : userRoles) {
             if (role.getName().equalsIgnoreCase(CHAIRPERSON)) {
                 isChairPerson = true;
                 break;
@@ -190,5 +234,81 @@ public class DACUserResource extends Resource {
         return isChairPerson;
     }
 
-}
+    /**
+     * Convenience method to find a member from legacy json structure.
+     *
+     * @param json Raw json string from client
+     * @param memberName The name of the member to find in the json
+     * @return Optional value of memberName
+     */
+    private Optional<String> getMemberNameStringFromJson(String json, String memberName) {
+        Optional<String> aString = Optional.empty();
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        if (jsonObject.has(memberName) && !jsonObject.get(memberName).isJsonNull()) {
+            try {
+                aString = Optional.of(jsonObject.get(memberName).getAsString());
+            } catch (Exception e) {
+                logger().debug(e.getMessage());
+            }
+        }
+        return aString;
+    }
 
+    /**
+     * Convenience method to find the email preference from legacy json structure.
+     *
+     * @param json Raw json string from client
+     * @return Optional value of the "emailPreference" boolean value set in the legacy json structure.
+     */
+    private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
+        Optional<Boolean> aBoolean = Optional.empty();
+        try {
+            JsonElement updateUser = new JsonParser().parse(json).getAsJsonObject();
+            if (updateUser != null && !updateUser.isJsonNull()) {
+                JsonObject userObj = updateUser.getAsJsonObject();
+                if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
+                    List<JsonElement> rolesElements = new ArrayList<>();
+                    userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
+                    List<Boolean> emailPrefs = rolesElements.
+                            stream().
+                            filter(e -> e.getAsJsonObject().has("emailPreference")).
+                            map(e -> e.getAsJsonObject().get("emailPreference").getAsBoolean()).
+                            distinct().
+                            collect(Collectors.toList());
+                    // In practice, there should only be a single email preference value, if any.
+                    if (emailPrefs.size() == 1) {
+                        aBoolean = Optional.of(emailPrefs.get(0));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger().warn("Unable to extract email preference from: " + json + " : " + e.getMessage());
+        }
+        return aBoolean;
+    }
+
+    /**
+     * Convenience method to handle legacy json user map structure
+     *
+     * @param json Raw json string from client
+     * @return Map of operation to DACUser
+     */
+    private Map<String, DACUser> constructUserMapFromJson(String json) {
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        Map<String, DACUser> userMap = new HashMap<>();
+        JsonElement updatedUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+        JsonElement delegatedUser = jsonObject.get(DACUserRolesHandler.DELEGATED_USER_KEY);
+        JsonElement alternativeDataOwner = jsonObject.get(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY);
+        if (updatedUser != null && !updatedUser.isJsonNull()) {
+            userMap.put(DACUserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
+        }
+        if (delegatedUser != null && !delegatedUser.isJsonNull()) {
+            userMap.put(DACUserRolesHandler.DELEGATED_USER_KEY, new DACUser(delegatedUser.toString()));
+        }
+        if (alternativeDataOwner != null && !alternativeDataOwner.isJsonNull()) {
+            userMap.put(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY, new DACUser(alternativeDataOwner.toString()));
+        }
+        return userMap;
+    }
+
+}

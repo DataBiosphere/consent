@@ -4,8 +4,6 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -18,7 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-
+@Deprecated // Use DataAccessRequestService
 public interface DataAccessRequestAPI {
 
     List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException;
@@ -28,8 +26,6 @@ public interface DataAccessRequestAPI {
     List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds);
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
-
-    List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId);
 
     List<Document> describeDataAccessRequests();
 
@@ -42,8 +38,6 @@ public interface DataAccessRequestAPI {
     void deleteDataAccessRequestById(String id) throws IllegalArgumentException;
 
     Document updateDataAccessRequest(Document dar, String id);
-
-    Integer getTotalUnReviewedDAR();
 
     List<String> describeDataAccessIdsForOwner(Integer userId);
 
@@ -78,7 +72,7 @@ public interface DataAccessRequestAPI {
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
-    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUserRole role, Boolean manualReview, String sDUR) throws IOException;
+    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException;
 
     String getStructuredDURForPdf(Document dar);
 
@@ -88,7 +82,7 @@ public interface DataAccessRequestAPI {
 
     File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException;
 
-    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar,DACUser dacUser, ElectionAPI electionApi, DACUserRole role);
+    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi);
 
 }
 

@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.service.users;
 
 import freemarker.template.TemplateException;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
+import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
+
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 public interface DACUserAPI {
 
@@ -22,7 +22,7 @@ public interface DACUserAPI {
 
     DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
 
-    DACUser updateDACUserById(Map<String,DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
+    DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
     DACUser updateDACUserById(DACUser dac, Integer userId) throws IllegalArgumentException, NotFoundException;
 
@@ -34,12 +34,12 @@ public interface DACUserAPI {
 
     ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role);
 
-    DACUser updateRoleStatus(DACUserRole dACUserRole, Integer userId);
+    DACUser updateUserStatus(String status, Integer userId);
 
-    DACUserRole getRoleStatus(Integer userId);
+    DACUser updateUserRationale(String rationale, Integer userId);
 
     DACUser updateNameById(DACUser user, Integer id);
 
-    public boolean hasUserRole(String userRole, DACUser user);
+    void updateEmailPreference(boolean preference, Integer userId);
 
 }

@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.users.UserAPI;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,8 +13,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -42,108 +39,58 @@ public class UserResourceTest {
 
     private final String TEST_EMAIL = "test@gmail.com";
 
+    private AuthUser authUser;
+
     @Before
     public void setUp() throws URISyntaxException {
+        GoogleUser googleUser = new GoogleUser();
+        googleUser.setName("Test User");
+        googleUser.setEmail(TEST_EMAIL);
+        authUser = new AuthUser(googleUser);
         MockitoAnnotations.initMocks(this);
-        when(uriInfo.getRequestUriBuilder())
-                .thenReturn(uriBuilder);
-       when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
-       when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
-       userResource = new UserResource(userAPI);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
+        when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
+        userResource = new UserResource(userAPI);
     }
 
     @Test
-    public void testCreateUserWithInvalidRole(){
+    public void testCreateExistingUser() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
-        List<DACUserRole> roles = new ArrayList<>();
-        DACUserRole admin = new DACUserRole();
-        admin.setName(UserRoles.ADMIN.getValue());
-        DACUserRole researcher = new DACUserRole();
-        researcher.setName(UserRoles.RESEARCHER.getValue());
+        List<UserRole> roles = new ArrayList<>();
+        UserRole admin = new UserRole();
+        admin.setName(UserRoles.ADMIN.getRoleName());
+        UserRole researcher = new UserRole();
+        researcher.setName(UserRoles.RESEARCHER.getRoleName());
         roles.add(researcher);
         roles.add(admin);
         user.setRoles(roles);
-        IllegalArgumentException ie = new IllegalArgumentException("Email should be unique.");
-        when(userAPI.createUser(user, TEST_EMAIL)).thenThrow(ie);
-        Response response = userResource.createUser(uriInfo, user, new User(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.CONFLICT.getStatusCode());
-        Error error = (Error) response.getEntity();
-        Assert.assertTrue(error.getCode() == Response.Status.CONFLICT.getStatusCode());
-        Assert.assertTrue(error.getMessage().contains("Email should be unique."));
+        when(userAPI.findUserByEmail(user.getEmail())).thenReturn(user);
+        Response response = userResource.createResearcher(uriInfo, authUser);
+        Assert.assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
     }
 
     @Test
-    public void testCreateUserWithoutRoles(){
+    public void testCreateFailingGoogleIdentity() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
-        DACUserRole admin = new DACUserRole();
-        admin.setName(UserRoles.ADMIN.getValue());
-        IllegalArgumentException ie = new IllegalArgumentException("Roles are required.");
-        when(userAPI.createUser(user, TEST_EMAIL)).thenThrow(ie);
-        Response response = userResource.createUser(uriInfo, user, new User(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode());
-        Error error = (Error) response.getEntity();
-        Assert.assertTrue(error.getCode() == Response.Status.BAD_REQUEST.getStatusCode());
-        Assert.assertTrue(error.getMessage().contains("Roles are required."));
+        Response response = userResource.createResearcher(uriInfo, new AuthUser(TEST_EMAIL));
+        Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
-    public void createUserSuccess(){
+    public void createUserSuccess() {
         DACUser user = new DACUser();
         user.setDisplayName("Test");
-        DACUserRole researcher = new DACUserRole();
-        List<DACUserRole> roles = new ArrayList<>();
-        researcher.setName(UserRoles.RESEARCHER.getValue());
+        UserRole researcher = new UserRole();
+        List<UserRole> roles = new ArrayList<>();
+        researcher.setName(UserRoles.RESEARCHER.getRoleName());
         roles.add(researcher);
         user.setRoles(roles);
-        when(userAPI.createUser(user, TEST_EMAIL)).thenReturn(user);
-        Response response = userResource.createUser(uriInfo, user, new User(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.CREATED.getStatusCode());
+        when(userAPI.createUser(user)).thenReturn(user);
+        Response response = userResource.createResearcher(uriInfo, authUser);
+        Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }
 
-    @Test
-    public void testUpdateUserWithInvalidRole() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
-        user.setDisplayName(TEST_EMAIL);
-        List<DACUserRole> roles = new ArrayList<>();
-        DACUserRole admin = new DACUserRole();
-        admin.setName(UserRoles.CHAIRPERSON.getValue());
-        DACUserRole researcher = new DACUserRole();
-        researcher.setName(UserRoles.RESEARCHER.getValue());
-        roles.add(researcher);
-        roles.add(admin);
-        user.setRoles(roles);
-        when(userAPI.updateUser(user, TEST_EMAIL)).thenThrow(new IllegalArgumentException());
-        Response response = userResource.update(user, new User(TEST_EMAIL));
-        Assert.assertTrue(response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode());
-    }
-
-    @Test
-    public void testUpdateUserWithInvalidEmail() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
-        user.setDisplayName(TEST_EMAIL);
-        List<DACUserRole> roles = new ArrayList<>();
-        DACUserRole researcher = new DACUserRole();
-        researcher.setName(UserRoles.RESEARCHER.getValue());
-        roles.add(researcher);
-        user.setRoles(roles);
-        when(userAPI.updateUser(user, "invalid_mail@gmail.com")).thenThrow(NotAuthorizedException.class);
-        Response response = userResource.update(user, new User("invalid_mail@gmail.com"));
-        Assert.assertTrue(response.getStatus() == Response.Status.UNAUTHORIZED.getStatusCode());
-    }
-
-    @Test
-    public void testUpdateNotExistentUser() throws UserRoleHandlerException {
-        DACUser user = new DACUser();
-        user.setDisplayName(TEST_EMAIL);
-        List<DACUserRole> roles = new ArrayList<>();
-        DACUserRole researcher = new DACUserRole();
-        researcher.setName(UserRoles.RESEARCHER.getValue());
-        roles.add(researcher);
-        user.setRoles(roles);
-        when(userAPI.updateUser(user, "invalid_mail@gmail.com")).thenThrow(NotFoundException.class);
-        Response response = userResource.update(user, new User("invalid_mail@gmail.com"));
-        Assert.assertTrue(response.getStatus() == Response.Status.NOT_FOUND.getStatusCode());
-    }
 }

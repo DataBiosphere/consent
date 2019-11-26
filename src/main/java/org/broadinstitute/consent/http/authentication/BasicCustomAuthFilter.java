@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.basic.BasicCredentialAuthFilter;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -15,7 +15,7 @@ public class BasicCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
     private AuthFilter filter;
 
     public BasicCustomAuthFilter(BasicAuthenticator authenticator){
-        filter = new BasicCredentialAuthFilter.Builder<User>()
+        filter = new BasicCredentialAuthFilter.Builder<AuthUser>()
                 .setAuthenticator(authenticator)
                 .setPrefix("Basic")
                 .setRealm("BASIC-AUTH")

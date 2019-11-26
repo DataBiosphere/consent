@@ -77,4 +77,10 @@ public class ConsentBuilder {
         this.consent.setGroupName(groupName);
         return this;
     }
+
+    public ConsentBuilder setDacId(Integer dacId) {
+        this.consent.setDacId(dacId);
+        return this;
+    }
+
 }

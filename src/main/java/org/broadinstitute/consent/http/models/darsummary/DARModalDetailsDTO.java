@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.bson.Document;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,11 +32,10 @@ public class DARModalDetailsDTO {
     private boolean sensitivePopulation = false;
     private boolean requiresManualReview = false;
     private Integer userId;
-
-    @JsonProperty
-    private Map<String, String> datasetDetail;
     private String needDOApproval = "";
-
+    private List<DataSet> datasets;
+    private List<ResearcherProperty> researcherProperties;
+    private String rus;
 
     public DARModalDetailsDTO() {}
 
@@ -55,7 +53,10 @@ public class DARModalDetailsDTO {
     }
 
     public DARModalDetailsDTO setResearcherName(DACUser owner, String principalInvestigator) {
-        if(owner.getDisplayName().equals(principalInvestigator)){
+        if (owner == null) {
+            return this;
+        }
+        if (owner.getDisplayName().equals(principalInvestigator)) {
             researcherName = principalInvestigator;
         } else {
             researcherName = owner.getDisplayName();
@@ -256,15 +257,33 @@ public class DARModalDetailsDTO {
         return this;
     }
 
-    public DARModalDetailsDTO setDatasetDetail(ArrayList<Document> datasetDetail) {
-        Map<String, String> datasetDetailMap = new HashMap<>();
-        datasetDetail.forEach((doc) -> {
-            String objectId = doc.getString(DarConstants.OBJECT_ID) != null ? doc.getString(DarConstants.OBJECT_ID) : "--";
-            datasetDetailMap.put(doc.getString("name"), objectId);
-        });
-        this.datasetDetail = datasetDetailMap;
+    public List<DataSet> getDatasets() {
+        return datasets;
+    }
+
+    public DARModalDetailsDTO setDatasets(List<DataSet> datasets) {
+        this.datasets = datasets;
         return this;
     }
+
+    public List<ResearcherProperty> getResearcherProperties() {
+        return researcherProperties;
+    }
+
+    public DARModalDetailsDTO setResearcherProperties(List<ResearcherProperty> researcherProperties) {
+        this.researcherProperties = researcherProperties;
+        return this;
+    }
+
+    public String getRus() {
+        return rus;
+    }
+
+    public DARModalDetailsDTO setRus(String rus) {
+        this.rus = rus;
+        return this;
+    }
+
     public String getStatus() {
         return status;
     }

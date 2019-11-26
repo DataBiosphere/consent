@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -26,10 +26,17 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
+import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,8 +63,9 @@ public class ConsentModule extends AbstractModule {
     private final VoteDAO voteDAO;
     private final DataSetDAO datasetDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
+    private final DacDAO dacDAO;
     private final DACUserDAO dacUserDAO;
-    private final DACUserRoleDAO dacUserRoleDAO;
+    private final UserRoleDAO userRoleDAO;
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
@@ -83,8 +91,9 @@ public class ConsentModule extends AbstractModule {
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
         this.datasetDAO = this.jdbi.onDemand(DataSetDAO.class);
         this.datasetAssociationDAO = this.jdbi.onDemand(DataSetAssociationDAO.class);
+        this.dacDAO = this.jdbi.onDemand(DacDAO.class);
         this.dacUserDAO = this.jdbi.onDemand(DACUserDAO.class);
-        this.dacUserRoleDAO= this.jdbi.onDemand(DACUserRoleDAO.class);
+        this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
@@ -112,7 +121,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    MongoConsentDB providesMongoConsentDB() {
+    MongoConsentDB providesMongo() {
         return this.mongoInstance;
     }
 
@@ -132,8 +141,50 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    ConsentService providesConsentService() {
+        return new ConsentService(
+                providesConsentDAO(),
+                providesElectionDAO(),
+                providesMongo(),
+                providesVoteDAO(),
+                providesDacService());
+    }
+
+    @Provides
     ConsentDAO providesConsentDAO() {
         return consentDAO;
+    }
+
+    @Provides
+    DataAccessRequestService providesDataAccessRequestService() {
+        return new DataAccessRequestService(
+                providesDACUserDAO(),
+                providesDataSetDAO(),
+                providesElectionDAO(),
+                providesMongo(),
+                providesDacService());
+    }
+
+    @Provides
+    ElectionService providesElectionService() {
+        return new ElectionService(
+                providesConsentDAO(),
+                providesElectionDAO(),
+                providesMongo(),
+                providesDacService());
+    }
+
+    @Provides
+    PendingCaseService providesPendingCaseService() {
+        return new PendingCaseService(
+                providesConsentDAO(),
+                providesDACUserDAO(),
+                providesDataSetDAO(),
+                providesElectionDAO(),
+                providesMongo(),
+                providesUserRoleDAO(),
+                providesVoteDAO(),
+                providesDacService());
     }
 
     @Provides
@@ -152,6 +203,11 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    VoteService providesVoteService() {
+        return new VoteService(providesVoteDAO());
+    }
+
+    @Provides
     DataSetDAO providesDataSetDAO() {
         return datasetDAO;
     }
@@ -162,13 +218,26 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    DacDAO providesDacDAO() {
+        return dacDAO;
+    }
+
+    @Provides
+    DacService providesDacService() {
+        return new DacService(
+                providesDacDAO(),
+                providesDACUserDAO(),
+                providesDataSetDAO());
+    }
+
+    @Provides
     DACUserDAO providesDACUserDAO() {
         return dacUserDAO;
     }
 
     @Provides
-    DACUserRoleDAO providesDACUserRoleDAO() {
-        return dacUserRoleDAO;
+    UserRoleDAO providesUserRoleDAO() {
+        return userRoleDAO;
     }
 
     @Provides

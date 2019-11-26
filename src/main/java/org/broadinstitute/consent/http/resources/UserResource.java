@@ -2,20 +2,24 @@ package org.broadinstitute.consent.http.resources;
 
 
 import io.dropwizard.auth.Auth;
-import io.dropwizard.jersey.PATCH;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.models.dto.PatchOperation;
 import org.broadinstitute.consent.http.service.users.UserAPI;
 
 import javax.annotation.security.PermitAll;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.List;
+import java.util.Collections;
 
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
@@ -30,43 +34,30 @@ public class UserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response createUser(@Context UriInfo info, DACUser userToCreate, @Auth User user) {
+    public Response createResearcher(@Context UriInfo info, @Auth AuthUser user) {
+        GoogleUser googleUser = user.getGoogleUser();
+        if (googleUser == null || googleUser.getEmail() == null || googleUser.getName() == null) {
+            return Response.
+                    status(Response.Status.BAD_REQUEST).
+                    entity(new Error("Unable to verify google identity", Response.Status.BAD_REQUEST.getStatusCode())).
+                    build();
+        }
+        if (userAPI.findUserByEmail(googleUser.getEmail()) != null) {
+            return Response.
+                    status(Response.Status.CONFLICT).
+                    entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).
+                    build();
+        }
+        DACUser dacUser = new DACUser(googleUser);
+        UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        dacUser.setRoles(Collections.singletonList(researcher));
         try {
             URI uri;
-            userToCreate = userAPI.createUser(userToCreate, user.getName());
-            uri = info.getRequestUriBuilder().path("{email}").build(userToCreate.getEmail());
-            return Response.created(new URI(uri.toString().replace("user","dacuser"))).entity(userToCreate).build();
-        } catch (IllegalArgumentException e) {
-            if(e.getMessage().contains("Email should be unique.")) {
-                return Response.status(Response.Status.CONFLICT).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build();
-            }
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e){
+            dacUser = userAPI.createUser(dacUser);
+            uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
+            return Response.created(new URI(uri.toString().replace("user", "dacuser"))).entity(dacUser).build();
+        } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
-        }
-    }
-
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @PermitAll
-    public Response update(DACUser userToUpdate, @Auth User user) {
-        try {
-            return Response.ok().entity(userAPI.updateUser(userToUpdate, user.getName())).build();
-        } catch (Exception e){
-            return createExceptionResponse(e);
-        }
-    }
-
-    @PATCH
-    @Consumes("application/json")
-    @Produces("application/json")
-    @PermitAll
-    public Response partialUpdate(List<PatchOperation> patchOperations, @Auth User user) {
-        try {
-            return Response.ok().entity(userAPI.updatePartialUser(patchOperations, user.getName())).build();
-        } catch (Exception e){
-            return createExceptionResponse(e);
         }
     }
 

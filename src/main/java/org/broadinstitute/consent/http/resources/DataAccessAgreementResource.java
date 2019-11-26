@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpResponse;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
 import org.bson.Document;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -23,7 +22,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.UUID;
@@ -48,11 +47,11 @@ public class DataAccessAgreementResource extends Resource {
         if (researcherProperties.containsKey(ResearcherFields.URL_DAA.getValue())) {
             try {
                 HttpResponse r = store.getStorageDocument(researcherProperties.get(ResearcherFields.URL_DAA.getValue()));
-                File targetFile = new File(researcherProperties.get(ResearcherFields.NAME_DAA.getValue()));
-                FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
-                return Response.ok(targetFile)
+                String filename = researcherProperties.get(ResearcherFields.NAME_DAA.getValue());
+                StreamingOutput stream = createStreamingOutput(r.getContent());
+                return Response.ok(stream)
                         .type(r.getContentType())
-                        .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                        .header("Content-Disposition", "attachment; filename=" + filename)
                         .build();
             } catch (Exception e) {
                 return createExceptionResponse(e);
@@ -73,9 +72,14 @@ public class DataAccessAgreementResource extends Resource {
             @QueryParam("fileName") String fileName,
             @QueryParam("existentFileUrl") String existentFileUrl) {
         try {
-            if(StringUtils.isNotEmpty(existentFileUrl)) {
+            if (StringUtils.isNotEmpty(existentFileUrl)) {
                 store.deleteStorageDocument(existentFileUrl);
             }
+        } catch (Exception e) {
+            // Warn non-fatal errors so we can manage them through support
+            logger().warn(String.format("Unable to delete storage document with url of '%s' when storing a new document of '%s'", existentFileUrl, fileName));
+        }
+        try {
             String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
             Document dataAccessAgreement = new Document();
             dataAccessAgreement.put(ResearcherFields.URL_DAA.getValue(), store.postStorageDocument(uploadedDAA, part.getMediaType().toString(), toStoreFileName));

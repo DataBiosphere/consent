@@ -1,23 +1,43 @@
 package org.broadinstitute.consent.http.service;
 
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
-import org.broadinstitute.consent.http.db.*;
-import org.broadinstitute.consent.http.enumeration.*;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetAuditDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetAuditProperty;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
-
 import org.bson.Document;
+
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Implementation class for DataSetAPI database support.
@@ -27,7 +47,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final DataSetFileParser parser = new DataSetFileParser();
     private final DataSetDAO dsDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
-    private final DACUserRoleDAO dsRoleDAO;
+    private final UserRoleDAO userRoleDAO;
     private final ConsentDAO consentDAO;
     private DataAccessRequestAPI accessAPI;
     private DataSetAuditDAO dataSetAuditDAO;
@@ -49,14 +69,14 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, dsRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
+    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, DACUserRoleDAO dsRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
         this.dsDAO = dsDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
-        this.dsRoleDAO = dsRoleDAO;
+        this.userRoleDAO = userRoleDAO;
         this.consentDAO = consentDAO;
         this.accessAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAuditDAO = dataSetAuditDAO;
@@ -155,7 +175,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
         Collection<DataSetDTO> dataSetDTOList;
-        if (userIs(UserRoles.RESEARCHER.getValue(), dacUserId)) {
+        if (userIs(UserRoles.RESEARCHER.getRoleName(), dacUserId)) {
             dataSetDTOList = dsDAO.findDataSetsForResearcher();
         } else {
 
@@ -175,7 +195,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 datasetsAssociatedToOpenElections = accessAPI.getDatasetsInDARs(dataAccessElectionsReferenceId);
             }
             dataSetDTOList = dsDAO.findDataSets();
-            if (userIs(UserRoles.ADMIN.getValue(), dacUserId) && dataSetDTOList.size() != 0) {
+            if (userIs(UserRoles.ADMIN.getRoleName(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
                 List<Integer> dataSetIdList = new ArrayList<>();
 
@@ -298,6 +318,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
         return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
+    }
+
+    @Override
+    public DataSet findDataSetByObjectId(String objectId) {
+        return dsDAO.findDataSetByObjectId(objectId);
     }
 
     public DataSetDTO getDataSetDTO(Integer dataSetId) {
@@ -436,11 +461,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
 
-    private boolean userIs(String rol, Integer dacUserId) {
-        if (dsRoleDAO.findRoleByNameAndUser(rol, dacUserId) != null) {
-            return true;
-        }
-        return false;
+    private boolean userIs(String roleName, Integer dacUserId) {
+        return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
     }
 
 

@@ -4,27 +4,33 @@ import org.broadinstitute.consent.http.resources.Resource;
 
 public enum UserRoles {
 
-    MEMBER(Resource.MEMBER),
-    CHAIRPERSON(Resource.CHAIRPERSON),
-    ALUMNI(Resource.ALUMNI),
-    ADMIN(Resource.ADMIN),
-    RESEARCHER(Resource.RESEARCHER),
-    DATAOWNER(Resource.DATAOWNER);
+    MEMBER(Resource.MEMBER, 1),
+    CHAIRPERSON(Resource.CHAIRPERSON, 2),
+    ALUMNI(Resource.ALUMNI, 3),
+    ADMIN(Resource.ADMIN, 4),
+    RESEARCHER(Resource.RESEARCHER, 5),
+    DATAOWNER(Resource.DATAOWNER, 6);
 
-    private String value;
+    private String roleName;
+    private Integer roleId;
 
-    UserRoles(String value) {
-        this.value = value;
+    UserRoles(String roleName, Integer roleId) {
+        this.roleName = roleName;
+        this.roleId = roleId;
     }
 
-    public String getValue() {
-        return value;
+    public String getRoleName() {
+        return roleName;
     }
 
-    public static String getValue(String value) {
+    public Integer getRoleId() {
+        return roleId;
+    }
+
+    public static UserRoles getUserRoleFromName(String value) {
         for (UserRoles e : UserRoles.values()) {
-            if (e.getValue().equalsIgnoreCase(value)) {
-                return e.getValue();
+            if (e.getRoleName().equalsIgnoreCase(value)) {
+                return e;
             }
         }
         return null;

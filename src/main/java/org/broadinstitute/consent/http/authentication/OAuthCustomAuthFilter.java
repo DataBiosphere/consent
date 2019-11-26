@@ -2,8 +2,8 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
@@ -13,10 +13,10 @@ public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
 
     private AuthFilter filter;
 
-    public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, DACUserRoleDAO dacUserRoleDAO) {
-        filter = new OAuthCredentialAuthFilter.Builder<User>()
+    public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, UserRoleDAO userRoleDAO) {
+        filter = new OAuthCredentialAuthFilter.Builder<AuthUser>()
             .setAuthenticator(authenticator)
-            .setAuthorizer(new UserAuthorizer(dacUserRoleDAO))
+            .setAuthorizer(new UserAuthorizer(userRoleDAO))
             .setPrefix("Bearer")
             .setRealm("OAUTH-AUTH")
             .buildAuthFilter();

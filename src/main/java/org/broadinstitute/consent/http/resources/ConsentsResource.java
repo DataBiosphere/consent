@@ -5,7 +5,7 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
@@ -134,7 +134,7 @@ public class ConsentsResource extends Resource {
     @Path("group-names")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(ADMIN)
-    public Response updateGroupNames(@Context UriInfo info, @Auth User user, List<ConsentGroupNameDTO> data) {
+    public Response updateGroupNames(@Context UriInfo info, @Auth AuthUser user, List<ConsentGroupNameDTO> data) {
         try {
             List<ConsentGroupNameDTO> errors = api.verifyConsentGroupNames(data);
             if (errors.isEmpty()) {

@@ -10,10 +10,10 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -24,6 +24,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,7 +71,7 @@ public class DataUseLetterResource extends Resource {
             @FormDataParam("data") FormDataBodyPart part,
             @PathParam("id") String consentId,
             @QueryParam("fileName") String fileName,
-            @Auth User user) {
+            @Auth AuthUser user) {
         String msg = String.format("POSTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -101,7 +102,7 @@ public class DataUseLetterResource extends Resource {
             @FormDataParam("data") FormDataBodyPart part,
             @PathParam("id") String consentId,
             @QueryParam("fileName") String fileName,
-            @Auth User user) {
+            @Auth AuthUser user) {
         String msg = String.format("PUTing Data Use Letter to consent with id '%s'", consentId);
         logger().debug(msg);
         try {
@@ -138,11 +139,10 @@ public class DataUseLetterResource extends Resource {
             String fileUrl = election != null ? election.getDataUseLetter() : consent.getDataUseLetter();
             String fileName = election != null ? election.getDulName() : consent.getDulName();
             HttpResponse r = store.getStorageDocument(fileUrl);
-            File targetFile = new File(fileName);
-            FileUtils.copyInputStreamToFile(r.getContent(), targetFile);
-            return Response.ok(targetFile)
+            StreamingOutput stream = createStreamingOutput(r.getContent());
+            return Response.ok(stream)
                     .type(r.getContentType())
-                    .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                    .header("Content-Disposition", "attachment; filename=" + fileName)
                     .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(e);

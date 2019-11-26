@@ -95,7 +95,7 @@ public class HelpReportTest  extends AbstractTest {
                     try {
                         checkStatus(OK,
                                 delete(client, path2Url(HELP_REPORT_URL+"/"+r.getReportId())));
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 

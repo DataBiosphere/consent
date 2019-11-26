@@ -36,6 +36,7 @@ public class DataUseDTO {
     private String genomicPhenotypicData;
     private String cloudStorage;
     private Boolean ethicsApprovalRequired;
+    private Boolean collaboratorRequired;
     private String geographicalRestrictions;
     private String other;
     private Boolean illegalBehavior;
@@ -204,6 +205,14 @@ public class DataUseDTO {
 
     public void setEthicsApprovalRequired(Boolean ethicsApprovalRequired) {
         this.ethicsApprovalRequired = ethicsApprovalRequired;
+    }
+
+    public Boolean getCollaboratorRequired() {
+        return collaboratorRequired;
+    }
+
+    public void setCollaboratorRequired(Boolean collaboratorRequired) {
+        this.collaboratorRequired = collaboratorRequired;
     }
 
     public String getGeographicalRestrictions() {

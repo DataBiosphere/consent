@@ -33,7 +33,6 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     private static String DATA_REQUEST_ID;
-    private static final Integer DAC_USER_ID = 2;
     private static final String RATIONALE = "Test";
     private static final String TEST_DATABASE_NAME = "TestConsent";
 
@@ -94,7 +93,6 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         assertThat(created.getUpdateDate()).isNull();
         assertThat(created.getVote()).isFalse();
         assertThat(created.getVoteId()).isNotNull();
-        testDataRequestPendingCase(DAC_USER_ID);
         updateVote(created.getVoteId(), created);
         deleteVotes(votes);
         delete(client, electionDataRequestPathById(DATA_REQUEST_ID, electionId));
@@ -131,16 +129,6 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         election = getJson(client, electionDataRequestPath(DATA_REQUEST_ID))
                 .readEntity(Election.class);
         return election.getElectionId();
-    }
-
-
-    private void testDataRequestPendingCase(Integer dacUserId) throws IOException {
-        Client client = ClientBuilder.newClient();
-        List<PendingCase> pendingCases = getJson(client, dataRequestPendingCasesPath(dacUserId)).readEntity(new GenericType<List<PendingCase>>() {});
-        assertThat(pendingCases).isNotNull();
-        assertThat(pendingCases.size()).isEqualTo(2);
-        assertThat(pendingCases.get(0).getLogged()).isEqualTo("1/5");
-        assertThat(pendingCases.get(0).getReferenceId()).isEqualTo(DATA_REQUEST_ID);
     }
 
     @Test

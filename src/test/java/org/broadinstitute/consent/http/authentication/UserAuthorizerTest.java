@@ -1,16 +1,15 @@
 package org.broadinstitute.consent.http.authentication;
 
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
-import org.broadinstitute.consent.http.models.DACUserRole;
-import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,38 +17,38 @@ import static org.mockito.Mockito.when;
 
 public class UserAuthorizerTest {
 
-    UserAuthorizer authorizer;
+    private UserAuthorizer authorizer;
     @Mock
-    DACUserRoleDAO dacUserRoleDAO;
+    UserRoleDAO userRoleDAO;
     @Mock
-    User authorizedUser;
+    AuthUser authorizedUser;
     @Mock
-    User unauthorizedUser;
+    AuthUser unauthorizedUser;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         when(authorizedUser.getName()).thenReturn("Authorized User");
         when(unauthorizedUser.getName()).thenReturn("Unauthorized User");
-        when(dacUserRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
-        when(dacUserRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(new ArrayList<>(Arrays.asList(getChairpersonRole())));
-        authorizer = new UserAuthorizer(dacUserRoleDAO);
+        when(userRoleDAO.findRolesByUserEmail("Authorized User")).thenReturn(Collections.singletonList(getChairpersonRole()));
+        when(userRoleDAO.findRolesByUserEmail("Unauthorized User")).thenReturn(Collections.singletonList(getChairpersonRole()));
+        authorizer = new UserAuthorizer(userRoleDAO);
     }
 
     @Test
-    public void testAuthorizeNotAuthorized() throws Exception {
+    public void testAuthorizeNotAuthorized() {
         assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER));
     }
 
     @Test
-    public void testAuthorizeAuthorized() throws Exception {
+    public void testAuthorizeAuthorized() {
         assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON));
     }
 
     /* Helper Methods */
 
-    private DACUserRole getChairpersonRole(){
-        return new DACUserRole(1, "CHAIRPERSON", false);
+    private UserRole getChairpersonRole(){
+        return new UserRole(1, "CHAIRPERSON");
     }
 
 }

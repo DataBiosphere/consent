@@ -1,160 +1,162 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.mongodb.MongoClient;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.broadinstitute.consent.http.ConsentApplication;
-import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
+import org.broadinstitute.consent.http.cloudstore.GCSStore;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
+import org.broadinstitute.consent.http.service.AbstractTranslateService;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
+import javax.ws.rs.NotFoundException;
+import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doReturn;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
-public class DataAccessRequestResourceTest extends DataAccessRequestServiceTest {
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({
+        AbstractDataAccessRequestAPI.class,
+        AbstractConsentAPI.class,
+        AbstractMatchProcessAPI.class,
+        AbstractEmailNotifierAPI.class,
+        AbstractUseRestrictionValidatorAPI.class,
+        AbstractTranslateService.class,
+        AbstractDataSetAPI.class,
+        AbstractDACUserAPI.class,
+        AbstractElectionAPI.class
+})
+public class DataAccessRequestResourceTest {
 
-    private static final String TEST_DATABASE_NAME = "TestConsent";
+    @Mock
+    DataAccessRequestService dataAccessRequestService;
+    @Mock
+    DACUserAPI dacUserAPI;
+    @Mock
+    ElectionAPI electionAPI;
+    @Mock
+    GCSStore store;
+    @Mock
+    ConsentAPI consentAPI;
+    @Mock
+    DataAccessRequestAPI dataAccessRequestAPI;
+    @Mock
+    DataSetAPI dataSetAPI;
 
-    @ClassRule
-    public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
-            ConsentApplication.class, resourceFilePath("consent-config.yml"));
-
-    @Override
-    public DropwizardAppRule<ConsentConfiguration> rule() {
-        return RULE;
-    }
+    private DataAccessRequestResource resource;
+    private Document dar;
+    private String darId;
 
     @Before
-    public void setUp() throws IOException {
-        MongoClient mongo = setUpMongoClient();
-        MongoConsentDB mongoi = new MongoConsentDB(mongo, TEST_DATABASE_NAME);
-        MongoConsentDB spiedMongoi = Mockito.spy(mongoi);
-        DatabaseDataAccessRequestAPI.getInstance().setMongoDBInstance(spiedMongoi);
-        doReturn("TESTDAR-COUNTER").when(spiedMongoi).getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
-        mongoi.getDataAccessRequestCollection().drop();
-        mongoi.getPartialDataAccessRequestCollection().drop();
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
+        PowerMockito.mockStatic(AbstractConsentAPI.class);
+        PowerMockito.mockStatic(AbstractMatchProcessAPI.class);
+        PowerMockito.mockStatic(AbstractEmailNotifierAPI.class);
+        PowerMockito.mockStatic(AbstractUseRestrictionValidatorAPI.class);
+        PowerMockito.mockStatic(AbstractTranslateService.class);
+        PowerMockito.mockStatic(AbstractDataSetAPI.class);
+        PowerMockito.mockStatic(AbstractDACUserAPI.class);
+        PowerMockito.mockStatic(AbstractElectionAPI.class);
     }
 
-    @After
-    public void teardown() {
-        shutDownMongo();
-    }
-
-
+    /**
+     * Positive case where a DAR references a numeric dataset id
+     */
     @Test
-    public void testDarOperations() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        long mongoDocuments = retrieveDars(client, darPath()).size();
-        checkStatus(CREATED, post(client, darPath(), sampleDar));
-        List<Document> created = retrieveDars(client, darPath());
-        assertTrue(created.size() == ++mongoDocuments);
+    public void testDescribeConsentForDAR_case1() throws Exception {
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
+        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+        when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
+        when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
+        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
+        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        Consent consent = resource.describeConsentForDAR(darId);
+        assertNotNull(consent);
     }
 
+    /**
+     * Positive case where a DAR references a string dataset id
+     */
     @Test
-    public void testPartialDarOperations() throws IOException {
-        Client client = ClientBuilder.newClient();
-        int partialDocumentsCount = retrieveDars(client, partialsPath()).size();
-        Document partialDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, partialPath(), partialDar));
-        List<Document> created = retrieveDars(client, partialsPath());
-        assertTrue(created.size() == ++partialDocumentsCount);
+    public void testDescribeConsentForDAR_case2() throws Exception {
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
+        dar.put(DarConstants.DATASET_ID, Collections.singletonList("SC-12345"));
+        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+        when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
+        when(dataSetAPI.findDataSetByObjectId(any())).thenReturn(dataSet);
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
+        when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
+        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
+        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        Consent consent = resource.describeConsentForDAR(darId);
+        assertNotNull(consent);
     }
 
-    @Test
-    public void testInvalidDars() throws IOException {
-        Client client = ClientBuilder.newClient();
-        List<UseRestrictionDTO> dtos = getJson(client, invalidDarsPath()).readEntity(new GenericType<List<UseRestrictionDTO>>() {});
-        assertTrue(dtos.size() == 0);
+    /**
+     * Negative case where a DAR references an invalid dataset id
+     */
+    @Test(expected = NotFoundException.class)
+    public void testDescribeConsentForDAR_case3() throws Exception {
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
+        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+        when(consentAPI.getConsentFromDatasetID(any())).thenReturn(null);
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
+        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
+        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        resource.describeConsentForDAR(darId);
     }
 
-    @Test
-    public void testManageDars() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Document sampleDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, darPath(), sampleDar));
-        List<DataAccessRequestManage> manageDars = getJson(client, darManagePath("1")).readEntity(new GenericType<List<DataAccessRequestManage>>() {
-        });
-        assertTrue(manageDars.size() == 1);
-
-    }
-
-    @Test
-    public void testManagePartialDars() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Document partialDar = DataRequestSamplesHolder.getSampleDar();
-        checkStatus(CREATED, post(client, partialPath(), partialDar));
-        List<Document> manageDars = getJson(client, partialsManagePath("1")).readEntity(new GenericType<List<Document>>() {
-        });
-        assertTrue(manageDars.size() == 1);
-    }
-
-    @Test
-    public void testRestrictionFromQuestions() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Response response = checkStatus(OK, put(client, restrictionFromQuestionsUrl(), DataRequestSamplesHolder.getSampleDar()));
-        String res = response.readEntity(String.class);
-        assertTrue(res.equals("{\"useRestriction\":\"Manual Review\"}"));
-    }
-
-    @Test
-    public void testDarFound() throws Exception {
-        // Create a DAR
-        Client client = ClientBuilder.newClient();
-        post(client, darPath(), DataRequestSamplesHolder.getSampleDar());
-        Document created = retrieveDars(client, darPath()).get(0);
-        ObjectId objectId = getObjectIdFromDocument(created);
-
-        // Make sure the DAR can be retrieved using the ID
-        Response response = getJson(client, darPath(objectId.toHexString()));
-        assertEquals(200, response.getStatus());
-    }
-
-    @Test
-    public void testInvalidDARFormat() throws Exception {
-        Client client = ClientBuilder.newClient();
-        Response response = getJson(client, darPath("invalid-5998-id"));
-        assertEquals(400, response.getStatus());
-    }
-
-    @Test
-    public void testDARNotFound() throws Exception {
-        ObjectId id = new ObjectId();
-        Client client = ClientBuilder.newClient();
-        Response response = getJson(client, darPath(id.toHexString()));
-        assertEquals(404, response.getStatus());
-    }
-
-    private List<Document> retrieveDars(Client client, String url) throws IOException {
-        return getJson(client, url).readEntity(new GenericType<List<Document>>() {});
-    }
-
-    private ObjectId getObjectIdFromDocument(Document document) {
-        LinkedHashMap id = (LinkedHashMap) document.get(DarConstants.ID);
-        return new ObjectId(
-                Integer.valueOf(id.get("timestamp").toString()),
-                Integer.valueOf(id.get("machineIdentifier").toString()),
-                Short.valueOf(id.get("processIdentifier").toString()),
-                Integer.valueOf(id.get("counter").toString())
-        );
+    /**
+     * Negative case where a DAR does not reference a dataset id
+     */
+    @Test(expected = NotFoundException.class)
+    public void testDescribeConsentForDAR_case4() throws Exception {
+        dar = DataRequestSamplesHolder.getSampleDarWithId();
+        dar.remove(DarConstants.DATASET_ID);
+        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
+        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        resource.describeConsentForDAR(darId);
     }
 
 }

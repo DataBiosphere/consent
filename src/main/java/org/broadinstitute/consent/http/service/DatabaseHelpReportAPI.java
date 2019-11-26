@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.DACUserRoleDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.HelpReport;
@@ -12,7 +12,7 @@ import java.util.List;
 public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
 
     private HelpReportDAO helpReportDAO;
-    private DACUserRoleDAO dsRoleDAO;
+    private UserRoleDAO userRoleDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO.  This method should only be called once
@@ -23,7 +23,7 @@ public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(HelpReportDAO dao, DACUserRoleDAO dsRoleDAO) {
+    public static void initInstance(HelpReportDAO dao, UserRoleDAO dsRoleDAO) {
         HelpReportAPIHolder.setInstance(new DatabaseHelpReportAPI(dao, dsRoleDAO));
     }
 
@@ -32,15 +32,15 @@ public class DatabaseHelpReportAPI extends AbstractHelpReportAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseHelpReportAPI(HelpReportDAO dao, DACUserRoleDAO dsRoleDAO) {
+    private DatabaseHelpReportAPI(HelpReportDAO dao, UserRoleDAO userRoleDAO) {
         this.helpReportDAO = dao;
-        this.dsRoleDAO = dsRoleDAO;
+        this.userRoleDAO = userRoleDAO;
     }
 
 
     @Override
     public List<HelpReport> findHelpReportsByUserId(Integer userId) {
-        return  dsRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getValue(), userId) != null
+        return  userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), userId) != null
                 ? helpReportDAO.findHelpReports() : helpReportDAO.findHelpReportsByUserId(userId);
     }
 
