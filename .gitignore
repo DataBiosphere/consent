@@ -153,3 +153,6 @@ hs_err_pid*
 /127.0.0.1/
 /data/
 /es_temp/
+
+## Automation
+automation/src/test/resources/application.conf
