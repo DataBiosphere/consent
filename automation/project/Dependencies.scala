@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val gatlingV = "3.0.3"
+  val gatlingV = "3.3.1"
 
   val rootDependencies: Seq[ModuleID] = Seq(
     "org.scalatest"        %% "scalatest" % "3.0.5" % Test,
