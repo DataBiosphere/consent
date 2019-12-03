@@ -15,10 +15,10 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -116,9 +117,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateStatus(election.getStatus());
         setGeneralFields(election, referenceId, electionType);
         Date createDate = new Date();
-        Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
-                createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
-                election.getDataUseLetter(), election.getDulName());
+        Integer id = electionDAO.insertElection(
+                election.getElectionType(),
+                election.getStatus(),
+                createDate,
+                election.getReferenceId(),
+                election.getFinalAccessVote() ,
+                Objects.toString(election.getUseRestriction(), "") ,
+                election.getTranslatedUseRestriction(),
+                election.getDataUseLetter(),
+                election.getDulName(),
+                election.getDataSetId());
         updateSortDate(referenceId, createDate);
 
         switch (electionType) {
@@ -568,46 +577,36 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
-        BasicDBObject query;
-        Document dar;
-        switch (electionType) {
-            case TRANSLATE_DUL:
-                election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-                Consent consent = consentDAO.findConsentById(referenceId);
-                election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
-                election.setUseRestriction(consent.getUseRestriction());
-                election.setDataUseLetter(consent.getDataUseLetter());
-                election.setDulName(consent.getDulName());
-                break;
-            case DATA_ACCESS:
-                election.setElectionType(ElectionType.DATA_ACCESS.getValue());
-                query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-                dar = mongo.getDataAccessRequestCollection().find(query).first();
-                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
+        election.setElectionType(electionType.getValue());
+        if (EnumSet.of(ElectionType.DATA_ACCESS, ElectionType.RP).contains(electionType)) {
+            BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
+            Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+            List datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
+            if (datasetIdList != null && !datasetIdList.isEmpty()) {
+                Object datasetId = datasetIdList.get(0);
                 try {
-                    String restriction  =  new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
-                    election.setUseRestriction((UseRestriction.parse(restriction)));
-                } catch (IOException e) {
-                    election.setUseRestriction(null);
+                    election.setDataSetId(Integer.valueOf(datasetId.toString()));
+                } catch (NumberFormatException e) {
+                    logger.error("Unable to parse " + datasetId + " to an integer value for election id: " + election.getElectionId());
                 }
-                break;
-            case RP:
-                election.setElectionType(ElectionType.RP.getValue());
-                query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-                dar = mongo.getDataAccessRequestCollection().find(query).first();
-                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
-                try {
-                    String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
-                    election.setUseRestriction((UseRestriction.parse(restriction)));
-
-                } catch (IOException e) {
-                    election.setUseRestriction(null);
-                }
-                break;
-            case DATA_SET:
-                election.setElectionType(ElectionType.DATA_SET.getValue());
-                break;
+            }
+            election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
+            try {
+                String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
+                election.setUseRestriction((UseRestriction.parse(restriction)));
+            } catch (IOException e) {
+                election.setUseRestriction(null);
+            }
         }
+
+        if (electionType == ElectionType.TRANSLATE_DUL) {
+            Consent consent = consentDAO.findConsentById(referenceId);
+            election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
+            election.setUseRestriction(consent.getUseRestriction());
+            election.setDataUseLetter(consent.getDataUseLetter());
+            election.setDulName(consent.getDulName());
+        }
+
         if (StringUtils.isEmpty(election.getStatus())) {
             election.setStatus(ElectionStatus.OPEN.getValue());
         }
