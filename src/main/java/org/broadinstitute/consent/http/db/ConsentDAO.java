@@ -183,7 +183,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
     @SqlQuery("select ca.consentId from consentassociations ca  where ca.dataSetId IN (<dataSetIdList>) ")
-    List<String> getAssociationsConsentIdfromDataSetIds(@BindIn("dataSetIdList") List<String> dataSetIdList);
+    List<String> getAssociationConsentIdsFromDatasetIds(@BindIn("dataSetIdList") List<String> dataSetIdList);
 
     @Mapper(UseRestrictionMapper.class)
     @SqlQuery("select consentId, name, useRestriction from consents where valid_restriction = false ")
@@ -204,5 +204,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("update consents set groupName = :groupName where consentId = :consentId")
     void updateConsentGroupName(@Bind("consentId") String consentId,
                                 @Bind("groupName") String groupName);
+
+    @SqlUpdate("update consents set dac_id = :dacId where consentId = :consentId")
+    void updateConsentDac(@Bind("consentId") String consentId,
+                                @Bind("dacId") Integer dacId);
 
 }
