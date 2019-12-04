@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -69,7 +68,6 @@ public class DataRequestElectionResourceTest {
     @Mock
     private UriBuilder uriBuilder;
 
-    private AuthUser authUser = new AuthUser("test@test.com");
     private DataRequestElectionResource resource;
 
     @Before
@@ -104,7 +102,6 @@ public class DataRequestElectionResourceTest {
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
-                authUser,
                 uriInfo,
                 new Election(),
                 UUID.randomUUID().toString()
@@ -122,7 +119,6 @@ public class DataRequestElectionResourceTest {
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
-                authUser,
                 uriInfo,
                 new Election(),
                 UUID.randomUUID().toString()
@@ -144,7 +140,6 @@ public class DataRequestElectionResourceTest {
         when(electionAPI.createElection(any(), any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.createDataRequestElection(
-                authUser,
                 uriInfo,
                 new Election(),
                 UUID.randomUUID().toString()
@@ -158,7 +153,6 @@ public class DataRequestElectionResourceTest {
         when(electionAPI.createElection(any(), any(), any())).thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.createDataRequestElection(
-                authUser,
                 uriInfo,
                 new Election(),
                 UUID.randomUUID().toString()
