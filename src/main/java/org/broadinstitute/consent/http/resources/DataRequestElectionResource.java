@@ -1,33 +1,15 @@
 package org.broadinstitute.consent.http.resources;
 
-import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
-import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.*;
 import org.broadinstitute.consent.http.util.DarConstants;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -39,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@Path("api/dataRequest/{requestId}/election")
+@Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
     private final ElectionAPI api;
@@ -59,30 +41,25 @@ public class DataRequestElectionResource extends Resource {
     @POST
     @Consumes("application/json")
     @RolesAllowed({ADMIN, CHAIRPERSON})
-    public Response createDataRequestElection(
-            @Auth AuthUser user,
-            @Context UriInfo info,
-            Election rec,
-            @PathParam("requestId") String requestId) {
+    public Response createDataRequestElection(@Context UriInfo info, Election rec,
+                                              @PathParam("requestId") String requestId) {
         URI uri;
         Election accessElection;
         try {
-            accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
+            accessElection = api.createElection(rec, requestId.toString(), ElectionType.DATA_ACCESS);
             List<Vote> votes;
             //create RP election
-            if (!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))) {
+            if(!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))){
                 votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
-                Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
+                Election rpElection = api.createElection(rec, requestId.toString(), ElectionType.RP);
                 voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
-            } else {
+            }else{
                 votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, true);
             }
-            List<Vote> darVotes = votes.stream().
-                    filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
-                    collect(Collectors.toList());
+            List<Vote> darVotes = votes.stream().filter(vote -> vote.getType().equals("DAC")).collect(Collectors.toList());
             emailApi.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
-        } catch (Exception e) {
+        } catch (Exception e){
             return createExceptionResponse(e);
         }
         return Response.created(uri).entity(accessElection).build();
