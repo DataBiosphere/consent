@@ -591,17 +591,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             case RP:
                 BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-                List<?> datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
+                List<Integer> datasetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
-                        logger.error("DAR " + referenceId + " contains multiple datasetId values.");
+                        logger.error("DAR " +
+                                referenceId +
+                                " contains multiple datasetId values: " +
+                                StringUtils.join(datasetIdList, ", "));
                     }
-                    Optional<Integer> datasetId = datasetIdList.
-                            stream().
-                            filter(Objects::nonNull).
-                            filter(Integer.class::isInstance).
-                            map(Integer.class::cast).
-                            findFirst();
+                    Optional<Integer> datasetId = datasetIdList.stream().findFirst();
                     datasetId.ifPresent(election::setDataSetId);
                 }
                 election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
