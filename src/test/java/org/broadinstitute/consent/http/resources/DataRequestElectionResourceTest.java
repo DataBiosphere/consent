@@ -85,7 +85,6 @@ public class DataRequestElectionResourceTest {
         when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailAPI);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(darApi);
         when(AbstractSummaryAPI.getInstance()).thenReturn(summaryAPI);
-
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         String requestId = UUID.randomUUID().toString();
@@ -101,6 +100,24 @@ public class DataRequestElectionResourceTest {
     public void testCreateDataRequestElection() throws Exception {
         when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
         when(darApi.getField(any(), any())).thenReturn(null);
+        when(voteAPI.createVotes(any(), any(), any())).thenReturn(Collections.emptyList());
+        doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
+        initResource();
+        Response response = resource.createDataRequestElection(
+                authUser,
+                uriInfo,
+                new Election(),
+                UUID.randomUUID().toString()
+        );
+        Assert.assertEquals(CREATED.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testCreateDataRequestElectionWithResearchPurpose() throws Exception {
+        Election election = new Election();
+        election.setElectionId(RandomUtils.nextInt(1, 100));
+        when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
+        when(darApi.getField(any(), any())).thenReturn(new Object());
         when(voteAPI.createVotes(any(), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
