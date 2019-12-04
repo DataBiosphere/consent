@@ -33,8 +33,6 @@ public interface ElectionAPI {
 
     List<Election> cancelOpenElectionAndReopen() throws Exception;
 
-    List<Election> describeClosedElectionsByType(String type);
-
     void setMongoDBInstance(MongoConsentDB mongo);
 
     Integer findRPElectionByElectionAccessId(Integer accessElectionId);

@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -15,10 +13,10 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
@@ -42,7 +40,6 @@ import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -187,54 +184,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new NotFoundException("Election was not found");
         }
         return election;
-    }
-
-    @Override
-    public List<Election> describeClosedElectionsByType(String type) {
-        List<Election> elections;
-        if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
-            elections = electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue());
-            List<String> referenceIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
-            ObjectId[] objarray = new ObjectId[referenceIds.size()];
-            for (int i = 0; i < referenceIds.size(); i++)
-                objarray[i] = new ObjectId(referenceIds.get(i));
-            BasicDBObject in = new BasicDBObject("$in", objarray);
-            BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
-            FindIterable<Document> dataAccessRequests =  mongo.getDataAccessRequestCollection().find(q);
-
-
-            elections.forEach(election -> {
-                MongoCursor<Document> itr = dataAccessRequests.iterator();
-                try {
-                    while (itr.hasNext()) {
-                        Document next = itr.next();
-                        if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
-                            election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
-                            election.setProjectTitle(next.get(DarConstants.PROJECT_TITLE).toString());
-                        }
-                    }
-                } finally {
-                    itr.close();
-                }
-            });
-        }else {
-            elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, ElectionStatus.CLOSED.getValue());
-            if(!elections.isEmpty()){
-                List<String> consentIds = elections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
-                Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
-                elections.forEach(election -> {
-                    List<Consent> c = consents.stream().filter(cs -> cs.getConsentId().equals(election.getReferenceId())).
-                            collect(Collectors.toList());
-                    election.setDisplayId(c.get(0).getName());
-                    election.setConsentGroupName(c.get(0).getGroupName());
-                });
-            }
-        }
-
-        if (elections == null) {
-            throw new NotFoundException("Couldn't find any closed elections");
-        }
-        return elections;
     }
 
     @Override
