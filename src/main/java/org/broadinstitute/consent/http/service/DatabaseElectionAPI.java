@@ -578,33 +578,37 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
         election.setElectionType(electionType.getValue());
-        if (EnumSet.of(ElectionType.DATA_ACCESS, ElectionType.RP).contains(electionType)) {
-            BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-            Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-            List datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
-            if (datasetIdList != null && !datasetIdList.isEmpty()) {
-                Object datasetId = datasetIdList.get(0);
-                try {
-                    election.setDataSetId(Integer.valueOf(datasetId.toString()));
-                } catch (NumberFormatException e) {
-                    logger.error("Unable to parse " + datasetId + " to an integer value for election id: " + election.getElectionId());
-                }
-            }
-            election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
-            try {
-                String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
-                election.setUseRestriction((UseRestriction.parse(restriction)));
-            } catch (IOException e) {
-                election.setUseRestriction(null);
-            }
-        }
 
-        if (electionType == ElectionType.TRANSLATE_DUL) {
-            Consent consent = consentDAO.findConsentById(referenceId);
-            election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
-            election.setUseRestriction(consent.getUseRestriction());
-            election.setDataUseLetter(consent.getDataUseLetter());
-            election.setDulName(consent.getDulName());
+        switch (electionType) {
+            case TRANSLATE_DUL:
+                Consent consent = consentDAO.findConsentById(referenceId);
+                election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
+                election.setUseRestriction(consent.getUseRestriction());
+                election.setDataUseLetter(consent.getDataUseLetter());
+                election.setDulName(consent.getDulName());
+                break;
+            case DATA_ACCESS: case RP:
+                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
+                Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+                List datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
+                if (datasetIdList != null && !datasetIdList.isEmpty()) {
+                    Object datasetId = datasetIdList.get(0);
+                    try {
+                        election.setDataSetId(Integer.valueOf(datasetId.toString()));
+                    } catch (NumberFormatException e) {
+                        logger.error("Unable to parse " + datasetId.toString() + " to an integer value for election reference id: " + referenceId);
+                    }
+                }
+                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
+                try {
+                    String restriction  =  new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
+                    election.setUseRestriction((UseRestriction.parse(restriction)));
+                } catch (IOException e) {
+                    election.setUseRestriction(null);
+                }
+                break;
+            case DATA_SET:
+                break;
         }
 
         if (StringUtils.isEmpty(election.getStatus())) {
