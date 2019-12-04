@@ -44,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -587,7 +586,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 election.setDataUseLetter(consent.getDataUseLetter());
                 election.setDulName(consent.getDulName());
                 break;
-            case DATA_ACCESS: case RP:
+            case DATA_ACCESS:
+            case RP:
                 BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 Document dar = mongo.getDataAccessRequestCollection().find(query).first();
                 List datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
@@ -601,7 +601,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 }
                 election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
                 try {
-                    String restriction  =  new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
+                    String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
                     election.setUseRestriction((UseRestriction.parse(restriction)));
                 } catch (IOException e) {
                     election.setUseRestriction(null);

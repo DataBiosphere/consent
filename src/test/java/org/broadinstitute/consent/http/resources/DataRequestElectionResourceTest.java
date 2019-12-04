@@ -33,6 +33,10 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.UUID;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -51,19 +55,19 @@ import static org.mockito.Mockito.when;
 public class DataRequestElectionResourceTest {
 
     @Mock
-    ElectionAPI electionAPI;
+    private ElectionAPI electionAPI;
     @Mock
-    VoteAPI voteAPI;
+    private VoteAPI voteAPI;
     @Mock
-    EmailNotifierAPI emailAPI;
+    private EmailNotifierAPI emailAPI;
     @Mock
-    DataAccessRequestAPI darApi;
+    private DataAccessRequestAPI darApi;
     @Mock
-    SummaryAPI summaryAPI;
+    private SummaryAPI summaryAPI;
     @Mock
     private UriInfo uriInfo;
     @Mock
-    UriBuilder uriBuilder;
+    private UriBuilder uriBuilder;
 
     private AuthUser authUser = new AuthUser("test@test.com");
     private DataRequestElectionResource resource;
@@ -106,7 +110,7 @@ public class DataRequestElectionResourceTest {
                 new Election(),
                 UUID.randomUUID().toString()
         );
-        Assert.assertEquals(201, response.getStatus());
+        Assert.assertEquals(CREATED.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -114,7 +118,7 @@ public class DataRequestElectionResourceTest {
         when(electionAPI.describeDataRequestElection(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.describe(UUID.randomUUID().toString());
-        Assert.assertEquals(404, response.getStatus());
+        Assert.assertEquals(NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -128,7 +132,7 @@ public class DataRequestElectionResourceTest {
                 new Election(),
                 UUID.randomUUID().toString()
         );
-        Assert.assertEquals(404, response.getStatus());
+        Assert.assertEquals(NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -142,7 +146,7 @@ public class DataRequestElectionResourceTest {
                 new Election(),
                 UUID.randomUUID().toString()
         );
-        Assert.assertEquals(400, response.getStatus());
+        Assert.assertEquals(BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -154,7 +158,7 @@ public class DataRequestElectionResourceTest {
                 RandomUtils.nextInt(1, 100),
                 uriInfo
         );
-        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -166,7 +170,7 @@ public class DataRequestElectionResourceTest {
                 RandomUtils.nextInt(1, 100),
                 uriInfo
         );
-        Assert.assertEquals(404, response.getStatus());
+        Assert.assertEquals(NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -178,7 +182,7 @@ public class DataRequestElectionResourceTest {
                 RandomUtils.nextInt(1, 100),
                 uriInfo
         );
-        Assert.assertEquals(400, response.getStatus());
+        Assert.assertEquals(BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -187,7 +191,7 @@ public class DataRequestElectionResourceTest {
         when(summaryAPI.describeDataSetElectionsVotesForDar(any())).thenReturn(file);
         initResource();
         Response response = resource.describeDataSetVotes(UUID.randomUUID().toString());
-        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -195,7 +199,7 @@ public class DataRequestElectionResourceTest {
         when(summaryAPI.describeDataSetElectionsVotesForDar(any())).thenReturn(null);
         initResource();
         Response response = resource.describeDataSetVotes(UUID.randomUUID().toString());
-        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(OK.getStatusCode(), response.getStatus());
     }
 
 }
