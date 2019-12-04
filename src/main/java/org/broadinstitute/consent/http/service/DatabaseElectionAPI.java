@@ -47,6 +47,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -590,14 +591,18 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             case RP:
                 BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
                 Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-                List datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
+                List<?> datasetIdList = dar.get(DarConstants.DATASET_ID, List.class);
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
-                    Object datasetId = datasetIdList.get(0);
-                    try {
-                        election.setDataSetId(Integer.valueOf(datasetId.toString()));
-                    } catch (NumberFormatException e) {
-                        logger.error("Unable to parse " + datasetId.toString() + " to an integer value for election reference id: " + referenceId);
+                    if (datasetIdList.size() > 1) {
+                        logger.error("DAR " + referenceId + " contains multiple datasetId values.");
                     }
+                    Optional<Integer> datasetId = datasetIdList.
+                            stream().
+                            filter(Objects::nonNull).
+                            filter(Integer.class::isInstance).
+                            map(Integer.class::cast).
+                            findFirst();
+                    datasetId.ifPresent(election::setDataSetId);
                 }
                 election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
                 try {
