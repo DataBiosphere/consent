@@ -995,6 +995,30 @@ paths:
           description: No DAC or User found with the provided ID
         500:
           description: Internal Server Error
+  /api/dac/{dacId}/datasets:
+    get:
+      summary: Get All Datasets for DAC
+      operationId: getDacDatasets
+      description: List all Datasets of a DAC
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The list of datasets
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Dataset'
+        404:
+          description: No DAC found with the provided ID
+        500:
+          description: Internal Server Error
   /api/dac/{dacId}/membership:
     get:
       summary: Get All Members of DAC
@@ -1281,7 +1305,7 @@ paths:
   /api/dar/modalSummary/{id}:
         get:
           summary: getDataAcessRequestModalSummary
-          description: Retrieves a DARModalDetailsDTO.
+          description: Retrieves a DARModalDetails.
           parameters:
             - name: id
               in: path
@@ -1292,7 +1316,7 @@ paths:
             - Data Access Request
           responses:
             200:
-              description: 'Returns a DARModalDetailsDTO initialized with the DAR associated with the provided Id.'
+              description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
   /api/dar/find/{id}:
     get:
       summary: describeSpecificFields
@@ -1811,11 +1835,11 @@ paths:
         - Datasets
       responses:
         200:
-          description: An array of DatasetDTO
+          description: An array of Datasets
           schema:
             type: array
             items:
-              $ref: '#/definitions/DatasetDTO'
+              $ref: '#/definitions/Dataset'
         404:
           description: Required parameter is null.
     post:
@@ -1842,7 +1866,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/DatasetDTO'
+              $ref: '#/definitions/Dataset'
         400:
           description: Array of the errors found with a brief description of each one.
           schema:
@@ -2972,7 +2996,7 @@ definitions:
         type: object
         items:
           $ref: '#/definitions/DACUser'
-  DatasetDTO:
+  Dataset:
     type: object
     properties:
       consentId:
@@ -2987,7 +3011,7 @@ definitions:
       properties:
         type: array
         items:
-          $ref: '#/definitions/DatasetPropertyDTO'
+          $ref: '#/definitions/DatasetProperty'
       active:
         type: boolean
         description: The Dataset is active
@@ -3000,7 +3024,7 @@ definitions:
       updateAssociationToDataOwnerAllowed:
         type: boolean
         description: You can update the data owners of this Dataset
-  DatasetPropertyDTO:
+  DatasetProperty:
     type: object
     properties:
       propertyName:

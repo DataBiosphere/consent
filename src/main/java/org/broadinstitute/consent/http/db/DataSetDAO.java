@@ -214,4 +214,15 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " where c.dac_id is null ")
     List<DataSet> findNonDACDataSets();
 
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @return List of datasets that are associated to a single DAC.
+     */
+    @SqlQuery(" select d.* from dataset d " +
+            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
+            " inner join consents c on a.consentId = c.consentId " +
+            " where c.dac_id = :dacId ")
+    List<DataSet> findDatasetsByDac(@Bind("dacId") Integer dacId);
+
 }

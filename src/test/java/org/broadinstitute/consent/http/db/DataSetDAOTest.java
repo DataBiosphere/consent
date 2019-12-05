@@ -56,6 +56,21 @@ public class DataSetDAOTest extends DAOTestHelper {
         Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
+    @Test
+    public void testFindDatasetsByDac() {
+        DataSet dataset = createDataset();
+        DataSet dataset2 = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        List<DataSet> datasets = dataSetDAO.findDatasetsByDac(dac.getDacId());
+        Assert.assertFalse(datasets.isEmpty());
+        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
+        Assert.assertFalse(datasetIds.contains(dataset2.getDataSetId()));
+    }
+
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }
