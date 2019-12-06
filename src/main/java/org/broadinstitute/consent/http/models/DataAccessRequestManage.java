@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -52,6 +54,15 @@ public class DataAccessRequestManage {
 
     @JsonProperty
     private String dataSetElectionResult;
+
+    @JsonProperty
+    private Integer datasetId;
+
+    @JsonProperty
+    private Integer dacId;
+
+    @JsonProperty
+    private List<String> errors = new ArrayList<>();
 
     @JsonProperty
     private DACUser ownerUser;
@@ -170,4 +181,29 @@ public class DataAccessRequestManage {
     public void setOwnerUser(DACUser ownerUser) {
         this.ownerUser = ownerUser;
     }
+
+    public Integer getDatasetId() {
+        return datasetId;
+    }
+
+    public void setDatasetId(Integer datasetId) {
+        this.datasetId = datasetId;
+    }
+
+    public Integer getDacId() {
+        return dacId;
+    }
+
+    public void setDacId(Integer dacId) {
+        this.dacId = dacId;
+    }
+
+    public List<String> getErrors() {
+        return errors;
+    }
+
+    public void setErrors(List<String> errors) {
+        this.errors = errors;
+    }
+
 }

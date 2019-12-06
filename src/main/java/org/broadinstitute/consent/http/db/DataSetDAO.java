@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
@@ -213,5 +214,17 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join consents c on a.consentId = c.consentId " +
             " where c.dac_id is null ")
     List<DataSet> findNonDACDataSets();
+
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @return List of dataset ids and their associated dac ids
+     */
+    @RegisterMapper(DatasetDacIdPairMapper.class)
+    @SqlQuery("select distinct d.dataSetId, c.dac_id from dataset d " +
+            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
+            " inner join consents c on a.consentId = c.consentId " +
+            " where c.dac_id is not null ")
+    List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
 }
