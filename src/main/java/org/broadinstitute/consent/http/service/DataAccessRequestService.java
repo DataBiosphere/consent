@@ -132,7 +132,7 @@ public class DataAccessRequestService {
             List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
             List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(darDatasetIds);
             if (darDatasetIds.size() > 1) {
-                darManage.getErrors().add("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
+                darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
             }
             if (darDatasetIds.size() == 1) {
                 darManage.setDatasetId(darDatasetIds.get(0));
