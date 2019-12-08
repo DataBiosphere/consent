@@ -19,6 +19,7 @@ import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -127,6 +128,18 @@ public class DacService {
 
     public DACUser findUserById(Integer id) throws IllegalArgumentException {
         return populatedUserById(id);
+    }
+
+    public List<DataSet> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
+        List<DataSet> datasets = dataSetDAO.findDatasetsByDac(dacId);
+        if (isAuthUserAdmin(authUser)) {
+            return datasets;
+        }
+        List<Integer> dacIds = getDacIdsForUser(authUser);
+        if (dacIds.contains(dacId)) {
+            return datasets;
+        }
+        return Collections.emptyList();
     }
 
     public List<DACUser> findMembersByDacId(Integer dacId) {
