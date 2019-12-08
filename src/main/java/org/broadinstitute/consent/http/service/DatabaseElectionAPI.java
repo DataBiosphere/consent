@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -113,9 +114,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         validateStatus(election.getStatus());
         setGeneralFields(election, referenceId, electionType);
         Date createDate = new Date();
-        Integer id = electionDAO.insertElection(election.getElectionType(), election.getStatus(),
-                createDate, election.getReferenceId(), election.getFinalAccessVote() , Objects.toString(election.getUseRestriction(), "") , election.getTranslatedUseRestriction(),
-                election.getDataUseLetter(), election.getDulName());
+        Integer id = electionDAO.insertElection(
+                election.getElectionType(),
+                election.getStatus(),
+                createDate,
+                election.getReferenceId(),
+                election.getFinalAccessVote() ,
+                Objects.toString(election.getUseRestriction(), "") ,
+                election.getTranslatedUseRestriction(),
+                election.getDataUseLetter(),
+                election.getDulName(),
+                election.getDataSetId());
         updateSortDate(referenceId, createDate);
 
         switch (electionType) {
@@ -517,11 +526,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
         election.setCreateDate(new Date());
         election.setReferenceId(referenceId);
-        BasicDBObject query;
-        Document dar;
+        election.setElectionType(electionType.getValue());
+
         switch (electionType) {
             case TRANSLATE_DUL:
-                election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
                 Consent consent = consentDAO.findConsentById(referenceId);
                 election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
                 election.setUseRestriction(consent.getUseRestriction());
@@ -529,34 +537,32 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 election.setDulName(consent.getDulName());
                 break;
             case DATA_ACCESS:
-                election.setElectionType(ElectionType.DATA_ACCESS.getValue());
-                query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-                dar = mongo.getDataAccessRequestCollection().find(query).first();
-                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
-                try {
-                    String restriction  =  new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
-                    election.setUseRestriction((UseRestriction.parse(restriction)));
-                } catch (IOException e) {
-                    election.setUseRestriction(null);
-                }
-                break;
             case RP:
-                election.setElectionType(ElectionType.RP.getValue());
-                query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-                dar = mongo.getDataAccessRequestCollection().find(query).first();
+                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
+                Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+                List<Integer> datasetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+                if (datasetIdList != null && !datasetIdList.isEmpty()) {
+                    if (datasetIdList.size() > 1) {
+                        logger.error("DAR " +
+                                referenceId +
+                                " contains multiple datasetId values: " +
+                                StringUtils.join(datasetIdList, ", "));
+                    }
+                    Optional<Integer> datasetId = datasetIdList.stream().findFirst();
+                    datasetId.ifPresent(election::setDataSetId);
+                }
                 election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
                 try {
                     String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
                     election.setUseRestriction((UseRestriction.parse(restriction)));
-
                 } catch (IOException e) {
                     election.setUseRestriction(null);
                 }
                 break;
             case DATA_SET:
-                election.setElectionType(ElectionType.DATA_SET.getValue());
                 break;
         }
+
         if (StringUtils.isEmpty(election.getStatus())) {
             election.setStatus(ElectionStatus.OPEN.getValue());
         }

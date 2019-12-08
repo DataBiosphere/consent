@@ -38,7 +38,7 @@ public class DarUtil {
     }
 
     public static  List<Integer> getIntegerList(Document dar, String key) {
-        List<Object> datasets = dar.get(key, List.class);
+        List<?> datasets = dar.get(key, List.class);
         return datasets.stream().
                 filter(Integer.class::isInstance).
                 map(Integer.class::cast).
