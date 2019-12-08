@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -69,6 +70,20 @@ public class DataSetDAOTest extends DAOTestHelper {
         List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
         Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
         Assert.assertFalse(datasetIds.contains(dataset2.getDataSetId()));
+    }
+
+    @Test
+    public void testFindDatasetAndDacIds() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        List<Pair<Integer, Integer>> pairs = dataSetDAO.findDatasetAndDacIds();
+        Assert.assertFalse(pairs.isEmpty());
+        Assert.assertEquals(1, pairs.size());
+        Assert.assertEquals(pairs.get(0).getLeft(), dataset.getDataSetId());
+        Assert.assertEquals(pairs.get(0).getRight(), dac.getDacId());
     }
 
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {

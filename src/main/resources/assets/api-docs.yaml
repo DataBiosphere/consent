@@ -2991,6 +2991,19 @@ definitions:
       dataSetElectionResult:
         type: string
         description: Result of the Data Owners elections.
+      datasetId:
+        type: integer
+        format: int32
+        description: The ID of the dataset for this DAR.
+      dacId:
+        type: integer
+        format: int32
+        description: The ID of the DAC for this DAR's dataset.
+      errors:
+        type: array
+        items:
+          type: string
+        description: List of any structural errors with this DAR
       ownerUser:
         description: The owner of the DAR
         type: object
