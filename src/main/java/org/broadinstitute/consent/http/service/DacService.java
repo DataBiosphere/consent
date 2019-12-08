@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -130,8 +131,8 @@ public class DacService {
         return populatedUserById(id);
     }
 
-    public List<DataSet> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        List<DataSet> datasets = dataSetDAO.findDatasetsByDac(dacId);
+    public List<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
+        List<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
         if (isAuthUserAdmin(authUser)) {
             return datasets;
         }

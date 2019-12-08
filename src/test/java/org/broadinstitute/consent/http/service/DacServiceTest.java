@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Assert;
@@ -153,11 +154,11 @@ public class DacServiceTest {
 
     @Test
     public void testFindDatasetsByDacId() {
-        when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singletonList(getDatasets().get(0)));
+        when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singletonList(getDatasetDTOs().get(0)));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
         initService();
 
-        List<DataSet> dataSets = service.findDatasetsByDacId(getUser(), 1);
+        List<DataSetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
         Assert.assertNotNull(dataSets);
         Assert.assertEquals(1, dataSets.size());
     }
@@ -610,6 +611,18 @@ public class DacServiceTest {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
                     DataSet dataSet = new DataSet();
+                    dataSet.setDataSetId(i);
+                    return dataSet;
+                }).collect(Collectors.toList());
+    }
+
+    /**
+     * @return A list of 5 datasets with ids
+     */
+    private List<DataSetDTO> getDatasetDTOs() {
+        return IntStream.range(1, 5).
+                mapToObj(i -> {
+                    DataSetDTO dataSet = new DataSetDTO();
                     dataSet.setDataSetId(i);
                     return dataSet;
                 }).collect(Collectors.toList());

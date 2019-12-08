@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -65,9 +66,9 @@ public class DataSetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        List<DataSet> datasets = dataSetDAO.findDatasetsByDac(dac.getDacId());
+        List<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dac.getDacId());
         Assert.assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
         Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
         Assert.assertFalse(datasetIds.contains(dataset2.getDataSetId()));
     }
