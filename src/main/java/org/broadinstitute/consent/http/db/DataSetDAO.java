@@ -223,8 +223,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      */
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId , c.translatedUseRestriction from dataset d " +
-            " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
-            " left outer join dictionary k on k.keyId = p.propertyKey " +
+            " inner join datasetproperty p on p.dataSetId = d.dataSetId " +
+            " inner join dictionary k on k.keyId = p.propertyKey " +
             " inner join consentassociations a on a.dataSetId = d.dataSetId " +
             " inner join consents c on c.consentId = a.consentId " +
             " where c.dac_id = :dacId ")
