@@ -34,7 +34,7 @@ public class DarUtil {
                         "nothealth");
 
         return !fieldsForManualReview.stream().
-                filter(field -> form.containsKey(field) && Boolean.parseBoolean(form.get(field).toString())).collect(Collectors.toList()).isEmpty();
+                filter(field -> form.containsKey(field) && Boolean.valueOf(form.get(field).toString())).collect(Collectors.toList()).isEmpty();
     }
 
     public static  List<Integer> getIntegerList(Document dar, String key) {
