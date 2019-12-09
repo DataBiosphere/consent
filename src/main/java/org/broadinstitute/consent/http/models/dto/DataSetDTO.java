@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -139,6 +141,13 @@ public class DataSetDTO {
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public void addProperty(DataSetPropertyDTO property) {
+        if (this.getProperties() == null) {
+            this.setProperties(new ArrayList<>());
+        }
+        this.getProperties().add(property);
     }
 
     @Override
