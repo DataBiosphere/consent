@@ -32,7 +32,7 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
             dataSetDTO.setActive(r.getBoolean("active"));
             dataSetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
             DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name", r.getString("name"));
-            dataSetDTO.getProperties().add(property);
+            dataSetDTO.addProperty(property);
             property = new DataSetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
             if (property.getPropertyName() != null) {
                 dataSetDTO.addProperty(property);
