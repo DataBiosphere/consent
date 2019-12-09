@@ -38,6 +38,9 @@ public class DataSetDTO {
     @JsonProperty
     private String alias;
 
+    @JsonProperty
+    private String objectId;
+
     public DataSetDTO() {
     }
 
@@ -128,4 +131,13 @@ public class DataSetDTO {
     public String getAlias(){
         return alias;
     }
+
+    public String getObjectId() {
+        return objectId;
+    }
+
+    public void setObjectId(String objectId) {
+        this.objectId = objectId;
+    }
+
 }
