@@ -219,7 +219,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      * DACs -> Consents -> Consent Associations -> DataSets
      * DataSets -> DatasetProperties -> Dictionary
      *
-     * @return List of datasets, with properties, that are associated to a single DAC.
+     * @return Set of datasets, with properties, that are associated to a single DAC.
      */
     @Mapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId , c.translatedUseRestriction from dataset d " +

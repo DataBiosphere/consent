@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 import java.util.List;
+import java.util.Objects;
 
 
 public class DataSetDTO {
@@ -138,6 +139,19 @@ public class DataSetDTO {
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataSetDTO that = (DataSetDTO) o;
+        return dataSetId.equals(that.dataSetId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataSetId);
     }
 
 }
