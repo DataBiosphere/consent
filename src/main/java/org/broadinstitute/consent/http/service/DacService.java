@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -131,8 +132,8 @@ public class DacService {
         return populatedUserById(id);
     }
 
-    public List<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        List<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
+    public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
+        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
         if (isAuthUserAdmin(authUser)) {
             return datasets;
         }
@@ -140,7 +141,7 @@ public class DacService {
         if (dacIds.contains(dacId)) {
             return datasets;
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     public List<DACUser> findMembersByDacId(Integer dacId) {

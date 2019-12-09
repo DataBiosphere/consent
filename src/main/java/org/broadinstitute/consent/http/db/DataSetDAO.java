@@ -228,7 +228,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join consentassociations a on a.dataSetId = d.dataSetId " +
             " inner join consents c on c.consentId = a.consentId " +
             " where c.dac_id = :dacId ")
-    List<DataSetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
+    Set<DataSetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
 
     /**
      * DACs -> Consents -> Consent Associations -> DataSets

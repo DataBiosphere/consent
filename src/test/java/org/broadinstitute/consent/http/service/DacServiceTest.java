@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -154,11 +155,11 @@ public class DacServiceTest {
 
     @Test
     public void testFindDatasetsByDacId() {
-        when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singletonList(getDatasetDTOs().get(0)));
+        when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singleton(getDatasetDTOs().get(0)));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
         initService();
 
-        List<DataSetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
+        Set<DataSetDTO> dataSets = service.findDatasetsByDacId(getUser(), 1);
         Assert.assertNotNull(dataSets);
         Assert.assertEquals(1, dataSets.size());
     }

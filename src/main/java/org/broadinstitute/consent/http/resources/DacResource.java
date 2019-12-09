@@ -23,6 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -163,7 +164,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
         findDacById(dacId);
-        List<DataSetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
+        Set<DataSetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
         return Response.ok().entity(datasets).build();
     }
 
