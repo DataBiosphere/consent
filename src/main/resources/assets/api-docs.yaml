@@ -3012,9 +3012,13 @@ definitions:
   Dataset:
     type: object
     properties:
+      dataSetId:
+        type: integer
+        format: int32
+        description: The dataset id, integer format
       consentId:
         type: string
-        description: Describes the id of the vote.
+        description: The consent id.
       translatedUseRestriction:
         type: string
         description: The Use Restriction, readable type
@@ -3037,6 +3041,12 @@ definitions:
       updateAssociationToDataOwnerAllowed:
         type: boolean
         description: You can update the data owners of this Dataset
+      alias:
+        type: string
+        description: The dataset id, string format
+      objectId:
+        type: string
+        description: The sample collection ID, if defined
   DatasetProperty:
     type: object
     properties:

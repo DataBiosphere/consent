@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DataSetDAOTest extends DAOTestHelper {
@@ -66,7 +67,7 @@ public class DataSetDAOTest extends DAOTestHelper {
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        List<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dac.getDacId());
+        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dac.getDacId());
         Assert.assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
         Assert.assertTrue(datasetIds.contains(dataset.getDataSetId()));
