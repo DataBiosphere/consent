@@ -13,9 +13,9 @@ import java.util.Map;
 
 public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
 
-    Map<Integer, DataSetDTO> dataSets = new LinkedHashMap<>();
-    static final String PROPERTY_KEY = "key";
-    static final String PROPERTY_PROPERTYVALUE = "propertyValue";
+    private Map<Integer, DataSetDTO> dataSets = new LinkedHashMap<>();
+    private static final String PROPERTY_KEY = "key";
+    private static final String PROPERTY_PROPERTYVALUE = "propertyValue";
 
 
     public DataSetDTO map(int index, ResultSet r, StatementContext ctx) throws SQLException {
@@ -25,22 +25,27 @@ public class DataSetPropertiesMapper implements ResultSetMapper<DataSetDTO> {
         String consentId = r.getString("consentId");
         Integer alias = r.getInt("alias");
         if (!dataSets.containsKey(dataSetId)) {
-            dataSetDTO = new DataSetDTO( new ArrayList<>());
+            dataSetDTO = new DataSetDTO(new ArrayList<>());
             dataSetDTO.setConsentId(consentId);
             dataSetDTO.setAlias(alias);
             dataSetDTO.setDataSetId(dataSetId);
             dataSetDTO.setActive(r.getBoolean("active"));
-            dataSetDTO.setTranslatedUseRestriction((r.getString("translatedUseRestriction") == null) ? null : r.getString("translatedUseRestriction"));
-            DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name",r.getString("name"));
-            dataSetDTO.getProperties().add(property);
-            property = new DataSetPropertyDTO(r.getString(PROPERTY_KEY),r.getString(PROPERTY_PROPERTYVALUE));
-            dataSetDTO.getProperties().add(property);
+            dataSetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
+            DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name", r.getString("name"));
+            dataSetDTO.addProperty(property);
+            property = new DataSetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
+            if (property.getPropertyName() != null) {
+                dataSetDTO.addProperty(property);
+            }
             dataSetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
+            dataSetDTO.setObjectId(r.getString("objectId"));
             dataSets.put(dataSetId, dataSetDTO);
         } else {
             dataSetDTO = dataSets.get(dataSetId);
             DataSetPropertyDTO property = new DataSetPropertyDTO(r.getString(PROPERTY_KEY),r.getString(PROPERTY_PROPERTYVALUE));
-            dataSetDTO.getProperties().add(property);
+            if (property.getPropertyName() != null) {
+                dataSetDTO.addProperty(property);
+            }
         }
         return dataSetDTO;
     }

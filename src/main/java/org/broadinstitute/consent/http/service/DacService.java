@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -130,8 +132,8 @@ public class DacService {
         return populatedUserById(id);
     }
 
-    public List<DataSet> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
-        List<DataSet> datasets = dataSetDAO.findDatasetsByDac(dacId);
+    public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
+        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
         if (isAuthUserAdmin(authUser)) {
             return datasets;
         }
@@ -139,7 +141,7 @@ public class DacService {
         if (dacIds.contains(dacId)) {
             return datasets;
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     public List<DACUser> findMembersByDacId(Integer dacId) {
