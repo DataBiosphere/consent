@@ -136,9 +136,9 @@ public class VoteService {
     }
 
     private boolean isChairPerson(DACUser user) {
-        return user.getRoles().stream().anyMatch(userRole ->
-                userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) ||
-                        userRole.getRoleId().equals(UserRoles.MEMBER.getRoleId()));
+        return user.getRoles().
+                stream().
+                anyMatch(userRole -> userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
     }
 
     /**
