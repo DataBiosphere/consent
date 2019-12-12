@@ -66,7 +66,7 @@ public class DACUserResource extends Resource {
             if (isChairPerson(dacUser.getRoles())) {
                 dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
-                voteService.createVotesForElections(elections, true);
+                voteService.createVotesForElections(elections);
             }
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->

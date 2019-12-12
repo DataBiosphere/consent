@@ -111,9 +111,8 @@ public class VoteService {
     /**
      * Create votes for elections.
      * @param elections List of Elections
-     * @param isConsent Is this a consent election?
      */
-    public void createVotesForElections(List<Election> elections, Boolean isConsent) {
+    public void createVotesForElections(List<Election> elections) {
         if (elections != null) {
             for (Election election : elections) {
                 createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
