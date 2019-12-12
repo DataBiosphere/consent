@@ -1,11 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
@@ -15,6 +10,11 @@ import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 // TODO: Rename this class to UserDAO - see DUOS-344
 @UseStringTemplate3StatementLocator
@@ -27,6 +27,7 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select * from dacuser where dacUserId IN (<dacUserIds>)")
     Collection<DACUser> findUsers(@BindIn("dacUserIds") Collection<Integer> dacUserIds);
 
+    @Deprecated // This method is no longer logical. There can be multiple chairpersons within a DAC
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson'")
     DACUser findChairpersonUser();
@@ -38,8 +39,12 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     Integer checkChairpersonUser(@Bind("dacUserId") Integer dacUserId);
 
     @Mapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson' or r.name = 'Member'")
-    Set<DACUser> findDACUsersEnabledToVote();
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson' or r.name = 'Member'")
+    Set<DACUser> findDACUsersEnabledToVoteByDAC(@Bind("dacId") Integer dacId);
+
+    @Mapper(DACUserRoleMapper.class)
+    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id is null inner join roles r on r.roleId = ur.role_id where r.name = 'Chairperson' or r.name = 'Member'")
+    Set<DACUser> findNonDACUsersEnabledToVote();
 
     @Mapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where  du.dacUserId IN (<dacUserIds>)")

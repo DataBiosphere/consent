@@ -5,6 +5,7 @@ import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.util.VisibleForTesting;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
@@ -108,7 +109,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = validateAndGetDULElection(referenceId, electionType);
-        validateAvailableUsers(electionType);
+        validateAvailableUsers(consentElection);
         validateReferenceId(referenceId, electionType);
         validateExistentElection(referenceId, electionType);
         validateStatus(election.getStatus());
@@ -607,9 +608,23 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void validateAvailableUsers(ElectionType electionType) {
-        if (!electionType.equals(ElectionType.DATA_SET)) {
-            Set<DACUser> dacUsers = dacUserDAO.findDACUsersEnabledToVote();
+    private void validateAvailableUsers(Election election) {
+        if (election != null && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
+            Set<DACUser> dacUsers;
+            if (election.getDataSetId() != null) {
+                // List of dataset id with its associated dac id
+                List<Pair<Integer, Integer>> pairs = dataSetDAO.findDatasetAndDacIds();
+                Optional<Pair<Integer, Integer>> datasetDacPair = pairs.stream().
+                        filter(p -> p.getLeft().equals(election.getDataSetId())).
+                        findFirst();
+                if (datasetDacPair.isPresent() && datasetDacPair.get().getRight() != null) {
+                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
+                } else {
+                    dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+                }
+            } else {
+                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+            }
             if (dacUsers == null || dacUsers.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
             }

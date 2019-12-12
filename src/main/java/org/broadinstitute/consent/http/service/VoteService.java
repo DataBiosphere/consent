@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -15,18 +18,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class VoteService {
 
     private DACUserDAO dacUserDAO;
     private DataSetAssociationDAO dataSetAssociationDAO;
+    private DataSetDAO datasetDAO;
+    private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
 
     @Inject
-    public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO, VoteDAO voteDAO) {
+    public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO,
+                       DataSetDAO datasetDAO, ElectionDAO electionDAO, VoteDAO voteDAO) {
         this.dacUserDAO = dacUserDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
+        this.datasetDAO = datasetDAO;
+        this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
     }
 
@@ -81,14 +90,29 @@ public class VoteService {
 
     /**
      * Create votes for an election
-     * TODO: Apply DAC logic to vote creation
+     *
      * @param electionId     The Election ID
      * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
      * @return List of votes
      */
     public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
-        Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
+        Set<DACUser> dacUserList;
+        Election election = electionDAO.findElectionById(electionId);
+        if (election.getDataSetId() != null) {
+            // List of dataset id with its associated dac id
+            List<Pair<Integer, Integer>> pairs = datasetDAO.findDatasetAndDacIds();
+            Optional<Pair<Integer, Integer>> datasetDacPair = pairs.stream().
+                    filter(p -> p.getLeft().equals(election.getDataSetId())).
+                    findFirst();
+            if (datasetDacPair.isPresent() && datasetDacPair.get().getRight() != null) {
+                dacUserList = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
+            } else {
+                dacUserList = dacUserDAO.findNonDACUsersEnabledToVote();
+            }
+        } else {
+            dacUserList = dacUserDAO.findNonDACUsersEnabledToVote();
+        }
         List<Vote> votes = new ArrayList<>();
         if (dacUserList != null) {
             for (DACUser user : dacUserList) {
@@ -113,6 +137,7 @@ public class VoteService {
 
     /**
      * Create votes for elections.
+     *
      * @param elections List of Elections
      */
     public void createVotesForElections(List<Election> elections) {
@@ -125,6 +150,7 @@ public class VoteService {
 
     /**
      * Create Votes for a data owner election
+     *
      * @param election Election
      * @return Votes for the election
      */

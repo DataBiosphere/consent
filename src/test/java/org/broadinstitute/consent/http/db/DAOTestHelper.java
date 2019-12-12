@@ -30,12 +30,14 @@ public abstract class DAOTestHelper extends AbstractTest {
     private List<Integer> createdDacIds = new ArrayList<>();
     private List<String> createdConsentIds = new ArrayList<>();
     private List<Integer> createdElectionIds = new ArrayList<>();
+    private List<String> createdUserEmails = new ArrayList<>();
 
     ConsentDAO consentDAO;
     DacDAO dacDAO;
-    private DACUserDAO userDAO;
+    DACUserDAO userDAO;
     DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
+    private UserRoleDAO userRoleDAO;
 
     String ASSOCIATION_TYPE_TEST;
 
@@ -56,6 +58,7 @@ public abstract class DAOTestHelper extends AbstractTest {
         userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
         electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
+        userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
         ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
     }
 
@@ -71,6 +74,11 @@ public abstract class DAOTestHelper extends AbstractTest {
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
+        });
+        createdUserEmails.forEach(email -> {
+            userRoleDAO.findRolesByUserEmail(email).
+                    forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
+            userDAO.deleteDACUserByEmail(email);
         });
     }
 
@@ -120,6 +128,22 @@ public abstract class DAOTestHelper extends AbstractTest {
                 "." +
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertDACUser(email, "display name", new Date());
+        createdUserEmails.add(email);
+        return dacDAO.findUserById(userId);
+    }
+
+    DACUser createUserWithRole(Integer roleId) {
+        int i1 = RandomUtils.nextInt(5, 10);
+        int i2 = RandomUtils.nextInt(5, 10);
+        int i3 = RandomUtils.nextInt(3, 5);
+        String email = RandomStringUtils.randomAlphabetic(i1) +
+                "@" +
+                RandomStringUtils.randomAlphabetic(i2) +
+                "." +
+                RandomStringUtils.randomAlphabetic(i3);
+        Integer userId = userDAO.insertDACUser(email, "display name", new Date());
+        userRoleDAO.insertSingleUserRole(roleId, userId);
+        createdUserEmails.add(email);
         return dacDAO.findUserById(userId);
     }
 
