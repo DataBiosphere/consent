@@ -283,7 +283,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentElectionResource(consentService, dacService, voteService));
         env.jersey().register(new DataRequestElectionResource(voteService));
         env.jersey().register(ConsentVoteResource.class);
-        env.jersey().register(DataRequestVoteResource.class);
+        env.jersey().register(new DataRequestVoteResource(voteService));
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DacResource(dacService));

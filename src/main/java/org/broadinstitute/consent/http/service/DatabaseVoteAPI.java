@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
@@ -123,13 +122,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     @Override
     public List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId) {
         return voteDAO.findVoteByTypeAndElectionId(electionId, type);
-    }
-
-    @Override
-    public List<Vote> createDataOwnersReviewVotes(Election election) {
-        List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
-        voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
-        return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }
 
     @Override

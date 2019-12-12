@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -50,6 +51,7 @@ public class ConsentResourceTest extends AbstractTest {
     private VoteAPI voteAPI = AbstractVoteAPI.getInstance();
     private VoteService voteService = new VoteService(
             getApplicationJdbi().onDemand(DACUserDAO.class),
+            getApplicationJdbi().onDemand(DataSetAssociationDAO.class),
             getApplicationJdbi().onDemand(VoteDAO.class)
     );
 

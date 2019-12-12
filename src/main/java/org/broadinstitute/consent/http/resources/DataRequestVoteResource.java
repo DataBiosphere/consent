@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
+    private VoteService voteService;
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;
@@ -40,7 +41,8 @@ public class DataRequestVoteResource extends Resource {
     private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
-    public DataRequestVoteResource() {
+    public DataRequestVoteResource(VoteService voteService) {
+        this.voteService = voteService;
         this.api = AbstractVoteAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.emailAPI = AbstractEmailNotifierAPI.getInstance();
@@ -202,8 +204,8 @@ public class DataRequestVoteResource extends Resource {
                 Map<DACUser, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(dataSetIds);
                 List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
-                    elections.stream().forEach(election -> {
-                        api.createDataOwnersReviewVotes(election);
+                    elections.forEach(election -> {
+                        voteService.createDataOwnersReviewVotes(election);
                     });
                 }
                 List<DACUser> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();

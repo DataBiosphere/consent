@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -19,11 +20,13 @@ import java.util.Set;
 public class VoteService {
 
     private DACUserDAO dacUserDAO;
+    private DataSetAssociationDAO dataSetAssociationDAO;
     private VoteDAO voteDAO;
 
     @Inject
-    public VoteService(DACUserDAO dacUserDAO, VoteDAO voteDAO) {
+    public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO, VoteDAO voteDAO) {
         this.dacUserDAO = dacUserDAO;
+        this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.voteDAO = voteDAO;
     }
 
@@ -78,7 +81,7 @@ public class VoteService {
 
     /**
      * Create votes for an election
-     *
+     * TODO: Apply DAC logic to vote creation
      * @param electionId     The Election ID
      * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
@@ -120,6 +123,17 @@ public class VoteService {
         }
     }
 
+    /**
+     * Create Votes for a data owner election
+     * @param election Election
+     * @return Votes for the election
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public List<Vote> createDataOwnersReviewVotes(Election election) {
+        List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
+        voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
+        return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
+    }
 
     private boolean isChairPerson(DACUser user) {
         return user.getRoles().stream().anyMatch(userRole ->

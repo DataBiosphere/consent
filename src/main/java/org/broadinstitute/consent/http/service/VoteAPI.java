@@ -25,8 +25,6 @@ public interface VoteAPI {
 
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 
-    List<Vote> createDataOwnersReviewVotes(Election electionId);
-
     Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException;
 
 }
