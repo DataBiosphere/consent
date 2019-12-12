@@ -9,8 +9,6 @@ import java.util.List;
 @Deprecated // Use VoteService
 public interface VoteAPI {
 
-    List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) throws IllegalArgumentException;
-
     Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
 
     Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException;
@@ -24,8 +22,6 @@ public interface VoteAPI {
     void deleteVote(Integer voteId, String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
 
     void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
-
-    void createVotesForElections(List<Election> elections, Boolean isConsent);
 
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
 
