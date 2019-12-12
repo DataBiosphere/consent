@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import java.util.ArrayList;
@@ -78,8 +79,8 @@ public class VoteService {
     /**
      * Create votes for an election
      *
-     * @param electionId The Election ID
-     * @param electionType The Election type
+     * @param electionId     The Election ID
+     * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
      * @return List of votes
      */
@@ -90,14 +91,14 @@ public class VoteService {
             for (DACUser user : dacUserList) {
                 Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
                 votes.add(voteDAO.findVoteById(id));
-                if(isChairPerson(user)){
+                if (isChairPerson(user)) {
                     Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
                     votes.add(voteDAO.findVoteById(chairPersonVoteId));
                 }
                 if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user)) {
                     id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
                     votes.add(voteDAO.findVoteById(id));
-                    if(!isManualReview){
+                    if (!isManualReview) {
                         id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
                         votes.add(voteDAO.findVoteById(id));
                     }
@@ -106,6 +107,20 @@ public class VoteService {
         }
         return votes;
     }
+
+    /**
+     * Create votes for elections.
+     * @param elections List of Elections
+     * @param isConsent Is this a consent election?
+     */
+    public void createVotesForElections(List<Election> elections, Boolean isConsent) {
+        if (elections != null) {
+            for (Election election : elections) {
+                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
+            }
+        }
+    }
+
 
     private boolean isChairPerson(DACUser user) {
         return user.getRoles().stream().anyMatch(userRole ->

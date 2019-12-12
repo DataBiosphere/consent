@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
@@ -10,9 +11,8 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
@@ -47,15 +47,14 @@ public class DACUserResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
-    private final VoteAPI voteAPI;
-    protected final Logger logger() {
-        return Logger.getLogger(this.getClass().getName());
-    }
+    protected final Logger logger = Logger.getLogger(this.getClass().getName());
+    private VoteService voteService;
 
-    public DACUserResource() {
+    @Inject
+    public DACUserResource(VoteService voteService) {
         this.electionAPI = AbstractElectionAPI.getInstance();
-        this.voteAPI = AbstractVoteAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.voteService = voteService;
     }
 
     @POST
@@ -67,7 +66,7 @@ public class DACUserResource extends Resource {
             if (isChairPerson(dacUser.getRoles())) {
                 dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
                 List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
-                voteAPI.createVotesForElections(elections, true);
+                voteService.createVotesForElections(elections, true);
             }
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
@@ -237,7 +236,7 @@ public class DACUserResource extends Resource {
     /**
      * Convenience method to find a member from legacy json structure.
      *
-     * @param json Raw json string from client
+     * @param json       Raw json string from client
      * @param memberName The name of the member to find in the json
      * @return Optional value of memberName
      */
@@ -248,7 +247,7 @@ public class DACUserResource extends Resource {
             try {
                 aString = Optional.of(jsonObject.get(memberName).getAsString());
             } catch (Exception e) {
-                logger().debug(e.getMessage());
+                logger.debug(e.getMessage());
             }
         }
         return aString;
@@ -282,7 +281,7 @@ public class DACUserResource extends Resource {
                 }
             }
         } catch (Exception e) {
-            logger().warn("Unable to extract email preference from: " + json + " : " + e.getMessage());
+            logger.warn("Unable to extract email preference from: " + json + " : " + e.getMessage());
         }
         return aBoolean;
     }
