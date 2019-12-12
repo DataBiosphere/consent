@@ -12,12 +12,11 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
-import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -46,16 +45,16 @@ public class ConsentElectionResource extends Resource {
 
     private ConsentService consentService;
     private DacService dacService;
+    private VoteService voteService;
     private final ElectionAPI api;
-    private final VoteAPI voteAPI;
     private final EmailNotifierAPI emailApi;
 
     @Inject
-    public ConsentElectionResource(ConsentService consentService, DacService dacService) {
+    public ConsentElectionResource(ConsentService consentService, DacService dacService, VoteService voteService) {
         this.consentService = consentService;
         this.dacService = dacService;
+        this.voteService = voteService;
         this.api = AbstractElectionAPI.getInstance();
-        this.voteAPI = AbstractVoteAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
     }
 
@@ -135,7 +134,7 @@ public class ConsentElectionResource extends Resource {
 
     private URI createElectionURI(UriInfo info, Election election, String consentId) throws Exception {
         Election newElection = api.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
-        List<Vote> votes = voteAPI.createVotes(newElection.getElectionId(), ElectionType.TRANSLATE_DUL, false);
+        List<Vote> votes = voteService.createVotes(newElection.getElectionId(), ElectionType.TRANSLATE_DUL, false);
         List<Vote> dulVotes = votes.stream().
                 filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                 collect(Collectors.toList());

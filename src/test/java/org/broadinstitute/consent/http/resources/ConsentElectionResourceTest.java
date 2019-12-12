@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,6 +75,9 @@ public class ConsentElectionResourceTest {
     EmailNotifierAPI emailAPI;
 
     @Mock
+    VoteService voteService;
+
+    @Mock
     UriInfo info;
 
     @Mock
@@ -96,7 +100,7 @@ public class ConsentElectionResourceTest {
 
         Election election = getElection();
         when(electionAPI.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
-        when(voteAPI.createVotes(anyInt(), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
+        when(voteService.createVotes(anyInt(), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
         doNothing().when(emailAPI).sendNewCaseMessageToList(anyList(), any(Election.class));
     }
 
@@ -251,7 +255,7 @@ public class ConsentElectionResourceTest {
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailAPI);
-        resource = new ConsentElectionResource(consentService, dacService);
+        resource = new ConsentElectionResource(consentService, dacService, voteService);
     }
 
     private Consent getConsent(Integer dacId) {

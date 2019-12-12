@@ -1,18 +1,28 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Vote;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 public class VoteService {
 
+    private DACUserDAO dacUserDAO;
     private VoteDAO voteDAO;
 
     @Inject
-    public VoteService(VoteDAO voteDAO) {
+    public VoteService(DACUserDAO dacUserDAO, VoteDAO voteDAO) {
+        this.dacUserDAO = dacUserDAO;
         this.voteDAO = voteDAO;
     }
 
@@ -63,6 +73,44 @@ public class VoteService {
                 vote.getHasConcerns()
         );
         return voteDAO.findVoteById(vote.getVoteId());
+    }
+
+    /**
+     * Create votes for an election
+     *
+     * @param electionId The Election ID
+     * @param electionType The Election type
+     * @param isManualReview Is this a manual review election
+     * @return List of votes
+     */
+    public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
+        Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
+        List<Vote> votes = new ArrayList<>();
+        if (dacUserList != null) {
+            for (DACUser user : dacUserList) {
+                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
+                votes.add(voteDAO.findVoteById(id));
+                if(isChairPerson(user)){
+                    Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
+                    votes.add(voteDAO.findVoteById(chairPersonVoteId));
+                }
+                if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user)) {
+                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
+                    votes.add(voteDAO.findVoteById(id));
+                    if(!isManualReview){
+                        id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
+                        votes.add(voteDAO.findVoteById(id));
+                    }
+                }
+            }
+        }
+        return votes;
+    }
+
+    private boolean isChairPerson(DACUser user) {
+        return user.getRoles().stream().anyMatch(userRole ->
+                userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) ||
+                        userRole.getRoleId().equals(UserRoles.MEMBER.getRoleId()));
     }
 
     /**

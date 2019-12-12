@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
@@ -9,12 +10,11 @@ import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.SummaryAPI;
-import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.util.DarConstants;
 
 import javax.annotation.security.PermitAll;
@@ -41,17 +41,18 @@ import java.util.stream.Collectors;
 public class DataRequestElectionResource extends Resource {
 
     private final ElectionAPI api;
-    private final VoteAPI voteAPI;
     private final EmailNotifierAPI emailApi;
     private final DataAccessRequestAPI darApi;
     private final SummaryAPI summaryAPI;
+    private VoteService voteService;
 
-    public DataRequestElectionResource() {
+    @Inject
+    public DataRequestElectionResource(VoteService voteService) {
         this.api = AbstractElectionAPI.getInstance();
-        this.voteAPI = AbstractVoteAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.summaryAPI = AbstractSummaryAPI.getInstance();
+        this.voteService = voteService;
     }
 
     @POST
@@ -66,11 +67,11 @@ public class DataRequestElectionResource extends Resource {
             List<Vote> votes;
             //create RP election
             if (!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))) {
-                votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
+                votes = voteService.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
                 Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
-                voteAPI.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
+                voteService.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
             } else {
-                votes = voteAPI.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, true);
+                votes = voteService.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, true);
             }
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
