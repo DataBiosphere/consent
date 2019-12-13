@@ -209,7 +209,7 @@ public class VoteServiceTest {
         when(dataSetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(Collections.singletonList(1));
         Vote v = new Vote();
         v.setVoteId(1);
-        when(voteDAO.insertVote(anyInt(), anyInt(), any(), anyBoolean())).thenReturn(v.getVoteId());
+        when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());
         when(voteDAO.findVoteById(anyInt())).thenReturn(v);
         when(voteDAO.findVotesByElectionIdAndType(anyInt(), anyString())).thenReturn(Collections.singletonList(v));
         initService();
@@ -233,7 +233,7 @@ public class VoteServiceTest {
         when(dacUserDAO.findNonDACUsersEnabledToVote()).thenReturn(Collections.singleton(user));
         Vote v = new Vote();
         v.setVoteId(1);
-        when(voteDAO.insertVote(anyInt(), anyInt(), any(), anyBoolean())).thenReturn(v.getVoteId());
+        when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());
         when(voteDAO.findVoteById(anyInt())).thenReturn(v);
     }
 

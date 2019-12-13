@@ -118,17 +118,17 @@ public class VoteService {
         List<Vote> votes = new ArrayList<>();
         if (dacUsers != null) {
             for (DACUser user : dacUsers) {
-                Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
+                Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue());
                 votes.add(voteDAO.findVoteById(dacVoteId));
                 if (isChairPerson(user)) {
-                    Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
+                    Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue());
                     votes.add(voteDAO.findVoteById(chairVoteId));
                     // Requires Chairperson role to create a final and agreement vote in the Data Access case
                     if (electionType.equals(ElectionType.DATA_ACCESS)) {
-                        Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
+                        Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue());
                         votes.add(voteDAO.findVoteById(finalVoteId));
                         if (!isManualReview) {
-                            Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
+                            Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue());
                             votes.add(voteDAO.findVoteById(agreementVoteId));
                         }
                     }
