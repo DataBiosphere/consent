@@ -41,6 +41,7 @@ import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -612,7 +613,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (election != null && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
             Set<DACUser> dacUsers;
             if (election.getDataSetId() != null) {
-                // List of dataset id with its associated dac id
+                // List of dataset id and associated dac id Pairs
                 List<Pair<Integer, Integer>> pairs = dataSetDAO.findDatasetAndDacIds();
                 Optional<Pair<Integer, Integer>> datasetDacPair = pairs.stream().
                         filter(p -> p.getLeft().equals(election.getDataSetId())).
@@ -620,9 +621,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 if (datasetDacPair.isPresent() && datasetDacPair.get().getRight() != null) {
                     dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
                 } else {
+                    // This case represents: Election has a dataset, but there is no DAC for the dataset
                     dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
                 }
             } else {
+                // This case represents: Election does not have a dataset, and therefore, no DAC for it
                 dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
             }
             if (dacUsers == null || dacUsers.isEmpty()) {

@@ -97,37 +97,40 @@ public class VoteService {
      * @return List of votes
      */
     public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
-        Set<DACUser> dacUserList;
+        Set<DACUser> dacUsers;
         Election election = electionDAO.findElectionById(electionId);
         if (election.getDataSetId() != null) {
-            // List of dataset id with its associated dac id
+            // List of dataset id and associated dac id Pairs
             List<Pair<Integer, Integer>> pairs = datasetDAO.findDatasetAndDacIds();
             Optional<Pair<Integer, Integer>> datasetDacPair = pairs.stream().
                     filter(p -> p.getLeft().equals(election.getDataSetId())).
                     findFirst();
             if (datasetDacPair.isPresent() && datasetDacPair.get().getRight() != null) {
-                dacUserList = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
+                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
             } else {
-                dacUserList = dacUserDAO.findNonDACUsersEnabledToVote();
+                // This case represents: Election has a dataset, but there is no DAC for the dataset
+                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
             }
         } else {
-            dacUserList = dacUserDAO.findNonDACUsersEnabledToVote();
+            // This case represents: Election does not have a dataset, and therefore, no DAC for it
+            dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
         }
         List<Vote> votes = new ArrayList<>();
-        if (dacUserList != null) {
-            for (DACUser user : dacUserList) {
-                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
-                votes.add(voteDAO.findVoteById(id));
+        if (dacUsers != null) {
+            for (DACUser user : dacUsers) {
+                Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
+                votes.add(voteDAO.findVoteById(dacVoteId));
                 if (isChairPerson(user)) {
-                    Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
-                    votes.add(voteDAO.findVoteById(chairPersonVoteId));
-                }
-                if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user)) {
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
-                    votes.add(voteDAO.findVoteById(id));
-                    if (!isManualReview) {
-                        id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
-                        votes.add(voteDAO.findVoteById(id));
+                    Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
+                    votes.add(voteDAO.findVoteById(chairVoteId));
+                    // Requires Chairperson role to create a final and agreement vote in the Data Access case
+                    if (electionType.equals(ElectionType.DATA_ACCESS)) {
+                        Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
+                        votes.add(voteDAO.findVoteById(finalVoteId));
+                        if (!isManualReview) {
+                            Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
+                            votes.add(voteDAO.findVoteById(agreementVoteId));
+                        }
                     }
                 }
             }
