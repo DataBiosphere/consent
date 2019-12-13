@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.
  */
+@Deprecated // Use ElectionService
 public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private MailMessageDAO mailMessageDAO;
@@ -609,6 +610,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
+    /*
+     * This method shares duplicated code with `VoteService`. This class will eventually be removed
+     * in favor of `ElectionService` so leaving this here for now.
+     */
+    @SuppressWarnings("DuplicatedCode")
     private void validateAvailableUsers(Election election) {
         if (election != null && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
             Set<DACUser> dacUsers;

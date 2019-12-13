@@ -91,11 +91,14 @@ public class VoteService {
     /**
      * Create votes for an election
      *
+     * TODO: Refactor duplicated code when DatabaseElectionAPI is fully replaced by ElectionService
+     *
      * @param electionId     The Election ID
      * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
      * @return List of votes
      */
+    @SuppressWarnings("DuplicatedCode")
     public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
         Set<DACUser> dacUsers;
         Election election = electionDAO.findElectionById(electionId);
