@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -119,7 +118,7 @@ public class VoteServiceTest {
 
         List<Vote> votes = service.createVotes(1, ElectionType.DATA_ACCESS, false);
         Assert.assertFalse(votes.isEmpty());
-        // Should create 1 member vote:
+        // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
     }
 
@@ -144,7 +143,7 @@ public class VoteServiceTest {
 
         List<Vote> votes = service.createVotes(1, ElectionType.DATA_ACCESS, false);
         Assert.assertFalse(votes.isEmpty());
-        // Should create 1 member vote:
+        // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
     }
 
@@ -168,7 +167,7 @@ public class VoteServiceTest {
 
         List<Vote> votes = service.createVotes(1, ElectionType.TRANSLATE_DUL, false);
         Assert.assertFalse(votes.isEmpty());
-        // Should create 1 member vote:
+        // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
     }
 
@@ -192,7 +191,7 @@ public class VoteServiceTest {
 
         List<Vote> votes = service.createVotes(1, ElectionType.RP, false);
         Assert.assertFalse(votes.isEmpty());
-        // Should create 1 member vote:
+        // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
     }
 
