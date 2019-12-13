@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private VoteService voteService;
+    private final VoteService voteService;
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
     private final EmailNotifierAPI emailAPI;

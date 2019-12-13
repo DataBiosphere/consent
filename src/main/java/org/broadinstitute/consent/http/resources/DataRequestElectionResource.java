@@ -44,7 +44,7 @@ public class DataRequestElectionResource extends Resource {
     private final EmailNotifierAPI emailApi;
     private final DataAccessRequestAPI darApi;
     private final SummaryAPI summaryAPI;
-    private VoteService voteService;
+    private final VoteService voteService;
 
     @Inject
     public DataRequestElectionResource(VoteService voteService) {

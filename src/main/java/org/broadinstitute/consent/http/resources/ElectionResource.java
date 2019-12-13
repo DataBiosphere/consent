@@ -29,7 +29,7 @@ public class ElectionResource extends Resource {
 
     private final ElectionAPI api;
 
-    private VoteService voteService;
+    private final VoteService voteService;
 
     @Inject
     public ElectionResource(VoteService voteService) {

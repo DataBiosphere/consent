@@ -48,7 +48,7 @@ public class DACUserResource extends Resource {
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
     protected final Logger logger = Logger.getLogger(this.getClass().getName());
-    private VoteService voteService;
+    private final VoteService voteService;
 
     @Inject
     public DACUserResource(VoteService voteService) {

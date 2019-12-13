@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
 @Path("api/consent/{consentId}/election")
 public class ConsentElectionResource extends Resource {
 
-    private ConsentService consentService;
-    private DacService dacService;
-    private VoteService voteService;
+    private final ConsentService consentService;
+    private final DacService dacService;
+    private final VoteService voteService;
     private final ElectionAPI api;
     private final EmailNotifierAPI emailApi;
 
