@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -11,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public class VoteService {
@@ -90,10 +89,10 @@ public class VoteService {
 
     /**
      * Create votes for an election
-     *
+     * <p>
      * TODO: Refactor duplicated code when DatabaseElectionAPI is fully replaced by ElectionService
      *
-     * @param election     The Election
+     * @param election       The Election
      * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
      * @return List of votes
@@ -102,20 +101,21 @@ public class VoteService {
     public List<Vote> createVotes(Election election, ElectionType electionType, Boolean isManualReview) {
         Set<DACUser> dacUsers;
         if (election.getDataSetId() != null) {
-            // List of dataset id and associated dac id Pairs
-            List<Pair<Integer, Integer>> pairs = datasetDAO.findDatasetAndDacIds();
-            Optional<Pair<Integer, Integer>> datasetDacPair = pairs.stream().
-                    filter(p -> p.getLeft().equals(election.getDataSetId())).
-                    findFirst();
-            if (datasetDacPair.isPresent() && datasetDacPair.get().getRight() != null) {
-                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
+            Dac electionDac = datasetDAO.findDacForDataset(election.getDataSetId());
+            if (electionDac != null) {
+                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(electionDac.getDacId());
             } else {
                 // This case represents: Election has a dataset, but there is no DAC for the dataset
                 dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
             }
         } else {
-            // This case represents: Election does not have a dataset, and therefore, no DAC for it
-            dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+            Dac consentDac = electionDAO.findDacForConsentElection(election.getElectionId());
+            if (consentDac != null) {
+                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(consentDac.getDacId());
+            } else {
+                // This case represents: Election does not have a dataset, and therefore, no DAC for it
+                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+            }
         }
         List<Vote> votes = new ArrayList<>();
         if (dacUsers != null) {

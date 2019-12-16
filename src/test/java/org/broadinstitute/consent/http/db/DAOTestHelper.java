@@ -36,7 +36,7 @@ public abstract class DAOTestHelper extends AbstractTest {
     DacDAO dacDAO;
     DACUserDAO userDAO;
     DataSetDAO dataSetDAO;
-    private ElectionDAO electionDAO;
+    ElectionDAO electionDAO;
     private UserRoleDAO userRoleDAO;
 
     String ASSOCIATION_TYPE_TEST;
