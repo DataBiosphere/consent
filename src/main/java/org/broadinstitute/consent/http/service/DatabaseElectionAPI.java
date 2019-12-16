@@ -5,7 +5,6 @@ import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.util.VisibleForTesting;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
@@ -22,6 +21,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -41,7 +41,6 @@ import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -619,20 +618,21 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (election != null && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
             Set<DACUser> dacUsers;
             if (election.getDataSetId() != null) {
-                // List of dataset id and associated dac id Pairs
-                List<Pair<Integer, Integer>> pairs = dataSetDAO.findDatasetAndDacIds();
-                Optional<Pair<Integer, Integer>> datasetDacPair = pairs.stream().
-                        filter(p -> p.getLeft().equals(election.getDataSetId())).
-                        findFirst();
-                if (datasetDacPair.isPresent() && datasetDacPair.get().getRight() != null) {
-                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(datasetDacPair.get().getRight());
+                Dac electionDac = dataSetDAO.findDacForDataset(election.getDataSetId());
+                if (electionDac != null) {
+                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(electionDac.getDacId());
                 } else {
                     // This case represents: Election has a dataset, but there is no DAC for the dataset
                     dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
                 }
             } else {
-                // This case represents: Election does not have a dataset, and therefore, no DAC for it
-                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+                Dac consentDac = electionDAO.findDacForConsentElection(election.getElectionId());
+                if (consentDac != null) {
+                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(consentDac.getDacId());
+                } else {
+                    // This case represents: Election does not have a dataset, and therefore, no DAC for it
+                    dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+                }
             }
             if (dacUsers == null || dacUsers.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
