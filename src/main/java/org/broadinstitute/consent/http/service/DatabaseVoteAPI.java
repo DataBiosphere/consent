@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -19,7 +18,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
-    private DataSetAssociationDAO dataSetAssociationDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -31,8 +29,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
-        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, electionDAO, dataSetAssociationDAO));
+    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO) {
+        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, electionDAO));
 
     }
 
@@ -42,10 +40,9 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseVoteAPI(VoteDAO dao, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
+    private DatabaseVoteAPI(VoteDAO dao, ElectionDAO electionDAO) {
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
-        this.dataSetAssociationDAO = dataSetAssociationDAO;
     }
 
     @Override

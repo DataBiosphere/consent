@@ -1,8 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+
 import javax.ws.rs.NotFoundException;
 import java.util.List;
 

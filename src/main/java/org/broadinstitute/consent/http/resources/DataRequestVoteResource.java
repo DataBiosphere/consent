@@ -3,8 +3,25 @@ package org.broadinstitute.consent.http.resources;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.*;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -14,7 +31,14 @@ import org.bson.Document;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,29 +53,28 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private final VoteService voteService;
-    private final VoteAPI api;
-    private final ElectionAPI electionAPI;
-    private final EmailNotifierAPI emailAPI;
+    private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+    private final DACUserAPI dacUserAPI;
     private final DataAccessRequestAPI accessRequestAPI;
     private final DataSetAPI dataSetAPI;
-    private final DACUserAPI dacUserAPI;
-    private final EmailNotifierAPI emailNotifierAPI;
     private final DataSetAssociationAPI dataSetAssociationAPI;
-    private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+    private final ElectionAPI electionAPI;
+    private final EmailNotifierAPI emailNotifierAPI;
+    private final VoteAPI api;
+    private final VoteService voteService;
+
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
     public DataRequestVoteResource(VoteService voteService) {
-        this.voteService = voteService;
-        this.api = AbstractVoteAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
-        this.emailAPI = AbstractEmailNotifierAPI.getInstance();
+        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
+        this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
-        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
         this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
-        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
+        this.electionAPI = AbstractElectionAPI.getInstance();
+        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
+        this.api = AbstractVoteAPI.getInstance();
+        this.voteService = voteService;
     }
 
     @POST
@@ -204,9 +227,7 @@ public class DataRequestVoteResource extends Resource {
                 Map<DACUser, List<DataSet>> dataOwnerDataSet = dataSetAssociationAPI.findDataOwnersWithAssociatedDataSets(dataSetIds);
                 List<Election> elections = electionAPI.createDataSetElections(requestId, dataOwnerDataSet);
                 if(CollectionUtils.isNotEmpty(elections)){
-                    elections.forEach(election -> {
-                        voteService.createDataOwnersReviewVotes(election);
-                    });
+                    elections.forEach(voteService::createDataOwnersReviewVotes);
                 }
                 List<DACUser> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
@@ -220,7 +241,7 @@ public class DataRequestVoteResource extends Resource {
     private void validateCollectDAREmail(Vote vote) {
         if(!vote.getType().equals(VoteType.DATA_OWNER.getValue()) && electionAPI.validateCollectDAREmailCondition(vote)){
             try {
-                emailAPI.sendCollectMessage(vote.getElectionId());
+                emailNotifierAPI.sendCollectMessage(vote.getElectionId());
             } catch (MessagingException | IOException | TemplateException e) {
                 logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
             }
