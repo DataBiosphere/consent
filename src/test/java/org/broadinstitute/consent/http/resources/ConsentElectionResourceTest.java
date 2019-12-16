@@ -100,7 +100,7 @@ public class ConsentElectionResourceTest {
 
         Election election = getElection();
         when(electionAPI.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
-        when(voteService.createVotes(anyInt(), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
+        when(voteService.createVotes(any(Election.class), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
         doNothing().when(emailAPI).sendNewCaseMessageToList(anyList(), any(Election.class));
     }
 

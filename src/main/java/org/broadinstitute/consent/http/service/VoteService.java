@@ -93,15 +93,14 @@ public class VoteService {
      *
      * TODO: Refactor duplicated code when DatabaseElectionAPI is fully replaced by ElectionService
      *
-     * @param electionId     The Election ID
+     * @param election     The Election
      * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
      * @return List of votes
      */
     @SuppressWarnings("DuplicatedCode")
-    public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
+    public List<Vote> createVotes(Election election, ElectionType electionType, Boolean isManualReview) {
         Set<DACUser> dacUsers;
-        Election election = electionDAO.findElectionById(electionId);
         if (election.getDataSetId() != null) {
             // List of dataset id and associated dac id Pairs
             List<Pair<Integer, Integer>> pairs = datasetDAO.findDatasetAndDacIds();
@@ -121,17 +120,17 @@ public class VoteService {
         List<Vote> votes = new ArrayList<>();
         if (dacUsers != null) {
             for (DACUser user : dacUsers) {
-                Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue());
+                Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
                 votes.add(voteDAO.findVoteById(dacVoteId));
                 if (isChairPerson(user)) {
-                    Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue());
+                    Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
                     votes.add(voteDAO.findVoteById(chairVoteId));
                     // Requires Chairperson role to create a final and agreement vote in the Data Access case
                     if (electionType.equals(ElectionType.DATA_ACCESS)) {
-                        Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue());
+                        Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.FINAL.getValue());
                         votes.add(voteDAO.findVoteById(finalVoteId));
                         if (!isManualReview) {
-                            Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue());
+                            Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
                             votes.add(voteDAO.findVoteById(agreementVoteId));
                         }
                     }
@@ -149,7 +148,7 @@ public class VoteService {
     public void createVotesForElections(List<Election> elections) {
         if (elections != null) {
             for (Election election : elections) {
-                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
+                createVotes(election, ElectionType.TRANSLATE_DUL, false);
             }
         }
     }

@@ -134,7 +134,7 @@ public class ConsentElectionResource extends Resource {
 
     private URI createElectionURI(UriInfo info, Election election, String consentId) throws Exception {
         Election newElection = api.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
-        List<Vote> votes = voteService.createVotes(newElection.getElectionId(), ElectionType.TRANSLATE_DUL, false);
+        List<Vote> votes = voteService.createVotes(newElection, ElectionType.TRANSLATE_DUL, false);
         List<Vote> dulVotes = votes.stream().
                 filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                 collect(Collectors.toList());

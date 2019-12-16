@@ -67,11 +67,11 @@ public class DataRequestElectionResource extends Resource {
             List<Vote> votes;
             //create RP election
             if (!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))) {
-                votes = voteService.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, false);
+                votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, false);
                 Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
-                voteService.createVotes(rpElection.getElectionId(), ElectionType.RP, false);
+                voteService.createVotes(rpElection, ElectionType.RP, false);
             } else {
-                votes = voteService.createVotes(accessElection.getElectionId(), ElectionType.DATA_ACCESS, true);
+                votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, true);
             }
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).

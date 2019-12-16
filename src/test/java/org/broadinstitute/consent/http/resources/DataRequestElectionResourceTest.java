@@ -101,7 +101,7 @@ public class DataRequestElectionResourceTest {
     public void testCreateDataRequestElection() throws Exception {
         when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
         when(darApi.getField(any(), any())).thenReturn(null);
-        when(voteService.createVotes(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
@@ -118,7 +118,7 @@ public class DataRequestElectionResourceTest {
         election.setElectionId(RandomUtils.nextInt(1, 100));
         when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
         when(darApi.getField(any(), any())).thenReturn(new Object());
-        when(voteService.createVotes(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(

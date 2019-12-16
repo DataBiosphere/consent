@@ -149,7 +149,7 @@ public class ConsentResourceTest extends AbstractTest {
         Election election = electionAPI.describeElectionById(electionId);
         assertNotNull("existing election should exist", election);
 
-        voteService.createVotes(electionId, ElectionType.TRANSLATE_DUL, false);
+        voteService.createVotes(election, ElectionType.TRANSLATE_DUL, false);
 
         List<Vote> votes = voteAPI.describeVotes(consentId);
         assertFalse("existing votes should exist", votes.isEmpty());

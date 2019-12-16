@@ -101,7 +101,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.DATA_ACCESS, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 4 votes:
         // Chairperson as a chair
@@ -116,7 +116,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.MEMBER);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.DATA_ACCESS, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
@@ -127,7 +127,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.DATA_ACCESS, true);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, true);
         Assert.assertFalse(votes.isEmpty());
         // Should create 3 votes:
         // Chairperson as a chair
@@ -141,7 +141,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.MEMBER);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.DATA_ACCESS, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
@@ -152,7 +152,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.TRANSLATE_DUL, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
@@ -165,7 +165,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.MEMBER);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.TRANSLATE_DUL, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
@@ -176,7 +176,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.RP, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
@@ -189,7 +189,7 @@ public class VoteServiceTest {
         setUpUserAndElectionVotes(UserRoles.MEMBER);
         initService();
 
-        List<Vote> votes = service.createVotes(1, ElectionType.RP, false);
+        List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
         Assert.assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
