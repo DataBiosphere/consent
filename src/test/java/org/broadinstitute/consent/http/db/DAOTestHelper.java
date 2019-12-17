@@ -9,11 +9,13 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -38,6 +40,7 @@ public abstract class DAOTestHelper extends AbstractTest {
     DataSetDAO dataSetDAO;
     ElectionDAO electionDAO;
     private UserRoleDAO userRoleDAO;
+    VoteDAO voteDAO;
 
     String ASSOCIATION_TYPE_TEST;
 
@@ -59,6 +62,7 @@ public abstract class DAOTestHelper extends AbstractTest {
         dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
         electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
         userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
+        voteDAO = getApplicationJdbi().onDemand(VoteDAO.class);
         ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
     }
 
@@ -66,6 +70,7 @@ public abstract class DAOTestHelper extends AbstractTest {
     public void tearDown() {
         // Order is important for FK constraints
         createdConsentIds.forEach(id -> {
+            voteDAO.deleteVotes(id);
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
         });
@@ -86,7 +91,7 @@ public abstract class DAOTestHelper extends AbstractTest {
         consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
-    protected Election createElection(String referenceId, Integer datasetId) {
+    Election createElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_ACCESS.getValue(),
                 ElectionStatus.OPEN.getValue(),
@@ -96,6 +101,11 @@ public abstract class DAOTestHelper extends AbstractTest {
         );
         createdElectionIds.add(electionId);
         return electionDAO.findElectionById(electionId);
+    }
+
+    Vote createDacVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+        return voteDAO.findVoteById(voteId);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -145,6 +155,12 @@ public abstract class DAOTestHelper extends AbstractTest {
         userRoleDAO.insertSingleUserRole(roleId, userId);
         createdUserEmails.add(email);
         return dacDAO.findUserById(userId);
+    }
+
+    DACUser createUserWithRoleInDac(Integer roleId, Integer dacId) {
+        DACUser user = createUserWithRole(roleId);
+        dacDAO.addDacMember(roleId, user.getDacUserId(), dacId);
+        return user;
     }
 
     Dac createDac() {

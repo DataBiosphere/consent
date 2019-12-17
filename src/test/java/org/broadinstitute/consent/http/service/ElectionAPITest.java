@@ -14,9 +14,12 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,6 +29,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -77,8 +81,12 @@ public class ElectionAPITest extends AbstractTest {
     @Test
     public void testCreateConsentElectionSingleChairperson() throws Exception {
         DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
-        DACUser chair = userDAO.findChairpersonUser();
-        Set<DACUser> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(chair.getDacUserId()));
+        Optional<UserRole> ur = userDAO.findUsers().stream().
+                flatMap(user -> user.getRoles().stream()).
+                filter(userRole -> userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())).
+                findFirst();
+        Assert.assertTrue(ur.isPresent());
+        Set<DACUser> chairsWithRoles = userDAO.findUsersWithRoles(Collections.singletonList(ur.get().getUserId()));
         when(dacUserDAO.findNonDACUsersEnabledToVote()).thenReturn(chairsWithRoles);
         when(consentDAO.checkConsentById(consentId)).thenReturn(consentId);
         when(consentDAO.findConsentById(consentId)).thenReturn(consent);

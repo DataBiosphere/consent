@@ -3,16 +3,19 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
 
@@ -34,22 +37,6 @@ public class UserDAOTest extends DAOTestHelper {
         Assert.assertNotNull(users);
         Assert.assertFalse(users.isEmpty());
         Assert.assertEquals(1, users.size());
-    }
-
-    @Test
-    public void testFindChairpersonUser() {
-        createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-
-        DACUser user = userDAO.findChairpersonUser();
-        Assert.assertNotNull(user);
-        Assert.assertNotNull(user.getRoles());
-        Assert.assertFalse(user.getRoles().isEmpty());
-        List<String> roleNames = user.getRoles().
-                stream().
-                map(UserRole::getName).
-                map(String::toLowerCase).
-                collect(Collectors.toList());
-        Assert.assertTrue(roleNames.contains(UserRoles.CHAIRPERSON.getRoleName().toLowerCase()));
     }
 
     @Test
@@ -260,6 +247,72 @@ public class UserDAOTest extends DAOTestHelper {
         Assert.assertNotNull(user);
         Assert.assertEquals(chair.getDacUserId(), user.getDacUserId());
         Assert.assertEquals(chair.getDisplayName(), user.getDisplayName());
+    }
+
+    @Test
+    public void testFindUsersForElectionsByRoles() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        DACUser user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        createDacVote(user.getDacUserId(), election.getElectionId());
+
+        Set<DACUser> users = userDAO.findUsersForElectionsByRoles(
+                Collections.singletonList(election.getElectionId()),
+                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Assert.assertNotNull(users);
+        Assert.assertFalse(users.isEmpty());
+        Assert.assertEquals(1, users.size());
+    }
+
+    @Test
+    public void testFindUsersForElectionsByRolesNotFound() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        DACUser user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        createDacVote(user.getDacUserId(), election.getElectionId());
+
+        Set<DACUser> users = userDAO.findUsersForElectionsByRoles(
+                Collections.singletonList(election.getElectionId()),
+                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Assert.assertNotNull(users);
+        Assert.assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindUsersForDatasetsByRole() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        DACUser user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Set<DACUser> users = userDAO.findUsersForDatasetsByRole(
+                Collections.singletonList(dataset.getDataSetId()),
+                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Optional<DACUser> foundUser = users.stream().findFirst();
+        Assert.assertNotNull(users);
+        Assert.assertFalse(users.isEmpty());
+        Assert.assertEquals(1, users.size());
+        Assert.assertEquals(user.getDacUserId(), foundUser.get().getDacUserId());
+    }
+
+    @Test
+    public void testFindUsersForDatasetsByRoleNotFound() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Set<DACUser> users = userDAO.findUsersForDatasetsByRole(
+                Collections.singletonList(dataset.getDataSetId()),
+                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Assert.assertNotNull(users);
+        Assert.assertTrue(users.isEmpty());
     }
 
     private String getRandomEmailAddress() {
