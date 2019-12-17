@@ -4,16 +4,25 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -28,8 +37,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class ConsentResourceTest extends AbstractTest {
     final String GROUPNAME_ID = "testId5";
@@ -39,6 +51,13 @@ public class ConsentResourceTest extends AbstractTest {
 
     private ElectionAPI electionAPI = AbstractElectionAPI.getInstance();
     private VoteAPI voteAPI = AbstractVoteAPI.getInstance();
+    private VoteService voteService = new VoteService(
+            getApplicationJdbi().onDemand(DACUserDAO.class),
+            getApplicationJdbi().onDemand(DataSetAssociationDAO.class),
+            getApplicationJdbi().onDemand(DataSetDAO.class),
+            getApplicationJdbi().onDemand(ElectionDAO.class),
+            getApplicationJdbi().onDemand(VoteDAO.class)
+    );
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
@@ -130,7 +149,7 @@ public class ConsentResourceTest extends AbstractTest {
         Election election = electionAPI.describeElectionById(electionId);
         assertNotNull("existing election should exist", election);
 
-        voteAPI.createVotes(electionId, ElectionType.TRANSLATE_DUL, false);
+        voteService.createVotes(election, ElectionType.TRANSLATE_DUL, false);
 
         List<Vote> votes = voteAPI.describeVotes(consentId);
         assertFalse("existing votes should exist", votes.isEmpty());

@@ -85,13 +85,11 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Integer checkVoteById(@Bind("referenceId") String referenceId,
                           @Bind("voteId") Integer voteId);
 
-    @SqlUpdate("insert into vote (dacUserId, electionId, type, reminderSent) values "
-            + "(:dacUserId,:electionId, :type, :reminderSent)")
+    @SqlUpdate("insert into vote (dacUserId, electionId, type, reminderSent) values (:dacUserId, :electionId, :type, false)")
     @GetGeneratedKeys
     Integer insertVote(@Bind("dacUserId") Integer dacUserId,
                        @Bind("electionId") Integer electionId,
-                       @Bind("type") String type,
-                       @Bind("reminderSent") Boolean reminderSent);
+                       @Bind("type") String type);
 
     @SqlUpdate("delete from vote where  voteId = :voteId")
     void deleteVoteById(@Bind("voteId") Integer voteId);

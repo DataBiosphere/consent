@@ -88,6 +88,26 @@ public class DataSetDAOTest extends DAOTestHelper {
         Assert.assertEquals(pairs.get(0).getRight(), dac.getDacId());
     }
 
+    @Test
+    public void testFindDacForDataset() {
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
+        Assert.assertNotNull(foundDac);
+        Assert.assertEquals(dac.getDacId(), foundDac.getDacId());
+    }
+
+    @Test
+    public void testFindDacForDatasetNotFound() {
+        DataSet dataset = createDataset();
+
+        Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
+        Assert.assertNull(foundDac);
+    }
+
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }

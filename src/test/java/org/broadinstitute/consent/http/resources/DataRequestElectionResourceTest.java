@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,6 +68,8 @@ public class DataRequestElectionResourceTest {
     private UriInfo uriInfo;
     @Mock
     private UriBuilder uriBuilder;
+    @Mock
+    private VoteService voteService;
 
     private DataRequestElectionResource resource;
 
@@ -91,14 +94,14 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource();
+        resource = new DataRequestElectionResource(voteService);
     }
 
     @Test
     public void testCreateDataRequestElection() throws Exception {
         when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
         when(darApi.getField(any(), any())).thenReturn(null);
-        when(voteAPI.createVotes(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
@@ -115,7 +118,7 @@ public class DataRequestElectionResourceTest {
         election.setElectionId(RandomUtils.nextInt(1, 100));
         when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
         when(darApi.getField(any(), any())).thenReturn(new Object());
-        when(voteAPI.createVotes(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(

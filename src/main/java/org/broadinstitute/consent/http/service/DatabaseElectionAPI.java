@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
 /**
  * Implementation class for ElectionAPI on top of ElectionDAO database support.
  */
+@Deprecated // Use ElectionService
 public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private MailMessageDAO mailMessageDAO;
@@ -108,7 +110,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @Override
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = validateAndGetDULElection(referenceId, electionType);
-        validateAvailableUsers(electionType);
+        validateAvailableUsers(consentElection);
         validateReferenceId(referenceId, electionType);
         validateExistentElection(referenceId, electionType);
         validateStatus(election.getStatus());
@@ -607,9 +609,31 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void validateAvailableUsers(ElectionType electionType) {
-        if (!electionType.equals(ElectionType.DATA_SET)) {
-            Set<DACUser> dacUsers = dacUserDAO.findDACUsersEnabledToVote();
+    /*
+     * This method shares duplicated code with `VoteService`. This class will eventually be removed
+     * in favor of `ElectionService` so leaving this here for now.
+     */
+    @SuppressWarnings("DuplicatedCode")
+    private void validateAvailableUsers(Election election) {
+        if (election != null && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
+            Set<DACUser> dacUsers;
+            if (election.getDataSetId() != null) {
+                Dac electionDac = dataSetDAO.findDacForDataset(election.getDataSetId());
+                if (electionDac != null) {
+                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(electionDac.getDacId());
+                } else {
+                    // This case represents: Election has a dataset, but there is no DAC for the dataset
+                    dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+                }
+            } else {
+                Dac consentDac = electionDAO.findDacForConsentElection(election.getElectionId());
+                if (consentDac != null) {
+                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(consentDac.getDacId());
+                } else {
+                    // This case represents: Election does not have a dataset, and therefore, no DAC for it
+                    dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+                }
+            }
             if (dacUsers == null || dacUsers.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
             }
