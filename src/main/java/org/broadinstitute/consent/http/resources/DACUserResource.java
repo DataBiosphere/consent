@@ -257,21 +257,25 @@ public class DACUserResource extends Resource {
      * Convenience method to find the email preference from legacy json structure.
      *
      * @param json Raw json string from client
-     * @return Optional value of the "emailPreference" boolean value set in the legacy json structure.
+     * @return Optional value of the "emailPreference" boolean value set in either the legacy json
+     *         or the new DacUser model.
      */
     private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
+        String memberName = "emailPreference";
         Optional<Boolean> aBoolean = Optional.empty();
         try {
             JsonElement updateUser = new JsonParser().parse(json).getAsJsonObject();
             if (updateUser != null && !updateUser.isJsonNull()) {
                 JsonObject userObj = updateUser.getAsJsonObject();
-                if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
+                if (userObj.has(memberName) && !userObj.get(memberName).isJsonNull()) {
+                    aBoolean = Optional.of(userObj.get(memberName).getAsBoolean());
+                } else if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
                     List<JsonElement> rolesElements = new ArrayList<>();
                     userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
                     List<Boolean> emailPrefs = rolesElements.
                             stream().
-                            filter(e -> e.getAsJsonObject().has("emailPreference")).
-                            map(e -> e.getAsJsonObject().get("emailPreference").getAsBoolean()).
+                            filter(e -> e.getAsJsonObject().has(memberName)).
+                            map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
                             distinct().
                             collect(Collectors.toList());
                     // In practice, there should only be a single email preference value, if any.
