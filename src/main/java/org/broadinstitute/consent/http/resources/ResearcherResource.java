@@ -19,22 +19,22 @@ import java.util.Map;
 
 
 @Path("{api : (api/)?}researcher/{userId}")
-public class ResearcherResource extends Resource{
+public class ResearcherResource extends Resource {
 
     private ResearcherAPI researcherAPI;
 
-    public ResearcherResource(ResearcherAPI researcherAPI){
+    public ResearcherResource(ResearcherAPI researcherAPI) {
         this.researcherAPI = researcherAPI;
     }
 
     @POST
     @Consumes("application/json")
     @RolesAllowed(RESEARCHER)
-    public Response registerResearcher(@QueryParam("validate") Boolean validate, @Context UriInfo info, @PathParam("userId") Integer userId, Map<String,String> researcherPropertiesMap) {
-        try{
+    public Response registerResearcher(@QueryParam("validate") Boolean validate, @Context UriInfo info, @PathParam("userId") Integer userId, Map<String, String> researcherPropertiesMap) {
+        try {
             researcherAPI.registerResearcher(researcherPropertiesMap, userId, validate);
             return Response.created(info.getRequestUriBuilder().build()).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -43,9 +43,9 @@ public class ResearcherResource extends Resource{
     @Consumes("application/json")
     @RolesAllowed(RESEARCHER)
     public Response updateResearcher(@QueryParam("validate") Boolean validate, @PathParam("userId") Integer userId, Map<String, String> researcherProperties) {
-        try{
+        try {
             return Response.ok(researcherAPI.updateResearcher(researcherProperties, userId, validate)).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -54,9 +54,9 @@ public class ResearcherResource extends Resource{
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
     public Response describeAllResearcherProperties(@PathParam("userId") Integer userId) {
-        try{
+        try {
             return Response.ok(researcherAPI.describeResearcherPropertiesMap(userId)).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -65,10 +65,10 @@ public class ResearcherResource extends Resource{
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response deleteAllProperties(@PathParam("userId") Integer userId) {
-        try{
+        try {
             researcherAPI.deleteResearcherProperties(userId);
             return Response.ok().build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -78,9 +78,9 @@ public class ResearcherResource extends Resource{
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER})
     public Response getResearcherPropertiesForDAR(@PathParam("userId") Integer userId) {
-        try{
+        try {
             return Response.ok(researcherAPI.describeResearcherPropertiesForDAR(userId)).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
