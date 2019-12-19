@@ -87,4 +87,20 @@ public class ResearcherResourceTest {
         Assert.assertEquals(Response.Status.OK.getStatusCode(), response2.getStatus());
     }
 
+    @Test
+    public void testUpdatePropertiesNotFound() {
+        when(researcherService.updateProperties(any(), any(), any())).thenThrow(new NotFoundException("User Not Found"));
+        initResource();
+        Response response = resource.updateProperties(authUser, false, null);
+        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testUpdatePropertiesInvalidFields() {
+        when(researcherService.updateProperties(any(), any(), any())).thenThrow(new IllegalArgumentException("Invalid Fields"));
+        initResource();
+        Response response = resource.updateProperties(authUser, false, null);
+        Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
 }
