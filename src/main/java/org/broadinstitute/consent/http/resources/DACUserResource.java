@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -205,17 +204,6 @@ public class DACUserResource extends Resource {
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
-    }
-
-    private boolean isChairPerson(List<UserRole> userRoles) {
-        boolean isChairPerson = false;
-        for (UserRole role : userRoles) {
-            if (role.getName().equalsIgnoreCase(CHAIRPERSON)) {
-                isChairPerson = true;
-                break;
-            }
-        }
-        return isChairPerson;
     }
 
     /**
