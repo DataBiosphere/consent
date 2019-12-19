@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -33,7 +34,7 @@ public class ResearcherResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
+    @PermitAll
     public Response registerProperties(@Auth AuthUser user, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
         try {
             List<ResearcherProperty> props = researcherService.setProperties(researcherPropertiesMap, user);
@@ -45,7 +46,7 @@ public class ResearcherResource extends Resource {
 
     @PUT
     @Consumes("application/json")
-    @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
+    @PermitAll
     public Response updateProperties(@Auth AuthUser user, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
         try {
             List<ResearcherProperty> props = researcherService.updateProperties(researcherProperties, user, validate);
