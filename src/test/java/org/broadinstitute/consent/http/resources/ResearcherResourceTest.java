@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
@@ -74,6 +75,16 @@ public class ResearcherResourceTest {
         initResource();
         Response response = resource.registerProperties(authUser, uriInfo, null);
         Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testUpdateProperties() {
+        initResource();
+
+        Response response1 = resource.updateProperties(authUser, false, null);
+        Assert.assertEquals(Response.Status.OK.getStatusCode(), response1.getStatus());
+        Response response2 = resource.updateProperties(authUser, true, null);
+        Assert.assertEquals(Response.Status.OK.getStatusCode(), response2.getStatus());
     }
 
 }

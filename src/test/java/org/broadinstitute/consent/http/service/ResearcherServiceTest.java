@@ -24,12 +24,17 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -84,7 +89,7 @@ public class ResearcherServiceTest {
         ResearcherProperty prop = new ResearcherProperty(
                 dacUser.getDacUserId(),
                 ResearcherFields.INSTITUTION.getValue(),
-                RandomStringUtils.random(10));
+                RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
         when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
@@ -108,12 +113,143 @@ public class ResearcherServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testSetPropertiesIllegalArgument() {
         Map<String, String> propMap = new HashMap<>();
-        propMap.put(RandomStringUtils.random(10), RandomStringUtils.random(10));
+        propMap.put(RandomStringUtils.random(10, true, false), RandomStringUtils.random(10, true, false));
         when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
         when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
         initService();
 
         service.setProperties(propMap, authUser);
+    }
+
+    @Test
+    public void testUpdatePropertiesWithValidation() {
+        List<ResearcherProperty> props = new ArrayList<>();
+        Map<String, String> propMap = new HashMap<>();
+        for (ResearcherFields researcherField : ResearcherFields.values()) {
+            if (researcherField.getRequired()) {
+                String val = RandomStringUtils.random(10, true, false);
+                props.add(new ResearcherProperty(dacUser.getDacUserId(), researcherField.getValue(), val));
+                propMap.put(researcherField.getValue(), val);
+            }
+        }
+        when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
+        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        initService();
+
+        List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
+        Assert.assertFalse(foundProps.isEmpty());
+        Assert.assertEquals(props.size(), foundProps.size());
+    }
+
+    @Test
+    public void testUpdatePropertiesNoValidation() {
+        ResearcherProperty prop = new ResearcherProperty(
+                dacUser.getDacUserId(),
+                ResearcherFields.INSTITUTION.getValue(),
+                RandomStringUtils.random(10, true, false));
+        Map<String, String> propMap = new HashMap<>();
+        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
+        when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
+        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
+        initService();
+
+        List<ResearcherProperty> props = service.updateProperties(propMap, authUser, false);
+        Assert.assertFalse(props.isEmpty());
+        Assert.assertEquals(propMap.size(), props.size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdatePropertiesMissingFields() {
+        ResearcherProperty prop = new ResearcherProperty(
+                dacUser.getDacUserId(),
+                ResearcherFields.INSTITUTION.getValue(),
+                RandomStringUtils.random(10, true, false));
+        Map<String, String> propMap = new HashMap<>();
+        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
+        when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
+        initService();
+
+        service.updateProperties(propMap, authUser, true);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdatePropertiesInvalidFields() {
+        ResearcherProperty prop = new ResearcherProperty(
+                dacUser.getDacUserId(),
+                RandomStringUtils.random(10, true, false),
+                RandomStringUtils.random(10, true, false));
+        Map<String, String> propMap = new HashMap<>();
+        propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
+        when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
+        initService();
+
+        service.updateProperties(propMap, authUser, true);
+    }
+
+    @Test
+    public void testUpdatePropertiesIncompleteProfile() throws Exception {
+        List<ResearcherProperty> props = new ArrayList<>();
+        Map<String, String> propMap = new HashMap<>();
+        for (ResearcherFields researcherField : ResearcherFields.values()) {
+            if (researcherField.getRequired()) {
+                String val1 = RandomStringUtils.random(10, true, false);
+                String val2 = RandomStringUtils.random(10, true, false);
+                props.add(new ResearcherProperty(dacUser.getDacUserId(), researcherField.getValue(), val1));
+                propMap.put(researcherField.getValue(), val2);
+            }
+        }
+        props.add(new ResearcherProperty(dacUser.getDacUserId(), ResearcherFields.COMPLETED.getValue(), Boolean.FALSE.toString()));
+        propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.FALSE.toString());
+        when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
+        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(researcherPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.FALSE.toString());
+        doNothing().when(researcherPropertyDAO).deletePropertiesByUserAndKey(any());
+        doNothing().when(researcherPropertyDAO).insertAll(any());
+        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
+        when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(dacUser);
+        doNothing().when(emailApi).sendNewResearcherCreatedMessage(any(), any());
+        initService();
+
+        List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
+        Assert.assertFalse(foundProps.isEmpty());
+        Assert.assertEquals(props.size(), foundProps.size());
+        verifyZeroInteractions(emailApi);
+    }
+
+    @Test
+    public void testUpdatePropertiesCompleteProfile() throws Exception {
+        List<ResearcherProperty> props = new ArrayList<>();
+        Map<String, String> propMap = new HashMap<>();
+        for (ResearcherFields researcherField : ResearcherFields.values()) {
+            if (researcherField.getRequired()) {
+                String val1 = RandomStringUtils.random(10, true, false);
+                String val2 = RandomStringUtils.random(10, true, false);
+                props.add(new ResearcherProperty(dacUser.getDacUserId(), researcherField.getValue(), val1));
+                propMap.put(researcherField.getValue(), val2);
+            }
+        }
+        props.add(new ResearcherProperty(dacUser.getDacUserId(), ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString()));
+        propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString());
+        when(dacUserDAO.findDACUserByEmail(any())).thenReturn(dacUser);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(dacUser);
+        when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
+        when(researcherPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.TRUE.toString());
+        doNothing().when(researcherPropertyDAO).deletePropertiesByUserAndKey(any());
+        doNothing().when(researcherPropertyDAO).insertAll(any());
+        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
+        when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(dacUser);
+        doNothing().when(emailApi).sendNewResearcherCreatedMessage(any(), any());
+        initService();
+
+        List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
+        Assert.assertFalse(foundProps.isEmpty());
+        Assert.assertEquals(props.size(), foundProps.size());
+        verify(emailApi, atLeast(1));
     }
 
 }

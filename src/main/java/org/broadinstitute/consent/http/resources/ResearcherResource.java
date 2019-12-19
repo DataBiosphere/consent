@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Path("api/researcher/{userId}")
+@Path("api/researcher")
 public class ResearcherResource extends Resource {
 
     private ResearcherService researcherService;
@@ -33,7 +33,7 @@ public class ResearcherResource extends Resource {
 
     @POST
     @Consumes("application/json")
-    @RolesAllowed(RESEARCHER)
+    @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
     public Response registerProperties(@Auth AuthUser user, @Context UriInfo info, Map<String, String> researcherPropertiesMap) {
         try {
             List<ResearcherProperty> props = researcherService.setProperties(researcherPropertiesMap, user);
@@ -45,16 +45,18 @@ public class ResearcherResource extends Resource {
 
     @PUT
     @Consumes("application/json")
-    @RolesAllowed(RESEARCHER)
-    public Response updateResearcher(@QueryParam("validate") Boolean validate, @PathParam("userId") Integer userId, Map<String, String> researcherProperties) {
+    @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
+    public Response updateProperties(@Auth AuthUser user, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
         try {
-            return Response.ok(researcherService.updateResearcher(researcherProperties, userId, validate)).build();
+            List<ResearcherProperty> props = researcherService.updateProperties(researcherProperties, user, validate);
+            return Response.ok(props).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
 
     @GET
+    @Path("/{userId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
     public Response describeAllResearcherProperties(@PathParam("userId") Integer userId) {
@@ -66,6 +68,7 @@ public class ResearcherResource extends Resource {
     }
 
     @DELETE
+    @Path("/{userId}")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response deleteAllProperties(@PathParam("userId") Integer userId) {
@@ -78,7 +81,7 @@ public class ResearcherResource extends Resource {
     }
 
     @GET
-    @Path("/dar")
+    @Path("/{userId}/dar")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER})
     public Response getResearcherPropertiesForDAR(@PathParam("userId") Integer userId) {
