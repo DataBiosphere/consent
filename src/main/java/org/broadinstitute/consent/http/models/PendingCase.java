@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 
 import java.util.Date;
 
@@ -195,4 +196,19 @@ public class PendingCase implements Comparable<PendingCase>{
     public void setProjectTitle(String projectTitle) {
         this.projectTitle = projectTitle;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PendingCase that = (PendingCase) o;
+        return Objects.equal(getReferenceId(), that.getReferenceId()) &&
+                Objects.equal(getFrontEndId(), that.getFrontEndId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getReferenceId(), getFrontEndId());
+    }
+
 }
