@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -55,6 +56,9 @@ public class DacServiceTest {
     ElectionDAO electionDAO;
 
     @Mock
+    MongoConsentDB mongo;
+
+    @Mock
     VoteService voteService;
 
     @Before
@@ -63,7 +67,7 @@ public class DacServiceTest {
     }
 
     private void initService() {
-        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, voteService);
+        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, mongo, voteService);
     }
 
     @Test

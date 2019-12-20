@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import com.mongodb.BasicDBObject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -19,6 +21,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,15 +43,17 @@ public class DacService {
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
+    private MongoConsentDB mongo;
     private VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                      ElectionDAO electionDAO, VoteService voteService) {
+                      ElectionDAO electionDAO, MongoConsentDB mongo, VoteService voteService) {
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
+        this.mongo = mongo;
         this.voteService = voteService;
     }
 
@@ -88,7 +93,7 @@ public class DacService {
      * Convenience method to group DACUsers into their associated Dacs. Users can be in more than
      * a single Dac, and a Dac can have multiple types of users, either Chairpersons or Members.
      *
-     * @param dacs List of all Dacs
+     * @param dacs          List of all Dacs
      * @param allDacMembers List of all DACUsers, i.e. users that are in any Dac.
      * @return Map of Dac to list of DACUser
      */
@@ -100,7 +105,7 @@ public class DacService {
         allDacMembers.stream().
                 flatMap(u -> u.getRoles().stream()).
                 filter(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) ||
-                                ur.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
+                        ur.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
                 forEach(ur -> {
                     Dac d = dacMap.get(ur.getDacId());
                     DACUser u = userMap.get(ur.getUserId());
@@ -177,8 +182,8 @@ public class DacService {
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             ElectionType type = ElectionType.valueOf(e.getElectionType());
-            // TODO: isManualReview is only for DAR elections that have a restriction field
-            voteService.createVotes(e, type, false);
+            boolean isManualReview = type.equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
+            voteService.createVotes(e, type, isManualReview);
         }
         return populatedUserById(user.getDacUserId());
     }
@@ -200,6 +205,14 @@ public class DacService {
 
     public Role getMemberRole() {
         return dacDAO.getRoleById(UserRoles.MEMBER.getRoleId());
+    }
+
+    private boolean hasUseRestriction(String referenceId) {
+        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(DarConstants.RESTRICTION, true);
+        Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
+        return dar.get(DarConstants.RESTRICTION) != null;
     }
 
     private DACUser populatedUserById(Integer userId) {
