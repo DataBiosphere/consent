@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -50,13 +51,19 @@ public class DacServiceTest {
     @Mock
     DataSetDAO dataSetDAO;
 
+    @Mock
+    ElectionDAO electionDAO;
+
+    @Mock
+    VoteService voteService;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     private void initService() {
-        service = new DacService(dacDAO, dacUserDAO, dataSetDAO);
+        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, voteService);
     }
 
     @Test

@@ -115,7 +115,7 @@ public class DacResource extends Resource {
     @POST
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN})
-    public Response addDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         checkMembership(dacId, userId);
         Role role = dacService.getMemberRole();
         DACUser user = findDacUser(userId);
@@ -127,7 +127,7 @@ public class DacResource extends Resource {
     @DELETE
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN})
-    public Response removeDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response removeDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getMemberRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
@@ -138,7 +138,7 @@ public class DacResource extends Resource {
     @POST
     @Path("{dacId}/chair/{userId}")
     @RolesAllowed({ADMIN})
-    public Response addDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response addDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         checkMembership(dacId, userId);
         Role role = dacService.getChairpersonRole();
         DACUser user = findDacUser(userId);
@@ -150,7 +150,7 @@ public class DacResource extends Resource {
     @DELETE
     @Path("{dacId}/chair/{userId}")
     @RolesAllowed({ADMIN})
-    public Response removeDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response removeDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getChairpersonRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);

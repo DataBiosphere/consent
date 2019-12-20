@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -37,12 +39,17 @@ public class DacService {
     private DacDAO dacDAO;
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
+    private ElectionDAO electionDAO;
+    private VoteService voteService;
 
     @Inject
-    public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO) {
+    public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+                      ElectionDAO electionDAO, VoteService voteService) {
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
+        this.electionDAO = electionDAO;
+        this.voteService = voteService;
     }
 
     public List<Dac> findAll() {
@@ -167,6 +174,12 @@ public class DacService {
 
     public DACUser addDacMember(Role role, DACUser user, Dac dac) {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
+        List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
+        for (Election e : elections) {
+            ElectionType type = ElectionType.valueOf(e.getElectionType());
+            // TODO: isManualReview is only for DAR elections that have a restriction field
+            voteService.createVotes(e, type, false);
+        }
         return populatedUserById(user.getDacUserId());
     }
 

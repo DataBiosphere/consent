@@ -616,30 +616,28 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     @SuppressWarnings("DuplicatedCode")
     private void validateAvailableUsers(Election election) {
         if (election != null && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
+            Dac dac = electionDAO.findDacForElection(election.getElectionId());
             Set<DACUser> dacUsers;
-            if (election.getDataSetId() != null) {
-                Dac electionDac = dataSetDAO.findDacForDataset(election.getDataSetId());
-                if (electionDac != null) {
-                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(electionDac.getDacId());
-                } else {
-                    // This case represents: Election has a dataset, but there is no DAC for the dataset
-                    dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
-                }
+            if (dac != null) {
+                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
             } else {
-                Dac consentDac = electionDAO.findDacForConsentElection(election.getElectionId());
-                if (consentDac != null) {
-                    dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(consentDac.getDacId());
-                } else {
-                    // This case represents: Election does not have a dataset, and therefore, no DAC for it
-                    dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
-                }
+                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
             }
             if (dacUsers == null || dacUsers.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
             }
-            boolean chairpersonExists = dacUsers.stream()
-                    .flatMap(u -> u.getRoles().stream())
-                    .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()));
+            boolean chairpersonExists;
+            if (dac == null) {
+                chairpersonExists = dacUsers.stream()
+                        .flatMap(u -> u.getRoles().stream())
+                        .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()));
+            } else {
+                chairpersonExists = dacUsers.stream()
+                        .flatMap(u -> u.getRoles().stream())
+                        .anyMatch(r ->
+                                r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()) &&
+                                        r.getDacId().equals(dac.getDacId()));
+            }
             if (!chairpersonExists) {
                 throw new IllegalArgumentException("There has to be a Chairperson.");
             }
