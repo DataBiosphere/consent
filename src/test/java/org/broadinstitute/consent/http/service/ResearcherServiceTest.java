@@ -226,12 +226,10 @@ public class ResearcherServiceTest {
         List<ResearcherProperty> props = new ArrayList<>();
         Map<String, String> propMap = new HashMap<>();
         for (ResearcherFields researcherField : ResearcherFields.values()) {
-            if (researcherField.getRequired()) {
-                String val1 = RandomStringUtils.random(10, true, false);
-                String val2 = RandomStringUtils.random(10, true, false);
-                props.add(new ResearcherProperty(dacUser.getDacUserId(), researcherField.getValue(), val1));
-                propMap.put(researcherField.getValue(), val2);
-            }
+            String val1 = RandomStringUtils.random(10, true, false);
+            String val2 = RandomStringUtils.random(10, true, false);
+            props.add(new ResearcherProperty(dacUser.getDacUserId(), researcherField.getValue(), val1));
+            propMap.put(researcherField.getValue(), val2);
         }
         props.add(new ResearcherProperty(dacUser.getDacUserId(), ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString()));
         propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString());
@@ -249,7 +247,7 @@ public class ResearcherServiceTest {
         List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
         Assert.assertFalse(foundProps.isEmpty());
         Assert.assertEquals(props.size(), foundProps.size());
-        verify(emailApi, atLeast(1));
+        verify(emailApi, atLeast(1)).sendNewResearcherCreatedMessage(any(), any());
     }
 
 }
