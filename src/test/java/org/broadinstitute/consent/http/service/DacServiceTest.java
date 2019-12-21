@@ -248,6 +248,7 @@ public class DacServiceTest {
         } catch (Exception e) {
             Assert.fail();
         }
+        verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     }
 
@@ -268,6 +269,7 @@ public class DacServiceTest {
         } catch (Exception e) {
             Assert.fail();
         }
+        verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     }
 
@@ -283,6 +285,7 @@ public class DacServiceTest {
         initService();
 
         service.removeDacMember(role, chair, dac);
+        verifyZeroInteractions(dacDAO);
         verifyZeroInteractions(voteService);
     }
 
