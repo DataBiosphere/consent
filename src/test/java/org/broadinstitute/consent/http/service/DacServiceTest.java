@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -43,8 +42,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -206,6 +203,7 @@ public class DacServiceTest {
         Assert.assertFalse(users.isEmpty());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testAddDacMember() {
         when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
