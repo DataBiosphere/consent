@@ -1,10 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -18,6 +23,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,9 +40,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DacServiceTest {
@@ -54,6 +65,15 @@ public class DacServiceTest {
 
     @Mock
     ElectionDAO electionDAO;
+
+    @Mock
+    FindIterable iterable;
+
+    @Mock
+    FindIterable projection;
+
+    @Mock
+    MongoCollection collection;
 
     @Mock
     MongoConsentDB mongo;
@@ -190,6 +210,16 @@ public class DacServiceTest {
     public void testAddDacMember() {
         when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
         when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
+        List<Election> elections = getElections().stream().
+                peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).
+                peek(e -> e.setReferenceId(new ObjectId().toHexString())).
+                collect(Collectors.toList());
+        when(projection.first()).thenReturn(new Document());
+        when(iterable.projection(any())).thenReturn(projection);
+        when(collection.find(any(BasicDBObject.class))).thenReturn(iterable);
+        when(mongo.getDataAccessRequestCollection()).thenReturn(collection);
+        when(electionDAO.findOpenElectionsByDacId(any())).thenReturn(elections);
+        when(voteService.createVotes(any(), any(), anyBoolean())).thenReturn(Collections.emptyList());
         doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt());
         initService();
 
@@ -197,6 +227,7 @@ public class DacServiceTest {
         DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
         Assert.assertNotNull(user);
         Assert.assertFalse(user.getRoles().isEmpty());
+        verify(voteService, times(elections.size())).createVotes(any(), any(), anyBoolean());
     }
 
     @Test

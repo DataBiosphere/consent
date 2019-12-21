@@ -28,10 +28,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -178,13 +180,16 @@ public class DacService {
         return dacUsers;
     }
 
-    public DACUser addDacMember(Role role, DACUser user, Dac dac) {
+    public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
-            ElectionType type = ElectionType.valueOf(e.getElectionType());
-            boolean isManualReview = type.equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
-            voteService.createVotes(e, type, isManualReview);
+            Optional<ElectionType> optionT = EnumSet.allOf(ElectionType.class).stream().filter(t -> t.getValue().equalsIgnoreCase(e.getElectionType())).findFirst();
+            if (!optionT.isPresent()) {
+                throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
+            }
+            boolean isManualReview = optionT.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
+            voteService.createVotes(e, optionT.get(), isManualReview);
         }
         return populatedUserById(user.getDacUserId());
     }
