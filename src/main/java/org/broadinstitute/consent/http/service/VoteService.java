@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class VoteService {
 
@@ -150,6 +151,23 @@ public class VoteService {
         List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
         voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
+    }
+
+    /**
+     * Delete any votes in Open elections for the specified user in the specified Dac.
+     *
+     * @param dac The Dac we are restricting elections to
+     * @param user The Dac member we are deleting votes for
+     */
+    void deleteOpenDacVotesForUser(Dac dac, DACUser user) {
+        List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
+                map(Election::getElectionId).
+                collect(Collectors.toList());
+        List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
+                filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                map(Vote::getVoteId).
+                collect(Collectors.toList());
+        voteDAO.removeVotesById(openUserVoteIds);
     }
 
     private boolean isDacChairPerson(Dac dac, DACUser user) {

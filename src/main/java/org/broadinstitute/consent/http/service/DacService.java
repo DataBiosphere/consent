@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -188,7 +189,12 @@ public class DacService {
         return populatedUserById(user.getDacUserId());
     }
 
-    public void removeDacMember(Role role, DACUser user, Dac dac) {
+    public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
+        if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
+            if (dac.getChairpersons().size() <= 1) {
+                throw new ForbiddenException("Dac requires at least one chairperson.");
+            }
+        }
         List<UserRole> dacRoles = user.
                 getRoles().
                 stream().
@@ -197,6 +203,7 @@ public class DacService {
                 filter(r -> r.getRoleId().equals(role.getRoleId())).
                 collect(Collectors.toList());
         dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+        voteService.deleteOpenDacVotesForUser(dac, user);
     }
 
     public Role getChairpersonRole() {

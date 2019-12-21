@@ -131,8 +131,12 @@ public class DacResource extends Resource {
         Role role = dacService.getMemberRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
-        dacService.removeDacMember(role, user, dac);
-        return Response.ok().build();
+        try {
+            dacService.removeDacMember(role, user, dac);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @POST
@@ -154,8 +158,12 @@ public class DacResource extends Resource {
         Role role = dacService.getChairpersonRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
-        dacService.removeDacMember(role, user, dac);
-        return Response.ok().build();
+        try {
+            dacService.removeDacMember(role, user, dac);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
