@@ -29,7 +29,9 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -42,9 +44,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class DacServiceTest {
@@ -226,6 +230,60 @@ public class DacServiceTest {
         Assert.assertNotNull(user);
         Assert.assertFalse(user.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotes(any(), any(), anyBoolean());
+    }
+
+    @Test
+    public void testRemoveDacMember() {
+        Role role = new Role(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+        Dac dac = getDacs().get(0);
+        DACUser member = getDacUsers().get(1);
+        dac.setChairpersons(Collections.singletonList(getDacUsers().get(0)));
+        dac.setMembers(Collections.singletonList(member));
+        doNothing().when(dacDAO).removeDacMember(anyInt());
+        doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
+        initService();
+
+        try {
+            service.removeDacMember(role, member, dac);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
+    }
+
+    @Test
+    public void testRemoveDacChair() {
+        Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        Dac dac = getDacs().get(0);
+        DACUser chair1 = getDacUsers().get(0);
+        DACUser chair2 = getDacUsers().get(0);
+        dac.setChairpersons(Arrays.asList(chair1, chair2));
+        dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
+        doNothing().when(dacDAO).removeDacMember(anyInt());
+        doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
+        initService();
+
+        try {
+            service.removeDacMember(role, chair1, dac);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void testRemoveDacChairFailure() {
+        Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+        Dac dac = getDacs().get(0);
+        DACUser chair = getDacUsers().get(0);
+        dac.setChairpersons(Collections.singletonList(chair));
+        dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
+        doNothing().when(dacDAO).removeDacMember(anyInt());
+        doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
+        initService();
+
+        service.removeDacMember(role, chair, dac);
+        verifyZeroInteractions(voteService);
     }
 
     @Test
@@ -699,7 +757,7 @@ public class DacServiceTest {
         member.setDisplayName("Member");
         member.setEmail("member@duos.org");
         member.setRoles(new ArrayList<>());
-        member.getRoles().add(new UserRole(1, member.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 1));
+        member.getRoles().add(new UserRole(2, member.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 1));
 
         List<DACUser> users = new ArrayList<>();
         users.add(chair);
