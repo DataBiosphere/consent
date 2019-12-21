@@ -240,21 +240,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public List<Election> cancelOpenElectionAndReopen() throws Exception{
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
-        cancelOpenElection(ElectionType.TRANSLATE_DUL.getValue());
-        List<Integer> electionIds = openElections.stream().map(election -> election.getElectionId()).collect(Collectors.toList());
-        List<String> consentIds = openElections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
-        Date sortDate = new Date();
-        if(CollectionUtils.isNotEmpty(electionIds)){
-            consentDAO.bulkUpdateConsentSortDate(consentIds, sortDate, sortDate);
-            electionDAO.bulkUpdateElectionLastUpdate(electionIds, sortDate);
-        }
-        return openElections(openElections);
-    }
-
-
-    @Override
     public Integer findRPElectionByElectionAccessId(Integer electionId) {
         return electionDAO.findRPElectionByElectionAccessId(electionId);
     }
@@ -516,26 +501,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
     }
 
-    private void cancelOpenElection(String electionType){
-        List<Integer> openElectionsIds = electionDAO.findElectionsIdByTypeAndStatus(electionType, ElectionStatus.OPEN.getValue());
-        if (openElectionsIds != null && openElectionsIds.size() > 0) {
-            electionDAO.updateElectionStatus(openElectionsIds, ElectionStatus.CANCELED.getValue());
-        }
-    }
-
     private Document describeDataAccessRequestById(String id){
         BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
         return mongo.getDataAccessRequestCollection().find(query).first();
-    }
-
-    private List<Election> openElections(List<Election> openElections) throws Exception{
-        List<Election> elections = new ArrayList<>();
-        for (Election existentElection : openElections) {
-            Election election = new Election();
-            election.setReferenceId(existentElection.getReferenceId());
-            elections.add(createElection(election, election.getReferenceId(), ElectionType.TRANSLATE_DUL));
-        }
-        return elections;
     }
 
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {

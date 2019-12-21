@@ -137,13 +137,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDACUserIdByRole() {
-        DACUser chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Integer foundUserId = userDAO.findDACUserIdByRole(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId());
-        Assert.assertNotNull(foundUserId);
-    }
-
-    @Test
     public void testFindUsers_noArgs() {
         createUser();
         Collection<DACUser> users = userDAO.findUsers();

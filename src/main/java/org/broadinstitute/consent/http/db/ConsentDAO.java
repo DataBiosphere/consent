@@ -118,11 +118,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             "where consentId = :consentId and active = true")
     void updateConsentSortDate(@Bind("consentId") String consentId, @Bind("sortDate") Date sortDate);
 
-    @SqlUpdate("update consents set lastUpdate = :lastUpdate, sortDate = :sortDate where consentId in (<consentId>) ")
-    void bulkUpdateConsentSortDate(@BindIn("consentId") List<String> consentId,
-                                   @Bind("lastUpdate") Date lastUpdate,
-                                   @Bind("sortDate") Date sortDate);
-
     // Consent Association Access Methods
 
     @SqlUpdate("insert into consentassociations (consentId, associationType, dataSetId) values (:consentId, :associationType, :dataSetId)")

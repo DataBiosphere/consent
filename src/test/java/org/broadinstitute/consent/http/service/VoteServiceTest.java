@@ -196,11 +196,6 @@ public class VoteServiceTest {
     }
 
     @Test
-    public void testCreateVotesForElections() {
-        // No-op ... tested in all of the create vote tests
-    }
-
-    @Test
     public void testCreateDataOwnersReviewVotes() {
         Election e = new Election();
         e.setElectionId(1);
