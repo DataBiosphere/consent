@@ -184,12 +184,13 @@ public class DacService {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
-            Optional<ElectionType> optionT = EnumSet.allOf(ElectionType.class).stream().filter(t -> t.getValue().equalsIgnoreCase(e.getElectionType())).findFirst();
-            if (!optionT.isPresent()) {
+            Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
+                    filter(t -> t.getValue().equalsIgnoreCase(e.getElectionType())).findFirst();
+            if (!type.isPresent()) {
                 throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
             }
-            boolean isManualReview = optionT.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
-            voteService.createVotes(e, optionT.get(), isManualReview);
+            boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
+            voteService.createVotes(e, type.get(), isManualReview);
         }
         return populatedUserById(user.getDacUserId());
     }
