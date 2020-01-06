@@ -5,6 +5,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
@@ -86,6 +87,8 @@ abstract public class Resource {
         dispatch.put(ForbiddenException.class, e ->
                 Response.status(Response.Status.FORBIDDEN).entity(new Error(e.getMessage(), Response.Status.FORBIDDEN.getStatusCode())).build());
         dispatch.put(NotFoundException.class, e ->
+                Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
+        dispatch.put(UnknownIdentifierException.class, e ->
                 Response.status(Response.Status.NOT_FOUND).entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
         dispatch.put(UpdateConsentException.class, e ->
                 Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build());

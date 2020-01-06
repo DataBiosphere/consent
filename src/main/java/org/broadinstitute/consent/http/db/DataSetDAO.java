@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -213,5 +215,48 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " inner join consents c on a.consentId = c.consentId " +
             " where c.dac_id is null ")
     List<DataSet> findNonDACDataSets();
+
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     * DataSets -> DatasetProperties -> Dictionary
+     *
+     * @return Set of datasets, with properties, that are associated to a single DAC.
+     */
+    @Mapper(DataSetPropertiesMapper.class)
+    @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId , c.translatedUseRestriction from dataset d " +
+            " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
+            " left outer join dictionary k on k.keyId = p.propertyKey " +
+            " inner join consentassociations a on a.dataSetId = d.dataSetId " +
+            " inner join consents c on c.consentId = a.consentId " +
+            " where c.dac_id = :dacId ")
+    Set<DataSetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
+
+    /**
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @return List of dataset id and its associated dac id
+     */
+    @RegisterMapper(DatasetDacIdPairMapper.class)
+    @SqlQuery("select distinct d.dataSetId, c.dac_id from dataset d " +
+            " inner join consentassociations a on d.dataSetId = a.dataSetId " +
+            " inner join consents c on a.consentId = c.consentId " +
+            " where c.dac_id is not null ")
+    List<Pair<Integer, Integer>> findDatasetAndDacIds();
+
+    /**
+     * Find the Dac for this dataset.
+     *
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @param datasetId The dataset Id
+     * @return The DAC that corresponds to this dataset
+     */
+    @RegisterMapper(DacMapper.class)
+    @SqlQuery("select d.* from dac d " +
+            " inner join consents c on d.dac_id = c.dac_id " +
+            " inner join consentassociations a on a.consentId = c.consentId " +
+            " where a.dataSetId = :datasetId " +
+            " limit 1 ")
+    Dac findDacForDataset(@Bind("datasetId") Integer datasetId);
 
 }

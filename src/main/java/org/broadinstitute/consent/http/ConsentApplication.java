@@ -239,7 +239,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance, dataSetDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractEmailNotifierAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance());
         DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
-        DatabaseVoteAPI.initInstance(voteDAO, dacUserDAO, electionDAO, dataSetAssociationDAO);
+        DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         TranslateServiceImpl.initInstance(useRestrictionConverter);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, userRoleDAO);
@@ -280,14 +280,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ConsentAssociationResource.class);
         env.jersey().register(new DataUseLetterResource(googleStore));
         env.jersey().register(AllAssociationsResource.class);
-        env.jersey().register(ConsentElectionResource.class);
-        env.jersey().register(DataRequestElectionResource.class);
+        env.jersey().register(new ConsentElectionResource(consentService, dacService, voteService));
+        env.jersey().register(new DataRequestElectionResource(voteService));
         env.jersey().register(ConsentVoteResource.class);
-        env.jersey().register(DataRequestVoteResource.class);
+        env.jersey().register(new DataRequestVoteResource(voteService));
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DacResource(dacService));
-        env.jersey().register(DACUserResource.class);
+        env.jersey().register(new DACUserResource(voteService));
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(new ConsentManageResource(consentService));
         env.jersey().register(new ElectionResource(voteService));

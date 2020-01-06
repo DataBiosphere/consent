@@ -1,21 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
 import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -24,9 +17,7 @@ import java.util.Set;
 public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     private VoteDAO voteDAO;
-    private DACUserDAO dacUserDAO;
     private ElectionDAO electionDAO;
-    private DataSetAssociationDAO dataSetAssociationDAO;
 
     /**
      * Initialize the singleton API instance using the provided DAO. This method
@@ -38,8 +29,8 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
-        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, dacUserDAO, electionDAO, dataSetAssociationDAO));
+    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO) {
+        VoteAPIHolder.setInstance(new DatabaseVoteAPI(dao, electionDAO));
 
     }
 
@@ -49,11 +40,9 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseVoteAPI(VoteDAO dao, DACUserDAO dacUserDAO, ElectionDAO electionDAO, DataSetAssociationDAO dataSetAssociationDAO) {
+    private DatabaseVoteAPI(VoteDAO dao, ElectionDAO electionDAO) {
         this.voteDAO = dao;
-        this.dacUserDAO = dacUserDAO;
         this.electionDAO = electionDAO;
-        this.dataSetAssociationDAO = dataSetAssociationDAO;
     }
 
     @Override
@@ -127,43 +116,9 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
 
     }
 
-
-    @Override
-    public List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) {
-        Set<DACUser> dacUserList = dacUserDAO.findDACUsersEnabledToVote();
-        List<Vote> votes = new ArrayList<>();
-        if (dacUserList != null) {
-            for (DACUser user : dacUserList) {
-                Integer id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.DAC.getValue(), false);
-                votes.add(voteDAO.findVoteById(id));
-                if(isChairPerson(user.getDacUserId())){
-                    Integer chairPersonVoteId = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.CHAIRPERSON.getValue(), false);
-                    votes.add(voteDAO.findVoteById(chairPersonVoteId));
-                }
-                if (electionType.equals(ElectionType.DATA_ACCESS) && isChairPerson(user.getDacUserId())) {
-                    id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.FINAL.getValue(), false);
-                    votes.add(voteDAO.findVoteById(id));
-                    if(!isManualReview){
-                        id = voteDAO.insertVote(user.getDacUserId(), electionId, VoteType.AGREEMENT.getValue(), false);
-                        votes.add(voteDAO.findVoteById(id));
-                    }
-                }
-             }
-        }
-        return votes;
-    }
-
-
     @Override
     public List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId) {
         return voteDAO.findVoteByTypeAndElectionId(electionId, type);
-    }
-
-    @Override
-    public List<Vote> createDataOwnersReviewVotes(Election election) {
-        List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
-        voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
-        return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }
 
     @Override
@@ -174,25 +129,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         return vote;
     }
-
-
-    @Override
-    public void createVotesForElections(List<Election> elections, Boolean isConsent){
-        if(elections != null){
-            for(Election election : elections){
-                createVotes(election.getElectionId(), ElectionType.TRANSLATE_DUL, false);
-            }
-        }
-    }
-
-    private boolean isChairPerson(Integer dacUserId) {
-        boolean isCherperson = false;
-        if (dacUserDAO.checkChairpersonUser(dacUserId) != null) {
-            isCherperson = true;
-        }
-        return isCherperson;
-    }
-
 
     private Integer getElectionId(String referenceId) {
         Integer electionId = electionDAO.getOpenElectionIdByReferenceId(referenceId);

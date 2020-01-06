@@ -1,9 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.service.DacService;
 
 import javax.annotation.security.RolesAllowed;
@@ -19,6 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -151,6 +156,16 @@ public class DacResource extends Resource {
         Dac dac = findDacById(dacId);
         dacService.removeDacMember(role, user, dac);
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("{dacId}/datasets")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
+    public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
+        findDacById(dacId);
+        Set<DataSetDTO> datasets = dacService.findDatasetsByDacId(user, dacId);
+        return Response.ok().entity(datasets).build();
     }
 
     @GET

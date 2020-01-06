@@ -14,16 +14,19 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -127,6 +130,18 @@ public class DacService {
 
     public DACUser findUserById(Integer id) throws IllegalArgumentException {
         return populatedUserById(id);
+    }
+
+    public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
+        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsByDac(dacId);
+        if (isAuthUserAdmin(authUser)) {
+            return datasets;
+        }
+        List<Integer> dacIds = getDacIdsForUser(authUser);
+        if (dacIds.contains(dacId)) {
+            return datasets;
+        }
+        return Collections.emptySet();
     }
 
     public List<DACUser> findMembersByDacId(Integer dacId) {

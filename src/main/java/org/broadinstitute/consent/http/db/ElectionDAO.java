@@ -1,8 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
 import org.broadinstitute.consent.http.models.AccessRP;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.skife.jdbi.v2.sqlobject.Bind;
@@ -14,6 +13,9 @@ import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
 import org.skife.jdbi.v2.unstable.BindIn;
+
+import java.util.Date;
+import java.util.List;
 
 @UseStringTemplate3StatementLocator
 @RegisterMapper({ElectionMapper.class})
@@ -40,8 +42,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("createDate") Date createDate,
                            @Bind("referenceId") String referenceId,
                            @Bind("datasetId") Integer dataSetId);
-    @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction, dataUseLetter, dulName, version) values " +
-            "( :electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction, :dataUseLetter, :dulName," +
+
+    @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction, dataUseLetter, dulName, datasetId, version) values " +
+            "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction, :dataUseLetter, :dulName, :datasetId, " +
             " (SELECT ifnull(MAX(version),0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
@@ -52,8 +55,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("useRestriction") String useRestriction,
                            @Bind("translatedUseRestriction") String translatedUseRestriction,
                            @Bind("dataUseLetter") String dataUseLetter,
-                           @Bind("dulName") String dulName);
-
+                           @Bind("dulName") String dulName,
+                           @Bind("datasetId") Integer dataSetId);
 
     @SqlUpdate("delete  from election where electionId = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
@@ -284,5 +287,20 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("select  v.vote from vote v where v.electionId = :electionId and v.type = 'FINAL'")
     Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
+
+    /**
+     * Find the Dac for this consent election. The relationship for other election types is
+     * via the dataset.
+     *
+     * @param electionId The election Id
+     * @return Get the DAC that corresponds to this consent election
+     */
+    @RegisterMapper(DacMapper.class)
+    @SqlQuery("select d.* from dac d " +
+            " inner join consents c on d.dac_id = c.dac_id " +
+            " inner join election e on e.referenceId = c.consentId " +
+            " where e.electionId = :electionId " +
+            " limit 1 ")
+    Dac findDacForConsentElection(@Bind("electionId") Integer electionId);
 
 }

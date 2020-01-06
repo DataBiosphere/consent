@@ -42,6 +42,23 @@ public class ConsentService {
         this.dacService = dacService;
     }
 
+    public Consent getById(String id) throws UnknownIdentifierException {
+        Consent consent = consentDAO.findConsentById(id);
+        if (consent == null) {
+            throw new UnknownIdentifierException(String.format("Could not find consent with id %s", id));
+        }
+        Election election = electionDAO.findLastElectionByReferenceIdAndType(id, ElectionType.TRANSLATE_DUL.getValue());
+        if (election != null) {
+            consent.setLastElectionStatus(election.getStatus());
+            consent.setLastElectionArchived(election.getArchived());
+        }
+        return consent;
+    }
+
+    public void updateConsentDac(String consentId, Integer dacId) {
+        consentDAO.updateConsentDac(consentId, dacId);
+    }
+
     @SuppressWarnings("unchecked")
     public List<ConsentManage> describeConsentManage(AuthUser authUser) {
         List<ConsentManage> consentManageList = new ArrayList<>();
@@ -64,18 +81,18 @@ public class ConsentService {
             BasicDBObject in = new BasicDBObject("$in", objarray);
             BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
-            List<String> datasetNames = new ArrayList<>();
+            List<String> datasetIds = new ArrayList<>();
             dataAccessRequests.forEach((Block<Document>) dar -> {
                 List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-                datasetNames.addAll(dataSets);
+                datasetIds.addAll(dataSets);
             });
-            List<String> objectIds = new ArrayList<>();
-            if (CollectionUtils.isNotEmpty(datasetNames)) {
-                objectIds = consentDAO.getAssociationsConsentIdfromDataSetIds(datasetNames);
+            List<String> consentIds = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(datasetIds)) {
+                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIds));
             }
 
             for (ConsentManage consentManage : consentManageList) {
-                if (objectIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
+                if (consentIds.stream().anyMatch(cm -> cm.equals(consentManage.getConsentId()))) {
                     consentManage.setEditable(false);
                 } else {
                     consentManage.setEditable(true);

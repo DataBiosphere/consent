@@ -1,15 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+
 import javax.ws.rs.NotFoundException;
 import java.util.List;
 
 @Deprecated // Use VoteService
 public interface VoteAPI {
-
-    List<Vote> createVotes(Integer electionId, ElectionType electionType, Boolean isManualReview) throws IllegalArgumentException;
 
     Vote firstVoteUpdate(Vote rec,  Integer voteId) throws IllegalArgumentException;
 
@@ -25,11 +22,7 @@ public interface VoteAPI {
 
     void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
 
-    void createVotesForElections(List<Election> elections, Boolean isConsent);
-
     List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId);
-
-    List<Vote> createDataOwnersReviewVotes(Election electionId);
 
     Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException;
 

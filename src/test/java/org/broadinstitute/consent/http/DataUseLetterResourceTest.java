@@ -32,7 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
 
-public class DataUseLetterResourceTest extends ConsentServiceTest {
+public class DataUseLetterResourceTest extends AbstractTest {
 
     @Mock
     GCSStore storage;

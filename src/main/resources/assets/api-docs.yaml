@@ -333,14 +333,14 @@ paths:
   /api/consent/{consentId}/election:
     post:
       summary: Create Consent Election
-      description: Creates an election for the consent ID sent as parameter.
+      description: Creates a consent election
       parameters:
         - name: consentId
           in: path
           description: Consent ID
           required: true
           type: string
-        - name: rec
+        - name: election
           in: body
           description: Election to be created
           required: true
@@ -351,11 +351,11 @@ paths:
         - Consent
       responses:
         201:
-          description: Returns the URI to access the newly created object.
+          description: Returns the URI to access the newly created election.
         400:
-          description: There is an existent Open election for that consent.
+          description: There is an existing open election for the consent.
         404:
-          description: The consent sent as a parameter doesn't exist.
+          description: The consent sent as a parameter does not exist.
     get:
        summary: Describe Consent Election
        description: Returns the election for the consent sent as a parameter.
@@ -377,6 +377,41 @@ paths:
            description: "Error"
            schema:
              $ref: '#/definitions/ErrorResponse'
+  /api/consent/{consentId}/election/dac/{dacId}:
+    post:
+      summary: Create Consent Election For Dac
+      description: |
+        Creates a consent election for a data access committee. Assigns the consent to the provided
+        Data Access Committee.
+      parameters:
+        - name: consentId
+          in: path
+          description: Consent ID
+          required: true
+          type: string
+        - name: dacId
+          in: path
+          description: DAC ID
+          required: true
+          type: integer
+        - name: election
+          in: body
+          description: Election to be created
+          required: true
+          schema:
+            $ref: '#/definitions/Election'
+      tags:
+        - Election
+        - Consent
+      responses:
+        201:
+          description: Returns the URI to access the newly created election.
+        400:
+          description: |
+            There is an existing open election for the consent, or the consent is already
+            associated to an existing dac.
+        404:
+          description: The consent or dac does not exist.
   /api/consent/{consentId}/election/{id}:
     put:
       summary: Update Consent Election
@@ -960,6 +995,30 @@ paths:
           description: No DAC or User found with the provided ID
         500:
           description: Internal Server Error
+  /api/dac/{dacId}/datasets:
+    get:
+      summary: Get All Datasets for DAC
+      operationId: getDacDatasets
+      description: List all Datasets of a DAC
+      parameters:
+        - name: dacId
+          in: path
+          description: The DAC ID
+          required: true
+          type: integer
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The list of datasets
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Dataset'
+        404:
+          description: No DAC found with the provided ID
+        500:
+          description: Internal Server Error
   /api/dac/{dacId}/membership:
     get:
       summary: Get All Members of DAC
@@ -1246,7 +1305,7 @@ paths:
   /api/dar/modalSummary/{id}:
         get:
           summary: getDataAcessRequestModalSummary
-          description: Retrieves a DARModalDetailsDTO.
+          description: Retrieves a DARModalDetails.
           parameters:
             - name: id
               in: path
@@ -1257,7 +1316,7 @@ paths:
             - Data Access Request
           responses:
             200:
-              description: 'Returns a DARModalDetailsDTO initialized with the DAR associated with the provided Id.'
+              description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
   /api/dar/find/{id}:
     get:
       summary: describeSpecificFields
@@ -1776,11 +1835,11 @@ paths:
         - Datasets
       responses:
         200:
-          description: An array of DatasetDTO
+          description: An array of Datasets
           schema:
             type: array
             items:
-              $ref: '#/definitions/DatasetDTO'
+              $ref: '#/definitions/Dataset'
         404:
           description: Required parameter is null.
     post:
@@ -1807,7 +1866,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/DatasetDTO'
+              $ref: '#/definitions/Dataset'
         400:
           description: Array of the errors found with a brief description of each one.
           schema:
@@ -2932,17 +2991,34 @@ definitions:
       dataSetElectionResult:
         type: string
         description: Result of the Data Owners elections.
+      datasetId:
+        type: integer
+        format: int32
+        description: The ID of the dataset for this DAR.
+      dacId:
+        type: integer
+        format: int32
+        description: The ID of the DAC for this DAR's dataset.
+      errors:
+        type: array
+        items:
+          type: string
+        description: List of any structural errors with this DAR
       ownerUser:
         description: The owner of the DAR
         type: object
         items:
           $ref: '#/definitions/DACUser'
-  DatasetDTO:
+  Dataset:
     type: object
     properties:
+      dataSetId:
+        type: integer
+        format: int32
+        description: The dataset id, integer format
       consentId:
         type: string
-        description: Describes the id of the vote.
+        description: The consent id.
       translatedUseRestriction:
         type: string
         description: The Use Restriction, readable type
@@ -2952,7 +3028,7 @@ definitions:
       properties:
         type: array
         items:
-          $ref: '#/definitions/DatasetPropertyDTO'
+          $ref: '#/definitions/DatasetProperty'
       active:
         type: boolean
         description: The Dataset is active
@@ -2965,7 +3041,13 @@ definitions:
       updateAssociationToDataOwnerAllowed:
         type: boolean
         description: You can update the data owners of this Dataset
-  DatasetPropertyDTO:
+      alias:
+        type: string
+        description: The dataset id, string format
+      objectId:
+        type: string
+        description: The sample collection ID, if defined
+  DatasetProperty:
     type: object
     properties:
       propertyName:

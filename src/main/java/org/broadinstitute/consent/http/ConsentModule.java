@@ -33,8 +33,8 @@ import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.skife.jdbi.v2.DBI;
@@ -204,7 +204,12 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     VoteService providesVoteService() {
-        return new VoteService(providesVoteDAO());
+        return new VoteService(
+                providesDACUserDAO(),
+                providesDataSetAssociationDAO(),
+                providesDataSetDAO(),
+                providesElectionDAO(),
+                providesVoteDAO());
     }
 
     @Provides

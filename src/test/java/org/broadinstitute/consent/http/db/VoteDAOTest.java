@@ -45,7 +45,7 @@ public class VoteDAOTest extends AbstractTest {
     public void testCreateVote() {
         Election election = createElection();
         String voteType = VoteType.DAC.getValue();
-        int voteId = voteDAO.insertVote(USER_ID, election.getElectionId(), voteType, false);
+        int voteId = voteDAO.insertVote(USER_ID, election.getElectionId(), voteType);
         Vote vote = voteDAO.findVoteById(voteId);
         Assert.assertNotNull(vote);
         Assert.assertNull(vote.getVote());
@@ -55,7 +55,7 @@ public class VoteDAOTest extends AbstractTest {
     public void testUpdateVote() {
         Election election = createElection();
         String voteType = VoteType.DAC.getValue();
-        int voteId = voteDAO.insertVote(USER_ID, election.getElectionId(), voteType, false);
+        int voteId = voteDAO.insertVote(USER_ID, election.getElectionId(), voteType);
 
         String rationale = "rationale";
         Date now = new Date();

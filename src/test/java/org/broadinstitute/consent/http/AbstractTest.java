@@ -41,6 +41,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -61,7 +63,9 @@ abstract public class AbstractTest extends ResourcedTest {
     static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
+
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
+
     private MongodExecutable mongodExe;
     private MongodProcess mongod;
 
@@ -133,7 +137,7 @@ abstract public class AbstractTest extends ResourcedTest {
         return String.format("http://localhost:%d/api/%s", rule().getLocalPort(), path);
     }
 
-    void mockTranslateResponse(){
+    void mockTranslateResponse() {
         final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
         final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
         String mockString = "TranslateMock";
@@ -141,12 +145,12 @@ abstract public class AbstractTest extends ResourcedTest {
         Response responseMock = Response.status(Response.Status.OK).entity(stream).build();
         Mockito.when(builderMock.post(Entity.json(Mockito.anyString()))).thenReturn(responseMock);
         Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
-        final Client clientMock= Mockito.mock(Client.class);
+        final Client clientMock = Mockito.mock(Client.class);
         Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
         Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
     }
 
-    void mockValidateResponse(){
+    void mockValidateResponse() {
         final Invocation.Builder builderMock = Mockito.mock(Invocation.Builder.class);
         final WebTarget webTargetMock = Mockito.mock(WebTarget.class);
         ValidateResponse entity = new ValidateResponse(true, "mockedValidatedRestriction");
@@ -158,7 +162,7 @@ abstract public class AbstractTest extends ResourcedTest {
 
         Mockito.when(builderMock.post(Entity.json(Mockito.anyString()))).thenReturn(responseMock);
         Mockito.when(webTargetMock.request(MediaType.APPLICATION_JSON)).thenReturn(builderMock);
-        final Client clientMock= Mockito.mock(Client.class);
+        final Client clientMock = Mockito.mock(Client.class);
         Mockito.when(clientMock.target(Mockito.anyString())).thenReturn(webTargetMock);
         Mockito.when(webTargetMock.queryParam(Mockito.anyString(), Mockito.anyString())).thenReturn(webTargetMock);
         UseRestrictionValidator.getInstance().setClient(clientMock);
@@ -233,7 +237,7 @@ abstract public class AbstractTest extends ResourcedTest {
                 .build();
         MongodStarter starter = MongodStarter.getInstance(runtimeConfig);
         // Creating MongodbExecutable
-        Storage replication = new Storage("target/mongo",null,0);
+        Storage replication = new Storage("target/mongo", null, 0);
         IMongodConfig config = new MongodConfigBuilder()
                 .version(Version.Main.PRODUCTION)
                 .replication(replication)
@@ -260,6 +264,59 @@ abstract public class AbstractTest extends ResourcedTest {
         ConsentConfiguration configuration = rule().getConfiguration();
         Environment environment = rule().getEnvironment();
         return new DBIFactory().build(environment, configuration.getDataSourceFactory(), "mysql");
+    }
+
+    String consentPath() {
+        return path2Url("/consent");
+    }
+
+    String consentPath(String id) {
+        try {
+            return path2Url(String.format("consent/%s", URLEncoder.encode(id, "UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s", id);
+        }
+    }
+
+    public String electionConsentPath(String id) {
+        try {
+            return path2Url(String.format("consent/%s/election", URLEncoder.encode(id, "UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/election", id);
+        }
+    }
+
+    public String electionConsentPathById(String referenceId, Integer electionId) {
+        try {
+            return path2Url(String.format("consent/%s/election/%s", URLEncoder.encode(referenceId, "UTF-8"), electionId));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/election/%s", referenceId, electionId);
+        }
+    }
+
+    public String voteConsentIdPath(String consentId, Integer voteId) {
+        try {
+            return path2Url(String.format("consent/%s/vote/%s", URLEncoder.encode(consentId, "UTF-8"), voteId));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/vote/%s", consentId, voteId);
+        }
+    }
+
+    public String voteConsentPath(String consentId) {
+        try {
+            return path2Url(String.format("consent/%s/vote", URLEncoder.encode(consentId, "UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(System.err);
+            return String.format("consent/%s/vote", consentId);
+        }
+    }
+
+    Consent retrieveConsent(Client client, String url) throws IOException {
+        return getJson(client, url).readEntity(Consent.class);
     }
 
 }

@@ -1,21 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import com.google.common.io.Resources;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.AbstractTest;
-import org.broadinstitute.consent.http.ConsentApplication;
-import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -23,37 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class DacDAOTest extends AbstractTest {
-
-    @SuppressWarnings("UnstableApiUsage")
-    @ClassRule
-    public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
-            ConsentApplication.class, Resources.getResource("consent-config.yml").getFile());
-
-    @Override
-    public DropwizardAppRule<ConsentConfiguration> rule() {
-        return RULE;
-    }
-
-    private DacDAO dacDAO;
-    private DACUserDAO userDAO;
-
-    @Before
-    public void setUp() {
-        dacDAO = getApplicationJdbi().onDemand(DacDAO.class);
-        userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
-    }
-
-    @After
-    public void tearDown() {
-        // Teardown also tests the delete function
-        dacDAO.findAll().forEach(dac -> {
-            dacDAO.deleteDacMembers(dac.getDacId());
-            dacDAO.deleteDac(dac.getDacId());
-        });
-        // Cannot delete all users created with this test due to the
-        // reliance on existing test data for older integration-style tests
-    }
+public class DacDAOTest extends DAOTestHelper {
 
     @Test
     public void testCreate() {
@@ -247,24 +207,6 @@ public class DacDAOTest extends AbstractTest {
         List<Integer> userIds = Arrays.asList(chair.getDacUserId(), member.getDacUserId());
         List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds);
         Assert.assertEquals(userRoles.size(), 2);
-    }
-
-    private Dac createDac() {
-        Integer dacId = dacDAO.createDac(RandomStringUtils.random(10), RandomStringUtils.random(10), new Date());
-        return dacDAO.findById(dacId);
-    }
-
-    private DACUser createUser() {
-        int i1 = RandomUtils.nextInt(5, 10);
-        int i2 = RandomUtils.nextInt(5, 10);
-        int i3 = RandomUtils.nextInt(3, 5);
-        String email = RandomStringUtils.randomAlphabetic(i1) +
-                "@" +
-                RandomStringUtils.randomAlphabetic(i2) +
-                "." +
-                RandomStringUtils.randomAlphabetic(i3);
-        Integer userId = userDAO.insertDACUser(email, "display name", new Date());
-        return dacDAO.findUserById(userId);
     }
 
 }

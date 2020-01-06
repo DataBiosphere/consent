@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -121,11 +123,23 @@ public class DataAccessRequestService {
 
     private List<DataAccessRequestManage> createAccessRequestManage(List<Document> documents, Map<String, Election> electionList) {
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
+        Map<Integer, Integer> datasetDacPairs = dataSetDAO.findDatasetAndDacIds().
+                stream().
+                collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<Integer> dataSets = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
+            List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(darDatasetIds);
+            if (darDatasetIds.size() > 1) {
+                darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
+            }
+            if (darDatasetIds.size() == 1) {
+                darManage.setDatasetId(darDatasetIds.get(0));
+            }
+            if (datasetDacPairs.containsKey(darManage.getDatasetId())) {
+                darManage.setDacId(datasetDacPairs.get(darManage.getDatasetId()));
+            }
             Election election = electionList.get(id.toString());
             darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
             darManage.setRus(dar.getString(DarConstants.RUS));

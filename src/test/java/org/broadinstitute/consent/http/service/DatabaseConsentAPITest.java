@@ -2,8 +2,8 @@ package org.broadinstitute.consent.http.service;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
+import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.ConsentApplication;
-import org.broadinstitute.consent.http.ConsentServiceTest;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -29,7 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-public class DatabaseConsentAPITest extends ConsentServiceTest {
+public class DatabaseConsentAPITest extends AbstractTest {
 
     private DataUseDTO generalUse = new DataUseBuilder().setGeneralUse(true).build();
     private final UseRestriction everything = new Everything();
