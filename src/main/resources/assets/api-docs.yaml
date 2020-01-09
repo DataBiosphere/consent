@@ -2347,11 +2347,6 @@ paths:
           description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
           required: true
           type: boolean
-        - name: userId
-          in: path
-          required: true
-          type: integer
-          format: int32
         - name: researcherProperties
           in: body
           required: true
@@ -2378,6 +2373,7 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/researcher/{userId}:
     get:
       summary: Return researcher properties.
       description: Describes all the properties for a reseacher user.
