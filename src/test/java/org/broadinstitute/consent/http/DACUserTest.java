@@ -150,14 +150,6 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Test
-    public void testGetUserStatusSuccess() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Response response = getJson(client, statusValue(1));
-        DACUser user = response.readEntity(DACUser.class);
-        assertTrue(user.getStatus().equalsIgnoreCase(RoleStatus.PENDING.name()));
-    }
-
-    @Test
     public void testUpdateStatus() throws IOException {
         Client client = ClientBuilder.newClient();
         DACUser postUser = new DACUser();
