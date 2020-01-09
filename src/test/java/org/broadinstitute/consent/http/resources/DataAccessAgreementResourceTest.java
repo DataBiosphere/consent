@@ -4,7 +4,7 @@ import com.google.api.client.http.HttpResponse;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.service.users.handler.DatabaseResearcherAPI;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        DatabaseResearcherAPI.class,
+        ResearcherPropertyHandler.class,
         HttpResponse.class
 })
 public class DataAccessAgreementResourceTest {
@@ -41,7 +41,7 @@ public class DataAccessAgreementResourceTest {
     GCSStore store;
 
     @Mock
-    DatabaseResearcherAPI researcherAPI;
+    ResearcherPropertyHandler researcherAPI;
 
     @Mock
     HttpResponse response;
@@ -51,7 +51,7 @@ public class DataAccessAgreementResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(DatabaseResearcherAPI.class);
+        PowerMockito.mockStatic(ResearcherPropertyHandler.class);
         PowerMockito.mockStatic(HttpResponse.class);
         resource = new DataAccessAgreementResource(store, researcherAPI);
     }

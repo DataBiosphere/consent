@@ -31,8 +31,8 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser user) {
         try {
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
-            return Response.ok(nihAuthApi.authenticateNih(nihAccount, dacUser.getDacUserId())).build();
+            dacUserAPI.describeDACUserByEmail(user.getName());
+            return Response.ok(nihAuthApi.authenticateNih(nihAccount, user)).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

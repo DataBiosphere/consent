@@ -2,11 +2,10 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpResponse;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.bson.Document;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -31,11 +30,11 @@ import java.util.UUID;
 public class DataAccessAgreementResource extends Resource {
 
     private final GCSStore store;
-    private final ResearcherAPI researcherAPI;
+    private final ResearcherService researcherService;
 
-    public DataAccessAgreementResource(GCSStore store, ResearcherAPI researcherAPI) {
+    public DataAccessAgreementResource(GCSStore store, ResearcherService researcherService) {
         this.store = store;
-        this.researcherAPI = researcherAPI;
+        this.researcherService = researcherService;
     }
 
     @GET
@@ -43,7 +42,7 @@ public class DataAccessAgreementResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER})
     @Path("/downloadDAA/{researcherId}")
     public Response getDAA(@PathParam("researcherId") Integer researcherId) {
-        Map<String, String> researcherProperties = researcherAPI.describeResearcherPropertiesForDAR(researcherId);
+        Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(researcherId);
         if (researcherProperties.containsKey(ResearcherFields.URL_DAA.getValue())) {
             try {
                 HttpResponse r = store.getStorageDocument(researcherProperties.get(ResearcherFields.URL_DAA.getValue()));
