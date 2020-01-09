@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Path("api/researcher/{userId}")
+@Path("api/researcher")
 public class ResearcherResource extends Resource {
 
     private ResearcherService researcherService;
@@ -44,6 +44,7 @@ public class ResearcherResource extends Resource {
     }
 
     @PUT
+    @Path("{userId}")
     @Consumes("application/json")
     @RolesAllowed(RESEARCHER)
     public Response updateResearcher(@QueryParam("validate") Boolean validate, @PathParam("userId") Integer userId, Map<String, String> researcherProperties) {
@@ -55,6 +56,7 @@ public class ResearcherResource extends Resource {
     }
 
     @GET
+    @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
     public Response describeAllResearcherProperties(@PathParam("userId") Integer userId) {
@@ -66,6 +68,7 @@ public class ResearcherResource extends Resource {
     }
 
     @DELETE
+    @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response deleteAllProperties(@PathParam("userId") Integer userId) {
@@ -78,7 +81,7 @@ public class ResearcherResource extends Resource {
     }
 
     @GET
-    @Path("/dar")
+    @Path("{userId}/dar")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER})
     public Response getResearcherPropertiesForDAR(@PathParam("userId") Integer userId) {

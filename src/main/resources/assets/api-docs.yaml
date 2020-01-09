@@ -2337,6 +2337,7 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/researcher/{userId}:
     put:
       summary: Update researcher.
       description: Updates a researcher user.
