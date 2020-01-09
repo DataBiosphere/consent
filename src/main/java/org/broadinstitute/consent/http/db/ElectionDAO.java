@@ -286,7 +286,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
     /**
-     * Find the elections that belong to this Dac
+     * Find the OPEN elections that belong to this Dac
      *
      * @param dacId The Dac id
      * @return List of elections associated to the Dac
