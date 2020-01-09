@@ -2,7 +2,11 @@
 {{with $fcEnv := env "FC_INSTANCE"}}
 
 consent {
-  baseUrl = {{if eq $fcEnv "local"}}"https://local.broadinstitute.org/"{{else if eq $fcEnv "live"}}"https://consent.dsde-{{$environment}}.broadinstitute.org/"{{else}}"https://firecloud-fiab.dsde-{{$environment}}.broadinstitute.org:27443/"{{end}}
+  baseUrl = {{if eq $fcEnv "local"}}"https://local.broadinstitute.org:27443/"{{else if eq $fcEnv "live"}}"https://consent.dsde-{{$environment}}.broadinstitute.org/"{{else}}"https://firecloud-fiab.dsde-{{$environment}}.broadinstitute.org:27443/"{{end}}
+  adminAccessToken = ""
+  chairAccessToken = ""
+  memberAccessToken = ""
+  researcherAccessToken = ""
 }
 
 {{end}}

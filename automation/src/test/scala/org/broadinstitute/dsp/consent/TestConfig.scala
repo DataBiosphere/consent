@@ -15,6 +15,10 @@ object TestConfig {
   val defaultUserAgent: String = "Gatling Client"
   val plainTextHeader: Map[String, String] = Map("Accept" -> "text/plain")
   val jsonHeader: Map[String, String] = Map("Accept" -> "application/json")
+  lazy val adminHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${config.getString("consent.adminAccessToken")}")
+  lazy val chairHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${config.getString("consent.chairAccessToken")}")
+  lazy val memberHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${config.getString("consent.memberAccessToken")}")
+  lazy val researcherHeader: Map[String, String] = Map("Authorization" -> s"Bearer ${config.getString("consent.researcherAccessToken")}")
 
   lazy val defaultHttpProtocol: HttpProtocolBuilder = {
     http

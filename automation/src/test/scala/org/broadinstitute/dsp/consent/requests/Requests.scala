@@ -33,4 +33,15 @@ object Requests {
     URLEncoder.encode(term, "UTF-8")
   }
 
+  object Dac {
+    val list: ChainBuilder = exec(
+      http("Dac List")
+        .get("/api/dac")
+        .headers(TestConfig.jsonHeader)
+        .headers(TestConfig.adminHeader)
+        .check(status.is(session => 200))
+    )
+
+  }
+
 }
