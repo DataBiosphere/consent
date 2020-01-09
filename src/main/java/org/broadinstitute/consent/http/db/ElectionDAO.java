@@ -272,18 +272,30 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
 
     /**
-     * Find the Dac for this consent election. The relationship for other election types is
-     * via the dataset.
+     * Find the Dac for this election
      *
-     * @param electionId The election Id
-     * @return Get the DAC that corresponds to this consent election
+     * @param electionId The election id
+     * @return Dac for this election
      */
-    @RegisterMapper(DacMapper.class)
+    @Mapper(DacMapper.class)
     @SqlQuery("select d.* from dac d " +
             " inner join consents c on d.dac_id = c.dac_id " +
-            " inner join election e on e.referenceId = c.consentId " +
-            " where e.electionId = :electionId " +
+            " inner join consentassociations a on a.consentId = c.consentId " +
+            " inner join election e on e.datasetId = a.dataSetId and e.electionId = :electionId " +
             " limit 1 ")
-    Dac findDacForConsentElection(@Bind("electionId") Integer electionId);
+    Dac findDacForElection(@Bind("electionId") Integer electionId);
+
+    /**
+     * Find the OPEN elections that belong to this Dac
+     *
+     * @param dacId The Dac id
+     * @return List of elections associated to the Dac
+     */
+    @Mapper(DatabaseElectionMapper.class)
+    @SqlQuery("select e.* from election e " +
+            " inner join consentassociations a on a.dataSetId = e.datasetId " +
+            " inner join consents c on c.consentId = a.consentId and c.dac_id = :dacId " +
+            " where e.status = '" + OPEN + "'")
+    List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
 
 }

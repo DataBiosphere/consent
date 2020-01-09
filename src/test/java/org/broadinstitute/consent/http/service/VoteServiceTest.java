@@ -51,7 +51,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(dacUserDAO, dataSetAssociationDAO, datasetDAO, electionDAO, voteDAO);
+        service = new VoteService(dacUserDAO, dataSetAssociationDAO, electionDAO, voteDAO);
     }
 
     @Test

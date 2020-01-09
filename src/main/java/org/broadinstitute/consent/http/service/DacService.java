@@ -1,9 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import com.mongodb.BasicDBObject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -17,15 +21,19 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
+import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,12 +45,19 @@ public class DacService {
     private DacDAO dacDAO;
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
+    private ElectionDAO electionDAO;
+    private MongoConsentDB mongo;
+    private VoteService voteService;
 
     @Inject
-    public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO) {
+    public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+                      ElectionDAO electionDAO, MongoConsentDB mongo, VoteService voteService) {
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
+        this.electionDAO = electionDAO;
+        this.mongo = mongo;
+        this.voteService = voteService;
     }
 
     public List<Dac> findAll() {
@@ -81,7 +96,7 @@ public class DacService {
      * Convenience method to group DACUsers into their associated Dacs. Users can be in more than
      * a single Dac, and a Dac can have multiple types of users, either Chairpersons or Members.
      *
-     * @param dacs List of all Dacs
+     * @param dacs          List of all Dacs
      * @param allDacMembers List of all DACUsers, i.e. users that are in any Dac.
      * @return Map of Dac to list of DACUser
      */
@@ -93,7 +108,7 @@ public class DacService {
         allDacMembers.stream().
                 flatMap(u -> u.getRoles().stream()).
                 filter(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) ||
-                                ur.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
+                        ur.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
                 forEach(ur -> {
                     Dac d = dacMap.get(ur.getDacId());
                     DACUser u = userMap.get(ur.getUserId());
@@ -165,12 +180,27 @@ public class DacService {
         return dacUsers;
     }
 
-    public DACUser addDacMember(Role role, DACUser user, Dac dac) {
+    public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
+        List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
+        for (Election e : elections) {
+            Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
+                    filter(t -> t.getValue().equalsIgnoreCase(e.getElectionType())).findFirst();
+            if (!type.isPresent()) {
+                throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
+            }
+            boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
+            voteService.createVotes(e, type.get(), isManualReview);
+        }
         return populatedUserById(user.getDacUserId());
     }
 
-    public void removeDacMember(Role role, DACUser user, Dac dac) {
+    public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
+        if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
+            if (dac.getChairpersons().size() <= 1) {
+                throw new ForbiddenException("Dac requires at least one chairperson.");
+            }
+        }
         List<UserRole> dacRoles = user.
                 getRoles().
                 stream().
@@ -179,6 +209,7 @@ public class DacService {
                 filter(r -> r.getRoleId().equals(role.getRoleId())).
                 collect(Collectors.toList());
         dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+        voteService.deleteOpenDacVotesForUser(dac, user);
     }
 
     public Role getChairpersonRole() {
@@ -187,6 +218,14 @@ public class DacService {
 
     public Role getMemberRole() {
         return dacDAO.getRoleById(UserRoles.MEMBER.getRoleId());
+    }
+
+    private boolean hasUseRestriction(String referenceId) {
+        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
+        BasicDBObject projection = new BasicDBObject();
+        projection.append(DarConstants.RESTRICTION, true);
+        Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
+        return dar.get(DarConstants.RESTRICTION) != null;
     }
 
     private DACUser populatedUserById(Integer userId) {

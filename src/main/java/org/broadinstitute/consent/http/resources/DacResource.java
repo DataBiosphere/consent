@@ -5,7 +5,6 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.service.DacService;
@@ -115,47 +114,63 @@ public class DacResource extends Resource {
     @POST
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN})
-    public Response addDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         checkMembership(dacId, userId);
         Role role = dacService.getMemberRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
-        DACUser member = dacService.addDacMember(role, user, dac);
-        return Response.ok().entity(member).build();
+        try {
+            DACUser member = dacService.addDacMember(role, user, dac);
+            return Response.ok().entity(member).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @DELETE
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN})
-    public Response removeDacMember(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response removeDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getMemberRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
-        dacService.removeDacMember(role, user, dac);
-        return Response.ok().build();
+        try {
+            dacService.removeDacMember(role, user, dac);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @POST
     @Path("{dacId}/chair/{userId}")
     @RolesAllowed({ADMIN})
-    public Response addDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response addDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         checkMembership(dacId, userId);
         Role role = dacService.getChairpersonRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
-        DACUser chair = dacService.addDacMember(role, user, dac);
-        return Response.ok().entity(chair).build();
+        try {
+            DACUser member = dacService.addDacMember(role, user, dac);
+            return Response.ok().entity(member).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @DELETE
     @Path("{dacId}/chair/{userId}")
     @RolesAllowed({ADMIN})
-    public Response removeDacChair(@PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
+    public Response removeDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getChairpersonRole();
         DACUser user = findDacUser(userId);
         Dac dac = findDacById(dacId);
-        dacService.removeDacMember(role, user, dac);
-        return Response.ok().build();
+        try {
+            dacService.removeDacMember(role, user, dac);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
