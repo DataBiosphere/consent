@@ -123,8 +123,9 @@ public class DataAccessRequestResource extends Resource {
             List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
             URI uri = info.getRequestUriBuilder().build();
             for (Document r : results) {
+                List<Integer> datasetIds = DarUtil.getIntegerList(r, DarConstants.DATASET_ID);
                 matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
-                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE));
+                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
             }
             return Response.created(uri).build();
         } catch (Exception e) {

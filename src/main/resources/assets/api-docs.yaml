@@ -1152,9 +1152,6 @@ paths:
               updatedUser:
                 description: The user that is being updated
                 $ref: '#/definitions/DACUser'
-              userToDelegate:
-                description: Required if there is a user to delegate roles to
-                $ref: '#/definitions/DACUser'
               alternativeDataOwnerUser:
                 description: Required if there is a user to delegate ownership to
                 $ref: '#/definitions/DACUser'

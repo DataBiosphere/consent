@@ -243,7 +243,7 @@ public class DataRequestVoteResource extends Resource {
             try {
                 emailNotifierAPI.sendCollectMessage(vote.getElectionId());
             } catch (MessagingException | IOException | TemplateException e) {
-                logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
+                logger.severe("Error when sending email notification to Chairpersons to collect votes. Cause: " + e);
             }
         }
     }

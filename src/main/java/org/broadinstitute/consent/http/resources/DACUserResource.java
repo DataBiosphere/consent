@@ -296,13 +296,9 @@ public class DACUserResource extends Resource {
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
         Map<String, DACUser> userMap = new HashMap<>();
         JsonElement updatedUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
-        JsonElement delegatedUser = jsonObject.get(DACUserRolesHandler.DELEGATED_USER_KEY);
         JsonElement alternativeDataOwner = jsonObject.get(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY);
         if (updatedUser != null && !updatedUser.isJsonNull()) {
             userMap.put(DACUserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
-        }
-        if (delegatedUser != null && !delegatedUser.isJsonNull()) {
-            userMap.put(DACUserRolesHandler.DELEGATED_USER_KEY, new DACUser(delegatedUser.toString()));
         }
         if (alternativeDataOwner != null && !alternativeDataOwner.isJsonNull()) {
             userMap.put(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY, new DACUser(alternativeDataOwner.toString()));
