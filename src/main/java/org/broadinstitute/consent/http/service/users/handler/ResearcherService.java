@@ -12,7 +12,7 @@ public interface ResearcherService {
 
     List<ResearcherProperty> setProperties(Map<String, String> researcherProperties, AuthUser authUser) throws NotFoundException, IllegalArgumentException;
 
-    List<ResearcherProperty> updateResearcher(Map<String, String> researcherProperties, Integer userId, Boolean validate) throws NotFoundException, IllegalArgumentException;
+    List<ResearcherProperty> updateProperties(Map<String, String> researcherProperties, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException;
 
     Map<String, String> describeResearcherPropertiesMap(Integer userId) throws NotFoundException;
 

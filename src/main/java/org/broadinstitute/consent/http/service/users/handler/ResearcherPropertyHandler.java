@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
@@ -56,29 +55,27 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     @Override
-    public List<ResearcherProperty> updateResearcher(Map<String, String> researcherPropertiesMap, Integer userId, Boolean validate) throws NotFoundException {
-        validateUser(userId);
+    public List<ResearcherProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
+        DACUser user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
         Boolean isUpdatedProfileCompleted = Boolean.valueOf(researcherPropertiesMap.get(ResearcherFields.COMPLETED.getValue()));
-        String completed = researcherPropertyDAO.isProfileCompleted(userId);
+        String completed = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
         Boolean isProfileCompleted = Boolean.valueOf(completed);
-        List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, userId);
+        List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
         if (!isProfileCompleted && isUpdatedProfileCompleted) {
             saveProperties(properties);
-            notifyAdmins(userId, ACTION_REGISTERED);
-        } else if (hasUpdatedFields(userId, researcherPropertiesMap, isUpdatedProfileCompleted)) {
-            deleteResearcherProperties(userId);
+            notifyAdmins(user.getDacUserId(), ACTION_REGISTERED);
+        } else if (hasUpdatedFields(user.getDacUserId(), researcherPropertiesMap, isUpdatedProfileCompleted)) {
+            deleteResearcherProperties(user.getDacUserId());
             saveProperties(properties);
-            UserRole userRole = new UserRole();
-            userRole.setRoleId(5);
-            dacUserAPI.updateUserStatus(RoleStatus.PENDING.toString(), userId);
-            notifyAdmins(userId, ACTION_UPDATED);
+            dacUserAPI.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
+            notifyAdmins(user.getDacUserId(), ACTION_UPDATED);
         } else {
             saveProperties(properties);
         }
-        return describeResearcherProperties(userId);
+        return describeResearcherProperties(user.getDacUserId());
     }
 
     private void saveProperties(List<ResearcherProperty> properties) {
@@ -144,7 +141,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     private void validateUser(Integer userId) {
         if (dacUserDAO.findDACUserById(userId) == null) {
-            throw new NotFoundException("User with id: " + userId + "does not exists");
+            throw new NotFoundException("User with id: " + userId + " does not exists");
         }
     }
 

@@ -62,7 +62,6 @@ public class VoteDAOTest extends AbstractTest {
         voteDAO.updateVote(true, rationale, now, voteId, true,
                 election.getElectionId(), now, true);
         Vote vote = voteDAO.findVoteById(voteId);
-        System.out.println(vote);
         Assert.assertTrue(vote.getVote());
         Assert.assertTrue(vote.getHasConcerns());
         Assert.assertTrue(vote.getIsReminderSent());

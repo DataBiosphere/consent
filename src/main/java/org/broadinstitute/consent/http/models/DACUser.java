@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -195,6 +196,13 @@ public class DACUser {
 
     public void setProfileCompleted(Boolean profileCompleted) {
         this.profileCompleted = profileCompleted;
+    }
+
+    public void addRole(UserRole userRole) {
+        if (this.getRoles() == null) {
+            this.setRoles(new ArrayList<>());
+        }
+        this.getRoles().add(userRole);
     }
 
     @Override
