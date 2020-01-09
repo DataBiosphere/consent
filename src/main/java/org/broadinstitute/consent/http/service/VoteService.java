@@ -154,7 +154,7 @@ public class VoteService {
                 filter(v -> v.getDacUserId().equals(user.getDacUserId())).
                 map(Vote::getVoteId).
                 collect(Collectors.toList());
-        voteDAO.removeVotesById(openUserVoteIds);
+        voteDAO.removeVotesByIds(openUserVoteIds);
     }
 
     private boolean isDacChairPerson(Dac dac, DACUser user) {

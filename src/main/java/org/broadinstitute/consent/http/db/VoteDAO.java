@@ -147,6 +147,9 @@ public interface VoteDAO extends Transactional<VoteDAO> {
             + " and (e.status = 'Open' OR e.status = 'Final'))")
     List<Vote> findVotesOnOpenElections(@Bind("dacUserId") Integer dacUserId);
 
+    @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
+    void removeVotesByIds(@BindIn("voteIds") List<Integer> voteIds);
+
     @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
             + " and v.electionId IN (<electionIds>)")
     List<Vote> findVotesByElectionIdsAndUser(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
