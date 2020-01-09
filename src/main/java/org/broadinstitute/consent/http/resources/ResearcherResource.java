@@ -56,7 +56,6 @@ public class ResearcherResource extends Resource {
     }
 
     @PUT
-    @Path("{userId}")
     @Consumes("application/json")
     @PermitAll
     public Response updateProperties(@Auth AuthUser user, @QueryParam("validate") Boolean validate, Map<String, String> researcherProperties) {
