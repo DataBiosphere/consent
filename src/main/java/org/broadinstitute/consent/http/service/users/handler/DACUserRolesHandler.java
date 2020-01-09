@@ -39,14 +39,15 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final UserRoleDAO userRoleDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
     private final String MEMBER = UserRoles.MEMBER.getRoleName();
-    private final String ADMIN = UserRoles.ADMIN.getRoleName();
-    private final String RESEARCHER = UserRoles.RESEARCHER.getRoleName();
     private final String DATA_OWNER = UserRoles.DATAOWNER.getRoleName();
-    private final String ALUMNI = UserRoles.ALUMNI.getRoleName();
     private final Map<String, Integer> roleIdMap;
     private final EmailNotifierAPI emailNotifierAPI;
     private final DataAccessRequestAPI dataAccessRequestAPI;
 
+    private final UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    private final UserRole alumni = new UserRole(UserRoles.ALUMNI.getRoleId(), UserRoles.ALUMNI.getRoleName());
+    private final UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    private final UserRole dataOwner = new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName());
 
     public DACUserRolesHandler(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
         this.dacUserDAO = userDao;
@@ -141,16 +142,16 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                         // Members are only added via Dac administration
                         break;
                     case ALUMNI:
-                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(ALUMNI), ALUMNI));
+                        assignNewRole(updatedUser, alumni);
                         break;
                     case ADMIN:
-                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(ADMIN), ADMIN));
+                        assignNewRole(updatedUser, admin);
                         break;
                     case RESEARCHER:
-                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(RESEARCHER), RESEARCHER));
+                        assignNewRole(updatedUser, researcher);
                         break;
                     case DATAOWNER:
-                        assignNewRole(updatedUser, new UserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER));
+                        assignNewRole(updatedUser, dataOwner);
                         break;
                 }
             }
@@ -167,10 +168,10 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
      * and assigns the role.
      */
     private void removeDataOwner(DACUser updatedUser, boolean delegate, DACUser doUserToDelegate) throws MessagingException, IOException, TemplateException {
-        removeRole(updatedUser.getDacUserId(), DATA_OWNER);
+        userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), dataOwner.getRoleId());
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (delegate) {
-            assignNewRole(doUserToDelegate, new UserRole(roleIdMap.get(DATA_OWNER), DATA_OWNER));
+            assignNewRole(doUserToDelegate, dataOwner);
             verifyAndDelegateElections(updatedUser, doUserToDelegate, openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
             updateDataSetsOwnership(updatedUser, doUserToDelegate);
         } else {
@@ -234,7 +235,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         if (dacUserDAO.verifyAdminUsers() < 2) {
             throw new IllegalArgumentException("At least one user with Admin roles should exist.");
         }
-        removeRole(updatedUser.getDacUserId(), ADMIN);
+        userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), admin.getRoleId());
     }
 
     /**
@@ -243,7 +244,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
      * @param updatedUser The user to update
      */
     private void removeAlumni(DACUser updatedUser) {
-        removeRole(updatedUser.getDacUserId(), ALUMNI);
+        userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), alumni.getRoleId());
     }
 
     /**
@@ -261,7 +262,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         for(String referenceId: referenceIds){
             dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
         }
-        removeRole(updatedUser.getDacUserId(), RESEARCHER);
+        userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), researcher.getRoleId());
     }
 
     /**
@@ -302,10 +303,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private List<UserRole> substractAllRoles(List<UserRole> roles, List<UserRole> toSubstractRoles) {
         List<String> toSubstractRolesNames = toSubstractRoles.stream().map(role -> role.getName().toUpperCase()).collect(Collectors.toList());
         return roles.stream().filter(rol -> !toSubstractRolesNames.contains(rol.getName().toUpperCase())).collect(Collectors.toList());
-    }
-
-    private void removeRole(Integer dacUserId, String role) {
-        userRoleDAO.removeSingleUserRole(dacUserId, roleIdMap.get(role));
     }
 
     public boolean containsRole(Collection<UserRole> roles, String role) {
