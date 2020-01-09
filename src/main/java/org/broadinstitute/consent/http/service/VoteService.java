@@ -128,19 +128,6 @@ public class VoteService {
     }
 
     /**
-     * Create votes for elections.
-     *
-     * @param elections List of Elections
-     */
-    public void createVotesForElections(List<Election> elections) {
-        if (elections != null) {
-            for (Election election : elections) {
-                createVotes(election, ElectionType.TRANSLATE_DUL, false);
-            }
-        }
-    }
-
-    /**
      * Create Votes for a data owner election
      *
      * @param election Election

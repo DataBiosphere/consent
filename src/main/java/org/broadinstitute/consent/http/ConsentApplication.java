@@ -132,8 +132,8 @@ import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
 import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.broadinstitute.consent.http.service.users.handler.AbstractUserRolesHandler;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
-import org.broadinstitute.consent.http.service.users.handler.DatabaseResearcherAPI;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
@@ -266,9 +266,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        final ResearcherAPI researcherAPI = new DatabaseResearcherAPI(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
+        final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
         final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
-        final NihAuthApi nihAuthApi = new NihServiceAPI(researcherAPI);
+        final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
@@ -287,7 +287,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DacResource(dacService));
-        env.jersey().register(new DACUserResource(voteService));
+        env.jersey().register(DACUserResource.class);
         env.jersey().register(ElectionReviewResource.class);
         env.jersey().register(new ConsentManageResource(consentService));
         env.jersey().register(new ElectionResource(voteService));
@@ -296,9 +296,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(HelpReportResource.class);
         env.jersey().register(ApprovalExpirationTimeResource.class);
         env.jersey().register(new UserResource(userAPI));
-        env.jersey().register(new ResearcherResource(researcherAPI));
+        env.jersey().register(new ResearcherResource(researcherService, userAPI));
         env.jersey().register(WorkspaceResource.class);
-        env.jersey().register(new DataAccessAgreementResource(googleStore, researcherAPI));
+        env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihAuthApi, DatabaseDACUserAPI.getInstance()));
         env.jersey().register(injector.getInstance(VersionResource.class));
@@ -316,7 +316,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new DataRequestReportsResource(researcherAPI, DatabaseDACUserAPI.getInstance()));
+        env.jersey().register(new DataRequestReportsResource(researcherService, DatabaseDACUserAPI.getInstance()));
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be

@@ -2,12 +2,25 @@ package org.broadinstitute.consent.http.resources;
 
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.*;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
+import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.VoteAPI;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -41,7 +54,7 @@ public class ConsentVoteResource extends Resource {
                 try {
                     emailAPI.sendCollectMessage(vote.getElectionId());
                 } catch (MessagingException | IOException | TemplateException e) {
-                    logger.severe("Error when sending email notification to Chaiperson to collect votes. Cause: "+e);
+                    logger.severe("Error when sending email notification to Chairpersons to collect votes. Cause: " + e);
                 }
             }
             return Response.ok(vote).build();

@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
@@ -41,6 +42,7 @@ import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -238,48 +240,46 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public List<Election> cancelOpenElectionAndReopen() throws Exception{
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
-        cancelOpenElection(ElectionType.TRANSLATE_DUL.getValue());
-        List<Integer> electionIds = openElections.stream().map(election -> election.getElectionId()).collect(Collectors.toList());
-        List<String> consentIds = openElections.stream().map(election -> election.getReferenceId()).collect(Collectors.toList());
-        Date sortDate = new Date();
-        if(CollectionUtils.isNotEmpty(electionIds)){
-            consentDAO.bulkUpdateConsentSortDate(consentIds, sortDate, sortDate);
-            electionDAO.bulkUpdateElectionLastUpdate(electionIds, sortDate);
-        }
-        return openElections(openElections);
-    }
-
-
-    @Override
     public Integer findRPElectionByElectionAccessId(Integer electionId) {
         return electionDAO.findRPElectionByElectionAccessId(electionId);
     }
 
-    /*
-     This is true if the last remaining vote is the chairperson vote, or everyone has already voted.
-  */
+    /**
+     * Return true if:
+     *      Everyone has already voted
+     *      The only remaining votes are chairperson votes
+     */
     @Override
-    public boolean validateCollectEmailCondition(Vote vote){
-        List<Vote> votes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
-        DACUser chairperson = dacUserDAO.findChairpersonUser();
-        if((votes.size() == 0) &&(vote.getDacUserId() != chairperson.getDacUserId())){
-            return true;
-        } else if((votes.size() == 1)) {
-            Vote chairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getDacUserId());
-            if(chairVote.getCreateDate() == null){
-                return true;
-            }
-        }
-        return false;
+    public boolean validateCollectEmailCondition(Vote vote) {
+        List<Vote> electionVotes = voteDAO.findPendingVotesByElectionId(vote.getElectionId());
+        // Everyone has voted, return true
+        if (electionVotes.isEmpty()) return true;
+
+        List<Integer> votingUserIds = electionVotes.stream().
+                map(Vote::getDacUserId).
+                collect(Collectors.toList());
+        Set<DACUser> votingUsers = dacUserDAO.findUsersWithRoles(votingUserIds);
+        List<UserRole> votingMemberRoles = votingUsers.stream().flatMap(u -> u.getRoles().stream()).
+                filter(r -> r.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
+                collect(Collectors.toList());
+        // If the voting member roles are empty, we only have chairpersons left, return true
+        return votingMemberRoles.isEmpty();
     }
 
+    /**
+     * Return true if:
+     *      There are no RP or DAR votes and the vote is not a chairperson vote
+     *      All RP chair votes have not been created
+     *      All DAR chair votes have not been created
+     *
+     * @param vote The vote to validate
+     * @return True if valid, false otherwise
+     */
     @Override
-    public boolean validateCollectDAREmailCondition(Vote vote){
+    public boolean validateCollectDAREmailCondition(Vote vote) {
         Election e = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
         Integer rpElectionId, darElectionId;
-        if(e.getElectionType().equals(ElectionType.RP.getValue())){
+        if (e.getElectionType().equals(ElectionType.RP.getValue())) {
             rpElectionId = e.getElectionId();
             darElectionId = electionDAO.findAccessElectionByElectionRPId(rpElectionId);
         } else {
@@ -288,28 +288,26 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         List<Vote> rpElectionVotes = voteDAO.findPendingVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingVotesByElectionId(darElectionId);
-        DACUser chairperson = dacUserDAO.findChairpersonUser();
+        Set<DACUser> electionChairs = dacUserDAO.findUsersForElectionsByRoles(
+                Arrays.asList(darElectionId, rpElectionId),
+                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        List<Integer> chairIds = electionChairs.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
         Integer exists = mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId);
-        if((exists == null)){
-            if(((darVotes.size()==0) && (rpElectionVotes.size() == 0) && (!vote.getDacUserId().equals(chairperson.getDacUserId())))){
+        if ((exists == null)) {
+            if (((darVotes.size() == 0) && (rpElectionVotes.size() == 0) && (!chairIds.contains(vote.getDacUserId())))) {
                 return true;
             } else {
-                Vote rpChairVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, chairperson.getDacUserId());
-                Vote darChairVote = voteDAO.findVoteByElectionIdAndDACUserId(vote.getElectionId(), chairperson.getDacUserId());
+                List<Vote> rpChairVotes = voteDAO.findVotesByElectionIdAndDACUserIds(rpElectionId, chairIds);
+                List<Vote> darChairVotes = voteDAO.findVotesByElectionIdAndDACUserIds(vote.getElectionId(), chairIds);
                 if ((((rpElectionVotes.size() == 1) && (CollectionUtils.isEmpty(darVotes))))) {
-                    if (rpChairVote.getCreateDate() == null) {
-                        return true;
-                    }
+                    return rpChairVotes.stream().allMatch(v -> v.getCreateDate() == null);
                 } else {
                     if ((((darVotes.size() == 1) && (CollectionUtils.isEmpty(rpElectionVotes))))) {
-                        if (darChairVote.getCreateDate() == null) {
-                            return true;
-                        }
+                        return darChairVotes.stream().allMatch(v -> v.getCreateDate() == null);
                     } else {
                         if ((((darVotes.size() == 1) && (rpElectionVotes.size() == 1)))) {
-                            if ((darChairVote.getCreateDate() == null) && (rpChairVote.getCreateDate() == null)) {
-                                return true;
-                            }
+                            return darChairVotes.stream().allMatch(v -> v.getCreateDate() == null) &&
+                                    rpChairVotes.stream().allMatch(v -> v.getCreateDate() == null);
                         }
                     }
                 }
@@ -503,26 +501,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
     }
 
-    private void cancelOpenElection(String electionType){
-        List<Integer> openElectionsIds = electionDAO.findElectionsIdByTypeAndStatus(electionType, ElectionStatus.OPEN.getValue());
-        if (openElectionsIds != null && openElectionsIds.size() > 0) {
-            electionDAO.updateElectionStatus(openElectionsIds, ElectionStatus.CANCELED.getValue());
-        }
-    }
-
     private Document describeDataAccessRequestById(String id){
         BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
         return mongo.getDataAccessRequestCollection().find(query).first();
-    }
-
-    private List<Election> openElections(List<Election> openElections) throws Exception{
-        List<Election> elections = new ArrayList<>();
-        for (Election existentElection : openElections) {
-            Election election = new Election();
-            election.setReferenceId(existentElection.getReferenceId());
-            elections.add(createElection(election, election.getReferenceId(), ElectionType.TRANSLATE_DUL));
-        }
-        return elections;
     }
 
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {

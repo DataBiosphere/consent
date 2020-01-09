@@ -5,6 +5,7 @@ package org.broadinstitute.consent.http.service;
  * Implement a skeleton for ConsentAPI interface that implements the singleton
  * object management.
  */
+@Deprecated // Use ElectionService
 public abstract class AbstractElectionAPI implements ElectionAPI {
 
     /**
