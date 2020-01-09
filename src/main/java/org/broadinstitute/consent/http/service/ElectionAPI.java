@@ -32,8 +32,6 @@ public interface ElectionAPI {
 
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
 
-    List<Election> cancelOpenElectionAndReopen() throws Exception;
-
     void setMongoDBInstance(MongoConsentDB mongo);
 
     Integer findRPElectionByElectionAccessId(Integer accessElectionId);

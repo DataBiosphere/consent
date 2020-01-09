@@ -303,16 +303,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public void updateExistentChairPersonToAlumni(Integer dacUserID) {
-        Integer existentRoleId = userRoleDAO.findRoleIdByName(UserRoles.CHAIRPERSON.getRoleName());
-        Integer chairPersonId = dacUserDAO.findDACUserIdByRole(existentRoleId, dacUserID);
-        if (chairPersonId != null) {
-            Integer newRoleId = userRoleDAO.findRoleIdByName(UserRoles.ALUMNI.getRoleName());
-            userRoleDAO.updateUserRoles(newRoleId, chairPersonId, existentRoleId);
-        }
-    }
-
-    @Override
     public Collection<DACUser> describeUsers() {
         Collection<DACUser> users = dacUserDAO.findUsers();
         users.forEach(user -> {

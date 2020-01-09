@@ -202,15 +202,6 @@ public class ConsentDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testBulkUpdateConsentSortDate() {
-        Consent consent = createConsent(null);
-
-        consentDAO.bulkUpdateConsentSortDate(Collections.singletonList(consent.getConsentId()), new Date(), yesterday());
-        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-        Assert.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
-    }
-
-    @Test
     public void testInsertConsentAssociation() {
         // no-op ... tested in `createAssociation()`
     }
