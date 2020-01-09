@@ -2308,22 +2308,11 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /api/researcher/{userId}:
+  /api/researcher:
     post:
-      summary: Create researcher.
-      description: Creates a researcher user.
+      summary: Create researcher properties.
+      description: Create researcher properties for the current user.
       parameters:
-        - name: validate
-          in: query
-          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
-          required: true
-          type: boolean
-        - name: userId
-          in: path
-          description: description
-          required: true
-          type: integer
-          format: int32
         - name: researcherProperties
           in: body
           required: true
@@ -2335,7 +2324,7 @@ paths:
         - Researcher
       responses:
         201:
-          description: The researcher was created.
+          description: The researcher properties were created.
         400:
           description: Malformed researcher entity.
           schema:
@@ -2357,11 +2346,6 @@ paths:
           description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
           required: true
           type: boolean
-        - name: userId
-          in: path
-          required: true
-          type: integer
-          format: int32
         - name: researcherProperties
           in: body
           required: true
@@ -2388,6 +2372,7 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/researcher/{userId}:
     get:
       summary: Return researcher properties.
       description: Describes all the properties for a reseacher user.

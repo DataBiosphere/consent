@@ -2,32 +2,33 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.service.users.handler.ResearcherAPI;
+import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 
 import javax.ws.rs.BadRequestException;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class NihServiceAPI implements NihAuthApi {
 
-    private ResearcherAPI researcherAPI;
+    private ResearcherService researcherService;
 
-    public NihServiceAPI(ResearcherAPI researcherApi) {
-        this.researcherAPI = researcherApi;
+    public NihServiceAPI(ResearcherService researcherService) {
+        this.researcherService = researcherService;
     }
 
     @Override
-    public List<ResearcherProperty> authenticateNih(NIHUserAccount nihAccount, Integer userId){
+    public List<ResearcherProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser user) {
         if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername().isEmpty()) {
             nihAccount.setEraExpiration(generateEraExpirationDates());
             nihAccount.setStatus(true);
-            return researcherAPI.updateResearcher(nihAccount.getNihMap(), userId, false);
+            return researcherService.updateProperties(nihAccount.getNihMap(), user, false);
         } else {
-            throw new BadRequestException("Invalid NIH UserName for user : " + userId);
+            throw new BadRequestException("Invalid NIH UserName for user : " + user.getName());
         }
     }
 
@@ -37,7 +38,7 @@ public class NihServiceAPI implements NihAuthApi {
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_EXPIRATION_DATE.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_STATUS.getValue()));
         properties.add(new ResearcherProperty(userId, ResearcherFields.ERA_USERNAME.getValue()));
-        researcherAPI.deleteResearcherSpecificProperties(properties);
+        researcherService.deleteResearcherSpecificProperties(properties);
     }
 
 
