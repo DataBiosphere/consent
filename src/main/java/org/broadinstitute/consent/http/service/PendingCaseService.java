@@ -133,7 +133,7 @@ public class PendingCaseService {
                 pendingCases.add(pendingCase);
             }
         }
-        return pendingCases;
+        return pendingCases.stream().distinct().collect(Collectors.toList());
     }
 
     public List<DataOwnerCase> describeDataOwnerPendingCases(Integer dataOwnerId, AuthUser authUser) {
