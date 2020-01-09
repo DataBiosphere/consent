@@ -2373,7 +2373,6 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /api/researcher/{userId}:
     get:
       summary: Return researcher properties.
       description: Describes all the properties for a reseacher user.
