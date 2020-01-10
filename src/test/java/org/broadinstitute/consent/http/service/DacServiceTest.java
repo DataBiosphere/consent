@@ -337,11 +337,11 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_memberCase_1() {
         // Member is not an admin user
-        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(dacUserDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member has access to DataSet 1
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
-        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDataSets);
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
         // There are no additional unassociated datasets
         when(dataSetDAO.findNonDACDataSets()).thenReturn(Collections.emptyList());
@@ -349,7 +349,7 @@ public class DacServiceTest {
 
         List<Document> documents = getDocuments();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
+        List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
         // Filtered documents should only contain the ones the user has direct access to:
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -358,11 +358,11 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_memberCase_2() {
         // Member is not an admin user
-        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(dacUserDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member has access to datasets
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
-        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDataSets);
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
         // There are additional unassociated datasets
         List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
@@ -371,7 +371,7 @@ public class DacServiceTest {
 
         List<Document> documents = getDocuments();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
+        List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
         // Filtered documents should contain the ones the user has direct access to in addition to
         // the unassociated ones:
@@ -381,11 +381,11 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_memberCase_3() {
         // Member is not an admin user
-        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(dacUserDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member no direct access to datasets
         List<DataSet> memberDataSets = Collections.emptyList();
-        when(dataSetDAO.findDataSetsByAuthUserEmail(anyString())).thenReturn(memberDataSets);
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
         // There are additional unassociated datasets
         List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
@@ -394,7 +394,7 @@ public class DacServiceTest {
 
         List<Document> documents = getDocuments();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
+        List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
         // Filtered documents should contain the ones the user has direct access to in addition to
         // the unassociated ones:
@@ -748,24 +748,31 @@ public class DacServiceTest {
      * @return A list of two users in a single DAC
      */
     private List<DACUser> getDacUsers() {
+        return Arrays.asList(getChair(), getMember());
+    }
+
+    private DACUser getChair() {
         DACUser chair = new DACUser();
         chair.setDacUserId(1);
         chair.setDisplayName("Chair");
         chair.setEmail("chair@duos.org");
         chair.setRoles(new ArrayList<>());
         chair.getRoles().add(new UserRole(1, chair.getDacUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName(), 1));
+        return chair;
+    }
 
+    private DACUser getMember() {
         DACUser member = new DACUser();
         member.setDacUserId(2);
         member.setDisplayName("Member");
         member.setEmail("member@duos.org");
         member.setRoles(new ArrayList<>());
         member.getRoles().add(new UserRole(2, member.getDacUserId(), UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName(), 1));
+        return member;
+    }
 
-        List<DACUser> users = new ArrayList<>();
-        users.add(chair);
-        users.add(member);
-        return users;
+    private AuthUser getMemberAuthUser() {
+        return new AuthUser(getMember().getEmail());
     }
 
 }

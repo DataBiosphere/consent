@@ -89,12 +89,25 @@ public class DataAccessRequestService {
         return unReviewedDarCount;
     }
 
+    /**
+     * Filter DataAccessRequestManage objects on user.
+     *
+     * @param userId Optional UserId. If provided, filter list of DARs on this user.
+     * @param authUser Required if no user id is provided. Instead, filter on what DACs the auth
+     *                 user has access to.
+     * @return List of DataAccessRequestManage objects
+     */
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
         BasicDBObject sort = new BasicDBObject("sortDate", -1);
-        FindIterable<Document> accessList = (userId == null) ?
-                mongo.getDataAccessRequestCollection().find().sort(sort) :
-                mongo.getDataAccessRequestCollection().find(new BasicDBObject(DarConstants.USER_ID, userId)).sort(sort);
-        List<Document> filteredAccessList = dacService.filterDarsByDAC(accessList.into(new ArrayList<>()), authUser);
+        List<Document> filteredAccessList;
+        if (userId == null) {
+            FindIterable<Document> accessList =  mongo.getDataAccessRequestCollection().find().sort(sort);
+            filteredAccessList = dacService.filterDarsByDAC(accessList.into(new ArrayList<>()), authUser);
+        } else {
+            filteredAccessList = mongo.getDataAccessRequestCollection().
+                    find(new BasicDBObject(DarConstants.USER_ID, userId)).
+                    sort(sort).into(new ArrayList<>());
+        }
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = filteredAccessList.
                 stream().
