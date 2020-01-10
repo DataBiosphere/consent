@@ -1360,8 +1360,18 @@ paths:
           description: The requested couldn't be found or the DAR doesn't exist.
   /api/dar/manage:
       get:
-        summary: describeManageDataAccessRequests
-        description: Returns all the elections created for Data Access Requests
+        summary: Manage Data Access Requests
+        description: |
+          Returns all the elections created for Data Access Requests relevant to the current user.
+          If the user is requesting these as an admin, all are returned. As a DAC member, only those
+          assigned to the DAC are returned. As a general user, only those created by the user are
+          returned.
+        parameters:
+          - name: userId
+            in: query
+            description: Optional user id to filter Data Access Requests by
+            required: false
+            type: integer
         tags:
           - Data Access Request
         responses:
@@ -1371,6 +1381,10 @@ paths:
               type: array
               items:
                 $ref: '#/definitions/DataAccessRequestManage'
+          400:
+            description: |
+              If optional user id is provided, it must be that of the authenticated user. Non-admin
+              and non-DAC users can only see their own Data Access Requests.
   /api/dar/cases/unreviewed:
       get:
         summary: getTotalUnReviewedDAR

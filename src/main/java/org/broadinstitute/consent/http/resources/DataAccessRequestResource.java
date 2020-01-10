@@ -43,6 +43,7 @@ import org.bson.types.ObjectId;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -289,6 +290,13 @@ public class DataAccessRequestResource extends Resource {
     @Path("/manage")
     @RolesAllowed({RESEARCHER, ADMIN})
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
+        // If a user id is provided, ensure that is the current user.
+        if (userId != null) {
+            DACUser user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            if (!user.getDacUserId().equals(userId)) {
+                throw new BadRequestException("Unable to query for other users' information.");
+            }
+        }
         List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
         return Response.ok().entity(dars).build();
     }
