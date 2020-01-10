@@ -54,7 +54,6 @@ public class ConsentResourceTest extends AbstractTest {
     private VoteService voteService = new VoteService(
             getApplicationJdbi().onDemand(DACUserDAO.class),
             getApplicationJdbi().onDemand(DataSetAssociationDAO.class),
-            getApplicationJdbi().onDemand(DataSetDAO.class),
             getApplicationJdbi().onDemand(ElectionDAO.class),
             getApplicationJdbi().onDemand(VoteDAO.class)
     );

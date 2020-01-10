@@ -1152,9 +1152,6 @@ paths:
               updatedUser:
                 description: The user that is being updated
                 $ref: '#/definitions/DACUser'
-              userToDelegate:
-                description: Required if there is a user to delegate roles to
-                $ref: '#/definitions/DACUser'
               alternativeDataOwnerUser:
                 description: Required if there is a user to delegate ownership to
                 $ref: '#/definitions/DACUser'
@@ -1363,8 +1360,18 @@ paths:
           description: The requested couldn't be found or the DAR doesn't exist.
   /api/dar/manage:
       get:
-        summary: describeManageDataAccessRequests
-        description: Returns all the elections created for Data Access Requests
+        summary: Manage Data Access Requests
+        description: |
+          Returns all the elections created for Data Access Requests relevant to the current user.
+          If the user is requesting these as an admin, all are returned. As a DAC member, only those
+          assigned to the DAC are returned. As a general user, only those created by the user are
+          returned.
+        parameters:
+          - name: userId
+            in: query
+            description: Optional user id to filter Data Access Requests by
+            required: false
+            type: integer
         tags:
           - Data Access Request
         responses:
@@ -1374,6 +1381,10 @@ paths:
               type: array
               items:
                 $ref: '#/definitions/DataAccessRequestManage'
+          400:
+            description: |
+              If optional user id is provided, it must be that of the authenticated user. Non-admin
+              and non-DAC users can only see their own Data Access Requests.
   /api/dar/cases/unreviewed:
       get:
         summary: getTotalUnReviewedDAR
@@ -2308,22 +2319,11 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /api/researcher/{userId}:
+  /api/researcher:
     post:
-      summary: Create researcher.
-      description: Creates a researcher user.
+      summary: Create researcher properties.
+      description: Create researcher properties for the current user.
       parameters:
-        - name: validate
-          in: query
-          description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
-          required: true
-          type: boolean
-        - name: userId
-          in: path
-          description: description
-          required: true
-          type: integer
-          format: int32
         - name: researcherProperties
           in: body
           required: true
@@ -2335,7 +2335,7 @@ paths:
         - Researcher
       responses:
         201:
-          description: The researcher was created.
+          description: The researcher properties were created.
         400:
           description: Malformed researcher entity.
           schema:
@@ -2357,11 +2357,6 @@ paths:
           description: Defines if the endpoint should validate if all the required fields are present. If not, it will fail.
           required: true
           type: boolean
-        - name: userId
-          in: path
-          required: true
-          type: integer
-          format: int32
         - name: researcherProperties
           in: body
           required: true
@@ -2388,6 +2383,7 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/researcher/{userId}:
     get:
       summary: Return researcher properties.
       description: Describes all the properties for a reseacher user.

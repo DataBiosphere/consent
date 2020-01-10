@@ -51,7 +51,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(dacUserDAO, dataSetAssociationDAO, datasetDAO, electionDAO, voteDAO);
+        service = new VoteService(dacUserDAO, dataSetAssociationDAO, electionDAO, voteDAO);
     }
 
     @Test
@@ -193,11 +193,6 @@ public class VoteServiceTest {
         Assert.assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assert.assertEquals(1, votes.size());
-    }
-
-    @Test
-    public void testCreateVotesForElections() {
-        // No-op ... tested in all of the create vote tests
     }
 
     @Test

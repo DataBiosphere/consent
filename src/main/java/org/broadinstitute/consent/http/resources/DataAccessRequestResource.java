@@ -43,6 +43,7 @@ import org.bson.types.ObjectId;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -123,8 +124,9 @@ public class DataAccessRequestResource extends Resource {
             List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
             URI uri = info.getRequestUriBuilder().build();
             for (Document r : results) {
+                List<Integer> datasetIds = DarUtil.getIntegerList(r, DarConstants.DATASET_ID);
                 matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
-                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE));
+                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
             }
             return Response.created(uri).build();
         } catch (Exception e) {
@@ -288,6 +290,13 @@ public class DataAccessRequestResource extends Resource {
     @Path("/manage")
     @RolesAllowed({RESEARCHER, ADMIN})
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
+        // If a user id is provided, ensure that is the current user.
+        if (userId != null) {
+            DACUser user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            if (!user.getDacUserId().equals(userId)) {
+                throw new BadRequestException("Unable to query for other users' information.");
+            }
+        }
         List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManage(userId, authUser);
         return Response.ok().entity(dars).build();
     }

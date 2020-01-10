@@ -28,8 +28,6 @@ public interface DACUserAPI {
 
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
 
-    void updateExistentChairPersonToAlumni(Integer dacUserID);
-
     Collection<DACUser> describeUsers();
 
     ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role);

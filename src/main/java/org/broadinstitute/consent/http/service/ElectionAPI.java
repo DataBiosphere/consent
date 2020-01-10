@@ -13,6 +13,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated // Use ElectionService
 public interface ElectionAPI {
 
     Election createElection(Election rec, String referenceId, ElectionType electionType) throws Exception;
@@ -30,8 +31,6 @@ public interface ElectionAPI {
     Election describeElectionByVoteId(Integer voteId) throws NotFoundException;
 
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
-
-    List<Election> cancelOpenElectionAndReopen() throws Exception;
 
     void setMongoDBInstance(MongoConsentDB mongo);
 

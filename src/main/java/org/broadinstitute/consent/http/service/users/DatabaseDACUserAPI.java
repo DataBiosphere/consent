@@ -95,7 +95,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser describeDACUserByEmail(String email) throws IllegalArgumentException {
+    public DACUser describeDACUserByEmail(String email) throws NotFoundException {
         DACUser dacUser = dacUserDAO.findDACUserByEmail(email);
         if (dacUser == null) {
             throw new NotFoundException("Could not find dacUser for specified email : " + email);
@@ -300,16 +300,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
         }
         dacUserDAO.deleteDACUserByEmail(email);
-    }
-
-    @Override
-    public void updateExistentChairPersonToAlumni(Integer dacUserID) {
-        Integer existentRoleId = userRoleDAO.findRoleIdByName(UserRoles.CHAIRPERSON.getRoleName());
-        Integer chairPersonId = dacUserDAO.findDACUserIdByRole(existentRoleId, dacUserID);
-        if (chairPersonId != null) {
-            Integer newRoleId = userRoleDAO.findRoleIdByName(UserRoles.ALUMNI.getRoleName());
-            userRoleDAO.updateUserRoles(newRoleId, chairPersonId, existentRoleId);
-        }
     }
 
     @Override

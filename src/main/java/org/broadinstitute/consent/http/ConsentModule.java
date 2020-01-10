@@ -207,7 +207,6 @@ public class ConsentModule extends AbstractModule {
         return new VoteService(
                 providesDACUserDAO(),
                 providesDataSetAssociationDAO(),
-                providesDataSetDAO(),
                 providesElectionDAO(),
                 providesVoteDAO());
     }
@@ -232,7 +231,10 @@ public class ConsentModule extends AbstractModule {
         return new DacService(
                 providesDacDAO(),
                 providesDACUserDAO(),
-                providesDataSetDAO());
+                providesDataSetDAO(),
+                providesElectionDAO(),
+                providesMongo(),
+                providesVoteService());
     }
 
     @Provides

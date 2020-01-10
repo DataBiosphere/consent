@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -19,21 +18,20 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class VoteService {
 
     private DACUserDAO dacUserDAO;
     private DataSetAssociationDAO dataSetAssociationDAO;
-    private DataSetDAO datasetDAO;
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
 
     @Inject
     public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO,
-                       DataSetDAO datasetDAO, ElectionDAO electionDAO, VoteDAO voteDAO) {
+                       ElectionDAO electionDAO, VoteDAO voteDAO) {
         this.dacUserDAO = dacUserDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
-        this.datasetDAO = datasetDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
     }
@@ -99,30 +97,19 @@ public class VoteService {
      */
     @SuppressWarnings("DuplicatedCode")
     public List<Vote> createVotes(Election election, ElectionType electionType, Boolean isManualReview) {
+        Dac dac = electionDAO.findDacForElection(election.getElectionId());
         Set<DACUser> dacUsers;
-        if (election.getDataSetId() != null) {
-            Dac electionDac = datasetDAO.findDacForDataset(election.getDataSetId());
-            if (electionDac != null) {
-                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(electionDac.getDacId());
-            } else {
-                // This case represents: Election has a dataset, but there is no DAC for the dataset
-                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
-            }
+        if (dac != null) {
+            dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
         } else {
-            Dac consentDac = electionDAO.findDacForConsentElection(election.getElectionId());
-            if (consentDac != null) {
-                dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(consentDac.getDacId());
-            } else {
-                // This case represents: Election does not have a dataset, and therefore, no DAC for it
-                dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
-            }
+            dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
         }
         List<Vote> votes = new ArrayList<>();
         if (dacUsers != null) {
             for (DACUser user : dacUsers) {
                 Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
                 votes.add(voteDAO.findVoteById(dacVoteId));
-                if (isChairPerson(user)) {
+                if (isDacChairPerson(dac, user)) {
                     Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
                     votes.add(voteDAO.findVoteById(chairVoteId));
                     // Requires Chairperson role to create a final and agreement vote in the Data Access case
@@ -141,19 +128,6 @@ public class VoteService {
     }
 
     /**
-     * Create votes for elections.
-     *
-     * @param elections List of Elections
-     */
-    public void createVotesForElections(List<Election> elections) {
-        if (elections != null) {
-            for (Election election : elections) {
-                createVotes(election, ElectionType.TRANSLATE_DUL, false);
-            }
-        }
-    }
-
-    /**
      * Create Votes for a data owner election
      *
      * @param election Election
@@ -166,7 +140,31 @@ public class VoteService {
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }
 
-    private boolean isChairPerson(DACUser user) {
+    /**
+     * Delete any votes in Open elections for the specified user in the specified Dac.
+     *
+     * @param dac The Dac we are restricting elections to
+     * @param user The Dac member we are deleting votes for
+     */
+    void deleteOpenDacVotesForUser(Dac dac, DACUser user) {
+        List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
+                map(Election::getElectionId).
+                collect(Collectors.toList());
+        List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
+                filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                map(Vote::getVoteId).
+                collect(Collectors.toList());
+        voteDAO.removeVotesByIds(openUserVoteIds);
+    }
+
+    private boolean isDacChairPerson(Dac dac, DACUser user) {
+        if (dac != null) {
+            return user.getRoles().
+                    stream().
+                    anyMatch(userRole ->
+                            userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) &&
+                                    userRole.getDacId().equals(dac.getDacId()));
+        }
         return user.getRoles().
                 stream().
                 anyMatch(userRole -> userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));

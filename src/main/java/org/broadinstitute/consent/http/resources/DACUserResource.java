@@ -3,16 +3,10 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
@@ -46,15 +40,10 @@ import java.util.stream.Collectors;
 public class DACUserResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
-    private final ElectionAPI electionAPI;
     protected final Logger logger = Logger.getLogger(this.getClass().getName());
-    private final VoteService voteService;
 
-    @Inject
-    public DACUserResource(VoteService voteService) {
-        this.electionAPI = AbstractElectionAPI.getInstance();
+    public DACUserResource() {
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
-        this.voteService = voteService;
     }
 
     @POST
@@ -63,11 +52,6 @@ public class DACUserResource extends Resource {
     public Response createDACUser(@Context UriInfo info, String json) {
         try {
             DACUser dacUser = dacUserAPI.createDACUser(new DACUser(json));
-            if (isChairPerson(dacUser.getRoles())) {
-                dacUserAPI.updateExistentChairPersonToAlumni(dacUser.getDacUserId());
-                List<Election> elections = electionAPI.cancelOpenElectionAndReopen();
-                voteService.createVotesForElections(elections);
-            }
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
                     dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
@@ -222,17 +206,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    private boolean isChairPerson(List<UserRole> userRoles) {
-        boolean isChairPerson = false;
-        for (UserRole role : userRoles) {
-            if (role.getName().equalsIgnoreCase(CHAIRPERSON)) {
-                isChairPerson = true;
-                break;
-            }
-        }
-        return isChairPerson;
-    }
-
     /**
      * Convenience method to find a member from legacy json structure.
      *
@@ -257,21 +230,25 @@ public class DACUserResource extends Resource {
      * Convenience method to find the email preference from legacy json structure.
      *
      * @param json Raw json string from client
-     * @return Optional value of the "emailPreference" boolean value set in the legacy json structure.
+     * @return Optional value of the "emailPreference" boolean value set in either the legacy json
+     *         or the new DacUser model.
      */
     private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
+        String memberName = "emailPreference";
         Optional<Boolean> aBoolean = Optional.empty();
         try {
             JsonElement updateUser = new JsonParser().parse(json).getAsJsonObject();
             if (updateUser != null && !updateUser.isJsonNull()) {
                 JsonObject userObj = updateUser.getAsJsonObject();
-                if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
+                if (userObj.has(memberName) && !userObj.get(memberName).isJsonNull()) {
+                    aBoolean = Optional.of(userObj.get(memberName).getAsBoolean());
+                } else if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
                     List<JsonElement> rolesElements = new ArrayList<>();
                     userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
                     List<Boolean> emailPrefs = rolesElements.
                             stream().
-                            filter(e -> e.getAsJsonObject().has("emailPreference")).
-                            map(e -> e.getAsJsonObject().get("emailPreference").getAsBoolean()).
+                            filter(e -> e.getAsJsonObject().has(memberName)).
+                            map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
                             distinct().
                             collect(Collectors.toList());
                     // In practice, there should only be a single email preference value, if any.
@@ -296,13 +273,9 @@ public class DACUserResource extends Resource {
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
         Map<String, DACUser> userMap = new HashMap<>();
         JsonElement updatedUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
-        JsonElement delegatedUser = jsonObject.get(DACUserRolesHandler.DELEGATED_USER_KEY);
         JsonElement alternativeDataOwner = jsonObject.get(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY);
         if (updatedUser != null && !updatedUser.isJsonNull()) {
             userMap.put(DACUserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
-        }
-        if (delegatedUser != null && !delegatedUser.isJsonNull()) {
-            userMap.put(DACUserRolesHandler.DELEGATED_USER_KEY, new DACUser(delegatedUser.toString()));
         }
         if (alternativeDataOwner != null && !alternativeDataOwner.isJsonNull()) {
             userMap.put(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY, new DACUser(alternativeDataOwner.toString()));
