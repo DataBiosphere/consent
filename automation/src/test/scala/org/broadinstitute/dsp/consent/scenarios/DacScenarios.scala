@@ -8,7 +8,7 @@ class DacScenarios  extends Simulation with TestRunner {
 
   runScenarios(
     List(
-      scenario("List DACs Scenario").exec(Requests.Dac.list(200, TestConfig.adminHeader))
+      scenario("Dac List Scenario").exec(Requests.Dac.list(200, TestConfig.adminHeader))
     )
   )
 

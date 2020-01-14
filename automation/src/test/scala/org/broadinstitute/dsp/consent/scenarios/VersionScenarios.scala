@@ -8,7 +8,7 @@ class VersionScenarios extends Simulation with TestRunner {
 
   runScenarios(
     List(
-      scenario("Version Scenario").exec(Requests.versionRequest)
+      scenario("Consent Version Scenario").exec(Requests.versionRequest)
     )
   )
 

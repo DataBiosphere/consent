@@ -8,7 +8,7 @@ class StatusScenarios extends Simulation with TestRunner {
 
   runScenarios(
     List(
-      scenario("Status Scenario").exec(Requests.statusRequest)
+      scenario("Consent Status Scenario").exec(Requests.statusRequest)
     )
   )
 
