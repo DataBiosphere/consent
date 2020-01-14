@@ -13,7 +13,7 @@ mkdir target
 docker pull broadinstitute/dsde-toolbox:dev
 
 # Render Configurations
-docker run -it --rm -e VAULT_TOKEN="${VAULT_TOKEN}" \
+docker run --rm \
   -e ENVIRONMENT="$ENV" \
   -e ROOT_DIR="${PWD}" \
   -v /etc/vault-token-dsde:/root/.vault-token \
@@ -33,7 +33,7 @@ researcher"
 
 for role in $listOfRoles; do
   echo "Writing $role file from $secretPath/duos-automation-$role.json"
-  docker run -it --rm \
+  docker run --rm \
     -v "$HOME":/root \
     broadinstitute/dsde-toolbox:dev vault read \
     --format=json \
