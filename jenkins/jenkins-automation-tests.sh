@@ -22,6 +22,7 @@ docker run --rm \
   broadinstitute/dsde-toolbox:dev render-templates.sh
 
 # render role service account credential files
+mkdir -p src/test/resources/accounts
 secretPath="/secret/dsde/firecloud/${ENV}/consent/automation"
 
 listOfRoles="admin
