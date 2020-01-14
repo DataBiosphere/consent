@@ -24,7 +24,7 @@ docker run -it --rm -e VAULT_TOKEN=${VAULT_TOKEN} \
     -v $PWD/configs:/input \
     broadinstitute/dsde-toolbox:dev render-templates.sh
 
-# render role-user service account credentials
+# render role service account credentials
 listOfRoles="admin
 chair
 member
