@@ -10,8 +10,6 @@ TEST_IMAGE=automation-consent
 
 mkdir target
 
-docker pull broadinstitute/dsde-toolbox:dev
-
 # Render Configurations
 docker run --rm \
   -e ENVIRONMENT="$ENV" \
@@ -35,6 +33,7 @@ for role in $listOfRoles; do
   echo "Writing $role file from $secretPath/duos-automation-$role.json"
   docker run --rm \
     -v "$HOME":/root \
+    -v /etc/vault-token-dsde:/root/.vault-token \
     broadinstitute/dsde-toolbox:dev vault read \
     --format=json \
     "$secretPath"/duos-automation-"$role".json |
