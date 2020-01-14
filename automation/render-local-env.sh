@@ -24,34 +24,20 @@ docker run -it --rm -e VAULT_TOKEN=${VAULT_TOKEN} \
     -v $PWD/configs:/input \
     broadinstitute/dsde-toolbox:dev render-templates.sh
 
-docker run -it --rm \
-    -v $HOME:/root \
-    broadinstitute/dsde-toolbox:dev vault read \
-    --format=json \
-    /secret/dsde/firecloud/dev/consent/automation/duos-automation-admin.json \
-    | jq .data \
-    > src/test/resources/accounts/duos-automation-admin.json
+# render role-user service account credentials
+listOfRoles="admin
+chair
+member
+researcher"
 
-docker run -it --rm \
-    -v $HOME:/root \
-    broadinstitute/dsde-toolbox:dev vault read \
-    --format=json \
-    /secret/dsde/firecloud/dev/consent/automation/duos-automation-chair.json \
-    | jq .data \
-    > src/test/resources/accounts/duos-automation-chair.json
-
-docker run -it --rm \
-    -v $HOME:/root \
-    broadinstitute/dsde-toolbox:dev vault read \
-    --format=json \
-    /secret/dsde/firecloud/dev/consent/automation/duos-automation-member.json \
-    | jq .data \
-    > src/test/resources/accounts/duos-automation-member.json
-
-docker run -it --rm \
-    -v $HOME:/root \
-    broadinstitute/dsde-toolbox:dev vault read \
-    --format=json \
-    /secret/dsde/firecloud/dev/consent/automation/duos-automation-researcher.json \
-    | jq .data \
-    > src/test/resources/accounts/duos-automation-researcher.json
+for role in $listOfRoles
+  do
+    echo "Writing $role file... to src/test/resources/accounts/"
+    docker run -it --rm \
+        -v $HOME:/root \
+        broadinstitute/dsde-toolbox:dev vault read \
+        --format=json \
+        /secret/dsde/firecloud/dev/consent/automation/duos-automation-$role.json \
+        | jq .data \
+        > src/test/resources/accounts/duos-automation-$role.json
+  done
