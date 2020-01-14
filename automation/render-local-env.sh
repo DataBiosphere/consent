@@ -26,7 +26,7 @@ docker run -it --rm -e VAULT_TOKEN="${VAULT_TOKEN}" \
   broadinstitute/dsde-toolbox:dev render-templates.sh
 
 # render role service account credential files
-if [ $ENV == "local" ]; then
+if [ "$ENV" == "local" ]; then
   secretPath="/secret/dsde/firecloud/dev/consent/automation"
 else
   secretPath="/secret/dsde/firecloud/${ENV}/consent/automation"
