@@ -34,13 +34,26 @@ object Requests {
   }
 
   object Dac {
-    val list: ChainBuilder = exec(
+    val dacListResponse: String = "DAC_LIST_RESPONSE"
+    def list(expectedStatus: Int, additionalHeaders: Map[String, String]): ChainBuilder = exec(
       http("Dac List")
         .get("/api/dac")
         .headers(TestConfig.jsonHeader)
-        .headers(TestConfig.adminHeader)
-        .check(status.is(session => 200))
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(dacListResponse))
+        .check(status.is(expectedStatus))
     )
+
+    def listResults(expectedStatus: Int, additionalHeaders: Map[String, String]): String = {
+      var responseContent: String = ""
+      list(expectedStatus, additionalHeaders).exec(
+        session => {
+          responseContent = session(dacListResponse).as[String]
+          session
+        }
+      )
+      responseContent
+    }
 
   }
 

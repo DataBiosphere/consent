@@ -6,19 +6,52 @@ set -e
 
 # Defaults
 WORKING_DIR=$PWD
-FC_INSTANCE=fiab
-VAULT_TOKEN=$(cat ~/.vault-token)
 ENV=dev
+VAULT_TOKEN=$(cat ~/.vault-token)
 
 # Parameters
-FC_INSTANCE=${1:-$FC_INSTANCE}
+ENV=${1:-$ENV}
 VAULT_TOKEN=${2:-$VAULT_TOKEN}
-ENV=${3:-$ENV}
 
 # render application.conf
 docker pull broadinstitute/dsde-toolbox:dev
 docker run -it --rm -e VAULT_TOKEN=${VAULT_TOKEN} \
-    -e ENVIRONMENT=${ENV} -e FC_INSTANCE=${FC_INSTANCE} -e ROOT_DIR=${WORKING_DIR} \
-    -e OUT_PATH=/output/src/test/resources -e INPUT_PATH=/input \
-    -v $PWD/configs:/input -v $PWD:/output \
+    -e ENVIRONMENT=${ENV} \
+    -e ROOT_DIR=${WORKING_DIR} \
+    -e OUT_PATH=/output/src/test/resources \
+    -v $PWD:/output \
+    -e INPUT_PATH=/input \
+    -v $PWD/configs:/input \
     broadinstitute/dsde-toolbox:dev render-templates.sh
+
+docker run -it --rm \
+    -v $HOME:/root \
+    broadinstitute/dsde-toolbox:dev vault read \
+    --format=json \
+    /secret/dsde/firecloud/dev/consent/automation/duos-automation-admin.json \
+    | jq .data \
+    > src/test/resources/accounts/duos-automation-admin.json
+
+docker run -it --rm \
+    -v $HOME:/root \
+    broadinstitute/dsde-toolbox:dev vault read \
+    --format=json \
+    /secret/dsde/firecloud/dev/consent/automation/duos-automation-chair.json \
+    | jq .data \
+    > src/test/resources/accounts/duos-automation-chair.json
+
+docker run -it --rm \
+    -v $HOME:/root \
+    broadinstitute/dsde-toolbox:dev vault read \
+    --format=json \
+    /secret/dsde/firecloud/dev/consent/automation/duos-automation-member.json \
+    | jq .data \
+    > src/test/resources/accounts/duos-automation-member.json
+
+docker run -it --rm \
+    -v $HOME:/root \
+    broadinstitute/dsde-toolbox:dev vault read \
+    --format=json \
+    /secret/dsde/firecloud/dev/consent/automation/duos-automation-researcher.json \
+    | jq .data \
+    > src/test/resources/accounts/duos-automation-researcher.json
