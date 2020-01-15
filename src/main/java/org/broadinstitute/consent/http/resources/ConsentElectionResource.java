@@ -91,7 +91,7 @@ public class ConsentElectionResource extends Resource {
             Optional<DataSet> dataset = dacService.findDatasetsByConsentId(consentId).
                     stream().
                     findFirst();
-            dataset.ifPresent(dataSetDTO -> election.setDataSetId(dataSetDTO.getDataSetId()));
+            dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));
             uri = createElectionURI(info, election, consentId);
         } catch (Exception e) {
             return createExceptionResponse(e);
