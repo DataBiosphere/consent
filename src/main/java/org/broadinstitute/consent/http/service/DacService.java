@@ -190,7 +190,7 @@ public class DacService {
                 throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
             }
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
-            voteService.createVotes(e, type.get(), isManualReview);
+            voteService.createVotesForUser(user, e, type.get(), isManualReview);
         }
         return populatedUserById(user.getDacUserId());
     }
