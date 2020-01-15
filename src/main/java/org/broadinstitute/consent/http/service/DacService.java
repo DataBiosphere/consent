@@ -159,6 +159,10 @@ public class DacService {
         return Collections.emptySet();
     }
 
+    public Set<DataSet> findDatasetsByConsentId(String consentId) {
+        return dataSetDAO.findDatasetsForConsentId(consentId);
+    }
+
     public List<DACUser> findMembersByDacId(Integer dacId) {
         List<DACUser> dacUsers = dacDAO.findMembersByDacId(dacId);
         List<Integer> allUserIds = dacUsers.

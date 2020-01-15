@@ -259,4 +259,11 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " limit 1 ")
     Dac findDacForDataset(@Bind("datasetId") Integer datasetId);
 
+    @Mapper(DataSetMapper.class)
+    @SqlQuery("select d.* from dataset d " +
+            " inner join consentassociations a on a.dataSetId = d.dataSetId " +
+            " where d.active = true " +
+            " and a.consentId = :consentId ")
+    Set<DataSet> findDatasetsForConsentId(@Bind("consentId") String consentId);
+
 }
