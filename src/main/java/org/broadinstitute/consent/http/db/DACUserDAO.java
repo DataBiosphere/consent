@@ -75,31 +75,6 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
-    @SqlQuery("Select * from dacuser d where d.dacUserId NOT IN "
-            + "("
-            + "    Select v.dacUserId From vote v Where v.electionId IN "
-            + "    ("
-            + "        Select e.electionId from election e where e.electionType != 'DataSet' and (e.status = 'Open' or e.status = 'Final')"
-            + "        and exists "
-            + "        ("
-            + "            Select * from vote v where v.electionId = e.electionId and v.dacUserId = :dacUserId"
-            + "        )"
-            + "        and "
-            + "        ( "
-            + "            (select count(*) from vote v2 where v2.electionId = e.electionId and v2.type = 'DAC') \\< 5 "
-            + "        )"
-            + "    ) "
-            + "group by v.dacUserId"
-            + ") AND d.dacUserId NOT IN (Select ur.user_id from user_role ur where ur.role_id in (<roleIds>))")
-    List<DACUser> getMembersApprovedToReplace(@Bind("dacUserId") Integer dacUserId, @BindIn("roleIds") List<Integer> includedRoles);
-
-    @SqlQuery("SELECT * FROM dacuser du "
-            + " INNER JOIN user_role ur ON du.dacUserId = ur.user_id "
-            + " INNER JOIN roles r ON ur.role_id = r.roleId "
-            + " WHERE du.dacUserId != :dacUserId "
-            + " AND r.name = 'DataOwner'")
-    List<DACUser> getDataOwnersApprovedToReplace(@Bind("dacUserId") Integer dacUserId);
-
     @SqlUpdate("update dacuser set displayName=:displayName where dacUserId = :id")
     void updateDACUser(@Bind("displayName") String displayName,
                           @Bind("id") Integer id);
