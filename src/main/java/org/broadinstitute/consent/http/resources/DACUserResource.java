@@ -127,7 +127,6 @@ public class DACUserResource extends Resource {
         return Response.ok().entity("User was deleted").build();
     }
 
-
     @Deprecated // Use update instead
     @PUT
     @Path("/status/{userId}")
