@@ -240,9 +240,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("SELECT v.electionId FROM vote v, election e where v.dacUserId = :dacUserId and e.electionId = v.electionId and v.vote is null AND e.electionType = '"+ DATASET +"' AND e.status = '" + OPEN +"'")
     List<Integer> findDataSetOpenElectionIds(@Bind("dacUserId")Integer dacUserId);
 
-    @SqlQuery("SELECT v.electionId FROM vote v, election e where v.dacUserId = :dacUserId and e.electionId = v.electionId AND v.vote is null AND e.electionType != '"+ DATASET +"' AND (e.status = '" + OPEN +"' OR e.status = 'Final')")
-    List<Integer> findNonDataSetOpenElectionIds(@Bind("dacUserId")Integer dacUserId);
-
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
             "e.lastUpdate, e.finalAccessVote, e.electionType e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join vote v  on v.electionId = e.electionId where e.electionType = 'DataAccess' "+
             " and v.type = 'FINAL'  and e.referenceId in (<darIds>) order by e.createDate asc")

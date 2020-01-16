@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
@@ -22,7 +21,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -129,24 +127,6 @@ public class DACUserResource extends Resource {
         return Response.ok().entity("User was deleted").build();
     }
 
-
-    // TODO: Undocumented: See DUOS-403
-    @POST
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/validateDelegation")
-    @PermitAll
-    public Response validateDelegation(@QueryParam("role") String role, String json) {
-        DACUser dac = new DACUser(json);
-        DACUser dacUser;
-        try {
-            dacUser = dacUserAPI.describeDACUserByEmail(dac.getEmail());
-            ValidateDelegationResponse delegationResponse = dacUserAPI.validateNeedsDelegation(dacUser, role);
-            return Response.ok().entity(delegationResponse).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
 
     @Deprecated // Use update instead
     @PUT
