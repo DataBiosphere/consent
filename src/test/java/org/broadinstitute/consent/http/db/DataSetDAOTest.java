@@ -108,6 +108,39 @@ public class DataSetDAOTest extends DAOTestHelper {
         Assert.assertNull(foundDac);
     }
 
+    @Test
+    public void testFindDatasetsForConsentId_case0() {
+        Dac dac = createDac();
+        Consent c = createConsent(dac.getDacId());
+
+        Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
+        Assert.assertEquals(datasets.size(), 0);
+    }
+
+    @Test
+    public void testFindDatasetsForConsentId_case1() {
+        Dac dac = createDac();
+        Consent c = createConsent(dac.getDacId());
+        DataSet d = createDataset();
+        createAssociation(c.getConsentId(), d.getDataSetId());
+
+        Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
+        Assert.assertEquals(datasets.size(), 1);
+    }
+
+    @Test
+    public void testFindDatasetsForConsentId_case2() {
+        Dac dac = createDac();
+        Consent c = createConsent(dac.getDacId());
+        DataSet d = createDataset();
+        createAssociation(c.getConsentId(), d.getDataSetId());
+        DataSet d2 = createDataset();
+        createAssociation(c.getConsentId(), d2.getDataSetId());
+
+        Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
+        Assert.assertEquals(datasets.size(), 2);
+    }
+
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }

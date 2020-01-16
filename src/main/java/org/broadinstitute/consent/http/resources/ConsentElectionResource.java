@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -133,6 +135,12 @@ public class ConsentElectionResource extends Resource {
     }
 
     private URI createElectionURI(UriInfo info, Election election, String consentId) throws Exception {
+        // For a consent election, any dataset associated to the consent is
+        // appropriate for assignment to this election.
+        Optional<DataSet> dataset = dacService.findDatasetsByConsentId(consentId).
+                stream().
+                findFirst();
+        dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));
         Election newElection = api.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
         List<Vote> votes = voteService.createVotes(newElection, ElectionType.TRANSLATE_DUL, false);
         List<Vote> dulVotes = votes.stream().
