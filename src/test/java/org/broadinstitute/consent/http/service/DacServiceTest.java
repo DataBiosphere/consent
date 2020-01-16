@@ -229,7 +229,7 @@ public class DacServiceTest {
         DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
         Assert.assertNotNull(user);
         Assert.assertFalse(user.getRoles().isEmpty());
-        verify(voteService, times(elections.size())).createVotes(any(), any(), anyBoolean());
+        verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
     }
 
     @Test

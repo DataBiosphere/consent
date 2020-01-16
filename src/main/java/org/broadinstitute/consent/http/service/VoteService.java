@@ -107,20 +107,36 @@ public class VoteService {
         List<Vote> votes = new ArrayList<>();
         if (dacUsers != null) {
             for (DACUser user : dacUsers) {
-                Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
-                votes.add(voteDAO.findVoteById(dacVoteId));
-                if (isDacChairPerson(dac, user)) {
-                    Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
-                    votes.add(voteDAO.findVoteById(chairVoteId));
-                    // Requires Chairperson role to create a final and agreement vote in the Data Access case
-                    if (electionType.equals(ElectionType.DATA_ACCESS)) {
-                        Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.FINAL.getValue());
-                        votes.add(voteDAO.findVoteById(finalVoteId));
-                        if (!isManualReview) {
-                            Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
-                            votes.add(voteDAO.findVoteById(agreementVoteId));
-                        }
-                    }
+                votes.addAll(createVotesForUser(user, election, electionType, isManualReview));
+            }
+        }
+        return votes;
+    }
+
+    /**
+     * Create election votes for a user
+     *
+     * @param user DACUser
+     * @param election Election
+     * @param electionType ElectionType
+     * @param isManualReview Is election manual review
+     * @return List of created votes
+     */
+    List<Vote> createVotesForUser(DACUser user, Election election, ElectionType electionType, Boolean isManualReview) {
+        Dac dac = electionDAO.findDacForElection(election.getElectionId());
+        List<Vote> votes = new ArrayList<>();
+        Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
+        votes.add(voteDAO.findVoteById(dacVoteId));
+        if (isDacChairPerson(dac, user)) {
+            Integer chairVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
+            votes.add(voteDAO.findVoteById(chairVoteId));
+            // Requires Chairperson role to create a final and agreement vote in the Data Access case
+            if (electionType.equals(ElectionType.DATA_ACCESS)) {
+                Integer finalVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.FINAL.getValue());
+                votes.add(voteDAO.findVoteById(finalVoteId));
+                if (!isManualReview) {
+                    Integer agreementVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
+                    votes.add(voteDAO.findVoteById(agreementVoteId));
                 }
             }
         }
