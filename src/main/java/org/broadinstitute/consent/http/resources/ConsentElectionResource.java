@@ -86,12 +86,6 @@ public class ConsentElectionResource extends Resource {
                 logger().error("Exception updating consent id: '" + consentId + "', with dac id: '" + dacId + "'");
                 throw new InternalServerErrorException("Unable to associate consent to dac.");
             }
-            // For a consent election, any dataset associated to the consent is
-            // appropriate for assignment to this election.
-            Optional<DataSet> dataset = dacService.findDatasetsByConsentId(consentId).
-                    stream().
-                    findFirst();
-            dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));
             uri = createElectionURI(info, election, consentId);
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -141,6 +135,12 @@ public class ConsentElectionResource extends Resource {
     }
 
     private URI createElectionURI(UriInfo info, Election election, String consentId) throws Exception {
+        // For a consent election, any dataset associated to the consent is
+        // appropriate for assignment to this election.
+        Optional<DataSet> dataset = dacService.findDatasetsByConsentId(consentId).
+                stream().
+                findFirst();
+        dataset.ifPresent(dataSet -> election.setDataSetId(dataSet.getDataSetId()));
         Election newElection = api.createElection(election, consentId, ElectionType.TRANSLATE_DUL);
         List<Vote> votes = voteService.createVotes(newElection, ElectionType.TRANSLATE_DUL, false);
         List<Vote> dulVotes = votes.stream().
