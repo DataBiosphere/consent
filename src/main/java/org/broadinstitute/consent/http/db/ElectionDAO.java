@@ -272,17 +272,23 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
 
     /**
-     * Find the Dac for this election
+     * Find the Dac for this election. Looks across associations to a dac via dataset and those
+     * associated via the consent.
      *
      * @param electionId The election id
      * @return Dac for this election
      */
     @Mapper(DacMapper.class)
-    @SqlQuery("select d.* from dac d " +
-            " inner join consents c on d.dac_id = c.dac_id " +
-            " inner join consentassociations a on a.consentId = c.consentId " +
-            " inner join election e on e.datasetId = a.dataSetId and e.electionId = :electionId " +
-            " limit 1 ")
+    @SqlQuery("select d0.* from ( " +
+            "   select d1.* from dac d1 " +
+            "     inner join consents c1 on d1.dac_id = c1.dac_id " +
+            "     inner join consentassociations a1 on a1.consentId = c1.consentId " +
+            "     inner join election e1 on e1.datasetId = a1.dataSetId and e1.electionId = :electionId " +
+            " union " +
+            "   select d2.* from dac d2 " +
+            "     inner join consents c2 on d2.dac_id = c2.dac_id " +
+            "     inner join election e2 on e2.referenceId = c2.consentId and e2.electionId = :electionId " +
+            " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
     /**
@@ -292,10 +298,14 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
      * @return List of elections associated to the Dac
      */
     @Mapper(DatabaseElectionMapper.class)
-    @SqlQuery("select e.* from election e " +
-            " inner join consentassociations a on a.dataSetId = e.datasetId " +
-            " inner join consents c on c.consentId = a.consentId and c.dac_id = :dacId " +
-            " where e.status = '" + OPEN + "'")
+    @SqlQuery("select e1.* from election e1 " +
+            "   inner join consentassociations a1 on a1.dataSetId = e1.datasetId " +
+            "   inner join consents c1 on c1.consentId = a1.consentId and c1.dac_id = :dacId " +
+            "   where e1.status = '" + OPEN + "' " +
+            " union " +
+            " select e2.* from election e2 " +
+            "   inner join consents c2 on c2.consentId = e2.referenceId and c2.dac_id = :dacId " +
+            "   where e2.status = '" + OPEN + "' ")
     List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
 
 }
