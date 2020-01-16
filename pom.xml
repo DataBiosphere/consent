@@ -18,6 +18,7 @@
     <pdfbox.version>2.0.15</pdfbox.version>
     <jetty.version>9.4.14.v20181114</jetty.version>
     <owl.version>5.1.7</owl.version>
+    <mysql.version>8.0.16</mysql.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
@@ -287,7 +288,7 @@
           <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.36</version>
+            <version>${mysql.version}</version>
           </dependency>
           <dependency>
             <groupId>org.hsqldb</groupId>
@@ -629,7 +630,7 @@
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.44</version>
+      <version>${mysql.version}</version>
     </dependency>
 
     <dependency>
