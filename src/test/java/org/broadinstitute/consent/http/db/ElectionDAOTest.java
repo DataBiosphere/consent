@@ -60,6 +60,18 @@ public class ElectionDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindElectionByDacIdWithNoAssociation() {
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+
+        List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
+        Assert.assertNotNull(foundElections);
+        Assert.assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
+    }
+
+    @Test
     public void testFindElectionByDacIdNotFound() {
         Dac dac = createDac();
         Consent consent = createConsent(null);
