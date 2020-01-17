@@ -19,7 +19,6 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
@@ -91,9 +89,8 @@ public class DACUserResource extends Resource {
     @PermitAll
     public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer id) {
         Map<String, DACUser> userMap = constructUserMapFromJson(json);
-        List<UserRoles> authedRoles = Collections.singletonList(UserRoles.ADMIN);
         try {
-            validateAuthedRoleUser(authedRoles, authUser, id);
+            validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), id);
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             DACUser dacUser = dacUserAPI.updateDACUserById(userMap, id);
             // Update email preference
@@ -235,28 +232,6 @@ public class DACUserResource extends Resource {
             userMap.put(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY, new DACUser(alternativeDataOwner.toString()));
         }
         return userMap;
-    }
-
-    /**
-     * Validate that the current authenticated user can access this resource.
-     * If the user has one of the provided roles, then access is allowed.
-     * If not, then the authenticated user must have the same identity as the
-     * `userId` parameter they are requesting information for.
-     *
-     * @param authedRoles Stream of UserRoles enums
-     * @param user        The AuthUser
-     * @param userId      The id of the DACUser the AuthUser is requesting access to
-     */
-    private void validateAuthedRoleUser(List<UserRoles> authedRoles, AuthUser user, Integer userId) {
-        DACUser authedDacUser = findByAuthUser(user);
-        List<Integer> authedRoleIds = authedRoles.stream().
-                map(UserRoles::getRoleId).
-                collect(Collectors.toList());
-        boolean authedUserHasRole = authedDacUser.getRoles().stream().
-                anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
-        if (!authedUserHasRole && !authedDacUser.getDacUserId().equals(userId)) {
-            throw new ForbiddenException("User does not have permission");
-        }
     }
 
     private DACUser findByAuthUser(AuthUser user) {

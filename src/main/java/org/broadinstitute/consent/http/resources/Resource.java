@@ -2,7 +2,9 @@ package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -18,7 +20,9 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by egolin on 9/17/14.
@@ -101,5 +105,25 @@ abstract public class Resource {
 
     }
 
+    /**
+     * Validate that the current authenticated user can access this resource.
+     * If the user has one of the provided roles, then access is allowed.
+     * If not, then the authenticated user must have the same identity as the
+     * `userId` parameter they are requesting information for.
+     *
+     * @param authedRoles   Stream of UserRoles enums
+     * @param authedDacUser The authenticated DACUser
+     * @param userId        The id of the DACUser the authenticated user is requesting access to
+     */
+    void validateAuthedRoleUser(List<UserRoles> authedRoles, DACUser authedDacUser, Integer userId) {
+        List<Integer> authedRoleIds = authedRoles.stream().
+                map(UserRoles::getRoleId).
+                collect(Collectors.toList());
+        boolean authedUserHasRole = authedDacUser.getRoles().stream().
+                anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
+        if (!authedUserHasRole && !authedDacUser.getDacUserId().equals(userId)) {
+            throw new ForbiddenException("User does not have permission");
+        }
+    }
 
 }
