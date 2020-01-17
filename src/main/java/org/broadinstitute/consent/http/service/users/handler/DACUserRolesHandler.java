@@ -154,26 +154,25 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private void removeDataOwner(DACUser updatedUser) {
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), dataOwner.getRoleId());
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
-        verifyAndDelegateElections(updatedUser, openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
+        deleteUserVotesInElections(updatedUser, openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
         deleteDatasetsOwnership(updatedUser);
     }
 
-    private void verifyAndDelegateElections(DACUser updatedUser, List<Integer> openElectionIdsForThisUser, String voteType) {
-        List<Integer> electionsIdToRemoveVotes = new ArrayList<>();
+    private void deleteUserVotesInElections(DACUser updatedUser, List<Integer> openElectionIdsForThisUser, String voteType) {
+        List<Integer> voteIdsToRemove = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
             openElectionIdsForThisUser.forEach(electionId -> {
-                List<Vote> votes = voteDAO.findVotesByTypeAndElectionIds(new ArrayList<>(Collections.singletonList(electionId)), voteType);
-                if (votes.isEmpty()) {
-                    electionsIdToRemoveVotes.add(electionId);
-                }
+                List<Vote> openUserVotes = voteDAO.
+                        findVotesByTypeAndElectionIds(new ArrayList<>(Collections.singletonList(electionId)), voteType).
+                        stream().
+                        filter(v -> v.getDacUserId().equals(updatedUser.getDacUserId())).
+                        collect(Collectors.toList());
+                voteIdsToRemove.addAll(openUserVotes.
+                        stream().
+                        map(Vote::getVoteId).
+                        collect(Collectors.toList()));
             });
-            removeVotes(updatedUser, electionsIdToRemoveVotes);
-        }
-    }
-
-    private void removeVotes(DACUser updatedUser, List<Integer> electionsIdToRemoveVotes) {
-        if (CollectionUtils.isNotEmpty(electionsIdToRemoveVotes)) {
-            voteDAO.removeVotesByElectionIdAndUser(electionsIdToRemoveVotes, updatedUser.getDacUserId());
+            voteDAO.removeVotesByIds(voteIdsToRemove);
         }
     }
 

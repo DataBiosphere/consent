@@ -354,7 +354,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         return diseases.substring(0, diseases.length()-2);
     }
 
-    private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException, IOException, TemplateException {
+    private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {
         mailService.sendNewCaseMessage(userAddress, entityId, electionType, template);
     }
 
