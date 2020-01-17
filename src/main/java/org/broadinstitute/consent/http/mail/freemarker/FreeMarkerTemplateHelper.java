@@ -21,11 +21,11 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 public class FreeMarkerTemplateHelper {
 
 
-    Configuration freeMarkerConfig;
+    private Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
     private final String HELP_REPORT_URL = "help_me";
 
-    public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
+    public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
         freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         freeMarkerConfig.setClassForTemplateLoading(this.getClass(), config.getTemplateDirectory());
@@ -76,9 +76,9 @@ public class FreeMarkerTemplateHelper {
                 checkedSentences, translatedUseRestriction, datasets, daysToApprove, serverUrl, temp);
     }
 
-    public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String type, String serverUrl) throws IOException, TemplateException {
+    public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("closed-dataset-elections.html");
-        return generateClosedDatasetElectionsTemplate(elections, darCode, serverUrl, temp);
+        return generateClosedDatasetElectionsTemplate(elections, serverUrl, temp);
     }
 
     public Writer getHelpReportTemplate(HelpReport helpReport, String serverUrl) throws IOException, TemplateException {
@@ -111,7 +111,7 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String serverUrl, Template temp) throws IOException, TemplateException {
+    private Writer generateClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String serverUrl, Template temp) throws IOException, TemplateException {
         List<ClosedDatasetElectionModel> closedElections = new ArrayList<>();
         List<String> dars = new ArrayList<>(elections.keySet());
         for(String key: dars){
@@ -186,17 +186,17 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    public Writer getUserDelegateResponsibilitiesTemplate(String user, List<VoteAndElectionModel> delegatedVotes, String newRoleName, String serverUrl) throws IOException, TemplateException {
-                Template temp = freeMarkerConfig.getTemplate("user-delegate-responsibilities.html");
-                return generateUserDelegateResponsibilitiesTemplate(user, delegatedVotes, newRoleName, serverUrl, temp);
-    }
+//    public Writer getUserDelegateResponsibilitiesTemplate(String user, List<VoteAndElectionModel> delegatedVotes, String newRoleName, String serverUrl) throws IOException, TemplateException {
+//                Template temp = freeMarkerConfig.getTemplate("user-delegate-responsibilities.html");
+//                return generateUserDelegateResponsibilitiesTemplate(user, delegatedVotes, newRoleName, serverUrl, temp);
+//    }
 
-    private Writer generateUserDelegateResponsibilitiesTemplate(String user, List<VoteAndElectionModel> delegatedVotes, String newRoleName, String serverUrl, Template temp) throws IOException, TemplateException {
-                DelegateResponsibilitiesModel model = new DelegateResponsibilitiesModel(user, newRoleName, serverUrl, delegatedVotes);
-                Writer out = new StringWriter();
-                temp.process(model, out);
-                return out;
-    }
+//    private Writer generateUserDelegateResponsibilitiesTemplate(String user, List<VoteAndElectionModel> delegatedVotes, String newRoleName, String serverUrl, Template temp) throws IOException, TemplateException {
+//                DelegateResponsibilitiesModel model = new DelegateResponsibilitiesModel(user, newRoleName, serverUrl, delegatedVotes);
+//                Writer out = new StringWriter();
+//                temp.process(model, out);
+//                return out;
+//    }
 
     public Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String url, String action) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-researcher.html");

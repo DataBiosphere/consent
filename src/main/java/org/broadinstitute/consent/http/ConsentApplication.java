@@ -36,7 +36,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -149,7 +148,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration.Dynamic;
 import javax.ws.rs.client.Client;
-import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -208,7 +206,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final MailMessageDAO emailDAO = injector.getProvider(MailMessageDAO.class).get();
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = injector.getProvider(ApprovalExpirationTimeDAO.class).get();
         final DataSetAuditDAO dataSetAuditDAO = injector.getProvider(DataSetAuditDAO.class).get();
-        final MailServiceDAO mailServiceDAO = injector.getProvider(MailServiceDAO.class).get();
         final ResearcherPropertyDAO  researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
         final WorkspaceAuditDAO workspaceAuditDAO = injector.getProvider(WorkspaceAuditDAO.class).get();
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
@@ -229,15 +226,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         try {
             MailService.initInstance(config.getMailConfiguration());
-            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
-        } catch (IOException e) {
+            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
+        } catch (Exception e) {
             LOGGER.error("Mail Notification Service initialization error.", e);
         }
 
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
         DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance, dataSetDAO);
-        DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractEmailNotifierAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance());
+        DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractDataAccessRequestAPI.getInstance());
         DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);

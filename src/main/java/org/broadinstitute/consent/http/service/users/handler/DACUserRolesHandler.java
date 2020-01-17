@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service.users.handler;
 
-import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
@@ -11,15 +10,11 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 
-import javax.mail.MessagingException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,17 +26,13 @@ import java.util.stream.Collectors;
 public class DACUserRolesHandler extends AbstractUserRolesHandler {
 
     public static final String UPDATED_USER_KEY = "updatedUser";
-    public static final String ALTERNATIVE_OWNER_KEY = "alternativeDataOwnerUser";
 
     private final DACUserDAO dacUserDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserRoleDAO userRoleDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
-    private final String MEMBER = UserRoles.MEMBER.getRoleName();
-    private final String DATA_OWNER = UserRoles.DATAOWNER.getRoleName();
     private final Map<String, Integer> roleIdMap;
-    private final EmailNotifierAPI emailNotifierAPI;
     private final DataAccessRequestAPI dataAccessRequestAPI;
 
     private final UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
@@ -49,19 +40,18 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
     private final UserRole dataOwner = new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName());
 
-    public DACUserRolesHandler(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
+    public DACUserRolesHandler(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, DataAccessRequestAPI dataAccessRequestAPI) {
         this.dacUserDAO = userDao;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
         this.voteDAO = voteDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.roleIdMap = createRoleMap(userRoleDAO.findRoles());
-        this.emailNotifierAPI = emailNotifierAPI;
         this.dataAccessRequestAPI = dataAccessRequestAPI;
     }
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
-        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierAPI, dataAccessRequestAPI));
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, DataAccessRequestAPI dataAccessRequestAPI) {
+        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, dataAccessRequestAPI));
     }
 
     private Map<String, Integer> createRoleMap(List<Role> roles) {
@@ -79,14 +69,12 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
      *                 Identification(explained above) -> DacUser
      */
     @Override
-    public void updateRoles(Map<String, DACUser> usersMap) throws MessagingException, IOException, TemplateException {
+    public void updateRoles(Map<String, DACUser> usersMap) {
         DACUser updatedUser;
-        DACUser doUserToDelegate = null;
 
         try {
             userRoleDAO.begin();
             voteDAO.begin();
-            boolean delegateOwner = usersMap.containsKey(ALTERNATIVE_OWNER_KEY);
             updatedUser = usersMap.get(UPDATED_USER_KEY);
             // roles as should be ..
             List<UserRole> updatedRoles = updatedUser.getRoles();
@@ -101,12 +89,8 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             List<UserRole> rolesToAdd = substractAllRoles(updatedRoles, originalRoles);
 
             // If there aren't any open elections and we didn't delegate to any owner then we don't have to validate anything.
-            if (electionDAO.verifyOpenElections() == 0 && !delegateOwner) {
+            if (electionDAO.verifyOpenElections() == 0) {
                 changeRolesWithoutDelegation(updatedUser, rolesToRemove, rolesToAdd);
-            }
-            if (delegateOwner) {
-                doUserToDelegate = dacUserDAO.findDACUserByEmail(usersMap.get("alternativeDataOwnerUser").getEmail());
-                doUserToDelegate.setRoles(userRoleDAO.findRolesByUserId(doUserToDelegate.getDacUserId()));
             }
             // removing deleted roles
             for (UserRole role : rolesToRemove) {
@@ -128,7 +112,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
                         removeResearcher(updatedUser);
                         break;
                     case DATAOWNER:
-                        removeDataOwner(updatedUser, delegateOwner, doUserToDelegate);
+                        removeDataOwner(updatedUser);
                         break;
                 }
             }
@@ -167,38 +151,23 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     /* Removes data owners role, assigns votes (update) if needed, then removes
      * and assigns the role.
      */
-    private void removeDataOwner(DACUser updatedUser, boolean delegate, DACUser doUserToDelegate) throws MessagingException, IOException, TemplateException {
+    private void removeDataOwner(DACUser updatedUser) {
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), dataOwner.getRoleId());
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
-        if (delegate) {
-            assignNewRole(doUserToDelegate, dataOwner);
-            verifyAndDelegateElections(updatedUser, doUserToDelegate, openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
-            updateDataSetsOwnership(updatedUser, doUserToDelegate);
-        } else {
-            verifyAndDelegateElections(updatedUser, doUserToDelegate, openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
-            deleteDatasetsOwnership(updatedUser);
-        }
+        verifyAndDelegateElections(updatedUser, openElectionIdsForThisUser, VoteType.DATA_OWNER.getValue());
+        deleteDatasetsOwnership(updatedUser);
     }
 
-    private void verifyAndDelegateElections(DACUser updatedUser, DACUser doUserToDelegate, List<Integer> openElectionIdsForThisUser, String voteType) throws MessagingException, IOException, TemplateException {
-        List<Integer> electionsIdToDelegateVotes = new ArrayList<>();
+    private void verifyAndDelegateElections(DACUser updatedUser, List<Integer> openElectionIdsForThisUser, String voteType) {
         List<Integer> electionsIdToRemoveVotes = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(openElectionIdsForThisUser)) {
             openElectionIdsForThisUser.forEach(electionId -> {
-                List<Vote> vote = voteDAO.findVotesByTypeAndElectionIds(new ArrayList<>(Collections.singletonList(electionId)), voteType);
-                if (vote.size() == 1) {
-                    electionsIdToDelegateVotes.add(electionId);
-                } else {
+                List<Vote> votes = voteDAO.findVotesByTypeAndElectionIds(new ArrayList<>(Collections.singletonList(electionId)), voteType);
+                if (votes.isEmpty()) {
                     electionsIdToRemoveVotes.add(electionId);
                 }
             });
             removeVotes(updatedUser, electionsIdToRemoveVotes);
-            delegateVotes(updatedUser, doUserToDelegate, electionsIdToDelegateVotes);
-            emailNotifierAPI.sendUserDelegateResponsibilitiesMessage(
-                    doUserToDelegate,
-                    updatedUser.getDacUserId(),
-                    voteType.equalsIgnoreCase(VoteType.DATA_OWNER.getValue())? DATA_OWNER: MEMBER,
-                    voteDAO.findVotesByElectionIdsAndUser(electionsIdToDelegateVotes, doUserToDelegate.getDacUserId()));
         }
     }
 
@@ -206,24 +175,6 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
         if (CollectionUtils.isNotEmpty(electionsIdToRemoveVotes)) {
             voteDAO.removeVotesByElectionIdAndUser(electionsIdToRemoveVotes, updatedUser.getDacUserId());
         }
-    }
-
-    private void delegateVotes(DACUser updatedUser, DACUser doUserToDelegate, List<Integer> electionsIdToDelegateVotes) {
-        if (CollectionUtils.isNotEmpty(electionsIdToDelegateVotes)) {
-            voteDAO.delegateDataSetOpenElectionsVotes(updatedUser.getDacUserId(), electionsIdToDelegateVotes, doUserToDelegate.getDacUserId());
-        }
-    }
-
-    private void updateDataSetsOwnership(DACUser updatedUser, DACUser userToDelegate) {
-        List<DatasetAssociation> associations = datasetAssociationDAO.findAllDatasetAssociationsByOwnerId(updatedUser.getDacUserId());
-        List<DatasetAssociation> newAssociations = new ArrayList<>();
-        associations.forEach((as) -> {
-            if (!as.getDacuserId().equals(userToDelegate.getDacUserId())) {
-                newAssociations.add(new DatasetAssociation(as.getDatasetId(), userToDelegate.getDacUserId()));
-            }
-        });
-        deleteDatasetsOwnership(updatedUser);
-        datasetAssociationDAO.insertDatasetUserAssociation(newAssociations);
     }
 
     /**

@@ -130,16 +130,6 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testDelegateResponsibilitiesMessage() throws Exception {
-        Assert.assertNotNull(mailService);
-        try {
-            mailService.sendDelegateResponsibilitiesMessage(Collections.singleton(TO), template);
-        } catch (Exception e) {
-            Assert.fail("Should not throw exception");
-        }
-    }
-
-    @Test
     public void testNewResearcherCreatedMessage() throws Exception {
         Assert.assertNotNull(mailService);
         try {

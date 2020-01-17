@@ -26,7 +26,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     String FINAL = "FINAL";
     String DAC = "DAC";
     String CLOSED = "Closed";
-    String DATASET = "DataSet";
 
     @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and election.status = '"+ OPEN +"'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
@@ -133,23 +132,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete from vote where electionId IN (<electionId>) and dacUserId = :userId")
     void removeVotesByElectionIdAndUser(@BindIn("electionId") List<Integer> electionId, @Bind("userId") Integer userId);
 
-    @SqlUpdate(" update vote v set v.dacUserId = :toDOUserId, v.vote = null, v.createDate = null, v.updateDate = null"
-            + " where v.dacUserId = :fromDOUserId "
-            + " and v.electionId IN (<electionIds>)")
-    void delegateDataSetOpenElectionsVotes(@Bind("fromDOUserId") Integer fromDOUserId, @BindIn("electionIds") List<Integer> electionIds,
-                                                  @Bind("toDOUserId") Integer toDOUserId);
-
-    @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
-            + " and v.electionId IN (select e.electionId from election e where e.electionType != '" + DATASET +"' "
-            + " and (e.status = 'Open' OR e.status = 'Final'))")
-    List<Vote> findVotesOnOpenElections(@Bind("dacUserId") Integer dacUserId);
-
     @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
     void removeVotesByIds(@BindIn("voteIds") List<Integer> voteIds);
-
-    @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
-            + " and v.electionId IN (<electionIds>)")
-    List<Vote> findVotesByElectionIdsAndUser(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select vote from vote v where v.electionId = :electionId and v.type = '"+ CHAIRPERSON +"'")
     Boolean findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);

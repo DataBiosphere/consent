@@ -36,9 +36,6 @@ public interface DataSetAssociationDAO extends Transactional<DataSetAssociationD
     @SqlQuery("select ds.dacuserId from dataset_user_association ds where ds.datasetId = :datasetId")
     List<Integer> getDataOwnersOfDataSet(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select * from dataset_user_association ds where ds.dacuserId = :dacUserId")
-    List<DatasetAssociation> findAllDatasetAssociationsByOwnerId(@Bind("dacUserId") Integer dacUserId);
-
     @SqlUpdate("delete from dataset_user_association where dacuserId = :ownerId")
     void deleteDatasetRelationshipsForUser(@Bind("ownerId") Integer ownerId);
 

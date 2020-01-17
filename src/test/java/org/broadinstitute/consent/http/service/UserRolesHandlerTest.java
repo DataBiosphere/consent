@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,21 +40,19 @@ public class UserRolesHandlerTest {
     @Mock
     private DataSetAssociationDAO datasetAssociationDAO;
     @Mock
-    private EmailNotifierService emailService;
-    @Mock
     private DataAccessRequestAPI dataAccessRequestAPI;
 
-    DACUserRolesHandler handler;
+    private DACUserRolesHandler handler;
 
 
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        handler = new DACUserRolesHandler(dacUserDAO, userRoleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailService, dataAccessRequestAPI);
+        handler = new DACUserRolesHandler(dacUserDAO, userRoleDAO, electionDAO, voteDAO, datasetAssociationDAO, dataAccessRequestAPI);
     }
 
     @Test
-    public void testUpdateChairperson() throws Exception {
+    public void testUpdateChairperson() {
         DACUser originalChairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
         Map<String, DACUser> updateUserMap = new HashMap<>();
@@ -64,22 +61,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testUpdateChairpersonWithDelegation() throws Exception {
-        DACUser originalChairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
-        DACUser delegatedChairperson = new DACUser(2, "delegatedChairperson@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
-        when(voteDAO.findVotesOnOpenElections(originalChairperson.getDacUserId())).thenReturn(randomVotesList(originalChairperson.getDacUserId()));
-        when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
-        when(dacUserDAO.findDACUserByEmail("delegatedChairperson@broad.com")).thenReturn(delegatedChairperson);
-        when(electionDAO.verifyOpenElections()).thenReturn(1);
-        Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalChairperson);
-        updateUserMap.put("userToDelegate", delegatedChairperson);
-        handler.updateRoles(updateUserMap);
-    }
-
-    @Test
-    public void testUpdateMember() throws Exception {
+    public void testUpdateMember() {
         DACUser originalMember = new DACUser(1, "originalMember@broad.com", "Original Chairperson", new Date(), alumniList(), null);
         DACUser delegatedMember = new DACUser(2, "delegatedMember@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
@@ -93,22 +75,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testUpdateMemberWithDelegation() throws Exception {
-        DACUser originalMember = new DACUser(1, "originalMember@broad.com", "Original Chairperson", new Date(), alumniList(), null);
-        DACUser delegatedMember = new DACUser(2, "delegatedMember@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
-        when(voteDAO.findVotesOnOpenElections(originalMember.getDacUserId())).thenReturn(randomVotesList(originalMember.getDacUserId()));
-        when(userRoleDAO.findRolesByUserId(2)).thenReturn(alumniList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
-        when(electionDAO.verifyOpenElections()).thenReturn(1);
-        Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalMember);
-        updateUserMap.put("userToDelegate", delegatedMember);
-        handler.updateRoles(updateUserMap);
-    }
-
-    @Test
-    public void testUpdateMultipleRoles() throws Exception {
+    public void testUpdateMultipleRoles() {
         DACUser originalDO = new DACUser(1, "originalDO@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(researcherList(), adminList()), null);
         DACUser delegatedDO = new DACUser(2, "delegatedDO@broad.com", "Delegated Chairperson", new Date(), dataownerList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(dataownerList());
@@ -122,7 +89,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testPromoteAlumniToMember() throws Exception {
+    public void testPromoteAlumniToMember() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(concatUserRoleLists(alumniList(), researcherList()));
         when(electionDAO.verifyOpenElections()).thenReturn(0);
@@ -132,7 +99,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testPromoteAlumniChairperson() throws Exception {
+    public void testPromoteAlumniChairperson() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(concatUserRoleLists(alumniList(), researcherList()));
         when(electionDAO.verifyOpenElections()).thenReturn(0);
@@ -142,7 +109,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testAddResearcher() throws Exception {
+    public void testAddResearcher() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(researcherList(), memberList()), null);
         DACUser delegatedMember = new DACUser(2, "delegatedMember@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(alumniList());
@@ -157,7 +124,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testAddAlumni() throws Exception {
+    public void testAddAlumni() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(alumniList(), memberList()), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
         when(electionDAO.verifyOpenElections()).thenReturn(0);
@@ -168,7 +135,7 @@ public class UserRolesHandlerTest {
     }
 
     @Test
-    public void testMemberToChair() throws Exception {
+    public void testMemberToChair() {
         DACUser originalMember = new DACUser(1, "originalMember@broad.com", "Original Chairperson", new Date(), alumniList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
         when(electionDAO.verifyOpenElections()).thenReturn(0);
@@ -204,14 +171,6 @@ public class UserRolesHandlerTest {
     
     private List<UserRole> concatUserRoleLists(List<UserRole> a, List<UserRole> b) {
         return Streams.concat(a.stream(), b.stream()).collect(Collectors.toList());
-    }
-
-    private List<Vote> randomVotesList(Integer dacUserId){
-        Vote v1 = new Vote(1, null, dacUserId, new Date(), new Date(), 1, "", "DAC", false, false);
-        Vote v2 = new Vote(2, null, dacUserId, new Date(), new Date(), 2, "", "CHAIR", false, false);
-        Vote v3 = new Vote(3, null, dacUserId, new Date(), new Date(), 3, "", "DAC", false, false);
-        Vote v4 = new Vote(4, null, dacUserId, new Date(), new Date(), 4, "", "CHAIR", false, false);
-        return Arrays.asList(v1, v2, v3, v4);
     }
 
     private List<UserRole> chairpersonList(){

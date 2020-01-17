@@ -117,20 +117,11 @@ public class FreeMarkerTemplateHelperTest {
 
     @Test
     public void testGetClosedDatasetElectionsTemplate() throws Exception {
-        Writer template = helper.getClosedDatasetElectionsTemplate(getClosedDsElections(), "DarCode",  "SomeType", "localhost:1234");
+        Writer template = helper.getClosedDatasetElectionsTemplate(getClosedDsElections(), "localhost:1234");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Closed Dataset Elections"));
         assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin!"));
-    }
-
-    @Test
-    public void testGetUserDelegateResponsibilitiesTemplate() throws Exception {
-        Writer template = helper.getUserDelegateResponsibilitiesTemplate("DelegateUser", Arrays.asList(vae1, vae2, vae3), "DataOwner", "localhost:1234");
-        String templateString = template.toString();
-        final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Delegated Responsibilities Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello DelegateUser!"));
     }
 
     @Test
@@ -156,10 +147,6 @@ public class FreeMarkerTemplateHelperTest {
     private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null , true, 1);
     private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null , false, 2);
     private Election e3 = new Election(3, "DataSet", "Closed", new Date(), "DAR-2", null , true, 1);
-
-    private VoteAndElectionModel vae1 = new VoteAndElectionModel("Identifier1", "DAR-1", "DataSet", "DataOwner");
-    private VoteAndElectionModel vae2 = new VoteAndElectionModel("Identifier2", "DAR-2", "DataSet", "DataOwner");
-    private VoteAndElectionModel vae3 = new VoteAndElectionModel("Identifier3", "DAR-3", "DataSet", "DataOwner");
 
     private SummaryItem item1 = new SummaryItem("A sample item 1", "Sample item 1");
     private SummaryItem item2 = new SummaryItem("A sample item 2", "Sample item 2");

@@ -25,7 +25,6 @@ public class MailService extends AbstractMailServiceAPI {
     private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
     private FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
     private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
-    private DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
     private HelpReportMessage helpReportMessage = new HelpReportMessage();
     private ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
@@ -34,11 +33,11 @@ public class MailService extends AbstractMailServiceAPI {
         return Logger.getLogger("MailService");
     }
 
-    public static void initInstance(MailConfiguration config) throws IOException {
+    public static void initInstance(MailConfiguration config) {
         MailServiceAPIHolder.setInstance(new MailService(config));
     }
 
-    private MailService(MailConfiguration config) throws IOException {
+    private MailService(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
         this.sendGrid = new SendGrid(config.getSendGridApiKey());
         this.activateEmailNotifications = config.isActivateEmailNotifications();
@@ -116,12 +115,6 @@ public class MailService extends AbstractMailServiceAPI {
     @Override
     public void sendFlaggedDarAdminApprovedMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         List<Mail> messages = adminApprovedDarMessageCreator.flaggedDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
-        sendMessages(messages);
-    }
-
-    @Override
-    public void sendDelegateResponsibilitiesMessage(Set<String> userAddresses, Writer template) throws MessagingException {
-        List<Mail> messages = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(userAddresses, fromAccount, template);
         sendMessages(messages);
     }
 

@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -70,7 +69,6 @@ public class ConsentModule extends AbstractModule {
     private final MailMessageDAO mailMessageDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final DataSetAuditDAO datasetAuditDAO;
-    private final MailServiceDAO mailServiceDAO;
     private final ResearcherPropertyDAO researcherPropertyDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
     private final AssociationDAO associationDAO;
@@ -98,7 +96,6 @@ public class ConsentModule extends AbstractModule {
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.datasetAuditDAO = this.jdbi.onDemand(DataSetAuditDAO.class);
-        this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
         this.researcherPropertyDAO = this.jdbi.onDemand(ResearcherPropertyDAO.class);
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
@@ -265,11 +262,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DataSetAuditDAO providesDataSetAuditDAO() {
         return datasetAuditDAO;
-    }
-
-    @Provides
-    MailServiceDAO providesMailServiceDAO() {
-        return mailServiceDAO;
     }
 
     @Provides
