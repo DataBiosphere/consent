@@ -33,8 +33,6 @@ public interface DACUserAPI {
 
     DACUser updateUserRationale(String rationale, Integer userId);
 
-    DACUser updateNameById(DACUser user, Integer id);
-
     void updateEmailPreference(boolean preference, Integer userId);
 
 }

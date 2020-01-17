@@ -166,15 +166,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testUpdateDACUser_case2() {
-        DACUser user = createUser();
-        String displayName = RandomStringUtils.random(10, true, false);
-        userDAO.updateDACUser(displayName, user.getDacUserId());
-        DACUser user2 = userDAO.findDACUserById(user.getDacUserId());
-        Assert.assertEquals(displayName, user2.getDisplayName());
-    }
-
-    @Test
     public void testUpdateEmailPreference() {
         // No-op ... tested in `testDescribeUsersByRoleAndEmailPreference()`
     }
