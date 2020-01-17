@@ -186,18 +186,6 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-//    public Writer getUserDelegateResponsibilitiesTemplate(String user, List<VoteAndElectionModel> delegatedVotes, String newRoleName, String serverUrl) throws IOException, TemplateException {
-//                Template temp = freeMarkerConfig.getTemplate("user-delegate-responsibilities.html");
-//                return generateUserDelegateResponsibilitiesTemplate(user, delegatedVotes, newRoleName, serverUrl, temp);
-//    }
-
-//    private Writer generateUserDelegateResponsibilitiesTemplate(String user, List<VoteAndElectionModel> delegatedVotes, String newRoleName, String serverUrl, Template temp) throws IOException, TemplateException {
-//                DelegateResponsibilitiesModel model = new DelegateResponsibilitiesModel(user, newRoleName, serverUrl, delegatedVotes);
-//                Writer out = new StringWriter();
-//                temp.process(model, out);
-//                return out;
-//    }
-
     public Writer getNewResearcherCreatedTemplate(String admin, String researcherName, String url, String action) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-researcher.html");
         NewResearcherModel model = new NewResearcherModel(admin, researcherName, url, action);
