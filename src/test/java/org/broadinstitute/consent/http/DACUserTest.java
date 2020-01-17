@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class DACUserTest extends DACUserServiceTest {
@@ -157,39 +156,6 @@ public class DACUserTest extends DACUserServiceTest {
         DACUser postUser = new DACUser();
         postUser.setStatus("Test");
         Response response = put(client, statusValue(4), postUser);
-        checkStatus(BAD_REQUEST, response);
-    }
-
-    @Test
-    public void testUpdateDisplayNameSuccess() throws IOException {
-        final String displayName = "Test";
-        Client client = ClientBuilder.newClient();
-        DACUser user = new DACUser();
-        user.setDisplayName(displayName);
-        user.setDacUserId(4);
-        Response response = put(client, dacUserPath()+ "/name/4", user);
-        checkStatus(OK, response);
-        DACUser dacUser = response.readEntity(DACUser.class);
-        assertEquals(dacUser.getDisplayName(), displayName);
-    }
-
-    @Test
-    public void testUpdateDisplayNameWithInvalidUser() throws IOException {
-        final String displayName = "Test";
-        Client client = ClientBuilder.newClient();
-        DACUser user = new DACUser();
-        user.setDisplayName(displayName);
-        user.setDacUserId(4);
-        Response response = put(client, dacUserPath()+ "/name/99", user);
-        checkStatus(NOT_FOUND, response);
-    }
-
-    @Test
-    public void testUpdateDisplayNameWithEmptyName() throws IOException {
-        Client client = ClientBuilder.newClient();
-        DACUser user = new DACUser();
-        user.setDacUserId(4);
-        Response response = put(client, dacUserPath() + "/name/4", user);
         checkStatus(BAD_REQUEST, response);
     }
 

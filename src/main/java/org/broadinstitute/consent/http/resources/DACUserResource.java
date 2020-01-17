@@ -168,23 +168,6 @@ public class DACUserResource extends Resource {
         }
     }
 
-    // TODO: Undocumented: See DUOS-403
-    @Deprecated // Use update instead
-    @PUT
-    @Path("/name/{id}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, RESEARCHER})
-    public Response updateName(String json, @PathParam("id") Integer id) {
-        DACUser user = new DACUser(json);
-        try {
-            DACUser dacUser = dacUserAPI.updateNameById(user, id);
-            return Response.ok().entity(dacUser).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     /**
      * Convenience method to find a member from legacy json structure.
      *
