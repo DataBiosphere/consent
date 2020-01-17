@@ -56,35 +56,27 @@ public class UserRolesHandlerTest {
         DACUser originalChairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalChairperson);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalChairperson);
         handler.updateRoles(updateUserMap);
     }
 
     @Test
     public void testUpdateMember() {
         DACUser originalMember = new DACUser(1, "originalMember@broad.com", "Original Chairperson", new Date(), alumniList(), null);
-        DACUser delegatedMember = new DACUser(2, "delegatedMember@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalMember);
-        updateUserMap.put("userToDelegate", delegatedMember);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalMember);
         handler.updateRoles(updateUserMap);
     }
 
     @Test
     public void testUpdateMultipleRoles() {
         DACUser originalDO = new DACUser(1, "originalDO@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(researcherList(), adminList()), null);
-        DACUser delegatedDO = new DACUser(2, "delegatedDO@broad.com", "Delegated Chairperson", new Date(), dataownerList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(dataownerList());
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(concatUserRoleLists(researcherList(), adminList()));
-        when(dacUserDAO.findDACUserByEmail("delegatedDO@broad.com")).thenReturn(delegatedDO);
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalDO);
-        updateUserMap.put("alternativeDataOwnerUser", delegatedDO);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalDO);
         handler.updateRoles(updateUserMap);
     }
 
@@ -92,9 +84,8 @@ public class UserRolesHandlerTest {
     public void testPromoteAlumniToMember() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(concatUserRoleLists(alumniList(), researcherList()));
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalAlumni);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalAlumni);
         handler.updateRoles(updateUserMap);
     }
 
@@ -102,24 +93,19 @@ public class UserRolesHandlerTest {
     public void testPromoteAlumniChairperson() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(concatUserRoleLists(alumniList(), researcherList()));
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalAlumni);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalAlumni);
         handler.updateRoles(updateUserMap);
     }
 
     @Test
     public void testAddResearcher() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(researcherList(), memberList()), null);
-        DACUser delegatedMember = new DACUser(2, "delegatedMember@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(alumniList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
         when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         when(dacUserDAO.verifyAdminUsers()).thenReturn(2);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalAlumni);
-        updateUserMap.put("userToDelegate", delegatedMember);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalAlumni);
         handler.updateRoles(updateUserMap);
     }
 
@@ -127,10 +113,9 @@ public class UserRolesHandlerTest {
     public void testAddAlumni() {
         DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(alumniList(), memberList()), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         when(dacUserDAO.verifyAdminUsers()).thenReturn(2);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalAlumni);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalAlumni);
         handler.updateRoles(updateUserMap);
     }
 
@@ -138,9 +123,8 @@ public class UserRolesHandlerTest {
     public void testMemberToChair() {
         DACUser originalMember = new DACUser(1, "originalMember@broad.com", "Original Chairperson", new Date(), alumniList(), null);
         when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
         Map<String, DACUser> updateUserMap = new HashMap<>();
-        updateUserMap.put("updatedUser", originalMember);
+        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, originalMember);
         handler.updateRoles(updateUserMap);
     }
 

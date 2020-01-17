@@ -76,6 +76,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             userRoleDAO.begin();
             voteDAO.begin();
             updatedUser = usersMap.get(UPDATED_USER_KEY);
+
             // roles as should be ..
             List<UserRole> updatedRoles = updatedUser.getRoles();
 
@@ -88,10 +89,8 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             // roles to add ..
             List<UserRole> rolesToAdd = substractAllRoles(updatedRoles, originalRoles);
 
-            // If there aren't any open elections and we didn't delegate to any owner then we don't have to validate anything.
-            if (electionDAO.verifyOpenElections() == 0) {
-                changeRolesWithoutDelegation(updatedUser, rolesToRemove, rolesToAdd);
-            }
+            changeRoles(updatedUser, rolesToRemove, rolesToAdd);
+
             // removing deleted roles
             for (UserRole role : rolesToRemove) {
                 switch (UserRoles.valueOf(role.getName().toUpperCase())) {
@@ -240,7 +239,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     }
 
 
-    private void changeRolesWithoutDelegation(DACUser updatedUser, List<UserRole> removedRoles, List<UserRole> newRoles) {
+    private void changeRoles(DACUser updatedUser, List<UserRole> removedRoles, List<UserRole> newRoles) {
         if (CollectionUtils.isNotEmpty(removedRoles)) {
             userRoleDAO.removeUserRoles(updatedUser.getDacUserId(),
                     removedRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList()));
