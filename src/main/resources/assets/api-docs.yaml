@@ -2031,7 +2031,7 @@ paths:
               description: Server error.
   /api/datasetAssociation/{datasetId}:
     get:
-      summary: Dataset Associations
+      summary: Get Dataset Associations
       description: Get all dataset associations
       parameters:
         - name: datasetId
