@@ -3,7 +3,11 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.dropwizard.auth.Auth;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -15,7 +19,9 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -28,11 +34,13 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
@@ -80,10 +88,12 @@ public class DACUserResource extends Resource {
     @Path("/{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response update(@Context UriInfo info, String json, @PathParam("id") Integer id) {
+    @PermitAll
+    public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer id) {
         Map<String, DACUser> userMap = constructUserMapFromJson(json);
+        List<UserRoles> authedRoles = Collections.singletonList(UserRoles.ADMIN);
         try {
+            validateAuthedRoleUser(authedRoles, authUser, id);
             URI uri = info.getRequestUriBuilder().path("{id}").build(id);
             DACUser dacUser = dacUserAPI.updateDACUserById(userMap, id);
             // Update email preference
@@ -95,24 +105,6 @@ public class DACUserResource extends Resource {
             return Response.ok(uri).entity(dacUser).build();
         } catch (UserRoleHandlerException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
-    // TODO: Undocumented: See DUOS-403
-    @Deprecated // Use update instead
-    @PUT
-    @Path("/mainFields/{id}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    @PermitAll
-    public Response updateMainFields(@Context UriInfo info, String json, @PathParam("id") Integer id) {
-        DACUser dac = new DACUser(json);
-        try {
-            URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-            DACUser dacUser = dacUserAPI.updateDACUserById(dac, id);
-            return Response.ok(uri).entity(dacUser).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -243,6 +235,37 @@ public class DACUserResource extends Resource {
             userMap.put(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY, new DACUser(alternativeDataOwner.toString()));
         }
         return userMap;
+    }
+
+    /**
+     * Validate that the current authenticated user can access this resource.
+     * If the user has one of the provided roles, then access is allowed.
+     * If not, then the authenticated user must have the same identity as the
+     * `userId` parameter they are requesting information for.
+     *
+     * @param authedRoles Stream of UserRoles enums
+     * @param user        The AuthUser
+     * @param userId      The id of the DACUser the AuthUser is requesting access to
+     */
+    private void validateAuthedRoleUser(List<UserRoles> authedRoles, AuthUser user, Integer userId) {
+        DACUser authedDacUser = findByAuthUser(user);
+        List<Integer> authedRoleIds = authedRoles.stream().
+                map(UserRoles::getRoleId).
+                collect(Collectors.toList());
+        boolean authedUserHasRole = authedDacUser.getRoles().stream().
+                anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
+        if (!authedUserHasRole && !authedDacUser.getDacUserId().equals(userId)) {
+            throw new ForbiddenException("User does not have permission");
+        }
+    }
+
+    private DACUser findByAuthUser(AuthUser user) {
+        GoogleUser googleUser = user.getGoogleUser();
+        DACUser dacUser = dacUserAPI.describeDACUserByEmail(googleUser.getEmail());
+        if (dacUser == null) {
+            throw new NotFoundException("Unable to find user :" + user.getName());
+        }
+        return dacUser;
     }
 
 }
