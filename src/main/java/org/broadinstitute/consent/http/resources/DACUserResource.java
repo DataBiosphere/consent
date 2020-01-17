@@ -87,12 +87,12 @@ public class DACUserResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @PermitAll
-    public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer id) {
+    public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer userId) {
         Map<String, DACUser> userMap = constructUserMapFromJson(json);
         try {
-            validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), id);
-            URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-            DACUser dacUser = dacUserAPI.updateDACUserById(userMap, id);
+            validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);
+            URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
+            DACUser dacUser = dacUserAPI.updateDACUserById(userMap, userId);
             // Update email preference
             JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
             JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
@@ -100,8 +100,6 @@ public class DACUserResource extends Resource {
                     dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
             );
             return Response.ok(uri).entity(dacUser).build();
-        } catch (UserRoleHandlerException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -224,12 +222,8 @@ public class DACUserResource extends Resource {
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
         Map<String, DACUser> userMap = new HashMap<>();
         JsonElement updatedUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
-        JsonElement alternativeDataOwner = jsonObject.get(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY);
         if (updatedUser != null && !updatedUser.isJsonNull()) {
             userMap.put(DACUserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
-        }
-        if (alternativeDataOwner != null && !alternativeDataOwner.isJsonNull()) {
-            userMap.put(DACUserRolesHandler.ALTERNATIVE_OWNER_KEY, new DACUser(alternativeDataOwner.toString()));
         }
         return userMap;
     }

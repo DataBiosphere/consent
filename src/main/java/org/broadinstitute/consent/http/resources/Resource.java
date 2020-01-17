@@ -111,11 +111,11 @@ abstract public class Resource {
      * If not, then the authenticated user must have the same identity as the
      * `userId` parameter they are requesting information for.
      *
-     * @param authedRoles   Stream of UserRoles enums
+     * @param authedRoles   List of UserRoles enums
      * @param authedDacUser The authenticated DACUser
      * @param userId        The id of the DACUser the authenticated user is requesting access to
      */
-    void validateAuthedRoleUser(List<UserRoles> authedRoles, DACUser authedDacUser, Integer userId) {
+    void validateAuthedRoleUser(final List<UserRoles> authedRoles, final DACUser authedDacUser, final Integer userId) {
         List<Integer> authedRoleIds = authedRoles.stream().
                 map(UserRoles::getRoleId).
                 collect(Collectors.toList());

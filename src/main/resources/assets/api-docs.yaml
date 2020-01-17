@@ -1076,8 +1076,7 @@ paths:
           schema:
             $ref: '#/definitions/DACUser'
       tags:
-        - Roles
-        - DACUser
+        - User
       responses:
         200:
           description: Returns the created user.
@@ -1089,8 +1088,7 @@ paths:
       summary: describeAllUsers
       description: Returns all the users
       tags:
-        - Roles
-        - DACUser
+        - User
       responses:
         200:
           description: Returns the collection of all the users and their permissions.
@@ -1109,8 +1107,7 @@ paths:
           required: true
           type: string
       tags:
-        - DACUser
-        - Roles
+        - User
       responses:
         200:
           description: Returns the user.
@@ -1126,8 +1123,7 @@ paths:
           required: true
           type: string
       tags:
-        - DACUser
-        - Roles
+        - User
       responses:
         200:
           description: Response = User was deleted
@@ -1136,35 +1132,36 @@ paths:
   /api/dacuser/{id}:
     put:
       summary: update
-      description: Updates the user identified by the ID.
+      description: | 
+        Updates the user identified by the ID. Requires the authenticated user to have the same id 
+        as that of the user being updated except in the admin case - admins can update information 
+        for other users.
       parameters:
         - name: id
           in: path
-          description: The id of the user.
+          description: The id of the updated user
           required: true
           type: string
-        - name: dac
+        - name: user
           in: body
           required: true
           schema:
             type: object
             properties:
               updatedUser:
-                description: The user that is being updated
-                $ref: '#/definitions/DACUser'
-              alternativeDataOwnerUser:
-                description: Required if there is a user to delegate ownership to
+                description: The updated user information
                 $ref: '#/definitions/DACUser'
       tags:
-        - DACUser
-        - Roles
+        - User
       responses:
         200:
           description: Returns the updated user.
           schema:
             $ref: '#/definitions/DACUser'
         400:
-          description: Malformed entity.
+          description: Malformed user entity.
+        403:
+          description: User must have appropriate roles to update different users' information.
   /api/dacuser/status/{userId}:
     get:
       summary: getUserStatusById
@@ -1177,7 +1174,7 @@ paths:
           required: true
           type: number
       tags:
-        - DACUser
+        - User
       responses:
         200:
           description: Returns the user by status
@@ -1203,7 +1200,7 @@ paths:
             JSON object with a "status" member. Statuses allowed are "pending", "approved", or
             "rejected".
       tags:
-        - DACUser
+        - User
       responses:
         200:
           description: Returns the updated user
