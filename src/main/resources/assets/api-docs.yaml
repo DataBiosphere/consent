@@ -2029,6 +2029,76 @@ paths:
                   type: string
             500:
               description: Server error.
+  /api/datasetAssociation/{datasetId}:
+    get:
+      summary: Dataset Associations
+      description: Get all dataset associations
+      parameters:
+        - name: datasetId
+          in: path
+          description: dataset id
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: An array of dataset associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DatasetAssociation'
+    post:
+      summary: Create Dataset Associations
+      operationId: Create dataset associations for the provided dataset and users
+      parameters:
+        - name: datasetId
+          in: path
+          description: dataset id
+          required: true
+          type: integer
+          format: int32
+        - name: userIdList
+          in: body
+          description: list of user ids
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        201:
+          description: An array of created dataset associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DatasetAssociation'
+    put:
+      summary: Update Dataset Associations
+      operationId: Update dataset associations for the provided dataset and users
+      parameters:
+        - name: datasetId
+          in: path
+          description: dataset id
+          required: true
+          type: integer
+          format: int32
+        - name: userIdList
+          in: body
+          description: list of user ids
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        200:
+          description: An array of updated dataset associations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DatasetAssociation'
   /api/election/{id}:
     get:
       summary: describeElectionById
@@ -3049,6 +3119,18 @@ definitions:
       propertyValue:
         type: string
         description: Value of the Property.
+  DatasetAssociation:
+    type: object
+    properties:
+      datasetId:
+        type: integer
+        description: The dataset id
+      dacuserId:
+        type: integer
+        description: The user id
+      createDate:
+        type: string
+        description: Association creation date
   Dictionary:
     type: object
     properties:
