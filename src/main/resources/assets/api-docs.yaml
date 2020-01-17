@@ -2044,11 +2044,9 @@ paths:
         - Datasets
       responses:
         200:
-          description: An array of dataset associations
+          description: Map of associated and non-associated users
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/DatasetAssociation'
+            $ref: '#/definitions/DatasetAssociationMap'
     post:
       summary: Create Dataset Associations
       operationId: Create dataset associations for the provided dataset and users
@@ -2067,6 +2065,8 @@ paths:
             type: array
             items:
               type: integer
+      tags:
+        - Datasets
       responses:
         201:
           description: An array of created dataset associations
@@ -2092,6 +2092,8 @@ paths:
             type: array
             items:
               type: integer
+      tags:
+        - Datasets
       responses:
         200:
           description: An array of updated dataset associations
@@ -3131,6 +3133,21 @@ definitions:
       createDate:
         type: string
         description: Association creation date
+  DatasetAssociationMap:
+    type: object
+    properties:
+      associated_users:
+        description: Associated Users
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/DACUser'
+      not_associated_users:
+        description: Non-associated Users
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/DACUser'
   Dictionary:
     type: object
     properties:
