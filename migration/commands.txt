@@ -1,0 +1,26 @@
+LOAD DATABASE
+     FROM mysql://<user>:<password>@localhost:3306/consent
+     INTO pgsql://root:<password>@localhost:5432/consent
+WITH include drop
+CAST column access_rp.electionaccessid to bigint drop typemod,
+     column access_rp.electionrpid to bigint drop typemod,
+     column approval_expiration_time.user_id to bigint drop typemod,
+     column consentassociations.datasetid to bigint drop typemod,
+     column consents.dac_id to bigint drop typemod,
+     column datarequest.datasetid to bigint drop typemod,
+     column datarequest.purposeid to bigint drop typemod,
+     column datasetproperty.datasetid to bigint drop typemod,
+     column datasetproperty.propertykey to bigint drop typemod,
+     column dataset_audit.modifiedbyuser to bigint drop typemod,
+     column dataset_audit_property.dataset_audit_id to bigint drop typemod,
+     column dataset_user_association.dacuserid to bigint drop typemod,
+     column dataset_user_association.datasetid to bigint drop typemod,
+     column election.datasetid to bigint drop typemod,
+     column help_report.user_id to bigint drop typemod,
+     column researcher_property.userid to bigint drop typemod,
+     column user_role.dac_id to bigint drop typemod,
+     column user_role.role_id to bigint drop typemod,
+     column user_role.user_id to bigint drop typemod,
+     column vote.dacuserid to bigint drop typemod,
+     column vote.electionid to bigint drop typemod
+;
