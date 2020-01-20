@@ -802,7 +802,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>rest</artifactId>
-      <version>5.5.0</version>
+      <version>5.5.3</version>
     </dependency>
 
     <!-- Required for asynchronous elastic search rest queries -->
