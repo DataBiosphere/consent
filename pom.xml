@@ -19,7 +19,7 @@
     <jetty.version>9.4.26.v20200117</jetty.version>
     <owl.version>5.1.12</owl.version>
     <mysql.version>8.0.16</mysql.version>
-    <swagger.ui.version>2.2.8</swagger.ui.version>
+    <swagger.ui.version>3.24.3</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
