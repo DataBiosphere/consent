@@ -819,7 +819,7 @@
     <dependency>
       <groupId>org.eclipse.rdf4j</groupId>
       <artifactId>rdf4j-rio-trix</artifactId>
-      <version>3.0.2</version>
+      <version>3.0.4</version>
     </dependency>
 
     <dependency>
