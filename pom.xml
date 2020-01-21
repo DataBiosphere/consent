@@ -637,7 +637,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client-appengine</artifactId>
-      <version>1.21.0</version>
+      <version>1.30.7</version>
       <exclusions>
         <exclusion>
           <groupId>javax.servlet</groupId>
