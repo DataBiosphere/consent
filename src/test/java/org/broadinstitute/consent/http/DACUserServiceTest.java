@@ -23,10 +23,6 @@ public abstract class DACUserServiceTest extends AbstractTest {
         return path2Url(String.format("/dacuser/%s", id));
     }
 
-    public String validateDelegationPath(String role) {
-        return path2Url(String.format("dacuser/validateDelegation?role=" + role));
-    }
-
     public String statusValue(Integer userId ) {
         return path2Url(String.format("dacuser/status/%s", userId));
     }
