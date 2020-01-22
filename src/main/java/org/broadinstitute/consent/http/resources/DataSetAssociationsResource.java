@@ -25,7 +25,7 @@ public class DataSetAssociationsResource extends Resource {
 
     private final DataSetAssociationAPI api;
 
-    DataSetAssociationsResource() {
+    public DataSetAssociationsResource() {
         this.api = AbstractDataSetAssociationAPI.getInstance();
     }
 
