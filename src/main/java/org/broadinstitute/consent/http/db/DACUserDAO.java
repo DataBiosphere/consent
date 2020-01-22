@@ -75,10 +75,6 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId inner join roles r on r.roleId = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
     List<DACUser> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName, @Bind("emailPreference") Boolean emailPreference);
 
-    @SqlUpdate("update dacuser set displayName=:displayName where dacUserId = :id")
-    void updateDACUser(@Bind("displayName") String displayName,
-                          @Bind("id") Integer id);
-
     @SqlUpdate("update dacuser set email_preference = :emailPreference where dacUserId = :userId")
     void updateEmailPreference(@Bind("emailPreference") Boolean emailPreference, @Bind("userId") Integer userId);
 
