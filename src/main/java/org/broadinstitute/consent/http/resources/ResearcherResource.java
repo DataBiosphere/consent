@@ -13,7 +13,6 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -71,11 +70,11 @@ public class ResearcherResource extends Resource {
     @Path("{userId}")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER, CHAIRPERSON, MEMBER})
-    public Response describeAllResearcherProperties(@Auth AuthUser user, @PathParam("userId") Integer userId) {
+    public Response describeAllResearcherProperties(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
             List<UserRoles> authedRoles = Stream.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN).
                     collect(Collectors.toList());
-            validateAuthedRoleUser(authedRoles, user, userId);
+            validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
             return Response.ok(researcherService.describeResearcherPropertiesMap(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -99,35 +98,13 @@ public class ResearcherResource extends Resource {
     @Path("{userId}/dar")
     @Produces("application/json")
     @RolesAllowed({ADMIN, RESEARCHER})
-    public Response getResearcherPropertiesForDAR(@Auth AuthUser user, @PathParam("userId") Integer userId) {
+    public Response getResearcherPropertiesForDAR(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
             List<UserRoles> authedRoles = Collections.singletonList(UserRoles.ADMIN);
-            validateAuthedRoleUser(authedRoles, user, userId);
+            validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
             return Response.ok(researcherService.describeResearcherPropertiesForDAR(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
-        }
-    }
-
-    /**
-     * Validate that the current authenticated user can access this resource.
-     * If the user has one of the provided roles, then access is allowed.
-     * If not, then the authenticated user must have the same identity as the
-     * `userId` parameter they are requesting information for.
-     *
-     * @param authedRoles Stream of UserRoles enums
-     * @param user        The AuthUser
-     * @param userId      The id of the DACUser the AuthUser is requesting access to
-     */
-    private void validateAuthedRoleUser(List<UserRoles> authedRoles, AuthUser user, Integer userId) {
-        DACUser authedDacUser = findByAuthUser(user);
-        List<Integer> authedRoleIds = authedRoles.stream().
-                map(UserRoles::getRoleId).
-                collect(Collectors.toList());
-        boolean authedUserHasRole = authedDacUser.getRoles().stream().
-                anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
-        if (!authedUserHasRole && !authedDacUser.getDacUserId().equals(userId)) {
-            throw new ForbiddenException("User does not have permission");
         }
     }
 

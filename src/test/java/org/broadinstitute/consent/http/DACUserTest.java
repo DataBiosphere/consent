@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,8 +20,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -110,18 +107,6 @@ public class DACUserTest extends DACUserServiceTest {
     public void retrieveDACUserWithInvalidEmail() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND, getJson(client, dacUserPathByEmail(INVALID_USER_EMAIL)));
-    }
-
-    @Test
-    public void testUpdateDACUser() throws IOException {
-        Client client = ClientBuilder.newClient();
-        mockValidateTokenResponse();
-        DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
-        Map<String, Object> updateUserMap = new HashMap<>();
-        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, user);
-        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), updateUserMap));
-        user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(DACUser.class);
-        assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
     }
 
     @Test

@@ -137,18 +137,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateDACUserById(DACUser dac, Integer id) throws IllegalArgumentException, NotFoundException {
-        validateExistentUserById(id);
-        validateRequiredFields(dac);
-        try {
-            dacUserDAO.updateDACUser(dac.getEmail(), dac.getDisplayName(), id, dac.getAdditionalEmail());
-        } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email should be unique.");
-        }
-        return describeDACUserByEmail(dac.getEmail());
-    }
-
-    @Override
     public void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException {
         DACUser user = dacUserDAO.findDACUserByEmail(email);
         if (user == null) {
