@@ -781,7 +781,6 @@
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->
     <!-- For all `rdf4j-rio-*` libraries, pulling in directly to evict older, transitive dependencies -->
-    <!-- Pulling in directly to evict older, transitive dependencies -->
     <dependency>
       <groupId>org.eclipse.rdf4j</groupId>
       <artifactId>rdf4j-rio-binary</artifactId>
