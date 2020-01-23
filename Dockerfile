@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM openjdk:13
 
 # Standard apt-get cleanup.
 RUN apt-get -yq autoremove && \
