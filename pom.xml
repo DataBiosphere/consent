@@ -439,6 +439,7 @@
           <artifactId>asm-debug-all</artifactId>
         </exclusion>
       </exclusions>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -534,10 +535,23 @@
       <version>28.2-jre</version>
     </dependency>
 
+    <!-- Pulling in directly to evict older, transitive dependencies -->
+    <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
+      <version>1.9.4</version>
+    </dependency>
+
     <dependency>
       <groupId>com.opencsv</groupId>
       <artifactId>opencsv</artifactId>
       <version>4.6</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-beanutils</groupId>
+          <artifactId>commons-beanutils</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

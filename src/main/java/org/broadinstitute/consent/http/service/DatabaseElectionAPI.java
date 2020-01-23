@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.util.VisibleForTesting;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
