@@ -1,4 +1,4 @@
-# PostgreSQL Migration
+# Postgres Migration
 
 Helpful resources:
 * [Postgres Cheat sheet](https://www.postgresqltutorial.com/postgresql-cheat-sheet/)
@@ -11,7 +11,7 @@ Install [pgloader](https://pgloader.readthedocs.io/en/latest/)
 ```
 brew install pgloader
 ```
-Spin up a local copy of the database using this [compose file](postgresql.yaml) 
+Spin up a local copy of the database using this [compose file](postgres-migrate.yaml) 
 with appropriate secret values set up correctly.
 ```
 docker-compose -f postgres.yaml up
