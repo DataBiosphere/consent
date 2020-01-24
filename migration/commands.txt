@@ -1,6 +1,6 @@
 LOAD DATABASE
-     FROM mysql://<user>:<password>@localhost:3306/consent
-     INTO pgsql://root:<password>@localhost:5432/consent
+     FROM mysql://consent:<password>@localhost:3306/consent
+     INTO pgsql://consent:<password>@localhost:5432/consent
 WITH include drop
 CAST column access_rp.electionaccessid to bigint drop typemod,
      column access_rp.electionrpid to bigint drop typemod,
