@@ -75,8 +75,6 @@ public class ConsentModule extends AbstractModule {
     private final WorkspaceAuditDAO workspaceAuditDAO;
     private final AssociationDAO associationDAO;
 
-    public static final String DB_ENV = "postgresql";
-
     ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
         this.config = consentConfiguration;
         this.environment = environment;
@@ -84,7 +82,7 @@ public class ConsentModule extends AbstractModule {
                 .using(config.getJerseyClientConfiguration())
                 .build(this.getClass().getName());
 
-        this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), DB_ENV);
+        this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), "postgresql");
         this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
