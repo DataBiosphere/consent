@@ -1,5 +1,10 @@
 # PostgreSQL Migration
 
+Helpful resources:
+* [Postgres Cheat sheet](https://www.postgresqltutorial.com/postgresql-cheat-sheet/)
+* [Postgres Dockerhub](https://hub.docker.com/_/postgres)
+* [pgloader](https://pgloader.readthedocs.io/en/latest/)
+
 ## Local DB Migration 
 
 Install [pgloader](https://pgloader.readthedocs.io/en/latest/)
