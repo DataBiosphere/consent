@@ -3,17 +3,17 @@
 ## Local DB Migration 
 
 Install [pgloader](https://pgloader.readthedocs.io/en/latest/)
-```shell script
+```
 brew install pgloader
 ```
 Spin up a local copy of the database using this [compose file](postgresql.yaml) 
 with appropriate secret values set up correctly.
-```shell script
+```
 docker-compose -f postgres.yaml up
 ```
 
 Run the migration on a local database using this [commands file](commands.txt):
-```shell script
+```
 pgloader commands.txt 
 LOG pgloader version "3.6.1"
 LOG Data errors in '/private/tmp/pgloader/'
@@ -70,7 +70,7 @@ consent.accesselection_consentelection          0        168     1.2 kB         
                      Total import time          ✓       7473     3.0 MB          3.645s
 ```
 Dump that to a local file for testing:
-```shell script
+```
 pg_dump -h localhost -U consent -d consent > consent.sql
 ```
 
@@ -95,7 +95,7 @@ sqlproxy:
 ## Using the db locally:
 
 With this compose, spin up the exported db:
-```shell script
+```
 version:  "3.7"
 services:
   postgres:
