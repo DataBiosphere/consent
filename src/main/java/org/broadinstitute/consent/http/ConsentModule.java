@@ -82,7 +82,7 @@ public class ConsentModule extends AbstractModule {
                 .using(config.getJerseyClientConfiguration())
                 .build(this.getClass().getName());
 
-        this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), "mysql");
+        this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), "postgresql");
         this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
