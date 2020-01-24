@@ -153,5 +153,31 @@ consent=# \dt
 (28 rows)
 ```
 
-### TODO
-Test running a local instance of consent against this db. Document any code changes required.
+## Code Changes Required
+Running consent against the postgres export requires some configuration and code changes. 
+
+`consent.yaml` - change the driver and connection string:
+```
+database:
+  driverClass: org.postgresql.Driver
+  url: jdbc:postgresql://sqlproxy:5432/consent?requireSSL=false&useSSL=false
+```
+
+`ConsentModule.java` - change the driver name:
+```
+this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), "postgresql");
+```
+
+`pom.xml` changes - add the driver, remove mysql, and update `sql-maven-plugin`:
+```xml
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.9</version>
+    </dependency>
+```
+
+`ElectionDAO.findExpiredElections` needs a query update since datediff isn't supported:
+```
+DATE_PART('day', NOW()::timestamp) - DATE_PART('day', createDate::timestamp)
+```
