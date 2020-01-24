@@ -1,14 +1,14 @@
 version:  "3.7"
 services:
   postgres:
-    image: postgres:9.6.5
+    image: postgres:11-alpine
     container_name: postgres
     ports:
       - 5432:5432
     environment: # The following sets up a db by default
-      POSTGRES_PASSWORD: <root password>
-      POSTGRES_USER: <root user>
       POSTGRES_DB: consent
+      POSTGRES_USER: consent
+      POSTGRES_PASSWORD: <db pass>
   mysql:
     image: mysql:5.6
     container_name: mysql
@@ -17,7 +17,7 @@ services:
     volumes:
       - ./<conset db name>:/docker-entrypoint-initdb.d/dump.sql
     environment:
-      MYSQL_ROOT_PASSWORD: <password>
+      MYSQL_ROOT_PASSWORD: <root password>
       MYSQL_DATABASE: consent
-      MYSQL_USER: <db user>
+      MYSQL_USER: consent
       MYSQL_PASSWORD: <db pass>
