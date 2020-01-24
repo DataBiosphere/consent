@@ -165,7 +165,7 @@ Running consent against the postgres export requires some configuration and code
 ```
 database:
   driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://sqlproxy:5432/consent?requireSSL=false&useSSL=false
+  url: jdbc:postgresql://sqlproxy:5432/consent
 ```
 
 `ConsentModule.java` - change the driver name:
