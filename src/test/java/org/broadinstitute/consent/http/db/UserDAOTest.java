@@ -166,48 +166,6 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testGetMembersApprovedToReplace() {
-        DACUser member1 = createUserWithRole(UserRoles.MEMBER.getRoleId());
-        DACUser member2 = createUserWithRole(UserRoles.MEMBER.getRoleId());
-        DACUser member3 = createUserWithRole(UserRoles.MEMBER.getRoleId());
-        List<Integer> memberRoleIds = Collections.singletonList(UserRoles.MEMBER.getRoleId());
-
-        Collection<DACUser> users2 = userDAO.getMembersApprovedToReplace(member1.getDacUserId(), memberRoleIds);
-        Assert.assertFalse(users2.isEmpty());
-
-        Collection<DACUser> users3 = userDAO.getMembersApprovedToReplace(member2.getDacUserId(), memberRoleIds);
-        Assert.assertFalse(users3.isEmpty());
-
-        Collection<DACUser> users4 = userDAO.getMembersApprovedToReplace(member3.getDacUserId(), memberRoleIds);
-        Assert.assertFalse(users4.isEmpty());
-    }
-
-    @Test
-    public void testGetDataOwnersApprovedToReplace() {
-        DACUser owner1 = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-        DACUser owner2 = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-        DACUser owner3 = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-
-        Collection<DACUser> users2 = userDAO.getDataOwnersApprovedToReplace(owner1.getDacUserId());
-        Assert.assertFalse(users2.isEmpty());
-
-        Collection<DACUser> users3 = userDAO.getDataOwnersApprovedToReplace(owner2.getDacUserId());
-        Assert.assertFalse(users3.isEmpty());
-
-        Collection<DACUser> users4 = userDAO.getDataOwnersApprovedToReplace(owner3.getDacUserId());
-        Assert.assertFalse(users4.isEmpty());
-    }
-
-    @Test
-    public void testUpdateDACUser_case2() {
-        DACUser user = createUser();
-        String displayName = RandomStringUtils.random(10, true, false);
-        userDAO.updateDACUser(displayName, user.getDacUserId());
-        DACUser user2 = userDAO.findDACUserById(user.getDacUserId());
-        Assert.assertEquals(displayName, user2.getDisplayName());
-    }
-
-    @Test
     public void testUpdateEmailPreference() {
         // No-op ... tested in `testDescribeUsersByRoleAndEmailPreference()`
     }

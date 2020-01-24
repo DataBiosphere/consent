@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service.users;
 
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.user.ValidateDelegationResponse;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 import javax.mail.MessagingException;
@@ -24,19 +23,13 @@ public interface DACUserAPI {
 
     DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
-    DACUser updateDACUserById(DACUser dac, Integer userId) throws IllegalArgumentException, NotFoundException;
-
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
 
     Collection<DACUser> describeUsers();
 
-    ValidateDelegationResponse validateNeedsDelegation(DACUser user, String role);
-
     DACUser updateUserStatus(String status, Integer userId);
 
     DACUser updateUserRationale(String rationale, Integer userId);
-
-    DACUser updateNameById(DACUser user, Integer id);
 
     void updateEmailPreference(boolean preference, Integer userId);
 

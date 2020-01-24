@@ -133,9 +133,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete from vote where electionId IN (<electionId>) and dacUserId = :userId")
     void removeVotesByElectionIdAndUser(@BindIn("electionId") List<Integer> electionId, @Bind("userId") Integer userId);
 
-    @SqlQuery("select count(*) from vote v where v.electionId IN (<electionIds>) and v.type = :type group by v.electionId")
-    List<Integer> findVoteCountForElections(@BindIn("electionIds") List<Integer> openElectionIdsForThisUser, @Bind("type") String type);
-
     @SqlUpdate(" update vote v set v.dacUserId = :toDOUserId, v.vote = null, v.createDate = null, v.updateDate = null"
             + " where v.dacUserId = :fromDOUserId "
             + " and v.electionId IN (<electionIds>)")

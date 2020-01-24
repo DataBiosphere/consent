@@ -9,7 +9,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,15 +19,9 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class DACUserTest extends DACUserServiceTest {
@@ -117,33 +110,6 @@ public class DACUserTest extends DACUserServiceTest {
     }
 
     @Test
-    public void testUpdateDACUser() throws IOException {
-        Client client = ClientBuilder.newClient();
-        mockValidateTokenResponse();
-        DACUser user = testCreate(createDacUser("Updated Chair Person", CHAIR_2_USER_EMAIL, CHAIRPERSON));
-        Map<String, Object> updateUserMap = new HashMap<>();
-        updateUserMap.put(DACUserRolesHandler.UPDATED_USER_KEY, user);
-        checkStatus(OK, put(client, dacUserPathById(user.getDacUserId()), updateUserMap));
-        user = getJson(client, dacUserPathByEmail(user.getEmail())).readEntity(DACUser.class);
-        assertThat(user.getDisplayName()).isEqualTo("Updated Chair Person");
-    }
-
-    @Test
-    public void testValidateDacUserDelegationNotNeeded() throws IOException {
-        Client client = ClientBuilder.newClient();
-        DACUser user = getJson(client, dacUserPathByEmail(DAC_USER_EMAIL)).readEntity(DACUser.class);
-        user.setEmail(DAC_USER_EMAIL);
-        UserRole role = new UserRole();
-        role.setName(UserRoles.MEMBER.getRoleName());
-        user.setRoles(Collections.singletonList(role));
-        HashMap response = post(client, validateDelegationPath(UserRoles.MEMBER.getRoleName()), user).readEntity(HashMap.class);
-        boolean needsDelegation = (Boolean) response.get("needsDelegation");
-        List<DACUser> dacUsers = (List<DACUser>) response.get("delegateCandidates");
-        assertThat(dacUsers).isEmpty();
-        assertThat(needsDelegation).isFalse();
-    }
-
-    @Test
     public void testGetUserStatusWithInvalidId() throws IOException {
         Client client = ClientBuilder.newClient();
         checkStatus(NOT_FOUND, getJson(client, statusValue(42525)));
@@ -175,39 +141,6 @@ public class DACUserTest extends DACUserServiceTest {
         DACUser postUser = new DACUser();
         postUser.setStatus("Test");
         Response response = put(client, statusValue(4), postUser);
-        checkStatus(BAD_REQUEST, response);
-    }
-
-    @Test
-    public void testUpdateDisplayNameSuccess() throws IOException {
-        final String displayName = "Test";
-        Client client = ClientBuilder.newClient();
-        DACUser user = new DACUser();
-        user.setDisplayName(displayName);
-        user.setDacUserId(4);
-        Response response = put(client, dacUserPath()+ "/name/4", user);
-        checkStatus(OK, response);
-        DACUser dacUser = response.readEntity(DACUser.class);
-        assertEquals(dacUser.getDisplayName(), displayName);
-    }
-
-    @Test
-    public void testUpdateDisplayNameWithInvalidUser() throws IOException {
-        final String displayName = "Test";
-        Client client = ClientBuilder.newClient();
-        DACUser user = new DACUser();
-        user.setDisplayName(displayName);
-        user.setDacUserId(4);
-        Response response = put(client, dacUserPath()+ "/name/99", user);
-        checkStatus(NOT_FOUND, response);
-    }
-
-    @Test
-    public void testUpdateDisplayNameWithEmptyName() throws IOException {
-        Client client = ClientBuilder.newClient();
-        DACUser user = new DACUser();
-        user.setDacUserId(4);
-        Response response = put(client, dacUserPath() + "/name/4", user);
         checkStatus(BAD_REQUEST, response);
     }
 
