@@ -16,6 +16,14 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
+import liquibase.Contexts;
+import liquibase.LabelExpression;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
@@ -150,6 +158,8 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration.Dynamic;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -183,6 +193,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     @Override
     public void run(ConsentConfiguration config, Environment env) {
 
+        try {
+            initializeLiquibase(config);
+        } catch (LiquibaseException le) {
+            LOGGER.error("LiquibaseException: " + le);
+        } catch (SQLException sql) {
+            LOGGER.error("SQLException: " + sql);
+        }
+
         // TODO: Update all services to use an injector.
         // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI (see AbstractConsentAPI).
         final Injector injector = Guice.createInjector(new ConsentModule(config, env));
@@ -209,7 +227,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = injector.getProvider(ApprovalExpirationTimeDAO.class).get();
         final DataSetAuditDAO dataSetAuditDAO = injector.getProvider(DataSetAuditDAO.class).get();
         final MailServiceDAO mailServiceDAO = injector.getProvider(MailServiceDAO.class).get();
-        final ResearcherPropertyDAO  researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
+        final ResearcherPropertyDAO researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
         final WorkspaceAuditDAO workspaceAuditDAO = injector.getProvider(WorkspaceAuditDAO.class).get();
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
@@ -236,7 +254,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
-        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO ,matchDAO, mongoInstance, dataSetDAO);
+        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO, mongoInstance, dataSetDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractEmailNotifierAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance());
         DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
@@ -375,4 +393,18 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         filter.setInitParameter("exposeHeaders", "Content-Type,Pragma,Cache-Control,Expires");
         filter.setInitParameter("allowCredentials", "true");
     }
+
+    private void initializeLiquibase(ConsentConfiguration config) throws LiquibaseException, SQLException {
+        java.sql.Connection connection = DriverManager.getConnection(
+                config.getDataSourceFactory().getUrl(),
+                config.getDataSourceFactory().getUser(),
+                config.getDataSourceFactory().getPassword()
+        );
+        String filenameUpdate = "update DATABASECHANGELOG set FILENAME = REPLACE(FILENAME, 'src/main/resources/', '') where FILENAME like 'src/main/resources/%';";
+        connection.prepareStatement(filenameUpdate).execute();
+        Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+        Liquibase liquibase = new Liquibase("changelog-master.xml", new ClassLoaderResourceAccessor(), database);
+        liquibase.update(new Contexts(), new LabelExpression());
+    }
+
 }
