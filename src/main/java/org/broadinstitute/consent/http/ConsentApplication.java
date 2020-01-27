@@ -19,6 +19,7 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.changelog.DatabaseChangeLog;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -158,6 +159,7 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration.Dynamic;
 import javax.ws.rs.client.Client;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.EnumSet;
@@ -395,15 +397,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     }
 
     private void initializeLiquibase(ConsentConfiguration config) throws LiquibaseException, SQLException {
-        java.sql.Connection connection = DriverManager.getConnection(
+        Connection connection = DriverManager.getConnection(
                 config.getDataSourceFactory().getUrl(),
                 config.getDataSourceFactory().getUser(),
                 config.getDataSourceFactory().getPassword()
         );
-        String filenameUpdate = "update DATABASECHANGELOG set FILENAME = REPLACE(FILENAME, 'src/main/resources/', '') where FILENAME like 'src/main/resources/%';";
-        connection.prepareStatement(filenameUpdate).execute();
         Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
-        Liquibase liquibase = new Liquibase("changelog-master.xml", new ClassLoaderResourceAccessor(), database);
+        DatabaseChangeLog changeLog = new DatabaseChangeLog();
+        changeLog.setLogicalFilePath("changelog-master.xml");
+        Liquibase liquibase = new Liquibase(changeLog, new ClassLoaderResourceAccessor(), database);
         liquibase.update(new Contexts(), new LabelExpression());
     }
 
