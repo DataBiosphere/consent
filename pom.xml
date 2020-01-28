@@ -37,6 +37,11 @@
       </testResource>
       <testResource>
         <directory>src/main/resources</directory>
+        <excludes>
+          <exclude>changesets/*</exclude>
+          <exclude>changelog-master.xml</exclude>
+          <exclude>migrations.xml</exclude>
+        </excludes>
       </testResource>
     </testResources>
 
@@ -178,7 +183,7 @@
             <configuration>
               <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
               <dropFirst>true</dropFirst>
-              <changeLogFile>src/main/resources/changelog-master.xml</changeLogFile>
+              <changeLogFile>changelog-master.xml</changeLogFile>
               <driver>${driver}</driver>
               <url>${url}</url>
               <username>${username}</username>
@@ -452,7 +457,7 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-junit4</artifactId>
-      <version>2.0.4</version>
+      <version>2.0.5</version>
       <scope>test</scope>
     </dependency>
 
@@ -492,22 +497,6 @@
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
       <version>3.8.5</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-migrations</artifactId>
-      <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.mattbertolini</groupId>
-          <artifactId>liquibase-slf4j</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.liquibase</groupId>
-          <artifactId>liquibase-core</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
