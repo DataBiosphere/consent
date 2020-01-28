@@ -9,10 +9,8 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.chained.ChainedAuthFilter;
-import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
-import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -373,12 +371,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
         bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
         bootstrap.addBundle(new MultiPartBundle());
-        bootstrap.addBundle(new MigrationsBundle<ConsentConfiguration>() {
-            @Override
-            public DataSourceFactory getDataSourceFactory(ConsentConfiguration configuration) {
-                return configuration.getDataSourceFactory();
-            }
-        });
         bootstrap.addBundle(new DBIExceptionsBundle());
         bootstrap.addBundle(new JobsBundle());
     }
