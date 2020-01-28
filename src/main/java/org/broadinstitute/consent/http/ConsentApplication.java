@@ -403,9 +403,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 config.getDataSourceFactory().getPassword()
         );
         Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
-        DatabaseChangeLog changeLog = new DatabaseChangeLog();
-        changeLog.setLogicalFilePath("changelog-master.xml");
-        Liquibase liquibase = new Liquibase(changeLog, new ClassLoaderResourceAccessor(), database);
+        Liquibase liquibase = new Liquibase("changelog-master.xml", new ClassLoaderResourceAccessor(), database);
         liquibase.update(new Contexts(), new LabelExpression());
     }
 
