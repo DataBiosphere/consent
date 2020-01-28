@@ -196,10 +196,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         try {
             initializeLiquibase(config);
-        } catch (LiquibaseException le) {
-            LOGGER.error("LiquibaseException: " + le);
-        } catch (SQLException sql) {
-            LOGGER.error("SQLException: " + sql);
+        } catch (LiquibaseException | SQLException e) {
+            LOGGER.error("Exception initializing liquibase: " + e);
         }
 
         // TODO: Update all services to use an injector.
