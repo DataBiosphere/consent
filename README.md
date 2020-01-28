@@ -1,7 +1,7 @@
 Consent Web Services
 ====================
 
-[![Build Status](https://travis-ci.org/DataBiosphere/consent.svg?branch=develop)](https://travis-ci.org/DataBiosphere/consent)
+[![Build Status](https://circleci.com/gh/DataBiosphere/consent.svg?style=svg)](https://circleci.com/gh/DataBiosphere/consent)
 [![Coverage Status](https://coveralls.io/repos/github/DataBiosphere/consent/badge.svg?branch=develop)](https://coveralls.io/github/DataBiosphere/consent?branch=develop)
 
 # Consent Web Services API

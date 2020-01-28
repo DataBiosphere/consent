@@ -1,0 +1,63 @@
+version: 2.1
+
+executors:
+  jdk:
+    docker:
+      - image: circleci/openjdk:8-jdk-stretch
+
+jobs:
+  test:
+    executor: jdk
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run: mvn dependency:go-offline
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+      - run:
+          name: Clean & Test
+          command: mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=${COVERALLS_REPO_TOKEN}
+      - store_test_results:
+          path: target/surefire-reports
+      - store_test_results:
+          path: target/site/jacoco
+  owasp:
+    executor: jdk
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run: mvn dependency:go-offline
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+      - run:
+          name: OWASP Dependency Checks
+          command: mvn dependency-check:check
+      - store_artifacts:
+          path: target/dependency-check-report.html
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *" # use cron syntax to set the schedule
+          filters:
+            branches:
+              only: develop
+    jobs:
+      - owasp
