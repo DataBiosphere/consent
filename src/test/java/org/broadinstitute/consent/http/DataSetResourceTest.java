@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http;
 
 import com.google.common.io.Resources;
-import com.google.gson.Gson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.glassfish.jersey.media.multipart.MultiPart;
