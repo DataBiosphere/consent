@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.VoteStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
@@ -170,6 +171,11 @@ public class PendingCaseService {
     private void setGeneralFields(PendingCase pendingCase, Election election, Vote vote, boolean isReminderSent) {
         List<Vote> votes = voteDAO.findDACVotesByElectionId(election.getElectionId());
         List<Vote> pendingVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
+        Dac dac = electionDAO.findDacForElection(election.getElectionId());
+        if (dac != null) {
+            dac = dacService.findById(dac.getDacId());
+            pendingCase.setDac(dac);
+        }
         pendingCase.setTotalVotes(votes.size());
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());

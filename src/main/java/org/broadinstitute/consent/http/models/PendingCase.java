@@ -58,6 +58,9 @@ public class PendingCase implements Comparable<PendingCase>{
     @JsonProperty
     private String projectTitle;
 
+    @JsonProperty
+    private Dac dac;
+
 
     public Date getCreateDate() {
         return createDate;
@@ -195,6 +198,14 @@ public class PendingCase implements Comparable<PendingCase>{
 
     public void setProjectTitle(String projectTitle) {
         this.projectTitle = projectTitle;
+    }
+
+    public Dac getDac() {
+        return dac;
+    }
+
+    public void setDac(Dac dac) {
+        this.dac = dac;
     }
 
     @Override
