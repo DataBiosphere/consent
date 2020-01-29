@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http;
 
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -23,6 +23,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DataSetResourceTest extends DataSetServiceTest {
@@ -47,10 +49,8 @@ public class DataSetResourceTest extends DataSetServiceTest {
                 .header("Authorization", "Bearer access_token")
                 .post(Entity.entity(mp, mp.getMediaType()));
         ArrayList<String> result = response.readEntity(new GenericType<ArrayList<String>>() {});
-        assertTrue(result.size() == 2);
-        assertTrue(response.getStatus() == (BAD_REQUEST));
-        assertTrue(result.get(0).equals("A problem has occurred while uploading datasets - Contact Support"));
-        assertTrue(result.get(1).equals("The file type is not the expected one. Please download the Dataset Spreadsheet Model from the 'Add Datasets' window."));
+        assertFalse(result.isEmpty());
+        assertEquals(response.getStatus(), BAD_REQUEST);
     }
 
     @Test
