@@ -54,7 +54,7 @@ public class DataSetFileParser {
                 ds.setProperties(properties);
                 datasets.add(ds);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger().error("An unexpected error had occurred in DataSetFileParser", e);
             errors.add("An unexpected error had occurred in DataSetFileParser - Contact Support");
         }
@@ -66,6 +66,15 @@ public class DataSetFileParser {
 
     private List<String> validateHeaderFields(String[] record, List<String> keys) {
         List<String> errors = new ArrayList<>();
+        if (record == null) {
+            errors.add("Invalid records");
+        }
+        if (keys == null) {
+            errors.add("Invalid keys");
+        }
+        if (!errors.isEmpty()) {
+            return errors;
+        }
         if ((record.length < keys.size()) || (record.length > keys.size())) {
             errors.add(String.format(MISSING_COLUMNS, keys.size()));
         } else {
