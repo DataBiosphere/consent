@@ -11,13 +11,13 @@ Install [pgloader](https://pgloader.readthedocs.io/en/latest/)
 ```
 brew install pgloader
 ```
-Spin up a local copy of the database using this [compose file](postgres-migrate.yaml) 
+Spin up a local copy of the database using this [compose file](postgres-migrate-local.yaml) 
 with appropriate secret values set up correctly.
 ```shell script
 docker-compose -f postgres.yaml up
 ```
 
-Run the migration on a local database using this [commands file](commands.txt):
+Then run pgloader using this [commands file](commands.txt) updated to include passwords appropriate to the local environment:
 ```
 pgloader commands.txt 
 LOG pgloader version "3.6.1"
@@ -83,50 +83,9 @@ pg_dump -h localhost -U consent -d consent > consent.sql
 
 Spin up a compose that establishes two connections, one to the remote mysql, one to the remote postgres.
 
-```yaml
-version:  "3.7"
-services:
-  postgres:
-    image: broadinstitute/cloudsqlproxy:1.11_20180808
-    ports:
-      - 127.0.0.1:5432:5432/tcp
-    container_name: remotePostgres
-    env_file:
-      - ./postgresproxy.env
-    volumes:
-      - ./sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
-    restart: always
-  mysql:
-    image: broadinstitute/cloudsqlproxy:1.11_20180808
-    ports:
-      - 127.0.0.1:3306:3306/tcp
-    container_name: remoteMysql
-    env_file:
-      - ./mysqlproxy.env
-    volumes:
-      - ./sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
-    restart: always
-```
+Spin up a local copy of the database using this [compose file](postgres-migrate-remote.yaml) with appropriate secret values set up correctly.
 
-Postgres proxy env file:
-```
-GOOGLE_PROJECT=broad-dsde-dev
-CLOUDSQL_ZONE=us-central1
-CLOUDSQL_INSTANCE=<replace with actual instance name for env>
-CLOUDSQL_MAXCONNS=300
-PORT=5432
-```
-
-Mysql proxy env file:
-```
-GOOGLE_PROJECT=broad-dsde-dev
-CLOUDSQL_ZONE=us-central1
-CLOUDSQL_INSTANCE=<replace with actual instance name for env>
-CLOUDSQL_MAXCONNS=300
-PORT=3306
-```
-
-Then run pgloader with a commands file updated to include passwords appropriate to environment.
+Then run pgloader using this [commands file](commands.txt) updated to include passwords appropriate to environment:
 ```shell script
 pgloader commands.txt 
 LOG pgloader version "3.6.1"
@@ -312,67 +271,6 @@ count(*)
 select count(*) from workspace_audit
 count(*)
 170
-```
-
-## Using the db locally:
-
-With this compose, spin up the exported db:
-```yaml
-version:  "3.7"
-services:
-  postgres:
-    image: postgres:11-alpine
-    container_name: postgres
-    ports:
-      - 5432:5432
-    volumes:
-      - ./consent.sql:/docker-entrypoint-initdb.d/consent.sql
-    environment:
-      POSTGRES_DB: consent
-      POSTGRES_USER: consent
-      POSTGRES_PASSWORD: <db pass>
-```
-
-And then connect:
-```shell script
-$> psql -h localhost -U consent -d consent
-Password for user consent: 
-psql (12.1, server 11.6)
-Type "help" for help.
-
-consent=# \dt
-                     List of relations
- Schema  |              Name              | Type  |  Owner  
----------+--------------------------------+-------+---------
- consent | access_rp                      | table | consent
- consent | accesselection_consentelection | table | consent
- consent | approval_expiration_time       | table | consent
- consent | consentassociations            | table | consent
- consent | consents                       | table | consent
- consent | dac                            | table | consent
- consent | dacuser                        | table | consent
- consent | databasechangelog              | table | consent
- consent | databasechangeloglock          | table | consent
- consent | datarequest                    | table | consent
- consent | dataset                        | table | consent
- consent | dataset_audit                  | table | consent
- consent | dataset_audit_property         | table | consent
- consent | dataset_user_association       | table | consent
- consent | datasetproperty                | table | consent
- consent | dictionary                     | table | consent
- consent | election                       | table | consent
- consent | email_entity                   | table | consent
- consent | email_type                     | table | consent
- consent | help_report                    | table | consent
- consent | match_entity                   | table | consent
- consent | researcher_property            | table | consent
- consent | researchpurpose                | table | consent
- consent | roles                          | table | consent
- consent | user_role                      | table | consent
- consent | user_role_bak                  | table | consent
- consent | vote                           | table | consent
- consent | workspace_audit                | table | consent
-(28 rows)
 ```
 
 ## Code Changes Required

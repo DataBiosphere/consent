@@ -1,0 +1,30 @@
+version:  "3.7"
+services:
+  postgres:
+    image: broadinstitute/cloudsqlproxy:1.11_20180808
+    ports:
+      - 127.0.0.1:5432:5432/tcp
+    container_name: remotePostgres
+    environment:
+      GOOGLE_PROJECT: broad-dsde-dev
+      CLOUDSQL_ZONE: us-central1
+      CLOUDSQL_INSTANCE: <replace with actual postgres instance name for env>
+      CLOUDSQL_MAXCONNS: 300
+      PORT: 5432
+    volumes:
+      - ./sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
+    restart: always
+  mysql:
+    image: broadinstitute/cloudsqlproxy:1.11_20180808
+    ports:
+      - 127.0.0.1:3306:3306/tcp
+    container_name: remoteMysql
+    environment:
+      GOOGLE_PROJECT: broad-dsde-dev
+      CLOUDSQL_ZONE: us-central1
+      CLOUDSQL_INSTANCE: <replace with actual mysql instance name for env>
+      CLOUDSQL_MAXCONNS: 300
+      PORT: 3306
+    volumes:
+      - ./sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
+    restart: always
