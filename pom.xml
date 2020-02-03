@@ -254,9 +254,9 @@
         <version>1.5</version>
         <dependencies>
           <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgres.version}</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.version}</version>
           </dependency>
           <dependency>
             <groupId>org.hsqldb</groupId>
@@ -563,9 +563,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>${postgres.version}</version>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${mysql.version}</version>
     </dependency>
 
     <dependency>
