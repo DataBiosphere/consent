@@ -143,7 +143,8 @@ consent.accesselection_consentelection          0        177     1.3 kB         
 
 ### Validation
 
-The row_counts script will show all of the rows. Run it against the original db and manually compare with the report that pgloader provides.
+The [row_counts.sql](row_counts.sql) script will show all of the row counts for the tables in the same order that `pgloder` loaded them. 
+Run it against the original db and manually compare with the report that `pgloader` provides.
 
 ```shell script
 docker run -v ${PWD}:/working -v $HOME:/root -it \
@@ -155,7 +156,7 @@ docker run -v ${PWD}:/working -v $HOME:/root -it \
 ```
 
 Output: 
-```shell script
+```
 [wmd08-a62:~/develop/consent/migration]$ docker run -v ${PWD}:/working -v $HOME:/root -it  broadinstitute/dsde-toolbox mysql-connect.sh -p firecloud -e dev -a consent -f /working/row_counts.sql 
 
 select count(*) from access_rp
@@ -274,11 +275,13 @@ count(*)
 ## Code Changes Required
 Running consent against the postgres export requires some configuration and code changes. 
 
-`consent.yaml` - change the driver and connection string:
+`consent.yaml` - change the driver, connection string, and user/password info:
 ```yaml
 database:
   driverClass: org.postgresql.Driver
   url: jdbc:postgresql://sqlproxy:5432/consent
+  user: consent
+  password: <replace with env specific password>
 ```
 
 `ConsentModule.java` - change the driver name:
