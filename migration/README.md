@@ -81,9 +81,7 @@ pg_dump -h localhost -U consent -d consent > consent.sql
 
 ## Remote DB Migration
 
-Spin up a compose that establishes two connections, one to the remote mysql, one to the remote postgres.
-
-Spin up a local copy of the database using this [compose file](postgres-migrate-remote.yaml) with appropriate secret values set up correctly.
+Spin up a compose that establishes two connections, one to the remote mysql, one to the remote postgres using this [compose file](postgres-migrate-remote.yaml) with appropriate secret values set up correctly.
 
 Then run pgloader using this [commands file](commands.txt) updated to include passwords appropriate to environment:
 ```shell script
