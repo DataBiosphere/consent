@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.Mail;
+import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

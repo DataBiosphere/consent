@@ -1,9 +1,24 @@
 package org.broadinstitute.consent.http.mail;
 
-import com.sendgrid.*;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.mail.message.*;
+import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
+import org.broadinstitute.consent.http.mail.message.CollectMessage;
+import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
+import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
+import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
+import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.HelpReportMessage;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -64,7 +79,10 @@ public class MailService extends AbstractMailServiceAPI {
                 for (String key : sendGrid.getRequestHeaders().keySet())
                     request.addHeader(key, sendGrid.getRequestHeaders().get(key));
                 // send
-                sendGrid.makeCall(request);
+                Response response = sendGrid.makeCall(request);
+                if (response.getStatusCode() >= 400) {
+                    throw new MessagingException(response.getBody());
+                }
             } catch (IOException ex) {
                 logger().error("Exception sending email: " + ex.getMessage());
                 throw new MessagingException(ex.getMessage());

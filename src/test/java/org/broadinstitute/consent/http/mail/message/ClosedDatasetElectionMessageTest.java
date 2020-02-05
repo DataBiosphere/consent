@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.Mail;
+import com.sendgrid.helpers.mail.Mail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -10,6 +10,7 @@ import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.Collections;
+
 import static org.junit.Assert.assertTrue;
 
 public class ClosedDatasetElectionMessageTest {
