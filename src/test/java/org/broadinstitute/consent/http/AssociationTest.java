@@ -403,7 +403,7 @@ public class AssociationTest extends AbstractTest {
 
     private String setupConsent() throws IOException {
         Client client = ClientBuilder.newClient();
-        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Consent rec = new ConsentBuilder().
                 setRequiresManualReview(false).
                 setUseRestriction(new Everything()).

@@ -23,8 +23,8 @@ public class ConsentAcceptanceTest extends AbstractTest {
 
     private final UseRestriction everything = new Everything();
     private final UseRestriction nothing = new Nothing();
-    private DataUseDTO generalUse = new DataUseBuilder().setGeneralUse(true).build();
-    private DataUseDTO notGeneralUse = new DataUseBuilder().setGeneralUse(false).build();
+    private DataUse generalUse = new DataUseBuilder().setGeneralUse(true).build();
+    private DataUse notGeneralUse = new DataUseBuilder().setGeneralUse(false).build();
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =

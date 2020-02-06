@@ -33,7 +33,7 @@ public class DatabaseReviewResultsAPITest {
     private DatabaseReviewResultsAPI databaseReviewResultsAPI;
 
     private Election sampleElection = new Election();
-    private DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    private DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     private Consent consent = new ConsentBuilder().
             setRequiresManualReview(false).
             setUseRestriction(new And(new Named("DOID:1"), new Named("DOID:2"))).

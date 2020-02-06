@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.After;
@@ -80,7 +80,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        DataUseDTO dto = converter.parseDataUsePurpose("{  }");
+        DataUse dto = converter.parseDataUsePurpose("{  }");
         UseRestriction restriction = converter.parseUseRestriction(dto);
         assertNotNull(restriction);
         assertTrue(restriction.equals(new Everything()));
@@ -95,7 +95,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        DataUseDTO dto = converter.parseDataUsePurpose("{  }");
+        DataUse dto = converter.parseDataUsePurpose("{  }");
         UseRestriction restriction = converter.parseUseRestriction(dto);
         assertNull(restriction);
     }
@@ -128,7 +128,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-        DataUseDTO dto = converter.parseDataUsePurpose(json);
+        DataUse dto = converter.parseDataUsePurpose(json);
         assertNotNull(dto);
         assertTrue(dto.getMethodsResearch());
         assertTrue(dto.getPopulationStructure());
@@ -153,7 +153,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
                 "\"poa\":false, " +
                 "\"hmb\":false " +
                 "}";
-        DataUseDTO dto = converter.parseDataUsePurpose(json);
+        DataUse dto = converter.parseDataUsePurpose(json);
         assertNull(dto.getMethodsResearch());
         assertNull(dto.getPopulationStructure());
         assertNull(dto.getControlSetOption());
@@ -175,7 +175,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
                 "\"poa\":true, " +
                 "\"hmb\":true " +
                 "}";
-        DataUseDTO dto = converter.parseDataUsePurpose(json);
+        DataUse dto = converter.parseDataUsePurpose(json);
         assertTrue(dto.getMethodsResearch());
         assertTrue(dto.getPopulationStructure());
         assertTrue(dto.getControlSetOption().equalsIgnoreCase("Yes"));

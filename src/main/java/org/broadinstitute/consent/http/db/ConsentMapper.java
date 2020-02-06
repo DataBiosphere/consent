@@ -1,8 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
@@ -33,7 +32,7 @@ public class ConsentMapper implements ResultSetMapper<Consent> {
         } catch (IOException e) {
             throw new SQLException(e);
         }
-        consent.setDataUse(DataUseDTO.parseDataUse(r.getString("dataUse")).orElse(null));
+        consent.setDataUse(DataUse.parseDataUse(r.getString("dataUse")).orElse(null));
         consent.setName(r.getString("name"));
         consent.setCreateDate(r.getTimestamp("createDate"));
         consent.setSortDate(r.getTimestamp("sortDate"));

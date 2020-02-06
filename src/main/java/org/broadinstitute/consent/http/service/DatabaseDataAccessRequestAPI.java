@@ -24,7 +24,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -239,7 +239,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public UseRestriction createStructuredResearchPurpose(Document document) {
-        DataUseDTO dto = converter.parseDataUsePurpose(document.toJson());
+        DataUse dto = converter.parseDataUsePurpose(document.toJson());
         return converter.parseUseRestriction(dto);
     }
 

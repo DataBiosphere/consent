@@ -6,14 +6,13 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
@@ -122,7 +121,7 @@ public class ConsentResourceTest extends AbstractTest {
 
     private String createConsent(Client client) throws IOException {
         String consentPath = path2Url("/consent");
-        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Consent consent = generateNewConsent(new Everything(), dataUse);
         consent.setName(name);
         consent.setTranslatedUseRestriction("translated");

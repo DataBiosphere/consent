@@ -10,11 +10,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-@SuppressWarnings({"unused", "SameParameterValue"})
+@SuppressWarnings({"unused", "SameParameterValue", "WeakerAccess"})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DataUseDTO {
+public class DataUse {
 
-    private static final Logger logger = Logger.getLogger(DataUseDTO.class);
+    private static final Logger logger = Logger.getLogger(DataUse.class);
 
     private Boolean generalUse;
     private Boolean hmbResearch;
@@ -46,6 +46,12 @@ public class DataUseDTO {
     private Boolean vulnerablePopulations;
     private Boolean psychologicalTraits;
     private Boolean nonBiomedical;
+    private Boolean manualReview;
+    private Boolean geneticStudiesOnly;
+    private Boolean publicationResults;
+    private Boolean genomicResults;
+    private String genomicSummaryResults;
+    private Boolean collaborationInvestigators;
 
     public Boolean getGeneralUse() {
         return generalUse;
@@ -287,21 +293,69 @@ public class DataUseDTO {
         this.nonBiomedical = nonBiomedical;
     }
 
+    public Boolean getManualReview() {
+        return manualReview;
+    }
+
+    public void setManualReview(Boolean manualReview) {
+        this.manualReview = manualReview;
+    }
+
+    public Boolean getGeneticStudiesOnly() {
+        return geneticStudiesOnly;
+    }
+
+    public void setGeneticStudiesOnly(Boolean geneticStudiesOnly) {
+        this.geneticStudiesOnly = geneticStudiesOnly;
+    }
+
+    public Boolean getPublicationResults() {
+        return publicationResults;
+    }
+
+    public void setPublicationResults(Boolean publicationResults) {
+        this.publicationResults = publicationResults;
+    }
+
+    public Boolean getGenomicResults() {
+        return genomicResults;
+    }
+
+    public void setGenomicResults(Boolean genomicResults) {
+        this.genomicResults = genomicResults;
+    }
+
+    public String getGenomicSummaryResults() {
+        return genomicSummaryResults;
+    }
+
+    public void setGenomicSummaryResults(String genomicSummaryResults) {
+        this.genomicSummaryResults = genomicSummaryResults;
+    }
+
+    public Boolean getCollaborationInvestigators() {
+        return collaborationInvestigators;
+    }
+
+    public void setCollaborationInvestigators(Boolean collaborationInvestigators) {
+        this.collaborationInvestigators = collaborationInvestigators;
+    }
+
     @Override
     public String toString() {
         return new GsonBuilder().create().toJson(this);
     }
 
-    public static Optional<DataUseDTO> parseDataUse(String str) {
+    public static Optional<DataUse> parseDataUse(String str) {
         if (str == null || str.isEmpty()) {
             return Optional.empty();
         } else {
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                ObjectReader reader = mapper.readerFor(DataUseDTO.class);
+                ObjectReader reader = mapper.readerFor(DataUse.class);
                 return Optional.of(reader.readValue(str));
             } catch (IOException e) {
-                logger.error(String.format("DataUseDTO parse exception on \"%s\"", str));
+                logger.error(String.format("DataUse parse exception on \"%s\"", str));
                 return Optional.empty();
             }
         }
