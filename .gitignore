@@ -149,7 +149,6 @@ hs_err_pid*
 
 ### OSX ###
 .DS_STORE
-/config/
 /127.0.0.1/
 /data/
 /es_temp/
@@ -158,3 +157,8 @@ hs_err_pid*
 automation/src/test/resources/application.conf
 automation/src/test/resources/logback.xml
 automation/src/test/resources/accounts/*.json
+
+## APP
+
+/config/
+/config_postgres/
