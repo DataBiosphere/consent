@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.Mail;
+import com.sendgrid.helpers.mail.Mail;
 
 import javax.mail.MessagingException;
 import java.io.Writer;

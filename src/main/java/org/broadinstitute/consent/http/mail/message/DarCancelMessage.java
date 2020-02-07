@@ -1,11 +1,10 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.Mail;
+import com.sendgrid.helpers.mail.Mail;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public class DarCancelMessage extends MailMessage {
