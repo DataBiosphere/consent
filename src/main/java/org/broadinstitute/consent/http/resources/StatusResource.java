@@ -27,9 +27,9 @@ public class StatusResource {
     @Produces("application/json")
     public Response getStatus() {
         Map<String, HealthCheck.Result> results = healthChecks.runHealthChecks();
-        HealthCheck.Result mysql = results.getOrDefault("mysql", HealthCheck.Result.unhealthy("Unable to access mysql database"));
+        HealthCheck.Result postgresql = results.getOrDefault("postgresql", HealthCheck.Result.unhealthy("Unable to access postgresql database"));
         HealthCheck.Result mongodb = results.getOrDefault("mongodb", HealthCheck.Result.unhealthy("Unable to access mongodb database"));
-        if (mysql.isHealthy() && mongodb.isHealthy()) {
+        if (postgresql.isHealthy() && mongodb.isHealthy()) {
             return Response.ok(results).build();
         } else {
             results.entrySet().

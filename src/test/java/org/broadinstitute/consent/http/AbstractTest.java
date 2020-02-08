@@ -263,7 +263,7 @@ abstract public class AbstractTest extends ResourcedTest {
     protected DBI getApplicationJdbi() {
         ConsentConfiguration configuration = rule().getConfiguration();
         Environment environment = rule().getEnvironment();
-        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), "mysql");
+        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), "postgresql");
     }
 
     String consentPath() {

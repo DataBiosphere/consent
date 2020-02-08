@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 
 public class StatusResourceTest {
 
-    private Result mysql;
+    private Result postgresql;
     private Result mongodb;
 
     @Mock
@@ -24,7 +24,7 @@ public class StatusResourceTest {
 
     @Before
     public void setUp() {
-        mysql = Result.healthy();
+        postgresql = Result.healthy();
         mongodb = Result.healthy();
     }
 
@@ -37,7 +37,7 @@ public class StatusResourceTest {
     @Test
     public void testHealthy() {
         SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put("mysql", mysql);
+        checks.put("postgresql", postgresql);
         checks.put("mongodb", mongodb);
         StatusResource statusResource = initStatusResource(checks);
 
@@ -47,9 +47,9 @@ public class StatusResourceTest {
 
     @Test
     public void testUnhealthyMysql() {
-        mysql = Result.unhealthy(new Exception("Cannot connect to the mysql database"));
+        postgresql = Result.unhealthy(new Exception("Cannot connect to the postgresql database"));
         SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put("mysql", mysql);
+        checks.put("postgresql", postgresql);
         checks.put("mongodb", mongodb);
         StatusResource statusResource = initStatusResource(checks);
 
@@ -61,7 +61,7 @@ public class StatusResourceTest {
     public void testUnhealthyMongo() {
         mongodb = Result.unhealthy(new Exception("Cannot connect to the mongo server"));
         SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put("mysql", mysql);
+        checks.put("postgresql", postgresql);
         checks.put("mongodb", mongodb);
         StatusResource statusResource = initStatusResource(checks);
 
