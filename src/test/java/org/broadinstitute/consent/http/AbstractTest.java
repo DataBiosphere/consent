@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentBuilder;
-import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.validate.ValidateResponse;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
@@ -49,7 +49,6 @@ import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 /**
  * An abstract superclass for Tests that involve the BOSS API, includes helper methods for setting up
@@ -212,7 +211,7 @@ abstract public class AbstractTest extends ResourcedTest {
         Mockito.when(client.target(Mockito.contains(urlMatch))).thenReturn(webTarget);
     }
 
-    Consent generateNewConsent(UseRestriction useRestriction, DataUse dataUse) {
+    Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {
         Timestamp createDate = new Timestamp(new Date().getTime());
         return new ConsentBuilder().
                 setRequiresManualReview(false).
@@ -264,7 +263,7 @@ abstract public class AbstractTest extends ResourcedTest {
     protected DBI getApplicationJdbi() {
         ConsentConfiguration configuration = rule().getConfiguration();
         Environment environment = rule().getEnvironment();
-        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV);
+        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), "postgresql");
     }
 
     String consentPath() {

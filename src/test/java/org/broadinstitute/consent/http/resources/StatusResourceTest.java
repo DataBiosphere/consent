@@ -12,7 +12,6 @@ import javax.ws.rs.core.Response;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 import static org.mockito.Mockito.when;
 
 public class StatusResourceTest {
@@ -38,7 +37,7 @@ public class StatusResourceTest {
     @Test
     public void testHealthy() {
         SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put(DB_ENV, postgresql);
+        checks.put("postgresql", postgresql);
         checks.put("mongodb", mongodb);
         StatusResource statusResource = initStatusResource(checks);
 
@@ -50,7 +49,7 @@ public class StatusResourceTest {
     public void testUnhealthyMysql() {
         postgresql = Result.unhealthy(new Exception("Cannot connect to the postgresql database"));
         SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put(DB_ENV, postgresql);
+        checks.put("postgresql", postgresql);
         checks.put("mongodb", mongodb);
         StatusResource statusResource = initStatusResource(checks);
 
@@ -62,7 +61,7 @@ public class StatusResourceTest {
     public void testUnhealthyMongo() {
         mongodb = Result.unhealthy(new Exception("Cannot connect to the mongo server"));
         SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put(DB_ENV, postgresql);
+        checks.put("postgresql", postgresql);
         checks.put("mongodb", mongodb);
         StatusResource statusResource = initStatusResource(checks);
 

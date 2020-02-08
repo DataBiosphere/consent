@@ -10,8 +10,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-
 @Path("status")
 public class StatusResource {
 
@@ -29,7 +27,7 @@ public class StatusResource {
     @Produces("application/json")
     public Response getStatus() {
         Map<String, HealthCheck.Result> results = healthChecks.runHealthChecks();
-        HealthCheck.Result postgresql = results.getOrDefault(DB_ENV, HealthCheck.Result.unhealthy("Unable to access postgresql database"));
+        HealthCheck.Result postgresql = results.getOrDefault("postgresql", HealthCheck.Result.unhealthy("Unable to access postgresql database"));
         HealthCheck.Result mongodb = results.getOrDefault("mongodb", HealthCheck.Result.unhealthy("Unable to access mongodb database"));
         if (postgresql.isHealthy() && mongodb.isHealthy()) {
             return Response.ok(results).build();
