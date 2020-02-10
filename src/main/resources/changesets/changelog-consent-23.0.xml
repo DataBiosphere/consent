@@ -6,11 +6,13 @@
 
 
     <changeSet author="vvicario" id="84">
+        <validCheckSum>ANY</validCheckSum>
         <insert tableName="roles">
             <column name="roleId" value="6"/>
             <column name="name" value="DataOwner"/>
         </insert>
         <insert tableName="electiontype">
+            <column name="typeId" value="4"/>
             <column name="type" value="DataSet"/>
         </insert>
     </changeSet>
@@ -56,15 +58,17 @@
     </changeSet>
 
     <changeSet author="vvicario" id="88">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
             <column name="datasetId" type="bigint"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="vvicario" id="89">
+        <validCheckSum>ANY</validCheckSum>
         <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="election"
                                  constraintName="fkDataSetElection" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataSetId"
                                  referencedTableName="dataset" referencesUniqueColumn="false"/>
     </changeSet>
 
