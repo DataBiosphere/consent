@@ -28,7 +28,7 @@ jobs:
       - store_test_results:
           path: target/site/jacoco
   owasp:
-    executor: jdk
+    machine: true
     steps:
       - checkout
       - restore_cache:
