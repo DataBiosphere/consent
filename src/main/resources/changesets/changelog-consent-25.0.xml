@@ -22,7 +22,8 @@
     </changeSet>
 
     <changeSet author="vvicario" id="93">
-        <dropColumn columnName="electiontype"
+        <validCheckSum>ANY</validCheckSum>
+        <dropColumn columnName="electionType"
                     tableName="election"/>
         <renameColumn tableName="election" columnDataType="varchar(255)"
                       newColumnName="electionType"
