@@ -5,6 +5,7 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="grushton" id="134">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="user_role_new">
             <column name="user_role_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -12,7 +13,7 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false"
                              foreignKeyName="fk_user_role_user_id"
-                             referencedColumnNames="dacUserid"
+                             referencedColumnNames="dacUserId"
                              referencedTableName="dacuser" />
             </column>
             <column name="role_id" type="bigint">
@@ -31,7 +32,7 @@
             <column name="status" type="int" defaultValue="0"/>
             <column name="rationale" type="text"/>
         </createTable>
-        <sql>
+        <sql dbms="hsql, mysql">
             insert into user_role_new (user_id, role_id, email_preference, status, rationale) select distinct dacUserId, roleId, email_preference, status, rationale from user_role
         </sql>
         <rollback>
