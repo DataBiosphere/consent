@@ -48,9 +48,11 @@
 
     <changeSet author="vvicario" id="127">
         <validCheckSum>ANY</validCheckSum>
-        <sql dbms="hsql, mysql">
-            insert into dictionary (key, required, receiveOrder) values ('Consent ID', FALSE, 10);
-        </sql>
+        <insert tableName="dictionary" dbms="hsql, mysql">
+            <column name="key" value="Consent ID"/>
+            <column name="required" valueBoolean="false"/>
+            <column name="receiveOrder" value="10"/>
+        </insert>
     </changeSet>
 
     <changeSet author="vvicario" id="128">
