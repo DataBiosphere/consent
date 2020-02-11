@@ -34,11 +34,10 @@
     </changeSet>
 
     <changeSet author="vvicario" id="125">
-        <update tableName="dictionary">
-            <column name="key" value="Sample Collection ID"> </column>
-            <column name="required" valueBoolean="false"> </column>
-            <where>receiveOrder = 9</where>
-        </update>
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsql, mysql">
+            update dictionary set key = 'Sample Collection ID', required = FALSE where receiveOrder = 9;
+        </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="126">
@@ -48,11 +47,10 @@
     </changeSet>
 
     <changeSet author="vvicario" id="127">
-        <insert tableName="dictionary">
-            <column name="key" value="Consent ID"/>
-            <column name="required" valueBoolean="false"/>
-            <column name="receiveOrder" value="10"/>
-        </insert>
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsql, mysql">
+            insert into dictionary (key, required, receiveOrder) values ('Consent ID', FALSE, 10);
+        </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="128">
