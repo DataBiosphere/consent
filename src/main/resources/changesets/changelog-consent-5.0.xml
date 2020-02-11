@@ -5,12 +5,11 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="ssaucedo" id="30">
-        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consents">
             <column name="name" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="structureddatauseletter" type="text">
+            <column name="structuredDataUseLetter" type="text">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
@@ -20,7 +19,7 @@
     <changeSet author="ssaucedo" id="31">
         <validCheckSum>ANY</validCheckSum>
         <sql dbms="mysql">
-            update consents t1, consents t2 set t1.name = t2.consentid where t1.consentid = t2.consentid
+            update consents t1, consents t2 set t1.name = t2.consentId where t1.consentId = t2.consentId
         </sql>
     </changeSet>
 

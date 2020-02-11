@@ -26,7 +26,8 @@
 
 
     <changeSet author="vvicario" id="124">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsqldb, mysql">
             UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
             INSERT INTO dataset(objectId) SELECT ca.objectId FROM consentassociations ca where dataSetId is null;
             UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
@@ -35,7 +36,7 @@
 
     <changeSet author="vvicario" id="125">
         <validCheckSum>ANY</validCheckSum>
-        <sql dbms="hsql, mysql">
+        <sql dbms="hsqldb, mysql">
             update dictionary set key = 'Sample Collection ID', required = FALSE where receiveOrder = 9;
         </sql>
     </changeSet>
@@ -48,7 +49,7 @@
 
     <changeSet author="vvicario" id="127">
         <validCheckSum>ANY</validCheckSum>
-        <insert tableName="dictionary" dbms="hsql, mysql">
+        <insert tableName="dictionary" dbms="hsqldb, mysql">
             <column name="key" value="Consent ID"/>
             <column name="required" valueBoolean="false"/>
             <column name="receiveOrder" value="10"/>
@@ -75,7 +76,8 @@
     </changeSet>
 
     <changeSet author="vvicario" id="131">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsqldb, mysql">
             UPDATE dataset SET alias = 2 where name = 'Melanoma_Regev';
             UPDATE dataset SET alias = 1 where name = 'Melanoma-Regev-Izar-Garraway-DFCI-ICR';
         </sql>

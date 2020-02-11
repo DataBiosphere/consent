@@ -5,69 +5,62 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="60">
-        <validCheckSum>ANY</validCheckSum>
-        <addColumn tableName="matchentity">
-            <column name="createdate" type="DATETIME"/>
+        <addColumn tableName="matchEntity">
+            <column name="createDate" type="DATETIME"></column>
         </addColumn>
     </changeSet>
 
     <changeSet id="61" author="vvicario">
-        <validCheckSum>ANY</validCheckSum>
-        <createTable tableName="accessrp">
+        <createTable tableName="accessRp">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="electionaccessid" type="bigint">
+            <column name="electionAccessId" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="electionrpid" type="bigint">
+            <column name="electionRPId" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet author="vvicario" id="62">
-        <validCheckSum>ANY</validCheckSum>
-        <addForeignKeyConstraint baseColumnNames="electionaccessid" baseTableName="accessrp"
+        <addForeignKeyConstraint baseColumnNames="electionAccessId" baseTableName="accessRp"
                                  constraintName="fkElectionAcess" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="electionid"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="electionId"
                                  referencedTableName="election" referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="63">
-        <validCheckSum>ANY</validCheckSum>
-        <addForeignKeyConstraint baseColumnNames="electionrpid" baseTableName="accessrp"
+        <addForeignKeyConstraint baseColumnNames="electionRPId" baseTableName="accessRp"
                                  constraintName="fkElectionRP" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="electionid"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="electionId"
                                  referencedTableName="election" referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="64">
-        <validCheckSum>ANY</validCheckSum>
         <insert tableName="electiontype">
-            <column name="typeid" value="3"/>
+            <column name="typeId" value="3"/>
             <column name="type" value="RP"/>
         </insert>
     </changeSet>
 
     <changeSet author="vvicario" id="65">
-        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="vote">
-            <column name="type"  type="varchar(255)"/>
+            <column name="type"  type="varchar(255)"></column>
         </addColumn>
     </changeSet>
 
     <changeSet author="vvicario" id="66">
         <validCheckSum>ANY</validCheckSum>
         <sql dbms="hsqldb, mysql">
-            update vote set type = 'DAC' where isfinalaccessvote = 0;
-            update vote set type = 'FINAL' where isfinalaccessvote = 1;
+            update vote set type = 'DAC' where isFinalAccessVote = 0;
+            update vote set type = 'FINAL' where isFinalAccessVote = 1;
         </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="67">
-        <validCheckSum>ANY</validCheckSum>
-        <dropColumn tableName="vote" columnName="isfinalaccessvote"/>
+        <dropColumn tableName="vote" columnName="isFinalAccessVote"/>
     </changeSet>
 
 
