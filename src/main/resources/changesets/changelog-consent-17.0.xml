@@ -5,7 +5,8 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="71">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="mysql">
             INSERT vote(createDate, electionId, rationale, type, vote, dacUserId)
             SELECT e.finalVoteDate, e.electionId, e.finalRationale, 'CHAIRPERSON', e.finalVote,
             (select du.dacUserId from dacuser du inner join user_role ur on du.dacUserId = ur.dacUserId and ur.roleId = 2) dacUserId

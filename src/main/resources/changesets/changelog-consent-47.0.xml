@@ -32,7 +32,7 @@
             <column name="status" type="int" defaultValue="0"/>
             <column name="rationale" type="text"/>
         </createTable>
-        <sql dbms="hsql, mysql">
+        <sql dbms="hsqldb, mysql">
             insert into user_role_new (user_id, role_id, email_preference, status, rationale) select distinct dacUserId, roleId, email_preference, status, rationale from user_role
         </sql>
         <rollback>

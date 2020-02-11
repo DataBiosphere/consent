@@ -6,10 +6,11 @@
 
 
     <changeSet author="vvicario" id="91">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
             <column name="type" type="varchar(255)"/>
         </addColumn>
-        <sql dbms="hsql, mysql">
+        <sql dbms="mysql">
             update election  set type = "DataAccess" where electionType = 1;
             update election  set type = "TranslateDUL" where electionType = 2;
             update election  set type = "RP" where electionType = 3;

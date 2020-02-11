@@ -52,7 +52,8 @@
     </changeSet>
 
     <changeSet author="vvicario" id="66">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsqldb, mysql">
             update vote set type = 'DAC' where isFinalAccessVote = 0;
             update vote set type = 'FINAL' where isFinalAccessVote = 1;
         </sql>

@@ -17,7 +17,8 @@
 
 
     <changeSet author="ssaucedo" id="31">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="mysql">
             update consents t1, consents t2 set t1.name = t2.consentId where t1.consentId = t2.consentId
         </sql>
     </changeSet>

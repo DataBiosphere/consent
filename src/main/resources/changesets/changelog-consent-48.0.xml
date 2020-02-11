@@ -10,7 +10,7 @@
         <addColumn tableName="dacuser">
             <column name="email_preference" type="boolean" defaultValueBoolean="true" />
         </addColumn>
-        <sql dbms="hsql, mysql">
+        <sql dbms="hsqldb, mysql">
             update dacuser set email_preference = false where dacUserId in (select distinct user_id from user_role where email_preference = false)
         </sql>
         <rollback>

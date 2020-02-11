@@ -5,7 +5,8 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="grushton" id="132">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsqldb, mysql">
             UPDATE consents SET dataUse = '{ "diseaseRestrictions": [ "http://purl.obolibrary.org/obo/DOID_4961" ], "populationOriginsAncestry": true, "controlSetOption": "Yes", "genomicPhenotypicData": "Yes" }' where consentId = '7db478df-35cc-441c-942a-a54ae23bae39';
             UPDATE consents SET dataUse = '{ "hmbResearch": true, "genomicPhenotypicData": "Yes" }' where consentId = '79c29af0-6710-41aa-ba45-65412b9726ac';
             UPDATE consents SET dataUse = '{ "diseaseRestrictions": [ "http://purl.obolibrary.org/obo/DOID_77" ], "populationOriginsAncestry": true, "commercialUse": false, "methodsResearch": true, "controlSetOption": "Yes", "ethicsApprovalRequired": true, "other": "Requestor must agree to make results of studies using the data available to \nthe larger scientific community." }' where consentId = '90539faf-35ca-4915-b82f-8968ddd8787e';

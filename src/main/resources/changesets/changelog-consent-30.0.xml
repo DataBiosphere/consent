@@ -5,7 +5,8 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="106">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql dbms="hsqldb, mysql">
             update consents set useRestriction = REPLACE(useRestriction, 'DURPO', 'DUOS')
         </sql>
     </changeSet>
