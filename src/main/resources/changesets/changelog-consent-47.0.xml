@@ -13,13 +13,13 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false"
                              foreignKeyName="fk_user_role_user_id"
-                             referencedColumnNames="dacuserid"
+                             referencedColumnNames="dacUserId"
                              referencedTableName="dacuser" />
             </column>
             <column name="role_id" type="bigint">
                 <constraints nullable="false"
                              foreignKeyName="fk_user_role_role_id"
-                             referencedColumnNames="roleid"
+                             referencedColumnNames="roleId"
                              referencedTableName="roles" />
             </column>
             <column name="dac_id" type="bigint">
@@ -32,8 +32,8 @@
             <column name="status" type="int" defaultValue="0"/>
             <column name="rationale" type="text"/>
         </createTable>
-        <sql>
-            insert into user_role_new (user_id, role_id, email_preference, status, rationale) select distinct dacuserid, roleid, email_preference, status, rationale from user_role
+        <sql dbms="hsql, mysql">
+            insert into user_role_new (user_id, role_id, email_preference, status, rationale) select distinct dacUserId, roleId, email_preference, status, rationale from user_role
         </sql>
         <rollback>
             <dropTable tableName="user_role_new"/>
