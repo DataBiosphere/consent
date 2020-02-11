@@ -49,6 +49,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 /**
  * An abstract superclass for Tests that involve the BOSS API, includes helper methods for setting up
@@ -263,7 +264,7 @@ abstract public class AbstractTest extends ResourcedTest {
     protected DBI getApplicationJdbi() {
         ConsentConfiguration configuration = rule().getConfiguration();
         Environment environment = rule().getEnvironment();
-        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), "postgresql");
+        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV);
     }
 
     String consentPath() {
