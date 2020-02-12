@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DatabaseConsentAPITest extends AbstractTest {
 
-    private DataUseDTO generalUse = new DataUseBuilder().setGeneralUse(true).build();
+    private DataUse generalUse = new DataUseBuilder().setGeneralUse(true).build();
     private final UseRestriction everything = new Everything();
     private static final String CONSENT_ID = "testId";
     private static final String CONSENT_DULNAME = "consent-dul";
@@ -130,7 +130,7 @@ public class DatabaseConsentAPITest extends AbstractTest {
         checkStatus(OK, delete(client, electionConsentPathById(consentId, electionId)));
     }
 
-    private Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {
+    private Consent generateNewConsent(UseRestriction useRestriction, DataUse dataUse) {
         Timestamp createDate = new Timestamp(new Date().getTime());
         return new ConsentBuilder().
                 setConsentId(CONSENT_ID).

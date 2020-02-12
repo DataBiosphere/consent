@@ -190,7 +190,7 @@ public class ConsentsServiceTest extends AbstractTest {
 
     private String postConsent(Client client) throws IOException {
         String consentPath = path2Url("/consent");
-        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Consent consent = generateNewConsent(new Everything(), dataUse);
         Response response = checkStatus(CREATED, post(client, consentPath, consent));
         String createdLocation = checkHeader(response, "Location");

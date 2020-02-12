@@ -23,7 +23,7 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentBuilder;
-import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.validate.ValidateResponse;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
@@ -212,7 +212,7 @@ abstract public class AbstractTest extends ResourcedTest {
         Mockito.when(client.target(Mockito.contains(urlMatch))).thenReturn(webTarget);
     }
 
-    Consent generateNewConsent(UseRestriction useRestriction, DataUseDTO dataUse) {
+    Consent generateNewConsent(UseRestriction useRestriction, DataUse dataUse) {
         Timestamp createDate = new Timestamp(new Date().getTime());
         return new ConsentBuilder().
                 setRequiresManualReview(false).

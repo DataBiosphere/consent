@@ -6,14 +6,15 @@ import java.util.List;
  * Syntactic sugar for creating a DataUse object.
  * Copied from org.broadinstitute.dsde.consent.ontology.resources.model.DataUseBuilder in Consent-Ontology
  */
+@SuppressWarnings("unused")
 public class DataUseBuilder {
-    private DataUseDTO du;
+    private DataUse du;
     
     public DataUseBuilder() {
-        du = new DataUseDTO();
+        du = new DataUse();
     }
     
-    public DataUseDTO build() {
+    public DataUse build() {
         return du;
     }
     
@@ -167,4 +168,35 @@ public class DataUseBuilder {
         du.setNonBiomedical(nonBiomedical);
         return this;
     }
+
+    public DataUseBuilder setManualReview(Boolean manualReview) {
+        du.setManualReview(manualReview);
+        return this;
+    }
+
+    public DataUseBuilder setGeneticStudiesOnly(Boolean geneticStudiesOnly) {
+        du.setGeneticStudiesOnly(geneticStudiesOnly);
+        return this;
+    }
+
+    public DataUseBuilder setPublicationResults(Boolean publicationResults) {
+        du.setPublicationResults(publicationResults);
+        return this;
+    }
+
+    public DataUseBuilder setGenomicResults(Boolean genomicResults) {
+        du.setGenomicResults(genomicResults);
+        return this;
+    }
+
+    public DataUseBuilder setGenomicSummaryResults(String genomicSummaryResults) {
+        du.setGenomicSummaryResults(genomicSummaryResults);
+        return this;
+    }
+
+    public DataUseBuilder setCollaborationInvestigators(Boolean collaborationInvestigators) {
+        du.setCollaborationInvestigators(collaborationInvestigators);
+        return this;
+    }
+
 }

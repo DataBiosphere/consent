@@ -50,7 +50,7 @@ public class Consent {
     public String translatedUseRestriction;
 
     @JsonProperty
-    public DataUseDTO dataUse;
+    public DataUse dataUse;
 
     @JsonProperty
     public String groupName;
@@ -191,12 +191,12 @@ public class Consent {
     }
 
     @JsonProperty
-    public DataUseDTO getDataUse() {
+    public DataUse getDataUse() {
         return dataUse;
     }
 
     @JsonProperty
-    public void setDataUse(DataUseDTO dataUse) {
+    public void setDataUse(DataUse dataUse) {
         this.dataUse = dataUse;
     }
 
