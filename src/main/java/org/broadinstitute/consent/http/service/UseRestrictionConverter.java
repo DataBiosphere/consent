@@ -94,9 +94,9 @@ public class UseRestrictionConverter {
         return dataUse;
     }
 
-    public UseRestriction parseUseRestriction(DataUse dto) {
+    public UseRestriction parseUseRestriction(DataUse dataUse) {
         WebTarget target = client.target(servicesConfiguration.getDARTranslateUrl());
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dto.toString()));
+        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()));
         if (response.getStatus() == 200) {
             try {
                 return response.readEntity(UseRestriction.class);
