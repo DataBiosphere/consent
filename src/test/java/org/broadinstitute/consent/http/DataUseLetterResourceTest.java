@@ -5,8 +5,8 @@ import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.DataUseDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -182,7 +182,7 @@ public class DataUseLetterResourceTest extends AbstractTest {
 
     private String setupConsent(String dul) throws IOException {
         Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
-        DataUseDTO dataUse = new DataUseBuilder().setGeneralUse(true).build();
+        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Consent rec = generateNewConsent(new Everything(), dataUse);
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");

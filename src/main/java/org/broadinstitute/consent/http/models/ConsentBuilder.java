@@ -68,7 +68,7 @@ public class ConsentBuilder {
         return this;
     }
 
-    public ConsentBuilder setDataUse(DataUseDTO dataUse) {
+    public ConsentBuilder setDataUse(DataUse dataUse) {
         this.consent.setDataUse(dataUse);
         return this;
     }

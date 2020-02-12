@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.models.DataUseDTO;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,21 +34,21 @@ public class UseRestrictionConverter {
     }
 
     @SuppressWarnings("unchecked")
-    public DataUseDTO parseDataUsePurpose(String json) {
+    public DataUse parseDataUsePurpose(String json) {
         Map<String, Object> form = parseAsMap(json);
-        DataUseDTO dataUseDTO = new DataUseDTO();
+        DataUse dataUse = new DataUse();
 
         //
         //    Research related entries
         //
         if (Boolean.valueOf(form.getOrDefault("methods", false).toString())) {
-            dataUseDTO.setMethodsResearch(true);
+            dataUse.setMethodsResearch(true);
         }
         if (Boolean.valueOf(form.getOrDefault("population", false).toString())) {
-            dataUseDTO.setPopulationStructure(true);
+            dataUse.setPopulationStructure(true);
         }
         if (Boolean.valueOf(form.getOrDefault("controls", false).toString())) {
-            dataUseDTO.setControlSetOption("Yes");
+            dataUse.setControlSetOption("Yes");
         }
 
         //
@@ -56,7 +56,7 @@ public class UseRestrictionConverter {
         //
         ArrayList<HashMap<String, String>> ontologies = (ArrayList<HashMap<String, String>>) form.get("ontologies");
         if (CollectionUtils.isNotEmpty(ontologies)) {
-            dataUseDTO.setDiseaseRestrictions(
+            dataUse.setDiseaseRestrictions(
                     ontologies.stream().map(hashMap -> hashMap.get("id")).collect(Collectors.toList())
             );
         }
@@ -65,7 +65,7 @@ public class UseRestrictionConverter {
         //    gender, age and commercial status entries
         //
         boolean forProfitOnly = Boolean.valueOf(form.getOrDefault("forProfit", false).toString());
-        dataUseDTO.setCommercialUse(forProfitOnly);
+        dataUse.setCommercialUse(forProfitOnly);
 
         // limited to one gender + children analysis
         boolean oneGenderOnly = Boolean.valueOf(form.getOrDefault("onegender", false).toString());
@@ -74,29 +74,29 @@ public class UseRestrictionConverter {
 
         if (oneGenderOnly) {
             if (selectedGender.equalsIgnoreCase("M"))
-                dataUseDTO.setGender("Male");
+                dataUse.setGender("Male");
             else if (selectedGender.equalsIgnoreCase("F"))
-                dataUseDTO.setGender("Female");
+                dataUse.setGender("Female");
         }
 
         if (pediatricsOnly) {
-            dataUseDTO.setPediatric(true);
+            dataUse.setPediatric(true);
         }
 
         if (Boolean.valueOf(form.getOrDefault("poa", false).toString())) {
-            dataUseDTO.setPopulationOriginsAncestry(true);
+            dataUse.setPopulationOriginsAncestry(true);
         }
 
         if (Boolean.valueOf(form.getOrDefault("hmb", false).toString())) {
-            dataUseDTO.setHmbResearch(true);
+            dataUse.setHmbResearch(true);
         }
 
-        return dataUseDTO;
+        return dataUse;
     }
 
-    public UseRestriction parseUseRestriction(DataUseDTO dto) {
+    public UseRestriction parseUseRestriction(DataUse dataUse) {
         WebTarget target = client.target(servicesConfiguration.getDARTranslateUrl());
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dto.toString()));
+        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()));
         if (response.getStatus() == 200) {
             try {
                 return response.readEntity(UseRestriction.class);
