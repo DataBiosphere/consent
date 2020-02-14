@@ -7,19 +7,20 @@
     <changeSet author="vvicario" id="71">
         <validCheckSum>ANY</validCheckSum>
         <sql dbms="mysql">
-            INSERT vote(createDate, electionId, rationale, type, vote, dacUserId)
-            SELECT e.finalVoteDate, e.electionId, e.finalRationale, 'CHAIRPERSON', e.finalVote,
-            (select du.dacUserId from dacuser du inner join user_role ur on du.dacUserId = ur.dacUserId and ur.roleId = 2) dacUserId
+            INSERT vote(createdate, electionid, rationale, type, vote, dacuserid)
+            SELECT e.finalvotedate, e.electionid, e.finalrationale, 'CHAIRPERSON', e.finalvote,
+            (select du.dacuserid from dacuser du inner join user_role ur on du.dacuserid = ur.dacuserid and ur.roleid = 2) dacuserid
             FROM election e
         </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="72">
-        <dropColumn columnName="finalVote"
+        <validCheckSum>ANY</validCheckSum>
+        <dropColumn columnName="finalvote"
                     tableName="election"/>
-        <dropColumn columnName="finalRationale"
+        <dropColumn columnName="finalrationale"
                     tableName="election"/>
-        <dropColumn columnName="finalVoteDate"
+        <dropColumn columnName="finalvotedate"
                     tableName="election"/>
     </changeSet>
 
