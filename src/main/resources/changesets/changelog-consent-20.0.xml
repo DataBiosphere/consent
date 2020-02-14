@@ -5,24 +5,28 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="ssaucedo" id="77">
-        <dropColumn columnName="structuredDataUseLetter" tableName="consents"/>
+        <validCheckSum>ANY</validCheckSum>
+        <dropColumn columnName="structureddatauseletter" tableName="consents"/>
     </changeSet>
 
     <changeSet author="ssaucedo" id="78">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consents">
-            <column name="translatedUseRestriction" type="text"></column>
+            <column name="translateduserestriction" type="text"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="ssaucedo" id="79">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="useRestriction" type="text"></column>
+            <column name="userestriction" type="text"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="ssaucedo" id="80">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="translatedUseRestriction" type="text"></column>
+            <column name="translateduserestriction" type="text"/>
         </addColumn>
     </changeSet>
 

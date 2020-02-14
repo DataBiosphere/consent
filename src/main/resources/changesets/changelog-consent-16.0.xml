@@ -5,54 +5,57 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="68" author="aracioppi">
-        <createTable tableName="emailEntity">
-            <column name="emailEntityId" type="bigint" autoIncrement="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createTable tableName="emailentity">
+            <column name="emailentityid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="voteId" type="bigint">
+            <column name="voteid" type="bigint">
                 <constraints nullable="true"/>
             </column>
-            <column name="electionId" type="bigint">
+            <column name="electionid" type="bigint">
                 <constraints nullable="true"/>
             </column>
-            <column name="dacUserId" type="bigint">
+            <column name="dacuserid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="emailType" type="bigint">
+            <column name="emailtype" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="dateSent" type="DATETIME">
+            <column name="datesent" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="emailText" type="text">
+            <column name="emailtext" type="text">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet id="69" author="aracioppi">
-        <createTable tableName="emailType">
-            <column name="emailTypeId" type="bigint" autoIncrement="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createTable tableName="emailtype">
+            <column name="emailtypeid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="emailType" type="varchar(255)">
+            <column name="emailtype" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet author="aracioppi" id="70">
-        <insert tableName="emailType">
-            <column name="emailTypeId" value="1"/>
-            <column name="emailType" value="CollectEmail"/>
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="emailtype">
+            <column name="emailtypeid" value="1"/>
+            <column name="emailtype" value="CollectEmail"/>
         </insert>
-        <insert tableName="emailType">
-            <column name="emailTypeId" value="2"/>
-            <column name="emailType" value="NewCaseEmail"/>
+        <insert tableName="emailtype">
+            <column name="emailtypeid" value="2"/>
+            <column name="emailtype" value="NewCaseEmail"/>
         </insert>
-        <insert tableName="emailType">
-            <column name="emailTypeId" value="3"/>
-            <column name="emailType" value="ReminderEmail"/>
+        <insert tableName="emailtype">
+            <column name="emailtypeid" value="3"/>
+            <column name="emailtype" value="ReminderEmail"/>
         </insert>
     </changeSet>
 </databaseChangeLog>

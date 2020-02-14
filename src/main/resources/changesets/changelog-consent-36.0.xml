@@ -7,10 +7,10 @@
     <changeSet author="grushton" id="114">
         <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consents">
-            <column name="dataUse" type="text"/>
+            <column name="datause" type="text"/>
         </addColumn>
-        <sql dbms="mysql">UPDATE consents SET dataUse = ''</sql>
-        <sql dbms="mysql">ALTER TABLE consents MODIFY dataUse text NOT NULL</sql>
+        <sql dbms="mysql">UPDATE consents SET datause = ''</sql>
+        <sql dbms="mysql">ALTER TABLE consents MODIFY datause text NOT NULL</sql>
     </changeSet>
 
 </databaseChangeLog>

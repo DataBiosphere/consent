@@ -5,23 +5,24 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="aracioppi" id="112">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="workspace_audit">
             <column name="workspace_audit_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="modifiedObjectId" type="varchar(255)">
+            <column name="modifiedobjectid" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="modifiedTable" type="varchar(255)">
+            <column name="modifiedtable" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="changeAction" type="varchar(255)">
+            <column name="changeaction" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="modifiedByUserId" type="bigint">
+            <column name="modifiedbyuserid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="modificationDate" type="DATETIME">
+            <column name="modificationdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
         </createTable>

@@ -5,26 +5,29 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="aracioppi" id="42">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="vote">
-            <column name="reminderSent" type="boolean" defaultValue="null"/>
+            <column name="remindersent" type="boolean" defaultValue="null"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="aracioppi" id="43">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="lastUpdate" type="DATETIME" defaultValue="null"/>
+            <column name="lastupdate" type="DATETIME" defaultValue="null"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="aracioppi" id="44">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consents">
-            <column name="createDate" type="DATETIME" defaultValue="null"/>
+            <column name="createdate" type="DATETIME" defaultValue="null"/>
         </addColumn>
         <addColumn tableName="consents">
-            <column name="lastUpdate" type="DATETIME" defaultValue="null"/>
+            <column name="lastupdate" type="DATETIME" defaultValue="null"/>
         </addColumn>
         <addColumn tableName="consents">
-            <column name="sortDate" type="DATETIME" defaultValue="null"/>
+            <column name="sortdate" type="DATETIME" defaultValue="null"/>
         </addColumn>
     </changeSet>
 

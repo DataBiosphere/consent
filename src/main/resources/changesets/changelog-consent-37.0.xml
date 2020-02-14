@@ -5,11 +5,12 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="diegogil" id="115">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="dataUseLetter" type="text"/>
+            <column name="datauseletter" type="text"/>
         </addColumn>
         <addColumn tableName="election">
-            <column name="dulName" type="varchar(255)"/>
+            <column name="dulname" type="varchar(255)"/>
         </addColumn>
     </changeSet>
 

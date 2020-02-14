@@ -5,20 +5,23 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="aracioppi" id="73">
-        <dropColumn columnName="electionId"
-                    tableName="emailEntity"/>
+        <validCheckSum>ANY</validCheckSum>
+        <dropColumn columnName="electionid"
+                    tableName="emailentity"/>
     </changeSet>
 
     <changeSet author="aracioppi" id="74">
-        <addColumn tableName="emailEntity">
-            <column name="entityReferenceId" type="varchar(255)"></column>
+        <validCheckSum>ANY</validCheckSum>
+        <addColumn tableName="emailentity">
+            <column name="entityReferenceId" type="varchar(255)"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="aracioppi" id="75">
-        <insert tableName="emailType">
-            <column name="emailTypeId" value="4"/>
-            <column name="emailType" value="NewDARRequestEmail"/>
+        <validCheckSum>ANY</validCheckSum>
+        <insert tableName="emailtype">
+            <column name="emailtypeid" value="4"/>
+            <column name="emailtype" value="NewDARRequestEmail"/>
         </insert>
     </changeSet>
 

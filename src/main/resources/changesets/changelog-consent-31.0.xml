@@ -6,8 +6,8 @@
 
     <changeSet author="aracioppi" id="107">
         <validCheckSum>ANY</validCheckSum>
-        <sql dbms="hsqldb, mysql">
-            update election set useRestriction = REPLACE(useRestriction, 'DURPO', 'DUOS')
+        <sql>
+            update election set userestriction = REPLACE(userestriction, 'DURPO', 'DUOS')
         </sql>
     </changeSet>
 

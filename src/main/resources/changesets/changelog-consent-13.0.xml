@@ -5,16 +5,18 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="ssaucedo" id="55">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="finalAccessVote" type="boolean" defaultValue="null"></column>
+            <column name="finalaccessvote" type="boolean" defaultValue="null"></column>
         </addColumn>
     </changeSet>
 
     <changeSet author="ssaucedo" id="56">
+        <validCheckSum>ANY</validCheckSum>
         <renameColumn
                 columnDataType="boolean"
-                newColumnName="isFinalAccessVote"
-                oldColumnName="isChairPersonVote"
+                newColumnName="isfinalaccessvote"
+                oldColumnName="ischairpersonvote"
                 tableName="vote"/>
     </changeSet>
 

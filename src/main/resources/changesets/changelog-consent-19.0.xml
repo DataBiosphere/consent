@@ -5,17 +5,18 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="76">
+        <validCheckSum>ANY</validCheckSum>
         <renameTable newTableName="access_rp"
-                     oldTableName="accessRp"/>
+                     oldTableName="accessrp"/>
 
         <renameTable newTableName="email_entity"
-                     oldTableName="emailEntity"/>
+                     oldTableName="emailentity"/>
 
         <renameTable newTableName="email_type"
-                     oldTableName="emailType"/>
+                     oldTableName="emailtype"/>
 
         <renameTable newTableName="match_entity"
-                     oldTableName="matchEntity"/>
+                     oldTableName="matchentity"/>
     </changeSet>
 
 </databaseChangeLog>

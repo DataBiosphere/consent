@@ -26,9 +26,10 @@
     </changeSet>
 
     <changeSet author="vvicario" id="83">
+        <validCheckSum>ANY</validCheckSum>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="help_report" constraintName="fkReportDacUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="dacUserId" referencedTableName="dacuser"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
     </changeSet>
 

@@ -5,8 +5,9 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="triveros" id="117">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consents">
-            <column name="groupName" type="varchar(255)">
+            <column name="groupname" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
