@@ -33,6 +33,7 @@
                                  referencedTableName="consents" referencesUniqueColumn="false"/>
     </changeSet>
     <changeSet author="vvicario" id="59">
+        <validCheckSum>ANY</validCheckSum>
         <addUniqueConstraint columnNames="purpose, consent"
                              constraintName="purpose_consent"
                              tableName="matchentity"/>
