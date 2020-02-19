@@ -2,15 +2,15 @@ package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DatasetDacIdPairMapper implements ResultSetMapper<Pair<Integer, Integer>> {
+public class DatasetDacIdPairMapper implements RowMapper<Pair<Integer, Integer>> {
 
-    public Pair<Integer, Integer> map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public Pair<Integer, Integer> map(ResultSet r, StatementContext ctx) throws SQLException {
         return new ImmutablePair<>(r.getInt(1), r.getInt(2));
     }
 

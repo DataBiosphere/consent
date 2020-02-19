@@ -2,8 +2,8 @@ package org.broadinstitute.consent.http.db;
 
 
 import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,13 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class ConsentDataSetMapper implements ResultSetMapper<ConsentDataSet> {
+public class ConsentDataSetMapper implements RowMapper<ConsentDataSet> {
 
     private Map<String, ConsentDataSet>  consentDataSets = new HashMap<>();
 
-    public ConsentDataSet map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public ConsentDataSet map(ResultSet r, StatementContext ctx) throws SQLException {
         ConsentDataSet consentDataSet;
-        if (index == 0 || !consentDataSets.containsKey(r.getString("consentId"))) {
+        if (!consentDataSets.containsKey(r.getString("consentId"))) {
             consentDataSet = new ConsentDataSet(r.getString("consentId"), new HashMap<>(), (r.getString("objectId")));
             consentDataSet.getDataSets().put(r.getString("datasetId"), r.getString("name"));
             consentDataSets.put(r.getString("consentId"),consentDataSet);

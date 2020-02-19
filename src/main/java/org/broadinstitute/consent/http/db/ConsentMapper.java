@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -12,11 +12,11 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConsentMapper implements ResultSetMapper<Consent> {
+public class ConsentMapper implements RowMapper<Consent> {
 
     private Map<String, Consent> consentMap = new HashMap<>();
 
-    public Consent map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public Consent map(ResultSet r, StatementContext ctx) throws SQLException {
         Consent consent;
         if (!consentMap.containsKey(r.getString("consentId"))) {
             consent = new Consent();

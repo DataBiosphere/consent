@@ -6,13 +6,13 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import javax.ws.rs.NotFoundException;
 import java.net.URISyntaxException;

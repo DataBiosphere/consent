@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;

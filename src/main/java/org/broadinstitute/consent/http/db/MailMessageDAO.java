@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.mail.MailMessage;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
 import java.util.List;
 
-@RegisterMapper(MailMessageMapper.class)
+@RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
     @SqlQuery("Select emailEntityId FROM email_entity e WHERE (e.entityReferenceId = :darElectionId or  e.entityReferenceId = :rpElectionId) AND e.emailType = 1 LIMIT 1")

@@ -4,21 +4,19 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
-import org.skife.jdbi.v2.unstable.BindIn;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
 import java.util.List;
 
-@UseStringTemplate3StatementLocator
-@RegisterMapper({DacMapper.class})
+@RegisterRowMapper(DacMapper.class)
 public interface DacDAO extends Transactional<DacDAO> {
 
     @SqlQuery("select * from dac")
@@ -30,11 +28,11 @@ public interface DacDAO extends Transactional<DacDAO> {
             " where du.email = :email ")
     List<Dac> findDacsForEmail(@Bind("email") String email);
 
-    @Mapper(DACUserRoleMapper.class)
+    @UseRowMapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id is not null inner join roles r on r.roleId = ur.role_id")
     List<DACUser> findAllDACUserMemberships();
 
-    @Mapper(DACUserRoleMapper.class)
+    @UseRowMapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du " +
               " inner join user_role ur on ur.user_id = du.dacUserId " +
               " inner join roles r on r.roleId = ur.role_id " +
@@ -63,12 +61,12 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlUpdate("delete from dac where dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 
-    @Mapper(DACUserMapper.class)
+    @UseRowMapper(DACUserMapper.class)
     @SqlQuery("select du.* from dacuser du " +
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId")
     List<DACUser> findMembersByDacId(@Bind("dacId") Integer dacId);
 
-    @Mapper(DACUserMapper.class)
+    @UseRowMapper(DACUserMapper.class)
     @SqlQuery("select du.* from dacuser du " +
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId and ur.role_id = :roleId")
     List<DACUser> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
@@ -79,20 +77,20 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlUpdate("delete from user_role where user_role_id = :userRoleId")
     void removeDacMember(@Bind("userRoleId") Integer userRoleId);
 
-    @Mapper(RoleMapper.class)
+    @UseRowMapper(RoleMapper.class)
     @SqlQuery("select * from roles where roleId = :roleId")
     Role getRoleById(@Bind("roleId") Integer roleId);
 
-    @Mapper(DACUserMapper.class)
+    @UseRowMapper(DACUserMapper.class)
     @SqlQuery("select du.* from dacuser du where du.dacUserId = :dacUserId")
     DACUser findUserById(@Bind("dacUserId") Integer dacUserId);
 
-    @Mapper(UserRoleMapper.class)
+    @UseRowMapper(UserRoleMapper.class)
     @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id = :userId")
     List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
 
-    @Mapper(UserRoleMapper.class)
+    @UseRowMapper(UserRoleMapper.class)
     @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id in (<userIds>)")
-    List<UserRole> findUserRolesForUsers(@BindIn("userIds") List<Integer> userIds);
+    List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
 
 }

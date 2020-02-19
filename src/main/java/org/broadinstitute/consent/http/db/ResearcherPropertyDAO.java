@@ -1,21 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.BindBean;
-import org.skife.jdbi.v2.unstable.BindIn;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Collection;
 import java.util.List;
 
-@UseStringTemplate3StatementLocator
-@RegisterMapper({ResearcherPropertyMapper.class})
+@RegisterRowMapper(ResearcherPropertyMapper.class)
 public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyDAO> {
 
     String INSTITUTION = "institution";
@@ -42,7 +40,7 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     void deletePropertiesByUserAndKey(@BindBean Collection<ResearcherProperty> researcherProperties);
 
     @SqlUpdate("delete from researcher_property where  userId = :userId and propertyKey IN (<propertyKeyList>)")
-    void deletePropertyByUser(@BindIn("propertyKeyList") List<String> propertyKeyList, @Bind("userId") Integer userId);
+    void deletePropertyByUser(@BindList("propertyKeyList") List<String> propertyKeyList, @Bind("userId") Integer userId);
 
     @SqlQuery(value = "select * from researcher_property where " +
             "(propertyKey = '" + INSTITUTION + "' AND propertyValue != :institutionName) OR " +
@@ -59,5 +57,5 @@ public interface ResearcherPropertyDAO extends Transactional<ResearcherPropertyD
     String findPropertyValueByPK(@Bind("userId") Integer userId, @Bind("propertyKey") String propertyKey);
 
     @SqlQuery("select * from researcher_property where userId  in (<userIds>)")
-    List<ResearcherProperty> findResearcherPropertiesByUserIds(@BindIn("userIds") List<Integer> userIds);
+    List<ResearcherProperty> findResearcherPropertiesByUserIds(@BindList("userIds") List<Integer> userIds);
 }

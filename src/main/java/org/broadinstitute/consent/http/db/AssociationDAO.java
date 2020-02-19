@@ -1,9 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 public interface AssociationDAO {
 

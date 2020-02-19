@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.WorkspaceAudit;
-import org.skife.jdbi.v2.sqlobject.BindBean;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
 import java.util.List;
 
-@UseStringTemplate3StatementLocator
 public interface WorkspaceAuditDAO {
 
     @SqlUpdate("insert into workspace_audit (modifiedObjectId, modifiedTable, changeAction, modifiedByUserId, modificationDate) " +
