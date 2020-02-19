@@ -45,7 +45,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction, dataUseLetter, dulName, datasetId, version) values " +
             "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction, :dataUseLetter, :dulName, :datasetId, " +
-            " (SELECT ifnull(MAX(version),0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
+            " (SELECT coalesce (MAX(version), 0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
