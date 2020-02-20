@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.auth.AuthDynamicFeature;
@@ -372,7 +371,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
         bootstrap.addBundle(new MultiPartBundle());
         bootstrap.addBundle(new DBIExceptionsBundle());
-        bootstrap.addBundle(new JobsBundle());
     }
 
     private void configureCors(Environment environment) {

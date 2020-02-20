@@ -45,7 +45,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("insert into election (electionType, status, createDate,referenceId, finalAccessVote, useRestriction, translatedUseRestriction, dataUseLetter, dulName, datasetId, version) values " +
             "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :useRestriction, :translatedUseRestriction, :dataUseLetter, :dulName, :datasetId, " +
-            " (SELECT ifnull(MAX(version),0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
+            " (SELECT coalesce (MAX(version), 0) + 1 FROM election AS electionVersion  where referenceId = :referenceId))")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
@@ -106,7 +106,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
 
-    @SqlQuery("select distinct * from election where electiontype = :electionType and status = '" + OPEN +"' and datediff(NOW(), createDate) > :amountOfDays")
+    @SqlQuery("select distinct * from election where electiontype = :electionType and status = '" + OPEN +"' and DATE_PART('day', NOW()::timestamp) - DATE_PART('day', createDate::timestamp) > :amountOfDays")
     @Mapper(DatabaseElectionMapper.class)
     List<Election> findExpiredElections(@Bind("electionType") String electionType, @Bind("amountOfDays")Integer amountOfDays);
 

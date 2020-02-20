@@ -6,23 +6,24 @@
 
 
     <changeSet author="vvicario" id="99">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dataset_audit">
             <column name="dataset_audit_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="dataSetId" type="bigint">
+            <column name="datasetid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="changeAction" type="varchar(255)">
+            <column name="changeaction" type="varchar(255)">
                  <constraints nullable="false"/>
             </column>
-            <column name="modifiedByUser" type="bigint">
+            <column name="modifiedbyuser" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="modificationDate" type="DATETIME">
+            <column name="modificationdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="objectId" type="varchar(255)">
+            <column name="objectid" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="name" type="varchar(255)">
@@ -35,6 +36,7 @@
     </changeSet>
 
     <changeSet author="vvicario" id="100">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dataset_audit_property">
             <column name="property_audit_Id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -42,34 +44,37 @@
             <column name="dataset_audit_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="dataSetId" type="bigint">
+            <column name="datasetid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="propertyKey" type="bigint">
+            <column name="propertykey" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="propertyValue" type="varchar(255)">
+            <column name="propertyvalue" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="modificationDate" type="DATETIME">
+            <column name="modificationdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet author="vvicario" id="101">
-        <addForeignKeyConstraint baseColumnNames="dataSetId" baseTableName="dataset_audit"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="dataset_audit"
                                  constraintName="fkDataSetAuditId" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataSetId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetid"
                                  referencedTableName="dataset" referencesUniqueColumn="false"/>
     </changeSet>
     <changeSet author="vvicario" id="102">
-        <addForeignKeyConstraint baseColumnNames="modifiedByUser" baseTableName="dataset_audit"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="modifiedbyuser" baseTableName="dataset_audit"
                                  constraintName="fkUserDataSetAudit" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacUserId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacuserid"
                                  referencedTableName="dacuser" referencesUniqueColumn="false"/>
     </changeSet>
     <changeSet author="vvicario" id="103">
+        <validCheckSum>ANY</validCheckSum>
         <addForeignKeyConstraint baseColumnNames="dataset_audit_id" baseTableName="dataset_audit_property"
                                  constraintName="fkDataSetPropertyAudit" deferrable="false" initiallyDeferred="false"
                                  onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataset_audit_id"

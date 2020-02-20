@@ -5,8 +5,9 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="57" author="vvicario">
-        <createTable tableName="matchEntity">
-            <column name="matchId" type="bigint" autoIncrement="true">
+        <validCheckSum>ANY</validCheckSum>
+        <createTable tableName="matchentity">
+            <column name="matchid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="consent" type="varchar(255)">
@@ -15,7 +16,7 @@
             <column name="purpose" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="matchEntity" type="boolean">
+            <column name="matchentity" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="failed" type="boolean">
@@ -25,14 +26,16 @@
     </changeSet>
 
     <changeSet author="vvicario" id="58">
-        <addForeignKeyConstraint baseColumnNames="consent" baseTableName="matchEntity"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="consent" baseTableName="matchentity"
                                  constraintName="fkMatchConsent" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="consentId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="consentid"
                                  referencedTableName="consents" referencesUniqueColumn="false"/>
     </changeSet>
     <changeSet author="vvicario" id="59">
+        <validCheckSum>ANY</validCheckSum>
         <addUniqueConstraint columnNames="purpose, consent"
                              constraintName="purpose_consent"
-                             tableName="matchEntity"/>
+                             tableName="matchentity"/>
     </changeSet>
 </databaseChangeLog>

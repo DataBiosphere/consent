@@ -5,10 +5,11 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="45">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="dataset">
             <column name="name" type="varchar(255)"/>
-            <column name="createDate" type="DATETIME"/>
-            <column name="objectId" type="varchar(255)"/>
+            <column name="createdate" type="DATETIME"/>
+            <column name="objectid" type="varchar(255)"/>
         </addColumn>
     </changeSet>
 
@@ -18,119 +19,127 @@
     </changeSet>
 
     <changeSet author="vvicario" id="47">
-        <dropColumn columnName="associationId" tableName="dataset"/>
+        <validCheckSum>ANY</validCheckSum>
+        <dropColumn columnName="associationid" tableName="dataset"/>
         <dropColumn columnName="description" tableName="dataset"/>
     </changeSet>
 
     <changeSet author="vvicario" id="48">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="datasetproperty">
-            <column name="propertyId" type="bigint" autoIncrement="true">
+            <column name="propertyid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="dataSetId" type="bigint">
+            <column name="datasetid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="propertyKey" type="bigint">
+            <column name="propertykey" type="bigint">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="propertyValue" type="varchar(255)">
+            <column name="propertyvalue" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="createDate" type="DATETIME">
+            <column name="createdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet author="vvicario" id="49">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dictionary">
-            <column name="keyId" type="bigint" autoIncrement="true">
+            <column name="keyid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="key" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="required" type="boolean"/>
-            <column name="displayOrder" type="int"/>
+            <column name="displayorder" type="int"/>
          </createTable>
     </changeSet>
 
     <changeSet author="vvicario" id="50">
-        <addForeignKeyConstraint baseColumnNames="propertyKey" baseTableName="datasetproperty" constraintName="fkDataSetProperty"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="propertykey" baseTableName="datasetproperty" constraintName="fkDataSetProperty"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="keyId" referencedTableName="dictionary"
+                                 referencedColumnNames="keyid" referencedTableName="dictionary"
                                  referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="51">
-        <addForeignKeyConstraint baseColumnNames="dataSetId" baseTableName="datasetproperty" constraintName="fkDataSetMetadata"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="datasetproperty" constraintName="fkDataSetMetadata"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="dataSetId" referencedTableName="dataset"
+                                 referencedColumnNames="datasetid" referencedTableName="dataset"
                                  referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="52">
+        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dictionary">
             <column name="key" value="Dataset Name"/>
             <column name="required" valueBoolean="true"/>
-            <column name="displayOrder" value="0"/>
+            <column name="displayorder" value="0"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Data Type"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="1"/>
+            <column name="displayorder" value="1"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Species"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="2"/>
+            <column name="displayorder" value="2"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Phenotype/Indication"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="3"/>
+            <column name="displayorder" value="3"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="# of participants"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="4"/>
+            <column name="displayorder" value="4"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Description"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="5"/>
+            <column name="displayorder" value="5"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="dbGAP"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="6"/>
+            <column name="displayorder" value="6"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Data Depositor"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="7"/>
+            <column name="displayorder" value="7"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Principal Investigator(PI)"/>
             <column name="required" valueBoolean="false"/>
-            <column name="displayOrder" value="8"/>
+            <column name="displayorder" value="8"/>
         </insert>
         <insert tableName="dictionary">
             <column name="key" value="Dataset ID"/>
             <column name="required" valueBoolean="true"/>
-            <column name="displayOrder" value="9"/>
+            <column name="displayorder" value="9"/>
         </insert>
     </changeSet>
 
 
     <changeSet author="ssaucedo" id="53">
-        <addUniqueConstraint columnNames="objectId" tableName="dataset"
+        <validCheckSum>ANY</validCheckSum>
+        <addUniqueConstraint columnNames="objectid" tableName="dataset"
           deferrable="false" initiallyDeferred="false"/>
     </changeSet>
 
     <changeSet author="ssaucedo" id="54">
-        <addUniqueConstraint columnNames="objectId" tableName="consentassociations"
+        <validCheckSum>ANY</validCheckSum>
+        <addUniqueConstraint columnNames="objectid" tableName="consentassociations"
                              deferrable="false" initiallyDeferred="false"/>
     </changeSet>
 

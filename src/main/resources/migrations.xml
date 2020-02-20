@@ -22,14 +22,15 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="1" author="tdanford">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="consents">
-            <column name="consentId" type="varchar(255)">
+            <column name="consentid" type="varchar(255)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="requiresManualReview" type="boolean" defaultValue="true">
+            <column name="requiresmanualreview" type="boolean" defaultValue="true">
                 <constraints nullable="false"/>
             </column>
-            <column name="useRestriction" type="text">
+            <column name="userestriction" type="text">
                 <constraints nullable="false"/>
             </column>
             <column name="active" type="boolean" defaultValue="true">
@@ -39,47 +40,52 @@
     </changeSet>
 
     <changeSet id="2" author="egolin">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="consentassociations">
-            <column name="associationId" type="bigint" autoIncrement="true">
+            <column name="associationid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false" />
             </column>
-            <column name="consentId" type="varchar(255)">
+            <column name="consentid" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="associationType" type="varchar(255)">
+            <column name="associationtype" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="objectId" type="varchar(255)">
+            <column name="objectid" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet id="3" author="egolin">
+        <validCheckSum>ANY</validCheckSum>
         <createIndex indexName="idx_ca_consentid" tableName="consentassociations">
-            <column name="consentId"/>
+            <column name="consentid"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="4" author="egolin">
+        <validCheckSum>ANY</validCheckSum>
         <createIndex indexName="idx_ca_consentid_associationtype" tableName="consentassociations">
-            <column name="consentId"/>
-            <column name="associationType"/>
+            <column name="consentid"/>
+            <column name="associationtype"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="5" author="egolin">
+        <validCheckSum>ANY</validCheckSum>
         <createIndex indexName="idx_ca_consentid_associationtype_objectid" tableName="consentassociations">
-            <column name="consentId"/>
-            <column name="associationType"/>
-            <column name="objectId"/>
+            <column name="consentid"/>
+            <column name="associationtype"/>
+            <column name="objectid"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="6" author="egolin">
+        <validCheckSum>ANY</validCheckSum>
         <createIndex indexName="idx_ca_associationtype_objectid" tableName="consentassociations">
-            <column name="associationType"/>
-            <column name="objectId"/>
+            <column name="associationtype"/>
+            <column name="objectid"/>
         </createIndex>
     </changeSet>
 

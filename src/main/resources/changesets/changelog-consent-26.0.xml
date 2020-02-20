@@ -22,29 +22,31 @@
     </changeSet>
 
     <changeSet author="vvicario" id="97">
+        <validCheckSum>ANY</validCheckSum>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="approval_expiration_time"
                                  constraintName="fkUserApproval" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacUserId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacuserid"
                                  referencedTableName="dacuser" referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="98">
-       <addColumn tableName="dictionary">
-           <column name="receiveOrder" type="int">
+        <validCheckSum>ANY</validCheckSum>
+        <addColumn tableName="dictionary">
+           <column name="receiveorder" type="int">
            </column>
        </addColumn>
 
-        <sql dbms="hsql, mysql">
-            update dictionary d set displayOrder = 0, receiveOrder = 0 where d.key = "Dataset Name";
-            update dictionary d set displayOrder = 1, receiveOrder = 9 where d.key = "Dataset ID";
-            update dictionary d set displayOrder = 2, receiveOrder = 1 where d.key = "Data Type";
-            update dictionary d set displayOrder = 3, receiveOrder = 2 where d.key = "Species";
-            update dictionary d set displayOrder = 4, receiveOrder = 3 where d.key = "Phenotype/Indication";
-            update dictionary d set displayOrder = 5, receiveOrder = 4 where d.key = "# of participants";
-            update dictionary d set displayOrder = 6, receiveOrder = 5 where d.key = "Description";
-            update dictionary d set displayOrder = 7, receiveOrder = 6 where d.key = "dbGAP";
-            update dictionary d set displayOrder = 8, receiveOrder = 7 where d.key =  "Data Depositor";
-            update dictionary d set displayOrder = 9, receiveOrder = 8 where d.key =  "Principal Investigator(PI)";
+        <sql>
+            update dictionary d set displayorder = 0, receiveorder = 0 where d.key = 'Dataset Name';
+            update dictionary d set displayorder = 1, receiveorder = 9 where d.key = 'Dataset ID';
+            update dictionary d set displayorder = 2, receiveorder = 1 where d.key = 'Data Type';
+            update dictionary d set displayorder = 3, receiveorder = 2 where d.key = 'Species';
+            update dictionary d set displayorder = 4, receiveorder = 3 where d.key = 'Phenotype/Indication';
+            update dictionary d set displayorder = 5, receiveorder = 4 where d.key = '# of participants';
+            update dictionary d set displayorder = 6, receiveorder = 5 where d.key = 'Description';
+            update dictionary d set displayorder = 7, receiveorder = 6 where d.key = 'dbGAP';
+            update dictionary d set displayorder = 8, receiveorder = 7 where d.key =  'Data Depositor';
+            update dictionary d set displayorder = 9, receiveorder = 8 where d.key =  'Principal Investigator(PI)';
         </sql>
     </changeSet>
 

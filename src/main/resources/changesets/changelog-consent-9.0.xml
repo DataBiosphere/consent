@@ -5,8 +5,9 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="aracioppi" id="40">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="finalVoteDate" type="DATETIME">
+            <column name="finalvotedate" type="DATETIME">
             </column>
         </addColumn>
     </changeSet>

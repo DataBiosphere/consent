@@ -5,12 +5,13 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="118">
-        <sql dbms="hsql, mysql"> UPDATE election as el SET dataUseLetter =
-            (SELECT c.dataUseLetter from consents c where el.referenceId = c.consentId)
-            where el.createDate &lt; '2018-05-23' </sql>
-        <sql dbms="hsql, mysql"> UPDATE election as el SET dulName =
-            (SELECT c.dulName from consents c where el.referenceId = c.consentId)
-            where el.createDate &lt; '2018-05-23' </sql>
+        <validCheckSum>ANY</validCheckSum>
+        <sql> UPDATE election as el SET datauseletter =
+            (SELECT c.datauseletter from consents c where el.referenceid = c.consentid)
+            where el.createdate &lt; '2018-05-23' </sql>
+        <sql> UPDATE election as el SET dulname =
+            (SELECT c.dulname from consents c where el.referenceid = c.consentid)
+            where el.createdate &lt; '2018-05-23' </sql>
     </changeSet>
 
 </databaseChangeLog>

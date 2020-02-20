@@ -6,14 +6,15 @@
 
 
     <changeSet author="vvicario" id="91">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
             <column name="type" type="varchar(255)"/>
         </addColumn>
-        <sql dbms="hsql, mysql">
-            update election  set type = "DataAccess" where electionType = 1;
-            update election  set type = "TranslateDUL" where electionType = 2;
-            update election  set type = "RP" where electionType = 3;
-            update election  set type = "DataSet" where electionType = 4;
+        <sql dbms="mysql">
+            update election set type = "DataAccess" where electiontype = 1;
+            update election set type = "TranslateDUL" where electiontype = 2;
+            update election set type = "RP" where electiontype = 3;
+            update election set type = "DataSet" where electiontype = 4;
         </sql>
     </changeSet>
 
@@ -22,10 +23,11 @@
     </changeSet>
 
     <changeSet author="vvicario" id="93">
+        <validCheckSum>ANY</validCheckSum>
         <dropColumn columnName="electiontype"
                     tableName="election"/>
         <renameColumn tableName="election" columnDataType="varchar(255)"
-                      newColumnName="electionType"
+                      newColumnName="electiontype"
                       oldColumnName="type"/>
     </changeSet>
 

@@ -6,11 +6,13 @@
 
 
     <changeSet author="vvicario" id="84">
+        <validCheckSum>ANY</validCheckSum>
         <insert tableName="roles">
-            <column name="roleId" value="6"/>
+            <column name="roleid" value="6"/>
             <column name="name" value="DataOwner"/>
         </insert>
         <insert tableName="electiontype">
+            <column name="typeid" value="4"/>
             <column name="type" value="DataSet"/>
         </insert>
     </changeSet>
@@ -22,30 +24,31 @@
     </changeSet>
 
     <changeSet  author="ssaucedo" id="86">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dataset_user_association">
-            <column name="datasetId" type="bigint">
+            <column name="datasetid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="dacuserId" type="bigint">
+            <column name="dacuserid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="createDate" type="DATETIME">
+            <column name="createdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
         </createTable>
 
         <addPrimaryKey
-                columnNames="datasetId, dacuserId"
+                columnNames="datasetid, dacuserid"
                 constraintName="avoid_duplicated_associations"
                 tableName="dataset_user_association"/>
 
-        <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="dataset_user_association" constraintName="fkDataSetId"
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="dataset_user_association" constraintName="fkDataSetId"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="dataSetId" referencedTableName="dataset"
+                                 referencedColumnNames="datasetid" referencedTableName="dataset"
                                  referencesUniqueColumn="true"/>
-        <addForeignKeyConstraint baseColumnNames="dacuserId" baseTableName="dataset_user_association" constraintName="fkDacuserId"
+        <addForeignKeyConstraint baseColumnNames="dacuserid" baseTableName="dataset_user_association" constraintName="fkDacuserId"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="dacUserId" referencedTableName="dacuser"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="true"/>
     </changeSet>
 
@@ -56,15 +59,17 @@
     </changeSet>
 
     <changeSet author="vvicario" id="88">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="election">
-            <column name="datasetId" type="bigint"/>
+            <column name="datasetid" type="bigint"/>
         </addColumn>
     </changeSet>
 
     <changeSet author="vvicario" id="89">
-        <addForeignKeyConstraint baseColumnNames="datasetId" baseTableName="election"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="election"
                                  constraintName="fkDataSetElection" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetid"
                                  referencedTableName="dataset" referencesUniqueColumn="false"/>
     </changeSet>
 

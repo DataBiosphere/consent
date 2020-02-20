@@ -127,7 +127,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlBatch("insert into vote (dacUserId, electionId, type) values (:dacUserId,:electionId, :type)")
     void insertVotes(@Bind("dacUserId") List<Integer> dacUserIds, @Bind("electionId") Integer electionId, @Bind("type") String type);
 
-    @SqlQuery("select  *  from vote v where  v.electionId = :electionId and (v.vote is null and  (v.has_concerns = false || v.has_concerns is null)) and v.type = :type")
+    @SqlQuery("select * from vote v where v.electionId = :electionId and (v.vote is null and (v.has_concerns = false OR v.has_concerns is null)) and v.type = :type")
     List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
     @SqlUpdate("delete from vote where electionId IN (<electionId>) and dacUserId = :userId")

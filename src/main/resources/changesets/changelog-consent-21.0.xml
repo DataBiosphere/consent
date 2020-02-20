@@ -5,8 +5,9 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="81">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="dataset">
-            <column name="active" type="boolean"></column>
+            <column name="active" type="boolean"/>
         </addColumn>
     </changeSet>
 

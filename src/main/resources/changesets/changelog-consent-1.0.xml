@@ -5,25 +5,27 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="7" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dacuser">
-            <column name="dacUserId" type="bigint" autoIncrement="true">
+            <column name="dacuserid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="email" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="displayName" type="varchar(255)">
+            <column name="displayname" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="memberStatus" type="varchar(255)">
+            <column name="memberstatus" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet id="8" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="electiontype">
-            <column name="typeId" type="bigint" autoIncrement="true">
+            <column name="typeid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="type" type="varchar(255)">
@@ -33,41 +35,43 @@
     </changeSet>
 
     <changeSet id="9" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="election">
-            <column name="electionId" type="bigint" autoIncrement="true">
+            <column name="electionid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="electionType" type="bigint">
+            <column name="electiontype" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="finalRationale" type="varchar(255)"/>
-            <column name="finalVote" type="boolean" defaultValue="null"/>
-            <column name="createDate" type="DATETIME">
+            <column name="finalrationale" type="varchar(255)"/>
+            <column name="finalvote" type="boolean" defaultValue="null"/>
+            <column name="createdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="referenceId" type="varchar(255)">
+            <column name="referenceid" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
     <changeSet id="10" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="vote">
-            <column name="voteId" type="bigint" autoIncrement="true">
+            <column name="voteid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="vote" type="boolean" defaultValue="null"/>
-            <column name="dacUserId" type="bigint">
+            <column name="dacuserid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="createDate" type="DATETIME">
+            <column name="createdate" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="updateDate" type="DATETIME"/>
-            <column name="electionId" type="bigint">
+            <column name="updatedate" type="DATETIME"/>
+            <column name="electionid" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="rationale" type="varchar(255)"/>
@@ -75,11 +79,12 @@
     </changeSet>
 
     <changeSet id="11" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dataset">
-            <column name="dataSetId" type="bigint" autoIncrement="true">
+            <column name="datasetid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="consentId" type="varchar(255)">
+            <column name="consentid" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="varchar(255)"/>
@@ -87,8 +92,9 @@
     </changeSet>
 
     <changeSet id="12" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="researchpurpose">
-            <column name="purposeId" type="bigint" autoIncrement="true">
+            <column name="purposeid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="purpose" type="varchar(255)">
@@ -98,21 +104,22 @@
     </changeSet>
 
     <changeSet id="13" author="vvicario">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="datarequest">
-            <column name="requestId" type="bigint" autoIncrement="true">
+            <column name="requestid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="dataSetId" type="bigint">
+            <column name="datasetid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="purposeId" type="bigint">
+            <column name="purposeid" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="varchar(255)"/>
             <column name="researcher" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="associationId" type="bigint">
+            <column name="associationid" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -120,56 +127,63 @@
 
     <!-- foreign key -->
     <changeSet author="vvicario" id="14">
-        <addForeignKeyConstraint baseColumnNames="dacUserId" baseTableName="vote" constraintName="fkVoteDacUser"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="dacuserid" baseTableName="vote" constraintName="fkVoteDacUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="dacUserId" referencedTableName="dacuser"
+                                 referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="15">
-        <addForeignKeyConstraint baseColumnNames="electionType" baseTableName="election"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="electiontype" baseTableName="election"
                                  constraintName="fkElectionElectionType" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="typeId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="typeid"
                                  referencedTableName="electiontype" referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="16">
-        <addForeignKeyConstraint baseColumnNames="electionId" baseTableName="vote" constraintName="fkVoteElection"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="electionid" baseTableName="vote" constraintName="fkVoteElection"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="electionId" referencedTableName="election"
+                                 referencedColumnNames="electionid" referencedTableName="election"
                                  referencesUniqueColumn="false"/>
     </changeSet>
 
 
     <changeSet author="vvicario" id="17">
-        <addForeignKeyConstraint baseColumnNames="purposeId" baseTableName="datarequest"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="purposeid" baseTableName="datarequest"
                                  constraintName="fkDataRequestPurpose" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="purposeId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="purposeid"
                                  referencedTableName="researchpurpose" referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="18">
-        <addForeignKeyConstraint baseColumnNames="consentId" baseTableName="dataset" constraintName="fkDataSetConsent"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="consentid" baseTableName="dataset" constraintName="fkDataSetConsent"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                 referencedColumnNames="consentId" referencedTableName="consents"
+                                 referencedColumnNames="consentid" referencedTableName="consents"
                                  referencesUniqueColumn="false"/>
     </changeSet>
 
     <changeSet author="vvicario" id="19">
-        <addForeignKeyConstraint baseColumnNames="associationId" baseTableName="datarequest"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="associationid" baseTableName="datarequest"
                                  constraintName="fkDataRequestAssociation" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="associationId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="associationid"
                                  referencedTableName="consentassociations" referencesUniqueColumn="false"/>
     </changeSet>
 
-    <!--insert electionType-->
+    <!--insert electiontype-->
     <changeSet author="vvicario" id="20">
+        <validCheckSum>ANY</validCheckSum>
         <insert tableName="electiontype">
-            <column name="typeId" value="1"/>
+            <column name="typeid" value="1"/>
             <column name="type" value="DataAccess"/>
         </insert>
         <insert tableName="electiontype">
-            <column name="typeId" value="2"/>
+            <column name="typeid" value="2"/>
             <column name="type" value="TranslateDUL"/>
         </insert>
     </changeSet>

@@ -6,8 +6,9 @@
 
 
     <changeSet author="vvicario" id="34">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="roles">
-            <column name="roleId" type="bigint" autoIncrement="true">
+            <column name="roleid" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="varchar(255)">
@@ -17,28 +18,30 @@
     </changeSet>
 
     <changeSet author="vvicario" id="35">
+        <validCheckSum>ANY</validCheckSum>
         <createTable tableName="user_role">
-            <column name="roleId" type="bigint">
+            <column name="roleid" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="dacUserId" type="bigint">
+            <column name="dacuserid" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey columnNames="roleId, dacUserId"
+        <addPrimaryKey columnNames="roleid, dacuserid"
                        constraintName="pk_user_role"
                        tableName="user_role"/>
     </changeSet>
 
     <changeSet author="vvicario" id="36">
-        <addForeignKeyConstraint baseColumnNames="roleId" baseTableName="user_role"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="roleid" baseTableName="user_role"
                                  constraintName="fkRole" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="roleId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="roleid"
                                  referencedTableName="roles" referencesUniqueColumn="false"/>
 
-        <addForeignKeyConstraint baseColumnNames="dacUserId" baseTableName="user_role"
+        <addForeignKeyConstraint baseColumnNames="dacuserid" baseTableName="user_role"
                                  constraintName="fkUser" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacUserId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dacuserid"
                                  referencedTableName="dacuser" referencesUniqueColumn="false"/>
     </changeSet>
 
@@ -48,24 +51,25 @@
     </changeSet>
 
     <changeSet author="vvicario" id="39">
+        <validCheckSum>ANY</validCheckSum>
         <insert tableName="roles">
-            <column name="roleId" value="1"/>
+            <column name="roleid" value="1"/>
             <column name="name" value="Member"/>
         </insert>
         <insert tableName="roles">
-            <column name="roleId" value="2"/>
+            <column name="roleid" value="2"/>
             <column name="name" value="Chairperson"/>
         </insert>
         <insert tableName="roles">
-            <column name="roleId" value="3"/>
+            <column name="roleid" value="3"/>
             <column name="name" value="Alumni"/>
         </insert>
         <insert tableName="roles">
-            <column name="roleId" value="4"/>
+            <column name="roleid" value="4"/>
             <column name="name" value="Admin"/>
         </insert>
         <insert tableName="roles">
-            <column name="roleId" value="5"/>
+            <column name="roleid" value="5"/>
             <column name="name" value="Researcher"/>
         </insert>
     </changeSet>

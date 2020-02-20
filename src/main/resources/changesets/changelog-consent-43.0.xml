@@ -5,53 +5,58 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="121">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consentassociations">
-            <column name="dataSetId" type="bigint"/>
+            <column name="datasetid" type="bigint"/>
         </addColumn>
     </changeSet>
 
 
     <changeSet author="vvicario" id="122">
-        <addUniqueConstraint columnNames="dataSetId"
+        <validCheckSum>ANY</validCheckSum>
+        <addUniqueConstraint columnNames="datasetid"
                              constraintName="unique_dataSetId"
                              tableName="consentassociations"/>
     </changeSet>
 
     <changeSet author="vvicario" id="123">
-        <addForeignKeyConstraint baseColumnNames="dataSetId" baseTableName="consentassociations"
+        <validCheckSum>ANY</validCheckSum>
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="consentassociations"
                                  constraintName="fkdatasets" deferrable="false" initiallyDeferred="false"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dataSetId"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="datasetid"
                                  referencedTableName="dataset" referencesUniqueColumn="false"/>
     </changeSet>
 
 
     <changeSet author="vvicario" id="124">
-        <sql dbms="hsql, mysql">
-            UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
-            INSERT INTO dataset(objectId) SELECT ca.objectId FROM consentassociations ca where dataSetId is null;
-            UPDATE consentassociations as ca SET dataSetId = (SELECT ds.dataSetId from dataset ds where ca.objectId = ds.objectId);
+        <validCheckSum>ANY</validCheckSum>
+        <sql>
+            UPDATE consentassociations as ca SET datasetid = (SELECT ds.datasetid from dataset ds where ca.objectid = ds.objectid);
+            INSERT INTO dataset(objectid) SELECT ca.objectid FROM consentassociations ca where datasetid is null;
+            UPDATE consentassociations as ca SET datasetid = (SELECT ds.datasetid from dataset ds where ca.objectid = ds.objectid);
         </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="125">
-        <update tableName="dictionary">
-            <column name="key" value="Sample Collection ID"> </column>
-            <column name="required" valueBoolean="false"> </column>
-            <where>receiveOrder = 9</where>
-        </update>
+        <validCheckSum>ANY</validCheckSum>
+        <sql>
+            update dictionary set key = 'Sample Collection ID', required = FALSE where receiveorder = 9;
+        </sql>
     </changeSet>
 
     <changeSet author="vvicario" id="126">
+        <validCheckSum>ANY</validCheckSum>
         <dropColumn tableName="consentassociations"
-                    columnName="objectId"/>
+                    columnName="objectid"/>
 
     </changeSet>
 
     <changeSet author="vvicario" id="127">
+        <validCheckSum>ANY</validCheckSum>
         <insert tableName="dictionary">
             <column name="key" value="Consent ID"/>
             <column name="required" valueBoolean="false"/>
-            <column name="receiveOrder" value="10"/>
+            <column name="receiveorder" value="10"/>
         </insert>
     </changeSet>
 
@@ -61,8 +66,9 @@
     </changeSet>
 
     <changeSet author="vvicario" id="129">
+        <validCheckSum>ANY</validCheckSum>
         <dropNotNullConstraint columnDataType="varchar(255)"
-                               columnName="objectId"
+                               columnName="objectid"
                                tableName="dataset_audit"/>
     </changeSet>
 
@@ -75,7 +81,8 @@
     </changeSet>
 
     <changeSet author="vvicario" id="131">
-        <sql dbms="hsql, mysql">
+        <validCheckSum>ANY</validCheckSum>
+        <sql>
             UPDATE dataset SET alias = 2 where name = 'Melanoma_Regev';
             UPDATE dataset SET alias = 1 where name = 'Melanoma-Regev-Izar-Garraway-DFCI-ICR';
         </sql>
