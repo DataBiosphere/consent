@@ -85,8 +85,7 @@ public class ConsentModule extends AbstractModule {
                 .using(config.getJerseyClientConfiguration())
                 .build(this.getClass().getName());
 
-        JdbiFactory factory = new JdbiFactory();
-        this.jdbi = factory.build(environment, config.getDataSourceFactory(), DB_ENV);
+        this.jdbi = new JdbiFactory().build(environment, config.getDataSourceFactory(), DB_ENV);
         jdbi.installPlugin(new SqlObjectPlugin());
         this.mongoInstance = initMongoDBInstance();
 
@@ -121,7 +120,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    Jdbi providesDBI() {
+    Jdbi providesJdbi() {
         return this.jdbi;
     }
 
