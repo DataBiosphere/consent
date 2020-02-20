@@ -2,7 +2,9 @@ LOAD DATABASE
      FROM mysql://consent:<password>@localhost:3306/consent
      INTO pgsql://consent:<password>@localhost:5432/consent
 WITH include drop
-CAST column access_rp.electionaccessid to bigint drop typemod,
+CAST column accesselection_consentelection.access_election_id to bigint drop typemod,
+     column accesselection_consentelection.consent_election_id to bigint drop typemod,
+     column access_rp.electionaccessid to bigint drop typemod,
      column access_rp.electionrpid to bigint drop typemod,
      column approval_expiration_time.user_id to bigint drop typemod,
      column consentassociations.datasetid to bigint drop typemod,
@@ -11,16 +13,35 @@ CAST column access_rp.electionaccessid to bigint drop typemod,
      column datarequest.purposeid to bigint drop typemod,
      column datasetproperty.datasetid to bigint drop typemod,
      column datasetproperty.propertykey to bigint drop typemod,
+     column dataset_audit.datasetid to bigint drop typemod,
      column dataset_audit.modifiedbyuser to bigint drop typemod,
      column dataset_audit_property.dataset_audit_id to bigint drop typemod,
+     column dataset_audit_property.datasetid to bigint drop typemod,
+     column dataset_audit_property.propertykey to bigint drop typemod,
      column dataset_user_association.dacuserid to bigint drop typemod,
      column dataset_user_association.datasetid to bigint drop typemod,
      column election.datasetid to bigint drop typemod,
+     column email_entity.voteid to bigint drop typemod,
+     column email_entity.dacuserid to bigint drop typemod,
+     column email_entity.emailtype to bigint drop typemod,
      column help_report.user_id to bigint drop typemod,
      column researcher_property.userid to bigint drop typemod,
      column user_role.dac_id to bigint drop typemod,
      column user_role.role_id to bigint drop typemod,
      column user_role.user_id to bigint drop typemod,
      column vote.dacuserid to bigint drop typemod,
-     column vote.electionid to bigint drop typemod
+     column vote.electionid to bigint drop typemod,
+     column workspace_audit.modifiedbyuserid to bigint drop typemod
+
+AFTER LOAD DO
+     $$ alter table consents alter column active set default true; $$,
+     $$ alter table consents alter column requiresmanualreview set default true; $$,
+     $$ alter table consents alter column valid_restriction set default true; $$,
+     $$ alter table dacuser alter column email_preference set default true; $$,
+     $$ alter table dataset alter column needs_approval set default false; $$,
+     $$ alter table dataset_audit alter column active set default true; $$,
+     $$ alter table election alter column archived set default false; $$,
+     $$ alter table user_role alter column email_preference set default true; $$,
+     $$ alter table vote alter column has_concerns set default false; $$,
+     $$ drop table user_role_bak; $$
 ;
