@@ -107,14 +107,6 @@ public class ConsentService {
         return dacService.filterConsentsByDAC(consents, authUser).size();
     }
 
-    public Collection<Consent> findByConsentIds(List<String> consentIds) {
-        return consentDAO.findConsentsFromConsentsIDs(consentIds);
-    }
-
-    public Collection<Consent> findConsentsByAssociationType(String associationType) {
-        return consentDAO.findConsentsByAssociationType(associationType);
-    }
-
     private List<ConsentManage> collectUnreviewedConsents(List<Consent> consents) {
         String UNREVIEWED = "un-reviewed"; // TODO: Fix this in https://broadinstitute.atlassian.net/browse/DUOS-469
         List<ConsentManage> consentManageList = consents.stream().map(ConsentManage::new).collect(Collectors.toList());

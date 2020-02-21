@@ -60,7 +60,6 @@ import org.broadinstitute.consent.http.resources.ConsentElectionResource;
 import org.broadinstitute.consent.http.resources.ConsentManageResource;
 import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.ConsentVoteResource;
-import org.broadinstitute.consent.http.resources.ConsentsResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DataAccessAgreementResource;
@@ -290,7 +289,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataSetResource.class);
         env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(ConsentResource.class);
-        env.jersey().register(new ConsentsResource(consentService));
         env.jersey().register(ConsentAssociationResource.class);
         env.jersey().register(new DataUseLetterResource(googleStore));
         env.jersey().register(AllAssociationsResource.class);

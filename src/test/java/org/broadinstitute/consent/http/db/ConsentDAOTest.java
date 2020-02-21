@@ -109,22 +109,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         Assert.assertEquals(consent.getConsentId(), foundConsent.getConsentId());
     }
 
-    @Test
-    public void testFindConsentsByAssociationType() {
-        DataSet dataset = createDataset();
-        Consent consent = createConsent(null);
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-
-        Collection<Consent> foundConsents = consentDAO.findConsentsByAssociationType(ASSOCIATION_TYPE_TEST);
-
-        Assert.assertNotNull(foundConsents);
-        Assert.assertFalse(foundConsents.isEmpty());
-        Assert.assertEquals(1, foundConsents.size());
-
-        Optional<Consent> foundConsent = foundConsents.stream().findFirst();
-        Assert.assertTrue(foundConsent.isPresent());
-        Assert.assertEquals(consent.getConsentId(), foundConsent.get().getConsentId());
-    }
 
     @Test
     public void testInsertConsent() {

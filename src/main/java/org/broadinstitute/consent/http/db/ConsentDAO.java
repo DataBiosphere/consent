@@ -57,9 +57,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select * from consents where name = :name and active=true")
     Consent findConsentByName(@Bind("name") String name);
 
-    @SqlQuery("select c.* from consents c inner join consentassociations a on c.consentId = a.consentId where c.active=true and a.associationType = :associationType ")
-    Collection<Consent> findConsentsByAssociationType(@Bind("associationType") String associationType);
-
     @SqlUpdate("insert into consents " +
             "(consentId, requiresManualReview, useRestriction, dataUse, dataUseLetter, active, name, dulName, createDate, sortDate, translatedUseRestriction, valid_restriction, groupName, dac_id) values " +
             "(:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name , :dulName, :createDate, :sortDate , :translatedUseRestriction, :valid_restriction, :groupName, :dacId)")
