@@ -1,12 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.common.collect.Collections2;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.ConsentMapper;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.Actions;
@@ -17,7 +15,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.dto.ConsentGroupNameDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
@@ -29,12 +26,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -124,28 +118,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     }
 
     @Override
-    public Collection<Consent> findConsentsByAssociationType(String associationType) {
-        return consentDAO.findConsentsByAssociationType(associationType);
-    }
-
-    @Override
-    public Collection<Consent> retrieve(List<String> ids) {
-        List<Consent> consents;
-        try (Handle h = jdbi.open()) {
-            consents = h.createQuery("select * from consents where consentId in (" + getInClauseStrings(ids) + ") and active=true").
-                    map(new ConsentMapper()).
-                    list();
-        }
-        return consents;
-    }
-
-    private String getInClauseStrings(Collection<String> strings) {
-        Collection<String> quotedIds = Collections2.transform(strings, (String input) -> "'" + input + "'");
-        return StringUtils.join(quotedIds, ",");
-    }
-
-
-    @Override
     public Consent update(String id, Consent rec) throws NotFoundException {
         rec = updateConsentDates(rec);
         if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
@@ -168,11 +140,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             consentDAO.deleteAllAssociationsForConsent(id);
         } else
             throw new IllegalArgumentException("Consent cannot be deleted because already exist elections associated with it");
-    }
-
-    @Override
-    public void logicalDelete(String id) throws UnknownIdentifierException {
-        consentDAO.logicalDeleteConsent(id);
     }
 
     // ConsentAssociation methods
@@ -442,25 +409,4 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return election;
     }
 
-    @Override
-    public void updateConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
-        logger.info("Update Consent Group Name");
-        for (ConsentGroupNameDTO consentGroupName : consentGroupNames) {
-            consentDAO.updateConsentGroupName(consentGroupName.getConsentId(), consentGroupName.getGroupName());
-        }
-    }
-
-    @Override
-    public List<ConsentGroupNameDTO> verifyConsentGroupNames(List<ConsentGroupNameDTO> consentGroupNames) {
-        List<ConsentGroupNameDTO> wrongConsentGroupNames = new ArrayList<>();
-        Map<String, String> groupNameMap = new HashMap<>();
-        for (ConsentGroupNameDTO consentGroupName : consentGroupNames) {
-            if (!groupNameMap.containsKey(consentGroupName.getConsentId()) && !StringUtils.isEmpty(consentGroupName.getConsentId())) {
-                groupNameMap.put(consentGroupName.getConsentId(), consentGroupName.getGroupName());
-            } else {
-                wrongConsentGroupNames.add(consentGroupName);
-            }
-        }
-        return wrongConsentGroupNames;
-    }
 }
