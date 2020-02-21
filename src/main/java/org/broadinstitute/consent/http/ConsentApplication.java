@@ -52,7 +52,6 @@ import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.resources.AllAssociationsResource;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
 import org.broadinstitute.consent.http.resources.ConsentCasesResource;
@@ -291,7 +290,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ConsentResource.class);
         env.jersey().register(ConsentAssociationResource.class);
         env.jersey().register(new DataUseLetterResource(googleStore));
-        env.jersey().register(AllAssociationsResource.class);
         env.jersey().register(new ConsentElectionResource(consentService, dacService, voteService));
         env.jersey().register(new DataRequestElectionResource(voteService));
         env.jersey().register(ConsentVoteResource.class);

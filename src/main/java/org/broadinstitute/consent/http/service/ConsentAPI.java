@@ -5,7 +5,6 @@ import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 
-import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 public interface ConsentAPI {
@@ -29,8 +28,6 @@ public interface ConsentAPI {
     List<ConsentAssociation> getAssociation(String consentId, String associationType, String objectId);
 
     List<ConsentAssociation> deleteAssociation(String consentId, String associationType, String objectId);
-
-    List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId);
 
     /**
      * This method finds the consent related to the datasetId sent as a parameter, by joining the
