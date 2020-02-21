@@ -601,50 +601,6 @@ paths:
               $ref: '#/definitions/Match'
         404:
           description: The consent for the id couldn't be found.
-  /api/consents:
-    get:
-      summary: findByIds
-      description: Returns the consents required in the parameter list
-      parameters:
-        - name: ids
-          in: query
-          description: List of consent IDs
-          required: true
-          type: array
-          items:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: Returns the list of found consents.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Consent'
-        404:
-          description: The consent IDs list wasn't send, or some consents couldn't be found.
-  /api/consents/{associationType}:
-    get:
-      summary: findByAssociationType
-      description: Returns the consents that have associated a record in consentassociation that matches the requested association type.
-      parameters:
-        - name: associationType
-          in: path
-          description: Association Type.
-          required: true
-          type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: Returns the list of found consents.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Consent'
-        404:
-          description: The association type wasn't send, or the application couldn't find any consents that matched the search criteria.
   /api/consent/{consentId}/vote/{id}:
     post:
       summary: firstVoteUpdate
@@ -1636,7 +1592,7 @@ paths:
           required: true
           type: string
       tags:
-        - Votes
+        - Vote
         - DataRequest
       responses:
         200:
@@ -1655,7 +1611,7 @@ paths:
           required: true
           type: string
       tags:
-        - Votes
+        - Vote
         - DataRequest
       responses:
         200:
