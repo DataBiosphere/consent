@@ -80,11 +80,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("delete from consents where consentId = :consentId")
     void deleteConsent(@Bind("consentId") String consentId);
 
-
-    @SqlUpdate("update consents set active=false where consentId = :consentId")
-    void logicalDeleteConsent(@Bind("consentId") String consentId);
-
-
     @SqlUpdate(" update consents set " +
             " requiresManualReview = :requiresManualReview, " +
             " useRestriction = :useRestriction, " +
@@ -195,10 +190,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("update consents set updated = :consentStatus where consentId = :referenceId")
     void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,
                                    @Bind("consentStatus") Boolean consentStatus);
-
-    @SqlUpdate("update consents set groupName = :groupName where consentId = :consentId")
-    void updateConsentGroupName(@Bind("consentId") String consentId,
-                                @Bind("groupName") String groupName);
 
     @SqlUpdate("update consents set dac_id = :dacId where consentId = :consentId")
     void updateConsentDac(@Bind("consentId") String consentId,

@@ -290,7 +290,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(DataSetResource.class);
         env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(ConsentResource.class);
-        env.jersey().register(ConsentsResource.class);
+        env.jersey().register(new ConsentsResource(consentService));
         env.jersey().register(ConsentAssociationResource.class);
         env.jersey().register(new DataUseLetterResource(googleStore));
         env.jersey().register(AllAssociationsResource.class);

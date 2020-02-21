@@ -94,15 +94,6 @@ public class ConsentDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testCheckConsentById_case2() {
-        Consent consent = createConsent(null);
-        consentDAO.logicalDeleteConsent(consent.getConsentId());
-
-        String consentId = consentDAO.checkConsentById(consent.getConsentId());
-        Assert.assertNull(consentId);
-    }
-
-    @Test
     public void testGetIdByName() {
         Consent consent = createConsent(null);
 
@@ -423,16 +414,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         Assert.assertTrue(consent1Found.getUpdated());
         Consent consent2Found = consentDAO.findConsentById(consent2.getConsentId());
         Assert.assertFalse(consent2Found.getUpdated());
-    }
-
-    @Test
-    public void testUpdateConsentGroupName() {
-        String newGroupName = RandomStringUtils.random(10);
-        Consent consent = createConsent(null);
-
-        consentDAO.updateConsentGroupName(consent.getConsentId(), newGroupName);
-        Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-        Assert.assertEquals(newGroupName, foundConsent.getGroupName());
     }
 
     @Test
