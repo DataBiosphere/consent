@@ -2,13 +2,18 @@ package org.broadinstitute.consent.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.broadinstitute.consent.http.models.ConsentBuilder;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.WorkspaceAssociationDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Before;
@@ -19,19 +24,17 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 
 /**
@@ -54,7 +57,7 @@ public class AssociationTest extends AbstractTest {
 
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         mockTranslateResponse();
         mockValidateResponse();
     }
@@ -65,7 +68,7 @@ public class AssociationTest extends AbstractTest {
     //
 
     @Test
-    public void testCreateAssociation() throws IOException {
+    public void testCreateAssociation() {
         final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -80,7 +83,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testCreateComplexAssociation() throws IOException {
+    public void testCreateComplexAssociation() {
         final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -95,7 +98,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testUpdateAssociation() throws IOException {
+    public void testUpdateAssociation() {
         final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -131,7 +134,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testGetAssociation() throws IOException {
+    public void testGetAssociation() {
         final String consentId = setupConsent();
 
         String controlSample = "SM-"+Math.random();
@@ -165,7 +168,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testDeleteAssociationByTypeAndObject() throws IOException {
+    public void testDeleteAssociationByTypeAndObject() {
        final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -186,7 +189,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testDeleteAssociationByType() throws IOException {
+    public void testDeleteAssociationByType() {
         final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -206,7 +209,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testDeleteAssociationAll() throws IOException {
+    public void testDeleteAssociationAll() {
         final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -225,7 +228,7 @@ public class AssociationTest extends AbstractTest {
     }
 
     @Test
-    public void testDeleteAssociationError() throws IOException {
+    public void testDeleteAssociationError() {
         final String consentId = setupConsent();
 
         Client client = ClientBuilder.newClient();
@@ -238,76 +241,30 @@ public class AssociationTest extends AbstractTest {
         checkStatus(BAD_REQUEST, delete(client, associationQueryPath(consentId, null, "SF-1234")));
     }
 
-    @Test
-    public void testQueryConsentByAssociation() throws IOException {
-        // first we need to set up some consents and associations
-        final String consentId1 = setupConsent();
-        final String consentId2 = setupConsent();
-        final String s1 = "AO-1234";
-        final String s2 = "BS-1234";
-        final String s3 = "DU-1234";
-        final String s4 = "EH-1234";
-        System.out.println(String.format("*** testQueryByAssociation, generated ids: '%s', '%s', '%s', '%s'", s1, s2, s3, s4));
-
-        Client client = ClientBuilder.newClient();
-
-        List<ConsentAssociation> assoc_list = new ArrayList<>();
-        assoc_list.add(buildConsentAssociation("sample", s1, s2, s3));
-        Response response = checkStatus(OK, post(client, associationPath(consentId1), assoc_list));
-        checkAssociations(assoc_list, response);
-        System.out.println(String.format("*** testQueryConsentByAssociation ***:  created consent 1: '%s'", consentId1));
-
-        assoc_list.clear();
-        assoc_list.add(buildConsentAssociation("sample", s4));
-        response = checkStatus(OK, post(client, associationPath(consentId2), assoc_list));
-        checkAssociations(assoc_list, response);
-        System.out.println(String.format("*** testQueryConsentByAssociation ***:  created consent 2: '%s'", consentId2));
-
-        String qpath = queryAssociationPath("sample", s2);
-        response = checkStatus(OK, getJson(client, qpath));
-
-        // check that we got back both consents
-        ArrayList<String> consent_urls = getConsentUrls(response);
-        assertThat(consent_urls.size()).isEqualTo(1);
-        String location = checkHeader(response, "Location");
-        System.out.println(String.format("*** testQueryByAssociation(1) - returned location '%s'", location));
-
-        // check that we got back just consent1
-        response = checkStatus(OK, getJson(client, queryAssociationPath("sample", s1)));
-        consent_urls = getConsentUrls(response);
-        assertThat(consent_urls.size()).isEqualTo(1);
-        location = checkHeader(response, "Location");
-        System.out.println(String.format("*** testQueryByAssociation(2) - returned location '%s'", location));
-        // check that we got back no consents
-        checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sample", "TST-$$$$")));
-        // check that we got back no consents
-        checkStatus(NOT_FOUND, getJson(client, queryAssociationPath("sampleSet", s2)));
-    }
-
     private static String WORKSPACE_TYPE = "workspace";
     private static String NON_EXISTENT_WORKSPACE = UUID.randomUUID().toString();
     private static String TO_UPDATE_WORKSPACE = UUID.randomUUID().toString();
-    private static String TO_CREATE_CONSENT = "testId2";
-    private static String TO_UPDATE_CONSENT = "testId3";
 
     private static String WORKSPACE_URL = "workspace/%s";
 
     @Test
-    public void testPostWorkspaceAssociation() throws IOException {
+    public void testPostWorkspaceAssociation() {
         Client client = ClientBuilder.newClient();
         final ConsentAssociation consent_association = buildConsentAssociation(WORKSPACE_TYPE, NON_EXISTENT_WORKSPACE);
-        checkStatus(OK, post(client, associationPath(TO_CREATE_CONSENT), Arrays.asList(consent_association)));
+        String TO_CREATE_CONSENT = "testId2";
+        checkStatus(OK, post(client, associationPath(TO_CREATE_CONSENT), Collections.singletonList(consent_association)));
         testGetWorkspaceAssociation(NON_EXISTENT_WORKSPACE, TO_CREATE_CONSENT);
         testGetWorkspaceAssociationWithElections(NON_EXISTENT_WORKSPACE, TO_CREATE_CONSENT);
-        checkStatus(CONFLICT, post(client, associationPath(TO_CREATE_CONSENT), Arrays.asList(consent_association)));
+        checkStatus(CONFLICT, post(client, associationPath(TO_CREATE_CONSENT), Collections.singletonList(consent_association)));
     }
 
     /** Workspace associations can't be updated, no matter the association values! **/
     @Test
-    public void testPutWorkspaceAssociation() throws IOException {
+    public void testPutWorkspaceAssociation() {
         Client client = ClientBuilder.newClient();
         final ConsentAssociation consent_association = buildConsentAssociation(WORKSPACE_TYPE, TO_UPDATE_WORKSPACE);
-        checkStatus(CONFLICT, put(client, associationPath(TO_UPDATE_CONSENT), Arrays.asList(consent_association)));
+        String TO_UPDATE_CONSENT = "testId3";
+        checkStatus(CONFLICT, put(client, associationPath(TO_UPDATE_CONSENT), Collections.singletonList(consent_association)));
         List<ConsentAssociation> created = retrieveAssociations(client, associationPath(TO_UPDATE_CONSENT));
         System.out.println(created.toString());
     }
@@ -316,26 +273,26 @@ public class AssociationTest extends AbstractTest {
     //  HELPER METHODS
     //
 
-    private void testGetWorkspaceAssociation(String workspaceId, String consentId) throws IOException {
+    private void testGetWorkspaceAssociation(String workspaceId, String consentId) {
         Client client = ClientBuilder.newClient();
         Response response = checkStatus(OK, getJson(client, path2Url(String.format(WORKSPACE_URL, workspaceId))));
         WorkspaceAssociationDTO workspaceAssociation = response.readEntity(WorkspaceAssociationDTO.class);
-        assertTrue(workspaceAssociation.getConsent() != null);
-        assertTrue(workspaceAssociation.getConsent().getConsentId().equals(consentId));
+        assertNotNull(workspaceAssociation.getConsent());
+        assertEquals(workspaceAssociation.getConsent().getConsentId(), consentId);
     }
 
-    private void testGetWorkspaceAssociationWithElections(String workspaceId, String consentId) throws IOException {
+    private void testGetWorkspaceAssociationWithElections(String workspaceId, String consentId) {
         Election election = createElection(consentId);
         Client client = ClientBuilder.newClient();
         Response response = checkStatus(OK, getJson(client, path2Url(String.format(WORKSPACE_URL, workspaceId))));
         WorkspaceAssociationDTO workspaceAssociation = response.readEntity(WorkspaceAssociationDTO.class);
-        assertTrue(workspaceAssociation.getConsent() != null);
-        assertTrue(workspaceAssociation.getConsent().getConsentId().equals(consentId));
-        assertTrue(workspaceAssociation.getElectionStatus().get(1).getElectionStatus().equals(ElectionStatus.OPEN.getValue()));
+        assertNotNull(workspaceAssociation.getConsent());
+        assertEquals(workspaceAssociation.getConsent().getConsentId(), consentId);
+        assertEquals(workspaceAssociation.getElectionStatus().get(1).getElectionStatus(), ElectionStatus.OPEN.getValue());
         deleteElection(election.getElectionId(), consentId);
     }
 
-    private List<ConsentAssociation> retrieveAssociations(Client client, String url) throws IOException {
+    private List<ConsentAssociation> retrieveAssociations(Client client, String url) {
         return getJson(client, url).readEntity(new GenericType<List<ConsentAssociation>>(){});
     }
 
@@ -374,34 +331,7 @@ public class AssociationTest extends AbstractTest {
         }
     }
 
-    private ArrayList<String> getConsentUrls(Response response) {
-        ArrayList<String> urls = null;
-        String result_json = response.readEntity(String.class);
-        try {
-            final ObjectMapper MAPPER = Jackson.newObjectMapper();
-            TypeFactory tf = TypeFactory.defaultInstance();
-            urls = MAPPER.readValue(result_json, tf.constructCollectionType(ArrayList.class, String.class));
-            System.out.println(String.format("*** Got json back: '%s' and converted to '%s'", result_json, urls.toString()));
-        } catch (Exception e) {
-            System.out.println(String.format("+++Exception ('%s') caugh processing JSON result", e.getMessage()));
-        }
-        return urls;
-    }
-
-    private static Random _rand = new Random();
-
-    private String genSampleId() {
-        int id_int = _rand.nextInt(9000) + 1000;
-        return String.format("TST-%4d", id_int);
-    }
-
-    private String queryAssociationPath(String atype, String id) {
-        final String path = String.format("%s/associations/%s/%s", consentPath(), atype, id);
-        System.out.println("*** queryAssociationPath = " + path);
-        return path;
-    }
-
-    private String setupConsent() throws IOException {
+    private String setupConsent() {
         Client client = ClientBuilder.newClient();
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Consent rec = new ConsentBuilder().
@@ -419,7 +349,7 @@ public class AssociationTest extends AbstractTest {
 
     // Create elections - Workspace associations related code
 
-    public Election createElection(String consentId) throws IOException {
+    public Election createElection(String consentId) {
         Client client = ClientBuilder.newClient();
         Election election = new Election();
         election.setStatus(ElectionStatus.OPEN.getValue());
@@ -438,11 +368,11 @@ public class AssociationTest extends AbstractTest {
         }
     }
 
-    public Election retrieveElection(Client client, String url) throws IOException {
+    public Election retrieveElection(Client client, String url) {
         return getJson(client, url).readEntity(Election.class);
     }
 
-    public void deleteElection(Integer electionId, String consentId) throws IOException {
+    public void deleteElection(Integer electionId, String consentId) {
         Client client = ClientBuilder.newClient();
         List<Vote> votes = getJson(client, voteConsentPath(consentId)).readEntity(new GenericType<List<Vote>>() {
         });

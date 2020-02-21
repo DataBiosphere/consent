@@ -27,9 +27,6 @@ import org.skife.jdbi.v2.util.LongColumnMapper;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -331,21 +328,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
 
         }
         return getAllAssociationsForConsent(consentId);
-    }
-
-    @Override
-    public List<String> getConsentsForAssociation(UriInfo uriInfo, String associationType, String objectId) {
-        // We get a list of consentId's (UUID's) from the database, and turn them into URIs
-        // <base-service-url>/consent/{id}
-        List<String> consent_ids = consentDAO.findConsentsForAssociation(associationType, objectId);
-        List<String> consent_uris = new ArrayList<>(consent_ids.size());
-        for (String consentId : consent_ids) {
-            UriBuilder ub = uriInfo.getBaseUriBuilder();
-            URI consentUri = ub.path("consent").path(consentId).build();
-            consent_uris.add((consentUri.getPath()));
-        }
-        logger.debug(String.format("getConsentsForAssociation(%s,%s) returning '%s'", associationType, objectId, consent_uris.toString()));
-        return consent_uris;
     }
 
     @Override

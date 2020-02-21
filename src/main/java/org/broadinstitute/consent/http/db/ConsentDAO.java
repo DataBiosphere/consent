@@ -156,10 +156,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select distinct(associationType) from consentassociations where consentId = :consentId")
     List<String> findAssociationTypesForConsent(@Bind("consentId") String consentId);
 
-    @SqlQuery("select distinct(consentId) from consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId where ca.associationType = :associationType and ds.objectId= :objectId")
-    List<String> findConsentsForAssociation(@Bind("associationType") String associationType,
-                                            @Bind("objectId") String objectId);
-
     @SqlQuery("select c.* from consentassociations ca inner join consents c on c.consentId = ca.consentId inner join dataset ds on ca.dataSetId = ds.dataSetId where ca.associationType = :associationType and ds.objectId= :objectId")
     Consent findConsentByAssociationAndObjectId(@Bind("associationType") String associationType,
                                             @Bind("objectId") String objectId);

@@ -106,35 +106,6 @@ paths:
       responses:
         200:
           description: List of allowed types.
-  /api/consent/associations/{associationType}/{id}:
-    get:
-      summary: getConsentsForAssociation
-      description: Returns a List with the Consent IDs that are related to the specified association
-      parameters:
-        - name: associationType
-          in: path
-          description: The association type
-          required: true
-          type: string
-        - name: id
-          in: path
-          description: The id of the association
-          required: true
-          type: string
-      tags:
-        - Consent
-        - Association
-      responses:
-        200:
-          description: A list of Consent IDs
-          schema:
-            type: array
-            items:
-              type: string
-        400:
-          description: Required parameter is null
-        default:
-          description: Unexpected error
   /api/consent/{consentId}/association:
     get:
       summary: Get Associations for Consent
