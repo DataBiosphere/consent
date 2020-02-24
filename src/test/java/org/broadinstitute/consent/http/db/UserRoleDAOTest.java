@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,8 +65,9 @@ public class UserRoleDAOTest extends AbstractTest {
 
     @Before
     public void setUp() {
-        userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
-        dacUserDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
+        Jdbi jdbi = getApplicationJdbi();
+        userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
+        dacUserDAO = jdbi.onDemand(DACUserDAO.class);
         resetUserRoleTable();
     }
 

@@ -18,6 +18,7 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -262,9 +263,10 @@ abstract public class AbstractTest extends ResourcedTest {
     }
 
     protected Jdbi getApplicationJdbi() {
+        String dbiExtension = "_" + RandomStringUtils.random(10, true, false);
         ConsentConfiguration configuration = rule().getConfiguration();
         Environment environment = rule().getEnvironment();
-        return new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV);
+        return new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
     }
 
     String consentPath() {

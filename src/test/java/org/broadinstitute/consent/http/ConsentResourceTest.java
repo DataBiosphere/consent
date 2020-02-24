@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -41,11 +42,12 @@ public class ConsentResourceTest extends AbstractTest {
 
     private ElectionAPI electionAPI = AbstractElectionAPI.getInstance();
     private VoteAPI voteAPI = AbstractVoteAPI.getInstance();
+    private Jdbi jdbi = getApplicationJdbi();
     private VoteService voteService = new VoteService(
-            getApplicationJdbi().onDemand(DACUserDAO.class),
-            getApplicationJdbi().onDemand(DataSetAssociationDAO.class),
-            getApplicationJdbi().onDemand(ElectionDAO.class),
-            getApplicationJdbi().onDemand(VoteDAO.class)
+            jdbi.onDemand(DACUserDAO.class),
+            jdbi.onDemand(DataSetAssociationDAO.class),
+            jdbi.onDemand(ElectionDAO.class),
+            jdbi.onDemand(VoteDAO.class)
     );
 
     @ClassRule
