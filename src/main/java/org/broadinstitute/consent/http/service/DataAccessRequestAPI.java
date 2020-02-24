@@ -62,8 +62,6 @@ public interface DataAccessRequestAPI {
 
     List<UseRestrictionDTO> getInvalidDataAccessRequest();
 
-//    void updateDARUseRestrictionValidation(List<String> darCodes, Boolean validUseRestriction);
-
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
     byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException;
