@@ -18,7 +18,6 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchHealthCheck.class);
     private String index;
-    private JsonParser parser = new JsonParser();
     private RestClient client;
 
     @Override
@@ -47,7 +46,7 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
                 throw new InternalServerErrorException(esResponse.getStatusLine().getReasonPhrase());
             }
             String stringResponse = IOUtils.toString(esResponse.getEntity().getContent());
-            JsonObject jsonResponse = parser.parse(stringResponse).getAsJsonObject();
+            JsonObject jsonResponse = JsonParser.parseString(stringResponse).getAsJsonObject();
             String status = jsonResponse.get("status").getAsString();
             if (status.equalsIgnoreCase("red")) {
                 return Result.unhealthy("ClusterHealth is RED\n" + jsonResponse.toString());
