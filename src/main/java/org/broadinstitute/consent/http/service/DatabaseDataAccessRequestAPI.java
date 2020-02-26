@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.model.Projections;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -58,7 +57,6 @@ import java.util.stream.IntStream;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.ne;
 
 /**
  * Implementation class for DatabaseDataAccessRequestAPI.
@@ -125,12 +123,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.dataAccessReportsParser = new DataAccessReportsParser();
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
-
-
-    public void setMongoDBInstance(MongoConsentDB mongo) {
-        this.mongo = mongo;
-    }
-
 
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) {
@@ -361,21 +353,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             invalidRestrictions.add(new UseRestrictionDTO(c.get(DarConstants.DAR_CODE, String.class),new Gson().toJson(c.get(DarConstants.RESTRICTION, Map.class))));
         });
         return invalidRestrictions;
-    }
-
-    @Override
-    public void updateDARUseRestrictionValidation(List<String> darCodes, Boolean validUseRestriction){
-        BasicDBObject updateFields = new BasicDBObject();
-        updateFields.append(DarConstants.VALID_RESTRICTION, validUseRestriction);
-        BasicDBObject setQuery = new BasicDBObject();
-        setQuery.append("$set", updateFields);
-
-        mongo.getDataAccessRequestCollection().updateMany(in(DarConstants.DAR_CODE, darCodes), setQuery);
-    }
-
-    @Override
-    public FindIterable<Document> findDARUseRestrictions(){
-        return mongo.getDataAccessRequestCollection().find(ne(DarConstants.RESTRICTION, null)).projection(Projections.include(DarConstants.DAR_CODE, DarConstants.RESTRICTION));
     }
 
     private void updateElection(Election access, Election rp) {

@@ -103,12 +103,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + "' where e.electionType = :type and e.status = :status order by createDate asc")
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
-
-    @SqlQuery("select distinct * from election where electiontype = :electionType and status = '" + OPEN +"' and DATE_PART('day', NOW()::timestamp) - DATE_PART('day', createDate::timestamp) > :amountOfDays")
-    @UseRowMapper(DatabaseElectionMapper.class)
-    List<Election> findExpiredElections(@Bind("electionType") String electionType, @Bind("amountOfDays")Integer amountOfDays);
-
-
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
             +" e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join vote v on v.electionId = e.electionId and v.type = '"  + CHAIRPERSON
             +"' inner join (select referenceId, MAX(createDate) maxDate from election e where  e.electionType = :type  group by referenceId) "

@@ -18,7 +18,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
@@ -68,7 +67,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private EmailNotifierAPI emailNotifierAPI;
     private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
-    private ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private final String DATA_USE_LIMITATION = "Data Use Limitation";
     private final String DATA_ACCESS_REQUEST = "Data Access Request";
 
@@ -102,7 +100,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.mailMessageDAO = mailMessageDAO;
         this.dataSetDAO = dataSetDAO;
         this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
-        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
     }
 
     public void setMongoDBInstance(MongoConsentDB mongo) {
@@ -419,12 +416,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             });
         });
         return CollectionUtils.isEmpty(electionsIds) ? null : electionDAO.findElectionsByIds(electionsIds);
-    }
-
-    @Override
-    public List<Election> findExpiredElections(String electionType) {
-        ApprovalExpirationTime timeout = approvalExpirationTimeAPI.findApprovalExpirationTime();
-        return electionDAO.findExpiredElections(electionType, timeout.getAmountOfDays());
     }
 
     @Override

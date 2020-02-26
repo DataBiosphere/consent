@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -94,7 +93,7 @@ public class DACUserResource extends Resource {
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
             DACUser dacUser = dacUserAPI.updateDACUserById(userMap, userId);
             // Update email preference
-            JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
             JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
                     dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
@@ -164,7 +163,7 @@ public class DACUserResource extends Resource {
      */
     private Optional<String> getMemberNameStringFromJson(String json, String memberName) {
         Optional<String> aString = Optional.empty();
-        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
         if (jsonObject.has(memberName) && !jsonObject.get(memberName).isJsonNull()) {
             try {
                 aString = Optional.of(jsonObject.get(memberName).getAsString());
@@ -186,7 +185,7 @@ public class DACUserResource extends Resource {
         String memberName = "emailPreference";
         Optional<Boolean> aBoolean = Optional.empty();
         try {
-            JsonElement updateUser = new JsonParser().parse(json).getAsJsonObject();
+            JsonElement updateUser = JsonParser.parseString(json).getAsJsonObject();
             if (updateUser != null && !updateUser.isJsonNull()) {
                 JsonObject userObj = updateUser.getAsJsonObject();
                 if (userObj.has(memberName) && !userObj.get(memberName).isJsonNull()) {
@@ -219,7 +218,7 @@ public class DACUserResource extends Resource {
      * @return Map of operation to DACUser
      */
     private Map<String, DACUser> constructUserMapFromJson(String json) {
-        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
         Map<String, DACUser> userMap = new HashMap<>();
         JsonElement updatedUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
         if (updatedUser != null && !updatedUser.isJsonNull()) {

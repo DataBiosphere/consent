@@ -4,7 +4,6 @@ import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
-import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.WorkspaceAudit;
 
 import java.util.ArrayList;

@@ -1,21 +1,17 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -334,31 +330,6 @@ public class ConsentDAOTest extends DAOTestHelper {
     @Test
     public void testFindInvalidRestrictions() {
         // no-op ... tested in `testUpdateConsentValidUseRestriction()`
-    }
-
-    @Test
-    public void testFindConsentUseRestrictions() {
-        Consent consent = createConsent(null);
-
-        List<UseRestrictionDTO> useRestrictions = consentDAO.findConsentUseRestrictions();
-        List<String> consentIds = useRestrictions.stream().map(UseRestrictionDTO::getId).collect(Collectors.toList());
-        Assert.assertFalse(useRestrictions.isEmpty());
-        Assert.assertTrue(consentIds.contains(consent.getConsentId()));
-    }
-
-    @Test
-    public void testUpdateConsentValidUseRestriction() {
-        Consent consent = createConsent(null);
-        Consent consent2 = createConsent(null);
-
-        consentDAO.updateConsentValidUseRestriction(Collections.singletonList(consent.getConsentId()), true);
-        consentDAO.updateConsentValidUseRestriction(Collections.singletonList(consent2.getConsentId()), false);
-
-        List<UseRestrictionDTO> useRestrictions = consentDAO.findInvalidRestrictions();
-        List<String> consentIds = useRestrictions.stream().map(UseRestrictionDTO::getId).collect(Collectors.toList());
-        Assert.assertFalse(useRestrictions.isEmpty());
-        Assert.assertFalse(consentIds.contains(consent.getConsentId()));
-        Assert.assertTrue(consentIds.contains(consent2.getConsentId()));
     }
 
     @Test

@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.mongodb.MongoException;
-import com.mongodb.client.FindIterable;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
@@ -56,8 +54,6 @@ public interface DataAccessRequestAPI {
 
     Object getField(String requestId, String field);
 
-    void setMongoDBInstance(MongoConsentDB mongo);
-
     Document cancelDataAccessRequest(String referenceId);
 
     List<DACUser> getUserEmailAndCancelElection(String referenceId);
@@ -65,10 +61,6 @@ public interface DataAccessRequestAPI {
     boolean hasUseRestriction(String referenceId);
 
     List<UseRestrictionDTO> getInvalidDataAccessRequest();
-
-    void updateDARUseRestrictionValidation(List<String> darCodes, Boolean validUseRestriction);
-
-    FindIterable<Document> findDARUseRestrictions();
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
