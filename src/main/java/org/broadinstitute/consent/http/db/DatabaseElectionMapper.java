@@ -2,16 +2,16 @@ package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.ElectionFields;
 import org.broadinstitute.consent.http.models.Election;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DatabaseElectionMapper implements ResultSetMapper<Election> {
+public class DatabaseElectionMapper implements RowMapper<Election> {
 
     @Override
-    public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public Election map(ResultSet r, StatementContext ctx) throws SQLException {
         return new Election(
                 r.getInt(ElectionFields.ID.getValue()),
                 r.getString(ElectionFields.TYPE.getValue()),

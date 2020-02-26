@@ -2,17 +2,18 @@ package org.broadinstitute.consent.http.db;
 
 
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
+
 import java.util.Date;
 
 
 
-@RegisterMapper({ApprovalExpirationTimeMapper.class})
+@RegisterRowMapper(ApprovalExpirationTimeMapper.class)
 public interface ApprovalExpirationTimeDAO extends Transactional<ApprovalExpirationTimeDAO> {
 
     @SqlUpdate("insert into approval_expiration_time (create_date, amount_of_days, user_id) values " +

@@ -14,10 +14,11 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
 import de.flapdoodle.embed.process.config.io.ProcessOutput;
 import de.flapdoodle.embed.process.runtime.Network;
-import io.dropwizard.jdbi.DBIFactory;
+import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -27,8 +28,8 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.validate.ValidateResponse;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
+import org.jdbi.v3.core.Jdbi;
 import org.mockito.Mockito;
-import org.skife.jdbi.v2.DBI;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -261,10 +262,11 @@ abstract public class AbstractTest extends ResourcedTest {
         }
     }
 
-    protected DBI getApplicationJdbi() {
+    protected Jdbi getApplicationJdbi() {
+        String dbiExtension = "_" + RandomStringUtils.random(10, true, false);
         ConsentConfiguration configuration = rule().getConfiguration();
         Environment environment = rule().getEnvironment();
-        return new DBIFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV);
+        return new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
     }
 
     String consentPath() {

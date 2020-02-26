@@ -1,19 +1,18 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.List;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
-import org.skife.jdbi.v2.unstable.BindIn;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-@UseStringTemplate3StatementLocator
+import java.util.List;
+
 public interface MailServiceDAO extends Transactional<MailServiceDAO> {
 
-    @Mapper(VoteAndElectionModelMapper.class)
+    @UseRowMapper(VoteAndElectionModelMapper.class)
     @SqlQuery("SELECT v.electionId, e.referenceId, e.electionType, v.type FROM vote v inner join election e ON e.electionId = v.electionId where v.voteId IN (<voteIds>) AND v.dacUserId = :dacUserId")
-    List<VoteAndElectionModel> findVotesDelegationInfo(@BindIn("voteIds") List<Integer> voteIds, @Bind("dacUserId") Integer dacUserId);
+    List<VoteAndElectionModel> findVotesDelegationInfo(@BindList("voteIds") List<Integer> voteIds, @Bind("dacUserId") Integer dacUserId);
 
 }

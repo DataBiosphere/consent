@@ -4,8 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionFields;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -13,12 +13,12 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ElectionMapper implements ResultSetMapper<Election> {
+public class ElectionMapper implements RowMapper<Election> {
 
     private Map<Integer, Election> electionMap = new HashMap<>();
 
     @Override
-    public Election map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public Election map(ResultSet r, StatementContext ctx) throws SQLException {
         UseRestriction useRestriction = null;
         if (StringUtils.isNoneBlank((r.getString(ElectionFields.USE_RESTRICTION.getValue())))) {
             try {

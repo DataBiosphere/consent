@@ -2,19 +2,21 @@ package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mongo.DatasetAssociationMapper;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
-import org.skife.jdbi.v2.sqlobject.*;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
-import org.skife.jdbi.v2.unstable.BindIn;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Collection;
 import java.util.List;
 
 
-@UseStringTemplate3StatementLocator
-@RegisterMapper({DatasetAssociationMapper.class})
+@RegisterRowMapper(DatasetAssociationMapper.class)
 public interface DataSetAssociationDAO extends Transactional<DataSetAssociationDAO> {
 
     @SqlBatch("insert into dataset_user_association (datasetId, dacuserId, createDate )" +
@@ -25,7 +27,7 @@ public interface DataSetAssociationDAO extends Transactional<DataSetAssociationD
     List<DatasetAssociation> getDatasetAssociation(@Bind("datasetId") Integer datasetId);
 
     @SqlQuery("select * from dataset_user_association where datasetId in (<dataSetIdList>)")
-    List<DatasetAssociation> getDatasetAssociations(@BindIn("dataSetIdList") List<Integer> dataSetIdList);
+    List<DatasetAssociation> getDatasetAssociations(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
     @SqlUpdate("delete from dataset_user_association where datasetId = :datasetId")
     void delete(@Bind("datasetId") Integer datasetId);

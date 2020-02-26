@@ -60,6 +60,7 @@ public class ElectionAPITest extends AbstractTest {
 
     private static final String consentId = UUID.randomUUID().toString();
     private Consent consent = new Consent();
+    private DACUserDAO userDAO;
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE = new DropwizardAppRule<>(
@@ -72,6 +73,7 @@ public class ElectionAPITest extends AbstractTest {
 
     @Before
     public void setUp() {
+        userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         MockitoAnnotations.initMocks(this);
         electionAPI = Mockito.spy(new DatabaseElectionAPI(electionDAO, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
         consent.setConsentId(consentId);
@@ -80,7 +82,6 @@ public class ElectionAPITest extends AbstractTest {
 
     @Test
     public void testCreateConsentElectionSingleChairperson() throws Exception {
-        DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         Optional<UserRole> ur = userDAO.findUsers().stream().
                 flatMap(user -> user.getRoles().stream()).
                 filter(userRole -> userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())).
@@ -105,7 +106,6 @@ public class ElectionAPITest extends AbstractTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentElectionNoChair() throws Exception {
-        DACUserDAO userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         List<Integer> memberIds = userDAO
                 .findNonDACUsersEnabledToVote()
                 .stream()
