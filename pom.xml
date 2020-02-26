@@ -13,7 +13,7 @@
     <java.version>1.8</java.version>
     <hsqldb.version>2.5.0</hsqldb.version>
     <liquibase.version>3.8.7</liquibase.version>
-    <dropwizard.version>1.3.18</dropwizard.version>
+    <dropwizard.version>2.0.2</dropwizard.version>
     <pdfbox.version>2.0.15</pdfbox.version>
     <jetty.version>9.4.26.v20200117</jetty.version>
     <owl.version>5.1.13</owl.version>
@@ -364,18 +364,6 @@
       <version>2.12.0</version>
     </dependency>
 
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.dhatim</groupId>
-      <artifactId>dropwizard-sentry</artifactId>
-      <version>1.3.9-2</version>
-    </dependency>
-
     <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
     <dependency>
       <groupId>org.parboiled</groupId>
@@ -414,35 +402,23 @@
     </dependency>
 
     <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-client</artifactId>
-      <version>${dropwizard.version}</version>
+      <groupId>org.dhatim</groupId>
+      <artifactId>dropwizard-sentry</artifactId>
+      <version>2.0.0-5</version>
     </dependency>
 
     <dependency>
       <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-core</artifactId>
+      <artifactId>dropwizard-dependencies</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>jsr305</artifactId>
-        </exclusion>
-      </exclusions>
+      <type>pom</type>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>stringtemplate</artifactId>
-      <version>3.2.1</version>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-auth</artifactId>
+      <version>${dropwizard.version}</version>
     </dependency>
 
     <dependency>
@@ -453,14 +429,44 @@
 
     <dependency>
       <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-http2</artifactId>
+      <version>${dropwizard.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-client</artifactId>
+      <version>${dropwizard.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>2.30</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-core</artifactId>
+      <version>${dropwizard.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-jdbi3</artifactId>
+      <version>${dropwizard.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>stringtemplate</artifactId>
+      <version>3.2.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-forms</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jvnet.mimepull</groupId>
-          <artifactId>mimepull</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -469,18 +475,17 @@
       <version>${dropwizard.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>javax.servlet</groupId>
-          <artifactId>javax.servlet-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.mockito</groupId>
-          <artifactId>mockito-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.ow2.asm</groupId>
-          <artifactId>asm-debug-all</artifactId>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13</version>
       <scope>test</scope>
     </dependency>
 
@@ -510,24 +515,6 @@
       <artifactId>powermock-api-mockito</artifactId>
       <version>1.7.4</version>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-logging</artifactId>
-      <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-jdbi3</artifactId>
-      <version>${dropwizard.version}</version>
     </dependency>
 
     <dependency>
@@ -634,33 +621,9 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.hubspot.dropwizard</groupId>
-      <artifactId>dropwizard-guice</artifactId>
-      <version>0.8.1.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>javax.annotation</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>aopalliance</groupId>
-          <artifactId>aopalliance</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>javax.inject</groupId>
-          <artifactId>javax.inject</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>4.2.2</version>
     </dependency>
 
     <dependency>
@@ -861,12 +824,6 @@
           <artifactId>guava</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-auth</artifactId>
-      <version>${dropwizard.version}</version>
     </dependency>
 
     <dependency>

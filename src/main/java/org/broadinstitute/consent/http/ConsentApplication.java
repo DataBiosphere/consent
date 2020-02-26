@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -12,7 +13,6 @@ import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import jersey.repackaged.com.google.common.collect.Lists;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -21,6 +21,7 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.authentication.AbstractOAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicAuthenticator;
 import org.broadinstitute.consent.http.authentication.BasicCustomAuthFilter;
@@ -161,9 +162,9 @@ import java.util.List;
 
 /**
  * Top-level entry point to the entire application.
- * <p/>
+ * <p>
  * See the Dropwizard docs here:
- * https://dropwizard.github.io/dropwizard/manual/core.html
+ * https://dropwizard.github.io
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
@@ -173,8 +174,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         LOGGER.info("Starting Consent Application");
         try {
             String dsn = System.getProperties().getProperty("sentry.dsn");
-            if (null != dsn && !dsn.isEmpty()) {
-                SentryBootstrap.bootstrap(dsn);
+            if (StringUtils.isNotBlank(dsn)) {
+                SentryBootstrap.Builder.withDsn(dsn).bootstrap();
                 Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
             } else {
                 LOGGER.error("Unable to bootstrap sentry logging.");

@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -56,13 +57,14 @@ public abstract class DAOTestHelper extends AbstractTest {
 
     @Before
     public void setUp() {
-        consentDAO = getApplicationJdbi().onDemand(ConsentDAO.class);
-        dacDAO = getApplicationJdbi().onDemand(DacDAO.class);
-        userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
-        dataSetDAO = getApplicationJdbi().onDemand(DataSetDAO.class);
-        electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
-        userRoleDAO = getApplicationJdbi().onDemand(UserRoleDAO.class);
-        voteDAO = getApplicationJdbi().onDemand(VoteDAO.class);
+        Jdbi jdbi = getApplicationJdbi();
+        consentDAO = jdbi.onDemand(ConsentDAO.class);
+        dacDAO = jdbi.onDemand(DacDAO.class);
+        userDAO = jdbi.onDemand(DACUserDAO.class);
+        dataSetDAO = jdbi.onDemand(DataSetDAO.class);
+        electionDAO = jdbi.onDemand(ElectionDAO.class);
+        userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
+        voteDAO = jdbi.onDemand(VoteDAO.class);
         ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
     }
 

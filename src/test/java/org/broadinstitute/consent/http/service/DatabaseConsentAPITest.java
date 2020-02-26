@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.*;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -55,8 +56,9 @@ public class DatabaseConsentAPITest extends AbstractTest {
 
     @Before
     public void setUp() {
-        ElectionDAO electionDAO = getApplicationJdbi().onDemand(ElectionDAO.class);
-        VoteDAO voteDAO = getApplicationJdbi().onDemand(VoteDAO.class);
+        Jdbi jdbi = getApplicationJdbi();
+        ElectionDAO electionDAO = jdbi.onDemand(ElectionDAO.class);
+        VoteDAO voteDAO = jdbi.onDemand(VoteDAO.class);
         Integer electionId = electionDAO.getOpenElectionIdByReferenceId(CONSENT_ID);
         if (electionId != null) {
             List<Vote> votes = voteDAO.findVotesByElectionIds(Collections.singletonList(electionId));
