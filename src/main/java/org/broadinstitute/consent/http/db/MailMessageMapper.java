@@ -1,15 +1,15 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class MailMessageMapper implements ResultSetMapper<MailMessage> {
+public class MailMessageMapper implements RowMapper<MailMessage> {
 
-    public MailMessage map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public MailMessage map(ResultSet r, StatementContext ctx) throws SQLException {
 
         return new MailMessage(
                 r.getInt("emailEntityId"),

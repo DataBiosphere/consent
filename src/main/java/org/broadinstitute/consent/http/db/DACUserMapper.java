@@ -2,15 +2,15 @@ package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DACUserMapper implements ResultSetMapper<DACUser> {
+public class DACUserMapper implements RowMapper<DACUser> {
 
-    public DACUser map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+    public DACUser map(ResultSet r, StatementContext ctx) throws SQLException {
         DACUser user = new DACUser();
         user.setDacUserId(r.getInt("dacUserId"));
         user.setEmail(r.getString("email"));

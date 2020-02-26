@@ -4,22 +4,20 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
-import org.skife.jdbi.v2.unstable.BindIn;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-@UseStringTemplate3StatementLocator
-@RegisterMapper({ConsentMapper.class})
+@RegisterRowMapper(ConsentMapper.class)
 public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents where consentId = :consentId and active=true")
@@ -36,17 +34,17 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     String findConsentNameFromDatasetID(@Bind("datasetId") String datasetId);
 
     @SqlQuery("select * from consents  where consentId in (<consentIds>)")
-    Collection<Consent> findConsentsFromConsentsIDs(@BindIn("consentIds") List<String> consentIds);
+    Collection<Consent> findConsentsFromConsentsIDs(@BindList("consentIds") List<String> consentIds);
 
     @SqlQuery("select * from consents  where name in (<names>)")
-    List<Consent> findConsentsFromConsentNames(@BindIn("names") List<String> names);
+    List<Consent> findConsentsFromConsentNames(@BindList("names") List<String> names);
 
-    @Mapper(ConsentDataSetMapper.class)
+    @UseRowMapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.dataSetId, ds.name, ds.objectId " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
             "INNER JOIN dataset ds on cs.dataSetId = ds.dataSetId "+
             "WHERE cs.dataSetId::text IN (<datasetId>)")
-    Set<ConsentDataSet> getConsentIdAndDataSets(@BindIn("datasetId") List<Integer> datasetId);
+    Set<ConsentDataSet> getConsentIdAndDataSets(@BindList("datasetId") List<Integer> datasetId);
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     String checkConsentById(@Bind("consentId") String consentId);
@@ -162,22 +160,22 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             "from consents c inner join election e ON e.referenceId = c.consentId inner join ( "+
             "select referenceId, MAX(createDate) maxDate from election e group by referenceId) electionView "+
             "ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId AND e.status = :status")
-    @Mapper(ConsentManageMapper.class)
+    @UseRowMapper(ConsentManageMapper.class)
     List<ConsentManage> findConsentManageByStatus(@Bind("status") String status);
 
     @SqlQuery("select ca.consentId from consentassociations ca  where ca.dataSetId IN (<dataSetIdList>) ")
-    List<String> getAssociationConsentIdsFromDatasetIds(@BindIn("dataSetIdList") List<String> dataSetIdList);
+    List<String> getAssociationConsentIdsFromDatasetIds(@BindList("dataSetIdList") List<String> dataSetIdList);
 
-    @Mapper(UseRestrictionMapper.class)
+    @UseRowMapper(UseRestrictionMapper.class)
     @SqlQuery("select consentId, name, useRestriction from consents where valid_restriction = false ")
     List<UseRestrictionDTO> findInvalidRestrictions();
 
-    @Mapper(UseRestrictionMapper.class)
+    @UseRowMapper(UseRestrictionMapper.class)
     @SqlQuery("select consentId, useRestriction, name from consents ")
     List<UseRestrictionDTO> findConsentUseRestrictions();
 
     @SqlUpdate("update consents set  valid_restriction = :valid_restriction where consentId in (<consentId>) ")
-    void updateConsentValidUseRestriction(@BindIn("consentId") List<String> consentId,
+    void updateConsentValidUseRestriction(@BindList("consentId") List<String> consentId,
                                    @Bind("valid_restriction") Boolean validRestriction);
 
     @SqlUpdate("update consents set updated = :consentStatus where consentId = :referenceId")

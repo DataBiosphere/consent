@@ -1,13 +1,14 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.List;
 import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.models.DataSetAuditProperty;
-import org.skife.jdbi.v2.sqlobject.BindBean;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.util.List;
 
 
 public interface DataSetAuditDAO extends Transactional<DataSetAuditDAO> {

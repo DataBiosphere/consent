@@ -3,22 +3,20 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlBatch;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.Mapper;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
-import org.skife.jdbi.v2.unstable.BindIn;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Date;
 import java.util.List;
 
-@UseStringTemplate3StatementLocator
-@RegisterMapper({VoteMapper.class})
+@RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
 
     String OPEN = "Open";
@@ -33,12 +31,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
             + "where election.electionId = :electionId and v.type != '" + CHAIRPERSON + "'")
-    @Mapper(ElectionReviewVoteMapper.class)
+    @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
             + "where election.electionId = :electionId and v.type = :type")
-    @Mapper(ElectionReviewVoteMapper.class)
+    @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
     @SqlQuery("select  *  from vote v where  v.voteId = :voteId")
@@ -48,10 +46,10 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select  *  from vote v where  v.electionId IN (<electionIds>)")
-    List<Vote> findVotesByElectionIds(@BindIn("electionIds") List<Integer> electionIds);
+    List<Vote> findVotesByElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlQuery("select  *  from vote v where  v.electionId IN (<electionIds>) and v.type = :voteType")
-    List<Vote> findVotesByTypeAndElectionIds(@BindIn("electionIds") List<Integer> electionIds, @Bind("voteType") String type);
+    List<Vote> findVotesByTypeAndElectionIds(@BindList("electionIds") List<Integer> electionIds, @Bind("voteType") String type);
 
     @SqlQuery("select  *  from vote v where  v.electionId = :electionIds and v.type = :type")
     List<Vote> findVotesByElectionIdAndType(@Bind("electionIds") Integer electionIds, @Bind("type") String type);
@@ -65,7 +63,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId in (<dacUserIds>) and v.type = '" + DAC + "'")
     List<Vote> findVotesByElectionIdAndDACUserIds(@Bind("electionId") Integer electionId,
-                                          @BindIn("dacUserIds") List<Integer> dacUserIds);
+                                          @BindList("dacUserIds") List<Integer> dacUserIds);
 
     @SqlQuery("select  *  from vote v where  v.electionId = :electionId and v.dacUserId = :dacUserId and v.type = :voteType")
     List<Vote> findVotesByElectionIdAndType(@Bind("electionId") Integer electionId,
@@ -122,7 +120,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 
     @SqlQuery("SELECT MAX(c) FROM  ((SELECT  COUNT(vote) as c FROM vote  WHERE type = '" + DAC + "' and electionId  IN (<electionIds>) GROUP BY electionId  ) as members)")
-    Integer findMaxNumberOfDACMembers(@BindIn("electionIds") List<Integer> electionIds);
+    Integer findMaxNumberOfDACMembers(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlBatch("insert into vote (dacUserId, electionId, type) values (:dacUserId,:electionId, :type)")
     void insertVotes(@Bind("dacUserId") List<Integer> dacUserIds, @Bind("electionId") Integer electionId, @Bind("type") String type);
@@ -131,12 +129,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
     @SqlUpdate("delete from vote where electionId IN (<electionId>) and dacUserId = :userId")
-    void removeVotesByElectionIdAndUser(@BindIn("electionId") List<Integer> electionId, @Bind("userId") Integer userId);
+    void removeVotesByElectionIdAndUser(@BindList("electionId") List<Integer> electionId, @Bind("userId") Integer userId);
 
     @SqlUpdate(" update vote v set v.dacUserId = :toDOUserId, v.vote = null, v.createDate = null, v.updateDate = null"
             + " where v.dacUserId = :fromDOUserId "
             + " and v.electionId IN (<electionIds>)")
-    void delegateDataSetOpenElectionsVotes(@Bind("fromDOUserId") Integer fromDOUserId, @BindIn("electionIds") List<Integer> electionIds,
+    void delegateDataSetOpenElectionsVotes(@Bind("fromDOUserId") Integer fromDOUserId, @BindList("electionIds") List<Integer> electionIds,
                                                   @Bind("toDOUserId") Integer toDOUserId);
 
     @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
@@ -145,11 +143,11 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findVotesOnOpenElections(@Bind("dacUserId") Integer dacUserId);
 
     @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
-    void removeVotesByIds(@BindIn("voteIds") List<Integer> voteIds);
+    void removeVotesByIds(@BindList("voteIds") List<Integer> voteIds);
 
     @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
             + " and v.electionId IN (<electionIds>)")
-    List<Vote> findVotesByElectionIdsAndUser(@BindIn("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
+    List<Vote> findVotesByElectionIdsAndUser(@BindList("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
 
     @SqlQuery("select vote from vote v where v.electionId = :electionId and v.type = '"+ CHAIRPERSON +"'")
     Boolean findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);

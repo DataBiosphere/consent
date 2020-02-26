@@ -7,7 +7,7 @@ import com.google.inject.Provides;
 import com.mongodb.MongoClient;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.jdbi.DBIFactory;
+import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -37,7 +37,8 @@ import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.skife.jdbi.v2.DBI;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public class ConsentModule extends AbstractModule {
     private final Environment environment;
 
     private final Client client;
-    private final DBI jdbi;
+    private final Jdbi jdbi;
     private final MongoConsentDB mongoInstance;
     private final ConsentDAO consentDAO;
     private final ElectionDAO electionDAO;
@@ -84,7 +85,8 @@ public class ConsentModule extends AbstractModule {
                 .using(config.getJerseyClientConfiguration())
                 .build(this.getClass().getName());
 
-        this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), DB_ENV);
+        this.jdbi = new JdbiFactory().build(environment, config.getDataSourceFactory(), DB_ENV);
+        jdbi.installPlugin(new SqlObjectPlugin());
         this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
@@ -118,7 +120,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    DBI providesDBI() {
+    Jdbi providesJdbi() {
         return this.jdbi;
     }
 

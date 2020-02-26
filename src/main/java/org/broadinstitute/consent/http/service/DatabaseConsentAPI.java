@@ -16,10 +16,10 @@ import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.Handle;
-import org.skife.jdbi.v2.PreparedBatch;
-import org.skife.jdbi.v2.util.LongColumnMapper;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.generic.GenericType;
+import org.jdbi.v3.core.statement.PreparedBatch;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
@@ -44,7 +44,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
     private final ConsentDAO consentDAO;
     private final ElectionDAO electionDAO;
     private final AssociationDAO associationDAO;
-    private final DBI jdbi;
+    private final Jdbi jdbi;
     private final Logger logger;
     private final DataSetDAO dataSetDAO;
 
@@ -53,7 +53,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, DBI jdbi, DataSetDAO dataSetDAO) {
+    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, Jdbi jdbi, DataSetDAO dataSetDAO) {
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.consentDAO = dao;
         this.electionDAO = electionDAO;
@@ -72,7 +72,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(DBI jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, DataSetDAO dataSetDAO) {
+    public static void initInstance(Jdbi jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, DataSetDAO dataSetDAO) {
         ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, jdbi, dataSetDAO));
     }
 
@@ -213,7 +213,9 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         for (String id : ids) {
             insertBatch.add(consentId, associationType, dataSetDAO.findDataSetIdByObjectId(id));
         }
-        List<Long> insertedIds = insertBatch.executeAndGenerateKeys(LongColumnMapper.PRIMITIVE).list();
+        List<Long> insertedIds = insertBatch.
+                executeAndReturnGeneratedKeys("associationid").
+                collectInto(new GenericType<List<Long>>() {});
         h.close();
         List<String> stringsList = new ArrayList<>();
         for (Long id : insertedIds) stringsList.add(id.toString());

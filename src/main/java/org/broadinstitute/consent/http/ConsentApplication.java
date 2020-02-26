@@ -9,7 +9,7 @@ import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.auth.chained.ChainedAuthFilter;
 import io.dropwizard.forms.MultiPartBundle;
-import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
+import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -145,7 +145,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
-import org.skife.jdbi.v2.DBI;
+import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,7 +200,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
         // Clients
-        final DBI jdbi = injector.getProvider(DBI.class).get();
+        final Jdbi jdbi = injector.getProvider(Jdbi.class).get();
         final MongoConsentDB mongoInstance = injector.getProvider(MongoConsentDB.class).get();
         final Client client = injector.getProvider(Client.class).get();
         final UseRestrictionConverter useRestrictionConverter = injector.getProvider(UseRestrictionConverter.class).get();
@@ -366,7 +366,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
         bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
         bootstrap.addBundle(new MultiPartBundle());
-        bootstrap.addBundle(new DBIExceptionsBundle());
+        bootstrap.addBundle(new JdbiExceptionsBundle());
     }
 
     private void configureCors(Environment environment) {

@@ -1,18 +1,21 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.Match;
-import org.skife.jdbi.v2.sqlobject.*;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
-import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLocator;
-import org.skife.jdbi.v2.unstable.BindIn;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@UseStringTemplate3StatementLocator
-@RegisterMapper({MatchMapper.class})
+@RegisterRowMapper(MatchMapper.class)
 public interface MatchDAO extends Transactional<MatchDAO> {
 
     @SqlQuery("select * from match_entity where consent = :consentId ")
@@ -28,7 +31,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     Match  findMatchById(@Bind("id") Integer id);
 
     @SqlQuery("select * from match_entity where purpose  IN (<purposeId>)")
-    List<Match>  findMatchesPurposeId(@BindIn("purposeId") List<String> purposeId);
+    List<Match>  findMatchesPurposeId(@BindList("purposeId") List<String> purposeId);
 
     @SqlUpdate("insert into match_entity " +
             "(consent, purpose, matchEntity, failed, date) values " +
@@ -44,7 +47,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
     void insertAll(@BindBean List<Match> matches);
 
     @SqlUpdate("update match_entity set matchEntity = :match, consent = :consentId, purpose = :purposeId, failed = :failed where matchId = :id ")
-    void updateMatch(@BindIn("match") Boolean match,
+    void updateMatch(@BindList("match") Boolean match,
                      @Bind("consentId") String consent,
                      @Bind("purposeId") String purpose,
                      @Bind("failed") Boolean failed);
