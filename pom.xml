@@ -15,7 +15,7 @@
     <liquibase.version>3.8.7</liquibase.version>
     <dropwizard.version>2.0.2</dropwizard.version>
     <pdfbox.version>2.0.15</pdfbox.version>
-    <jetty.version>9.4.26.v20200117</jetty.version>
+    <jetty.version>9.4.27.v20200227</jetty.version>
     <owl.version>5.1.13</owl.version>
     <postgres.version>42.2.10</postgres.version>
     <rdf4j-rio.version>3.1.1</rdf4j-rio.version>
