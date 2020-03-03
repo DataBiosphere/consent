@@ -1059,9 +1059,9 @@ paths:
   /api/dacuser/{id}:
     put:
       summary: update
-      description: | 
-        Updates the user identified by the ID. Requires the authenticated user to have the same id 
-        as that of the user being updated except in the admin case - admins can update information 
+      description: |
+        Updates the user identified by the ID. Requires the authenticated user to have the same id
+        as that of the user being updated except in the admin case - admins can update information
         for other users.
       parameters:
         - name: id
@@ -1161,6 +1161,40 @@ paths:
       responses:
         200:
           description: Returns the DAR collection
+  /api/dar/all/mongo:
+    get:
+      summary: Get All DARs - Mongo
+      description: |
+        Admin only: Get All DARs via mongo
+        Temporary API for migration purposes.
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns all Data Access Requests mapped by their reference id
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataAccessRequest'
+        500:
+          description: Server Error
+  /api/dar/all/postgres:
+    get:
+      summary: Get All DARs - Postgres
+      description: |
+        Admin only: Get All DARs via the db
+        Temporary API for migration purposes.
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns all Data Access Requests
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataAccessRequest'
+        500:
+          description: Server Error
   /api/dar/{id}:
     get:
       summary: describe
@@ -2485,9 +2519,9 @@ paths:
       tags:
         - Status
       responses:
-        200: 
+        200:
           description: All systems are OK
-        500: 
+        500:
           description: Some number of subsystems are not OK.
 
   /version:
@@ -2501,7 +2535,7 @@ paths:
           description: Successful Response
           schema:
             $ref: '#/definitions/Version'
-        500: 
+        500:
           description: Internal Server Error
 
 definitions:

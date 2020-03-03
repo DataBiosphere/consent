@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -72,7 +73,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-@Path("{api : (api/)?}dar")
+@Path("api/dar")
 public class DataAccessRequestResource extends Resource {
 
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
@@ -198,6 +199,26 @@ public class DataAccessRequestResource extends Resource {
     public Response describeDataAccessRequests(@Auth AuthUser authUser) {
         List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
         return Response.ok().entity(documents).build();
+    }
+
+    @GET
+    @Path("/all/mongo")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response getAllMongoDataAccessRequests(@Auth AuthUser authUser) {
+        Map<String, Document> map = dataAccessRequestService.getAllMongoDataAccessRequests().
+                stream().
+                collect(Collectors.toMap(d -> d.get(DarConstants.ID).toString(), d -> d));
+        return Response.ok().entity(map).build();
+    }
+
+    @GET
+    @Path("/all/postgres")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response getAllPostgresDataAccessRequests(@Auth AuthUser authUser) {
+        List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDataAccessRequests();
+        return Response.ok().entity(data).build();
     }
 
     @GET

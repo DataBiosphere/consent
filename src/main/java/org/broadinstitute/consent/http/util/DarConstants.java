@@ -25,6 +25,10 @@ public class DarConstants {
 
     public static final String ID = "_id";
 
+    public static final String DATA_ACCESS_REQUEST_ID = "data_access_request_id";
+
+    public static final String REFERENCE_ID = "reference_id";
+
     public static final String RESTRICTION = "restriction";
 
     public static final String TRANSLATED_RESTRICTION = "translatedUseRestriction";

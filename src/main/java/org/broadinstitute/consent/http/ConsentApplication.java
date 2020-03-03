@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -213,6 +214,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionDAO electionDAO = injector.getProvider(ElectionDAO.class).get();
         final HelpReportDAO helpReportDAO = injector.getProvider(HelpReportDAO.class).get();
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
+        final DataAccessRequestDAO dataAccessRequestDAO = injector.getProvider(DataAccessRequestDAO.class).get();
         final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
         final DataSetAssociationDAO dataSetAssociationDAO = injector.getProvider(DataSetAssociationDAO.class).get();
         final DACUserDAO dacUserDAO = injector.getProvider(DACUserDAO.class).get();
@@ -242,7 +244,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         try {
             MailService.initInstance(config.getMailConfiguration());
-            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
+            EmailNotifierService.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
         } catch (IOException e) {
             LOGGER.error("Mail Notification Service initialization error.", e);
         }

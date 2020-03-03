@@ -1,12 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -14,7 +10,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
@@ -25,16 +20,16 @@ public class ElectionService {
 
     private ConsentDAO consentDAO;
     private ElectionDAO electionDAO;
-    private MongoConsentDB mongo;
     private DacService dacService;
+    private DataAccessRequestService dataAccessRequestService;
 
     @Inject
-    public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
-                           DacService dacService) {
+    public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, DacService dacService,
+                           DataAccessRequestService dataAccessRequestService) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
-        this.mongo = mongo;
         this.dacService = dacService;
+        this.dataAccessRequestService = dataAccessRequestService;
     }
 
     public List<Election> describeClosedElectionsByType(String type, AuthUser authUser) {
@@ -44,20 +39,14 @@ public class ElectionService {
                     electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
             List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            ObjectId[] objarray = new ObjectId[referenceIds.size()];
-            for (int i = 0; i < referenceIds.size(); i++)
-                objarray[i] = new ObjectId(referenceIds.get(i));
-            BasicDBObject in = new BasicDBObject("$in", objarray);
-            BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
-            FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
+            List<Document> dataAccessRequests = dataAccessRequestService.getAllMongoDataAccessRequests().stream().
+                    filter(d -> referenceIds.contains(d.getString(DarConstants.REFERENCE_ID))).
+                    collect(Collectors.toList());
             elections.forEach(election -> {
-                try (MongoCursor<Document> itr = dataAccessRequests.iterator()) {
-                    while (itr.hasNext()) {
-                        Document next = itr.next();
-                        if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
-                            election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
-                            election.setProjectTitle(next.get(DarConstants.PROJECT_TITLE).toString());
-                        }
+                for (Document next : dataAccessRequests) {
+                    if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
+                        election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
+                        election.setProjectTitle(next.get(DarConstants.PROJECT_TITLE).toString());
                     }
                 }
             });

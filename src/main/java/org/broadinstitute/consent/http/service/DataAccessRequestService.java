@@ -1,13 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -23,6 +24,7 @@ import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,14 +35,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.ne;
-
 public class DataAccessRequestService {
 
     private Logger logger = Logger.getLogger(DataAccessRequestService.class.getName());
     private DACUserDAO dacUserDAO;
+    private DataAccessRequestDAO dataAccessRequestDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
@@ -52,10 +51,11 @@ public class DataAccessRequestService {
     private static final String DENIED = "Denied";
 
     @Inject
-    public DataAccessRequestService(DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                                    ElectionDAO electionDAO, MongoConsentDB mongo,
+    public DataAccessRequestService(DACUserDAO dacUserDAO, DataAccessRequestDAO dataAccessRequestDAO,
+                                    DataSetDAO dataSetDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
                                     DacService dacService) {
         this.dacUserDAO = dacUserDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
@@ -98,16 +98,16 @@ public class DataAccessRequestService {
      * @return List of DataAccessRequestManage objects
      */
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
-        BasicDBObject sort = new BasicDBObject("sortDate", -1);
         List<Document> filteredAccessList;
+        List<Document> allDars = getAllDataAccessRequestsAsDocuments();
         if (userId == null) {
-            FindIterable<Document> accessList =  mongo.getDataAccessRequestCollection().find().sort(sort);
-            filteredAccessList = dacService.filterDarsByDAC(accessList.into(new ArrayList<>()), authUser);
+            filteredAccessList = dacService.filterDarsByDAC(allDars, authUser);
         } else {
-            filteredAccessList = mongo.getDataAccessRequestCollection().
-                    find(new BasicDBObject(DarConstants.USER_ID, userId)).
-                    sort(sort).into(new ArrayList<>());
+            filteredAccessList = allDars.stream().
+                    filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
+                    collect(Collectors.toList());
         }
+        filteredAccessList.sort((a, b) -> b.getInteger(DarConstants.SORT_DATE) - a.getInteger(DarConstants.SORT_DATE));
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = filteredAccessList.
                 stream().
@@ -129,8 +129,51 @@ public class DataAccessRequestService {
         return electionMap;
     }
 
+    @SuppressWarnings("deprecation")
+    public List<Document> getAllMongoDataAccessRequests() {
+        return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
+    }
+
+    public List<DataAccessRequest> getAllPostgresDataAccessRequests() {
+        return dataAccessRequestDAO.findAll();
+    }
+
+    /**
+     * Replacement for MongoConsentDB.getDataAccessRequestCollection()
+     * @return List of all DataAccessRequestData objects as Documents
+     */
+    public List<Document> getAllDataAccessRequestsAsDocuments() {
+        Gson gson = new Gson();
+        return getAllPostgresDataAccessRequests().stream().
+                map(d -> {
+                    Document document = Document.parse(gson.toJson(d.getData()));
+                    document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
+                    document.put(DarConstants.ID, d.getReferenceId());
+                    document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
+                    return document;
+                }).
+                collect(Collectors.toList());
+    }
+
+    /**
+     * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
+     * @return DataAccessRequestData object as Document
+     */
+    public Document getDataAccessRequestByReferenceIdAsDocument(String referenceId) {
+        Gson gson = new Gson();
+        DataAccessRequest d = dataAccessRequestDAO.findByReferenceId(referenceId);
+        if (d == null) {
+            throw new NotFoundException("Unable to find Data Access Request by reference id: " + referenceId);
+        }
+        Document document = Document.parse(gson.toJson(d.getData()));
+        document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
+        document.put(DarConstants.ID, d.getReferenceId());
+        document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
+        return document;
+    }
+
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
-        List<Document> documents = mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
+        List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
     }
 
@@ -206,21 +249,18 @@ public class DataAccessRequestService {
     }
 
     private List<Document> getUnReviewedDarsForUser(AuthUser authUser) {
+        List<Document> activeDars = getAllDataAccessRequestsAsDocuments().stream().
+                filter(d -> !d.getString(DarConstants.STATUS).equalsIgnoreCase(ElectionStatus.CANCELED.getValue())).
+                collect(Collectors.toList());
         if (dacService.isAuthUserAdmin(authUser)) {
-            return mongo.
-                    getDataAccessRequestCollection().
-                    find(ne(DarConstants.STATUS, ElectionStatus.CANCELED.getValue())).
-                    into(new ArrayList<>());
+            return activeDars;
         }
         List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().
                 map(DataSet::getDataSetId).
                 collect(Collectors.toList());
-        return mongo.
-                getDataAccessRequestCollection().
-                find(and(
-                        ne(DarConstants.STATUS, ElectionStatus.CANCELED.getValue()),
-                        in(DarConstants.DATASET_ID, dataSetIds))).
-                into(new ArrayList<>());
+        return activeDars.stream().
+                filter(d -> !Collections.disjoint(DarUtil.getIntegerList(d, DarConstants.DATASET_ID), dataSetIds)).
+                collect(Collectors.toList());
     }
 
 }

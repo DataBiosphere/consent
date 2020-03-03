@@ -1,0 +1,33 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet dbms="postgresql" author="grushton" id="51.0">
+        <createTable tableName="data_access_request">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="reference_id" type="varchar(255)"/>
+            <column name="data" type="jsonb"/>
+        </createTable>
+        <rollback>
+            <dropTable tableName="data_access_request" />
+        </rollback>
+    </changeSet>
+
+    <changeSet dbms="hsqldb" author="grushton" id="51.1">
+        <createTable tableName="data_access_request">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="reference_id" type="varchar(255)"/>
+            <column name="data" type="varchar(1000000)"/>
+        </createTable>
+        <rollback>
+            <dropTable tableName="data_access_request" />
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
