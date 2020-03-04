@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -170,6 +171,24 @@ public class DataAccessRequestService {
         document.put(DarConstants.ID, d.getReferenceId());
         document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
         return document;
+    }
+
+    public void deleteByReferenceId(String referenceId) {
+        dataAccessRequestDAO.deleteByReferenceId(referenceId);
+    }
+
+    public DataAccessRequest findByReferenceId(String referencedId) {
+        return dataAccessRequestDAO.findByReferenceId(referencedId);
+    }
+
+    public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
+        dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
+        return findByReferenceId(referencedId);
+    }
+
+    public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
+        dataAccessRequestDAO.insert(referencedId, darData);
+        return findByReferenceId(referencedId);
     }
 
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
