@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +31,6 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +59,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private ConsentDAO consentDAO;
     private VoteDAO voteDAO;
     private DACUserDAO dacUserDAO;
-    private MongoConsentDB mongo;
     private DataSetDAO dataSetDAO;
+    private DataAccessRequestService dataAccessRequestService;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
     private EmailNotifierAPI emailNotifierAPI;
@@ -80,8 +78,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dao, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dataAccessRequestService, dao, consentDAO, dacUserDAO, voteDAO, mailMessageDAO, dataSetDAO));
     }
 
     /**
@@ -91,19 +89,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object used to read/write data.
      */
     @VisibleForTesting
-    DatabaseElectionAPI(ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, MongoConsentDB mongo, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+    DatabaseElectionAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+        this.dataAccessRequestService = dataAccessRequestService;
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
-        this.mongo = mongo;
         this.voteDAO = voteDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.dataSetDAO = dataSetDAO;
         this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
-    }
-
-    public void setMongoDBInstance(MongoConsentDB mongo) {
-        this.mongo = mongo;
     }
 
     @Override
@@ -468,14 +462,14 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
             }else{
-                updateDataAccessRequest(dataSetList, dar, dar.getString(DarConstants.DAR_CODE));
+                updateDataAccessRequest(dataSetList, dar, referenceId);
                 emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
             }
         }
         return dataSetList;
     }
 
-    private void updateDataAccessRequest(List<DataSet> dataSets, Document dar, String id){
+    private void updateDataAccessRequest(List<DataSet> dataSets, Document dar, String referenceId) {
         List<Document> dataSetList = new ArrayList<>();
         List<String> dataSetId = new ArrayList<>();
         List<DataSet> activeDataSets = dataSets.stream().filter(ds -> ds.getActive()).collect(Collectors.toList());
@@ -486,15 +480,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             document.put("name", dataSet.getName());
             dataSetList.add(document);
         });
-        dar.put(DarConstants.DATASET_ID,dataSetId);
-        dar.put(DarConstants.DATASET_DETAIL,dataSetList);
-        BasicDBObject query = new BasicDBObject(DarConstants.DAR_CODE, id);
-        mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
+        dar.put(DarConstants.DATASET_ID, dataSetId);
+        dar.put(DarConstants.DATASET_DETAIL, dataSetList);
+        dataAccessRequestService.updateDocumentByReferenceId(referenceId, dar);
     }
 
-    private Document describeDataAccessRequestById(String id){
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
-        return mongo.getDataAccessRequestCollection().find(query).first();
+    private Document describeDataAccessRequestById(String id) {
+        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
@@ -512,8 +504,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 break;
             case DATA_ACCESS:
             case RP:
-                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-                Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+                Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
                 List<Integer> datasetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
@@ -620,10 +611,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(consentDAO.checkConsentById(referenceId) != null){
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
-            BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-            Document dar = mongo.getDataAccessRequestCollection().find(query).first();
-            dar.put("sortDate", createDate);
-            mongo.getDataAccessRequestCollection().findOneAndReplace(query, dar);
+            Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
+            dar.put(DarConstants.SORT_DATE, createDate);
+            dataAccessRequestService.updateDocumentByReferenceId(referenceId, dar);
         }
     }
 
@@ -651,8 +641,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void sendResearcherNotification(String referenceId) throws Exception {
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-        Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
         List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
         if(CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<DataSet> dataSets = dataSetDAO.searchDataSetsByIds(dataSetIdList);

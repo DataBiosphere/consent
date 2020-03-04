@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.DatabaseElectionAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.After;
@@ -56,9 +55,6 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
         mongoi.getResearchPurposeCollection().drop();
         mongoi.configureMongo();
 
-        // configuring ResearchPurposeAPI instance to use in memory Mongo
-        DatabaseElectionAPI.getInstance().setMongoDBInstance(mongoi);
-
         // Create Documents needed in mongo for testing
         List<Integer> dataSets = new ArrayList<>();
         dataSets.add(1);
@@ -74,7 +70,7 @@ public class VoteDataRequestTest extends ElectionVoteServiceTest {
     }
 
     @Test
-    @Ignore // TODO: Broken, need to either remove or fix.
+    @Ignore // TODO: Broken due to mongo DAR no longer in use - replace with better unit tests
     public void testCreateDataRequestVote() throws IOException {
         // should exist an election for specified data request
         mockValidateTokenResponse();

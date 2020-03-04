@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -48,7 +47,7 @@ public class ElectionAPITest extends AbstractTest {
     @Mock
     private DACUserDAO dacUserDAO;
     @Mock
-    private MongoConsentDB mongo;
+    private DataAccessRequestService dataAccessRequestService;
     @Mock
     private VoteDAO voteDAO;
     @Mock
@@ -75,7 +74,7 @@ public class ElectionAPITest extends AbstractTest {
     public void setUp() {
         userDAO = getApplicationJdbi().onDemand(DACUserDAO.class);
         MockitoAnnotations.initMocks(this);
-        electionAPI = Mockito.spy(new DatabaseElectionAPI(electionDAO, consentDAO, dacUserDAO, mongo, voteDAO, mailMessageDAO, dataSetDAO));
+        electionAPI = Mockito.spy(new DatabaseElectionAPI(dataAccessRequestService, electionDAO, consentDAO, dacUserDAO, voteDAO, mailMessageDAO, dataSetDAO));
         consent.setConsentId(consentId);
         consent.setTranslatedUseRestriction("Translated");
     }

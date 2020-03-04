@@ -29,6 +29,7 @@ import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +131,9 @@ public class DataAccessRequestService {
         return electionMap;
     }
 
+    /**
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     */
     @SuppressWarnings("deprecation")
     public List<Document> getAllMongoDataAccessRequests() {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
@@ -140,6 +144,7 @@ public class DataAccessRequestService {
     }
 
     /**
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
      * Replacement for MongoConsentDB.getDataAccessRequestCollection()
      * @return List of all DataAccessRequestData objects as Documents
      */
@@ -157,6 +162,7 @@ public class DataAccessRequestService {
     }
 
     /**
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
      * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
      * @return DataAccessRequestData object as Document
      */
@@ -184,6 +190,20 @@ public class DataAccessRequestService {
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
         dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
         return findByReferenceId(referencedId);
+    }
+
+    /**
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     */
+    public Document updateDocumentByReferenceId(String id, Document document) {
+        if (findByReferenceId(id) == null) {
+            throw new NotFoundException("Data access for the specified id does not exist");
+        }
+        Gson gson = new Gson();
+        DataAccessRequestData darData = gson.fromJson(document.toJson(), DataAccessRequestData.class);
+        darData.setSortDate(new Date().getTime());
+        updateByReferenceId(id, darData);
+        return getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
     public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
