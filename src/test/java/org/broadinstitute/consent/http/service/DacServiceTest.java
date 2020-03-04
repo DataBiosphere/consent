@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -15,11 +12,14 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -68,16 +68,7 @@ public class DacServiceTest {
     ElectionDAO electionDAO;
 
     @Mock
-    FindIterable iterable;
-
-    @Mock
-    FindIterable projection;
-
-    @Mock
-    MongoCollection collection;
-
-    @Mock
-    MongoConsentDB mongo;
+    DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
     VoteService voteService;
@@ -88,7 +79,7 @@ public class DacServiceTest {
     }
 
     private void initService() {
-        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, mongo, voteService);
+        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, dataAccessRequestDAO, voteService);
     }
 
     @Test
@@ -207,7 +198,6 @@ public class DacServiceTest {
         Assert.assertFalse(users.isEmpty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testAddDacMember() {
         when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
@@ -216,10 +206,10 @@ public class DacServiceTest {
                 peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).
                 peek(e -> e.setReferenceId(new ObjectId().toHexString())).
                 collect(Collectors.toList());
-        when(projection.first()).thenReturn(new Document());
-        when(iterable.projection(any())).thenReturn(projection);
-        when(collection.find(any(BasicDBObject.class))).thenReturn(iterable);
-        when(mongo.getDataAccessRequestCollection()).thenReturn(collection);
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setData(new DataAccessRequestData());
+        dar.getData().setRestriction(new Everything());
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(electionDAO.findOpenElectionsByDacId(any())).thenReturn(elections);
         when(voteService.createVotes(any(), any(), anyBoolean())).thenReturn(Collections.emptyList());
         doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt());
