@@ -167,11 +167,25 @@ public class DataAccessRequestService {
      * @return DataAccessRequestData object as Document
      */
     public Document getDataAccessRequestByReferenceIdAsDocument(String referenceId) {
-        Gson gson = new Gson();
         DataAccessRequest d = dataAccessRequestDAO.findByReferenceId(referenceId);
         if (d == null) {
             throw new NotFoundException("Unable to find Data Access Request by reference id: " + referenceId);
         }
+        return createDocumentFromDar(d);
+    }
+
+    /**
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
+     * @return DataAccessRequestData object as Document
+     */
+    public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(referenceIds);
+        return dars.stream().map(this::createDocumentFromDar).collect(Collectors.toList());
+    }
+
+    private Document createDocumentFromDar(DataAccessRequest d) {
+        Gson gson = new Gson();
         Document document = Document.parse(gson.toJson(d.getData()));
         document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
         document.put(DarConstants.ID, d.getReferenceId());
