@@ -4,8 +4,14 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.*;
-import org.broadinstitute.consent.http.models.grammar.*;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.grammar.Everything;
+import org.broadinstitute.consent.http.models.grammar.Nothing;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -44,13 +50,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
     }
 
     @Test
-    public void testCreateConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(everything, generalUse);
-        assertValidConsentResource(client, rec);
-    }
-
-    @Test
     public void testUpdateConsent() throws IOException {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
@@ -84,44 +83,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
         Response response = checkStatus(CREATED, post(client, consentPath(), rec));
         String createdLocation = checkHeader(response, "Location");
         check200(delete(client, createdLocation));
-    }
-
-
-    @Test
-    public void testOnlyOrNamedConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        UseRestriction only = new Only("http://broadinstitute.org/ontology/consent/research_on", new Or(new Named("DOID:1"), new Named("DOID:2")));
-        Consent rec = generateNewConsent(only, notGeneralUse);
-        assertValidConsentResource(client, rec);
-    }
-
-    @Test
-    public void testAndConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(new And(new Named("DOID:1"), new Named("DOID:2")), notGeneralUse);
-        assertValidConsentResource(client, rec);
-    }
-
-    @Test
-    public void testNotConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(new Not(new Named("DOID:1")), notGeneralUse);
-        assertValidConsentResource(client, rec);
-    }
-
-    @Test
-    public void testNothingConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(nothing, notGeneralUse);
-        assertValidConsentResource(client, rec);
-    }
-
-    @Test
-    public void testSomeConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        UseRestriction some = new Some("http://broadinstitute.org/ontology/consent/research_on", new Named("DOID:1"));
-        Consent rec = generateNewConsent(some, notGeneralUse);
-        assertValidConsentResource(client, rec);
     }
 
     @Test
@@ -164,18 +125,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
         update.setDataUseLetter("invalidUrl");
         Response updateResponse = put(client, createdLocation, update);
         assertThat(updateResponse.getStatus()).isEqualTo(BAD_REQUEST);
-    }
-
-    private void assertValidConsentResource(Client client, Consent rec) throws IOException {
-        rec.setGroupName("Test Group Name");
-        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
-        String createdLocation = checkHeader(response, "Location");
-        mockValidateTokenResponse();
-        Consent created = retrieveConsent(client, createdLocation);
-
-        assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
-        assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
-        assertThat(created.groupName).isEqualTo(rec.groupName);
     }
 
     public Election createElection(String consentId) throws IOException {
