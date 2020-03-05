@@ -8,9 +8,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.models.grammar.Nothing;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -18,19 +16,15 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsentAcceptanceTest extends AbstractTest {
 
     private final UseRestriction everything = new Everything();
-    private final UseRestriction nothing = new Nothing();
     private DataUse generalUse = new DataUseBuilder().setGeneralUse(true).build();
-    private DataUse notGeneralUse = new DataUseBuilder().setGeneralUse(false).build();
 
     @ClassRule
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
@@ -47,33 +41,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
     public void setup() {
         mockTranslateResponse();
         mockValidateResponse();
-    }
-
-    @Test
-    public void testUpdateConsent() throws IOException {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(everything, generalUse);
-        rec.setGroupName("Test Group Name");
-        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
-        String createdLocation = checkHeader(response, "Location");
-        mockValidateTokenResponse();
-        Consent created = retrieveConsent(client, createdLocation);
-        assertThat(created.requiresManualReview).isEqualTo(rec.requiresManualReview);
-        assertThat(created.useRestriction).isEqualTo(rec.useRestriction);
-        assertThat(created.groupName).isEqualTo(rec.groupName);
-        Consent update = generateNewConsent(nothing, notGeneralUse);
-        update.setRequiresManualReview(true);
-        update.setGroupName("Group Name in testing");
-        check200(put(client, createdLocation, update));
-        Consent updated = retrieveConsent(client, createdLocation);
-        // when an update is done to a consent from orsp, updateStatus flag is set true
-        assertThat(updated.updateStatus).isEqualTo(true);
-        assertThat(updated.requiresManualReview).isEqualTo(update.requiresManualReview);
-        assertThat(updated.useRestriction).isEqualTo(update.useRestriction);
-
-        Election election = createElection(created.consentId);
-        checkStatus(BAD_REQUEST, put(client, createdLocation, update));
-        deleteElection(created.getConsentId(), election.getElectionId());
     }
 
     @Test
@@ -136,21 +103,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
                 post(client, electionConsentPath(consentId), election));
         String createdLocation = checkHeader(response, "Location");
         return getJson(client, createdLocation).readEntity(Election.class);
-    }
-
-    private void deleteElection(String consentId, Integer electionId) throws IOException {
-
-        Client client = ClientBuilder.newClient();
-        mockValidateTokenResponse();
-        List<Vote> votes = getJson(client, voteConsentPath(consentId)).readEntity(new GenericType<List<Vote>>() {
-        });
-
-        for (Vote vote : votes) {
-            checkStatus(OK,
-                    delete(client, voteConsentIdPath(consentId, vote.getVoteId())));
-        }
-
-        checkStatus(OK, delete(client, electionConsentPathById(consentId, electionId)));
     }
 
 }

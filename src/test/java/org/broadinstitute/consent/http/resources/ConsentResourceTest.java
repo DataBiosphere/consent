@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -105,14 +104,16 @@ public class ConsentResourceTest {
         DACUser dacUser = new DACUser();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
-        doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         Consent consent = new Consent();
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         when(api.create(any())).thenReturn(consent);
         doNothing().when(auditServiceAPI).saveConsentAudit(any(), any(), any(), any());
         doNothing().when(matchProcessAPI).processMatchesForConsent(any());
+
         initResource();
 
         Response response = resource.createConsent(info, consent, user);
@@ -120,8 +121,26 @@ public class ConsentResourceTest {
     }
 
     @Test
-    public void testUpdateConsent() {
+    public void testUpdateConsent() throws Exception {
+        DACUser dacUser = new DACUser();
+        dacUser.setEmail("test@email.com");
+        AuthUser user = new AuthUser(dacUser.getEmail());
+        Consent consent = new Consent();
+        consent.setLastElectionArchived(true); // Unarchived consents cannot be updated.
+        consent.setConsentId(UUID.randomUUID().toString());
+        consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
+        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
+        when(api.retrieve(any())).thenReturn(consent);
+        when(api.update(any(), any())).thenReturn(consent);
+        doNothing().when(auditServiceAPI).saveConsentAudit(any(), any(), any(), any());
+        doNothing().when(matchProcessAPI).processMatchesForConsent(any());
+
+        initResource();
+
+        Response response = resource.update(consent.getConsentId(), consent, user);
+        assertEquals(200, response.getStatus());
     }
 
 }
