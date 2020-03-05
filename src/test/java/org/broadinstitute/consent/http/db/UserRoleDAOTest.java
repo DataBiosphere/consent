@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// TODO: Convert to using DAOTestHelper
+// TODO: Convert to using DAOTestFramework
 public class UserRoleDAOTest extends AbstractTest {
 
     private static final int TEST_USER_1_ID = 1;

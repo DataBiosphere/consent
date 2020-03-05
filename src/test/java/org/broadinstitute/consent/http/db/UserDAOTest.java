@@ -19,7 +19,7 @@ import java.util.Set;
 
 import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
 
-public class UserDAOTest extends DAOTestHelper {
+public class UserDAOTest extends DAOTestFramework {
 
     @Test
     public void testFindDACUserById() {
@@ -58,10 +58,10 @@ public class UserDAOTest extends DAOTestHelper {
         Assert.assertFalse(admins.isEmpty());
 
         List<DACUser> researchers = userDAO.describeUsersByRole(UserRoles.RESEARCHER.getRoleName());
-        Assert.assertFalse(researchers.isEmpty());
+        Assert.assertTrue(researchers.isEmpty());
 
         List<DACUser> dataOwners = userDAO.describeUsersByRole(UserRoles.DATAOWNER.getRoleName());
-        Assert.assertFalse(dataOwners.isEmpty());
+        Assert.assertTrue(dataOwners.isEmpty());
     }
 
     @Test

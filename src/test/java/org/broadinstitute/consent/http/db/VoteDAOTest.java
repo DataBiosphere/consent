@@ -12,7 +12,7 @@ import org.junit.Test;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class VoteDAOTest extends DAOTestHelper {
+public class VoteDAOTest extends DAOTestFramework {
 
     @Test
     public void testCreateVote() {

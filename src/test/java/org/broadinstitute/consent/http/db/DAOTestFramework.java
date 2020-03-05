@@ -25,6 +25,8 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.ArrayList;
@@ -39,13 +41,9 @@ import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 public class DAOTestFramework {
 
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
+    protected Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     private static final int maxConnections = 100;
     private static ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
-    private static ConfigOverride driverOverride;
-    private static ConfigOverride urlOverride;
-    private static ConfigOverride userOverride;
-    private static ConfigOverride passwordOverride;
-    private static ConfigOverride validationQueryOverride;
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
     static ConsentDAO consentDAO;
@@ -73,11 +71,11 @@ public class DAOTestFramework {
         PostgreSQLContainer postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE).
                 withCommand("postgres -c max_connections=" + maxConnections);
         postgres.start();
-        driverOverride = ConfigOverride.config("database.driverClass", postgres.getDriverClassName());
-        urlOverride = ConfigOverride.config("database.url", postgres.getJdbcUrl());
-        userOverride = ConfigOverride.config("database.user", postgres.getUsername());
-        passwordOverride = ConfigOverride.config("database.password", postgres.getPassword());
-        validationQueryOverride = ConfigOverride.config("database.validationQuery", postgres.getTestQueryString());
+        ConfigOverride driverOverride = ConfigOverride.config("database.driverClass", postgres.getDriverClassName());
+        ConfigOverride urlOverride = ConfigOverride.config("database.url", postgres.getJdbcUrl());
+        ConfigOverride userOverride = ConfigOverride.config("database.user", postgres.getUsername());
+        ConfigOverride passwordOverride = ConfigOverride.config("database.password", postgres.getPassword());
+        ConfigOverride validationQueryOverride = ConfigOverride.config("database.validationQuery", postgres.getTestQueryString());
 
         // Start the app
         testApp = new DropwizardTestSupport<>(
