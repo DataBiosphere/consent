@@ -392,7 +392,7 @@
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
-      <version>4.3.2</version>
+      <version>4.3.3</version>
       <exclusions>
         <exclusion>
           <artifactId>org.apache.httpcomponents</artifactId>
