@@ -36,7 +36,6 @@ import java.util.UUID;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
-// TODO: Migrate DAOTestHelper implementors to use this class instead.
 public class DAOTestFramework {
 
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
