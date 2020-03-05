@@ -39,7 +39,6 @@ logging:
     "net.sourceforge": ERROR
     "org.apache": ERROR
     "org.liquibase": ERROR
-    "de.flapdoodle.embed.mongo": ERROR
     "org.mongodb": ERROR
     "org.reflections": ERROR
     "org.semanticweb": ERROR

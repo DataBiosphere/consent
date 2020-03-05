@@ -1,23 +1,8 @@
 package org.broadinstitute.consent.http;
 
-import com.mongodb.MongoClient;
-import de.flapdoodle.embed.mongo.Command;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Storage;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.config.IRuntimeConfig;
-import de.flapdoodle.embed.process.config.io.ProcessOutput;
-import de.flapdoodle.embed.process.runtime.Network;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
@@ -39,7 +24,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -67,9 +51,6 @@ abstract public class AbstractTest extends ResourcedTest {
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
 
     abstract public DropwizardAppRule<ConsentConfiguration> rule();
-
-    private MongodExecutable mongodExe;
-    private MongodProcess mongod;
 
     /*
      * Some utility methods for interacting with HTTP-services.
@@ -224,42 +205,6 @@ abstract public class AbstractTest extends ResourcedTest {
                 setLastUpdate(createDate).
                 setSortDate(createDate).
                 build();
-    }
-
-    protected MongoClient setUpMongoClient() throws IOException {
-        int port = 27017;
-        String bindIp = "localhost";
-        // Creating Mongodbruntime instance
-        // Make flapdoodle/mongo respect dropwizard's logging framework
-        // See https://github.com/flapdoodle-oss/de.flapdoodle.embed.mongo#usage---custom-mongod-process-output
-        org.slf4j.Logger slf4jLogger = org.slf4j.LoggerFactory.getLogger(getClass().getName());
-        IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
-                .defaultsWithLogger(Command.MongoD, slf4jLogger)
-                .processOutput(ProcessOutput.getDefaultInstanceSilent())
-                .build();
-        MongodStarter starter = MongodStarter.getInstance(runtimeConfig);
-        // Creating MongodbExecutable
-        Storage replication = new Storage("target/mongo", null, 0);
-        IMongodConfig config = new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION)
-                .replication(replication)
-                .net(new Net(bindIp, port, Network.localhostIsIPv6()))
-                .build();
-        mongodExe = starter.prepare(config);
-        // Starting Mongodb
-        mongod = mongodExe.start();
-        return new MongoClient(bindIp, port);
-    }
-
-    protected void shutDownMongo() {
-        mongod.stop();
-        mongodExe.stop();
-        // Force cleanup of any leftover mongo db files. Only deletes the `mongo` directory itself.
-        try {
-            FileUtils.deleteDirectory(new File("target/mongo"));
-        } catch (IOException e) {
-            logger.error("Unable to remove target/mongo directory");
-        }
     }
 
     protected Jdbi getApplicationJdbi() {

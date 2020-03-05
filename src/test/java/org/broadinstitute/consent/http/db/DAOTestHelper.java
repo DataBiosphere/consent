@@ -13,9 +13,12 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Before;
@@ -23,6 +26,7 @@ import org.junit.ClassRule;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +38,7 @@ public abstract class DAOTestHelper extends AbstractTest {
     private List<String> createdConsentIds = new ArrayList<>();
     private List<Integer> createdElectionIds = new ArrayList<>();
     private List<String> createdUserEmails = new ArrayList<>();
+    private List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
 
     ConsentDAO consentDAO;
     DacDAO dacDAO;
@@ -42,6 +47,7 @@ public abstract class DAOTestHelper extends AbstractTest {
     ElectionDAO electionDAO;
     private UserRoleDAO userRoleDAO;
     VoteDAO voteDAO;
+    DataAccessRequestDAO dataAccessRequestDAO;
 
     String ASSOCIATION_TYPE_TEST;
 
@@ -65,6 +71,7 @@ public abstract class DAOTestHelper extends AbstractTest {
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
+        dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
         ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
     }
 
@@ -87,6 +94,8 @@ public abstract class DAOTestHelper extends AbstractTest {
                     forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
             userDAO.deleteDACUserByEmail(email);
         });
+        createdDataAccessRequestReferenceIds.forEach(d ->
+                dataAccessRequestDAO.deleteByReferenceId(d));
     }
 
     void createAssociation(String consentId, Integer datasetId) {
@@ -190,6 +199,18 @@ public abstract class DAOTestHelper extends AbstractTest {
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
+    }
+
+    DataAccessRequest createDtaAccessRequest() {
+        String referenceId = UUID.randomUUID().toString();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setRestriction(new Everything());
+        data.setStatus(ElectionStatus.OPEN.getValue());
+        data.setSortDate(new Date().getTime());
+        data.setDatasetId(Collections.singletonList(createDataset().getDataSetId()));
+        data.setDarCode("DAR-test-" + RandomUtils.nextInt(1000, 10000));
+        dataAccessRequestDAO.insert(referenceId, data);
+        return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
 }
