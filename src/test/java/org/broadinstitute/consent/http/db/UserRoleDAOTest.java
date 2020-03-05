@@ -173,7 +173,6 @@ public class UserRoleDAOTest extends AbstractTest {
         Assert.assertNotNull(userRole);
         Assert.assertEquals(userRole.getRoleId().intValue(), 1);
         Assert.assertEquals(userRole.getName(), "name");
-        System.out.println(userRole.toString());
     }
 
 }
