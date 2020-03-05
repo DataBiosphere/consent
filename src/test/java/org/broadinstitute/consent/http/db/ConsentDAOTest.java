@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ConsentDAOTest extends DAOTestHelper {
+public class ConsentDAOTest extends DAOTestFramework {
 
     @Test
     public void testFindConsentById() {
@@ -38,7 +38,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
 
-        String name = consentDAO.findConsentNameFromDatasetID(dataset.getDataSetId().toString());
+        String name = consentDAO.findConsentNameFromDatasetID(dataset.getDataSetId());
         Assert.assertNotNull(name);
         Assert.assertEquals(consent.getName(), name);
     }
@@ -320,7 +320,8 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent(null);
         DataSet dataset = createDataset();
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        List<String> dataSetIds = Stream.of(String.valueOf(dataset.getDataSetId())).collect(Collectors.toList());
+        List<Integer> dataSetIds = Stream.of(String.valueOf(dataset.getDataSetId())).
+                map(Integer::valueOf).collect(Collectors.toList());
 
         List<String> consentIds = consentDAO.getAssociationConsentIdsFromDatasetIds(dataSetIds);
         Assert.assertFalse(consentIds.isEmpty());

@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class DacDAOTest extends DAOTestHelper {
+public class DacDAOTest extends DAOTestFramework {
 
     @Test
     public void testCreate() {

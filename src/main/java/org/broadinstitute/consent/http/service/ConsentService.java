@@ -79,7 +79,8 @@ public class ConsentService {
             });
             List<String> consentIds = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(datasetIds)) {
-                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIds));
+                List<Integer> datasetIdIntValues = datasetIds.stream().map(Integer::valueOf).collect(Collectors.toList());
+                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIdIntValues));
             }
 
             for (ConsentManage consentManage : consentManageList) {

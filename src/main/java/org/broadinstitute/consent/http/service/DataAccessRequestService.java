@@ -202,7 +202,7 @@ public class DataAccessRequestService {
     }
 
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
-        dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
+        dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData.toString());
         return findByReferenceId(referencedId);
     }
 
@@ -221,7 +221,7 @@ public class DataAccessRequestService {
     }
 
     public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
-        dataAccessRequestDAO.insert(referencedId, darData);
+        dataAccessRequestDAO.insert(referencedId, darData.toString());
         return findByReferenceId(referencedId);
     }
 

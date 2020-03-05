@@ -4,14 +4,12 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class DataAccessRequestDAOTest extends DAOTestHelper {
+public class DataAccessRequestDAOTest extends DAOTestFramework {
 
-    // TODO: Need to sort through the postgres <-> hsqldb problem some more ... @JSON
-    // doesn't work in hsqldb :-(
     @Test
     public void testCreate() {
-//        DataAccessRequest dar = createDtaAccessRequest();
-//        Assert.assertNotNull(dar);
+        DataAccessRequest dar = createDtaAccessRequest();
+        Assert.assertNotNull(dar);
     }
 
 }

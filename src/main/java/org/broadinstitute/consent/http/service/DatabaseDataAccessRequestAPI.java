@@ -419,7 +419,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 if (dar != null) {
                     String profileName = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
                     String institution = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.INSTITUTION);
-                    String consentName = consentDAO.findConsentNameFromDatasetID(dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString());
+                    String consentName = consentDAO.findConsentNameFromDatasetID(DarUtil.getIntegerList(dar, DarConstants.DATASET_ID).get(0));
                     Election consentElection = getConsentElection(election.getElectionId(), dar);
                     dataAccessReportsParser.addApprovedDARLine(darWriter, election, dar, profileName, institution, consentName, consentElection.getTranslatedUseRestriction());
                 }
@@ -443,7 +443,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             for (Election election : elections) {
                 Document dar = describeDataAccessRequestById(election.getReferenceId());
                 if (dar != null) {
-                    String consentName = consentDAO.findConsentNameFromDatasetID(dar.get(DarConstants.DATASET_ID, ArrayList.class).get(0).toString());
+                    String consentName = consentDAO.findConsentNameFromDatasetID(DarUtil.getIntegerList(dar, DarConstants.DATASET_ID).get(0));
                     Election consentElection = getConsentElection(election.getElectionId(), dar);
                     dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar, consentName, consentElection.getTranslatedUseRestriction());
                 }

@@ -86,6 +86,11 @@ public class DataAccessRequestData {
     public DataAccessRequestData() {
     }
 
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
+    }
+
     public static DataAccessRequestData fromString(String jsonString) {
         return new Gson().fromJson(jsonString, DataAccessRequestData.class);
     }

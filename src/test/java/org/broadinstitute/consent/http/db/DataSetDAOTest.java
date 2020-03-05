@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DataSetDAOTest extends DAOTestHelper {
+public class DataSetDAOTest extends DAOTestFramework {
 
     @Test
     public void testInsertDataset() {
