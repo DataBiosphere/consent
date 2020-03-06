@@ -200,8 +200,6 @@ public class DataAccessRequestService {
                 Optional<Pair<Integer, Integer>> rpElectionIdOption =  rpAccessElectionIdPairs.stream().
                         filter(p -> p.getRight().equals(election.getElectionId())).
                         findFirst();
-
-                // TODO: Look into moving these dao calls out of the loop
                 if (rpElectionIdOption.isPresent()) {
                     Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionIdOption.get().getKey(), user.getDacUserId());
                     darManage.setRpElectionId(rpElectionIdOption.get().getKey());
@@ -250,7 +248,6 @@ public class DataAccessRequestService {
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
-            // TODO: Look into moving these dao calls out of the loop
             if (election != null && !CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))) {
                 darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
             } else if (CollectionUtils.isNotEmpty(dataSetsToApprove) && election != null && election.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
