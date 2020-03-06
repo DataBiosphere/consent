@@ -7,17 +7,23 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -31,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
@@ -40,11 +47,13 @@ import static com.mongodb.client.model.Filters.ne;
 public class DataAccessRequestService {
 
     private Logger logger = Logger.getLogger(DataAccessRequestService.class.getName());
+    private ConsentDAO consentDAO;
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
     private DacService dacService;
+    private VoteDAO voteDAO;
 
     private static final String UN_REVIEWED = "un-reviewed";
     private static final String NEEDS_APPROVAL = "Needs Approval";
@@ -52,14 +61,16 @@ public class DataAccessRequestService {
     private static final String DENIED = "Denied";
 
     @Inject
-    public DataAccessRequestService(DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                                    ElectionDAO electionDAO, MongoConsentDB mongo,
-                                    DacService dacService) {
+    public DataAccessRequestService(ConsentDAO consentDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+                                    ElectionDAO electionDAO, MongoConsentDB mongo, DacService dacService,
+                                    VoteDAO voteDAO) {
+        this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
         this.dacService = dacService;
+        this.voteDAO = voteDAO;
     }
 
     /**
@@ -118,7 +129,7 @@ public class DataAccessRequestService {
             List<Election> electionList = electionDAO.
                     findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue());
             Map<String, Election> electionAccessMap = createAccessRequestElectionMap(electionList);
-            darManage.addAll(createAccessRequestManage(filteredAccessList, electionAccessMap));
+            darManage.addAll(createAccessRequestManage(filteredAccessList, electionAccessMap, authUser));
         }
         return darManage;
     }
@@ -134,16 +145,44 @@ public class DataAccessRequestService {
         return dacService.filterDarsByDAC(documents, authUser);
     }
 
-    private List<DataAccessRequestManage> createAccessRequestManage(List<Document> documents, Map<String, Election> electionList) {
+    private List<DataAccessRequestManage> createAccessRequestManage(List<Document> documents, Map<String, Election> electionList, AuthUser authUser) {
+        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         Map<Integer, Integer> datasetDacPairs = dataSetDAO.findDatasetAndDacIds().
                 stream().
                 collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+        List<Integer> electionIds = electionList.values().stream().
+                map(Election::getElectionId).collect(Collectors.toList());
+        List<Dac> dacList = electionDAO.findDacsForElections(electionIds);
+        List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
+        Map<Integer, List<Vote>> electionVoteMap = voteDAO.findVotesByElectionIds(electionIds).stream().
+                collect(Collectors.groupingBy(Vote::getElectionId));
+        Map<Integer, List<Vote>> electionPendingVoteMap = electionVoteMap.entrySet().stream().
+                collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().stream().filter(v -> v.getVote() == null).
+                                collect(Collectors.toList())
+                ));
+        List<String> referenceIds = electionList.values().stream().map(Election::getReferenceId).collect(Collectors.toList());
+        Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
+                collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
+
+        Map<ObjectId, List<Integer>> darDatasetMap = documents.stream().collect(Collectors.toMap(
+                d -> d.get(DarConstants.ID, ObjectId.class),
+                d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)
+        ));
+
+        List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
+                map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
+                flatMap(List::stream).
+                collect(Collectors.toList());
+        List<DataSet> dataSetsToApprove = dataSetDAO.
+                findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
+
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-            List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(darDatasetIds);
+            List<Integer> darDatasetIds = darDatasetMap.get(id);
             if (darDatasetIds.size() > 1) {
                 darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
             }
@@ -154,6 +193,54 @@ public class DataAccessRequestService {
                 darManage.setDacId(datasetDacPairs.get(darManage.getDatasetId()));
             }
             Election election = electionList.get(id.toString());
+            if (election != null) {
+                List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
+                List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
+                Consent consent = consentMap.get(election.getReferenceId());
+                Optional<Pair<Integer, Integer>> rpElectionIdOption =  rpAccessElectionIdPairs.stream().
+                        filter(p -> p.getRight().equals(election.getElectionId())).
+                        findFirst();
+
+                // TODO: Look into moving these dao calls out of the loop
+                if (rpElectionIdOption.isPresent()) {
+                    Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionIdOption.get().getKey(), user.getDacUserId());
+                    darManage.setRpElectionId(rpElectionIdOption.get().getKey());
+                    if (rpVote != null) {
+                        darManage.setRpVoteId(rpVote.getVoteId());
+                    }
+                }
+                boolean isReminderSent = electionVotes.stream().
+                        anyMatch(Vote::getIsReminderSent);
+                boolean finalVote = electionVotes.stream().
+                        filter(v -> v.getVote() != null).
+                        filter(v -> v.getType() != null).
+                        filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).
+                        anyMatch(Vote::getVote);
+                Optional<Vote> userVoteOption = electionVotes.stream().
+                        filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                        findFirst();
+                darManage.setReferenceId(election.getReferenceId());
+                darManage.setTotalVotes(electionVotes.size());
+                darManage.setVotesLogged(electionVotes.size() - pendingVotes.size());
+                darManage.setLogged(darManage.getVotesLogged() + "/" + darManage.getTotalVotes());
+                Optional<Dac> dacOption =  dacList.stream().filter(d -> d.getElectionIds().contains(election.getElectionId())).findFirst();
+                dacOption.ifPresent(darManage::setDac);
+                darManage.setReminderSent(isReminderSent);
+                darManage.setFinalVote(finalVote);
+                if (userVoteOption.isPresent()) {
+                    darManage.setVoteId(userVoteOption.get().getVoteId());
+                    darManage.setAlreadyVoted(true);
+                }
+                if (consent != null) {
+                    // See PendingCaseService ... we populate this from the consent's name, not group name
+                    darManage.setConsentGroupName(consent.getName());
+                }
+                darManage.setElectionStatus(election.getStatus());
+                darManage.setElectionId(election.getElectionId());
+                darManage.setElectionVote(election.getFinalVote());
+            } else {
+                darManage.setElectionStatus(UN_REVIEWED);
+            }
             darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
             darManage.setRus(dar.getString(DarConstants.RUS));
             darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
@@ -163,9 +250,7 @@ public class DataAccessRequestService {
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
-            darManage.setElectionStatus(election == null ? UN_REVIEWED : election.getStatus());
-            darManage.setElectionId(election != null ? election.getElectionId() : null);
-            darManage.setElectionVote(election != null ? election.getFinalVote() : null);
+            // TODO: Look into moving these dao calls out of the loop
             if (election != null && !CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))) {
                 darManage.setElectionStatus(ElectionStatus.PENDING_APPROVAL.getValue());
             } else if (CollectionUtils.isNotEmpty(dataSetsToApprove) && election != null && election.getStatus().equals(ElectionStatus.CLOSED.getValue())) {

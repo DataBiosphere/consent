@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -30,6 +31,8 @@ public class Dac {
 
     @JsonProperty
     private List<DACUser> members;
+
+    private List<Integer> electionIds = new ArrayList<>();
 
     public Dac() {
     }
@@ -89,5 +92,14 @@ public class Dac {
     public void setMembers(List<DACUser> members) {
         this.members = members;
     }
+
+    public List<Integer> getElectionIds() {
+        return electionIds;
+    }
+
+    public void addElectionId(Integer electionId) {
+        this.electionIds.add(electionId);
+    }
+
 
 }

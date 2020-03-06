@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.db;
+package org.broadinstitute.consent.http.db.mapper;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -8,7 +8,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DatasetDacIdPairMapper implements RowMapper<Pair<Integer, Integer>> {
+public class ImmutableIntPairMapper implements RowMapper<Pair<Integer, Integer>> {
 
     public Pair<Integer, Integer> map(ResultSet r, StatementContext ctx) throws SQLException {
         return new ImmutablePair<>(r.getInt(1), r.getInt(2));

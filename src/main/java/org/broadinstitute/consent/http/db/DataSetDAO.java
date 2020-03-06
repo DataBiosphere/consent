@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.db.mapper.DacMapper;
+import org.broadinstitute.consent.http.db.mapper.ImmutableIntPairMapper;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -234,7 +236,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      *
      * @return List of dataset id and its associated dac id
      */
-    @RegisterRowMapper(DatasetDacIdPairMapper.class)
+    @RegisterRowMapper(ImmutableIntPairMapper.class)
     @SqlQuery("select distinct d.dataSetId, c.dac_id from dataset d " +
             " inner join consentassociations a on d.dataSetId = a.dataSetId " +
             " inner join consents c on a.consentId = c.consentId " +
