@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
-import org.broadinstitute.consent.http.db.mapper.ImmutableIntPairMapper;
+import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
@@ -178,7 +178,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
 
-    @RegisterRowMapper(ImmutableIntPairMapper.class)
+    @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
     @SqlQuery(" select electionRPId, electionAccessId from access_rp arp where arp.electionAccessId in (<electionAccessIds>) ")
     List<Pair<Integer, Integer>> findRpAccessElectionIdPairs(@BindList("electionAccessIds") List<Integer> electionAccessIds);
 
