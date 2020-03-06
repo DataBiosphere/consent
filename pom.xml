@@ -630,7 +630,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-oauth2</artifactId>
-      <version>v2-rev20200213-1.30.8</version>
+      <version>v2-rev20200213-1.30.9</version>
     </dependency>
 
     <dependency>
