@@ -2,12 +2,9 @@ package org.broadinstitute.consent.http;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Before;
@@ -92,17 +89,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
         update.setDataUseLetter("invalidUrl");
         Response updateResponse = put(client, createdLocation, update);
         assertThat(updateResponse.getStatus()).isEqualTo(BAD_REQUEST);
-    }
-
-    public Election createElection(String consentId) throws IOException {
-        Client client = ClientBuilder.newClient();
-        Election election = new Election();
-        election.setStatus(ElectionStatus.OPEN.getValue());
-        election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-        Response response = checkStatus(CREATED,
-                post(client, electionConsentPath(consentId), election));
-        String createdLocation = checkHeader(response, "Location");
-        return getJson(client, createdLocation).readEntity(Election.class);
     }
 
 }

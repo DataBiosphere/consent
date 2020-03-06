@@ -24,10 +24,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -45,8 +42,6 @@ abstract public class AbstractTest extends ResourcedTest {
 
     private final Logger logger = Logger.getLogger(AbstractTest.class);
     public static final int CREATED = Response.Status.CREATED.getStatusCode();
-    static final int CONFLICT = Response.Status.CONFLICT.getStatusCode();
-    static final int NOT_FOUND = Response.Status.NOT_FOUND.getStatusCode();
     public static final int OK = Response.Status.OK.getStatusCode();
     public static final int BAD_REQUEST = Response.Status.BAD_REQUEST.getStatusCode();
 
@@ -216,55 +211,6 @@ abstract public class AbstractTest extends ResourcedTest {
 
     String consentPath() {
         return path2Url("/consent");
-    }
-
-    String consentPath(String id) {
-        try {
-            return path2Url(String.format("consent/%s", URLEncoder.encode(id, "UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.err);
-            return String.format("consent/%s", id);
-        }
-    }
-
-    public String electionConsentPath(String id) {
-        try {
-            return path2Url(String.format("consent/%s/election", URLEncoder.encode(id, "UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.err);
-            return String.format("consent/%s/election", id);
-        }
-    }
-
-    public String electionConsentPathById(String referenceId, Integer electionId) {
-        try {
-            return path2Url(String.format("consent/%s/election/%s", URLEncoder.encode(referenceId, "UTF-8"), electionId));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.err);
-            return String.format("consent/%s/election/%s", referenceId, electionId);
-        }
-    }
-
-    public String voteConsentIdPath(String consentId, Integer voteId) {
-        try {
-            return path2Url(String.format("consent/%s/vote/%s", URLEncoder.encode(consentId, "UTF-8"), voteId));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.err);
-            return String.format("consent/%s/vote/%s", consentId, voteId);
-        }
-    }
-
-    public String voteConsentPath(String consentId) {
-        try {
-            return path2Url(String.format("consent/%s/vote", URLEncoder.encode(consentId, "UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.err);
-            return String.format("consent/%s/vote", consentId);
-        }
-    }
-
-    Consent retrieveConsent(Client client, String url) throws IOException {
-        return getJson(client, url).readEntity(Consent.class);
     }
 
 }
