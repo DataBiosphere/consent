@@ -130,7 +130,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                                                   @Bind("toDOUserId") Integer toDOUserId);
 
     @SqlQuery("select * from vote v where v.dacUserId = :dacUserId "
-            + " and v.electionId IN (select e.electionId from election e where lower(e.electionType) != 'DATASET' "
+            + " and v.electionId IN (select e.electionId from election e where lower(e.electionType) != 'dataset' "
             + " and (lower(e.status) = 'open' OR lower(e.status) = 'final'))")
     List<Vote> findVotesOnOpenElections(@Bind("dacUserId") Integer dacUserId);
 
