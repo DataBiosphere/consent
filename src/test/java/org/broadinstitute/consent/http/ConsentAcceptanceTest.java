@@ -40,15 +40,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
     }
 
     @Test
-    public void testDeleteConsent() {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(everything, generalUse);
-        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
-        String createdLocation = checkHeader(response, "Location");
-        check200(delete(client, createdLocation));
-    }
-
-    @Test
     public void testMissingDataUseCreate() {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, null);

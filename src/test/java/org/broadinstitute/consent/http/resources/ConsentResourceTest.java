@@ -143,4 +143,13 @@ public class ConsentResourceTest {
         assertEquals(200, response.getStatus());
     }
 
+    @Test
+    public void testDeleteConsent() {
+        doNothing().when(api).delete(any());
+        initResource();
+
+        Response response = resource.delete(UUID.randomUUID().toString());
+        assertEquals(200, response.getStatus());
+    }
+
 }
