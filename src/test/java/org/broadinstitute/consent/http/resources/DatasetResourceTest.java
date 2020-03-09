@@ -23,7 +23,6 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.Collections;
 
@@ -70,6 +69,11 @@ public class DatasetResourceTest {
         MultiPart mp = createFormData(file);
         FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data", file, MediaType.valueOf("text/plain"));
         InputStream is = IOUtils.toInputStream(mp.toString(), Charset.defaultCharset());
+        ParseResult result = new ParseResult();
+        result.setDatasets(Collections.emptyList());
+        result.setErrors(Collections.singletonList("Error!"));
+        when(api.overwrite(any(), any())).thenReturn(result);
+        when(api.create(any(), any())).thenReturn(result);
 
         initResource();
         Response response = resource.createDataSet(is, fileDataBodyPart, 1, false);
@@ -82,6 +86,11 @@ public class DatasetResourceTest {
         MultiPart mp = createFormData(file);
         FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data", file, MediaType.valueOf("text/plain"));
         InputStream is = IOUtils.toInputStream(mp.toString(), Charset.defaultCharset());
+        ParseResult result = new ParseResult();
+        result.setDatasets(Collections.emptyList());
+        result.setErrors(Collections.singletonList("Error!"));
+        when(api.overwrite(any(), any())).thenReturn(result);
+        when(api.create(any(), any())).thenReturn(result);
 
         initResource();
         Response response = resource.createDataSet(is, fileDataBodyPart, 1, false);
@@ -94,6 +103,11 @@ public class DatasetResourceTest {
         MultiPart mp = createFormData(file);
         FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("data", file, MediaType.valueOf("text/plain"));
         InputStream is = IOUtils.toInputStream(mp.toString(), Charset.defaultCharset());
+        ParseResult result = new ParseResult();
+        result.setDatasets(Collections.emptyList());
+        result.setErrors(Collections.singletonList("Error!"));
+        when(api.overwrite(any(), any())).thenReturn(result);
+        when(api.create(any(), any())).thenReturn(result);
 
         initResource();
         Response response = resource.createDataSet(is, fileDataBodyPart, 1, false);
