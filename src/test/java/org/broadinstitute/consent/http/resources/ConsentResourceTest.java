@@ -27,15 +27,12 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -156,7 +153,7 @@ public class ConsentResourceTest {
     }
 
     @Test
-    public void testMissingDataUseCreate() throws Exception {
+    public void testMissingDataUseCreate() {
         DACUser dacUser = new DACUser();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
