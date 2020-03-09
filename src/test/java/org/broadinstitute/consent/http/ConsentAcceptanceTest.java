@@ -40,15 +40,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
     }
 
     @Test
-    public void testInvalidDULCreate() {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(everything, generalUse);
-        rec.setDataUseLetter("invalidUrl");
-        Response response = post(client, consentPath(), rec);
-        assertThat(response.getStatus()).isEqualTo(BAD_REQUEST);
-    }
-
-    @Test
     public void testInvalidDULUpdate() {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);

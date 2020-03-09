@@ -186,5 +186,23 @@ public class ConsentResourceTest {
         assertEquals(400, response.getStatus());
     }
 
+    @Test
+    public void testInvalidDULCreate() throws Exception {
+        DACUser dacUser = new DACUser();
+        dacUser.setEmail("test@email.com");
+        AuthUser user = new AuthUser(dacUser.getEmail());
+        Consent consent = new Consent();
+        consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+        consent.setConsentId(UUID.randomUUID().toString());
+        consent.setDataUseLetter(UUID.randomUUID().toString());
+        when(api.retrieve(any())).thenReturn(consent);
+        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
+        initResource();
+
+        Response response = resource.createConsent(info, consent, user);
+        assertEquals(400, response.getStatus());
+    }
+
 
 }
