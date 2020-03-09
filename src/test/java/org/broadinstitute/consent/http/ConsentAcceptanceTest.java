@@ -40,14 +40,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
     }
 
     @Test
-    public void testMissingDataUseCreate() {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(everything, null);
-        Response response = post(client, consentPath(), rec);
-        assertThat(response.getStatus()).isEqualTo(BAD_REQUEST);
-    }
-
-    @Test
     public void testMissingDataUseUpdate() {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
