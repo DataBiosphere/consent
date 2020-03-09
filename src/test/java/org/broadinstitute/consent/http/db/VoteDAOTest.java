@@ -44,6 +44,19 @@ public class VoteDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindElectionReviewVotesByElectionIdAndType() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        Consent consent = createConsent(null);
+        DataSet dataset = createDataset();
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        List<ElectionReviewVote> votes = voteDAO.findElectionReviewVotesByElectionId(election.getElectionId(), vote.getType());
+        Assert.assertFalse(votes.isEmpty());
+        Assert.assertEquals(user.getEmail(), votes.get(0).getEmail());
+    }
+
+    @Test
     public void testCreateVote() {
         DACUser user = createUser();
         DataSet dataset = createDataset();
