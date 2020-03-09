@@ -15,10 +15,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 /**
@@ -37,15 +35,6 @@ abstract public class AbstractTest extends ResourcedTest {
      * Some utility methods for interacting with HTTP-services.
      */
 
-    public <T> Response post(Client client, String path, T value) {
-        mockValidateTokenResponse();
-        return client.target(path)
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .accept(MediaType.APPLICATION_JSON_TYPE)
-                .header("Authorization", "Bearer api_token")
-                .post(Entity.json(value), Response.class);
-    }
-
     public <T> Response put(Client client, String path, T value) {
         mockValidateTokenResponse();
         return client.target(path)
@@ -53,15 +42,6 @@ abstract public class AbstractTest extends ResourcedTest {
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer api_token")
                 .put(Entity.json(value), Response.class);
-    }
-
-    public Response delete(Client client, String path) {
-        mockValidateTokenResponse();
-        return client.target(path)
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .accept(MediaType.APPLICATION_JSON_TYPE)
-                .header("Authorization", "Bearer api_token")
-                .delete(Response.class);
     }
 
     public Response getJson(Client client, String path) {
@@ -75,21 +55,6 @@ abstract public class AbstractTest extends ResourcedTest {
                 .header("Authorization", "Bearer api_token")
                 .get(Response.class);
     }
-
-    public Response checkStatus(int status, Response response) {
-        if (response.getStatus() != status) {
-            logger.error("Incorrect response status: " + response.toString());
-        }
-        assertThat(response.getStatus()).isEqualTo(status);
-        return response;
-    }
-
-    public String checkHeader(Response response, String header) {
-        MultivaluedMap<String, Object> map = response.getHeaders();
-        assertThat(map).describedAs(String.format("header \"%s\"", header)).containsKey(header);
-        return map.getFirst(header).toString();
-    }
-
     public String path2Url(String path) {
         if (path.startsWith("/")) {
             path = path.substring(1, path.length());
