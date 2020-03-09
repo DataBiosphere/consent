@@ -16,12 +16,13 @@ public class DatabaseConsentAPITest extends AbstractTest {
     public static final DropwizardAppRule<ConsentConfiguration> RULE =
             new DropwizardAppRule<>(ConsentApplication.class,
                     resourceFilePath("consent-config.yml"));
+
     @Override
     public DropwizardAppRule<ConsentConfiguration> rule() {
         return RULE;
     }
 
-    @Test (expected = UnknownIdentifierException.class)
+    @Test(expected = UnknownIdentifierException.class)
     public void testRetrieveUnkownIdentifier() throws UnknownIdentifierException {
         databaseConsentApi.retrieve("non-existent Id");
     }
