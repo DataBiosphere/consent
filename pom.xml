@@ -14,7 +14,7 @@
     <hsqldb.version>2.5.0</hsqldb.version>
     <liquibase.version>3.8.7</liquibase.version>
     <dropwizard.version>2.0.2</dropwizard.version>
-    <pdfbox.version>2.0.15</pdfbox.version>
+    <pdfbox.version>2.0.19</pdfbox.version>
     <jetty.version>9.4.27.v20200227</jetty.version>
     <owl.version>5.1.13</owl.version>
     <postgres.version>42.2.10</postgres.version>
@@ -349,7 +349,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.10.2</version>
+      <version>2.10.3</version>
     </dependency>
 
     <dependency>
@@ -473,7 +473,7 @@
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>stringtemplate</artifactId>
-      <version>3.2.1</version>
+      <version>4.0.2</version>
     </dependency>
 
     <dependency>
