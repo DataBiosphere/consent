@@ -16,7 +16,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("{api : (api/)?}report")
+@Path("api/report")
 public class HelpReportResource extends Resource {
 
     private final HelpReportAPI helpReportAPI;
