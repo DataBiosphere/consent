@@ -40,18 +40,6 @@ public class ConsentAcceptanceTest extends AbstractTest {
     }
 
     @Test
-    public void testMissingDataUseUpdate() {
-        Client client = ClientBuilder.newClient();
-        Consent rec = generateNewConsent(everything, generalUse);
-        Response response = checkStatus(CREATED, post(client, consentPath(), rec));
-        String createdLocation = checkHeader(response, "Location");
-
-        Consent update = generateNewConsent(everything, null);
-        Response updateResponse = put(client, createdLocation, update);
-        assertThat(updateResponse.getStatus()).isEqualTo(BAD_REQUEST);
-    }
-
-    @Test
     public void testInvalidDULCreate() {
         Client client = ClientBuilder.newClient();
         Consent rec = generateNewConsent(everything, generalUse);
