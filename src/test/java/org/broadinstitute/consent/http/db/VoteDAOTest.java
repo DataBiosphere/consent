@@ -537,4 +537,76 @@ public class VoteDAOTest extends DAOTestHelper {
         assertNull(v.getUpdateDate());
     }
 
+    @Test
+    public void testFindVotesOnOpenElections() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        List<Vote> votes = voteDAO.findVotesOnOpenElections(user.getDacUserId());
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+        assertEquals(1, votes.size());
+        assertEquals(vote.getVoteId(), votes.get(0).getDacUserId());
+    }
+
+    @Test
+    public void testRemoveVotesByIds() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        voteDAO.removeVotesByIds(Collections.singletonList(vote.getVoteId()));
+        Vote v = voteDAO.findVoteById(vote.getVoteId());
+        assertNull(v);
+    }
+
+    @Test
+    public void testFindVotesByElectionIdsAndUser() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        List<Vote> votes = voteDAO.findVotesByElectionIdsAndUser(
+                Collections.singletonList(election.getElectionId()),
+                user.getDacUserId()
+        );
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+        assertEquals(1, votes.size());
+        assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+    }
+
+    @Test
+    public void testFindChairPersonVoteByElectionId() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createChairpersonVote(user.getDacUserId(), election.getElectionId());
+        voteDAO.updateVote(
+                true,
+                RandomStringUtils.random(10),
+                new Date(),
+                vote.getVoteId(),
+                false,
+                election.getElectionId(),
+                vote.getCreateDate(),
+                false);
+
+        Boolean v = voteDAO.findChairPersonVoteByElectionId(election.getElectionId());
+        assertNotNull(v);
+        assertTrue(v);
+    }
+
 }
