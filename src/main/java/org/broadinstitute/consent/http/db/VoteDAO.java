@@ -111,10 +111,10 @@ public interface VoteDAO extends Transactional<VoteDAO> {
             + " lower(v.type) = 'final' and v.vote = :finalVote ")
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 
-    @SqlQuery("SELECT MAX(c) FROM ((SELECT COUNT(vote) as c FROM vote WHERE type = 'DAC' and electionId IN (<electionIds>) GROUP BY electionId) as members)")
+    @SqlQuery("SELECT MAX(c) FROM (SELECT COUNT(vote) as c FROM vote WHERE lower(type) = 'dac' and electionId IN (<electionIds>) GROUP BY electionId) as members")
     Integer findMaxNumberOfDACMembers(@BindList("electionIds") List<Integer> electionIds);
 
-    @SqlBatch("insert into vote (dacUserId, electionId, type) values (:dacUserId,:electionId, :type)")
+    @SqlBatch("insert into vote (dacUserId, electionId, type) values (:dacUserId, :electionId, :type)")
     void insertVotes(@Bind("dacUserId") List<Integer> dacUserIds, @Bind("electionId") Integer electionId, @Bind("type") String type);
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and (v.vote is null and (v.has_concerns = false OR v.has_concerns is null)) and lower(v.type) = lower(:type)")

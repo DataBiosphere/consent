@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
@@ -425,6 +426,49 @@ public class VoteDAOTest extends DAOTestHelper {
 
         int count3 = voteDAO.findTotalFinalVoteByElectionTypeAndVote(election.getElectionType().toUpperCase(), voteValue);
         assertEquals(1, count3);
+    }
+
+    @Test
+    public void testFindMaxNumberOfDACMembers() {
+        DACUser user = createUser();
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        closeElection(election);
+        Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
+        boolean voteValue = true;
+        voteDAO.updateVote(
+                voteValue,
+                RandomStringUtils.random(10),
+                new Date(),
+                v.getVoteId(),
+                false,
+                election.getElectionId(),
+                v.getCreateDate(),
+                false
+        );
+
+        int count = voteDAO.findMaxNumberOfDACMembers(Collections.singletonList(election.getElectionId()));
+        assertEquals(1, count);
+    }
+
+    @Test
+    public void testInsertVotes() {
+        DACUser user1 = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DACUser user2 = createUserWithRole(UserRoles.MEMBER.getRoleId());
+        DACUser user3 = createUserWithRole(UserRoles.MEMBER.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        List<Integer> userIds = Arrays.asList(user1.getDacUserId(), user2.getDacUserId(), user3.getDacUserId());
+
+        voteDAO.insertVotes(userIds, election.getElectionId(), VoteType.DAC.getValue());
+        List<Vote> votes = voteDAO.findVotesByElectionIds(Collections.singletonList(election.getElectionId()));
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+        assertEquals(3, votes.size());
     }
 
 }
