@@ -11,7 +11,6 @@
 
   <properties>
     <java.version>1.8</java.version>
-    <hsqldb.version>2.5.0</hsqldb.version>
     <liquibase.version>3.8.7</liquibase.version>
     <dropwizard.version>2.0.2</dropwizard.version>
     <pdfbox.version>2.0.15</pdfbox.version>
@@ -24,10 +23,6 @@
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <driver>org.hsqldb.jdbc.JDBCDriver</driver>
-    <url>jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true</url>
-    <username>sa</username>
-    <password>sa</password>
   </properties>
 
   <build>
@@ -186,30 +181,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.liquibase</groupId>
-        <artifactId>liquibase-maven-plugin</artifactId>
-        <version>${liquibase.version}</version>
-        <executions>
-          <execution>
-            <phase>process-test-resources</phase>
-            <configuration>
-              <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-              <dropFirst>true</dropFirst>
-              <changeLogFile>changelog-master.xml</changeLogFile>
-              <driver>${driver}</driver>
-              <url>${url}</url>
-              <username>${username}</username>
-              <password>${password}</password>
-              <logging>warning</logging>
-            </configuration>
-            <goals>
-              <goal>update</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.2</version>
@@ -244,59 +215,6 @@
                 <transformer
                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>sql-maven-plugin</artifactId>
-        <version>1.5</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgres.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.5.0</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>initialize-test-inserts-db</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-            <configuration>
-              <driver>${driver}</driver>
-              <url>${url}</url>
-              <username>${username}</username>
-              <password>${password}</password>
-              <autocommit>true</autocommit>
-              <srcFiles>
-                <srcFile>src/test/resources/sql/insert.sql</srcFile>
-              </srcFiles>
-            </configuration>
-          </execution>
-          <execution>
-            <id>delete-after-tests</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-            <configuration>
-              <driver>${driver}</driver>
-              <url>${url}</url>
-              <username>${username}</username>
-              <password>${password}</password>
-              <autocommit>true</autocommit>
-              <srcFiles>
-                <srcFile>src/test/resources/sql/delete.sql</srcFile>
-              </srcFiles>
             </configuration>
           </execution>
         </executions>
@@ -386,7 +304,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.11</version>
+      <version>4.5.12</version>
     </dependency>
 
     <dependency>
@@ -581,16 +499,16 @@
     </dependency>
 
     <dependency>
-      <groupId>org.hsqldb</groupId>
-      <artifactId>hsqldb</artifactId>
-      <version>${hsqldb.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>${postgres.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.12.5</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -612,7 +530,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20191127-1.30.8</version>
+      <version>v1-rev20191127-1.30.9</version>
     </dependency>
 
     <dependency>
