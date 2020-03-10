@@ -1059,9 +1059,9 @@ paths:
   /api/dacuser/{id}:
     put:
       summary: update
-      description: | 
-        Updates the user identified by the ID. Requires the authenticated user to have the same id 
-        as that of the user being updated except in the admin case - admins can update information 
+      description: |
+        Updates the user identified by the ID. Requires the authenticated user to have the same id
+        as that of the user being updated except in the admin case - admins can update information
         for other users.
       parameters:
         - name: id
@@ -2478,6 +2478,24 @@ paths:
           description: The user doesn't exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/whitelist:
+    post:
+      summary: Upload Whitelist
+      description: Upload Library Card Whitelist tsv to bucket
+      parameters:
+        - name: whitelistFile
+          in: body
+          description: information about whitelist tsv file to upload
+          required: true
+          schema:
+            $ref: '#/definitions/WhitelistFile'
+      tags:
+        - Whitelist
+      responses:
+        200:
+          description: Success
+        404:
+          description: Failure
   /status:
     get:
       summary: System Health Status
@@ -2485,9 +2503,9 @@ paths:
       tags:
         - Status
       responses:
-        200: 
+        200:
           description: All systems are OK
-        500: 
+        500:
           description: Some number of subsystems are not OK.
 
   /version:
@@ -2501,10 +2519,19 @@ paths:
           description: Successful Response
           schema:
             $ref: '#/definitions/Version'
-        500: 
+        500:
           description: Internal Server Error
 
 definitions:
+  WhitelistFile:
+    type: object
+    properties:
+      filePath:
+        type: string
+        description: path to file
+      fileName:
+        type: string
+        description: name of file
   UserProperties:
     type: array
     items:
