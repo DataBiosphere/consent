@@ -112,6 +112,22 @@ public class DacResource extends Resource {
     }
 
     @POST
+    @Path("/whitelist/{filePath}")
+    @RolesAllowed({ADMIN})
+    public Response postWhitelist(@Auth AuthUser authUser, @PathParam("filePath") String filePath) {
+        // define bucket (in a config?)
+        // push file to bucket
+
+        try {
+            String filePathStr = "this is your path: "+filePath;
+            Logger.getLogger(filePathStr);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @POST
     @Path("{dacId}/member/{userId}")
     @RolesAllowed({ADMIN})
     public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
