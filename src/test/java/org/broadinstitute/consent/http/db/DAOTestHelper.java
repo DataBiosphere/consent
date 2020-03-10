@@ -139,6 +139,11 @@ public class DAOTestHelper {
         return voteDAO.findVoteById(voteId);
     }
 
+    Vote createFinalVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+        return voteDAO.findVoteById(voteId);
+    }
+
     @SuppressWarnings("SameParameterValue")
     Consent createConsent(Integer dacId) {
         String consentId = UUID.randomUUID().toString();

@@ -18,7 +18,7 @@ import java.util.List;
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
 
-    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId and lower(election.status) = 'open'")
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId and lower(election.status) = 'open'")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
@@ -69,7 +69,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                                      @Bind("dacUserId") Integer dacUserId);
 
-    @SqlQuery("select vote.voteId from vote  inner join election on election.electionId = vote.electionId  "
+    @SqlQuery("select vote.voteId from vote inner join election on election.electionId = vote.electionId "
             + "where election.referenceId = :referenceId "
             + "and vote.voteId = :voteId")
     Integer checkVoteById(@Bind("referenceId") String referenceId,
@@ -87,7 +87,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete from vote v where electionId in (select electionId from election where referenceId = :referenceId) ")
     void deleteVotes(@Bind("referenceId") String referenceId);
 
-    @SqlUpdate("update vote set vote = :vote,  updateDate = :updateDate,  rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate, has_concerns = :hasConcerns where voteId = :voteId")
+    @SqlUpdate("update vote set vote = :vote, updateDate = :updateDate, rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate, has_concerns = :hasConcerns where voteId = :voteId")
     void updateVote(@Bind("vote") Boolean vote,
                     @Bind("rationale") String rationale,
                     @Bind("updateDate") Date updateDate,
@@ -101,7 +101,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
     void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
-    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId  where election.referenceId = :referenceId  and v.dacUserId = :dacUserId and v.type = :voteType")
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId and v.dacUserId = :dacUserId and v.type = :voteType")
     Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("dacUserId") Integer dacUserId, @Bind("type") String voteType);
 
     @SqlQuery("select v.* from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
@@ -111,7 +111,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
             + " lower(v.type) = 'final' and v.vote = :finalVote ")
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 
-    @SqlQuery("SELECT MAX(c) FROM  ((SELECT  COUNT(vote) as c FROM vote  WHERE type = 'DAC' and electionId  IN (<electionIds>) GROUP BY electionId  ) as members)")
+    @SqlQuery("SELECT MAX(c) FROM ((SELECT COUNT(vote) as c FROM vote WHERE type = 'DAC' and electionId IN (<electionIds>) GROUP BY electionId) as members)")
     Integer findMaxNumberOfDACMembers(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlBatch("insert into vote (dacUserId, electionId, type) values (:dacUserId,:electionId, :type)")

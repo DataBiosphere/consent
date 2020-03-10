@@ -20,6 +20,8 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class VoteDAOTest extends DAOTestHelper {
 
@@ -218,6 +220,75 @@ public class VoteDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindVoteByElectionIdAndType() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        Vote foundVote = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType());
+        assertNotNull(foundVote);
+        assertEquals(vote.getVoteId(), foundVote.getVoteId());
+
+        Vote foundVote2 = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType().toLowerCase());
+        assertNotNull(foundVote2);
+        assertEquals(vote.getVoteId(), foundVote2.getVoteId());
+
+        Vote foundVote3 = voteDAO.findVoteByElectionIdAndType(election.getElectionId(), vote.getType().toUpperCase());
+        assertNotNull(foundVote3);
+        assertEquals(vote.getVoteId(), foundVote3.getVoteId());
+    }
+
+    @Test
+    public void testFindChairPersonVoteByElectionIdAndDACUserId() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createFinalVote(user.getDacUserId(), election.getElectionId());
+
+        Vote foundVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(election.getElectionId(), user.getDacUserId());
+        assertNotNull(foundVote);
+        assertEquals(vote.getVoteId(), foundVote.getVoteId());
+    }
+
+    @Test
+    public void testCheckVoteById() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        Integer voteId = voteDAO.checkVoteById(election.getReferenceId(), vote.getVoteId());
+        assertNotNull(voteId);
+        assertEquals(vote.getVoteId(), voteId);
+    }
+
+    @Test
+    public void testInsertVote() {
+        // no-op ... tested by `createDacVote` and `createFinalVote`
+    }
+
+    @Test
+    public void testDeleteVoteById() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        DataSet dataset = createDataset();
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        voteDAO.deleteVoteById(vote.getVoteId());
+        Vote foundVote = voteDAO.findVoteById(vote.getVoteId());
+        assertNull(foundVote);
+    }
+
+    @Test
     public void testCreateVote() {
         DACUser user = createUser();
         DataSet dataset = createDataset();
@@ -257,6 +328,24 @@ public class VoteDAOTest extends DAOTestHelper {
     @Test
     public void testDeleteVotes() {
         // No-op ... tested by `tearDown()`
+    }
+
+    @Test
+    public void testUpdateVoteReminderFlag() {
+        DACUser user = createUser();
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        voteDAO.updateVoteReminderFlag(v.getVoteId(), true);
+        Vote vote = voteDAO.findVoteById(v.getVoteId());
+        assertTrue(vote.getIsReminderSent());
+
+        voteDAO.updateVoteReminderFlag(v.getVoteId(), false);
+        Vote vote2 = voteDAO.findVoteById(v.getVoteId());
+        assertFalse(vote2.getIsReminderSent());
     }
 
 }
