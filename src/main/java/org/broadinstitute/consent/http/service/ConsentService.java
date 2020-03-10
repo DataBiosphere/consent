@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -59,7 +60,6 @@ public class ConsentService {
         consentDAO.updateConsentDac(consentId, dacId);
     }
 
-    @SuppressWarnings("unchecked")
     public List<ConsentManage> describeConsentManage(AuthUser authUser) {
         List<ConsentManage> consentManageList = new ArrayList<>();
         consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents()));
@@ -81,9 +81,9 @@ public class ConsentService {
             BasicDBObject in = new BasicDBObject("$in", objarray);
             BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
             FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
-            List<String> datasetIds = new ArrayList<>();
+            List<Integer> datasetIds = new ArrayList<>();
             dataAccessRequests.forEach((Block<Document>) dar -> {
-                List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
+                List<Integer> dataSets = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                 datasetIds.addAll(dataSets);
             });
             List<String> consentIds = new ArrayList<>();
