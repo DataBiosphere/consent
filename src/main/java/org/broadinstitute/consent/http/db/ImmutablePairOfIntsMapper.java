@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.db.mapper;
+package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;

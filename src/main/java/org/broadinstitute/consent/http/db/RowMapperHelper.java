@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.db.mapper;
+package org.broadinstitute.consent.http.db;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;

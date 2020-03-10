@@ -1,11 +1,10 @@
-package org.broadinstitute.consent.http.db.mapper;
+package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.models.Dac;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
