@@ -471,4 +471,20 @@ public class VoteDAOTest extends DAOTestHelper {
         assertEquals(3, votes.size());
     }
 
+    @Test
+    public void testFindDataOwnerPendingVotesByElectionId() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        List<Vote> votes = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType());
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+        assertEquals(1, votes.size());
+        assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+    }
+
 }
