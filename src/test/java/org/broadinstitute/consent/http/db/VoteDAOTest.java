@@ -485,6 +485,33 @@ public class VoteDAOTest extends DAOTestHelper {
         assertFalse(votes.isEmpty());
         assertEquals(1, votes.size());
         assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+
+        List<Vote> votes2 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType().toLowerCase());
+        assertNotNull(votes2);
+        assertFalse(votes2.isEmpty());
+        assertEquals(1, votes2.size());
+        assertEquals(vote.getVoteId(), votes2.get(0).getVoteId());
+
+        List<Vote> votes3 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType().toUpperCase());
+        assertNotNull(votes3);
+        assertFalse(votes3.isEmpty());
+        assertEquals(1, votes3.size());
+        assertEquals(vote.getVoteId(), votes3.get(0).getVoteId());
+
+    }
+
+    @Test
+    public void testRemoveVotesByElectionIdAndUser() {
+        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        voteDAO.removeVotesByElectionIdAndUser(Collections.singletonList(election.getElectionId()), user.getDacUserId());
+        Vote v = voteDAO.findVoteById(vote.getVoteId());
+        assertNull(v);
     }
 
 }
