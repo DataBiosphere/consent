@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -346,6 +347,84 @@ public class VoteDAOTest extends DAOTestHelper {
         voteDAO.updateVoteReminderFlag(v.getVoteId(), false);
         Vote vote2 = voteDAO.findVoteById(v.getVoteId());
         assertFalse(vote2.getIsReminderSent());
+    }
+
+    @Test
+    public void testFindVotesByReferenceIdTypeAndUser() {
+        DACUser user = createUser();
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        Vote vote = voteDAO.findVotesByReferenceIdTypeAndUser(election.getReferenceId(), user.getDacUserId(), v.getType());
+        assertNotNull(vote);
+        assertEquals(v.getVoteId(), vote.getVoteId());
+
+        Vote vote2 = voteDAO.findVotesByReferenceIdTypeAndUser(election.getReferenceId(), user.getDacUserId(), v.getType().toLowerCase());
+        assertNotNull(vote2);
+        assertEquals(v.getVoteId(), vote2.getVoteId());
+
+        Vote vote3 = voteDAO.findVotesByReferenceIdTypeAndUser(election.getReferenceId(), user.getDacUserId(), v.getType().toUpperCase());
+        assertNotNull(vote3);
+        assertEquals(v.getVoteId(), vote3.getVoteId());
+    }
+
+    @Test
+    public void testFindVoteByTypeAndElectionId() {
+        DACUser user = createUser();
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        Vote v = createDacVote(user.getDacUserId(), election.getElectionId());
+
+        List<Vote> votes = voteDAO.findVoteByTypeAndElectionId(election.getElectionId(), v.getType());
+        assertNotNull(votes);
+        assertFalse(votes.isEmpty());
+        assertEquals(v.getVoteId(), votes.get(0).getVoteId());
+
+        List<Vote> votes2 = voteDAO.findVoteByTypeAndElectionId(election.getElectionId(), v.getType().toLowerCase());
+        assertNotNull(votes2);
+        assertFalse(votes2.isEmpty());
+        assertEquals(v.getVoteId(), votes2.get(0).getVoteId());
+
+        List<Vote> votes3 = voteDAO.findVoteByTypeAndElectionId(election.getElectionId(), v.getType().toUpperCase());
+        assertNotNull(votes3);
+        assertFalse(votes3.isEmpty());
+        assertEquals(v.getVoteId(), votes3.get(0).getVoteId());
+    }
+
+    @Test
+    public void testFindTotalFinalVoteByElectionTypeAndVote() {
+        DACUser user = createUser();
+        DataSet dataset = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
+        closeElection(election);
+        Vote v = createFinalVote(user.getDacUserId(), election.getElectionId());
+        boolean voteValue = true;
+        voteDAO.updateVote(
+                voteValue,
+                RandomStringUtils.random(10),
+                new Date(),
+                v.getVoteId(),
+                false,
+                election.getElectionId(),
+                v.getCreateDate(),
+                false
+        );
+
+        int count = voteDAO.findTotalFinalVoteByElectionTypeAndVote(election.getElectionType(), voteValue);
+        assertEquals(1, count);
+
+        int count2 = voteDAO.findTotalFinalVoteByElectionTypeAndVote(election.getElectionType().toLowerCase(), voteValue);
+        assertEquals(1, count2);
+
+        int count3 = voteDAO.findTotalFinalVoteByElectionTypeAndVote(election.getElectionType().toUpperCase(), voteValue);
+        assertEquals(1, count3);
     }
 
 }

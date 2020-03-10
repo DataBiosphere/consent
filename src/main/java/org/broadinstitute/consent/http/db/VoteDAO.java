@@ -101,13 +101,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
     void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
-    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId and v.dacUserId = :dacUserId and v.type = :voteType")
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId and v.dacUserId = :dacUserId and lower(v.type) = lower(:type)")
     Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("dacUserId") Integer dacUserId, @Bind("type") String voteType);
 
     @SqlQuery("select v.* from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
     List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
-    @SqlQuery("select count(*) from vote v inner join election e on v.electionId = e.electionId where e.electionType = :type and lower(e.status) = 'closed' and "
+    @SqlQuery("select count(*) from vote v inner join election e on v.electionId = e.electionId where lower(e.electionType) = lower(:type) and lower(e.status) = 'closed' and "
             + " lower(v.type) = 'final' and v.vote = :finalVote ")
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 

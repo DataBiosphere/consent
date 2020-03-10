@@ -134,6 +134,13 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
+    void closeElection(Election election) {
+        electionDAO.updateElectionById(
+                election.getElectionId(),
+                ElectionStatus.CLOSED.getValue(),
+                new Date());
+    }
+
     Vote createDacVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
         return voteDAO.findVoteById(voteId);
