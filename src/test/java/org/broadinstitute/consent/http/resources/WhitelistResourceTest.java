@@ -22,6 +22,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +34,7 @@ public class WhitelistResourceTest {
     private static final OAuthCredentialAuthFilter<AuthUser> filter;
     static {
         Map<String, String> authUserRoles = new HashMap<>();
-        authUserRoles.put(UserRoles.ADMIN.getRoleName(), UserRoles.ADMIN.getRoleName());
-        authUserRoles.put(UserRoles.MEMBER.getRoleName(), UserRoles.MEMBER.getRoleName());
-        authUserRoles.put(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.CHAIRPERSON.getRoleName());
-        authUserRoles.put(UserRoles.RESEARCHER.getRoleName(), UserRoles.RESEARCHER.getRoleName());
-        authUserRoles.put(UserRoles.DATAOWNER.getRoleName(), UserRoles.DATAOWNER.getRoleName());
+        EnumSet.allOf(UserRoles.class).forEach(e -> authUserRoles.put(e.getRoleName(), e.getRoleName()));
         List<String> authUserNames = new ArrayList<>(authUserRoles.keySet());
         TestOAuthAuthenticator authenticator = new TestOAuthAuthenticator(authUserNames);
         TestAuthorizer authorizer = new TestAuthorizer(authUserRoles);
@@ -75,6 +72,8 @@ public class WhitelistResourceTest {
                 target("api/whitelist").
                 register(MultiPartFeature.class).
                 request().
+                // Here is the auth trick. Pass in the UserRole name as the bearer token and the auth
+                // framework will look for that value when it checks `@RolesAllowed`
                 header(HttpHeaders.AUTHORIZATION, "Bearer " + UserRoles.ADMIN.getRoleName()).
                 post(Entity.entity(multiPart, multiPart.getMediaType()));
         String results = response.readEntity(String.class);
