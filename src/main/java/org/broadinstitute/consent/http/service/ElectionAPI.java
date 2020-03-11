@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -31,8 +30,6 @@ public interface ElectionAPI {
     Election describeElectionByVoteId(Integer voteId) throws NotFoundException;
 
     void deleteElection(String referenceId, Integer electionId) throws IllegalArgumentException, NotFoundException;
-
-    void setMongoDBInstance(MongoConsentDB mongo);
 
     Integer findRPElectionByElectionAccessId(Integer accessElectionId);
 

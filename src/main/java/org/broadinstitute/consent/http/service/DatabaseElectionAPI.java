@@ -102,10 +102,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
     }
 
-    public void setMongoDBInstance(MongoConsentDB mongo) {
-        this.mongo = mongo;
-    }
-
     @Override
     public Election createElection(Election election, String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = validateAndGetDULElection(referenceId, electionType);
