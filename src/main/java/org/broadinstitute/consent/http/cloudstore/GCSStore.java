@@ -11,6 +11,7 @@ import com.google.api.services.storage.model.StorageObject;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 
+import javax.ws.rs.core.MediaType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -181,5 +182,35 @@ public class GCSStore implements CloudStore {
         insertRequest.execute();
         return generateURLForDocument(fileName).toString();
     }
+
+    public GenericUrl generateURLForWhitelist(String fileName) {
+        return new GenericUrl(sConfig.getEndpoint() + sConfig.getWhitelistBucket() + "/" + fileName);
+    }
+
+    @Override
+    public String postWhitelist(InputStream stream, String fileName) throws IOException, GeneralSecurityException {
+        GenericUrl url = generateURLForWhitelist(fileName);
+        HttpResponse response = null;
+        try {
+            initializeCloudStore();
+            HttpContent content = new InputStreamContent(MediaType.TEXT_PLAIN, stream);
+            HttpRequest request = buildHttpPutRequest(url, content);
+            request.getHeaders().setCacheControl("private");
+            response = request.execute();
+            if (response.getStatusCode() != 200) {
+                logger().error("Error uploading whitelist: " + response.getStatusMessage());
+            }
+        } finally {
+            if (null != response) {
+                try {
+                    response.disconnect();
+                } catch (IOException e) {
+                    logger().error("Error disconnecting response.", e);
+                }
+            }
+        }
+        return url.toString();
+    }
+
 
 }

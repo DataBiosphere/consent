@@ -27,7 +27,6 @@ public class WhitelistResource extends Resource {
     public Response postWhitelist(@Context String filePath, @Auth AuthUser authUser) {
         // define bucket (in a config?)
         // push file to bucket
-
         try {
             String filePathStr = "you are "+authUser;
             Logger.getLogger(filePathStr);
