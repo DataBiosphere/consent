@@ -313,7 +313,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihAuthApi, DatabaseDACUserAPI.getInstance()));
-        env.jersey().register(WhitelistResource.class);
+        env.jersey().register(new WhitelistResource(googleStore));
         env.jersey().register(injector.getInstance(VersionResource.class));
 
         // Authentication filters

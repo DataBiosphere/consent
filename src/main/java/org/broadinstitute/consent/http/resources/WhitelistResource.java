@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.models.AuthUser;
 
 import javax.annotation.security.RolesAllowed;
@@ -11,6 +13,13 @@ import java.util.logging.Logger;
 
 @Path("api/whitelist")
 public class WhitelistResource extends Resource {
+
+    private GCSStore gcsStore;
+
+    @Inject
+    public WhitelistResource(GCSStore gcsStore) {
+        this.gcsStore = gcsStore;
+    }
 
     @POST
     @Consumes("application/json")
