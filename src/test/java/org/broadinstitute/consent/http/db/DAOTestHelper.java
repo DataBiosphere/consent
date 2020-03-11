@@ -105,6 +105,7 @@ public class DAOTestHelper {
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
         });
+        createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
         dataSetDAO.deleteDataSets(createdDataSetIds);
         createdDacIds.forEach(id -> {
@@ -125,6 +126,18 @@ public class DAOTestHelper {
     Election createElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_ACCESS.getValue(),
+                ElectionStatus.OPEN.getValue(),
+                new Date(),
+                referenceId,
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
+    }
+
+    Election createRPElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.RP.getValue(),
                 ElectionStatus.OPEN.getValue(),
                 new Date(),
                 referenceId,
