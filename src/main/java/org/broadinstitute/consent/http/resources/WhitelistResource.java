@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,7 @@ public class WhitelistResource extends Resource {
     @POST
     @RolesAllowed(ADMIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postWhitelist(@FormDataParam("fileData") String fileData) {
+    public Response postWhitelist(@Auth AuthUser user, @FormDataParam("fileData") String fileData) {
         // define bucket (in a config?)
         // push file to bucket
         try {
