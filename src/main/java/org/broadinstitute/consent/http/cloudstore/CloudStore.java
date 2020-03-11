@@ -22,4 +22,6 @@ public interface CloudStore {
 
     String postOntologyDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException, URISyntaxException;
 
+    String postWhitelist(InputStream stream, String fileName) throws IOException, GeneralSecurityException;
+
 }

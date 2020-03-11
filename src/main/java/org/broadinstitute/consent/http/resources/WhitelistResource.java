@@ -31,7 +31,6 @@ public class WhitelistResource extends Resource {
     public Response postWhitelist(@FormDataParam("fileData") String fileData) {
         // define bucket (in a config?)
         // push file to bucket
-
         try {
             logger.info(fileData);
             return Response.ok(fileData).build();
