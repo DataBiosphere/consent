@@ -68,7 +68,7 @@ public class WhitelistResourceTest {
     }
 
     @Test
-    public void testPostWhiteList() {
+    public void testPostWhitelist() {
         FormDataMultiPart multiPart = new FormDataMultiPart()
                 .field("fileData", "Hello Multipart");
         Response response = resources.
@@ -83,7 +83,7 @@ public class WhitelistResourceTest {
     }
 
     @Test
-    public void testPostWhiteListNotAllowed() {
+    public void testPostWhitelistNotAllowed() {
         FormDataMultiPart multiPart = new FormDataMultiPart()
                 .field("fileData", "Hello Multipart");
         Response response = resources.
