@@ -153,7 +153,12 @@ public class DataAccessRequestService {
                 collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
         List<Integer> electionIds = electionList.values().stream().
                 map(Election::getElectionId).collect(Collectors.toList());
-        List<Dac> dacList = electionDAO.findDacsForElections(electionIds);
+        List<Integer> datasetIds = documents.stream().
+                map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
+                flatMap(List::stream).
+                collect(Collectors.toList());
+        List<Dac> dacList = dataSetDAO.findDacsForDatasetIds(datasetIds);
+        dacList.addAll(electionDAO.findDacsForElections(electionIds));
         List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
         Map<Integer, List<Vote>> electionVoteMap = voteDAO.findVotesByElectionIds(electionIds).stream().
                 collect(Collectors.groupingBy(Vote::getElectionId));

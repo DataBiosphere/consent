@@ -257,6 +257,22 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             " limit 1 ")
     Dac findDacForDataset(@Bind("datasetId") Integer datasetId);
 
+    /**
+     * Find the Dacs for these dataset ids.
+     *
+     * DACs -> Consents -> Consent Associations -> DataSets
+     *
+     * @param datasetIds The dataset Ids
+     * @return The DACs that own these datasets
+     */
+    @RegisterRowMapper(DacMapper.class)
+    @SqlQuery("select d.* from dac d " +
+            " inner join consents c on d.dac_id = c.dac_id " +
+            " inner join consentassociations a on a.consentid = c.consentid " +
+            " where a.datasetid in (<datasetids>) " +
+            " limit 1 ")
+    List<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
+
     @UseRowMapper(DataSetMapper.class)
     @SqlQuery("select d.* from dataset d " +
             " inner join consentassociations a on a.dataSetId = d.dataSetId and a.consentId = :consentId " +
