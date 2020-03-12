@@ -34,7 +34,6 @@ import org.bson.types.ObjectId;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -158,15 +157,10 @@ public class DataAccessRequestService {
             AuthUser authUser) {
         DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
-        List<String> referenceIds = referenceIdElectionMap.values().stream().map(Election::getReferenceId).collect(Collectors.toList());
-        Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
-                collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
-
         Map<ObjectId, List<Integer>> darDatasetMap = documents.stream().collect(Collectors.toMap(
                 d -> d.get(DarConstants.ID, ObjectId.class),
                 d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)
         ));
-
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
                 map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
                 flatMap(List::stream).
@@ -187,14 +181,6 @@ public class DataAccessRequestService {
             Election election = referenceIdElectionMap.get(id.toString());
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
-                Consent consent = consentMap.get(election.getReferenceId());
-                darManage.setReferenceId(election.getReferenceId());
-                if (consent != null) {
-                    // See PendingCaseService ... we populate this from the consent's name, not group name
-                    darManage.setConsentGroupName(consent.getName());
-                }
-            } else {
-                darManage.setElectionStatus(UN_REVIEWED);
             }
             darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
             darManage.setRus(dar.getString(DarConstants.RUS));
@@ -211,6 +197,8 @@ public class DataAccessRequestService {
                 List<String> referenceList = Collections.singletonList(election.getReferenceId());
                 List<Election> datasetElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(referenceList, ElectionType.DATA_SET.getValue());
                 darManage.setDataSetElectionResult(consolidateDataSetElectionsResult(datasetElections));
+            } else {
+                darManage.setElectionStatus(UN_REVIEWED);
             }
             darManage.setOwnerUser(getOwnerUser(dar.get(DarConstants.USER_ID)).orElse(null));
             if (darManage.getOwnerUser() == null) {
@@ -238,6 +226,9 @@ public class DataAccessRequestService {
                         e -> e.getValue().stream().filter(v -> v.getVote() == null).
                                 collect(Collectors.toList())
                 ));
+        List<String> referenceIds = new ArrayList<>(referenceIdElectionMap.keySet());
+        Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
+                collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
         Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
@@ -278,7 +269,13 @@ public class DataAccessRequestService {
                                 c.setAlreadyVoted(true);
                             }
                             c.setElectionStatus(election.getStatus());
+                            c.setReferenceId(election.getReferenceId());
                             c.setElectionVote(election.getFinalVote());
+                            Consent consent = consentMap.get(election.getReferenceId());
+                            if (consent != null) {
+                                // See PendingCaseService ... we populate this from the consent's name, not group name
+                                c.setConsentGroupName(consent.getName());
+                            }
                         }
                     }
                 }).
