@@ -2480,15 +2480,16 @@ paths:
             $ref: '#/definitions/ErrorResponse'
   /api/whitelist:
     post:
-      summary: Upload Whitelist
-      description: Upload Library Card Whitelist tsv to bucket
+      summary: postWhitelist
+      description: Uploads Library Card Whitelist tsv to bucket - NEW!
+      consumes:
+        - multipart/form-data
       parameters:
-        - name: whitelistFile
-          in: body
-          description: information about whitelist tsv file to upload
+        - name: data
+          in: formData
+          description: TSV file that contains whitelist information
           required: true
-          schema:
-            $ref: '#/definitions/WhitelistFile'
+          type: file
       tags:
         - Whitelist
       responses:
@@ -2523,15 +2524,6 @@ paths:
           description: Internal Server Error
 
 definitions:
-  WhitelistFile:
-    type: object
-    properties:
-      filePath:
-        type: string
-        description: path to file
-      fileName:
-        type: string
-        description: name of file
   UserProperties:
     type: array
     items:
