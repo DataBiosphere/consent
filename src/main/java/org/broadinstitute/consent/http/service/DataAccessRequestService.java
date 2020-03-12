@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -48,6 +49,7 @@ public class DataAccessRequestService {
 
     private Logger logger = Logger.getLogger(DataAccessRequestService.class.getName());
     private ConsentDAO consentDAO;
+    private DacDAO dacDAO;
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
@@ -61,10 +63,11 @@ public class DataAccessRequestService {
     private static final String DENIED = "Denied";
 
     @Inject
-    public DataAccessRequestService(ConsentDAO consentDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+    public DataAccessRequestService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
                                     ElectionDAO electionDAO, MongoConsentDB mongo, DacService dacService,
                                     VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
+        this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
@@ -148,17 +151,12 @@ public class DataAccessRequestService {
     private List<DataAccessRequestManage> createAccessRequestManage(List<Document> documents, Map<String, Election> electionList, AuthUser authUser) {
         DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
-        Map<Integer, Integer> datasetDacPairs = dataSetDAO.findDatasetAndDacIds().
+        Map<Integer, Integer> datasetDacIdPairs = dataSetDAO.findDatasetAndDacIds().
                 stream().
-                collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+                collect(Collectors.toMap(Pair::getKey, Pair::getValue));
         List<Integer> electionIds = electionList.values().stream().
                 map(Election::getElectionId).collect(Collectors.toList());
-        List<Integer> datasetIds = documents.stream().
-                map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
-                flatMap(List::stream).
-                collect(Collectors.toList());
-        List<Dac> dacList = dataSetDAO.findDacsForDatasetIds(datasetIds);
-        dacList.addAll(electionDAO.findDacsForElections(electionIds));
+        List<Dac> dacList = dacDAO.findAll();
         List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
         Map<Integer, List<Vote>> electionVoteMap = voteDAO.findVotesByElectionIds(electionIds).stream().
                 collect(Collectors.groupingBy(Vote::getElectionId));
@@ -194,9 +192,11 @@ public class DataAccessRequestService {
             if (darDatasetIds.size() == 1) {
                 darManage.setDatasetId(darDatasetIds.get(0));
             }
-            if (datasetDacPairs.containsKey(darManage.getDatasetId())) {
-                darManage.setDacId(datasetDacPairs.get(darManage.getDatasetId()));
+            if (datasetDacIdPairs.containsKey(darManage.getDatasetId())) {
+                darManage.setDacId(datasetDacIdPairs.get(darManage.getDatasetId()));
             }
+            Optional<Dac> dacOption =  dacList.stream().filter(d -> d.getDacId().equals(darManage.getDacId())).findFirst();
+            dacOption.ifPresent(darManage::setDac);
             Election election = electionList.get(id.toString());
             if (election != null) {
                 List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
@@ -226,8 +226,6 @@ public class DataAccessRequestService {
                 darManage.setTotalVotes(electionVotes.size());
                 darManage.setVotesLogged(electionVotes.size() - pendingVotes.size());
                 darManage.setLogged(darManage.getVotesLogged() + "/" + darManage.getTotalVotes());
-                Optional<Dac> dacOption =  dacList.stream().filter(d -> d.getElectionIds().contains(election.getElectionId())).findFirst();
-                dacOption.ifPresent(darManage::setDac);
                 darManage.setReminderSent(isReminderSent);
                 darManage.setFinalVote(finalVote);
                 if (userVoteOption.isPresent()) {

@@ -110,27 +110,4 @@ public class ElectionDAOTest extends DAOTestHelper {
         Assert.assertTrue(foundElections.isEmpty());
     }
 
-    @Test
-    public void testFindDacsForConsentElections() {
-        Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
-        createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
-        Dac dac2 = createDac();
-        Consent consent2 = createConsent(dac2.getDacId());
-        DataSet dataset2 = createDataset();
-        createAssociation(consent2.getConsentId(), dataset2.getDataSetId());
-        Election election2 = createElection(consent2.getConsentId(), dataset2.getDataSetId());
-        List<Integer> electionIds = new ArrayList<>();
-        electionIds.add(election.getElectionId());
-        electionIds.add(election2.getElectionId());
-
-        List<Dac> foundDacs = electionDAO.findDacsForElections(electionIds);
-        assertNotNull(foundDacs);
-        Assert.assertFalse(foundDacs.isEmpty());
-        Assert.assertTrue(foundDacs.stream().map(Dac::getDacId).collect(Collectors.toList()).contains(dac.getDacId()));
-        Assert.assertTrue(foundDacs.stream().map(Dac::getDacId).collect(Collectors.toList()).contains(dac2.getDacId()));
-    }
-
 }

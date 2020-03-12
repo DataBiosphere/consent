@@ -163,6 +163,7 @@ public class ConsentModule extends AbstractModule {
     DataAccessRequestService providesDataAccessRequestService() {
         return new DataAccessRequestService(
                 providesConsentDAO(),
+                providesDacDAO(),
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
