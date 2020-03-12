@@ -34,6 +34,7 @@ import org.bson.types.ObjectId;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,10 +44,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.ne;
+import static java.util.stream.Collectors.toList;
 
 public class DataAccessRequestService {
 
@@ -89,14 +92,14 @@ public class DataAccessRequestService {
         List<String> unReviewedDarIds = getUnReviewedDarsForUser(authUser).
                 stream().
                 map(d -> d.get(DarConstants.ID).toString()).
-                collect(Collectors.toList());
+                collect(toList());
         Integer unReviewedDarCount = 0;
         if (!unReviewedDarIds.isEmpty()) {
             List<String> electionReferenceIds = electionDAO.
                     findLastElectionsWithFinalVoteByReferenceIdsAndType(unReviewedDarIds, ElectionType.DATA_ACCESS.getValue()).
                     stream().
                     map(Election::getReferenceId).
-                    collect(Collectors.toList());
+                    collect(toList());
             for (String darId : unReviewedDarIds) {
                 if (!electionReferenceIds.contains(darId)) {
                     ++unReviewedDarCount;
@@ -130,7 +133,7 @@ public class DataAccessRequestService {
                 stream().
                 map(d -> d.get(DarConstants.ID).toString()).
                 distinct().
-                collect(Collectors.toList());
+                collect(toList());
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
             List<Election> electionList = electionDAO.
                     findLastElectionsWithFinalVoteByReferenceIdsAndType(accessRequestIds, ElectionType.DATA_ACCESS.getValue());
@@ -164,7 +167,7 @@ public class DataAccessRequestService {
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
                 map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
                 flatMap(List::stream).
-                collect(Collectors.toList());
+                collect(toList());
         List<DataSet> dataSetsToApprove = dataSetDAO.
                 findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
 
@@ -213,10 +216,13 @@ public class DataAccessRequestService {
                 user);
     }
 
+    /**
+     * Return a cloned, immutable list of DataAccessRequestManage objects with election and vote information populated
+     */
     private List<DataAccessRequestManage> populateElectionInformation(List<DataAccessRequestManage> darManages, Map<String, Election> referenceIdElectionMap, DACUser user) {
         Collection<Election> elections = referenceIdElectionMap.values();
         List<Integer> electionIds = referenceIdElectionMap.values().stream().
-                map(Election::getElectionId).collect(Collectors.toList());
+                map(Election::getElectionId).collect(toList());
         List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
         Map<Integer, List<Vote>> electionVoteMap = voteDAO.findVotesByElectionIds(electionIds).stream().
                 collect(Collectors.groupingBy(Vote::getElectionId));
@@ -224,11 +230,12 @@ public class DataAccessRequestService {
                 collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> e.getValue().stream().filter(v -> v.getVote() == null).
-                                collect(Collectors.toList())
+                                collect(toList())
                 ));
         List<String> referenceIds = new ArrayList<>(referenceIdElectionMap.keySet());
         Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
                 collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
+        List<Vote> userVotes = voteDAO.findVotesByElectionIdsAndUser(electionIds, user.getDacUserId());
         Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
@@ -237,40 +244,41 @@ public class DataAccessRequestService {
                         Optional<Election> electionOption = elections.stream().filter(e -> e.getElectionId().equals(c.getElectionId())).findFirst();
                         if (electionOption.isPresent()) {
                             Election election = electionOption.get();
-                            List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
-                            List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
-                            Optional<Pair<Integer, Integer>> rpElectionIdOption =  rpAccessElectionIdPairs.stream().
-                                    filter(p -> p.getRight().equals(election.getElectionId())).
-                                    findFirst();
-                            if (rpElectionIdOption.isPresent()) {
-                                Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionIdOption.get().getKey(), user.getDacUserId());
-                                c.setRpElectionId(rpElectionIdOption.get().getKey());
-                                if (rpVote != null) {
-                                    c.setRpVoteId(rpVote.getVoteId());
+                            // Only calculate votes for the cases for open elections:
+                            if (election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())) {
+                                List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
+                                List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
+                                Optional<Pair<Integer, Integer>> rpElectionIdOption =  rpAccessElectionIdPairs.stream().
+                                        filter(p -> p.getRight().equals(election.getElectionId())).
+                                        findFirst();
+                                if (rpElectionIdOption.isPresent()) {
+                                    c.setRpElectionId(rpElectionIdOption.get().getKey());
+                                    Optional<Vote> rpVoteOption = userVotes.stream().filter(v -> v.getElectionId().equals(c.getRpElectionId())).findFirst();
+                                    rpVoteOption.ifPresent(vote -> c.setRpVoteId(vote.getVoteId()));
                                 }
-                            }
-                            boolean isReminderSent = electionVotes.stream().
-                                    anyMatch(Vote::getIsReminderSent);
-                            boolean finalVote = electionVotes.stream().
-                                    filter(v -> v.getVote() != null).
-                                    filter(v -> v.getType() != null).
-                                    filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).
-                                    anyMatch(Vote::getVote);
-                            Optional<Vote> userVoteOption = electionVotes.stream().
-                                    filter(v -> v.getDacUserId().equals(user.getDacUserId())).
-                                    findFirst();
-                            c.setTotalVotes(electionVotes.size());
-                            c.setVotesLogged(electionVotes.size() - pendingVotes.size());
-                            c.setLogged(c.getVotesLogged() + "/" + c.getTotalVotes());
-                            c.setReminderSent(isReminderSent);
-                            c.setFinalVote(finalVote);
-                            if (userVoteOption.isPresent()) {
-                                c.setVoteId(userVoteOption.get().getVoteId());
-                                c.setAlreadyVoted(true);
+                                boolean isReminderSent = electionVotes.stream().
+                                        anyMatch(Vote::getIsReminderSent);
+                                boolean finalVote = electionVotes.stream().
+                                        filter(v -> v.getVote() != null).
+                                        filter(v -> v.getType() != null).
+                                        filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).
+                                        anyMatch(Vote::getVote);
+                                Optional<Vote> userVoteOption = electionVotes.stream().
+                                        filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                                        findFirst();
+                                c.setTotalVotes(electionVotes.size());
+                                c.setVotesLogged(electionVotes.size() - pendingVotes.size());
+                                c.setLogged(c.getVotesLogged() + "/" + c.getTotalVotes());
+                                c.setReminderSent(isReminderSent);
+                                c.setFinalVote(finalVote);
+                                c.setElectionVote(election.getFinalVote());
+                                if (userVoteOption.isPresent()) {
+                                    c.setVoteId(userVoteOption.get().getVoteId());
+                                    c.setAlreadyVoted(true);
+                                }
                             }
                             c.setElectionStatus(election.getStatus());
                             c.setReferenceId(election.getReferenceId());
-                            c.setElectionVote(election.getFinalVote());
                             Consent consent = consentMap.get(election.getReferenceId());
                             if (consent != null) {
                                 // See PendingCaseService ... we populate this from the consent's name, not group name
@@ -279,11 +287,11 @@ public class DataAccessRequestService {
                         }
                     }
                 }).
-                collect(Collectors.toList());
+                collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
     /**
-     * Return a cloned list of DataAccessRequestManage objects with Dac and DacId information populated
+     * Return a cloned, immutable list of DataAccessRequestManage objects with Dac and DacId information populated
      */
     private List<DataAccessRequestManage> populateDacInformation(List<DataAccessRequestManage> darManages) {
         Map<Integer, Integer> datasetDacIdPairs = dataSetDAO.findDatasetAndDacIds().
@@ -300,7 +308,7 @@ public class DataAccessRequestService {
                 Optional<Dac> dacOption = dacList.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
                 dacOption.ifPresent(c::setDac);
             }
-        }).collect(Collectors.toList());
+        }).collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
     private Optional<DACUser> getOwnerUser(Object dacUserId) {
@@ -335,7 +343,7 @@ public class DataAccessRequestService {
         }
         List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().
                 map(DataSet::getDataSetId).
-                collect(Collectors.toList());
+                collect(toList());
         return mongo.
                 getDataAccessRequestCollection().
                 find(and(
