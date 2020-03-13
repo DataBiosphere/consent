@@ -297,6 +297,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
         DataAccessRequestData darData = dar.getData();
         darData.setStatus(ElectionStatus.CANCELED.getValue());
+        dataAccessRequestService.updateByReferenceId(referenceId, darData);
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 

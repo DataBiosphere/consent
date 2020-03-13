@@ -19,7 +19,7 @@ import java.util.Set;
 
 import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
 
-public class UserDAOTest extends DAOTestFramework {
+public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDACUserById() {

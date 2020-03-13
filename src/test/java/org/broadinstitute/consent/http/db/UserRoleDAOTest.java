@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class UserRoleDAOTest extends DAOTestFramework {
+public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindRolesByUserId() {

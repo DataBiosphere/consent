@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -24,6 +23,8 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 
 public class DataAccessRequestService {
 
-    private Logger logger = Logger.getLogger(DataAccessRequestService.class.getName());
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     private DACUserDAO dacUserDAO;
     private DataAccessRequestDAO dataAccessRequestDAO;
     private DataSetDAO dataSetDAO;
@@ -139,6 +140,9 @@ public class DataAccessRequestService {
         return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
 
+    /**
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     */
     public List<DataAccessRequest> getAllPostgresDataAccessRequests() {
         return dataAccessRequestDAO.findAll();
     }

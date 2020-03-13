@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class ElectionDAOTest extends DAOTestFramework {
+public class ElectionDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDacForConsentElection() {

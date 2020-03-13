@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ConsentDAOTest extends DAOTestFramework {
+public class ConsentDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindConsentById() {

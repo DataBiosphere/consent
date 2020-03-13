@@ -201,6 +201,12 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(documents).build();
     }
 
+    /**
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     *
+     * @param authUser AuthUser
+     * @return List of all DataAccessRequests in Mongo
+     */
     @GET
     @Path("/all/mongo")
     @Produces("application/json")
@@ -212,6 +218,12 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(map).build();
     }
 
+    /**
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     *
+     * @param authUser AuthUser
+     * @return List of all DataAccessRequests in Postgres
+     */
     @GET
     @Path("/all/postgres")
     @Produces("application/json")

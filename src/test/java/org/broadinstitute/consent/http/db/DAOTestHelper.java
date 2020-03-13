@@ -38,10 +38,9 @@ import java.util.UUID;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
-public class DAOTestFramework {
+public class DAOTestHelper {
 
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
-    protected Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     private static final int maxConnections = 100;
     private static ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
 

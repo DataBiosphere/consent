@@ -4,7 +4,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class DataAccessRequestDAOTest extends DAOTestFramework {
+public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testCreate() {
