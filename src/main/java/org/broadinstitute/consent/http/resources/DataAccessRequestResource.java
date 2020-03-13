@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -208,7 +210,7 @@ public class DataAccessRequestResource extends Resource {
      * @return List of all DataAccessRequests in Mongo
      */
     @GET
-    @Path("/all/mongo")
+    @Path("/migrate/mongo")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response getAllMongoDataAccessRequests(@Auth AuthUser authUser) {
@@ -225,12 +227,29 @@ public class DataAccessRequestResource extends Resource {
      * @return List of all DataAccessRequests in Postgres
      */
     @GET
-    @Path("/all/postgres")
+    @Path("/migrate/postgres")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response getAllPostgresDataAccessRequests(@Auth AuthUser authUser) {
         List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDataAccessRequests();
         return Response.ok().entity(data).build();
+    }
+
+    /**
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     *
+     * @param authUser AuthUser
+     * @return Converted DataAccessRequest
+     */
+    @POST
+    @Path("migrate/{id}")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
+        DataAccessRequestData darData = DataAccessRequestData.fromString(json);
+        dataAccessRequestService.insertDataAccessRequest(id, darData);
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        return Response.ok().entity(dar).build();
     }
 
     @GET
