@@ -224,8 +224,8 @@ public class DataAccessRequestService {
         return getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
-    public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
-        dataAccessRequestDAO.insert(referencedId, darData.toString());
+    public DataAccessRequest insertDataAccessRequest(String referencedId, String darData) {
+        dataAccessRequestDAO.insert(referencedId, darData);
         return findByReferenceId(referencedId);
     }
 

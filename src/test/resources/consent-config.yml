@@ -32,6 +32,7 @@ logging:
   level: WARN
   # logger specific levels
   loggers:
+#    "org.broadinstitute": DEBUG
     ConsentAssociationResource: WARN
     AllAssociationsResource: WARN
     ConsentApplication: WARN

@@ -561,7 +561,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                     referenceId = UUID.randomUUID().toString();
                 }
                 DataAccessRequestData darData = gson.fromJson(d.toJson(), DataAccessRequestData.class);
-                dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
+                dataAccessRequestService.insertDataAccessRequest(referenceId, darData.toString());
             });
         }
     }

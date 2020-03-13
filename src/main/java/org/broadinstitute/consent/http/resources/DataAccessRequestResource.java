@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -12,7 +11,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -246,9 +244,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
-        DataAccessRequestData darData = DataAccessRequestData.fromString(json);
-        dataAccessRequestService.insertDataAccessRequest(id, darData);
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        DataAccessRequest dar = dataAccessRequestService.insertDataAccessRequest(id, json);
         return Response.ok().entity(dar).build();
     }
 
