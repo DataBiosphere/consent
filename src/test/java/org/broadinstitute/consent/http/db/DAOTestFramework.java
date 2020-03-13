@@ -146,8 +146,25 @@ public class DAOTestFramework {
         return electionDAO.findElectionById(electionId);
     }
 
+    void closeElection(Election election) {
+        electionDAO.updateElectionById(
+                election.getElectionId(),
+                ElectionStatus.CLOSED.getValue(),
+                new Date());
+    }
+
     Vote createDacVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+        return voteDAO.findVoteById(voteId);
+    }
+
+    Vote createFinalVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+        return voteDAO.findVoteById(voteId);
+    }
+
+    Vote createChairpersonVote(Integer userId, Integer electionId) {
+        Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
         return voteDAO.findVoteById(voteId);
     }
 

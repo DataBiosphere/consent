@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.Block;
+import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -13,6 +16,9 @@ import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

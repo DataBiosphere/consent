@@ -55,7 +55,4 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     @SqlQuery("select * from user_role ur inner join roles r on r.roleId = ur.role_id where ur.user_id = :userId and ur.role_id = :roleId")
     UserRole findRoleByUserIdAndRoleId(@Bind("userId") Integer userId, @Bind("roleId") Integer roleId);
 
-    @SqlUpdate("delete from user_role")
-    void deleteAllUserRoles();
-
 }

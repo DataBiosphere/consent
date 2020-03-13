@@ -320,8 +320,7 @@ public class ConsentDAOTest extends DAOTestFramework {
         Consent consent = createConsent(null);
         DataSet dataset = createDataset();
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        List<Integer> dataSetIds = Stream.of(String.valueOf(dataset.getDataSetId())).
-                map(Integer::valueOf).collect(Collectors.toList());
+        List<Integer> dataSetIds = Stream.of(dataset.getDataSetId()).collect(Collectors.toList());
 
         List<String> consentIds = consentDAO.getAssociationConsentIdsFromDatasetIds(dataSetIds);
         Assert.assertFalse(consentIds.isEmpty());

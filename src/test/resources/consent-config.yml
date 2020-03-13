@@ -6,11 +6,14 @@ server:
     type: http
     port: 8180
 database:
-  driverClass: org.hsqldb.jdbc.JDBCDriver
-  user: sa
-  password: sa
-  url: jdbc:hsqldb:file:${project.build.testOutputDirectory}/testdb;shutdown=true
-  validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
+  driverClass: org.postgresql.Driver
+  user: consent
+  password: consent
+  url: jdbc:postgresql://sqlproxy:5432/consent
+  initialSize: 20
+  minSize: 20
+  maxSize: 128
+  validationQuery: SELECT 1
 googleStore:
   password: password
   bucket: bucket
