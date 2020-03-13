@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -244,7 +245,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
-        DataAccessRequest dar = dataAccessRequestService.insertDataAccessRequest(id, json);
+        DataAccessRequestData data = DataAccessRequestData.fromString(json);
+        DataAccessRequest dar = dataAccessRequestService.insertDataAccessRequest(id, data);
         return Response.ok().entity(dar).build();
     }
 

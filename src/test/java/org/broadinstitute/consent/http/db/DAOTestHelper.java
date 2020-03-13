@@ -22,11 +22,12 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.gson2.Gson2Plugin;
+import org.jdbi.v3.guava.GuavaPlugin;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.ArrayList;
@@ -91,6 +92,9 @@ public class DAOTestHelper {
         ConsentConfiguration configuration = testApp.getConfiguration();
         Environment environment = testApp.getEnvironment();
         Jdbi jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
+        jdbi.installPlugin(new SqlObjectPlugin());
+        jdbi.installPlugin(new Gson2Plugin());
+        jdbi.installPlugin(new GuavaPlugin());
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
         userDAO = jdbi.onDemand(DACUserDAO.class);
@@ -249,15 +253,16 @@ public class DAOTestHelper {
         return cal.getTime();
     }
 
-    DataAccessRequest createDtaAccessRequest() {
+    DataAccessRequest createDataAccessRequest() {
         String referenceId = UUID.randomUUID().toString();
         DataAccessRequestData data = new DataAccessRequestData();
+        data.setRus(RandomStringUtils.random(10, true, false));
         data.setRestriction(new Everything());
         data.setStatus(ElectionStatus.OPEN.getValue());
         data.setSortDate(new Date().getTime());
         data.setDatasetId(Collections.singletonList(createDataset().getDataSetId()));
         data.setDarCode("DAR-test-" + RandomUtils.nextInt(1000, 10000));
-        dataAccessRequestDAO.insert(referenceId, data.toString());
+        dataAccessRequestDAO.insert(referenceId, data);
         createdDataAccessRequestReferenceIds.add(referenceId);
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
