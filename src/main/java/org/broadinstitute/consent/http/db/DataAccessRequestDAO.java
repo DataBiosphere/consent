@@ -24,7 +24,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     @SqlQuery("select * from data_access_request where reference_id = :referenceId limit 1")
     DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery("select * from data_access_request where reference_id in <:referenceIds>")
+    @SqlQuery("select * from data_access_request where reference_id in (<referenceIds>)")
     List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @RegisterArgumentFactory(JsonArgumentFactory.class)

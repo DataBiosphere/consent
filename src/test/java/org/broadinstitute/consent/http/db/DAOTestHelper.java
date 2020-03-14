@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -20,7 +21,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
@@ -28,19 +28,25 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import static org.junit.Assert.fail;
 
 public class DAOTestHelper {
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
     private static final int maxConnections = 100;
     private static ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
@@ -254,17 +260,21 @@ public class DAOTestHelper {
     }
 
     DataAccessRequest createDataAccessRequest() {
-        String referenceId = UUID.randomUUID().toString();
-        DataAccessRequestData data = new DataAccessRequestData();
-        data.setRus(RandomStringUtils.random(10, true, false));
-        data.setRestriction(new Everything());
-        data.setStatus(ElectionStatus.OPEN.getValue());
-        data.setSortDate(new Date().getTime());
-        data.setDatasetId(Collections.singletonList(createDataset().getDataSetId()));
-        data.setDarCode("DAR-test-" + RandomUtils.nextInt(1000, 10000));
-        dataAccessRequestDAO.insert(referenceId, data);
-        createdDataAccessRequestReferenceIds.add(referenceId);
-        return dataAccessRequestDAO.findByReferenceId(referenceId);
+        DataAccessRequestData data;
+        try {
+            String darDataString = FileUtils.readFileToString(
+                    new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
+                    Charset.defaultCharset());
+            data = DataAccessRequestData.fromString(darDataString);
+            String referenceId = UUID.randomUUID().toString();
+            dataAccessRequestDAO.insert(referenceId, data);
+            createdDataAccessRequestReferenceIds.add(referenceId);
+            return dataAccessRequestDAO.findByReferenceId(referenceId);
+        } catch (IOException e) {
+            logger.error("Exception parsing dar data: " + e.getMessage());
+            fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
+        }
+        return null;
     }
 
 }

@@ -1,40 +1,59 @@
 package org.broadinstitute.consent.http.db;
 
-import io.dropwizard.testing.ResourceHelpers;
-import org.apache.commons.io.FileUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.UUID;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
-    public void testParse() throws Exception {
-        String darData =getSampleDarData();
-        DataAccessRequestData data = DataAccessRequestData.fromString(darData);
-        assertNotNull(data);
-        assertNotNull(data.getDarCode());
-        assertNotNull(data.getResearcher());
+    public void testFindAll() {
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAll();
+        assertTrue(dars.isEmpty());
+
+        createDataAccessRequest();
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAll();
+        assertFalse(newDars.isEmpty());
+        assertEquals(1, newDars.size());
     }
 
     @Test
-    public void testCreate() throws Exception {
-        String darData = getSampleDarData();
-        DataAccessRequestData data = DataAccessRequestData.fromString(darData);
-        String referenceId = UUID.randomUUID().toString();
-        dataAccessRequestDAO.insert(referenceId, data);
-        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-        assertNotNull(dar);
-        assertNotNull(dar.getData());
+    public void testCreate() {
+        DataAccessRequest dar = createDataAccessRequest();
+        DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertNotNull(foundDar);
+        assertNotNull(foundDar.getData());
+    }
+
+    @Test
+    public void testFindByReferenceId() {
+        // no-op ... tested by createDataAccessRequest()
+    }
+
+    @Test
+    public void testFindByReferenceIds() {
+        DataAccessRequest dar1 = createDataAccessRequest();
+        DataAccessRequest dar2 = createDataAccessRequest();
+        DataAccessRequest dar3 = createDataAccessRequest();
+        List<String> referenceIds = Arrays.asList(dar1.getReferenceId(), dar2.getReferenceId(), dar3.getReferenceId());
+
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(referenceIds);
+        assertNotNull(dars);
+        assertFalse(dars.isEmpty());
+        assertEquals(3, dars.size());
+    }
+
+    @Test
+    public void testDeleteByReferenceId() {
+        // no-op ... tested by tearDown()
     }
 
     @Test
@@ -49,10 +68,4 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertFalse(updatedDar.getData().getValidRestriction());
     }
 
-    private String getSampleDarData() throws Exception {
-        return FileUtils.readFileToString(
-                new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
-                Charset.defaultCharset());
-
-    }
 }
