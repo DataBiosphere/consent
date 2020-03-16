@@ -3,7 +3,6 @@
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import groovy.json.JsonSlurper
-import groovy.transform.Field
 
 import static groovyx.net.http.HttpBuilder.configure
 import static groovyx.net.http.util.SslUtils.ignoreSslIssues
@@ -16,15 +15,9 @@ import static groovyx.net.http.util.SslUtils.ignoreSslIssues
  *
  * Sample Usage:
  *   groovy migrate.groovy \
- *     "$(gcloud auth application-default print-access-token)" \
- *     "http://local.broadinstitute.org:27443"
+ *     `gcloud auth application-default print-access-token)` \
+ *     https://local.broadinstitute.org:27443
  */
-
-@Field
-final Gson GSON = new GsonBuilder().setPrettyPrinting().create()
-
-@Field
-final String JSON_TYPE = "application/json"
 
 migrateDars(args[0], args[1])
 
@@ -48,13 +41,13 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
     configure {
         ignoreSslIssues execution
         request.uri = uriHost
-        request.uri.path = "api/dar/migrate/${referenceId}"
-        request.contentType = JSON_TYPE
-        request.accept = JSON_TYPE
-        request.headers['Authorization'] = 'Bearer: ' + authToken
+        request.uri.path = "/api/dar/migrate/${referenceId}"
+        request.contentType = 'application/json'
+        request.accept = 'application/json'
+        request.headers['Authorization'] = 'Bearer ' + authToken
     }.post {
-        request.body = GSON.toJson(dar)
-        response.parser(JSON_TYPE) { cc, fs ->
+        request.body = new Gson().toJson(dar)
+        response.parser('application/json') { cc, fs ->
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
@@ -67,18 +60,18 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
 /**
  * @param authToken A valid, admin-user google bearer token
  * @param uriHost The host to run this script against.
- * @return Map of dar entries, ReferenceId -> Mongo DAR Content in json format
+ * @return Map of dar entries, ReferenceId -> Mongo DAR Content in object format
  */
 static Map<String, Object> getMongoDars(String authToken, String uriHost) {
     configure {
         ignoreSslIssues execution
         request.uri = uriHost
-        request.uri.path = 'api/dar/migrate/mongo'
-        request.contentType = JSON_TYPE
-        request.accept = JSON_TYPE
-        request.headers['Authorization'] = 'Bearer: ' + authToken
+        request.uri.path = '/api/dar/migrate/mongo'
+        request.contentType = 'application/json'
+        request.accept = 'application/json'
+        request.headers['Authorization'] = 'Bearer ' + authToken
     }.get {
-        response.parser(JSON_TYPE) { cc, fs ->
+        response.parser('application/json') { cc, fs ->
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
