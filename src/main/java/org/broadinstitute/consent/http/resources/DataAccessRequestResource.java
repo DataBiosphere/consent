@@ -70,11 +70,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-@Path("api/dar")
+@Path("{api : (api/)?}dar")
 public class DataAccessRequestResource extends Resource {
 
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
@@ -107,7 +108,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
-    public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
+    public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
@@ -122,12 +123,12 @@ public class DataAccessRequestResource extends Resource {
                 logger.log(Level.SEVERE, "Error creating use restriction for data access request " + dar.toJson(), e);
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
-            dar.append(DarConstants.SORT_DATE, new Date());
+            dar.append(DarConstants.SORT_DATE, new Date().getTime());
             List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
             URI uri = info.getRequestUriBuilder().build();
             for (Document r : results) {
                 List<Integer> datasetIds = DarUtil.getIntegerList(r, DarConstants.DATASET_ID);
-                matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
+                matchProcessAPI.processMatchesForPurpose(r.getString(DarConstants.REFERENCE_ID));
                 emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
             }
             return Response.created(uri).build();
@@ -520,7 +521,7 @@ public class DataAccessRequestResource extends Resource {
     }
 
     private Document savePartialDarRequest(Document dar) throws Exception {
-        dar.append(DarConstants.SORT_DATE, new Date());
+        dar.append(DarConstants.SORT_DATE, new Date().getTime());
         return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
     }
 

@@ -9,7 +9,7 @@ public class DataAccessRequestData {
 
     @SerializedName(value = "_id", alternate = "objectId")
     ObjectId objectId;
-
+    String referenceId;
     String investigator;
     String institution;
     String department;
@@ -101,6 +101,14 @@ public class DataAccessRequestData {
 
     public void setObjectId(ObjectId objectId) {
         this.objectId = objectId;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public String getInvestigator() {

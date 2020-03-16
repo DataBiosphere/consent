@@ -612,7 +612,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
             Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-            dar.put(DarConstants.SORT_DATE, createDate);
+            dar.put(DarConstants.SORT_DATE, createDate.getTime());
             dataAccessRequestService.updateDocumentByReferenceId(referenceId, dar);
         }
     }

@@ -130,7 +130,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
-        List<Integer> datasets =  dataAccessRequest.get(DATA_SET_ID, List.class);
+        if (dataAccessRequest.getString(DarConstants.REFERENCE_ID) == null) {
+            dataAccessRequest.put(DarConstants.REFERENCE_ID, UUID.randomUUID().toString());
+        }
+        List<Integer> datasets =  DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
         if (CollectionUtils.isNotEmpty(datasets)) {
             Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasets);
             consentDataSets.forEach(consentDataSet -> {
@@ -261,7 +264,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public Document updatePartialDataAccessRequest(Document partialDar) {
         BasicDBObject query = new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, partialDar.get(DarConstants.PARTIAL_DAR_CODE));
         partialDar.remove(DarConstants.ID);
-        partialDar.put("sortDate", new Date());
+        partialDar.put(DarConstants.SORT_DATE, new Date().getTime());
         if (mongo.getPartialDataAccessRequestCollection().findOneAndReplace(query, partialDar) == null) {
             throw new NotFoundException("Partial Data access for the specified id does not exist");
         }
@@ -560,7 +563,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 if (referenceId == null) {
                     referenceId = UUID.randomUUID().toString();
                 }
-                DataAccessRequestData darData = DataAccessRequestData.fromString(d.toJson());
+                DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(d));
+                darData.setReferenceId(referenceId);
+                d.put(DarConstants.REFERENCE_ID, referenceId);
                 dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
             });
         }

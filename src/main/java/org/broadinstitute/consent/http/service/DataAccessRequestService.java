@@ -22,7 +22,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +109,7 @@ public class DataAccessRequestService {
                     filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
                     collect(Collectors.toList());
         }
-        filteredAccessList.sort((a, b) -> b.getInteger(DarConstants.SORT_DATE) - a.getInteger(DarConstants.SORT_DATE));
+        filteredAccessList.sort((a, b) -> b.getLong(DarConstants.SORT_DATE).intValue() - a.getLong(DarConstants.SORT_DATE).intValue());
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = filteredAccessList.
                 stream().
@@ -241,7 +240,8 @@ public class DataAccessRequestService {
                 collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
-            ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
+            String referenceId = dar.getString(DarConstants.REFERENCE_ID);
+            Long createDate = dar.getLong(DarConstants.SORT_DATE);
             List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
             List<DataSet> dataSetsToApprove = dataSetDAO.findNeedsApprovalDataSetByDataSetId(darDatasetIds);
             if (darDatasetIds.size() > 1) {
@@ -253,13 +253,13 @@ public class DataAccessRequestService {
             if (datasetDacPairs.containsKey(darManage.getDatasetId())) {
                 darManage.setDacId(datasetDacPairs.get(darManage.getDatasetId()));
             }
-            Election election = electionList.get(id.toString());
-            darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
+            Election election = electionList.get(referenceId);
+            darManage.setCreateDate(new Timestamp(createDate));
             darManage.setRus(dar.getString(DarConstants.RUS));
             darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
-            darManage.setDataRequestId(id.toString());
+            darManage.setDataRequestId(referenceId);
             darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
-            darManage.setSortDate(dar.getDate("sortDate"));
+            darManage.setSortDate(new Date(dar.getLong(DarConstants.SORT_DATE)));
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
