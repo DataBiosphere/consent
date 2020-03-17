@@ -212,15 +212,18 @@ public class DataAccessRequestService {
     /**
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      */
-    public Document updateDocumentByReferenceId(String id, Document document) {
-        if (findByReferenceId(id) == null) {
+    public Document updateDocumentByReferenceId(String referenceId, Document document) {
+        if (findByReferenceId(referenceId) == null) {
             throw new NotFoundException("Data access for the specified id does not exist");
         }
         Gson gson = new Gson();
-        DataAccessRequestData darData = gson.fromJson(document.toJson(), DataAccessRequestData.class);
+        document.remove(DarConstants.ID);
+        document.put(DarConstants.REFERENCE_ID, referenceId);
+        String documentJson = gson.toJson(document);
+        DataAccessRequestData darData = DataAccessRequestData.fromString(documentJson);
         darData.setSortDate(new Date().getTime());
-        updateByReferenceId(id, darData);
-        return getDataAccessRequestByReferenceIdAsDocument(id);
+        updateByReferenceId(referenceId, darData);
+        return getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {

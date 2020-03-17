@@ -7,8 +7,8 @@ import java.util.List;
 
 public class DataAccessRequestData {
 
-    @SerializedName(value = "_id", alternate = "objectId")
-    ObjectId objectId;
+//    @SerializedName(value = "_id", alternate = "objectId")
+//    ObjectId objectId;
     String referenceId;
     String investigator;
     String institution;
@@ -95,13 +95,13 @@ public class DataAccessRequestData {
         return new Gson().fromJson(jsonString, DataAccessRequestData.class);
     }
 
-    public ObjectId getObjectId() {
-        return objectId;
-    }
-
-    public void setObjectId(ObjectId objectId) {
-        this.objectId = objectId;
-    }
+//    public ObjectId getObjectId() {
+//        return objectId;
+//    }
+//
+//    public void setObjectId(ObjectId objectId) {
+//        this.objectId = objectId;
+//    }
 
     public String getReferenceId() {
         return referenceId;
