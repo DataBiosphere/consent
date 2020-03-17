@@ -51,8 +51,8 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
+            println("Error creating DAR for id: " + referenceId)
             t.printStackTrace()
-            throw new RuntimeException(t)
         }
     } as Object
 }
@@ -75,8 +75,8 @@ static Map<String, Object> getMongoDars(String authToken, String uriHost) {
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
+            println("Error querying for DARs in Mongo: ")
             t.printStackTrace()
-            throw new RuntimeException(t)
         }
     } as Map<String, Object>
 }

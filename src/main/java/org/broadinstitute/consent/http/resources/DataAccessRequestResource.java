@@ -247,7 +247,10 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
         DataAccessRequestData data = DataAccessRequestData.fromString(json);
-        DataAccessRequest dar = dataAccessRequestService.insertDataAccessRequest(id, data);
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        if (dar == null) {
+            dar = dataAccessRequestService.insertDataAccessRequest(id, data);
+        }
         return Response.ok().entity(dar).build();
     }
 

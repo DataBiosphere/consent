@@ -127,6 +127,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public List<Document> createDataAccessRequest(Document dataAccessRequest) {
         List<Document> dataAccessList = new ArrayList<>();
         if (dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
+            mongo.getPartialDataAccessRequestCollection().findOneAndDelete(new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequest.getString(DarConstants.PARTIAL_DAR_CODE)));
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
