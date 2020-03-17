@@ -13,8 +13,8 @@ import java.util.List;
 @RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
-    @SqlQuery("Select emailEntityId FROM email_entity e WHERE (e.entityReferenceId = :darElectionId or  e.entityReferenceId = :rpElectionId) AND e.emailType = 1 LIMIT 1")
-    Integer existsCollectDAREmail(@Bind("darElectionId") Integer darElectionId, @Bind("rpElectionId") Integer rpElectionId);
+    @SqlQuery("Select emailEntityId FROM email_entity e WHERE (e.entityReferenceId = :darReferenceId or  e.entityReferenceId = :rpReferenceId) AND e.emailType = 1 LIMIT 1")
+    Integer existsCollectDAREmail(@Bind("darReferenceId") String darReferenceId, @Bind("rpReferenceId") String rpReferenceId);
 
     @SqlUpdate("insert into email_entity " +
             "(voteId, entityReferenceId, dacUserId, emailType, dateSent, emailText) values " +

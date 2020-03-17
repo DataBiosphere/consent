@@ -270,12 +270,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     public boolean validateCollectDAREmailCondition(Vote vote) {
         Election e = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
         Integer rpElectionId, darElectionId;
+        String darReferenceId = null;
+        String rpReferenceId = null;
         if (e.getElectionType().equals(ElectionType.RP.getValue())) {
             rpElectionId = e.getElectionId();
             darElectionId = electionDAO.findAccessElectionByElectionRPId(rpElectionId);
+            darReferenceId = Optional.ofNullable(electionDAO.findElectionById(darElectionId).getReferenceId()).orElse(null);
         } else {
             darElectionId = e.getElectionId();
             rpElectionId = electionDAO.findRPElectionByElectionAccessId(darElectionId);
+            rpReferenceId = Optional.ofNullable(electionDAO.findElectionById(rpElectionId).getReferenceId()).orElse(null);
         }
         List<Vote> rpElectionVotes = voteDAO.findPendingVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingVotesByElectionId(darElectionId);
@@ -283,7 +287,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 Arrays.asList(darElectionId, rpElectionId),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
         List<Integer> chairIds = electionChairs.stream().map(DACUser::getDacUserId).collect(Collectors.toList());
-        Integer exists = mailMessageDAO.existsCollectDAREmail(darElectionId, rpElectionId);
+        Integer exists = mailMessageDAO.existsCollectDAREmail(darReferenceId, rpReferenceId);
         if ((exists == null)) {
             if (((darVotes.size() == 0) && (rpElectionVotes.size() == 0) && (!chairIds.contains(vote.getDacUserId())))) {
                 return true;
