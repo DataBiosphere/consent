@@ -183,8 +183,14 @@ public class DataAccessRequestService {
      * @return DataAccessRequestData object as Document
      */
     public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(referenceIds);
-        return dars.stream().map(this::createDocumentFromDar).collect(Collectors.toList());
+        return getDataAccessRequestsByReferenceIds(referenceIds).
+                stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
+    }
+
+    public List<DataAccessRequest> getDataAccessRequestsByReferenceIds(List<String> referenceIds) {
+        return dataAccessRequestDAO.findByReferenceIds(referenceIds);
     }
 
     private Document createDocumentFromDar(DataAccessRequest d) {
@@ -310,7 +316,7 @@ public class DataAccessRequestService {
 
     private List<Document> getUnReviewedDarsForUser(AuthUser authUser) {
         List<Document> activeDars = getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> !d.getString(DarConstants.STATUS).equalsIgnoreCase(ElectionStatus.CANCELED.getValue())).
+                filter(d -> !ElectionStatus.CANCELED.getValue().equalsIgnoreCase(d.getString(DarConstants.STATUS))).
                 collect(Collectors.toList());
         if (dacService.isAuthUserAdmin(authUser)) {
             return activeDars;

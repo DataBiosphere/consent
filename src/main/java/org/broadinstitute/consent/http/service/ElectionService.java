@@ -7,13 +7,13 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ElectionService {
@@ -39,16 +39,16 @@ public class ElectionService {
                     electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
             List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            List<Document> dataAccessRequests = dataAccessRequestService.getAllMongoDataAccessRequests().stream().
-                    filter(d -> referenceIds.contains(d.getString(DarConstants.REFERENCE_ID))).
-                    collect(Collectors.toList());
+            List<DataAccessRequest> dataAccessRequests = dataAccessRequestService.
+                    getDataAccessRequestsByReferenceIds(referenceIds);
             elections.forEach(election -> {
-                for (Document next : dataAccessRequests) {
-                    if (next.get(DarConstants.ID).toString().equals(election.getReferenceId())) {
-                        election.setDisplayId(next.get(DarConstants.DAR_CODE).toString());
-                        election.setProjectTitle(next.get(DarConstants.PROJECT_TITLE).toString());
-                    }
-                }
+                Optional<DataAccessRequest> darOption = dataAccessRequests.stream().
+                        filter(d -> d.getReferenceId().equals(election.getReferenceId())).
+                        findFirst();
+                darOption.ifPresent(dar -> {
+                    election.setDisplayId(dar.getData().getDarCode());
+                    election.setProjectTitle(dar.getData().getProjectTitle());
+                });
             });
         } else {
             elections = dacService.filterElectionsByDAC(
