@@ -169,12 +169,15 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DataAccessRequestService providesDataAccessRequestService() {
         return new DataAccessRequestService(
+                providesConsentDAO(),
+                providesDacDAO(),
                 providesDACUserDAO(),
                 providesDataAccessRequestDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesMongo(),
-                providesDacService());
+                providesDacService(),
+                providesVoteDAO());
     }
 
     @Provides

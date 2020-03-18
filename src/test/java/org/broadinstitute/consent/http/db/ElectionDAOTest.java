@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -7,9 +8,35 @@ import org.broadinstitute.consent.http.models.Election;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 public class ElectionDAOTest extends DAOTestHelper {
+
+    @Test
+    public void testFindRpAccessElectionIdPairs() {
+        String accessReferenceId = UUID.randomUUID().toString();
+        String rpReferenceId = UUID.randomUUID().toString();
+        DataSet dataset = createDataset();
+        Election accessElection = createElection(accessReferenceId, dataset.getDataSetId());
+        Election rpElection = createRPElection(rpReferenceId, dataset.getDataSetId());
+        electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
+        List<Integer> electionIds = Arrays.asList(accessElection.getElectionId(), rpElection.getElectionId());
+
+        List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
+        assertNotNull(rpAccessElectionIdPairs);
+        assertFalse(rpAccessElectionIdPairs.isEmpty());
+        assertEquals(1, rpAccessElectionIdPairs.size());
+        assertEquals(rpElection.getElectionId(), rpAccessElectionIdPairs.get(0).getKey());
+        assertEquals(accessElection.getElectionId(), rpAccessElectionIdPairs.get(0).getValue());
+    }
 
     @Test
     public void testFindDacForConsentElection() {
@@ -20,7 +47,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
 
         Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
-        Assert.assertNotNull(foundDac);
+        assertNotNull(foundDac);
         Assert.assertEquals(dac.getDacId(), foundDac.getDacId());
     }
 
@@ -32,7 +59,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
 
         Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
-        Assert.assertNotNull(foundDac);
+        assertNotNull(foundDac);
         Assert.assertEquals(dac.getDacId(), foundDac.getDacId());
     }
 
@@ -55,7 +82,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
 
         List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
-        Assert.assertNotNull(foundElections);
+        assertNotNull(foundElections);
         Assert.assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
     }
 
@@ -67,7 +94,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
 
         List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
-        Assert.assertNotNull(foundElections);
+        assertNotNull(foundElections);
         Assert.assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
     }
 

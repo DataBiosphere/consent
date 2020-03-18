@@ -56,22 +56,22 @@ public class DacServiceTest {
     private DacService service;
 
     @Mock
-    DacDAO dacDAO;
+    private DacDAO dacDAO;
 
     @Mock
-    DACUserDAO dacUserDAO;
+    private DACUserDAO dacUserDAO;
 
     @Mock
-    DataSetDAO dataSetDAO;
+    private DataSetDAO dataSetDAO;
 
     @Mock
-    ElectionDAO electionDAO;
+    private ElectionDAO electionDAO;
 
     @Mock
     DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
-    VoteService voteService;
+    private VoteService voteService;
 
     @Before
     public void setUp() {
@@ -363,9 +363,8 @@ public class DacServiceTest {
 
         List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
-        // Filtered documents should contain the ones the user has direct access to in addition to
-        // the unassociated ones:
-        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filtered.size());
+        // Filtered documents should only contain the ones the user has direct access to
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -386,9 +385,8 @@ public class DacServiceTest {
 
         List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
-        // Filtered documents should contain the ones the user has direct access to in addition to
-        // the unassociated ones:
-        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filtered.size());
+        // Filtered documents should contain the ones the user has direct access to
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test

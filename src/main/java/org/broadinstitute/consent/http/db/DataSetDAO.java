@@ -234,7 +234,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      *
      * @return List of dataset id and its associated dac id
      */
-    @RegisterRowMapper(DatasetDacIdPairMapper.class)
+    @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
     @SqlQuery("select distinct d.dataSetId, c.dac_id from dataset d " +
             " inner join consentassociations a on d.dataSetId = a.dataSetId " +
             " inner join consents c on a.consentId = c.consentId " +
