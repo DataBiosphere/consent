@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -197,7 +198,6 @@ public class DataAccessRequestService {
 
     /**
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
      * @return DataAccessRequestData object as Document
      */
     public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
