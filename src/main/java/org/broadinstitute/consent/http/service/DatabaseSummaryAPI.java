@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -244,11 +243,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> referenceIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Document> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIdsAsDocuments(referenceIds);
-                    HashSet<Integer> datasetIds = new HashSet<>();
-                    dataAccessRequests.forEach(dar -> {
-                        List<Integer> ids = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-                        datasetIds.addAll(ids);
-                    });
+                    List<Integer> datasetIds = dataAccessRequests.stream().
+                            map(dar -> DarUtil.getIntegerList(dar, DarConstants.DATASET_ID)).
+                            flatMap(List::stream).
+                            collect(Collectors.toList());
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
                     List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
@@ -376,7 +374,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     public File describeDataSetElectionsVotesForDar(String referenceId) {
         File file = null;
         try {
-            file = File.createTempFile("dar"+referenceId+"DatasetElectionsDetail", ".txt");
+            file = File.createTempFile("dar" + referenceId + "DatasetElectionsDetail", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
                 List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(referenceId, ElectionType.DATA_SET.getValue());
                 Map<Integer, List<Vote>> electionsData = new HashMap<>();
