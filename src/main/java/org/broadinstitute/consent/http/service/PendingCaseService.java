@@ -23,8 +23,6 @@ import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -177,11 +175,11 @@ public class PendingCaseService {
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
-            Document dataAccessRequest = dataAccessRequestService.
-                    getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId());
+            DataAccessRequest dataAccessRequest = dataAccessRequestService.
+                    findByReferenceId(election.getReferenceId());
             if (dataAccessRequest != null) {
-                pendingCase.setFrontEndId(dataAccessRequest.get(DarConstants.DAR_CODE).toString());
-                pendingCase.setProjectTitle(dataAccessRequest.get(DarConstants.PROJECT_TITLE).toString());
+                pendingCase.setFrontEndId(dataAccessRequest.getData().getDarCode());
+                pendingCase.setProjectTitle(dataAccessRequest.getData().getProjectTitle());
             }
         } else {
             pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());
