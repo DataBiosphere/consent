@@ -175,8 +175,7 @@ public class PendingCaseService {
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
-            DataAccessRequest dataAccessRequest = dataAccessRequestService.
-                    findByReferenceId(election.getReferenceId());
+            DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
             if (dataAccessRequest != null) {
                 pendingCase.setFrontEndId(dataAccessRequest.getData().getDarCode());
                 pendingCase.setProjectTitle(dataAccessRequest.getData().getProjectTitle());
