@@ -146,20 +146,18 @@ public class PendingCaseService {
                 List<Vote> dataOwnerVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), dataOwnerId, VoteType.DATA_OWNER.getValue());
                 if(CollectionUtils.isNotEmpty(dataOwnerVotes)){
                     dataOwnerVotes.forEach(v -> {
-                        DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
-                        dataOwnerCase.setAlias(dataSet.getAlias());
-                        dataOwnerCase.setDataSetId(dataSet.getDataSetId());
-                        dataOwnerCase.setDataSetName(dataSet.getName());
                         Document dataAccessRequest = dataAccessRequestService.
                                 getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId());
-                        if (dataAccessRequest != null) {
-                            dataOwnerCase.setDarCode(dataAccessRequest.get(DarConstants.DAR_CODE).toString());
-                            dataOwnerCase.setVoteId(v.getVoteId());
-                            dataOwnerCase.setAlreadyVoted(v.getVote() != null);
-                            dataOwnerCase.setReferenceId(election.getReferenceId());
-                            dataOwnerCase.setHasConcerns(v.getHasConcerns());
-                            pendingCases.add(dataOwnerCase);
-                        }
+                        DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
+                        dataOwnerCase.setAlias(dataSet.getAlias());
+                        dataOwnerCase.setDarCode(dataAccessRequest != null ? dataAccessRequest.get(DarConstants.DAR_CODE).toString() : null);
+                        dataOwnerCase.setDataSetId(dataSet.getDataSetId());
+                        dataOwnerCase.setDataSetName(dataSet.getName());
+                        dataOwnerCase.setVoteId(v.getVoteId());
+                        dataOwnerCase.setAlreadyVoted(v.getVote() != null);
+                        dataOwnerCase.setReferenceId(election.getReferenceId());
+                        dataOwnerCase.setHasConcerns(v.getHasConcerns());
+                        pendingCases.add(dataOwnerCase);
                     });
                 }
             }
