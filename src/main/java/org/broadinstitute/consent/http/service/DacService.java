@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -36,7 +37,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -267,30 +267,22 @@ public class DacService {
 
     /**
      * Filter data access requests by the DAC they are associated with.
-     * DARs that are not associated to any DAC are also considered valid.
-     * In essence, we are filtering out dars associated to DACs the user is not a member of.
      */
     List<Document> filterDarsByDAC(List<Document> documents, AuthUser authUser) {
         if (isAuthUserAdmin(authUser)) {
             return documents;
         }
-        // Chair and Member users can see data access requests that they have DAC access to, or
-        // requests that are not associated to any DAC.
+        // Chair and Member users can see data access requests that they have DAC access to
         if (isAuthUserChairOrMember(authUser)) {
-            List<Integer> accessibleDatasetIds = Stream.concat(
-                    dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().map(DataSet::getDataSetId),
-                    dataSetDAO.findNonDACDataSets().stream().map(DataSet::getDataSetId)
-            ).collect(Collectors.toList());
+            List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).
+                    stream().
+                    map(DataSet::getDataSetId).
+                    collect(Collectors.toList());
 
             return documents.
                     stream().
                     filter(d -> {
-                        @SuppressWarnings("unchecked")
-                        List<Integer> datasetIds = (List) d.get(DarConstants.DATASET_ID, List.class).
-                                stream().
-                                filter(Integer.class::isInstance).
-                                map(Integer.class::cast).
-                                collect(Collectors.toList());
+                        List<Integer> datasetIds = DarUtil.getIntegerList(d, DarConstants.DATASET_ID);
                         return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
                     }).
                     collect(Collectors.toList());
@@ -300,9 +292,6 @@ public class DacService {
 
     /**
      * Filter consent manages by the DAC they are associated with.
-     * Consent manages that are not associated to any DAC are also considered valid.
-     * In essence, we are filtering out consent manages associated to DACs the user is not a member
-     * of.
      */
     List<ConsentManage> filterConsentManageByDAC(List<ConsentManage> consentManages,
                                                  AuthUser authUser) {
@@ -311,14 +300,6 @@ public class DacService {
         }
         List<Integer> dacIds = getDacIdsForUser(authUser);
 
-        // Non-DAC users can only see unassociated consent manages
-        if (dacIds.isEmpty()) {
-            return consentManages.
-                    stream().
-                    filter(c -> c.getDacId() == null).
-                    collect(Collectors.toList());
-        }
-
         return consentManages.stream().
                 filter(c -> c.getDacId() == null || dacIds.contains(c.getDacId())).
                 collect(Collectors.toList());
@@ -326,8 +307,6 @@ public class DacService {
 
     /**
      * Filter consents by the DAC they are associated with.
-     * Consents that are not associated to any DAC are also considered valid.
-     * In essence, we are filtering out consents associated to DACs the user is not a member of.
      */
     Collection<Consent> filterConsentsByDAC(Collection<Consent> consents,
                                             AuthUser authUser) {
@@ -335,14 +314,6 @@ public class DacService {
             return consents;
         }
         List<Integer> dacIds = getDacIdsForUser(authUser);
-
-        // Non-DAC users can only see unassociated consents
-        if (dacIds.isEmpty()) {
-            return consents.
-                    stream().
-                    filter(c -> c.getDacId() == null).
-                    collect(Collectors.toList());
-        }
 
         return consents.
                 stream().
@@ -352,21 +323,10 @@ public class DacService {
 
     /**
      * Filter elections by the Dataset/DAC they are associated with.
-     * Elections that are not associated to any Dataset/DAC are also considered valid.
-     * In essence, we are filtering out elections associated to Datasets/DACs the user is not a member of.
      */
     List<Election> filterElectionsByDAC(List<Election> elections, AuthUser authUser) {
         if (isAuthUserAdmin(authUser)) {
             return elections;
-        }
-        List<Integer> dacIds = getDacIdsForUser(authUser);
-
-        // Non-DAC users can only see unassociated elections
-        if (dacIds.isEmpty()) {
-            return elections.
-                    stream().
-                    filter(e -> e.getDataSetId() == null).
-                    collect(Collectors.toList());
         }
 
         List<Integer> userDataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).

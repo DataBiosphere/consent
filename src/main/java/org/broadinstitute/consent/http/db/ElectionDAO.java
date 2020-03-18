@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
@@ -175,6 +176,10 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
 
+    @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
+    @SqlQuery(" select electionRPId, electionAccessId from access_rp arp where arp.electionAccessId in (<electionAccessIds>) ")
+    List<Pair<Integer, Integer>> findRpAccessElectionIdPairs(@BindList("electionAccessIds") List<Integer> electionAccessIds);
+
     @SqlUpdate("insert into access_rp (electionAccessId, electionRPId ) values ( :electionAccessId, :electionRPId)")
     void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
                         @Bind("electionRPId") Integer electionRPId);
@@ -269,12 +274,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
      */
     @UseRowMapper(DacMapper.class)
     @SqlQuery("select d0.* from ( " +
-            "   select d1.* from dac d1 " +
+            "   select d1.*, e1.electionId from dac d1 " +
             "     inner join consents c1 on d1.dac_id = c1.dac_id " +
             "     inner join consentassociations a1 on a1.consentId = c1.consentId " +
             "     inner join election e1 on e1.datasetId = a1.dataSetId and e1.electionId = :electionId " +
             " union " +
-            "   select d2.* from dac d2 " +
+            "   select d2.*, e2.electionId from dac d2 " +
             "     inner join consents c2 on d2.dac_id = c2.dac_id " +
             "     inner join election e2 on e2.referenceId = c2.consentId and e2.electionId = :electionId " +
             " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation

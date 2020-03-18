@@ -72,7 +72,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-@Path("{api : (api/)?}dar")
+@Path("api/dar")
 public class DataAccessRequestResource extends Resource {
 
     private static final Logger logger = Logger.getLogger(DataAccessRequestResource.class.getName());
@@ -288,7 +288,7 @@ public class DataAccessRequestResource extends Resource {
     @GET
     @Produces("application/json")
     @Path("/manage")
-    @RolesAllowed({RESEARCHER, ADMIN})
+    @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
         // If a user id is provided, ensure that is the current user.
         if (userId != null) {
