@@ -266,10 +266,6 @@ public class DataAccessRequestService {
             AuthUser authUser) {
         DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
-        Map<String, List<Integer>> darDatasetMap = documents.stream().collect(Collectors.toMap(
-                d -> d.getString(DarConstants.REFERENCE_ID),
-                d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)
-        ));
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
                 map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
                 flatMap(List::stream).
