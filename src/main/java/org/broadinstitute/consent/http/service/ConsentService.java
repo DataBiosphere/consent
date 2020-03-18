@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 
@@ -71,12 +72,12 @@ public class ConsentService {
         if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
             List<DataAccessRequest> dataAccessRequests = dataAccessRequestDAO.findByReferenceIds(referenceIds);
-            List<String> datasetIds = new ArrayList<>();
-            dataAccessRequests.forEach(dar -> {
-                List<String> dataSets = dar.getData().getDatasetDetail().stream().
-                        map(DatasetDetailEntry::getDatasetId).collect(Collectors.toList());
-                datasetIds.addAll(dataSets);
-            });
+            List<String> datasetIds = dataAccessRequests.stream().
+                    map(DataAccessRequest::getData).
+                    map(DataAccessRequestData::getDatasetDetail).
+                    flatMap(List::stream).
+                    map(DatasetDetailEntry::getDatasetId).
+                    collect(Collectors.toList());
             List<String> consentIds = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(datasetIds)) {
                 List<Integer> datasetIdIntValues = datasetIds.stream().map(Integer::valueOf).collect(Collectors.toList());
