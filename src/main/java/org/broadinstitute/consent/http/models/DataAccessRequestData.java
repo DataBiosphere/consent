@@ -7,8 +7,6 @@ import java.util.List;
 
 public class DataAccessRequestData {
 
-//    @SerializedName(value = "_id", alternate = "objectId")
-//    ObjectId objectId;
     String referenceId;
     String investigator;
     String institution;
@@ -94,14 +92,6 @@ public class DataAccessRequestData {
     public static DataAccessRequestData fromString(String jsonString) {
         return new Gson().fromJson(jsonString, DataAccessRequestData.class);
     }
-
-//    public ObjectId getObjectId() {
-//        return objectId;
-//    }
-//
-//    public void setObjectId(ObjectId objectId) {
-//        this.objectId = objectId;
-//    }
 
     public String getReferenceId() {
         return referenceId;
@@ -565,109 +555,5 @@ public class DataAccessRequestData {
 
     public void setPoa(Boolean poa) {
         this.poa = poa;
-    }
-}
-
-class ObjectId {
-
-    Long timestamp;
-    Long machineIdentifier;
-    Integer processIdentifier;
-    Integer counter;
-    Long time;
-    Long date;
-    Long timeSecond;
-
-    public ObjectId() {
-    }
-
-    public Long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public Long getMachineIdentifier() {
-        return machineIdentifier;
-    }
-
-    public void setMachineIdentifier(Long machineIdentifier) {
-        this.machineIdentifier = machineIdentifier;
-    }
-
-    public Integer getProcessIdentifier() {
-        return processIdentifier;
-    }
-
-    public void setProcessIdentifier(Integer processIdentifier) {
-        this.processIdentifier = processIdentifier;
-    }
-
-    public Integer getCounter() {
-        return counter;
-    }
-
-    public void setCounter(Integer counter) {
-        this.counter = counter;
-    }
-
-    public Long getTime() {
-        return time;
-    }
-
-    public void setTime(Long time) {
-        this.time = time;
-    }
-
-    public Long getDate() {
-        return date;
-    }
-
-    public void setDate(Long date) {
-        this.date = date;
-    }
-
-    public Long getTimeSecond() {
-        return timeSecond;
-    }
-
-    public void setTimeSecond(Long timeSecond) {
-        this.timeSecond = timeSecond;
-    }
-}
-
-class DatasetEntry {
-
-    String key;
-    String value;
-    String label;
-
-    public DatasetEntry() {
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 }
