@@ -147,13 +147,13 @@ public class PendingCaseService {
                 if(CollectionUtils.isNotEmpty(dataOwnerVotes)){
                     dataOwnerVotes.forEach(v -> {
                         DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
+                        dataOwnerCase.setAlias(dataSet.getAlias());
+                        dataOwnerCase.setDataSetId(dataSet.getDataSetId());
+                        dataOwnerCase.setDataSetName(dataSet.getName());
                         Document dataAccessRequest = dataAccessRequestService.
                                 getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId());
                         if (dataAccessRequest != null) {
-                            dataOwnerCase.setAlias(dataSet.getAlias());
                             dataOwnerCase.setDarCode(dataAccessRequest.get(DarConstants.DAR_CODE).toString());
-                            dataOwnerCase.setDataSetId(dataSet.getDataSetId());
-                            dataOwnerCase.setDataSetName(dataSet.getName());
                             dataOwnerCase.setVoteId(v.getVoteId());
                             dataOwnerCase.setAlreadyVoted(v.getVote() != null);
                             dataOwnerCase.setReferenceId(election.getReferenceId());
