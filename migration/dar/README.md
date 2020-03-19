@@ -44,17 +44,17 @@ The following workflows have been tested end-to-end
   * View dar election :heavy_check_mark:
   * After chair final vote, election shows in reviewed cases :heavy_check_mark:
 * Admin - Statistics
-  * DUL: All Cases
-  * DUL: Reviewed Cases
+  * DUL: All Cases :heavy_check_mark:
+  * DUL: Reviewed Cases :heavy_check_mark:
   * DAR: Should data be granted to this applicant?
-    * All Cases 
-    * Reviewed Cases
+    * All Cases :heavy_check_mark:
+    * Reviewed Cases :heavy_check_mark:
   * DAR: Was the research purpose accurately converted to a structured format? 
-    * All Cases 
-    * Reviewed Cases
+    * All Cases :heavy_check_mark:
+    * Reviewed Cases :heavy_check_mark:
   * DAR: Evaluation of automated matching in comparison with the Data Access Committee decision 
-    * Cases reviewed by automated matching 
-    * Agreement beween automated maching and Data Access Committee
+    * Cases reviewed by automated matching :heavy_check_mark: 
+    * Agreement beween automated maching and Data Access Committee :heavy_check_mark:
 * Member
   * View dar page (filtered by DAC) :heavy_check_mark:
   * View dar after new election created :heavy_check_mark:
