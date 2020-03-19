@@ -35,11 +35,13 @@ The following workflows have been tested end-to-end
   * Review dar :heavy_check_mark:
   * Cancel dar :heavy_check_mark:
 * Admin
-  * View dar manage page
-  * Create dar election
-  * Cancel dar election
-  * View dar summary
-  * View dar election
+  * View dar manage page :heavy_check_mark:
+  * Create new dar election :heavy_check_mark:
+  * Create migrated dar election :heavy_check_mark:
+  * Cancel dar election :heavy_check_mark:
+  * Create canceled dar election :heavy_check_mark:
+  * View dar summary :heavy_check_mark:
+  * View dar election :heavy_check_mark:
 * Member
   * View dar page
   * Vote on dar
