@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -70,7 +69,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -260,17 +258,7 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public Response describe(@PathParam("id") String id) {
         try {
-            new ObjectId(id);
-        } catch (IllegalArgumentException e) {
-            String message = "The provided id is not a valid Data Access Request Id: " + id;
-            logger.log(Level.INFO, message + "; " + e.getMessage());
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(new Error(message, Response.Status.BAD_REQUEST.getStatusCode()))
-                    .build();
-        }
-        try {
-            Document document = dataAccessRequestAPI.describeDataAccessRequestById(id);
+            Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
             if (document != null) {
                 return Response.status(Response.Status.OK).entity(document).build();
             }

@@ -58,7 +58,8 @@ The following workflows have been tested end-to-end
 * Member
   * View dar page (filtered by DAC) :heavy_check_mark:
   * View dar after new election created :heavy_check_mark:
-  * Vote on dar :heavy_check_mark:
+  * Vote on migrated dar :heavy_check_mark:
+  * Vote on new dar 
   * DAR page shows correct votes :heavy_check_mark:
   * Edit vote :heavy_check_mark:
 * Chair
