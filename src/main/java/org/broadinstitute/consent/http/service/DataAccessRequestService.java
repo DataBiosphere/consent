@@ -324,11 +324,18 @@ public class DataAccessRequestService {
      */
     private List<DataAccessRequestManage> populateElectionInformation(List<DataAccessRequestManage> darManages, Map<String, Election> referenceIdElectionMap, DACUser user) {
         Collection<Election> elections = referenceIdElectionMap.values();
-        List<Integer> electionIds = referenceIdElectionMap.values().stream().
+        List<Integer> electionIds = referenceIdElectionMap.values().
+                stream().
                 map(Election::getElectionId).collect(toList());
-        List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
-        Map<Integer, List<Vote>> electionVoteMap = voteDAO.findVotesByElectionIds(electionIds).stream().
-                collect(Collectors.groupingBy(Vote::getElectionId));
+        List<Pair<Integer, Integer>> rpAccessElectionIdPairs = new ArrayList<>();
+        Map<Integer, List<Vote>> electionVoteMap = new HashMap<>();
+        List<Vote> userVotes = new ArrayList<>();
+        if (!electionIds.isEmpty()) {
+            rpAccessElectionIdPairs.addAll(electionDAO.findRpAccessElectionIdPairs(electionIds));
+            electionVoteMap.putAll(voteDAO.findVotesByElectionIds(electionIds).stream().
+                    collect(Collectors.groupingBy(Vote::getElectionId)));
+            userVotes.addAll(voteDAO.findVotesByElectionIdsAndUser(electionIds, user.getDacUserId()));
+        }
         Map<Integer, List<Vote>> electionPendingVoteMap = electionVoteMap.entrySet().stream().
                 collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -338,7 +345,6 @@ public class DataAccessRequestService {
         List<String> referenceIds = new ArrayList<>(referenceIdElectionMap.keySet());
         Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
                 collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
-        List<Vote> userVotes = voteDAO.findVotesByElectionIdsAndUser(electionIds, user.getDacUserId());
         Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
