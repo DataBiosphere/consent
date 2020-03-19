@@ -42,6 +42,7 @@ The following workflows have been tested end-to-end
   * Create canceled dar election :heavy_check_mark:
   * View dar summary :heavy_check_mark:
   * View dar election :heavy_check_mark:
+  * After chair final vote, election shows in reviewed cases :heavy_check_mark:
 * Admin - Statistics
   * DUL: All Cases
   * DUL: Reviewed Cases
@@ -61,8 +62,9 @@ The following workflows have been tested end-to-end
   * DAR page shows correct votes :heavy_check_mark:
   * Edit vote :heavy_check_mark:
 * Chair
-  * View dar page
-  * Vote on dar
-  * Collect votes on dar
-  * Final vote on dar
+  * View dar page (filtered by DAC) :heavy_check_mark:
+  * Vote as member :heavy_check_mark: 
+  * Vote as chair :heavy_check_mark:
+  * Collect votes on dar :heavy_check_mark:
+  * Final vote on dar :heavy_check_mark: 
   
