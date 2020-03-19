@@ -42,6 +42,18 @@ The following workflows have been tested end-to-end
   * Create canceled dar election :heavy_check_mark:
   * View dar summary :heavy_check_mark:
   * View dar election :heavy_check_mark:
+* Admin - Statistics
+  * DUL: All Cases
+  * DUL: Reviewed Cases
+  * DAR: Should data be granted to this applicant?
+    * All Cases 
+    * Reviewed Cases
+  * DAR: Was the research purpose accurately converted to a structured format? 
+    * All Cases 
+    * Reviewed Cases
+  * DAR: Evaluation of automated matching in comparison with the Data Access Committee decision 
+    * Cases reviewed by automated matching 
+    * Agreement beween automated maching and Data Access Committee
 * Member
   * View dar page
   * Vote on dar
