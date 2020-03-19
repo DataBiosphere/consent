@@ -55,8 +55,11 @@ The following workflows have been tested end-to-end
     * Cases reviewed by automated matching 
     * Agreement beween automated maching and Data Access Committee
 * Member
-  * View dar page
-  * Vote on dar
+  * View dar page (filtered by DAC) :heavy_check_mark:
+  * View dar after new election created :heavy_check_mark:
+  * Vote on dar :heavy_check_mark:
+  * DAR page shows correct votes :heavy_check_mark:
+  * Edit vote :heavy_check_mark:
 * Chair
   * View dar page
   * Vote on dar
