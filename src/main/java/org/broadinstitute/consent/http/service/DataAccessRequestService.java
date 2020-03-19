@@ -343,8 +343,11 @@ public class DataAccessRequestService {
                                 collect(toList())
                 ));
         List<String> referenceIds = new ArrayList<>(referenceIdElectionMap.keySet());
-        Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
-                collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
+        Map<String, Consent> consentMap = new HashMap<>();
+        if (!referenceIds.isEmpty()) {
+            consentMap.putAll(consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
+                    collect(Collectors.toMap(Consent::getConsentId, Function.identity())));
+        }
         Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
