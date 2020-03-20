@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -50,6 +51,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -212,10 +214,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds) {
-        return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> dataAccessRequestIds.contains(d.getString(DarConstants.REFERENCE_ID))).
-                map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
-                map(String::valueOf).
+        return dataAccessRequestService.getDataAccessRequestsByReferenceIds(new ArrayList<>(dataAccessRequestIds)).
+                stream().
+                map(DataAccessRequest::getData).filter(Objects::nonNull).
+                map(DataAccessRequestData::getDatasetDetail).filter(Objects::nonNull).
+                flatMap(List::stream).filter(Objects::nonNull).
+                map(DatasetDetailEntry::getDatasetId).filter(Objects::nonNull).
+                distinct().
                 collect(Collectors.toList());
     }
 
