@@ -15,7 +15,7 @@ import static groovyx.net.http.util.SslUtils.ignoreSslIssues
  *
  * Sample Usage:
  *   groovy migrate.groovy \
- *     `gcloud auth application-default print-access-token)` \
+ *     `gcloud auth application-default print-access-token` \
  *     https://local.broadinstitute.org:27443
  */
 
