@@ -38,6 +38,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -114,7 +115,7 @@ public class DataAccessRequestService {
     /**
      * Filter DataAccessRequestManage objects on user.
      *
-     * @param userId Optional UserId. If provided, filter list of DARs on this user.
+     * @param userId   Optional UserId. If provided, filter list of DARs on this user.
      * @param authUser Required if no user id is provided. Instead, filter on what DACs the auth
      *                 user has access to.
      * @return List of DataAccessRequestManage objects
@@ -177,6 +178,7 @@ public class DataAccessRequestService {
     /**
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      * Replacement for MongoConsentDB.getDataAccessRequestCollection()
+     *
      * @return List of all DataAccessRequestData objects as Documents
      */
     public List<Document> getAllDataAccessRequestsAsDocuments() {
@@ -188,6 +190,7 @@ public class DataAccessRequestService {
     /**
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
+     *
      * @return DataAccessRequestData object as Document
      */
     public Document getDataAccessRequestByReferenceIdAsDocument(String referenceId) {
@@ -200,6 +203,7 @@ public class DataAccessRequestService {
 
     /**
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     *
      * @return DataAccessRequestData object as Document
      */
     public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
@@ -287,7 +291,7 @@ public class DataAccessRequestService {
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
             }
-            darManage.setCreateDate(new Timestamp(dar.getLong(DarConstants.CREATE_DATE )));
+            darManage.setCreateDate(new Timestamp(dar.getLong(DarConstants.CREATE_DATE)));
             darManage.setRus(dar.getString(DarConstants.RUS));
             darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
             darManage.setDataRequestId(referenceId);
@@ -311,11 +315,13 @@ public class DataAccessRequestService {
             }
             requestsManage.add(darManage);
         });
-
-        return populateElectionInformation(
-                populateDacInformation(requestsManage),
-                referenceIdElectionMap,
-                user);
+        List<DataAccessRequestManage> populatedDARManages = populateElectionInformation(
+                populateDacInformation(requestsManage), referenceIdElectionMap, user).
+                stream().
+                sorted(Comparator.comparing(DataAccessRequestManage::getSortDate)).
+                collect(toList());
+        Collections.reverse(populatedDARManages);
+        return populatedDARManages;
     }
 
     /**
@@ -358,7 +364,7 @@ public class DataAccessRequestService {
                             if (election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())) {
                                 List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
                                 List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
-                                Optional<Pair<Integer, Integer>> rpElectionIdOption =  rpAccessElectionIdPairs.stream().
+                                Optional<Pair<Integer, Integer>> rpElectionIdOption = rpAccessElectionIdPairs.stream().
                                         filter(p -> p.getRight().equals(election.getElectionId())).
                                         findFirst();
                                 if (rpElectionIdOption.isPresent()) {
@@ -411,13 +417,13 @@ public class DataAccessRequestService {
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
                 peek(c -> {
-            if (datasetDacIdPairs.containsKey(c.getDatasetId())) {
-                Integer dacId = datasetDacIdPairs.get(c.getDatasetId());
-                c.setDacId(dacId);
-                Optional<Dac> dacOption = dacList.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
-                dacOption.ifPresent(c::setDac);
-            }
-        }).collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
+                    if (datasetDacIdPairs.containsKey(c.getDatasetId())) {
+                        Integer dacId = datasetDacIdPairs.get(c.getDatasetId());
+                        c.setDacId(dacId);
+                        Optional<Dac> dacOption = dacList.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
+                        dacOption.ifPresent(c::setDac);
+                    }
+                }).collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
     private Optional<DACUser> getOwnerUser(Object dacUserId) {
