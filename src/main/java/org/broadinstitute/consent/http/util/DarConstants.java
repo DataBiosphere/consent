@@ -47,6 +47,8 @@ public class DarConstants {
 
     public static final String DUOS_DEFAULT = "Default Duos";
 
+    public static final String CREATE_DATE = "createDate";
+
     public static final String SORT_DATE = "sortDate";
 
     public static final String PROFILE_NAME = "profileName";

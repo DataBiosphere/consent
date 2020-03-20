@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -245,6 +247,20 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
         DataAccessRequestData data = DataAccessRequestData.fromString(json);
+        if (data.getCreateDate() == null) {
+            // Original create date was inferred from mongo ObjectId.timestamp
+            Gson gson = new Gson();
+            JsonObject obj = gson.fromJson(json, JsonObject.class);
+            long createDate = new Date().getTime();
+            if (obj.has("_id")) {
+                JsonObject idObject = obj.getAsJsonObject("_id");
+                if (idObject.has("timestamp")) {
+                    long timestamp = idObject.get("timestamp").getAsLong();
+                    createDate = timestamp * 1000; // Fix Mongo's timestamp
+                }
+            }
+            data.setCreateDate(createDate);
+        }
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
         if (dar == null) {
             dar = dataAccessRequestService.insertDataAccessRequest(id, data);

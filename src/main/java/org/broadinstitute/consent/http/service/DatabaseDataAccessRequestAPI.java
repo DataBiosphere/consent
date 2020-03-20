@@ -572,6 +572,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(d));
                 darData.setReferenceId(referenceId);
                 d.put(DarConstants.REFERENCE_ID, referenceId);
+                if (darData.getCreateDate() == null) {
+                    darData.setCreateDate(new Date().getTime());
+                }
                 dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
             });
         }

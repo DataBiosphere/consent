@@ -77,6 +77,7 @@ public class DataAccessRequestData {
     @SerializedName(value = "valid_restriction", alternate = "validRestriction")
     Boolean validRestriction;
     String translatedUseRestriction;
+    Long createDate;
     Long sortDate;
     List<Integer> datasetId;
     List<DatasetDetailEntry> datasetDetail;
@@ -483,6 +484,14 @@ public class DataAccessRequestData {
 
     public void setTranslatedUseRestriction(String translatedUseRestriction) {
         this.translatedUseRestriction = translatedUseRestriction;
+    }
+
+    public Long getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Long createDate) {
+        this.createDate = createDate;
     }
 
     public Long getSortDate() {

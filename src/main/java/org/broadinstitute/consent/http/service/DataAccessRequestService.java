@@ -276,7 +276,6 @@ public class DataAccessRequestService {
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             String referenceId = dar.getString(DarConstants.REFERENCE_ID);
-            Long createDate = dar.getLong(DarConstants.SORT_DATE);
             List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
             if (darDatasetIds.size() > 1) {
                 darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
@@ -288,7 +287,7 @@ public class DataAccessRequestService {
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
             }
-            darManage.setCreateDate(new Timestamp(createDate));
+            darManage.setCreateDate(new Timestamp(dar.getLong(DarConstants.CREATE_DATE )));
             darManage.setRus(dar.getString(DarConstants.RUS));
             darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
             darManage.setDataRequestId(referenceId);
