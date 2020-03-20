@@ -465,7 +465,7 @@ public class DataAccessRequestService {
                 map(DataSet::getDataSetId).
                 collect(Collectors.toList());
         return activeDars.stream().
-                filter(d -> !Collections.disjoint(DarUtil.getIntegerList(d, DarConstants.DATASET_ID), dataSetIds)).
+                filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
     }
 
