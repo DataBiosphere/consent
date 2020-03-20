@@ -63,6 +63,7 @@ public class DataAccessRequestService {
     private DacService dacService;
     private VoteDAO voteDAO;
 
+    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
     private static final String NEEDS_APPROVAL = "Needs Approval";
     private static final String APPROVED = "Approved";
@@ -179,15 +180,8 @@ public class DataAccessRequestService {
      * @return List of all DataAccessRequestData objects as Documents
      */
     public List<Document> getAllDataAccessRequestsAsDocuments() {
-        Gson gson = new Gson();
         return getAllPostgresDataAccessRequests().stream().
-                map(d -> {
-                    Document document = Document.parse(gson.toJson(d.getData()));
-                    document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
-                    document.put(DarConstants.ID, d.getReferenceId());
-                    document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
-                    return document;
-                }).
+                map(this::createDocumentFromDar).
                 collect(Collectors.toList());
     }
 
@@ -220,7 +214,6 @@ public class DataAccessRequestService {
     }
 
     private Document createDocumentFromDar(DataAccessRequest d) {
-        Gson gson = new Gson();
         Document document = Document.parse(gson.toJson(d.getData()));
         document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
         document.put(DarConstants.ID, d.getReferenceId());
@@ -248,7 +241,6 @@ public class DataAccessRequestService {
         if (findByReferenceId(referenceId) == null) {
             throw new NotFoundException("Data access for the specified id does not exist");
         }
-        Gson gson = new Gson();
         document.remove(DarConstants.ID);
         document.put(DarConstants.REFERENCE_ID, referenceId);
         String documentJson = gson.toJson(document);
@@ -356,7 +348,6 @@ public class DataAccessRequestService {
             consentMap.putAll(consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
                     collect(Collectors.toMap(Consent::getConsentId, Function.identity())));
         }
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
                 peek(c -> {
@@ -418,7 +409,6 @@ public class DataAccessRequestService {
                 stream().
                 collect(Collectors.toMap(Pair::getKey, Pair::getValue));
         List<Dac> dacList = dacDAO.findAll();
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
                 peek(c -> {
