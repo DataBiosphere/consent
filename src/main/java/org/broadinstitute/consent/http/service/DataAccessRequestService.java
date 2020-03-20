@@ -234,6 +234,7 @@ public class DataAccessRequestService {
     }
 
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
+        darData.setSortDate(new Date().getTime());
         dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
         return findByReferenceId(referencedId);
     }
@@ -249,7 +250,6 @@ public class DataAccessRequestService {
         document.put(DarConstants.REFERENCE_ID, referenceId);
         String documentJson = gson.toJson(document);
         DataAccessRequestData darData = DataAccessRequestData.fromString(documentJson);
-        darData.setSortDate(new Date().getTime());
         updateByReferenceId(referenceId, darData);
         return getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
