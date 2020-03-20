@@ -92,7 +92,7 @@ public class DataAccessRequestService {
     public Integer getTotalUnReviewedDars(AuthUser authUser) {
         List<String> unReviewedDarIds = getUnReviewedDarsForUser(authUser).
                 stream().
-                map(d -> d.get(DarConstants.ID).toString()).
+                map(d -> d.getString(DarConstants.REFERENCE_ID)).
                 collect(toList());
         Integer unReviewedDarCount = 0;
         if (!unReviewedDarIds.isEmpty()) {

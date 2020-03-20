@@ -387,8 +387,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if(CollectionUtils.isNotEmpty(darList)){
             List<String> darIds = new ArrayList<>();
             darList.stream().forEach(dar -> {
-                darIds.add(dar.get(DarConstants.ID).toString());
-                dar.put(DarConstants.ID,dar.get(DarConstants.ID).toString());
+                darIds.add(dar.getString(DarConstants.REFERENCE_ID));
+                dar.put(DarConstants.REFERENCE_ID, dar.getString(DarConstants.REFERENCE_ID));
             });
             List<Election> elections = electionDAO.findRequestElectionsByReferenceIds(darIds);
             getElectionStatusDTO(electionStatusDTOs, elections, DATA_ACCESS_REQUEST);

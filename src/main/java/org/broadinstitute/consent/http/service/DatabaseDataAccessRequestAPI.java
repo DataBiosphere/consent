@@ -393,7 +393,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public String getStructuredDURForPdf(Document dar) {
         List<Integer> dataSetId = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.get(DarConstants.ID).toString(), ElectionType.DATA_ACCESS.getValue());
+        Election accessElection = electionDAO.findLastElectionByReferenceIdAndType(dar.getString(DarConstants.REFERENCE_ID), ElectionType.DATA_ACCESS.getValue());
         String sDUR;
         if (accessElection != null) {
             Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(accessElection.getElectionId());
@@ -467,7 +467,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         dataAccessReportsParser.setDataSetApprovedUsersHeader(darWriter);
         if (CollectionUtils.isNotEmpty(darList)){
             for(Document dar: darList){
-                Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.get(DarConstants.ID).toString());
+                Date approvalDate = electionDAO.findApprovalAccessElectionDate(dar.getString(DarConstants.REFERENCE_ID));
                 if (approvalDate != null) {
                     String email = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.ACADEMIC_BUSINESS_EMAIL);
                     String name = researcherPropertyDAO.findPropertyValueByPK(dar.getInteger(DarConstants.USER_ID), DarConstants.PROFILE_NAME);
@@ -492,7 +492,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
-            .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.get(DarConstants.ID).toString())))
+            .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
             .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
             .setStatus(status)
             .setRationale(rationale)
@@ -576,7 +576,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<String> accessIds = new ArrayList<>();
         if (access != null) {
             access.forEach((Block<Document>) document ->
-                accessIds.add(document.get(DarConstants.ID).toString())
+                accessIds.add(document.getString(DarConstants.REFERENCE_ID))
             );
         }
         return accessIds;

@@ -155,7 +155,7 @@ public class DataAccessRequestResource extends Resource {
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
-            matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
+            matchProcessAPI.processMatchesForPurpose(dar.getString(DarConstants.REFERENCE_ID));
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -376,7 +376,7 @@ public class DataAccessRequestResource extends Resource {
         }
         try {
             result = savePartialDarRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.get(DarConstants.ID));
+            uri = info.getRequestUriBuilder().path("{id}").build(result.getString(DarConstants.REFERENCE_ID));
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
