@@ -277,6 +277,10 @@ public class DataAccessRequestService {
         List<DataSet> dataSetsToApprove = dataSetDAO.
                 findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
 
+        // Sort documents by sort time, create time, then reversed.
+        Comparator<Document> sortField = Comparator.comparing(d -> d.getLong(DarConstants.SORT_DATE));
+        Comparator<Document> createField = Comparator.comparing(d -> d.getLong(DarConstants.CREATE_DATE));
+        documents.sort(sortField.thenComparing(createField).reversed());
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             String referenceId = dar.getString(DarConstants.REFERENCE_ID);
@@ -315,14 +319,8 @@ public class DataAccessRequestService {
             }
             requestsManage.add(darManage);
         });
-        List<DataAccessRequestManage> populatedDARManages = populateElectionInformation(
-                populateDacInformation(requestsManage), referenceIdElectionMap, user).
-                stream().
-                sorted(Comparator.comparing(DataAccessRequestManage::getSortDate).
-                                thenComparing(DataAccessRequestManage::getCreateDate)).
-                collect(toList());
-        Collections.reverse(populatedDARManages);
-        return populatedDARManages;
+        return populateElectionInformation(
+                populateDacInformation(requestsManage), referenceIdElectionMap, user);
     }
 
     /**
