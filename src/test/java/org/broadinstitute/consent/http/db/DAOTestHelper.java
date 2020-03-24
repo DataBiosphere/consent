@@ -60,6 +60,7 @@ public class DAOTestHelper {
     static UserRoleDAO userRoleDAO;
     static VoteDAO voteDAO;
     static DataAccessRequestDAO dataAccessRequestDAO;
+    static MailMessageDAO mailMessageDAO;
 
     private static List<Integer> createdDataSetIds = new ArrayList<>();
     private static List<Integer> createdDacIds = new ArrayList<>();
@@ -109,6 +110,7 @@ public class DAOTestHelper {
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+        mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
     }
 
     @AfterClass
