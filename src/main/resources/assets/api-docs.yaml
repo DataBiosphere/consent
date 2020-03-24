@@ -2111,6 +2111,16 @@ paths:
           description: referenceId of the Election
           required: true
           type: string
+        - name: type
+          in: query
+          description: Type of the Election
+          required: true
+          type: string
+          enum:
+            - TranslateDUL
+            - DataAccess
+            - DataSet
+            - RP
       tags:
         - ElectionReview
       responses:
