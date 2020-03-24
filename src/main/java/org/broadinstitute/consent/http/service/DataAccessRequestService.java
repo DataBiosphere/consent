@@ -318,7 +318,8 @@ public class DataAccessRequestService {
         List<DataAccessRequestManage> populatedDARManages = populateElectionInformation(
                 populateDacInformation(requestsManage), referenceIdElectionMap, user).
                 stream().
-                sorted(Comparator.comparing(DataAccessRequestManage::getSortDate)).
+                sorted(Comparator.comparing(DataAccessRequestManage::getSortDate).
+                                thenComparing(DataAccessRequestManage::getCreateDate)).
                 collect(toList());
         Collections.reverse(populatedDARManages);
         return populatedDARManages;
