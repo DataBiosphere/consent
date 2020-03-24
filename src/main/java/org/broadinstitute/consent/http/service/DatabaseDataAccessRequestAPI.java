@@ -179,6 +179,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
      * Find DARS related to the datasets sent as a parameter. Only dars with the use restriction
      * field present will be returned. DARs that require Manual Review wont be matched.
      * @param dataSetIds
@@ -192,6 +194,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param dataSetIds List<String>
+     * @return List<Document>
+     */
     @Override
     public List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds) {
         return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
@@ -199,6 +207,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param userId User id
+     * @return List<String>
+     */
     @Override
     public List<String> describeDataAccessIdsForOwner(Integer userId) {
         return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
@@ -207,6 +221,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @return List<Document>
+     */
     @Override
     public List<Document> describeDataAccessRequests() {
         return  dataAccessRequestService.getAllDataAccessRequestsAsDocuments();
@@ -337,6 +356,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return getField(referenceId, DarConstants.RESTRICTION) != null ? true : false;
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @return List<UseRestrictionDTO>
+     */
     @Override
     public List<UseRestrictionDTO> getInvalidDataAccessRequest() {
         List<Document> darList = dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
@@ -538,6 +562,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return datasets;
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param dataSetId Dataset Id
+     * @return List<Document>
+     */
     private List<Document> describeDataAccessByDataSetId(Integer dataSetId) {
         return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
                 filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).contains(dataSetId)).

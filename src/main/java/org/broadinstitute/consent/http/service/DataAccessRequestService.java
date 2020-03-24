@@ -113,6 +113,9 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
      * Filter DataAccessRequestManage objects on user.
      *
      * @param userId   Optional UserId. If provided, filter list of DARs on this user.
@@ -161,6 +164,7 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      */
     @SuppressWarnings("deprecation")
@@ -169,6 +173,7 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      */
     public List<DataAccessRequest> getAllPostgresDataAccessRequests() {
@@ -176,6 +181,9 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      * Replacement for MongoConsentDB.getDataAccessRequestCollection()
      *
@@ -188,6 +196,8 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     *
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
      *
@@ -202,6 +212,8 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     *
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      *
      * @return DataAccessRequestData object as Document
@@ -240,6 +252,8 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     *
      * Convenience method during transition away from `Document` and to `DataAccessRequest`
      */
     public Document updateDocumentByReferenceId(String referenceId, Document document) {
@@ -259,6 +273,13 @@ public class DataAccessRequestService {
         return findByReferenceId(referencedId);
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param authUser AuthUser
+     * @return List<Document>
+     */
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
         List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
@@ -320,7 +341,9 @@ public class DataAccessRequestService {
             requestsManage.add(darManage);
         });
         return populateElectionInformation(
-                populateDacInformation(requestsManage), referenceIdElectionMap, user);
+                populateDacInformation(requestsManage),
+                referenceIdElectionMap,
+                user);
     }
 
     /**
@@ -328,8 +351,7 @@ public class DataAccessRequestService {
      */
     private List<DataAccessRequestManage> populateElectionInformation(List<DataAccessRequestManage> darManages, Map<String, Election> referenceIdElectionMap, DACUser user) {
         Collection<Election> elections = referenceIdElectionMap.values();
-        List<Integer> electionIds = referenceIdElectionMap.values().
-                stream().
+        List<Integer> electionIds = referenceIdElectionMap.values().stream().
                 map(Election::getElectionId).collect(toList());
         List<Pair<Integer, Integer>> rpAccessElectionIdPairs = new ArrayList<>();
         Map<Integer, List<Vote>> electionVoteMap = new HashMap<>();
@@ -448,6 +470,12 @@ public class DataAccessRequestService {
         return NEEDS_APPROVAL;
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param authUser AuthUser
+     * @return List<Document>
+     */
     private List<Document> getUnReviewedDarsForUser(AuthUser authUser) {
         List<Document> activeDars = getAllDataAccessRequestsAsDocuments().stream().
                 filter(d -> !ElectionStatus.CANCELED.getValue().equalsIgnoreCase(d.getString(DarConstants.STATUS))).
