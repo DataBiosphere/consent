@@ -186,6 +186,7 @@ public class DacService {
 
     public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
+        DACUser updatedUser = dacUserDAO.findDACUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
@@ -194,9 +195,9 @@ public class DacService {
                 throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
             }
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
-            voteService.createVotesForUser(user, e, type.get(), isManualReview);
+            voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
         }
-        return populatedUserById(user.getDacUserId());
+        return populatedUserById(updatedUser.getDacUserId());
     }
 
     public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
