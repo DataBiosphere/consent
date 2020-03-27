@@ -1,18 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -108,6 +109,19 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         Assert.assertTrue(foundElections.isEmpty());
+    }
+
+    @Test
+    public void testFindElectionWithFinalVoteById() {
+        Dac dac = createDac();
+        Consent c = createConsent(dac.getDacId());
+        DataSet d = createDataset();
+        createAssociation(c.getConsentId(), d.getDataSetId());
+        Election e = createElection(c.getConsentId(), d.getDataSetId());
+
+        Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+        assertNotNull(election);
+        assertEquals(e.getElectionId(), election.getElectionId());
     }
 
 }
