@@ -223,7 +223,7 @@ public class DAOTestHelper {
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertDACUser(email, "display name", new Date());
         createdUserEmails.add(email);
-        return dacDAO.findUserById(userId);
+        return userDAO.findDACUserById(userId);
     }
 
     DACUser createUserWithRole(Integer roleId) {
@@ -238,7 +238,7 @@ public class DAOTestHelper {
         Integer userId = userDAO.insertDACUser(email, "display name", new Date());
         userRoleDAO.insertSingleUserRole(roleId, userId);
         createdUserEmails.add(email);
-        return dacDAO.findUserById(userId);
+        return userDAO.findDACUserById(userId);
     }
 
     DACUser createUserWithRoleInDac(Integer roleId, Integer dacId) {

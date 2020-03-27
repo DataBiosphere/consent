@@ -81,10 +81,6 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlQuery("select * from roles where roleId = :roleId")
     Role getRoleById(@Bind("roleId") Integer roleId);
 
-    @UseRowMapper(DACUserMapper.class)
-    @SqlQuery("select du.* from dacuser du where du.dacUserId = :dacUserId")
-    DACUser findUserById(@Bind("dacUserId") Integer dacUserId);
-
     @UseRowMapper(UserRoleMapper.class)
     @SqlQuery("select ur.*, r.name from user_role ur inner join roles r on ur.role_id = r.roleId where ur.user_id = :userId")
     List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
