@@ -165,17 +165,6 @@ public class DacServiceTest {
     }
 
     @Test
-    public void testFindUserById() {
-        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
-        when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
-        initService();
-
-        DACUser user = service.findUserById(1);
-        Assert.assertNotNull(user);
-        Assert.assertFalse(user.getRoles().isEmpty());
-    }
-
-    @Test
     public void testFindDatasetsByDacId() {
         when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singleton(getDatasetDTOs().get(0)));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
@@ -199,7 +188,10 @@ public class DacServiceTest {
 
     @Test
     public void testAddDacMember() {
-        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
+        DACUser user = getDacUsers().get(0);
+        Dac dac = getDacs().get(0);
+        when(dacUserDAO.findDACUserById(any())).thenReturn(user);
+        when(dacUserDAO.findDACUserById(anyInt())).thenReturn(user);
         when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
         List<Election> elections = getElections().stream().
                 peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).
@@ -215,9 +207,9 @@ public class DacServiceTest {
         initService();
 
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
-        Assert.assertNotNull(user);
-        Assert.assertFalse(user.getRoles().isEmpty());
+        DACUser user1 = service.addDacMember(role, user, dac);
+        Assert.assertNotNull(user1);
+        Assert.assertFalse(user1.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
     }
 

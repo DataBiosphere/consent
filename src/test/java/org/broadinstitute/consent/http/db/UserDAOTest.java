@@ -23,8 +23,10 @@ public class UserDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindDACUserById() {
-        DACUser user = createUser();
+        DACUser user = createUserWithRole(UserRoles.ADMIN.getRoleId());
         Assert.assertNotNull(user);
+        Assert.assertFalse(user.getRoles().isEmpty());
+        Assert.assertEquals(UserRoles.ADMIN.getRoleId(), user.getRoles().get(0).getRoleId());
         DACUser user2 = userDAO.findDACUserById(user.getDacUserId());
         Assert.assertNotNull(user2);
         Assert.assertEquals(user.getEmail(), user2.getEmail());
