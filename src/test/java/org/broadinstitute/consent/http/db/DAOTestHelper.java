@@ -5,6 +5,7 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -15,15 +16,25 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.gson2.Gson2Plugin;
+import org.jdbi.v3.guava.GuavaPlugin;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -31,9 +42,11 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import static org.junit.Assert.fail;
 
 public class DAOTestHelper {
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
     private static final int maxConnections = 100;
     private static ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
@@ -46,12 +59,15 @@ public class DAOTestHelper {
     static ElectionDAO electionDAO;
     static UserRoleDAO userRoleDAO;
     static VoteDAO voteDAO;
+    static DataAccessRequestDAO dataAccessRequestDAO;
+    static MailMessageDAO mailMessageDAO;
 
     private static List<Integer> createdDataSetIds = new ArrayList<>();
     private static List<Integer> createdDacIds = new ArrayList<>();
     private static List<String> createdConsentIds = new ArrayList<>();
     private static List<Integer> createdElectionIds = new ArrayList<>();
     private static List<String> createdUserEmails = new ArrayList<>();
+    private static List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
@@ -83,6 +99,9 @@ public class DAOTestHelper {
         ConsentConfiguration configuration = testApp.getConfiguration();
         Environment environment = testApp.getEnvironment();
         Jdbi jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
+        jdbi.installPlugin(new SqlObjectPlugin());
+        jdbi.installPlugin(new Gson2Plugin());
+        jdbi.installPlugin(new GuavaPlugin());
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
         userDAO = jdbi.onDemand(DACUserDAO.class);
@@ -90,6 +109,8 @@ public class DAOTestHelper {
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
+        dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+        mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
     }
 
     @AfterClass
@@ -117,6 +138,8 @@ public class DAOTestHelper {
                     forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
             userDAO.deleteDACUserByEmail(email);
         });
+        createdDataAccessRequestReferenceIds.forEach(d ->
+                dataAccessRequestDAO.deleteByReferenceId(d));
     }
 
     void createAssociation(String consentId, Integer datasetId) {
@@ -249,6 +272,24 @@ public class DAOTestHelper {
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
+    }
+
+    DataAccessRequest createDataAccessRequest() {
+        DataAccessRequestData data;
+        try {
+            String darDataString = FileUtils.readFileToString(
+                    new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
+                    Charset.defaultCharset());
+            data = DataAccessRequestData.fromString(darDataString);
+            String referenceId = UUID.randomUUID().toString();
+            dataAccessRequestDAO.insert(referenceId, data);
+            createdDataAccessRequestReferenceIds.add(referenceId);
+            return dataAccessRequestDAO.findByReferenceId(referenceId);
+        } catch (IOException e) {
+            logger.error("Exception parsing dar data: " + e.getMessage());
+            fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
+        }
+        return null;
     }
 
 }

@@ -42,8 +42,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @UseRowMapper(ConsentDataSetMapper.class)
     @SqlQuery("SELECT c.consentId, cs.dataSetId, ds.name, ds.objectId " +
             "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
-            "INNER JOIN dataset ds on cs.dataSetId = ds.dataSetId "+
-            "WHERE cs.dataSetId::text IN (<datasetId>)")
+            "INNER JOIN dataset ds on cs.dataSetId = ds.dataSetId " +
+            "WHERE cs.dataSetId IN (<datasetId>)")
     Set<ConsentDataSet> getConsentIdAndDataSets(@BindList("datasetId") List<Integer> datasetId);
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")

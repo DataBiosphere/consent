@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import com.mongodb.BasicDBObject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -14,6 +13,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
@@ -22,7 +22,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
@@ -46,17 +45,17 @@ public class DacService {
     private DACUserDAO dacUserDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
-    private MongoConsentDB mongo;
+    private DataAccessRequestDAO dataAccessRequestDAO;
     private VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                      ElectionDAO electionDAO, MongoConsentDB mongo, VoteService voteService) {
+                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, VoteService voteService) {
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
-        this.mongo = mongo;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.voteService = voteService;
     }
 
@@ -226,11 +225,8 @@ public class DacService {
     }
 
     private boolean hasUseRestriction(String referenceId) {
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(referenceId));
-        BasicDBObject projection = new BasicDBObject();
-        projection.append(DarConstants.RESTRICTION, true);
-        Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
-        return dar.get(DarConstants.RESTRICTION) != null;
+        DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+        return dar.getData().getRestriction() != null;
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {

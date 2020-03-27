@@ -48,6 +48,8 @@ public class DatabaseDataAccessRequestAPITest {
     private DACUserDAO dacUserDAO;
     @Mock
     private DataSetDAO dataSetDAO;
+    @Mock
+    private DataAccessRequestService dataAccessRequestService;
 
     private final Integer USER_ID = 3333;
 
@@ -64,7 +66,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
     }
 
     @Test

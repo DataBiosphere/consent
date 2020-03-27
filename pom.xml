@@ -260,6 +260,16 @@
       <artifactId>jdbi3-sqlobject</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-gson2</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-guava</artifactId>
+    </dependency>
+
     <!--
         Pulling in directly to evict older, transitive dependencies
         See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/28254959
@@ -624,13 +634,6 @@
       <artifactId>json</artifactId>
       <version>20190722</version>
       <type>jar</type>
-    </dependency>
-
-    <dependency>
-      <groupId>de.flapdoodle.embed</groupId>
-      <artifactId>de.flapdoodle.embed.mongo</artifactId>
-      <version>2.2.0</version>
-      <scope>test</scope>
     </dependency>
 
     <dependency>

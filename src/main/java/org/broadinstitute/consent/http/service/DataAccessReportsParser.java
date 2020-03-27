@@ -61,7 +61,7 @@ public class DataAccessReportsParser {
     public void addApprovedDARLine(FileWriter darWriter, Election election, Document dar, String profileName, String institution, String consentName, String translatedUseRestriction) throws IOException {        String rusSummary = StringUtils.isNotEmpty( dar.getString(DarConstants.NON_TECH_RUS)) ?  dar.getString(DarConstants.NON_TECH_RUS).replace("\n", " ") : "";
         String content1 =  profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
         String content2 = rusSummary + DEFAULT_SEPARATOR +
-                formatTimeToDate(dar.getDate(DarConstants.SORT_DATE).getTime()) + DEFAULT_SEPARATOR +
+                formatTimeToDate(new Date(dar.getLong(DarConstants.SORT_DATE)).getTime()) + DEFAULT_SEPARATOR +
                 formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
                 "--";
         addDARLine(darWriter, dar, content1, content2, consentName, translatedUseRestriction);

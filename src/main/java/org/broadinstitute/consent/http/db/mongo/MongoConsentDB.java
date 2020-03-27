@@ -36,9 +36,10 @@ public class MongoConsentDB {
     }
 
     /**
-     *
+     * @deprecated Replaced with DataAccessRequestService.getAllDataAccessRequestsAsDocuments()
      * @return dataAccessRequest collection
      */
+    @Deprecated
     public MongoCollection<Document> getDataAccessRequestCollection() {
         return mongo.getDatabase(DATABASE_NAME).getCollection("dataAccessRequest");
     }

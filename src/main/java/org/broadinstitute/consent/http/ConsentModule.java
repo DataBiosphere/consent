@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -38,6 +39,8 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.gson2.Gson2Plugin;
+import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +78,7 @@ public class ConsentModule extends AbstractModule {
     private final ResearcherPropertyDAO researcherPropertyDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
     private final AssociationDAO associationDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
 
     public static final String DB_ENV = "postgresql";
 
@@ -87,6 +91,8 @@ public class ConsentModule extends AbstractModule {
 
         this.jdbi = new JdbiFactory().build(environment, config.getDataSourceFactory(), DB_ENV);
         jdbi.installPlugin(new SqlObjectPlugin());
+        jdbi.installPlugin(new Gson2Plugin());
+        jdbi.installPlugin(new GuavaPlugin());
         this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
@@ -106,6 +112,7 @@ public class ConsentModule extends AbstractModule {
         this.researcherPropertyDAO = this.jdbi.onDemand(ResearcherPropertyDAO.class);
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
+        this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
     }
 
     @Override
@@ -149,9 +156,9 @@ public class ConsentModule extends AbstractModule {
         return new ConsentService(
                 providesConsentDAO(),
                 providesElectionDAO(),
-                providesMongo(),
                 providesVoteDAO(),
-                providesDacService());
+                providesDacService(),
+                providesDataAccessRequestDAO());
     }
 
     @Provides
@@ -163,6 +170,7 @@ public class ConsentModule extends AbstractModule {
     DataAccessRequestService providesDataAccessRequestService() {
         return new DataAccessRequestService(
                 providesConsentDAO(),
+                providesDataAccessRequestDAO(),
                 providesDacDAO(),
                 providesDACUserDAO(),
                 providesDataSetDAO(),
@@ -177,8 +185,8 @@ public class ConsentModule extends AbstractModule {
         return new ElectionService(
                 providesConsentDAO(),
                 providesElectionDAO(),
-                providesMongo(),
-                providesDacService());
+                providesDacService(),
+                providesDataAccessRequestService());
     }
 
     @Provides
@@ -186,12 +194,17 @@ public class ConsentModule extends AbstractModule {
         return new PendingCaseService(
                 providesConsentDAO(),
                 providesDACUserDAO(),
+                providesDataAccessRequestService(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesMongo(),
                 providesUserRoleDAO(),
                 providesVoteDAO(),
                 providesDacService());
+    }
+
+    @Provides
+    DataAccessRequestDAO providesDataAccessRequestDAO() {
+        return dataAccessRequestDAO;
     }
 
     @Provides
@@ -240,7 +253,7 @@ public class ConsentModule extends AbstractModule {
                 providesDACUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesMongo(),
+                providesDataAccessRequestDAO(),
                 providesVoteService());
     }
 

@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
@@ -10,7 +8,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -19,15 +16,13 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -44,22 +39,23 @@ public class PendingCaseService {
 
     private ConsentDAO consentDAO;
     private DACUserDAO dacUserDAO;
+    private DataAccessRequestService dataAccessRequestService;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
-    private MongoConsentDB mongo;
     private UserRoleDAO userRoleDAO;
     private VoteDAO voteDAO;
     private DacService dacService;
 
     @Inject
-    public PendingCaseService(ConsentDAO consentDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                              ElectionDAO electionDAO, MongoConsentDB mongo,
-                              UserRoleDAO userRoleDAO, VoteDAO voteDAO, DacService dacService) {
+    public PendingCaseService(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
+                              DataAccessRequestService dataAccessRequestService, DataSetDAO dataSetDAO,
+                              ElectionDAO electionDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO,
+                              DacService dacService) {
         this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
+        this.dataAccessRequestService = dataAccessRequestService;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
-        this.mongo = mongo;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
         this.dacService = dacService;
@@ -149,11 +145,10 @@ public class PendingCaseService {
                 List<Vote> dataOwnerVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), dataOwnerId, VoteType.DATA_OWNER.getValue());
                 if(CollectionUtils.isNotEmpty(dataOwnerVotes)){
                     dataOwnerVotes.forEach(v -> {
-                        BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
-                        FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
+                        DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
                         DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
                         dataOwnerCase.setAlias(dataSet.getAlias());
-                        dataOwnerCase.setDarCode(dataAccessRequest != null ?  dataAccessRequest.first().get(DarConstants.DAR_CODE).toString() : null);
+                        dataOwnerCase.setDarCode(dataAccessRequest != null ? dataAccessRequest.getData().getDarCode() : null);
                         dataOwnerCase.setDataSetId(dataSet.getDataSetId());
                         dataOwnerCase.setDataSetName(dataSet.getName());
                         dataOwnerCase.setVoteId(v.getVoteId());
@@ -180,11 +175,10 @@ public class PendingCaseService {
         pendingCase.setVotesLogged(votes.size() - pendingVotes.size());
         pendingCase.setReferenceId(election.getReferenceId());
         if (election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())) {
-            BasicDBObject query = new BasicDBObject().append(DarConstants.ID, new ObjectId(election.getReferenceId()));
-            FindIterable<Document> dataAccessRequest = mongo.getDataAccessRequestCollection().find(query);
-            if (dataAccessRequest.first() != null) {
-                pendingCase.setFrontEndId(dataAccessRequest.first().get(DarConstants.DAR_CODE).toString());
-                pendingCase.setProjectTitle(dataAccessRequest.first().get(DarConstants.PROJECT_TITLE).toString());
+            DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
+            if (dataAccessRequest != null) {
+                pendingCase.setFrontEndId(dataAccessRequest.getData().getDarCode());
+                pendingCase.setProjectTitle(dataAccessRequest.getData().getProjectTitle());
             }
         } else {
             pendingCase.setFrontEndId(consentDAO.findConsentById(election.getReferenceId()).getName());

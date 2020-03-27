@@ -1,12 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Objects;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -15,7 +8,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Election;
@@ -27,9 +19,17 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Objects;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.when;
 
@@ -48,14 +48,14 @@ public class DatabaseSummaryAPITest {
     @Mock
     private MatchDAO matchDAO;
     @Mock
-    private MongoConsentDB mongoDB;
+    private DataAccessRequestService dataAccessRequestService;
 
     DatabaseSummaryAPI databaseSummaryAPI;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO, mongoDB, dataSetDAO));
+        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO));
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.

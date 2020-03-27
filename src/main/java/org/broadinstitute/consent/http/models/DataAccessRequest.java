@@ -1,48 +1,43 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.bson.Document;
 
-/**
- *
- * @author dgil
- */
-public class DataAccessRequest extends Document {
-    private static final long serialVersionUID = 540392772361155266L;
+public class DataAccessRequest {
+
+    @JsonProperty
+    public Integer id;
+
+    @JsonProperty
+    public String referenceId;
+
+    @JsonProperty
+    public DataAccessRequestData data;
 
     public DataAccessRequest() {
     }
 
     public Integer getId() {
-        return this.getInteger("id");
+        return id;
     }
 
-    @JsonProperty
-    public void setId(Integer Id) {
-        this.put("id", Id);
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public String getRup() {
-        return this.getString("rup");
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    @JsonProperty
-    public void setRup(String rup) {
-        this.put("rup", rup);
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
-    public String getCreateDate() {
-        return this.getString("createDate");
+    public DataAccessRequestData getData() {
+        return data;
     }
 
-    @JsonProperty
-    public void setCreateDate(String createDate) {
-        this.put("createDate", createDate);
+    public void setData(DataAccessRequestData data) {
+        this.data = data;
     }
 
 }

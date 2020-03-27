@@ -98,7 +98,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                     }
                 } catch (Exception e) {
                     logger.error("Error finding  matches for consent.", e);
-                    matches.add(createMatch(consentId, dar.get(DarConstants.ID).toString(), true, false));
+                    matches.add(createMatch(consentId, dar.getString(DarConstants.REFERENCE_ID), true, false));
                 }
             }
         }
@@ -118,7 +118,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
             logger.error("Error finding single matchData Access Request: "+ dar.getString(DarConstants.DAR_CODE) + " does not have a proper Use Restriction.");
             throw new Exception("Data Access Request: " + dar.getString(DarConstants.DAR_CODE) + " cannot be matched. Missing Use Restriction field.");
         }
-        Match match = createMatch(consent.getConsentId(), dar.get(DarConstants.ID).toString(), false, false);
+        Match match = createMatch(consent.getConsentId(), dar.getString(DarConstants.REFERENCE_ID), false, false);
         RequestMatchingObject requestObject = createRequestObject(consent, dar);
         String json = new Gson().toJson(requestObject);
         Response res = matchServiceTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(json));

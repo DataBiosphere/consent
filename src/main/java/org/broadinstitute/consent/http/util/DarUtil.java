@@ -40,8 +40,8 @@ public class DarUtil {
     public static  List<Integer> getIntegerList(Document dar, String key) {
         List<?> datasets = dar.get(key, List.class);
         return datasets.stream().
-                filter(Integer.class::isInstance).
-                map(Integer.class::cast).
+                filter(Objects::nonNull).
+                map(o -> Integer.valueOf(o.toString())).
                 collect(Collectors.toList());
     }
 

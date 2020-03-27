@@ -23,7 +23,15 @@ public class DarConstants {
 
     public static final String RUS = "rus";
 
+    /**
+     * Use REFERENCE_ID as a replacement for this field
+     */
+    @Deprecated
     public static final String ID = "_id";
+
+    public static final String DATA_ACCESS_REQUEST_ID = "data_access_request_id";
+
+    public static final String REFERENCE_ID = "reference_id";
 
     public static final String RESTRICTION = "restriction";
 
@@ -38,6 +46,8 @@ public class DarConstants {
     public static final Integer DEFAULT_AMOUNT_OF_DAYS = 7;
 
     public static final String DUOS_DEFAULT = "Default Duos";
+
+    public static final String CREATE_DATE = "createDate";
 
     public static final String SORT_DATE = "sortDate";
 

@@ -3,15 +3,13 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -23,6 +21,8 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -30,13 +30,16 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,37 +47,37 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.ne;
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
-    private Logger logger = Logger.getLogger(DataAccessRequestService.class.getName());
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     private ConsentDAO consentDAO;
     private DacDAO dacDAO;
     private DACUserDAO dacUserDAO;
+    private DataAccessRequestDAO dataAccessRequestDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
     private DacService dacService;
     private VoteDAO voteDAO;
 
+    private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
     private static final String NEEDS_APPROVAL = "Needs Approval";
     private static final String APPROVED = "Approved";
     private static final String DENIED = "Denied";
 
     @Inject
-    public DataAccessRequestService(ConsentDAO consentDAO, DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+    public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
                                     ElectionDAO electionDAO, MongoConsentDB mongo, DacService dacService,
                                     VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.mongo = mongo;
@@ -91,7 +94,7 @@ public class DataAccessRequestService {
     public Integer getTotalUnReviewedDars(AuthUser authUser) {
         List<String> unReviewedDarIds = getUnReviewedDarsForUser(authUser).
                 stream().
-                map(d -> d.get(DarConstants.ID).toString()).
+                map(d -> d.getString(DarConstants.REFERENCE_ID)).
                 collect(toList());
         Integer unReviewedDarCount = 0;
         if (!unReviewedDarIds.isEmpty()) {
@@ -110,24 +113,27 @@ public class DataAccessRequestService {
     }
 
     /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
      * Filter DataAccessRequestManage objects on user.
      *
-     * @param userId Optional UserId. If provided, filter list of DARs on this user.
+     * @param userId   Optional UserId. If provided, filter list of DARs on this user.
      * @param authUser Required if no user id is provided. Instead, filter on what DACs the auth
      *                 user has access to.
      * @return List of DataAccessRequestManage objects
      */
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
-        BasicDBObject sort = new BasicDBObject("sortDate", -1);
         List<Document> filteredAccessList;
+        List<Document> allDars = getAllDataAccessRequestsAsDocuments();
         if (userId == null) {
-            FindIterable<Document> accessList =  mongo.getDataAccessRequestCollection().find().sort(sort);
-            filteredAccessList = dacService.filterDarsByDAC(accessList.into(new ArrayList<>()), authUser);
+            filteredAccessList = dacService.filterDarsByDAC(allDars, authUser);
         } else {
-            filteredAccessList = mongo.getDataAccessRequestCollection().
-                    find(new BasicDBObject(DarConstants.USER_ID, userId)).
-                    sort(sort).into(new ArrayList<>());
+            filteredAccessList = allDars.stream().
+                    filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
+                    collect(Collectors.toList());
         }
+        filteredAccessList.sort((a, b) -> getSortDateInt(b) - getSortDateInt(a));
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = filteredAccessList.
                 stream().
@@ -143,14 +149,139 @@ public class DataAccessRequestService {
         return darManage;
     }
 
+    private int getSortDateInt(Document document) {
+        Long time = document.getLong(DarConstants.SORT_DATE);
+        if (time == null) {
+            time = new Date().getTime();
+        }
+        return time.intValue();
+    }
+
     private Map<String, Election> createAccessRequestElectionMap(List<Election> elections) {
         Map<String, Election> electionMap = new HashMap<>();
         elections.forEach(election -> electionMap.put(election.getReferenceId(), election));
         return electionMap;
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     */
+    @SuppressWarnings("deprecation")
+    public List<Document> getAllMongoDataAccessRequests() {
+        return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     */
+    public List<DataAccessRequest> getAllPostgresDataAccessRequests() {
+        return dataAccessRequestDAO.findAll();
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     * Replacement for MongoConsentDB.getDataAccessRequestCollection()
+     *
+     * @return List of all DataAccessRequestData objects as Documents
+     */
+    public List<Document> getAllDataAccessRequestsAsDocuments() {
+        return getAllPostgresDataAccessRequests().stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     *
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     * Replacement for MongoConsentDB.getDataAccessRequestCollection().find(ObjectId)
+     *
+     * @return DataAccessRequestData object as Document
+     */
+    public Document getDataAccessRequestByReferenceIdAsDocument(String referenceId) {
+        DataAccessRequest d = dataAccessRequestDAO.findByReferenceId(referenceId);
+        if (d == null) {
+            throw new NotFoundException("Unable to find Data Access Request by reference id: " + referenceId);
+        }
+        return createDocumentFromDar(d);
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     *
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     *
+     * @return DataAccessRequestData object as Document
+     */
+    public List<Document> getDataAccessRequestsByReferenceIdsAsDocuments(List<String> referenceIds) {
+        return getDataAccessRequestsByReferenceIds(referenceIds).
+                stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
+    }
+
+    public List<DataAccessRequest> getDataAccessRequestsByReferenceIds(List<String> referenceIds) {
+        return dataAccessRequestDAO.findByReferenceIds(referenceIds);
+    }
+
+    private Document createDocumentFromDar(DataAccessRequest d) {
+        Document document = Document.parse(gson.toJson(d.getData()));
+        document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
+        document.put(DarConstants.ID, d.getReferenceId());
+        document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
+        return document;
+    }
+
+    public void deleteByReferenceId(String referenceId) {
+        dataAccessRequestDAO.deleteByReferenceId(referenceId);
+    }
+
+    public DataAccessRequest findByReferenceId(String referencedId) {
+        return dataAccessRequestDAO.findByReferenceId(referencedId);
+    }
+
+    public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
+        darData.setSortDate(new Date().getTime());
+        dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
+        return findByReferenceId(referencedId);
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     *
+     * Convenience method during transition away from `Document` and to `DataAccessRequest`
+     */
+    public Document updateDocumentByReferenceId(String referenceId, Document document) {
+        if (findByReferenceId(referenceId) == null) {
+            throw new NotFoundException("Data access for the specified id does not exist");
+        }
+        document.remove(DarConstants.ID);
+        document.put(DarConstants.REFERENCE_ID, referenceId);
+        String documentJson = gson.toJson(document);
+        DataAccessRequestData darData = DataAccessRequestData.fromString(documentJson);
+        updateByReferenceId(referenceId, darData);
+        return getDataAccessRequestByReferenceIdAsDocument(referenceId);
+    }
+
+    public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
+        dataAccessRequestDAO.insert(referencedId, darData);
+        return findByReferenceId(referencedId);
+    }
+
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param authUser AuthUser
+     * @return List<Document>
+     */
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
-        List<Document> documents = mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
+        List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
     }
 
@@ -160,10 +291,6 @@ public class DataAccessRequestService {
             AuthUser authUser) {
         DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
-        Map<ObjectId, List<Integer>> darDatasetMap = documents.stream().collect(Collectors.toMap(
-                d -> d.get(DarConstants.ID, ObjectId.class),
-                d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)
-        ));
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
                 map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
                 flatMap(List::stream).
@@ -171,26 +298,30 @@ public class DataAccessRequestService {
         List<DataSet> dataSetsToApprove = dataSetDAO.
                 findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
 
+        // Sort documents by sort time, create time, then reversed.
+        Comparator<Document> sortField = Comparator.comparing(d -> d.getLong(DarConstants.SORT_DATE));
+        Comparator<Document> createField = Comparator.comparing(d -> d.getLong(DarConstants.CREATE_DATE));
+        documents.sort(sortField.thenComparing(createField).reversed());
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
-            ObjectId id = dar.get(DarConstants.ID, ObjectId.class);
-            List<Integer> darDatasetIds = darDatasetMap.get(id);
+            String referenceId = dar.getString(DarConstants.REFERENCE_ID);
+            List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
             if (darDatasetIds.size() > 1) {
                 darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
             }
             if (darDatasetIds.size() == 1) {
                 darManage.setDatasetId(darDatasetIds.get(0));
             }
-            Election election = referenceIdElectionMap.get(id.toString());
+            Election election = referenceIdElectionMap.get(referenceId);
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
             }
-            darManage.setCreateDate(new Timestamp((long) id.getTimestamp() * 1000));
+            darManage.setCreateDate(new Timestamp(dar.getLong(DarConstants.CREATE_DATE)));
             darManage.setRus(dar.getString(DarConstants.RUS));
             darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
-            darManage.setDataRequestId(id.toString());
+            darManage.setDataRequestId(referenceId);
             darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
-            darManage.setSortDate(dar.getDate("sortDate"));
+            darManage.setSortDate(new Date(dar.getLong(DarConstants.SORT_DATE)));
             darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
@@ -209,7 +340,6 @@ public class DataAccessRequestService {
             }
             requestsManage.add(darManage);
         });
-
         return populateElectionInformation(
                 populateDacInformation(requestsManage),
                 referenceIdElectionMap,
@@ -223,9 +353,15 @@ public class DataAccessRequestService {
         Collection<Election> elections = referenceIdElectionMap.values();
         List<Integer> electionIds = referenceIdElectionMap.values().stream().
                 map(Election::getElectionId).collect(toList());
-        List<Pair<Integer, Integer>> rpAccessElectionIdPairs = electionDAO.findRpAccessElectionIdPairs(electionIds);
-        Map<Integer, List<Vote>> electionVoteMap = voteDAO.findVotesByElectionIds(electionIds).stream().
-                collect(Collectors.groupingBy(Vote::getElectionId));
+        List<Pair<Integer, Integer>> rpAccessElectionIdPairs = new ArrayList<>();
+        Map<Integer, List<Vote>> electionVoteMap = new HashMap<>();
+        List<Vote> userVotes = new ArrayList<>();
+        if (!electionIds.isEmpty()) {
+            rpAccessElectionIdPairs.addAll(electionDAO.findRpAccessElectionIdPairs(electionIds));
+            electionVoteMap.putAll(voteDAO.findVotesByElectionIds(electionIds).stream().
+                    collect(Collectors.groupingBy(Vote::getElectionId)));
+            userVotes.addAll(voteDAO.findVotesByElectionIdsAndUser(electionIds, user.getDacUserId()));
+        }
         Map<Integer, List<Vote>> electionPendingVoteMap = electionVoteMap.entrySet().stream().
                 collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -233,10 +369,11 @@ public class DataAccessRequestService {
                                 collect(toList())
                 ));
         List<String> referenceIds = new ArrayList<>(referenceIdElectionMap.keySet());
-        Map<String, Consent> consentMap = consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
-                collect(Collectors.toMap(Consent::getConsentId, Function.identity()));
-        List<Vote> userVotes = voteDAO.findVotesByElectionIdsAndUser(electionIds, user.getDacUserId());
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
+        Map<String, Consent> consentMap = new HashMap<>();
+        if (!referenceIds.isEmpty()) {
+            consentMap.putAll(consentDAO.findConsentsFromConsentsIDs(referenceIds).stream().
+                    collect(Collectors.toMap(Consent::getConsentId, Function.identity())));
+        }
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
                 peek(c -> {
@@ -248,7 +385,7 @@ public class DataAccessRequestService {
                             if (election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())) {
                                 List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
                                 List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
-                                Optional<Pair<Integer, Integer>> rpElectionIdOption =  rpAccessElectionIdPairs.stream().
+                                Optional<Pair<Integer, Integer>> rpElectionIdOption = rpAccessElectionIdPairs.stream().
                                         filter(p -> p.getRight().equals(election.getElectionId())).
                                         findFirst();
                                 if (rpElectionIdOption.isPresent()) {
@@ -298,17 +435,16 @@ public class DataAccessRequestService {
                 stream().
                 collect(Collectors.toMap(Pair::getKey, Pair::getValue));
         List<Dac> dacList = dacDAO.findAll();
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
         return darManages.stream().
                 map(d -> gson.fromJson(gson.toJson(d), DataAccessRequestManage.class)).
                 peek(c -> {
-            if (datasetDacIdPairs.containsKey(c.getDatasetId())) {
-                Integer dacId = datasetDacIdPairs.get(c.getDatasetId());
-                c.setDacId(dacId);
-                Optional<Dac> dacOption = dacList.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
-                dacOption.ifPresent(c::setDac);
-            }
-        }).collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
+                    if (datasetDacIdPairs.containsKey(c.getDatasetId())) {
+                        Integer dacId = datasetDacIdPairs.get(c.getDatasetId());
+                        c.setDacId(dacId);
+                        Optional<Dac> dacOption = dacList.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
+                        dacOption.ifPresent(c::setDac);
+                    }
+                }).collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
     private Optional<DACUser> getOwnerUser(Object dacUserId) {
@@ -334,22 +470,25 @@ public class DataAccessRequestService {
         return NEEDS_APPROVAL;
     }
 
+    /**
+     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+     *
+     * @param authUser AuthUser
+     * @return List<Document>
+     */
     private List<Document> getUnReviewedDarsForUser(AuthUser authUser) {
+        List<Document> activeDars = getAllDataAccessRequestsAsDocuments().stream().
+                filter(d -> !ElectionStatus.CANCELED.getValue().equalsIgnoreCase(d.getString(DarConstants.STATUS))).
+                collect(Collectors.toList());
         if (dacService.isAuthUserAdmin(authUser)) {
-            return mongo.
-                    getDataAccessRequestCollection().
-                    find(ne(DarConstants.STATUS, ElectionStatus.CANCELED.getValue())).
-                    into(new ArrayList<>());
+            return activeDars;
         }
         List<Integer> dataSetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).stream().
                 map(DataSet::getDataSetId).
-                collect(toList());
-        return mongo.
-                getDataAccessRequestCollection().
-                find(and(
-                        ne(DarConstants.STATUS, ElectionStatus.CANCELED.getValue()),
-                        in(DarConstants.DATASET_ID, dataSetIds))).
-                into(new ArrayList<>());
+                collect(Collectors.toList());
+        return activeDars.stream().
+                filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).stream().anyMatch(dataSetIds::contains)).
+                collect(Collectors.toList());
     }
 
 }

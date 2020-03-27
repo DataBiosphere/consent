@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -10,6 +12,8 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -38,7 +42,6 @@ import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorA
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -105,7 +108,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
-    public Response createdDataAccessRequest(@Context UriInfo info, Document dar) {
+    public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
@@ -120,12 +123,12 @@ public class DataAccessRequestResource extends Resource {
                 logger.log(Level.SEVERE, "Error creating use restriction for data access request " + dar.toJson(), e);
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
-            dar.append(DarConstants.SORT_DATE, new Date());
+            dar.append(DarConstants.SORT_DATE, new Date().getTime());
             List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
             URI uri = info.getRequestUriBuilder().build();
             for (Document r : results) {
                 List<Integer> datasetIds = DarUtil.getIntegerList(r, DarConstants.DATASET_ID);
-                matchProcessAPI.processMatchesForPurpose(r.get(DarConstants.ID).toString());
+                matchProcessAPI.processMatchesForPurpose(r.getString(DarConstants.REFERENCE_ID));
                 emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
             }
             return Response.created(uri).build();
@@ -154,7 +157,7 @@ public class DataAccessRequestResource extends Resource {
             }
             dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
             dar = dataAccessRequestAPI.updateDataAccessRequest(dar, id);
-            matchProcessAPI.processMatchesForPurpose(dar.get(DarConstants.ID).toString());
+            matchProcessAPI.processMatchesForPurpose(dar.getString(DarConstants.REFERENCE_ID));
             return Response.ok().entity(dataAccessRequestAPI.updateDataAccessRequest(dar, id)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -200,23 +203,78 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(documents).build();
     }
 
+    /**
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     *
+     * @param authUser AuthUser
+     * @return List of all DataAccessRequests in Mongo
+     */
+    @GET
+    @Path("/migrate/mongo")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response getAllMongoDataAccessRequests(@Auth AuthUser authUser) {
+        Map<String, Document> map = dataAccessRequestService.getAllMongoDataAccessRequests().
+                stream().
+                collect(Collectors.toMap(d -> d.get(DarConstants.ID).toString(), d -> d));
+        return Response.ok().entity(map).build();
+    }
+
+    /**
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     *
+     * @param authUser AuthUser
+     * @return List of all DataAccessRequests in Postgres
+     */
+    @GET
+    @Path("/migrate/postgres")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response getAllPostgresDataAccessRequests(@Auth AuthUser authUser) {
+        List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDataAccessRequests();
+        return Response.ok().entity(data).build();
+    }
+
+    /**
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     *
+     * @param authUser AuthUser
+     * @return Converted DataAccessRequest
+     */
+    @POST
+    @Path("migrate/{id}")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
+        DataAccessRequestData data = DataAccessRequestData.fromString(json);
+        if (data.getCreateDate() == null) {
+            // Original create date was inferred from mongo ObjectId.timestamp
+            Gson gson = new Gson();
+            JsonObject obj = gson.fromJson(json, JsonObject.class);
+            long createDate = new Date().getTime();
+            if (obj.has("_id")) {
+                JsonObject idObject = obj.getAsJsonObject("_id");
+                if (idObject.has("timestamp")) {
+                    long timestamp = idObject.get("timestamp").getAsLong();
+                    createDate = timestamp * 1000; // Fix Mongo's timestamp
+                }
+            }
+            data.setCreateDate(createDate);
+        }
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        if (dar == null) {
+            dar = dataAccessRequestService.insertDataAccessRequest(id, data);
+        }
+        return Response.ok().entity(dar).build();
+    }
+
     @GET
     @Path("/{id}")
     @Produces("application/json")
     @PermitAll
     public Response describe(@PathParam("id") String id) {
         try {
-            new ObjectId(id);
-        } catch (IllegalArgumentException e) {
-            String message = "The provided id is not a valid Data Access Request Id: " + id;
-            logger.log(Level.INFO, message + "; " + e.getMessage());
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(new Error(message, Response.Status.BAD_REQUEST.getStatusCode()))
-                    .build();
-        }
-        try {
-            Document document = dataAccessRequestAPI.describeDataAccessRequestById(id);
+            Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
             if (document != null) {
                 return Response.status(Response.Status.OK).entity(document).build();
             }
@@ -334,7 +392,7 @@ public class DataAccessRequestResource extends Resource {
         }
         try {
             result = savePartialDarRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.get(DarConstants.ID));
+            uri = info.getRequestUriBuilder().path("{id}").build(result.getString(DarConstants.REFERENCE_ID));
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
@@ -470,7 +528,7 @@ public class DataAccessRequestResource extends Resource {
     }
 
     private Document savePartialDarRequest(Document dar) throws Exception {
-        dar.append(DarConstants.SORT_DATE, new Date());
+        dar.append(DarConstants.SORT_DATE, new Date().getTime());
         return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
     }
 

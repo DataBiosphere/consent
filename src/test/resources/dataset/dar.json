@@ -1,0 +1,112 @@
+{
+  "_id": {
+    "timestamp": 1559052991,
+    "machineIdentifier": 4645115,
+    "processIdentifier": 1,
+    "counter": 16183287,
+    "date": 1559052991000,
+    "time": 1559052991000,
+    "timeSecond": 1559052991
+  },
+  "datasets": [
+    {
+      "key": "377",
+      "value": "377",
+      "label": "TOPMed COPDGene_DS_CS_RD_phs000951.v2.p2.c2 | NHLBI | DEV-CG-4421"
+    }
+  ],
+  "dar_code": "DAR-29",
+  "checkCollaborator": true,
+  "rus": "Sample RUS (\"missing heritability\" issue)",
+  "non_tech_rus": "Sample RUS",
+  "eraAuthorized": false,
+  "ontologies": [
+    {
+      "id": "http://purl.obolibrary.org/obo/DOID_850",
+      "label": "lung disease",
+      "definition": "A lower respiratory tract disease in which the function of the lungs is adversely affected by narrowing or blockage of the airways resulting in poor air flow, a loss of elasticity in the lungs that produces a decrease in the total volume of air that the lungs are able to hold, and clotting, scarring, or inflammation of the blood vessels that affect the ability of the lungs to take up oxygen and to release carbon dioxide.",
+      "synonyms": [
+        "Non-neoplastic pulmonary disorder",
+        "non-neoplastic lung disorder"
+      ]
+    }
+  ],
+  "onegender": false,
+  "diseases": true,
+  "methods": true,
+  "hmb": true,
+  "forProfit": false,
+  "pediatric": false,
+  "illegalbehave": false,
+  "addiction": false,
+  "sexualdiseases": false,
+  "stigmatizediseases": false,
+  "vulnerablepop": false,
+  "popmigration": false,
+  "psychtraits": false,
+  "nothealth": false,
+  "investigator": "Researcher",
+  "researcher": "Researcher",
+  "projectTitle": "Lung Disease Study",
+  "isThePi": "true",
+  "urlDAA": "DAA url",
+  "nameDAA": "",
+  "eraExpiration": false,
+  "institution": "Broad Institute",
+  "department": "Data Science Platform",
+  "address1": "105 Broadway",
+  "city": "Cambridge",
+  "zipcode": "02104",
+  "country": "USA",
+  "state": "MA",
+  "academicEmail": "researcher@gmail.com",
+  "userId": 4949,
+  "datasetId": [
+    377
+  ],
+  "restriction": {
+    "type": "and",
+    "operands": [
+      {
+        "type": "and",
+        "operands": [
+          {
+            "type": "named",
+            "name": "http://purl.obolibrary.org/obo/DUO_0000015"
+          },
+          {
+            "type": "not",
+            "operand": {
+              "type": "named",
+              "name": "http://purl.obolibrary.org/obo/DUO_0000011"
+            }
+          },
+          {
+            "type": "not",
+            "operand": {
+              "type": "named",
+              "name": "http://www.broadinstitute.org/ontologies/DUOS/control"
+            }
+          }
+        ]
+      },
+      {
+        "type": "named",
+        "name": "http://purl.obolibrary.org/obo/DOID_850"
+      },
+      {
+        "type": "named",
+        "name": "http://purl.obolibrary.org/obo/DUO_0000018"
+      }
+    ]
+  },
+  "valid_restriction": true,
+  "translatedUseRestriction": "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used for methods development research [NMDS=0]<br>Data will be used to study:  lung disease [DOID_850(CC)]<br>Data will not be used for commercial purpose<br>",
+  "sortDate": 1561149767889,
+  "datasetDetail": [
+    {
+      "datasetId": "377",
+      "name": "TOPMed COPDGene_DS_CS_RD_phs000951.v2.p2.c2"
+    }
+  ]
+}
