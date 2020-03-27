@@ -144,7 +144,7 @@ public class DacService {
     }
 
     public DACUser findUserById(Integer id) throws IllegalArgumentException {
-        return populatedUserById(id);
+        return dacUserDAO.findDACUserById(id);
     }
 
     public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
@@ -186,6 +186,7 @@ public class DacService {
 
     public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
+        DACUser updatedUser = dacUserDAO.findDACUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
@@ -194,9 +195,9 @@ public class DacService {
                 throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
             }
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
-            voteService.createVotesForUser(user, e, type.get(), isManualReview);
+            voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
         }
-        return populatedUserById(user.getDacUserId());
+        return dacUserDAO.findDACUserById(updatedUser.getDacUserId());
     }
 
     public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
@@ -230,12 +231,6 @@ public class DacService {
         projection.append(DarConstants.RESTRICTION, true);
         Document dar = mongo.getDataAccessRequestCollection().find(query).projection(projection).first();
         return dar.get(DarConstants.RESTRICTION) != null;
-    }
-
-    private DACUser populatedUserById(Integer userId) {
-        DACUser user = dacDAO.findUserById(userId);
-        user.setRoles(dacDAO.findUserRolesForUser(userId));
-        return user;
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {
