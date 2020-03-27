@@ -5,15 +5,13 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
-import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
-
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ElectionReviewVote;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
@@ -64,10 +62,8 @@ public class DatabaseReviewResultsAPI extends AbstractReviewResultsAPI {
 
     @Override
     public ElectionReview describeElectionReviewByReferenceId(String referenceId){
-        List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue()).
-                map(String::toLowerCase).
-                collect(Collectors.toList());
-        Election election = electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(referenceId, statuses);
+        List<String> status = Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.FINAL.getValue());
+        Election election = electionDAO.findLastElectionWithFinalVoteByReferenceIdAndStatus(referenceId, status);
         return getElectionReview(referenceId, election);
     }
 

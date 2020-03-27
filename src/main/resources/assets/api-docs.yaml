@@ -1161,65 +1161,6 @@ paths:
       responses:
         200:
           description: Returns the DAR collection
-  /api/dar/migrate/mongo:
-    get:
-      summary: Get All DARs - Mongo
-      description: |
-        Admin only: Get All DARs via mongo
-        Temporary API for migration purposes.
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns all Data Access Requests mapped by their reference id
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/DataAccessRequest'
-        500:
-          description: Server Error
-  /api/dar/migrate/postgres:
-    get:
-      summary: Get All DARs - Postgres
-      description: |
-        Admin only: Get All DARs via the db
-        Temporary API for migration purposes.
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns all Data Access Requests
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/DataAccessRequest'
-        500:
-          description: Server Error
-  /api/dar/migrate/{id}:
-    post:
-      summary: Create a Postgres DAR
-      description: |
-        Admin only: Create a Postgres DAR
-        Temporary API for migration purposes.
-      parameters:
-        - name: id
-          in: path
-          description: The reference id of the existing DAR
-          required: true
-          type: string
-        - name: dar
-          in: body
-          description: The fields that represent a DAR, json format.
-          required: true
-          schema:
-            $ref: '#/definitions/DataAccessRequestData'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the created Data Access Request in json format.
-        500:
-          description: Internal Server Error.
   /api/dar/{id}:
     get:
       summary: describe

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.mongodb.MongoException;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
@@ -24,8 +23,6 @@ public interface DataAccessRequestAPI {
     List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds);
 
     Document describeDataAccessRequestFieldsById(String id, List<String> fields) throws NotFoundException;
-
-    List<Document> describeDataAccessRequests();
 
     Collection<String> getDatasetsInDARs(Collection<String> dataAccessRequestIds);
 
@@ -52,17 +49,9 @@ public interface DataAccessRequestAPI {
 
     List<Document> describePartialDataAccessRequestManage(Integer userId);
 
-    Object getField(String requestId, String field);
-
     Document cancelDataAccessRequest(String referenceId);
 
     List<DACUser> getUserEmailAndCancelElection(String referenceId);
-
-    boolean hasUseRestriction(String referenceId);
-
-    List<UseRestrictionDTO> getInvalidDataAccessRequest();
-
-    List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
     byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException;
 

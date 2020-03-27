@@ -3,12 +3,11 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
@@ -41,10 +40,10 @@ public class DatabaseMatchProcessAPI extends AbstractMatchProcessAPI {
     @Override
     public void processMatchesForPurpose(String purposeId) {
         removeMatchesForPurpose(purposeId);
-        Document rp = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(purposeId);
-        if (rp != null && rp.get(DarConstants.RESTRICTION) != null) {
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(purposeId);
+        if (dar != null && dar.getData().getRestriction() != null) {
             Match match = matchingServiceAPI.findMatchForPurpose(purposeId);
-            saveMatch(Arrays.asList(match));
+            saveMatch(Collections.singletonList(match));
         }
 
     }

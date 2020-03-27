@@ -46,8 +46,6 @@ public interface ConsentAPI {
 
     List<UseRestrictionDTO> getInvalidConsents();
 
-    Consent getConsentFromObjectIdAndType(String objectId, String associationType);
-
     /**
      * Method to check if a workspace is already associated with a consentId
      * @param workspaceId

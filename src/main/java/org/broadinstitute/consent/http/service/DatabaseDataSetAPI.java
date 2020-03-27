@@ -5,25 +5,25 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetAuditProperty;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 
 import javax.ws.rs.NotFoundException;
 import java.io.File;
@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     private final DataSetFileParser parser = new DataSetFileParser();
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DataSetDAO dsDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
     private final UserRoleDAO userRoleDAO;
@@ -69,12 +70,13 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return org.apache.log4j.Logger.getLogger("DataSetResource");
     }
 
-    public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
-        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
+    public static void initInstance(DataSetDAO dsDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+        DataSetAPIHolder.setInstance(new DatabaseDataSetAPI(dsDAO, dataAccessRequestDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, predefinedDatasets));
     }
 
-    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
+    private DatabaseDataSetAPI(DataSetDAO dsDAO, DataAccessRequestDAO dataAccessRequestDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {
         this.dsDAO = dsDAO;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.userRoleDAO = userRoleDAO;
         this.consentDAO = consentDAO;
@@ -196,12 +198,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             }
             dataSetDTOList = dsDAO.findDataSets();
             if (userIs(UserRoles.ADMIN.getRoleName(), dacUserId) && dataSetDTOList.size() != 0) {
-                List<Document> accessRequests = accessAPI.describeDataAccessRequests();
-                List<Integer> dataSetIdList = new ArrayList<>();
-
-                dataSetDTOList.stream().forEach(dataSet -> dataSetIdList.add(dataSet.getDataSetId()));
-
-                Set<Integer> accessRequestsDatasetIdSet = accessRequests.stream().map(ar -> (ArrayList<Integer>) ar.get(DarConstants.DATASET_ID)).flatMap(l -> l.stream()).collect(Collectors.toSet());
+                List<DataAccessRequest> dars = dataAccessRequestDAO.findAll();
+                Set<Integer> accessRequestsDatasetIdSet = dars.stream().
+                        map(d -> d.getData().getDatasetId()).
+                        flatMap(List::stream).
+                        collect(Collectors.toSet());
                 for (DataSetDTO dataSetDTO : dataSetDTOList) {
                     Integer datasetId = dataSetDTO.getDataSetId();
 
@@ -218,7 +219,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                         dataSetDTO.setIsAssociatedToDataOwners(true);
                     }
 
-                    if (CollectionUtils.isNotEmpty(accessRequests)) {
+                    if (CollectionUtils.isNotEmpty(dars)) {
                         if (accessRequestsDatasetIdSet.contains(datasetId)) {
                             dataSetDTO.setDeletable(false);
                         } else {
@@ -277,7 +278,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             }
             dataSetAssociationDAO.delete(dataset.getDataSetId());
             dsDAO.deleteDataSetsProperties(dataSetsId);
-            
+
             if (StringUtils.isNotEmpty(dataset.getObjectId())) {
                 dsDAO.logicalDataSetdelete(dataset.getDataSetId());
             } else {

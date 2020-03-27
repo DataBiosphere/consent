@@ -13,11 +13,11 @@ import java.util.List;
 @RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
-    @SqlQuery("SELECT emailEntityId FROM email_entity e WHERE (e.entityReferenceId = :darReferenceId or  e.entityReferenceId = :rpReferenceId) AND e.emailType = 1 LIMIT 1")
+    @SqlQuery("Select emailEntityId FROM email_entity e WHERE (e.entityReferenceId = :darReferenceId or  e.entityReferenceId = :rpReferenceId) AND e.emailType = 1 LIMIT 1")
     Integer existsCollectDAREmail(@Bind("darReferenceId") String darReferenceId, @Bind("rpReferenceId") String rpReferenceId);
 
-    @SqlUpdate("INSERT INTO email_entity " +
-            "(voteId, entityReferenceId, dacUserId, emailType, dateSent, emailText) VALUES " +
+    @SqlUpdate("insert into email_entity " +
+            "(voteId, entityReferenceId, dacUserId, emailType, dateSent, emailText) values " +
             "(:voteId, :entityReferenceId, :dacUserId, :emailType, :dateSent, :emailText)")
     void insertEmail(@Bind("voteId") Integer voteId,
                      @Bind("entityReferenceId") String entityReferenceId,
@@ -26,8 +26,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
                      @Bind("dateSent") Date dateSent,
                      @Bind("emailText") String emailText);
 
-    @SqlBatch("INSERT INTO email_entity " +
-            "(entityReferenceId, dacUserId, emailType, dateSent, emailText) VALUES " +
+    @SqlBatch("insert into email_entity " +
+            "(entityReferenceId, dacUserId, emailType, dateSent, emailText) values " +
             "(:entityReferenceId, :dacUserId, :emailType, :dateSent, :emailText)")
     void insertBulkEmailNoVotes(@Bind("dacUserId") List<Integer> userIds,
                          @Bind("entityReferenceId") String entityReferenceId,

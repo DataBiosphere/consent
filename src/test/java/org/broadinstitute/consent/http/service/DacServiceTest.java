@@ -20,8 +20,6 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -166,6 +165,17 @@ public class DacServiceTest {
     }
 
     @Test
+    public void testFindUserById() {
+        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
+        when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
+        initService();
+
+        DACUser user = service.findUserById(1);
+        Assert.assertNotNull(user);
+        Assert.assertFalse(user.getRoles().isEmpty());
+    }
+
+    @Test
     public void testFindDatasetsByDacId() {
         when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singleton(getDatasetDTOs().get(0)));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
@@ -189,10 +199,7 @@ public class DacServiceTest {
 
     @Test
     public void testAddDacMember() {
-        DACUser user = getDacUsers().get(0);
-        Dac dac = getDacs().get(0);
-        when(dacUserDAO.findDACUserById(any())).thenReturn(user);
-        when(dacUserDAO.findDACUserById(anyInt())).thenReturn(user);
+        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
         when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
         List<Election> elections = getElections().stream().
                 peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).
@@ -208,9 +215,9 @@ public class DacServiceTest {
         initService();
 
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        DACUser user1 = service.addDacMember(role, user, dac);
-        Assert.assertNotNull(user1);
-        Assert.assertFalse(user1.getRoles().isEmpty());
+        DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
+        Assert.assertNotNull(user);
+        Assert.assertFalse(user.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
     }
 
@@ -309,11 +316,11 @@ public class DacServiceTest {
         when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        List<Document> documents = getDocuments();
+        List<DataAccessRequest> dars = getDars();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getUser());
+        List<DataAccessRequest> filtered = service.filterDarsByDAC(dars, getUser());
         // As an admin, all docs should be returned.
-        Assert.assertEquals(documents.size(), filtered.size());
+        Assert.assertEquals(dars.size(), filtered.size());
     }
 
     @Test
@@ -329,9 +336,9 @@ public class DacServiceTest {
         when(dataSetDAO.findNonDACDataSets()).thenReturn(Collections.emptyList());
         initService();
 
-        List<Document> documents = getDocuments();
+        List<DataAccessRequest> dars = getDars();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
+        List<DataAccessRequest> filtered = service.filterDarsByDAC(dars, getMemberAuthUser());
 
         // Filtered documents should only contain the ones the user has direct access to:
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -351,9 +358,9 @@ public class DacServiceTest {
         when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
         initService();
 
-        List<Document> documents = getDocuments();
+        List<DataAccessRequest> dars = getDars();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
+        List<DataAccessRequest> filtered = service.filterDarsByDAC(dars, getMemberAuthUser());
 
         // Filtered documents should only contain the ones the user has direct access to
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -373,9 +380,9 @@ public class DacServiceTest {
         when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
         initService();
 
-        List<Document> documents = getDocuments();
+        List<DataAccessRequest> dars = getDars();
 
-        List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
+        List<DataAccessRequest> filtered = service.filterDarsByDAC(dars, getMemberAuthUser());
 
         // Filtered documents should contain the ones the user has direct access to
         Assert.assertEquals(memberDataSets.size(), filtered.size());
@@ -674,15 +681,19 @@ public class DacServiceTest {
     }
 
     /**
-     * @return A list of 5 documents with DataSet ids
+     * @return A list of 5 dars with DataSet ids
      */
-    private List<Document> getDocuments() {
+    private List<DataAccessRequest> getDars() {
         return IntStream.range(1, 5).
                 mapToObj(i -> {
                     List<Integer> dataSetIds = Collections.singletonList(i);
-                    Document doc = new Document();
-                    doc.put(DarConstants.DATASET_ID, dataSetIds);
-                    return doc;
+                    DataAccessRequest dar = new DataAccessRequest();
+                    dar.setReferenceId(UUID.randomUUID().toString());
+                    DataAccessRequestData data = new DataAccessRequestData();
+                    data.setReferenceId(dar.getReferenceId());
+                    data.setDatasetId(dataSetIds);
+                    dar.setData(data);
+                    return dar;
                 }).collect(Collectors.toList());
     }
 

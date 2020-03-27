@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -11,6 +12,7 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.SummaryAPI;
@@ -40,6 +42,7 @@ import java.util.stream.Collectors;
 @Path("{api : (api/)?}dataRequest/{requestId}/election")
 public class DataRequestElectionResource extends Resource {
 
+    private final DataAccessRequestService dataAccessRequestService;
     private final ElectionAPI api;
     private final EmailNotifierAPI emailApi;
     private final DataAccessRequestAPI darApi;
@@ -47,7 +50,8 @@ public class DataRequestElectionResource extends Resource {
     private final VoteService voteService;
 
     @Inject
-    public DataRequestElectionResource(VoteService voteService) {
+    public DataRequestElectionResource(DataAccessRequestService dataAccessRequestService, VoteService voteService) {
+        this.dataAccessRequestService = dataAccessRequestService;
         this.api = AbstractElectionAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
@@ -66,7 +70,8 @@ public class DataRequestElectionResource extends Resource {
             accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
             List<Vote> votes;
             //create RP election
-            if (!Objects.isNull(darApi.getField(requestId, DarConstants.RESTRICTION))) {
+            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(requestId);
+            if (!Objects.isNull(dar) && !Objects.isNull(dar.getData().getRestriction())) {
                 votes = voteService.createVotes(accessElection, ElectionType.DATA_ACCESS, false);
                 Election rpElection = api.createElection(rec, requestId, ElectionType.RP);
                 voteService.createVotes(rpElection, ElectionType.RP, false);

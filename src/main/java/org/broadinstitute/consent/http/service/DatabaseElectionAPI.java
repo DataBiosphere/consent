@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -20,17 +19,16 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,8 +112,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 election.getStatus(),
                 createDate,
                 election.getReferenceId(),
-                election.getFinalAccessVote() ,
-                Objects.toString(election.getUseRestriction(), "") ,
+                election.getFinalAccessVote(),
+                Objects.toString(election.getUseRestriction(), ""),
                 election.getTranslatedUseRestriction(),
                 election.getDataUseLetter(),
                 election.getDulName(),
@@ -158,7 +156,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getStatus(), lastUpdate);
-        if(rec.getArchived() != null && rec.getArchived()) {
+        if (rec.getArchived() != null && rec.getArchived()) {
             electionDAO.archiveElectionById(electionId, lastUpdate);
         }
         updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
@@ -172,7 +170,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new NotFoundException("Election for specified id does not exist");
         }
         electionDAO.updateFinalAccessVote(electionId);
-        if(electionDAO.findFinalAccessVote(electionId)) {
+        if (electionDAO.findFinalAccessVote(electionId)) {
             sendResearcherNotification(election.getReferenceId());
         }
         return electionDAO.findElectionWithFinalVoteById(electionId);
@@ -237,8 +235,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     /**
      * Return true if:
-     *      Everyone has already voted
-     *      The only remaining votes are chairperson votes
+     * Everyone has already voted
+     * The only remaining votes are chairperson votes
      */
     @Override
     public boolean validateCollectEmailCondition(Vote vote) {
@@ -259,9 +257,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     /**
      * Return true if:
-     *      There are no RP or DAR votes and the vote is not a chairperson vote
-     *      All RP chair votes have not been created
-     *      All DAR chair votes have not been created
+     * There are no RP or DAR votes and the vote is not a chairperson vote
+     * All RP chair votes have not been created
+     * All DAR chair votes have not been created
      *
      * @param vote The vote to validate
      * @return True if valid, false otherwise
@@ -312,7 +310,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public void closeDataOwnerApprovalElection(Integer electionId){
+    public void closeDataOwnerApprovalElection(Integer electionId) {
         Election election = electionDAO.findElectionById(electionId);
         List<Vote> dataOwnersVote = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
         List<Vote> rejectedVotes = dataOwnersVote.stream().filter(dov -> (dov.getVote() != null && !dov.getVote()) || (dov.getHasConcerns() != null && dov.getHasConcerns())).collect(Collectors.toList());
@@ -321,7 +319,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         electionDAO.updateElectionById(electionId, election.getStatus(), new Date(), election.getFinalAccessVote());
         try {
             List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-            if(validateAllDatasetElectionsAreClosed(dsElections)){
+            if (validateAllDatasetElectionsAreClosed(dsElections)) {
                 List<Election> darElections = new ArrayList<>();
                 darElections.add(electionDAO.findLastElectionByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_ACCESS.getValue()));
                 emailNotifierAPI.sendClosedDataSetElectionsMessage(darElections);
@@ -332,10 +330,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public boolean checkDataOwnerToCloseElection(Integer electionId){
+    public boolean checkDataOwnerToCloseElection(Integer electionId) {
         Boolean closeElection = false;
         Election election = electionDAO.findElectionById(electionId);
-        if(election.getElectionType().equals(ElectionType.DATA_SET.getValue())) {
+        if (election.getElectionType().equals(ElectionType.DATA_SET.getValue())) {
             List<Vote> pendingVotes = voteDAO.findDataOwnerPendingVotesByElectionId(electionId, VoteType.DATA_OWNER.getValue());
             closeElection = CollectionUtils.isEmpty(pendingVotes) ? true : false;
         }
@@ -343,21 +341,25 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public String darDatasetElectionStatus(String darReferenceId){
-        List<Integer> dataSets =  DarUtil.getIntegerList(describeDataAccessRequestById(darReferenceId), DarConstants.DATASET_ID);
-        List<DataSet> dsForApproval =  dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
-        if(CollectionUtils.isEmpty(dsForApproval)) {
+    public String darDatasetElectionStatus(String darReferenceId) {
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(darReferenceId);
+        List<Integer> dataSets = new ArrayList<>();
+        if (dar != null) {
+            dataSets.addAll(dar.getData().getDatasetId());
+        }
+        List<DataSet> dsForApproval = dataSetDAO.findNeedsApprovalDataSetByDataSetId(dataSets);
+        if (CollectionUtils.isEmpty(dsForApproval)) {
             return DataSetElectionStatus.APPROVAL_NOT_NEEDED.getValue();
         } else {
             Election darElection = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(darReferenceId, ElectionType.DATA_ACCESS.getValue());
             List<Election> dsElectionsToVoteOn = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(Arrays.asList(darReferenceId), ElectionType.DATA_SET.getValue());
-            if((!(Objects.isNull(darElection)) && darElection.getStatus().equals(ElectionStatus.OPEN.getValue())) || CollectionUtils.isEmpty(dsElectionsToVoteOn)){
+            if ((!(Objects.isNull(darElection)) && darElection.getStatus().equals(ElectionStatus.OPEN.getValue())) || CollectionUtils.isEmpty(dsElectionsToVoteOn)) {
                 return DataSetElectionStatus.DS_PENDING.getValue();
             } else {
-                for(Election e: dsElectionsToVoteOn){
-                    if(e.getStatus().equals(ElectionStatus.OPEN.getValue())){
+                for (Election e : dsElectionsToVoteOn) {
+                    if (e.getStatus().equals(ElectionStatus.OPEN.getValue())) {
                         return DataSetElectionStatus.DS_PENDING.getValue();
-                    } else if(!e.getFinalAccessVote()){
+                    } else if (!e.getFinalAccessVote()) {
                         return DataSetElectionStatus.DS_DENIED.getValue();
                     }
                 }
@@ -367,47 +369,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     @Override
-    public List<ElectionStatusDTO> describeElectionsByConsentId(String consentId) {
-       List<Election> elections = electionDAO.findElectionsWithFinalVoteByReferenceId(consentId);
-       List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
-        getElectionStatusDTO(electionStatusDTOs, elections, DATA_USE_LIMITATION);
-        return electionStatusDTOs;
-    }
-
-    @Override
-    public Election getConsentElectionByDARElectionId(Integer darElectionId){
+    public Election getConsentElectionByDARElectionId(Integer darElectionId) {
         Integer electionId = electionDAO.getElectionConsentIdByDARElectionId(darElectionId);
         return electionId != null ? electionDAO.findElectionById(electionId) : null;
     }
 
-
     @Override
-    public List<ElectionStatusDTO> describeElectionByDARs(List<Document> darList) {
-        List<ElectionStatusDTO> electionStatusDTOs = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(darList)){
-            List<String> darIds = new ArrayList<>();
-            darList.stream().forEach(dar -> {
-                darIds.add(dar.getString(DarConstants.REFERENCE_ID));
-                dar.put(DarConstants.REFERENCE_ID, dar.getString(DarConstants.REFERENCE_ID));
-            });
-            List<Election> elections = electionDAO.findRequestElectionsByReferenceIds(darIds);
-            getElectionStatusDTO(electionStatusDTOs, elections, DATA_ACCESS_REQUEST);
-        }
-        return electionStatusDTOs;
-    }
-
-    private void getElectionStatusDTO(List<ElectionStatusDTO> electionStatusDTOs, List<Election> elections, String type) {
-        if(CollectionUtils.isNotEmpty(elections)){
-            elections.stream().forEach(election -> electionStatusDTOs.add(new ElectionStatusDTO(election.getCreateDate(), election.getStatus(), type)));
-        }
-    }
-
-    @Override
-    public List<Election> createDataSetElections(String referenceId, Map<DACUser, List<DataSet>> dataOwnerDataSet){
+    public List<Election> createDataSetElections(String referenceId, Map<DACUser, List<DataSet>> dataOwnerDataSet) {
         List<Integer> electionsIds = new ArrayList<>();
-        dataOwnerDataSet.forEach((user,dataSets) -> {
+        dataOwnerDataSet.forEach((user, dataSets) -> {
             dataSets.stream().forEach(dataSet -> {
-                if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDataSetId()) == null) {
+                if (electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDataSetId()) == null) {
                     Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDataSetId());
                     electionsIds.add(electionId);
                 }
@@ -422,9 +394,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return CollectionUtils.isNotEmpty(elections) ? true : false;
     }
 
-    private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
-        for(Election e: elections){
-            if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+    private boolean validateAllDatasetElectionsAreClosed(List<Election> elections) {
+        for (Election e : elections) {
+            if (!e.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
                 return false;
             }
         }
@@ -434,20 +406,20 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
 
     private Election validateAndGetDULElection(String referenceId, ElectionType electionType) throws Exception {
         Election consentElection = null;
-        if(electionType.equals(ElectionType.DATA_ACCESS)){
-            Document dar = describeDataAccessRequestById(referenceId);
-            if(dar == null){
+        if (electionType.equals(ElectionType.DATA_ACCESS)) {
+            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+            if (dar == null) {
                 throw new NotFoundException();
             }
             List<DataSet> dataSets = verifyDisableDataSets(dar, referenceId);
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
             consentElection = electionDAO.findLastElectionByReferenceIdAndStatus(consent.getConsentId(), "Closed");
-            if((consentElection == null)){
+            if (consentElection == null) {
                 throw new IllegalArgumentException(DUL_NOT_APROVED);
             } else {
                 Integer openElections = electionDAO.verifyOpenElectionsForReferenceId(consent.getConsentId());
                 Vote vote = voteDAO.findVoteByElectionIdAndType(consentElection.getElectionId(), VoteType.CHAIRPERSON.getValue());
-                if((openElections != 0) || (vote != null && !vote.getVote())) {
+                if ((openElections != 0) || (vote != null && !vote.getVote())) {
                     throw new IllegalArgumentException(DUL_NOT_APROVED);
                 }
             }
@@ -455,42 +427,38 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         return consentElection;
     }
 
-    private List<DataSet> verifyDisableDataSets(Document dar, String referenceId) throws  Exception{
-        List<Integer> dataSets = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+    private List<DataSet> verifyDisableDataSets(DataAccessRequest dar, String referenceId) throws Exception {
+        List<Integer> dataSets = dar.getData().getDatasetId();
         List<DataSet> dataSetList = dataSetDAO.searchDataSetsByIds(dataSets);
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(disabledDataSets)) {
+        if (CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
-            DACUser dacUser = dacUserDAO.findDACUserById(dar.getInteger("userId"));
-            if(!createElection){
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+            DACUser dacUser = dacUserDAO.findDACUserById(dar.getData().getUserId());
+            if (!createElection) {
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getData().getDarCode());
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
-            }else{
+            } else {
                 updateDataAccessRequest(dataSetList, dar, referenceId);
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getData().getDarCode());
             }
         }
         return dataSetList;
     }
 
-    private void updateDataAccessRequest(List<DataSet> dataSets, Document dar, String referenceId) {
-        List<Document> dataSetList = new ArrayList<>();
-        List<String> dataSetId = new ArrayList<>();
-        List<DataSet> activeDataSets = dataSets.stream().filter(ds -> ds.getActive()).collect(Collectors.toList());
-        activeDataSets.forEach((dataSet) -> {
-            Document document = new Document();
-            document.put(DarConstants.DATASET_ID, dataSet.getObjectId());
-            dataSetId.add(dataSet.getObjectId());
-            document.put("name", dataSet.getName());
-            dataSetList.add(document);
-        });
-        dar.put(DarConstants.DATASET_ID, dataSetId);
-        dar.put(DarConstants.DATASET_DETAIL, dataSetList);
-        dataAccessRequestService.updateDocumentByReferenceId(referenceId, dar);
-    }
-
-    private Document describeDataAccessRequestById(String id) {
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
+    private void updateDataAccessRequest(List<DataSet> dataSets, DataAccessRequest dar, String referenceId) {
+        DataAccessRequestData data = dar.getData();
+        List<DataSet> activeDatasets = dataSets.stream().filter(DataSet::getActive).collect(Collectors.toList());
+        List<Integer> datasetIds = activeDatasets.stream().map(DataSet::getDataSetId).collect(Collectors.toList());
+        List<DatasetDetailEntry> dataSetList = activeDatasets.
+                stream().
+                map(d -> new DatasetDetailEntry(
+                        String.valueOf(d.getDataSetId()),
+                        d.getName(),
+                        d.getObjectId()
+                )).collect(Collectors.toList());
+        data.setDatasetId(datasetIds);
+        data.setDatasetDetail(dataSetList);
+        dataAccessRequestService.updateByReferenceId(referenceId, data);
     }
 
     private void setGeneralFields(Election election, String referenceId, ElectionType electionType) {
@@ -508,8 +476,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 break;
             case DATA_ACCESS:
             case RP:
-                Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-                List<Integer> datasetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+                DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+                List<Integer> datasetIdList = dar.getData().getDatasetId();
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
                         logger.error("DAR " +
@@ -520,9 +488,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     Optional<Integer> datasetId = datasetIdList.stream().findFirst();
                     datasetId.ifPresent(election::setDataSetId);
                 }
-                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
+                election.setTranslatedUseRestriction(dar.getData().getTranslatedUseRestriction());
                 try {
-                    String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
+                    String restriction = new Gson().toJson(dar.getData().getRestriction(), Map.class);
                     election.setUseRestriction((UseRestriction.parse(restriction)));
                 } catch (IOException e) {
                     election.setUseRestriction(null);
@@ -545,10 +513,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void validateDataRequestId(String dataRequest) {
-        Document dar = describeDataAccessRequestById(dataRequest);
-        if (dataRequest != null && dar == null ) {
-            throw new NotFoundException("Invalid id: " + dataRequest);
+    private void validateDataRequestId(String referenceId) {
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        if (referenceId != null && dar == null) {
+            throw new NotFoundException("Invalid id: " + referenceId);
         }
     }
 
@@ -611,13 +579,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
     }
 
-    private void updateSortDate(String referenceId, Date createDate){
-        if(consentDAO.checkConsentById(referenceId) != null){
+    private void updateSortDate(String referenceId, Date createDate) {
+        if (consentDAO.checkConsentById(referenceId) != null) {
             consentDAO.updateConsentSortDate(referenceId, createDate);
         } else {
-            Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-            dar.put(DarConstants.SORT_DATE, createDate.getTime());
-            dataAccessRequestService.updateDocumentByReferenceId(referenceId, dar);
+            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+            dar.getData().setSortDate(createDate.getTime());
+            dataAccessRequestService.updateByReferenceId(referenceId, dar.getData());
         }
     }
 
@@ -645,16 +613,16 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     private void sendResearcherNotification(String referenceId) throws Exception {
-        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-        List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-        if(CollectionUtils.isNotEmpty(dataSetIdList)) {
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        List<Integer> dataSetIdList = dar.getData().getDatasetId();
+        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
             List<DataSet> dataSets = dataSetDAO.searchDataSetsByIds(dataSetIdList);
             List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
             dataSets.forEach(ds ->
-                datasetsDetail.add(new DatasetMailDTO(ds.getName(), DatasetUtil.parseAlias(ds.getAlias())))
+                    datasetsDetail.add(new DatasetMailDTO(ds.getName(), DatasetUtil.parseAlias(ds.getAlias())))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            emailNotifierAPI.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
+            emailNotifierAPI.sendResearcherDarApproved(dar.getData().getDarCode(), dar.getData().getUserId(), datasetsDetail, consent.getTranslatedUseRestriction());
         }
     }
 }

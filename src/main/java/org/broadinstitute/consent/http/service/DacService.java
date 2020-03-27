@@ -19,9 +19,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 
 import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
@@ -143,7 +140,7 @@ public class DacService {
     }
 
     public DACUser findUserById(Integer id) throws IllegalArgumentException {
-        return dacUserDAO.findDACUserById(id);
+        return populatedUserById(id);
     }
 
     public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
@@ -185,7 +182,6 @@ public class DacService {
 
     public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
-        DACUser updatedUser = dacUserDAO.findDACUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
@@ -194,9 +190,9 @@ public class DacService {
                 throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
             }
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
-            voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
+            voteService.createVotesForUser(user, e, type.get(), isManualReview);
         }
-        return dacUserDAO.findDACUserById(updatedUser.getDacUserId());
+        return populatedUserById(user.getDacUserId());
     }
 
     public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
@@ -229,6 +225,12 @@ public class DacService {
         return dar.getData().getRestriction() != null;
     }
 
+    private DACUser populatedUserById(Integer userId) {
+        DACUser user = dacDAO.findUserById(userId);
+        user.setRoles(dacDAO.findUserRolesForUser(userId));
+        return user;
+    }
+
     boolean isAuthUserAdmin(AuthUser authUser) {
         DACUser user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
         return user != null;
@@ -259,9 +261,9 @@ public class DacService {
     /**
      * Filter data access requests by the DAC they are associated with.
      */
-    List<Document> filterDarsByDAC(List<Document> documents, AuthUser authUser) {
+    List<DataAccessRequest> filterDarsByDAC(List<DataAccessRequest> dars, AuthUser authUser) {
         if (isAuthUserAdmin(authUser)) {
-            return documents;
+            return dars;
         }
         // Chair and Member users can see data access requests that they have DAC access to
         if (isAuthUserChairOrMember(authUser)) {
@@ -270,10 +272,10 @@ public class DacService {
                     map(DataSet::getDataSetId).
                     collect(Collectors.toList());
 
-            return documents.
+            return dars.
                     stream().
                     filter(d -> {
-                        List<Integer> datasetIds = DarUtil.getIntegerList(d, DarConstants.DATASET_ID);
+                        List<Integer> datasetIds = d.getData().getDatasetId();
                         return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
                     }).
                     collect(Collectors.toList());

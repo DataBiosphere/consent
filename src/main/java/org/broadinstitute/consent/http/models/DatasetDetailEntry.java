@@ -9,6 +9,12 @@ public class DatasetDetailEntry {
     public DatasetDetailEntry() {
     }
 
+    public DatasetDetailEntry(String datasetId, String name, String objectId) {
+        this.datasetId = datasetId;
+        this.name = name;
+        this.objectId = objectId;
+    }
+
     public String getDatasetId() {
         return datasetId;
     }

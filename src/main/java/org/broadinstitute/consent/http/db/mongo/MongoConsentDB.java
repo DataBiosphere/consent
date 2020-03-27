@@ -36,28 +36,11 @@ public class MongoConsentDB {
     }
 
     /**
-     * @deprecated Replaced with DataAccessRequestService.getAllDataAccessRequestsAsDocuments()
-     * @return dataAccessRequest collection
-     */
-    @Deprecated
-    public MongoCollection<Document> getDataAccessRequestCollection() {
-        return mongo.getDatabase(DATABASE_NAME).getCollection("dataAccessRequest");
-    }
-
-    /**
      *
      * @return dataAccessRequest collection
      */
     public MongoCollection<Document> getPartialDataAccessRequestCollection() {
         return mongo.getDatabase(DATABASE_NAME).getCollection("dataAccessRequestPartials");
-    }
-
-    /**
-     *
-     * @return researchPurposeCollection
-     */
-    public MongoCollection<Document> getResearchPurposeCollection() {
-        return mongo.getDatabase(DATABASE_NAME).getCollection("researchPurpose");
     }
 
     /**
@@ -98,26 +81,13 @@ public class MongoConsentDB {
             getCountersCollection().insertOne(counter);
         }
 
-        // Creates  MongoDB DataAccessRequest Index
-        BasicDBObject indexFields = new BasicDBObject(DAR_CODE, 1);
         IndexOptions indexOptions = new IndexOptions();
         indexOptions.unique(true);
         indexOptions.sparse(true);
-        getDataAccessRequestCollection().createIndex(indexFields, indexOptions);
 
         // Creates MongoDB Partial DataAccessRequest Index
         BasicDBObject secondIndexFields = new BasicDBObject(PARTIAL_DAR_CODE, 1);
         getPartialDataAccessRequestCollection().createIndex(secondIndexFields, indexOptions);
-
-        FindIterable<Document> documents = getDataAccessRequestCollection().find();
-        documents.forEach((Block<Document>) dar -> {
-            if (dar.get(DAR_CODE) == null) {
-                BasicDBObject object = new BasicDBObject(DAR_CODE, "DAR-" + getNextSequence(DAR_CODE_COUNTER));
-                BasicDBObject set = new BasicDBObject("$set", object);
-                BasicDBObject searchQuery = new BasicDBObject().append(DarConstants.ID, dar.get(DarConstants.ID));
-                getDataAccessRequestCollection().updateOne(searchQuery, set);
-            }
-        });
 
         FindIterable<Document> partialDocuments = getPartialDataAccessRequestCollection().find();
         partialDocuments.forEach((Block<Document>) dar -> {

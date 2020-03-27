@@ -375,15 +375,6 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         return !Objects.isNull(associationDAO.findAssociationIdByTypeAndObjectId(AssociationType.WORKSPACE.getValue(), workspaceId));
     }
 
-    @Override
-    public Consent getConsentFromObjectIdAndType(String objectId, String associationType) {
-        Consent consent = consentDAO.findConsentByAssociationAndObjectId(associationType, objectId);
-        if (consent == null) {
-            throw new NotFoundException("The specified id does not exists.");
-        }
-        return consent;
-    }
-
     private Consent updateConsentDates(Consent c) {
         Timestamp updateDate = new Timestamp(new Date().getTime());
         c.setLastUpdate(updateDate);

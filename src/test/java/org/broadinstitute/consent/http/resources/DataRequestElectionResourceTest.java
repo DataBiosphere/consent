@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -8,6 +11,7 @@ import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.SummaryAPI;
@@ -55,6 +59,8 @@ import static org.mockito.Mockito.when;
 public class DataRequestElectionResourceTest {
 
     @Mock
+    private DataAccessRequestService dataAccessRequestService;
+    @Mock
     private ElectionAPI electionAPI;
     @Mock
     private VoteAPI voteAPI;
@@ -94,13 +100,13 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(voteService);
+        resource = new DataRequestElectionResource(dataAccessRequestService, voteService);
     }
 
     @Test
     public void testCreateDataRequestElection() throws Exception {
         when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
-        when(darApi.getField(any(), any())).thenReturn(null);
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();
@@ -117,7 +123,10 @@ public class DataRequestElectionResourceTest {
         Election election = new Election();
         election.setElectionId(RandomUtils.nextInt(1, 100));
         when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
-        when(darApi.getField(any(), any())).thenReturn(new Object());
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        dar.setData(data);
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
         doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
         initResource();

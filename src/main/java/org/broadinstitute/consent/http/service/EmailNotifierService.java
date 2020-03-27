@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.HelpReport;
@@ -213,8 +214,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                String dar_code = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId()).getString(DarConstants.DAR_CODE);
-                reviewedDatasets.put(dar_code, dsElections);
+                DataAccessRequest dar = dataAccessRequestService.findByReferenceId(election.getReferenceId());
+                if (dar != null) {
+                    reviewedDatasets.put(dar.getData().getDarCode(), dsElections);
+                } else {
+                    logger.warning("Unable to find a Data Access Request for id: " + election.getReferenceId());
+                }
             }
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
             if(CollectionUtils.isNotEmpty(users)) {
@@ -311,8 +316,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                         logger.severe("Could not find Consent related to ID " + voteInfo.getReferenceId() + " for delegation email sending. Cause " + e.getMessage());
                     }
                 } else {
-                    Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(voteInfo.getReferenceId());
-                    voteInfo.setElectionNumber(dar.getString(DarConstants.DAR_CODE));
+                    DataAccessRequest dar = dataAccessRequestService.findByReferenceId(voteInfo.getReferenceId());
+                    if (dar != null) {
+                        voteInfo.setElectionNumber(dar.getData().getDarCode());
+                    } else {
+                        logger.warning("Unable to find a Data Access Request for id: " + voteInfo.getReferenceId());
+                    }
                 }
                 voteInfo.setElectionType(retrieveElectionTypeString(voteInfo.getElectionType()));
             });
