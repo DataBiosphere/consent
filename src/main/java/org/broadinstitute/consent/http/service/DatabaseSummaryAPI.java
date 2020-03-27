@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,6 +40,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
@@ -148,8 +148,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
 
     protected Summary getSummaryCases(String type) {
-        List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
+        List<String> statuses = Stream.of(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue()).
+                map(String::toLowerCase).
+                collect(Collectors.toList());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, statuses);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), true);
         Integer totalNegativeCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), false);
@@ -157,8 +159,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     protected Summary getAccessSummaryCases(String type) {
-        List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
+        List<String> statuses = Stream.of(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue()).
+                map(String::toLowerCase).
+                collect(Collectors.toList());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, statuses);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, true);
         Integer totalNegativeCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, false);
@@ -180,8 +184,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<String> electionStatus = new ArrayList<>(Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()));
-                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), electionStatus);
+                List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()).
+                        map(String::toLowerCase).
+                        collect(Collectors.toList());
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses);
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
