@@ -18,24 +18,24 @@ import java.util.List;
 @RegisterRowMapper(DataAccessRequestMapper.class)
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
 
-    @SqlQuery("select * from data_access_request")
+    @SqlQuery("SELECT * FROM data_access_request")
     List<DataAccessRequest> findAll();
 
-    @SqlQuery("select * from data_access_request where reference_id = :referenceId limit 1")
+    @SqlQuery("SELECT * FROM data_access_request WHERE reference_id = :referenceId limit 1")
     DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery("select * from data_access_request where reference_id in (<referenceIds>)")
+    @SqlQuery("SELECT * FROM data_access_request WHERE reference_id IN (<referenceIds>)")
     List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @RegisterArgumentFactory(JsonArgumentFactory.class)
-    @SqlUpdate("update data_access_request set data = to_jsonb(:data) where reference_id = :referenceId")
+    @SqlUpdate("UPDATE data_access_request SET data = to_jsonb(:data) WHERE reference_id = :referenceId")
     void updateDataByReferenceId(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
 
-    @SqlUpdate("delete from data_access_request where reference_id = :referenceId")
+    @SqlUpdate("DELETE FROM data_access_request WHERE reference_id = :referenceId")
     void deleteByReferenceId(@Bind("referenceId") String referenceId);
 
     @RegisterArgumentFactory(JsonArgumentFactory.class)
-    @SqlUpdate("insert into data_access_request (reference_id, data) values (:referenceId, to_jsonb(:data)) ")
+    @SqlUpdate("INSERT INTO data_access_request (reference_id, data) VALUES (:referenceId, to_jsonb(:data)) ")
     void insert(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
 
 }
