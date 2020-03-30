@@ -133,7 +133,7 @@ public class DataAccessRequestService {
                     filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
                     collect(Collectors.toList());
         }
-        filteredAccessList.sort((a, b) -> getSortDateInt(b) - getSortDateInt(a));
+        filteredAccessList.sort(sortTimeComparator());
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = filteredAccessList.
                 stream().
@@ -149,12 +149,23 @@ public class DataAccessRequestService {
         return darManage;
     }
 
-    private int getSortDateInt(Document document) {
-        Long time = document.getLong(DarConstants.SORT_DATE);
-        if (time == null) {
-            time = new Date().getTime();
-        }
-        return time.intValue();
+    /**
+     * Compare document sort time long values, descending order.
+     *
+     * @return Comparator
+     */
+    private Comparator<Document> sortTimeComparator() {
+        return (a, b) -> {
+            Long aTime = a.getLong(DarConstants.SORT_DATE);
+            Long bTime = b.getLong(DarConstants.SORT_DATE);
+            if (aTime == null) {
+                aTime = new Date().getTime();
+            }
+            if (bTime == null) {
+                bTime = new Date().getTime();
+            }
+            return bTime.compareTo(aTime);
+        };
     }
 
     private Map<String, Election> createAccessRequestElectionMap(List<Election> elections) {
