@@ -86,7 +86,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             " sortDate = :sortDate, " +
             " translatedUseRestriction = :translatedUseRestriction, " +
             " groupName = :groupName, " +
-            " updated = (:updated::int)::bit(1), " +
+            " updated = :updated, " +
             " dac_id = :dacId " +
             " where consentId = :consentId " +
             " and active = true ")

@@ -5,8 +5,9 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="lforconesi" id="120">
+        <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="consents">
-            <column name="updated" type="BIT(1)">
+            <column name="updated" type="boolean">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
