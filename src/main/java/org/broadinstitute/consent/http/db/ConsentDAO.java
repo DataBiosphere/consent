@@ -170,9 +170,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("select consentId, name, useRestriction from consents where valid_restriction = false ")
     List<UseRestrictionDTO> findInvalidRestrictions();
 
-    @SqlUpdate("update consents set updated = (:consentStatus::int)::bit(1) where consentId = :referenceId")
+    @SqlUpdate("update consents set updated = :updated where consentId = :referenceId")
     void updateConsentUpdateStatus(@Bind("referenceId") String referenceId,
-                                   @Bind("consentStatus") Boolean consentStatus);
+                                   @Bind("updated") Boolean updated);
 
     @SqlUpdate("update consents set dac_id = :dacId where consentId = :consentId")
     void updateConsentDac(@Bind("consentId") String consentId,
