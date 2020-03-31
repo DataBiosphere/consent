@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -23,6 +24,9 @@ import org.broadinstitute.consent.http.models.PendingCase;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DataOwnerCase;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -37,6 +41,7 @@ import java.util.stream.Collectors;
 
 public class PendingCaseService {
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     private ConsentDAO consentDAO;
     private DACUserDAO dacUserDAO;
     private DataAccessRequestService dataAccessRequestService;
@@ -45,12 +50,13 @@ public class PendingCaseService {
     private UserRoleDAO userRoleDAO;
     private VoteDAO voteDAO;
     private DacService dacService;
+    private VoteService voteService;
 
     @Inject
     public PendingCaseService(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
                               DataAccessRequestService dataAccessRequestService, DataSetDAO dataSetDAO,
                               ElectionDAO electionDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO,
-                              DacService dacService) {
+                              DacService dacService, VoteService voteService) {
         this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataAccessRequestService = dataAccessRequestService;
@@ -59,11 +65,12 @@ public class PendingCaseService {
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
         this.dacService = dacService;
+        this.voteService = voteService;
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
-        DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
-        List<Integer> roleIds = userRoleDAO.findRolesByUserEmail(authUser.getName()).stream().
+        DACUser dacUser = findDACUser(authUser);
+        List<Integer> roleIds = dacUser.getRoles().stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
         Integer dacUserId = dacUser.getDacUserId();
@@ -72,6 +79,11 @@ public class PendingCaseService {
                 stream().
                 map(e -> {
                     Vote vote = voteDAO.findVoteByElectionIdAndDACUserId(e.getElectionId(), dacUserId);
+                    if (vote == null) {
+                        // Handle error case where user votes have not been created for the current election
+                        createMissingUserVotes(e, dacUser);
+                        vote = voteDAO.findVoteByElectionIdAndDACUserId(e.getElectionId(), dacUserId);
+                    }
                     if (vote != null) {
                         PendingCase pendingCase = new PendingCase();
                         setGeneralFields(pendingCase, e, vote, vote.getIsReminderSent());
@@ -91,7 +103,7 @@ public class PendingCaseService {
     }
 
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
-        DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
+        DACUser dacUser = findDACUser(authUser);
         Integer dacUserId = dacUser.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
@@ -143,7 +155,7 @@ public class PendingCaseService {
             for (Election election : elections) {
                 DataOwnerCase dataOwnerCase = new DataOwnerCase();
                 List<Vote> dataOwnerVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), dataOwnerId, VoteType.DATA_OWNER.getValue());
-                if(CollectionUtils.isNotEmpty(dataOwnerVotes)){
+                if (CollectionUtils.isNotEmpty(dataOwnerVotes)) {
                     dataOwnerVotes.forEach(v -> {
                         DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(election.getReferenceId());
                         DataSet dataSet = dataSetDAO.findDataSetById(election.getDataSetId());
@@ -254,6 +266,34 @@ public class PendingCaseService {
         } else {
             pendingCase.setIsFinalVote(false);
         }
+    }
+
+    // Dao calls do not properly populate the roles, so do it manually. TODO: Fix with DUOS-615
+    private DACUser findDACUser(AuthUser authUser) {
+        DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
+        List<UserRole> userRoles = userRoleDAO.findRolesByUserId(dacUser.getDacUserId());
+        dacUser.setRoles(userRoles);
+        return dacUser;
+    }
+
+    private void createMissingUserVotes(Election e, DACUser dacUser) {
+        ElectionType type = ElectionType.getFromValue(e.getElectionType());
+        boolean isManualReview = false;
+        if (type.equals(ElectionType.DATA_ACCESS)) {
+            DataAccessRequest dar = dataAccessRequestService.findByReferenceId(e.getReferenceId());
+            isManualReview = DarUtil.requiresManualReview(dar);
+        }
+        if (type.equals(ElectionType.TRANSLATE_DUL)) {
+            Consent c = consentDAO.findConsentById(e.getReferenceId());
+            isManualReview = c.getRequiresManualReview();
+        }
+        logger.info(String.format(
+                "Creating missing votes for user id '%s', election id '%s', reference id '%s' ",
+                dacUser.getDacUserId(),
+                e.getElectionId(),
+                e.getReferenceId()
+        ));
+        voteService.createVotesForUser(dacUser, e, type, isManualReview);
     }
 
 }
