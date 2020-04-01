@@ -23,8 +23,10 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest> {
         dar.setId(resultSet.getInt("id"));
         dar.setReferenceId(resultSet.getString("reference_id"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
+        // Handle nested quotes
+        String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");
         // Inserted json data ends up double-escaped via standard jdbi insert.
-        String escapedDataString = StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(darDataString));
+        String escapedDataString = StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(quoteFixedDataString));
         try {
             DataAccessRequestData data = DataAccessRequestData.fromString(escapedDataString);
             data.setReferenceId(dar.getReferenceId());

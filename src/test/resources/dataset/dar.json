@@ -9,7 +9,7 @@
     "timeSecond": 1559052991
   },
   "hmb": true,
-  "rus": "The objective of the proposed project is to identify germline mutations associated with lung cancer risk in smokers. We will assess mutation frequency in a set of genes of interest (300 genes) in the TCGA data to identify genes with mutations enriched in lung cancer as compared to those with similar mutation rates as the reference populations in gnomAD non-TCGA datasets and TCGA non-lung cancer cohorts, with an emphasis on loss of function mutations. In the TCGA cohorts, germline mutations will be assessed and correlated to smoking status.For this study, the different datasets will be analyzed separately. We will only consider population mutation frequency, not mutation frequency in individuals, eliminating additional risks to participants. The proposed research is consistent with the data use limitations for the requested datasets as GnomAD and The Cancer Genome Atlas permit use of their data for biomedical research by qualified investigators. We will use Exacloud, the secure OHSU compute cluster, for storage and analysis of dbGaP data to avoid Cloud computing. We are requesting access to three additional data sets with no change in the goals or methods in our initial RUS. Access to \\u0027Transdisciplinary Research Into Cancer of the Lung (TRICL) - Exome Plus Targeted Sequencing\\u0027 (phs000876) will extend our studies to a case-control (lung cancer-no lung cancer) group with more detailed smoking history available. Access to \\u0027NHLBI GO-ESP: Lung Cohorts Exome Sequencing Project (Lung Health Study of Chronic Obstructive Pulmonary Disease)\\u0027 (phs000291) and \\u0027Genetic Epidemiology of COPD (COPDGene) Funded by the National Heart, Lung, and Blood Institute\\u0027 (phs000179) to extend our study to well characterized smoking populations without a history of lung cancer. We expect that inclusion of these groups will allow us to determine whether identified mutations are specific to lung cancer, or general to lung disease.\\\\n",
+  "rus": "Recent \"genome-wide association studies\" (GWAS) and their meta-analysis have identified numerous common genetic variants associated with coronary artery disease (CAD)/myocardial infarction (MI) risk. However, these variants can explain only a small proportion of the heritable risk for the disease (\"missing heritability\" issue). Meanwhile there is growing evidence that multi-loci interactions, including epistasis, may contribute to genetic explanation for CAD/MI risk but have not been unveiled yet. Compared to GWAS studies which test the associations of single common SNPs to the disease, multi-locus association analyses aim to test the effect of combinations for two or more SNPs. Accessing and mining the individual-level genotype data together with CAD-related phenotype information will help us to further investigate the genetic etiology of CAD. This dbGaP dataset will be analyzed independently and will be used only for research purposes. These data will not be used to determine the individual identity or family members within pedigree structures. In all cases, the datasets will be used to understand the genetics of CAD/MI.\n",
   "city": "Cambridge",
   "state": "MA",
   "urlDAA": "https://storage.googleapis.com/broad-dsde-dev-consent/random",
@@ -42,19 +42,27 @@
   "department": "Data Science Platform",
   "ontologies": [
     {
-      "id": "http://purl.obolibrary.org/obo/DOID_1324",
-      "label": "lung cancer",
-      "synonyms": [],
-      "definition": "A respiratory system cancer that is located_in the lung."
+      "id": "http://purl.obolibrary.org/obo/DOID_3393",
+      "label": "coronary artery disease",
+      "synonyms": [
+        "CHD (coronary heart disease)",
+        "coronary heart disease",
+        "chronic myocardial ischaemia",
+        "myocardial ischemia",
+        "Coronary disease",
+        "coronary arteriosclerosis",
+        "ischemic heart disease"
+      ],
+      "definition": "An artery disease that is characterized by plaque building up along the inner walls of the arteries of the heart resulting in a narrowing of the arteries and a reduced blood supply to the cardiac muscles."
     },
     {
-      "id": "http://purl.obolibrary.org/obo/DOID_850",
-      "label": "lung disease",
+      "id": "http://purl.obolibrary.org/obo/DOID_5844",
+      "label": "myocardial infarction",
       "synonyms": [
-        "Non-neoplastic pulmonary disorder",
-        "non-neoplastic lung disorder"
+        "Myocardial infarct",
+        "heart attack"
       ],
-      "definition": "A lower respiratory tract disease in which the function of the lungs is adversely affected by narrowing or blockage of the airways resulting in poor air flow, a loss of elasticity in the lungs that produces a decrease in the total volume of air that the lungs are able to hold, and clotting, scarring, or inflammation of the blood vessels that affect the ability of the lungs to take up oxygen and to release carbon dioxide."
+      "definition": "A coronary artery disease characterized by myocardial cell death (myocardial necrosis) due to prolonged ischaemia."
     }
   ],
   "researcher": "Jonathan Lawson (Researcher)",
@@ -67,8 +75,11 @@
         "type": "and",
         "operands": [
           {
-            "name": "http://purl.obolibrary.org/obo/DUO_0000015",
-            "type": "named"
+            "type": "not",
+            "operand": {
+              "name": "http://purl.obolibrary.org/obo/DUO_0000015",
+              "type": "named"
+            }
           },
           {
             "type": "not",
@@ -90,11 +101,11 @@
         "type": "or",
         "operands": [
           {
-            "name": "http://purl.obolibrary.org/obo/DOID_1324",
+            "name": "http://purl.obolibrary.org/obo/DOID_3393",
             "type": "named"
           },
           {
-            "name": "http://purl.obolibrary.org/obo/DOID_850",
+            "name": "http://purl.obolibrary.org/obo/DOID_5844",
             "type": "named"
           }
         ]
@@ -106,14 +117,14 @@
     ]
   },
   "investigator": "Jonathan Lawson (Researcher)",
-  "non_tech_rus": "Lung cancer is the leading cause of death by cancer with more than 60% of lung cancer being diagnosed at a non-curable late stage. Exposure to cigarette smoke is strongly associated with the disease. However only 20% of smokers will develop lung cancer. Current screening approaches use yearly low-dose computed tomography (LDCT) scans in 55 to 80 years old individuals with smoking history. This approach results in a number of false positive that require subsequent biopsy to confirm the diagnosis, an invasive and costly procedure. Our project aims to define a genetic test that will enable the identification of individuals in the high-risk population that are at likely to develop lung cancer.       \\\\n",
+  "non_tech_rus": "Coronary artery disease (CAD)/myocardial infarction (MI) is one of the leading causes of death worldwide. With the help of disease-related high-throughput genotype datasets we aim to investigate the impact of specific genetic variants of interest, and a combination of two or multiple genetic locus interactions (epistasis) on the disease risk, in order to improve our understanding of genetic etiology as well as the \"missing heritability\" issue in the context of CAD.\n",
   "popmigration": false,
   "projectTitle": "Lung Cancer \\\\u0026 Smoking Study",
   "academicEmail": "jon.nsf@gmail.com",
   "datasetDetail": [
     {
-      "name": "TOPMed CHS_HMB_MDS_phs000287.v6.p1.c1",
-      "datasetId": "372"
+      "name": "TOPMed HVH_DS_CVD_IRB_MDS_phs000993.v2.p2.c2",
+      "datasetId": "388"
     }
   ],
   "eraAuthorized": false,
