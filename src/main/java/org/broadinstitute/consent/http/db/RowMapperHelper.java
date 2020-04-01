@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -27,25 +25,5 @@ public interface RowMapperHelper {
         }
         return false;
     }
-
-    /**
-     * JDBI3 does some string escaping when storing @Json data in postgres so it requires a bit of
-     * processing to make it Gson-friendly:
-     * <ul>
-     * <li>Removes surrounding " literals
-     * <li>Removes all of the prepended \" literals surrounding string keys and values
-     * <li>Replaces \\" literals with single quotes
-     * </p>
-     *
-     * @param json Unescaped jsonb data from postgres
-     * @return Escaped json
-     */
-    default String escapeStoredJson(String json) {
-        return StringUtils.
-                stripEnd(StringUtils.stripStart(json, "\""), "\"").
-                replace("\\\"", "\"").
-                replace("\\\\\"", "'");
-    }
-
 
 }
