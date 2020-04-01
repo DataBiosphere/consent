@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -74,14 +75,13 @@ public class UserServiceTest {
         assertEquals(2, u.getRoles().size());
     }
 
-    @Test
+    @Test(expected = NotFoundException.class)
     public void testFindUserByIdNotFound() {
         DACUser u = createUser();
         when(userDAO.findDACUserById(any())).thenReturn(null);
         initService();
 
-        DACUser user = service.findUserById(u.getDacUserId());
-        assertNull(user);
+        service.findUserById(u.getDacUserId());
     }
 
     @Test
@@ -115,14 +115,13 @@ public class UserServiceTest {
         assertEquals(2, u.getRoles().size());
     }
 
-    @Test
+    @Test(expected = NotFoundException.class)
     public void testFindUserByEmailNotFound() {
         DACUser u = createUser();
         when(userDAO.findDACUserByEmail(any())).thenReturn(null);
         initService();
 
-        DACUser user = service.findUserByEmail(u.getEmail());
-        assertNull(user);
+        service.findUserByEmail(u.getEmail());
     }
 
     private DACUser createUser() {
