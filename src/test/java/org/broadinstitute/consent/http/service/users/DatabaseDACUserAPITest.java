@@ -105,24 +105,6 @@ public class DatabaseDACUserAPITest {
     }
 
     @Test
-    public void describeUserByNonExistentEmail() {
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(null);
-        try {
-            userService.findUserByEmail(EMAIL);
-        } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find dacUser for specified email : " + EMAIL));
-        }
-    }
-
-    @Test
-    public void describeUserByEmail() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(dacUser);
-        DACUser user = userService.findUserByEmail(EMAIL);
-        assertNotNull(user);
-    }
-
-    @Test
     public void describeUserByNonExistentId() {
         int id = 1;
         when(dacUserDAO.findDACUserById(id)).thenReturn(null);
