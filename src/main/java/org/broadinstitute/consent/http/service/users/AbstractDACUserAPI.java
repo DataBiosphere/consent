@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.service.users;
 
 /**
+ * @deprecated Use UserService
  * Implement a skeleton for ConsentAPI interface that implements the singleton
  * object management.
  */
+@Deprecated
 public abstract class AbstractDACUserAPI implements DACUserAPI {
 
     /**

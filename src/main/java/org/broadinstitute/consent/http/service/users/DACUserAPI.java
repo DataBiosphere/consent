@@ -11,6 +11,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @deprecated Use UserService
+ */
+@Deprecated
 public interface DACUserAPI {
 
     DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException;

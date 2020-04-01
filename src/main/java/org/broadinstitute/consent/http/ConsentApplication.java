@@ -125,6 +125,7 @@ import org.broadinstitute.consent.http.service.NihServiceAPI;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
@@ -235,6 +236,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
+        final UserService userService = injector.getProvider(UserService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);

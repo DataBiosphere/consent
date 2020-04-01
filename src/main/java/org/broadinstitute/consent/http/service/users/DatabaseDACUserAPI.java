@@ -24,8 +24,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * @deprecated Use UserService
  * Implementation class for DACUserAPI on top of DACUserDAO database support.
  */
+@Deprecated
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final DACUserDAO dacUserDAO;

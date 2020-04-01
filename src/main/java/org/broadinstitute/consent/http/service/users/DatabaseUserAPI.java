@@ -13,7 +13,10 @@ import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import javax.ws.rs.BadRequestException;
 import java.util.List;
 
-
+/**
+ * @deprecated Use UserService
+ */
+@Deprecated
 public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
     public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
