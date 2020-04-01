@@ -1,4 +1,13 @@
 {
+  "_id": {
+    "timestamp": 1559052991,
+    "machineIdentifier": 4645115,
+    "processIdentifier": 1,
+    "counter": 16183287,
+    "date": 1559052991000,
+    "time": 1559052991000,
+    "timeSecond": 1559052991
+  },
   "hmb": true,
   "rus": "The objective of the proposed project is to identify germline mutations associated with lung cancer risk in smokers. We will assess mutation frequency in a set of genes of interest (300 genes) in the TCGA data to identify genes with mutations enriched in lung cancer as compared to those with similar mutation rates as the reference populations in gnomAD non-TCGA datasets and TCGA non-lung cancer cohorts, with an emphasis on loss of function mutations. In the TCGA cohorts, germline mutations will be assessed and correlated to smoking status.For this study, the different datasets will be analyzed separately. We will only consider population mutation frequency, not mutation frequency in individuals, eliminating additional risks to participants. The proposed research is consistent with the data use limitations for the requested datasets as GnomAD and The Cancer Genome Atlas permit use of their data for biomedical research by qualified investigators. We will use Exacloud, the secure OHSU compute cluster, for storage and analysis of dbGaP data to avoid Cloud computing. We are requesting access to three additional data sets with no change in the goals or methods in our initial RUS. Access to \\u0027Transdisciplinary Research Into Cancer of the Lung (TRICL) - Exome Plus Targeted Sequencing\\u0027 (phs000876) will extend our studies to a case-control (lung cancer-no lung cancer) group with more detailed smoking history available. Access to \\u0027NHLBI GO-ESP: Lung Cohorts Exome Sequencing Project (Lung Health Study of Chronic Obstructive Pulmonary Disease)\\u0027 (phs000291) and \\u0027Genetic Epidemiology of COPD (COPDGene) Funded by the National Heart, Lung, and Blood Institute\\u0027 (phs000179) to extend our study to well characterized smoking populations without a history of lung cancer. We expect that inclusion of these groups will allow us to determine whether identified mutations are specific to lung cancer, or general to lung disease.\\\\n",
   "city": "Cambridge",
