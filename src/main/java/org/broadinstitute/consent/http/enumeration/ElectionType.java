@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.enumeration;
 
+import java.util.EnumSet;
+import java.util.Optional;
+
 public enum ElectionType {
 
     DATA_ACCESS("DataAccess"),
@@ -24,6 +27,14 @@ public enum ElectionType {
             }
         }
         return null;
+    }
+
+    public static ElectionType getFromValue(String value) {
+        Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).
+                stream().
+                filter(t -> t.getValue().equalsIgnoreCase(value)).
+                findFirst();
+        return type.orElse(null);
     }
 
 }
