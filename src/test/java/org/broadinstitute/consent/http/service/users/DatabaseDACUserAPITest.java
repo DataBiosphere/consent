@@ -104,23 +104,4 @@ public class DatabaseDACUserAPITest {
         }
     }
 
-    @Test
-    public void describeUserByNonExistentId() {
-        int id = 1;
-        when(dacUserDAO.findDACUserById(id)).thenReturn(null);
-        try {
-            databaseDACUserAPI.describeDACUserById(id);
-        } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find dacUser for specified id : " + id));
-        }
-    }
-
-    @Test
-    public void describeUserById() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(dacUser);
-        DACUser user = databaseDACUserAPI.describeDACUserById(1);
-        assertNotNull(user);
-    }
-
 }

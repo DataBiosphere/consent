@@ -145,7 +145,7 @@ public class DACUserResourceTest {
 
     @Test
     public void testGetUserStatusWithInvalidId() {
-        when(dacUserAPI.describeDACUserById(any())).thenThrow(new NotFoundException());
+        when(userService.findUserById(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.getUserStatus(RandomUtils.nextInt(1, 10));
         assertEquals(404, response.getStatus());
@@ -157,7 +157,7 @@ public class DACUserResourceTest {
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setStatus("pending");
         user.setRationale("rationale");
-        when(dacUserAPI.describeDACUserById(any())).thenReturn(user);
+        when(userService.findUserById(any())).thenReturn(user);
         when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(user);
         when(dacUserAPI.updateUserRationale(any(), any())).thenReturn(user);
         initResource();
@@ -169,7 +169,7 @@ public class DACUserResourceTest {
     public void testUpdateStatusUserNotFound() {
         DACUser user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
-        when(dacUserAPI.describeDACUserById(any())).thenThrow(new NotFoundException());
+        when(userService.findUserById(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.updateStatus(user.getDacUserId(), user.toString());
         assertEquals(200, response.getStatus());
@@ -180,7 +180,7 @@ public class DACUserResourceTest {
         DACUser user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setStatus("Bad Status");
-        when(dacUserAPI.describeDACUserById(any())).thenReturn(user);
+        when(userService.findUserById(any())).thenReturn(user);
         when(dacUserAPI.updateUserStatus(any(), any())).thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.updateStatus(user.getDacUserId(), user.toString());

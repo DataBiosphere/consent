@@ -83,16 +83,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser describeDACUserById(Integer id) throws IllegalArgumentException {
-        DACUser dacUser = dacUserDAO.findDACUserById(id);
-        if (dacUser == null) {
-            throw new NotFoundException("Could not find dacUser for specified id : " + id);
-        }
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
-    }
-
-    @Override
     public DACUser updateUserStatus(String status, Integer userId) {
         Integer statusId = RoleStatus.getValueByStatus(status);
         validateExistentUserById(userId);
@@ -100,7 +90,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException(status + " is not a valid status.");
         }
         dacUserDAO.updateUserStatus(statusId, userId);
-        return describeDACUserById(userId);
+        return userService.findUserById(userId);
     }
 
     @Override
@@ -110,7 +100,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException("Rationale is required.");
         }
         dacUserDAO.updateUserRationale(rationale, userId);
-        return describeDACUserById(userId);
+        return userService.findUserById(userId);
     }
 
     @Override

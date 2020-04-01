@@ -62,6 +62,7 @@ public class DataAccessRequestService {
     private ElectionDAO electionDAO;
     private MongoConsentDB mongo;
     private DacService dacService;
+    private UserService userService;
     private VoteDAO voteDAO;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
@@ -73,7 +74,7 @@ public class DataAccessRequestService {
     @Inject
     public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
                                     ElectionDAO electionDAO, MongoConsentDB mongo, DacService dacService,
-                                    VoteDAO voteDAO) {
+                                    UserService userService, VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
@@ -82,6 +83,7 @@ public class DataAccessRequestService {
         this.electionDAO = electionDAO;
         this.mongo = mongo;
         this.dacService = dacService;
+        this.userService = userService;
         this.voteDAO = voteDAO;
     }
 
@@ -300,7 +302,7 @@ public class DataAccessRequestService {
             List<Document> documents,
             Map<String, Election> referenceIdElectionMap,
             AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
+        DACUser user = userService.findUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
                 map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).

@@ -21,8 +21,6 @@ public interface DACUserAPI {
 
     List<DACUser> describeAdminUsersThatWantToReceiveMails();
 
-    DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
-
     DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;

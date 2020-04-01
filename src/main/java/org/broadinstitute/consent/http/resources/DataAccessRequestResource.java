@@ -177,7 +177,7 @@ public class DataAccessRequestResource extends Resource {
         Integer userId = obtainUserId(dar);
         DACUser user = null;
         try {
-            user = dacUserAPI.describeDACUserById(userId);
+            user = userService.findUserById(userId);
         } catch (NotFoundException e) {
             logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
         }

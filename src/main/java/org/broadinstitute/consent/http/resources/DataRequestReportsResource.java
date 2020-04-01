@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
@@ -26,13 +27,13 @@ public class DataRequestReportsResource extends Resource {
 
     private final ResearcherService researcherService;
 
-    private final DACUserAPI dacUserAPI;
+    private final UserService userService;
 
-
-    public DataRequestReportsResource(ResearcherService researcherService, DACUserAPI dacUserAPI) {
+    @Inject
+    public DataRequestReportsResource(ResearcherService researcherService, UserService userService) {
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.researcherService = researcherService;
-        this.dacUserAPI = dacUserAPI;
+        this.userService = userService;
     }
 
     // TODO: Undocumented
@@ -43,7 +44,7 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-        DACUser user = dacUserAPI.describeDACUserById(dar.getInteger(DarConstants.USER_ID));
+        DACUser user = userService.findUserById(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try {
             String sDUR = darApi.getStructuredDURForPdf(dar);

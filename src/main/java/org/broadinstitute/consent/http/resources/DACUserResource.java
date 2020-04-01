@@ -127,7 +127,7 @@ public class DACUserResource extends Resource {
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
         Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
         Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
-        DACUser user = dacUserAPI.describeDACUserById(userId);
+        DACUser user = userService.findUserById(userId);
         if (statusOpt.isPresent()) {
             try {
                 user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
@@ -153,7 +153,7 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
-            return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
+            return Response.ok(userService.findUserById(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

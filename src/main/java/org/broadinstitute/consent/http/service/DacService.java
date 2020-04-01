@@ -46,16 +46,19 @@ public class DacService {
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private DataAccessRequestDAO dataAccessRequestDAO;
+    private UserService userService;
     private VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, VoteService voteService) {
+                      ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, UserService userService,
+                      VoteService voteService) {
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
+        this.userService = userService;
         this.voteService = voteService;
     }
 
@@ -143,7 +146,7 @@ public class DacService {
     }
 
     public DACUser findUserById(Integer id) throws IllegalArgumentException {
-        return dacUserDAO.findDACUserById(id);
+        return userService.findUserById(id);
     }
 
     public Set<DataSetDTO> findDatasetsByDacId(AuthUser authUser, Integer dacId) {
@@ -185,7 +188,7 @@ public class DacService {
 
     public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
-        DACUser updatedUser = dacUserDAO.findDACUserById(user.getDacUserId());
+        DACUser updatedUser = userService.findUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
@@ -196,7 +199,7 @@ public class DacService {
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
             voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
         }
-        return dacUserDAO.findDACUserById(updatedUser.getDacUserId());
+        return userService.findUserById(updatedUser.getDacUserId());
     }
 
     public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
