@@ -8,62 +8,66 @@
     "time": 1559052991000,
     "timeSecond": 1559052991
   },
+  "hmb": true,
+  "rus": "Recent \"genome-wide association studies\" (GWAS) and their meta-analysis have identified numerous common genetic variants associated with coronary artery disease (CAD)/myocardial infarction (MI) risk. However, these variants can explain only a small proportion of the heritable risk for the disease (\"missing heritability\" issue). Meanwhile there is growing evidence that multi-loci interactions, including epistasis, may contribute to genetic explanation for CAD/MI risk but have not been unveiled yet. Compared to GWAS studies which test the associations of single common SNPs to the disease, multi-locus association analyses aim to test the effect of combinations for two or more SNPs. Accessing and mining the individual-level genotype data together with CAD-related phenotype information will help us to further investigate the genetic etiology of CAD. This dbGaP dataset will be analyzed independently and will be used only for research purposes. These data will not be used to determine the individual identity or family members within pedigree structures. In all cases, the datasets will be used to understand the genetics of CAD/MI.\n",
+  "city": "Cambridge",
+  "state": "MA",
+  "urlDAA": "https://storage.googleapis.com/broad-dsde-dev-consent/random",
+  "userId": 4949,
+  "country": "USA",
+  "isThePi": "true",
+  "methods": true,
+  "nameDAA": "",
+  "zipcode": "02104",
+  "address1": "105 Broadway",
+  "dar_code": "DAR-57",
   "datasets": [
     {
-      "key": "377",
-      "value": "377",
-      "label": "TOPMed COPDGene_DS_CS_RD_phs000951.v2.p2.c2 | NHLBI | DEV-CG-4421"
+      "key": "372",
+      "label": "TOPMed CHS_HMB_MDS_phs000287.v6.p1.c1 | NHLBI | DEV-CG-4441",
+      "value": "372"
     }
   ],
-  "dar_code": "DAR-29",
-  "checkCollaborator": true,
-  "rus": "Sample RUS (\"missing heritability\" issue)",
-  "non_tech_rus": "Sample RUS",
-  "eraAuthorized": false,
+  "diseases": true,
+  "sortDate": 1585755829773,
+  "addiction": false,
+  "datasetId": [
+    372
+  ],
+  "forProfit": false,
+  "nothealth": false,
+  "onegender": false,
+  "pediatric": false,
+  "createDate": 1559062668000,
+  "department": "Data Science Platform",
   "ontologies": [
     {
-      "id": "http://purl.obolibrary.org/obo/DOID_850",
-      "label": "lung disease",
-      "definition": "A lower respiratory tract disease in which the function of the lungs is adversely affected by narrowing or blockage of the airways resulting in poor air flow, a loss of elasticity in the lungs that produces a decrease in the total volume of air that the lungs are able to hold, and clotting, scarring, or inflammation of the blood vessels that affect the ability of the lungs to take up oxygen and to release carbon dioxide.",
+      "id": "http://purl.obolibrary.org/obo/DOID_3393",
+      "label": "coronary artery disease",
       "synonyms": [
-        "Non-neoplastic pulmonary disorder",
-        "non-neoplastic lung disorder"
-      ]
+        "CHD (coronary heart disease)",
+        "coronary heart disease",
+        "chronic myocardial ischaemia",
+        "myocardial ischemia",
+        "Coronary disease",
+        "coronary arteriosclerosis",
+        "ischemic heart disease"
+      ],
+      "definition": "An artery disease that is characterized by plaque building up along the inner walls of the arteries of the heart resulting in a narrowing of the arteries and a reduced blood supply to the cardiac muscles."
+    },
+    {
+      "id": "http://purl.obolibrary.org/obo/DOID_5844",
+      "label": "myocardial infarction",
+      "synonyms": [
+        "Myocardial infarct",
+        "heart attack"
+      ],
+      "definition": "A coronary artery disease characterized by myocardial cell death (myocardial necrosis) due to prolonged ischaemia."
     }
   ],
-  "onegender": false,
-  "diseases": true,
-  "methods": true,
-  "hmb": true,
-  "forProfit": false,
-  "pediatric": false,
-  "illegalbehave": false,
-  "addiction": false,
-  "sexualdiseases": false,
-  "stigmatizediseases": false,
-  "vulnerablepop": false,
-  "popmigration": false,
-  "psychtraits": false,
-  "nothealth": false,
-  "investigator": "Researcher",
-  "researcher": "Researcher",
-  "projectTitle": "Lung Disease Study",
-  "isThePi": "true",
-  "urlDAA": "DAA url",
-  "nameDAA": "",
-  "eraExpiration": false,
+  "researcher": "Jonathan Lawson (Researcher)",
   "institution": "Broad Institute",
-  "department": "Data Science Platform",
-  "address1": "105 Broadway",
-  "city": "Cambridge",
-  "zipcode": "02104",
-  "country": "USA",
-  "state": "MA",
-  "academicEmail": "researcher@gmail.com",
-  "userId": 4949,
-  "datasetId": [
-    377
-  ],
+  "psychtraits": false,
   "restriction": {
     "type": "and",
     "operands": [
@@ -71,42 +75,65 @@
         "type": "and",
         "operands": [
           {
-            "type": "named",
-            "name": "http://purl.obolibrary.org/obo/DUO_0000015"
-          },
-          {
             "type": "not",
             "operand": {
-              "type": "named",
-              "name": "http://purl.obolibrary.org/obo/DUO_0000011"
+              "name": "http://purl.obolibrary.org/obo/DUO_0000015",
+              "type": "named"
             }
           },
           {
             "type": "not",
             "operand": {
-              "type": "named",
-              "name": "http://www.broadinstitute.org/ontologies/DUOS/control"
+              "name": "http://purl.obolibrary.org/obo/DUO_0000011",
+              "type": "named"
+            }
+          },
+          {
+            "type": "not",
+            "operand": {
+              "name": "http://www.broadinstitute.org/ontologies/DUOS/control",
+              "type": "named"
             }
           }
         ]
       },
       {
-        "type": "named",
-        "name": "http://purl.obolibrary.org/obo/DOID_850"
+        "type": "or",
+        "operands": [
+          {
+            "name": "http://purl.obolibrary.org/obo/DOID_3393",
+            "type": "named"
+          },
+          {
+            "name": "http://purl.obolibrary.org/obo/DOID_5844",
+            "type": "named"
+          }
+        ]
       },
       {
-        "type": "named",
-        "name": "http://purl.obolibrary.org/obo/DUO_0000018"
+        "name": "http://purl.obolibrary.org/obo/DUO_0000018",
+        "type": "named"
       }
     ]
   },
-  "valid_restriction": true,
-  "translatedUseRestriction": "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used for methods development research [NMDS=0]<br>Data will be used to study:  lung disease [DOID_850(CC)]<br>Data will not be used for commercial purpose<br>",
-  "sortDate": 1561149767889,
+  "investigator": "Jonathan Lawson (Researcher)",
+  "non_tech_rus": "Coronary artery disease (CAD)/myocardial infarction (MI) is one of the leading causes of death worldwide. With the help of disease-related high-throughput genotype datasets we aim to investigate the impact of specific genetic variants of interest, and a combination of two or multiple genetic locus interactions (epistasis) on the disease risk, in order to improve our understanding of genetic etiology as well as the \"missing heritability\" issue in the context of CAD.\n",
+  "popmigration": false,
+  "projectTitle": "Lung Cancer \\\\u0026 Smoking Study",
+  "academicEmail": "jon.nsf@gmail.com",
   "datasetDetail": [
     {
-      "datasetId": "377",
-      "name": "TOPMed COPDGene_DS_CS_RD_phs000951.v2.p2.c2"
+      "name": "TOPMed HVH_DS_CVD_IRB_MDS_phs000993.v2.p2.c2",
+      "datasetId": "388"
     }
-  ]
+  ],
+  "eraAuthorized": false,
+  "eraExpiration": false,
+  "illegalbehave": false,
+  "vulnerablepop": false,
+  "sexualdiseases": false,
+  "checkCollaborator": true,
+  "valid_restriction": true,
+  "stigmatizediseases": false,
+  "translatedUseRestriction": "Samples will be used under the following conditions:\\\\u003cbr\\\\u003eData will be used for health/medical/biomedical research \\\\u003cbr\\\\u003eData will be used for methods development research [NMDS\\\\u003d0]\\\\u003cbr\\\\u003eData will be used to study:  lung cancer [DOID_1324(CC)], lung disease [DOID_850(CC)]\\\\u003cbr\\\\u003eData will not be used for commercial purpose\\\\u003cbr\\\\u003e"
 }
