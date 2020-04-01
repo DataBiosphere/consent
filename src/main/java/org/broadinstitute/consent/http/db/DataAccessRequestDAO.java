@@ -18,13 +18,13 @@ import java.util.List;
 @RegisterRowMapper(DataAccessRequestMapper.class)
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
 
-    @SqlQuery("SELECT * FROM data_access_request")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request")
     List<DataAccessRequest> findAll();
 
-    @SqlQuery("SELECT * FROM data_access_request WHERE reference_id = :referenceId limit 1")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id = :referenceId limit 1")
     DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery("SELECT * FROM data_access_request WHERE reference_id IN (<referenceIds>)")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id IN (<referenceIds>)")
     List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @RegisterArgumentFactory(JsonArgumentFactory.class)
