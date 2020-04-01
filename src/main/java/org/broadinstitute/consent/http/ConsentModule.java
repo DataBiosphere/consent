@@ -195,13 +195,12 @@ public class ConsentModule extends AbstractModule {
     PendingCaseService providesPendingCaseService() {
         return new PendingCaseService(
                 providesConsentDAO(),
-                providesDACUserDAO(),
                 providesDataAccessRequestService(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesUserRoleDAO(),
                 providesVoteDAO(),
                 providesDacService(),
+                providesUserService(),
                 providesVoteService());
     }
 
