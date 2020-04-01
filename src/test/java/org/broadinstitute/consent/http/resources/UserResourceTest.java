@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,6 +30,9 @@ public class UserResourceTest {
     @Mock
     private UserAPI userAPI;
 
+    @Mock
+    private UserService userService;
+
     private UserResource userResource;
 
     @Mock
@@ -51,7 +55,7 @@ public class UserResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
-        userResource = new UserResource(userAPI);
+        userResource = new UserResource(userAPI, userService);
     }
 
     @Test
@@ -66,7 +70,7 @@ public class UserResourceTest {
         roles.add(researcher);
         roles.add(admin);
         user.setRoles(roles);
-        when(userAPI.findUserByEmail(user.getEmail())).thenReturn(user);
+        when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
         Response response = userResource.createResearcher(uriInfo, authUser);
         Assert.assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
     }

@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 
 import javax.ws.rs.BadRequestException;
@@ -19,8 +20,8 @@ import java.util.List;
 @Deprecated
 public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
-    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
-        super(userDAO, roleDAO, userHandlerAPI, researcherPropertyDAO);
+    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO, UserService userService) {
+        super(userDAO, roleDAO, userHandlerAPI, researcherPropertyDAO, userService);
     }
 
     @Override
@@ -28,16 +29,6 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
         validateEmail(user.getEmail());
         validateRoles(user.getRoles());
         return createDACUser(user);
-    }
-
-    @Override
-    public DACUser findUserByEmail(String email) {
-        DACUser dacUser = dacUserDAO.findDACUserByEmail(email);
-        if (dacUser == null) {
-            return null;
-        }
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
     }
 
     private void validateEmail(String emailToValidate) {

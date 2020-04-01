@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.service.users.UserAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class ResearcherResourceTest {
     ResearcherService researcherService;
 
     @Mock
-    UserAPI userAPI;
+    UserService userService;
 
     @Mock
     private UriInfo uriInfo;
@@ -57,7 +57,7 @@ public class ResearcherResourceTest {
     }
 
     private void initResource() {
-        resource = new ResearcherResource(researcherService, userAPI);
+        resource = new ResearcherResource(researcherService, userService);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class ResearcherResourceTest {
         DACUser authedDacUser = new DACUser();
         authedDacUser.setDacUserId(1);
         authedDacUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-        when(userAPI.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
         initResource();
 
         // Request properties for self
@@ -134,7 +134,7 @@ public class ResearcherResourceTest {
         DACUser authedDacUser = new DACUser();
         authedDacUser.setDacUserId(1);
         authedDacUser.addRole(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-        when(userAPI.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
         initResource();
 
         // Request properties for self
@@ -152,7 +152,7 @@ public class ResearcherResourceTest {
         DACUser authedDacUser = new DACUser();
         authedDacUser.setDacUserId(1);
         authedDacUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-        when(userAPI.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
         initResource();
 
         // Request properties for self
@@ -170,7 +170,7 @@ public class ResearcherResourceTest {
         DACUser authedDacUser = new DACUser();
         authedDacUser.setDacUserId(1);
         authedDacUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-        when(userAPI.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
         initResource();
 
         // Request properties for self
@@ -188,7 +188,7 @@ public class ResearcherResourceTest {
         DACUser authedDacUser = new DACUser();
         authedDacUser.setDacUserId(1);
         authedDacUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-        when(userAPI.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
         initResource();
 
         // Request properties for self

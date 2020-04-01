@@ -2,14 +2,15 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
@@ -55,6 +57,19 @@ public class ConsentResource extends Resource {
     private final MatchAPI matchAPI;
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final ElectionAPI electionAPI;
+    private final UserService userService;
+
+    @Inject
+    public ConsentResource(UserService userService) {
+        this.api = AbstractConsentAPI.getInstance();
+        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
+        this.matchAPI = AbstractMatchAPI.getInstance();
+        this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
+        this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
+        this.electionAPI = AbstractElectionAPI.getInstance();
+        this.userService = userService;
+    }
 
     @Path("{id}")
     @GET
@@ -86,7 +101,7 @@ public class ConsentResource extends Resource {
     @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
         try {
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            DACUser dacUser = userService.findUserByEmail(user.getName());
             if(rec.getUseRestriction() != null){
                 useRestrictionValidatorAPI.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
             }
@@ -123,7 +138,7 @@ public class ConsentResource extends Resource {
             if (updated.getDataUseLetter() != null) {
                 checkValidDUL(updated);
             }
-            DACUser dacUser = dacUserAPI.describeDACUserByEmail(user.getName());
+            DACUser dacUser = userService.findUserByEmail(user.getName());
             updated = api.update(id, updated);
             auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
@@ -186,17 +201,6 @@ public class ConsentResource extends Resource {
 
     private Consent populateFromApi(String id) throws UnknownIdentifierException {
         return api.retrieve(id);
-    }
-
-
-    public ConsentResource() {
-        this.api = AbstractConsentAPI.getInstance();
-        this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
-        this.matchAPI = AbstractMatchAPI.getInstance();
-        this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
-        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
-        this.electionAPI = AbstractElectionAPI.getInstance();
     }
 
     private void checkValidDUL(Consent rec) {

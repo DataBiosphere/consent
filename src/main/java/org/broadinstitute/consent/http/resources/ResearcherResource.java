@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.service.users.UserAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 
 import javax.annotation.security.PermitAll;
@@ -35,11 +36,12 @@ import java.util.stream.Stream;
 public class ResearcherResource extends Resource {
 
     private ResearcherService researcherService;
-    private final UserAPI userAPI;
+    private final UserService userService;
 
-    public ResearcherResource(ResearcherService researcherService, UserAPI userAPI) {
+    @Inject
+    public ResearcherResource(ResearcherService researcherService, UserService userService) {
         this.researcherService = researcherService;
-        this.userAPI = userAPI;
+        this.userService = userService;
     }
 
     @POST
@@ -110,7 +112,7 @@ public class ResearcherResource extends Resource {
 
     private DACUser findByAuthUser(AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
-        DACUser dacUser = userAPI.findUserByEmail(googleUser.getEmail());
+        DACUser dacUser = userService.findUserByEmail(googleUser.getEmail());
         if (dacUser == null) {
             throw new NotFoundException("Unable to find user :" + user.getName());
         }

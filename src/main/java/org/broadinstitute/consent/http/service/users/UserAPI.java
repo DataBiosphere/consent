@@ -12,6 +12,4 @@ public interface UserAPI {
 
     DACUser createUser(DACUser user);
 
-    DACUser findUserByEmail(String email);
-
 }

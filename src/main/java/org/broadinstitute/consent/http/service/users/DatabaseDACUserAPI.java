@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -34,9 +35,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     protected final UserRoleDAO userRoleDAO;
     private final UserHandlerAPI rolesHandler;
     private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserService userService;
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, researcherPropertyDAO));
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO, UserService userService) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, researcherPropertyDAO, userService));
     }
 
     protected org.apache.log4j.Logger logger() {
@@ -49,11 +51,12 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
+    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO, UserService userService) {
         this.dacUserDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
         this.rolesHandler = userHandlerAPI;
         this.researcherPropertyDAO = researcherPropertyDAO;
+        this.userService = userService;
     }
 
     @Override
@@ -72,16 +75,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
 
-    }
-
-    @Override
-    public DACUser describeDACUserByEmail(String email) throws NotFoundException {
-        DACUser dacUser = dacUserDAO.findDACUserByEmail(email);
-        if (dacUser == null) {
-            throw new NotFoundException("Could not find dacUser for specified email : " + email);
-        }
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
     }
 
     @Override
@@ -133,7 +126,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        DACUser dacUser = describeDACUserByEmail(updatedUser.getEmail());
+        DACUser dacUser = userService.findUserByEmail(updatedUser.getEmail());
         dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
         return dacUser;
     }

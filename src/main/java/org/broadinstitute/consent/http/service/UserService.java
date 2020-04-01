@@ -14,7 +14,7 @@ public class UserService {
         this.roleDAO = roleDAO;
     }
 
-    DACUser findUserById(Integer id) {
+    public DACUser findUserById(Integer id) {
         DACUser dacUser = userDAO.findDACUserById(id);
         if (dacUser == null) {
             return null;
@@ -23,7 +23,7 @@ public class UserService {
         return dacUser;
     }
 
-    DACUser findUserByEmail(String email) {
+    public DACUser findUserByEmail(String email) {
         DACUser dacUser = userDAO.findDACUserByEmail(email);
         if (dacUser == null) {
             return null;

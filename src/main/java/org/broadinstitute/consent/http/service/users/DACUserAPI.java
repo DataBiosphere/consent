@@ -19,8 +19,6 @@ public interface DACUserAPI {
 
     DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException;
 
-    DACUser describeDACUserByEmail(String email) throws NotFoundException;
-
     List<DACUser> describeAdminUsersThatWantToReceiveMails();
 
     DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
