@@ -9,7 +9,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DatabaseElectionMapper implements RowMapper<Election>, RowMapperHelper {
+public class SimpleElectionMapper implements RowMapper<Election>, RowMapperHelper {
 
     @Override
     public Election map(ResultSet r, StatementContext ctx) throws SQLException {
