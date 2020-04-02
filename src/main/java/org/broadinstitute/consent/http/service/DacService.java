@@ -285,6 +285,31 @@ public class DacService {
     }
 
     /**
+     * Filter data access requests by the DAC they are associated with.
+     */
+    List<DataAccessRequest> filterDataAccessRequestsByDac(List<DataAccessRequest> documents, AuthUser authUser) {
+        if (isAuthUserAdmin(authUser)) {
+            return documents;
+        }
+        // Chair and Member users can see data access requests that they have DAC access to
+        if (isAuthUserChairOrMember(authUser)) {
+            List<Integer> accessibleDatasetIds = dataSetDAO.findDataSetsByAuthUserEmail(authUser.getName()).
+                    stream().
+                    map(DataSet::getDataSetId).
+                    collect(Collectors.toList());
+
+            return documents.
+                    stream().
+                    filter(d -> {
+                        List<Integer> datasetIds = d.getData().getDatasetId();
+                        return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
+                    }).
+                    collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+
+    /**
      * Filter consent manages by the DAC they are associated with.
      */
     List<ConsentManage> filterConsentManageByDAC(List<ConsentManage> consentManages,
