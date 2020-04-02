@@ -33,12 +33,11 @@ public class DACUserRoleMapper implements RowMapper<DACUser>, RowMapperHelper {
             if (hasColumn(r, "completed")) {
                 user.setProfileCompleted(Boolean.valueOf(r.getString("completed")));
             }
-            users.put(user.getDacUserId(), user);
         } else {
             user = users.get(r.getInt("dacUserId"));
             addRole(r, user);
-            users.put(user.getDacUserId(), user);
         }
+        users.put(user.getDacUserId(), user);
         return user;
     }
 
