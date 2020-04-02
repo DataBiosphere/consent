@@ -54,7 +54,7 @@ public class DatabaseDACUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, null, userService);
+        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, userService);
     }
 
     @Test

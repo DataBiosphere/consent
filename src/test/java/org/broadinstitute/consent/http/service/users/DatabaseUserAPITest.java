@@ -40,7 +40,7 @@ public class DatabaseUserAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, null, userService);
+        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, userService);
     }
 
 

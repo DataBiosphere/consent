@@ -4,7 +4,6 @@ package org.broadinstitute.consent.http.service.users;
 import freemarker.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -18,7 +17,6 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +32,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     protected final DACUserDAO dacUserDAO;
     protected final UserRoleDAO userRoleDAO;
     private final UserHandlerAPI rolesHandler;
-    private final ResearcherPropertyDAO researcherPropertyDAO;
     private final UserService userService;
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO, UserService userService) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, researcherPropertyDAO, userService));
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, userService));
     }
 
     protected org.apache.log4j.Logger logger() {
@@ -51,11 +48,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO, UserService userService) {
+    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
         this.dacUserDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
         this.rolesHandler = userHandlerAPI;
-        this.researcherPropertyDAO = researcherPropertyDAO;
         this.userService = userService;
     }
 
@@ -136,17 +132,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
         }
         dacUserDAO.deleteDACUserByEmail(email);
-    }
-
-    @Override
-    public Collection<DACUser> describeUsers() {
-        Collection<DACUser> users = dacUserDAO.findUsers();
-        users.forEach(user -> {
-            // TODO: This nested dao call isn't scalable. See DUOS-404
-            String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
-            user.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
-        });
-        return users;
     }
 
     @Override

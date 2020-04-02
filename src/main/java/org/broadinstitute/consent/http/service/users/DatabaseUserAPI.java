@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service.users;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -20,8 +19,8 @@ import java.util.List;
 @Deprecated
 public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
-    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO, UserService userService) {
-        super(userDAO, roleDAO, userHandlerAPI, researcherPropertyDAO, userService);
+    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
+        super(userDAO, roleDAO, userHandlerAPI, userService);
     }
 
     @Override

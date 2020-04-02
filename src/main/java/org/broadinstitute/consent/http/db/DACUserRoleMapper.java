@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DACUserRoleMapper implements RowMapper<DACUser> {
+public class DACUserRoleMapper implements RowMapper<DACUser>, RowMapperHelper {
 
     private Map<Integer, DACUser> users = new HashMap<>();
 
@@ -29,17 +29,26 @@ public class DACUserRoleMapper implements RowMapper<DACUser> {
             user.setStatus(getStatus(r));
             user.setRationale(r.getString("rationale"));
             user.setRoles(new ArrayList<>());
-            Integer dacId = (r.getObject("dac_id") == null) ? null : r.getInt("dac_id");
-            UserRole role = new UserRole(r.getInt("user_role_id"), r.getInt("user_id"), r.getInt("roleId"), r.getString("name"), dacId);
-            user.getRoles().add(role);
+            addRole(r, user);
+            if (hasColumn(r, "completed")) {
+                user.setProfileCompleted(Boolean.valueOf(r.getString("completed")));
+            }
             users.put(user.getDacUserId(), user);
         } else {
             user = users.get(r.getInt("dacUserId"));
+            addRole(r, user);
+        }
+        return user;
+    }
+
+    private void addRole(ResultSet r, DACUser user) throws SQLException {
+        if (r.getObject("user_role_id") != null &&
+                r.getObject("user_id") != null &&
+                r.getObject("roleId") != null) {
             Integer dacId = (r.getObject("dac_id") == null) ? null : r.getInt("dac_id");
             UserRole role = new UserRole(r.getInt("user_role_id"), r.getInt("user_id"), r.getInt("roleId"), r.getString("name"), dacId);
             user.getRoles().add(role);
         }
-        return user;
     }
 
     private String getStatus(ResultSet r) {

@@ -61,12 +61,13 @@ public class DAOTestHelper {
     static VoteDAO voteDAO;
     static DataAccessRequestDAO dataAccessRequestDAO;
     static MailMessageDAO mailMessageDAO;
+    static ResearcherPropertyDAO researcherPropertyDAO;
 
     private static List<Integer> createdDataSetIds = new ArrayList<>();
     private static List<Integer> createdDacIds = new ArrayList<>();
     private static List<String> createdConsentIds = new ArrayList<>();
     private static List<Integer> createdElectionIds = new ArrayList<>();
-    private static List<String> createdUserEmails = new ArrayList<>();
+    private static List<Integer> createdUserIds = new ArrayList<>();
     private static List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
@@ -111,6 +112,7 @@ public class DAOTestHelper {
         voteDAO = jdbi.onDemand(VoteDAO.class);
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
+        researcherPropertyDAO = jdbi.onDemand(ResearcherPropertyDAO.class);
     }
 
     @AfterClass
@@ -133,10 +135,11 @@ public class DAOTestHelper {
             dacDAO.deleteDacMembers(id);
             dacDAO.deleteDac(id);
         });
-        createdUserEmails.forEach(email -> {
-            userRoleDAO.findRolesByUserEmail(email).
+        createdUserIds.forEach(id -> {
+            researcherPropertyDAO.deleteAllPropertiesByUser(id);
+            userRoleDAO.findRolesByUserId(id).
                     forEach(ur -> userRoleDAO.removeSingleUserRole(ur.getUserId(), ur.getRoleId()));
-            userDAO.deleteDACUserByEmail(email);
+            userDAO.deleteDACUserById(id);
         });
         createdDataAccessRequestReferenceIds.forEach(d ->
                 dataAccessRequestDAO.deleteByReferenceId(d));
@@ -222,7 +225,7 @@ public class DAOTestHelper {
                 "." +
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertDACUser(email, "display name", new Date());
-        createdUserEmails.add(email);
+        createdUserIds.add(userId);
         return userDAO.findDACUserById(userId);
     }
 
@@ -237,7 +240,7 @@ public class DAOTestHelper {
                 RandomStringUtils.randomAlphabetic(i3);
         Integer userId = userDAO.insertDACUser(email, "display name", new Date());
         userRoleDAO.insertSingleUserRole(roleId, userId);
-        createdUserEmails.add(email);
+        createdUserIds.add(userId);
         return userDAO.findDACUserById(userId);
     }
 

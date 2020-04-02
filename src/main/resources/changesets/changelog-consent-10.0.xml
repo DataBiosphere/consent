@@ -7,16 +7,6 @@
     <!--Admin user-->
     <changeSet author="vvicario" id="41">
         <validCheckSum>ANY</validCheckSum>
-        <insert tableName="dacuser">
-            <column name="dacuserid" value="3333"/>
-            <column name="displayname" value="Moran Cabili-Kalmar"/>
-            <column name="email" value="nmcabili@broadinstitute.org"/>
-            <column name="createdate" value="2015-08-21 13:58:50"/>
-        </insert>
-        <insert tableName="user_role">
-            <column name="roleid" value="4"/>
-            <column name="dacuserid" value="3333"/>
-        </insert>
     </changeSet>
 
 </databaseChangeLog>
