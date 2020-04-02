@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
+import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
 import org.broadinstitute.consent.http.models.AccessRP;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
@@ -90,7 +92,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select e.* from election e inner join vote v on v.electionId = e.electionId where  v.voteId = :voteId")
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     Election findElectionByVoteId(@Bind("voteId") Integer voteId);
 
     @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, "
@@ -150,7 +152,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "inner join (select referenceId, MAX(createDate) maxDate from election e where e.electionType = :type group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findLastElectionsByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("select count(*) from election e where lower(e.status) = 'open' and e.referenceId = :referenceId")
@@ -159,13 +161,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.status) = lower(:status) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceIds, @Bind("status") String status);
 
     @SqlQuery("select * from election e inner join (select referenceId, MAX(createDate) maxDate from election e where lower(e.electionType) = lower(:type) group by referenceId) " +
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId ")
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("select electionRPId from access_rp arp where arp.electionAccessId = :electionAccessId ")
@@ -201,11 +203,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             + " where lower(e.electionType) = lower(:type)  and lower(e.status) in (<status>) order by createDate asc")
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @BindList("status") List<String> status);
 
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("select distinct * from election e where  e.electionId in  (<electionIds>)")
     List<Election> findElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
 
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("select * from election e where e.electionId = :electionId")
     Election findElectionById(@Bind("electionId") Integer electionId);
 
@@ -215,11 +217,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlQuery("select datasetId from election where electionId = :electionId ")
     Integer getDatasetIdByElectionId(@Bind("electionId") Integer electionId);
 
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("select distinct * from election where lower(status) = lower(:status) and lower(electionType) = lower(:electionType)")
     List<Election> getElectionByTypeAndStatus(@Bind("electionType") String electionType, @Bind("status") String status);
 
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("select distinct * from election  where lower(status) = lower(:status) and lower(electionType) = lower(:electionType) and referenceId = :referenceId")
     List<Election> getElectionByTypeStatusAndReferenceId(@Bind("electionType") String electionType, @Bind("status") String status, @Bind("referenceId") String referenceId);
 
@@ -254,7 +256,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId  " +
             "AND e.referenceId = :referenceId " +
             "inner join vote v on v.electionId = e.electionId and v.vote = true  and lower(v.type) = 'chairperson' ")
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     Election findDULApprovedElectionByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select  v.vote from vote v where v.electionId = :electionId and lower(v.type) = 'final' ")
@@ -286,7 +288,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
      * @param dacId The Dac id
      * @return List of elections associated to the Dac
      */
-    @UseRowMapper(DatabaseElectionMapper.class)
+    @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("select e1.* from election e1 " +
             "   inner join consentassociations a1 on a1.dataSetId = e1.datasetId " +
             "   inner join consents c1 on c1.consentId = a1.consentId and c1.dac_id = :dacId " +

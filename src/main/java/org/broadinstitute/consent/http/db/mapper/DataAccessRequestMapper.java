@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.text.StringEscapeUtils;
+import org.broadinstitute.consent.http.db.RowMapperHelper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DataAccessRequestMapper implements RowMapper<DataAccessRequest> {
+public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, RowMapperHelper {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -26,7 +27,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest> {
         // Handle nested quotes
         String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");
         // Inserted json data ends up double-escaped via standard jdbi insert.
-        String escapedDataString = StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(quoteFixedDataString));
+        String escapedDataString = unescapeJava(quoteFixedDataString);
         try {
             DataAccessRequestData data = DataAccessRequestData.fromString(escapedDataString);
             data.setReferenceId(dar.getReferenceId());
