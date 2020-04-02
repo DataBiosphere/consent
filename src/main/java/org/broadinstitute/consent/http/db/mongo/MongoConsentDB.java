@@ -103,21 +103,10 @@ public class MongoConsentDB {
         IndexOptions indexOptions = new IndexOptions();
         indexOptions.unique(true);
         indexOptions.sparse(true);
-        getDataAccessRequestCollection().createIndex(indexFields, indexOptions);
 
         // Creates MongoDB Partial DataAccessRequest Index
         BasicDBObject secondIndexFields = new BasicDBObject(PARTIAL_DAR_CODE, 1);
         getPartialDataAccessRequestCollection().createIndex(secondIndexFields, indexOptions);
-
-        FindIterable<Document> documents = getDataAccessRequestCollection().find();
-        documents.forEach((Block<Document>) dar -> {
-            if (dar.get(DAR_CODE) == null) {
-                BasicDBObject object = new BasicDBObject(DAR_CODE, "DAR-" + getNextSequence(DAR_CODE_COUNTER));
-                BasicDBObject set = new BasicDBObject("$set", object);
-                BasicDBObject searchQuery = new BasicDBObject().append(DarConstants.ID, dar.get(DarConstants.ID));
-                getDataAccessRequestCollection().updateOne(searchQuery, set);
-            }
-        });
 
         FindIterable<Document> partialDocuments = getPartialDataAccessRequestCollection().find();
         partialDocuments.forEach((Block<Document>) dar -> {
