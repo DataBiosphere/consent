@@ -37,6 +37,7 @@ public class DACUserRoleMapper implements RowMapper<DACUser>, RowMapperHelper {
         } else {
             user = users.get(r.getInt("dacUserId"));
             addRole(r, user);
+            users.put(user.getDacUserId(), user);
         }
         return user;
     }
