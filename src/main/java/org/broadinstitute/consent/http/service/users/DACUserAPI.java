@@ -11,15 +11,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @deprecated Use UserService
+ */
+@Deprecated
 public interface DACUserAPI {
 
     DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException;
 
-    DACUser describeDACUserByEmail(String email) throws NotFoundException;
-
     List<DACUser> describeAdminUsersThatWantToReceiveMails();
-
-    DACUser describeDACUserById(Integer id) throws IllegalArgumentException;
 
     DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 

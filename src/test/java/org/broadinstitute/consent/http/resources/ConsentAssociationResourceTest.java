@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.ConsentAssociation;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.junit.Assert;
@@ -40,6 +41,9 @@ public class ConsentAssociationResourceTest {
     @Mock
     private DACUserAPI dacUserAPI;
 
+    @Mock
+    private UserService userService;
+
     private ConsentAssociationResource resource;
 
     @Before
@@ -52,7 +56,7 @@ public class ConsentAssociationResourceTest {
     }
 
     private void initResource() {
-        resource = new ConsentAssociationResource();
+        resource = new ConsentAssociationResource(userService);
     }
 
     @Test
@@ -60,7 +64,7 @@ public class ConsentAssociationResourceTest {
         DACUser user = new DACUser();
         user.setEmail("test");
         when(api.hasWorkspaceAssociation(any())).thenReturn(false);
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(user);
+        when(userService.findUserByEmail(any())).thenReturn(user);
         when(api.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();
         AuthUser authUser = new AuthUser(user.getEmail());
@@ -75,7 +79,7 @@ public class ConsentAssociationResourceTest {
         DACUser user = new DACUser();
         user.setEmail("test");
         when(api.hasWorkspaceAssociation(any())).thenReturn(false);
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(user);
+        when(userService.findUserByEmail(any())).thenReturn(user);
         when(api.createAssociation(any(), any(), any())).thenReturn(Collections.emptyList());
         initResource();
         AuthUser authUser = new AuthUser(user.getEmail());

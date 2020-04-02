@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
@@ -49,6 +50,9 @@ public class DACUserResourceTest {
     DACUserAPI dacUserAPI;
 
     @Mock
+    UserService userService;
+
+    @Mock
     private UriInfo uriInfo;
 
     @Mock
@@ -73,7 +77,7 @@ public class DACUserResourceTest {
 
     private void initResource() {
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
-        resource = new DACUserResource();
+        resource = new DACUserResource(userService);
     }
 
     @Test
@@ -83,7 +87,7 @@ public class DACUserResourceTest {
         JsonElement userJson = new Gson().toJsonTree(researcher);
         json.add(DACUserRolesHandler.UPDATED_USER_KEY, userJson);
 
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(researcher);
+        when(userService.findUserByEmail(any())).thenReturn(researcher);
         when(dacUserAPI.updateDACUserById(any(), anyInt())).thenReturn(researcher);
         doNothing().when(dacUserAPI).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
@@ -99,7 +103,7 @@ public class DACUserResourceTest {
         JsonElement userJson = new Gson().toJsonTree(researcher);
         json.add(DACUserRolesHandler.UPDATED_USER_KEY, userJson);
 
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(researcher);
+        when(userService.findUserByEmail(any())).thenReturn(researcher);
         when(dacUserAPI.updateDACUserById(any(), anyInt())).thenReturn(researcher);
         doNothing().when(dacUserAPI).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
@@ -115,7 +119,7 @@ public class DACUserResourceTest {
         JsonElement userJson = new Gson().toJsonTree(admin);
         json.add(DACUserRolesHandler.UPDATED_USER_KEY, userJson);
 
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(admin);
+        when(userService.findUserByEmail(any())).thenReturn(admin);
         when(dacUserAPI.updateDACUserById(any(), anyInt())).thenReturn(admin);
         doNothing().when(dacUserAPI).updateEmailPreference(anyBoolean(), anyInt());
         initResource();
@@ -134,14 +138,14 @@ public class DACUserResourceTest {
 
     @Test(expected = NotFoundException.class)
     public void testRetrieveDACUserWithInvalidEmail() {
-        when(dacUserAPI.describeDACUserByEmail(any())).thenThrow(new NotFoundException());
+        when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
         initResource();
         resource.describe(RandomStringUtils.random(10));
     }
 
     @Test
     public void testGetUserStatusWithInvalidId() {
-        when(dacUserAPI.describeDACUserById(any())).thenThrow(new NotFoundException());
+        when(userService.findUserById(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.getUserStatus(RandomUtils.nextInt(1, 10));
         assertEquals(404, response.getStatus());
@@ -153,7 +157,7 @@ public class DACUserResourceTest {
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setStatus("pending");
         user.setRationale("rationale");
-        when(dacUserAPI.describeDACUserById(any())).thenReturn(user);
+        when(userService.findUserById(any())).thenReturn(user);
         when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(user);
         when(dacUserAPI.updateUserRationale(any(), any())).thenReturn(user);
         initResource();
@@ -165,7 +169,7 @@ public class DACUserResourceTest {
     public void testUpdateStatusUserNotFound() {
         DACUser user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
-        when(dacUserAPI.describeDACUserById(any())).thenThrow(new NotFoundException());
+        when(userService.findUserById(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.updateStatus(user.getDacUserId(), user.toString());
         assertEquals(200, response.getStatus());
@@ -176,7 +180,7 @@ public class DACUserResourceTest {
         DACUser user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setStatus("Bad Status");
-        when(dacUserAPI.describeDACUserById(any())).thenReturn(user);
+        when(userService.findUserById(any())).thenReturn(user);
         when(dacUserAPI.updateUserStatus(any(), any())).thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.updateStatus(user.getDacUserId(), user.toString());

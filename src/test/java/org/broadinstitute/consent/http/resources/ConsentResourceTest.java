@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
@@ -67,6 +68,8 @@ public class ConsentResourceTest {
     @Mock
     private ElectionAPI electionAPI;
     @Mock
+    private UserService userService;
+    @Mock
     UriInfo info;
     @Mock
     UriBuilder builder;
@@ -96,7 +99,7 @@ public class ConsentResourceTest {
         when(AbstractMatchAPI.getInstance()).thenReturn(matchAPI);
         when(AbstractUseRestrictionValidatorAPI.getInstance()).thenReturn(useRestrictionValidatorAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new ConsentResource();
+        resource = new ConsentResource(userService);
     }
 
     @Test
@@ -108,7 +111,7 @@ public class ConsentResourceTest {
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         when(api.create(any())).thenReturn(consent);
         doNothing().when(auditServiceAPI).saveConsentAudit(any(), any(), any(), any());
@@ -130,7 +133,7 @@ public class ConsentResourceTest {
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         when(api.retrieve(any())).thenReturn(consent);
         when(api.update(any(), any())).thenReturn(consent);
@@ -159,7 +162,7 @@ public class ConsentResourceTest {
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
         consent.setConsentId(UUID.randomUUID().toString());
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();
 
@@ -175,7 +178,7 @@ public class ConsentResourceTest {
         Consent consent = new Consent();
         consent.setConsentId(UUID.randomUUID().toString());
         when(api.retrieve(any())).thenReturn(consent);
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();
 
@@ -193,7 +196,7 @@ public class ConsentResourceTest {
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUseLetter(UUID.randomUUID().toString());
         when(api.retrieve(any())).thenReturn(consent);
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();
 
@@ -210,7 +213,7 @@ public class ConsentResourceTest {
         consent.setConsentId(UUID.randomUUID().toString());
         consent.setDataUseLetter(UUID.randomUUID().toString());
         when(api.retrieve(any())).thenReturn(consent);
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         doNothing().when(useRestrictionValidatorAPI).validateUseRestriction(any());
         initResource();
 

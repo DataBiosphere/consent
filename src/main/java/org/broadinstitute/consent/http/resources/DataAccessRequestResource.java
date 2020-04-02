@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateService;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
@@ -90,9 +91,10 @@ public class DataAccessRequestResource extends Resource {
     private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
     private final GCSStore store;
+    private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, GCSStore store) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, GCSStore store, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
@@ -102,6 +104,7 @@ public class DataAccessRequestResource extends Resource {
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.store = store;
+        this.userService = userService;
     }
 
     @POST
@@ -174,7 +177,7 @@ public class DataAccessRequestResource extends Resource {
         Integer userId = obtainUserId(dar);
         DACUser user = null;
         try {
-            user = dacUserAPI.describeDACUserById(userId);
+            user = userService.findUserById(userId);
         } catch (NotFoundException e) {
             logger.severe("Unable to find userId: " + userId + " for data access request id: " + id);
         }
@@ -350,7 +353,7 @@ public class DataAccessRequestResource extends Resource {
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
         // If a user id is provided, ensure that is the current user.
         if (userId != null) {
-            DACUser user = dacUserAPI.describeDACUserByEmail(authUser.getName());
+            DACUser user = userService.findUserByEmail(authUser.getName());
             if (!user.getDacUserId().equals(userId)) {
                 throw new BadRequestException("Unable to query for other users' information.");
             }

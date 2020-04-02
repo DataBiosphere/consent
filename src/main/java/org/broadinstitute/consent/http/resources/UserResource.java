@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -8,6 +9,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.UserAPI;
 
 import javax.annotation.security.PermitAll;
@@ -25,9 +27,12 @@ import java.util.Collections;
 public class UserResource extends Resource {
 
     private final UserAPI userAPI;
+    private final UserService userService;
 
-    public UserResource(UserAPI userAPI) {
+    @Inject
+    public UserResource(UserAPI userAPI, UserService userService) {
         this.userAPI = userAPI;
+        this.userService = userService;
     }
 
     @POST
@@ -42,7 +47,7 @@ public class UserResource extends Resource {
                     entity(new Error("Unable to verify google identity", Response.Status.BAD_REQUEST.getStatusCode())).
                     build();
         }
-        if (userAPI.findUserByEmail(googleUser.getEmail()) != null) {
+        if (userService.findUserByEmail(googleUser.getEmail()) != null) {
             return Response.
                     status(Response.Status.CONFLICT).
                     entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).

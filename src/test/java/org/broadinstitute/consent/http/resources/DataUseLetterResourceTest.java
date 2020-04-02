@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AuditServiceAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -55,6 +56,8 @@ public class DataUseLetterResourceTest {
     private DACUserAPI dacUserAPI;
     @Mock
     private AuditServiceAPI auditServiceAPI;
+    @Mock
+    private UserService userService;
 
     private AuthUser user = new AuthUser("oauthuser@broadinstitute.org");
     private DataUseLetterResource resource;
@@ -71,11 +74,11 @@ public class DataUseLetterResourceTest {
         DACUser dacUser = new DACUser();
         dacUser.setEmail(user.getName());
         dacUser.setDacUserId(1);
-        when(dacUserAPI.describeDACUserByEmail(any())).thenReturn(dacUser);
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractAuditServiceAPI.getInstance()).thenReturn(auditServiceAPI);
-        resource = new DataUseLetterResource(store);
+        resource = new DataUseLetterResource(store, userService);
     }
 
     @Test

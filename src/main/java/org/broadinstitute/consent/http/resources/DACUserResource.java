@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
@@ -10,6 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
@@ -43,10 +45,13 @@ import java.util.stream.Collectors;
 public class DACUserResource extends Resource {
 
     private final DACUserAPI dacUserAPI;
+    private final UserService userService;
     protected final Logger logger = Logger.getLogger(this.getClass().getName());
 
-    public DACUserResource() {
+    @Inject
+    public DACUserResource(UserService userService) {
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
+        this.userService = userService;
     }
 
     @POST
@@ -78,7 +83,7 @@ public class DACUserResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public DACUser describe(@PathParam("email") String email) {
-        return dacUserAPI.describeDACUserByEmail(email);
+        return userService.findUserByEmail(email);
     }
 
     @PUT
@@ -122,7 +127,7 @@ public class DACUserResource extends Resource {
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
         Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
         Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
-        DACUser user = dacUserAPI.describeDACUserById(userId);
+        DACUser user = userService.findUserById(userId);
         if (statusOpt.isPresent()) {
             try {
                 user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
@@ -148,7 +153,7 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response getUserStatus(@PathParam("userId") Integer userId) {
         try {
-            return Response.ok(dacUserAPI.describeDACUserById(userId)).build();
+            return Response.ok(userService.findUserById(userId)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -229,7 +234,7 @@ public class DACUserResource extends Resource {
 
     private DACUser findByAuthUser(AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
-        DACUser dacUser = dacUserAPI.describeDACUserByEmail(googleUser.getEmail());
+        DACUser dacUser = userService.findUserByEmail(googleUser.getEmail());
         if (dacUser == null) {
             throw new NotFoundException("Unable to find user :" + user.getName());
         }

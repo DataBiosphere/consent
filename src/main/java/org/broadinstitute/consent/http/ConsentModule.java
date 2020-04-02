@@ -37,6 +37,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -177,6 +178,7 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesMongo(),
                 providesDacService(),
+                providesUserService(),
                 providesVoteDAO());
     }
 
@@ -193,13 +195,12 @@ public class ConsentModule extends AbstractModule {
     PendingCaseService providesPendingCaseService() {
         return new PendingCaseService(
                 providesConsentDAO(),
-                providesDACUserDAO(),
                 providesDataAccessRequestService(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
-                providesUserRoleDAO(),
                 providesVoteDAO(),
                 providesDacService(),
+                providesUserService(),
                 providesVoteService());
     }
 
@@ -255,6 +256,7 @@ public class ConsentModule extends AbstractModule {
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesDataAccessRequestDAO(),
+                providesUserService(),
                 providesVoteService());
     }
 
@@ -306,6 +308,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     AssociationDAO providesAssociationDAO() {
         return associationDAO;
+    }
+
+    @Provides
+    UserService providesUserService() {
+        return new UserService(providesDACUserDAO(), providesUserRoleDAO());
     }
 
     // Private helpers

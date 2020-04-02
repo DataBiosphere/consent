@@ -3,10 +3,8 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -43,33 +41,31 @@ public class PendingCaseService {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
     private ConsentDAO consentDAO;
-    private DACUserDAO dacUserDAO;
     private DataAccessRequestService dataAccessRequestService;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
-    private UserRoleDAO userRoleDAO;
+
     private VoteDAO voteDAO;
     private DacService dacService;
+    private UserService userService;
     private VoteService voteService;
 
     @Inject
-    public PendingCaseService(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
-                              DataAccessRequestService dataAccessRequestService, DataSetDAO dataSetDAO,
-                              ElectionDAO electionDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO,
-                              DacService dacService, VoteService voteService) {
+    public PendingCaseService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
+                              DataSetDAO dataSetDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
+                              UserService userService, VoteService voteService) {
         this.consentDAO = consentDAO;
-        this.dacUserDAO = dacUserDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
-        this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
         this.dacService = dacService;
+        this.userService = userService;
         this.voteService = voteService;
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
-        DACUser dacUser = findDACUser(authUser);
+        DACUser dacUser = userService.findUserByEmail(authUser.getName());
         List<Integer> roleIds = dacUser.getRoles().stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
@@ -103,7 +99,7 @@ public class PendingCaseService {
     }
 
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
-        DACUser dacUser = findDACUser(authUser);
+        DACUser dacUser = userService.findUserByEmail(authUser.getName());
         Integer dacUserId = dacUser.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
@@ -266,14 +262,6 @@ public class PendingCaseService {
         } else {
             pendingCase.setIsFinalVote(false);
         }
-    }
-
-    // Dao calls do not properly populate the roles, so do it manually. TODO: Fix with DUOS-615
-    private DACUser findDACUser(AuthUser authUser) {
-        DACUser dacUser = dacUserDAO.findDACUserByEmail(authUser.getName());
-        List<UserRole> userRoles = userRoleDAO.findRolesByUserId(dacUser.getDacUserId());
-        dacUser.setRoles(userRoles);
-        return dacUser;
     }
 
     private void createMissingUserVotes(Election e, DACUser dacUser) {
