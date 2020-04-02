@@ -1185,26 +1185,26 @@ paths:
         500:
           description: Server Error
     put:
-          summary: updateDataAccessRequest
-          description: Updates the DAR identified by the dar_code.
-          parameters:
-            - name: id
-              in: path
-              description: dar_code that identifies univocally
-              required: true
-              type: string
-            - name: dataAccessRequest
-              in: body
-              description: The fields that represent a DAR, json format.
-              schema:
-                type: string
-          tags:
-            - Data Access Request
-          responses:
-            200:
-              description: Returns the updated DAR.
-            400:
-              description: Bad request.
+      summary: updateDataAccessRequest
+      description: Updates the DAR identified by the dar_code.
+      parameters:
+        - name: id
+          in: path
+          description: dar_code that identifies univocally
+          required: true
+          type: string
+        - name: dataAccessRequest
+          in: body
+          description: The fields that represent a DAR, json format.
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the updated DAR.
+        400:
+          description: Bad request.
     delete:
       summary: delete
       description: Deletes the DAR identified by the ID

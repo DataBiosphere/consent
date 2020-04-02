@@ -54,14 +54,6 @@ public class MongoConsentDB {
 
     /**
      *
-     * @return researchPurposeCollection
-     */
-    public MongoCollection<Document> getResearchPurposeCollection() {
-        return mongo.getDatabase(DATABASE_NAME).getCollection("researchPurpose");
-    }
-
-    /**
-     *
      * @return counters collection
      */
     public MongoCollection<Document> getCountersCollection() {
