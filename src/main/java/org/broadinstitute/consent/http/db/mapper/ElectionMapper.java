@@ -1,6 +1,7 @@
-package org.broadinstitute.consent.http.db;
+package org.broadinstitute.consent.http.db.mapper;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.RowMapperHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionFields;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -13,7 +14,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ElectionMapper implements RowMapper<Election> {
+public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
 
     private Map<Integer, Election> electionMap = new HashMap<>();
 
@@ -64,7 +65,8 @@ public class ElectionMapper implements RowMapper<Election> {
         }
         election.setUseRestriction(useRestriction);
         if (r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()) != null) {
-            election.setTranslatedUseRestriction(r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()));
+            election.setTranslatedUseRestriction(
+                    unescapeJava(r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue())));
         }
         if (r.getObject(ElectionFields.DATASET_ID.getValue()) != null) {
             election.setDataSetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
