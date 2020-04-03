@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.DACUser;
 
 import javax.ws.rs.NotFoundException;
+import java.util.Collection;
 
 public class UserService {
 
@@ -32,6 +33,10 @@ public class UserService {
         }
         dacUser.setRoles(roleDAO.findRolesByUserId(dacUser.getDacUserId()));
         return dacUser;
+    }
+
+    public Collection<DACUser> describeUsers() {
+        return userDAO.findUsers();
     }
 
 }

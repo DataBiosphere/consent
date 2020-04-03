@@ -66,9 +66,16 @@ public interface DACUserDAO extends Transactional<DACUserDAO> {
     @SqlUpdate("delete from dacuser where email = :email")
     void deleteDACUserByEmail(@Bind("email") String email);
 
+    @SqlUpdate("delete from dacuser where dacuserid = :id")
+    void deleteDACUserById(@Bind("id") Integer id);
+
     @UseRowMapper(DACUserRoleMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId " +
-              "inner join roles r on r.roleId = ur.role_id order by createDate desc")
+    @SqlQuery("SELECT du.*, r.roleid, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, p.propertyvalue AS completed " +
+            " FROM dacuser du " +
+            " LEFT JOIN user_role ur ON ur.user_id = du.dacuserid " +
+            " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+            " LEFT JOIN researcher_property p ON p.userid = du.dacuserid AND lower(propertykey) = 'completed' " +
+            " ORDER BY createdate DESC ")
     Set<DACUser> findUsers();
 
     @SqlQuery("select count(*) from user_role dr inner join roles r on r.roleId = dr.role_id where r.name = 'Admin'")

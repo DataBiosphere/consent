@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerExce
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +23,6 @@ public interface DACUserAPI {
     DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
     void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
-
-    Collection<DACUser> describeUsers();
 
     DACUser updateUserStatus(String status, Integer userId);
 
