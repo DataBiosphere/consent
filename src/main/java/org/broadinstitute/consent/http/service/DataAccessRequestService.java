@@ -112,7 +112,6 @@ public class DataAccessRequestService {
     }
 
     /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
      * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
      *
      * Filter DataAccessRequestManage objects on user.
@@ -123,20 +122,21 @@ public class DataAccessRequestService {
      * @return List of DataAccessRequestManage objects
      */
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
-        List<Document> filteredAccessList;
-        List<Document> allDars = getAllDataAccessRequestsAsDocuments();
+        List<DataAccessRequest> filteredAccessList;
+        List<DataAccessRequest> allDars = findAllDataAccessRequests();
         if (userId == null) {
-            filteredAccessList = dacService.filterDarsByDAC(allDars, authUser);
+            filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
         } else {
             filteredAccessList = allDars.stream().
-                    filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
+                    filter(d -> d.getData().getUserId() != null).
+                    filter(d -> d.getData().getUserId().equals(userId)).
                     collect(Collectors.toList());
         }
         filteredAccessList.sort(sortTimeComparator());
         List<DataAccessRequestManage> darManage = new ArrayList<>();
         List<String> accessRequestIds = filteredAccessList.
                 stream().
-                map(d -> d.get(DarConstants.ID).toString()).
+                map(DataAccessRequest::getReferenceId).
                 distinct().
                 collect(toList());
         if (CollectionUtils.isNotEmpty(accessRequestIds)) {
@@ -149,14 +149,14 @@ public class DataAccessRequestService {
     }
 
     /**
-     * Compare document sort time long values, descending order.
+     * Compare DataAccessRequest sort time long values, descending order.
      *
      * @return Comparator
      */
-    private Comparator<Document> sortTimeComparator() {
+    private Comparator<DataAccessRequest> sortTimeComparator() {
         return (a, b) -> {
-            Long aTime = a.getLong(DarConstants.SORT_DATE);
-            Long bTime = b.getLong(DarConstants.SORT_DATE);
+            Long aTime = a.getData().getSortDate();
+            Long bTime = b.getData().getSortDate();
             if (aTime == null) {
                 aTime = new Date().getTime();
             }
@@ -173,11 +173,7 @@ public class DataAccessRequestService {
         return electionMap;
     }
 
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     */
-    public List<DataAccessRequest> getAllPostgresDataAccessRequests() {
+    public List<DataAccessRequest> findAllDataAccessRequests() {
         return dataAccessRequestDAO.findAll();
     }
 
@@ -191,7 +187,7 @@ public class DataAccessRequestService {
      * @return List of all DataAccessRequestData objects as Documents
      */
     public List<Document> getAllDataAccessRequestsAsDocuments() {
-        return getAllPostgresDataAccessRequests().stream().
+        return findAllDataAccessRequests().stream().
                 map(this::createDocumentFromDar).
                 collect(Collectors.toList());
     }
@@ -287,26 +283,26 @@ public class DataAccessRequestService {
     }
 
     private List<DataAccessRequestManage> createAccessRequestManage(
-            List<Document> documents,
+            List<DataAccessRequest> documents,
             Map<String, Election> referenceIdElectionMap,
             AuthUser authUser) {
         DACUser user = userService.findUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
-                map(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID)).
+                map(d -> d.getData().getDatasetId()).
                 flatMap(List::stream).
                 collect(toList());
         List<DataSet> dataSetsToApprove = dataSetDAO.
                 findNeedsApprovalDataSetByDataSetId(datasetIdsForDatasetsToApprove);
 
         // Sort documents by sort time, create time, then reversed.
-        Comparator<Document> sortField = Comparator.comparing(d -> d.getLong(DarConstants.SORT_DATE));
-        Comparator<Document> createField = Comparator.comparing(d -> d.getLong(DarConstants.CREATE_DATE));
+        Comparator<DataAccessRequest> sortField = Comparator.comparing(d -> d.getData().getSortDate());
+        Comparator<DataAccessRequest> createField = Comparator.comparing(d -> d.getData().getCreateDate());
         documents.sort(sortField.thenComparing(createField).reversed());
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
-            String referenceId = dar.getString(DarConstants.REFERENCE_ID);
-            List<Integer> darDatasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            String referenceId = dar.getReferenceId();
+            List<Integer> darDatasetIds = dar.getData().getDatasetId();
             if (darDatasetIds.size() > 1) {
                 darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
             }
@@ -317,13 +313,13 @@ public class DataAccessRequestService {
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
             }
-            darManage.setCreateDate(new Timestamp(dar.getLong(DarConstants.CREATE_DATE)));
-            darManage.setRus(dar.getString(DarConstants.RUS));
-            darManage.setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE));
+            darManage.setCreateDate(new Timestamp(dar.getData().getCreateDate()));
+            darManage.setRus(dar.getData().getRus());
+            darManage.setProjectTitle(dar.getData().getProjectTitle());
             darManage.setDataRequestId(referenceId);
-            darManage.setFrontEndId(dar.get(DarConstants.DAR_CODE).toString());
-            darManage.setSortDate(new Date(dar.getLong(DarConstants.SORT_DATE)));
-            darManage.setIsCanceled(dar.containsKey(DarConstants.STATUS) && dar.get(DarConstants.STATUS).equals(ElectionStatus.CANCELED.getValue()));
+            darManage.setFrontEndId(dar.getData().getDarCode());
+            darManage.setSortDate(new Date(dar.getData().getSortDate()));
+            darManage.setIsCanceled(dar.getData().getStatus() != null && dar.getData().getStatus().equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
             if (election != null && !CollectionUtils.isEmpty(electionDAO.getElectionByTypeStatusAndReferenceId(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), election.getReferenceId()))) {
@@ -335,7 +331,7 @@ public class DataAccessRequestService {
             } else {
                 darManage.setElectionStatus(UN_REVIEWED);
             }
-            darManage.setOwnerUser(getOwnerUser(dar.get(DarConstants.USER_ID)).orElse(null));
+            darManage.setOwnerUser(getOwnerUser(dar.getData().getUserId()).orElse(null));
             if (darManage.getOwnerUser() == null) {
                 logger.error("DAR: " + darManage.getFrontEndId() + " has an invalid owner");
             }
