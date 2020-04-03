@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -24,6 +26,11 @@ public interface RowMapperHelper {
             }
         }
         return false;
+    }
+
+    default String unescapeJava(String value) {
+        return StringEscapeUtils.unescapeJava(
+                StringEscapeUtils.unescapeJava(value));
     }
 
 }
