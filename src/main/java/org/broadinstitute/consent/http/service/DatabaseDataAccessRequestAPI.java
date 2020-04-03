@@ -133,9 +133,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
-        if (dataAccessRequest.getString(DarConstants.REFERENCE_ID) == null) {
-            dataAccessRequest.put(DarConstants.REFERENCE_ID, UUID.randomUUID().toString());
-        }
         List<Integer> datasets =  DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
         if (CollectionUtils.isNotEmpty(datasets)) {
             Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasets);
