@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -12,8 +10,6 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -36,8 +32,6 @@ import org.broadinstitute.consent.http.service.EmailNotifierAPI;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -88,7 +82,6 @@ public class DataAccessRequestResource extends Resource {
     private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
-    private final DACUserAPI dacUserAPI;
     private final ElectionAPI electionAPI;
     private final GCSStore store;
     private final UserService userService;
@@ -101,7 +94,6 @@ public class DataAccessRequestResource extends Resource {
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.store = store;
         this.userService = userService;
@@ -204,71 +196,6 @@ public class DataAccessRequestResource extends Resource {
     public Response describeDataAccessRequests(@Auth AuthUser authUser) {
         List<Document> documents = dataAccessRequestService.describeDataAccessRequests(authUser);
         return Response.ok().entity(documents).build();
-    }
-
-    /**
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     *
-     * @param authUser AuthUser
-     * @return List of all DataAccessRequests in Mongo
-     */
-    @GET
-    @Path("/migrate/mongo")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response getAllMongoDataAccessRequests(@Auth AuthUser authUser) {
-        Map<String, Document> map = dataAccessRequestService.getAllMongoDataAccessRequests().
-                stream().
-                collect(Collectors.toMap(d -> d.get(DarConstants.ID).toString(), d -> d));
-        return Response.ok().entity(map).build();
-    }
-
-    /**
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     *
-     * @param authUser AuthUser
-     * @return List of all DataAccessRequests in Postgres
-     */
-    @GET
-    @Path("/migrate/postgres")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response getAllPostgresDataAccessRequests(@Auth AuthUser authUser) {
-        List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDataAccessRequests();
-        return Response.ok().entity(data).build();
-    }
-
-    /**
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     *
-     * @param authUser AuthUser
-     * @return Converted DataAccessRequest
-     */
-    @POST
-    @Path("migrate/{id}")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
-        DataAccessRequestData data = DataAccessRequestData.fromString(json);
-        if (data.getCreateDate() == null) {
-            // Original create date was inferred from mongo ObjectId.timestamp
-            Gson gson = new Gson();
-            JsonObject obj = gson.fromJson(json, JsonObject.class);
-            long createDate = new Date().getTime();
-            if (obj.has("_id")) {
-                JsonObject idObject = obj.getAsJsonObject("_id");
-                if (idObject.has("timestamp")) {
-                    long timestamp = idObject.get("timestamp").getAsLong();
-                    createDate = timestamp * 1000; // Fix Mongo's timestamp
-                }
-            }
-            data.setCreateDate(createDate);
-        }
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        if (dar == null) {
-            dar = dataAccessRequestService.insertDataAccessRequest(id, data);
-        }
-        return Response.ok().entity(dar).build();
     }
 
     @GET

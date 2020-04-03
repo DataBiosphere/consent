@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -60,7 +59,6 @@ public class DataAccessRequestService {
     private DataAccessRequestDAO dataAccessRequestDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
-    private MongoConsentDB mongo;
     private DacService dacService;
     private UserService userService;
     private VoteDAO voteDAO;
@@ -72,16 +70,15 @@ public class DataAccessRequestService {
     private static final String DENIED = "Denied";
 
     @Inject
-    public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
-                                    ElectionDAO electionDAO, MongoConsentDB mongo, DacService dacService,
-                                    UserService userService, VoteDAO voteDAO) {
+    public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO,
+                                    DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
+                                    DacService dacService, UserService userService, VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
-        this.mongo = mongo;
         this.dacService = dacService;
         this.userService = userService;
         this.voteDAO = voteDAO;
@@ -174,15 +171,6 @@ public class DataAccessRequestService {
         Map<String, Election> electionMap = new HashMap<>();
         elections.forEach(election -> electionMap.put(election.getReferenceId(), election));
         return electionMap;
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     */
-    @SuppressWarnings("deprecation")
-    public List<Document> getAllMongoDataAccessRequests() {
-        return mongo.getDataAccessRequestCollection().find().into(new ArrayList<>());
     }
 
     /**
