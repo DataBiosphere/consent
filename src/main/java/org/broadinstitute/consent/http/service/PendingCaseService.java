@@ -120,17 +120,18 @@ public class PendingCaseService {
                 if (Objects.nonNull(rpElectionId)) {
                     Election rpElection = electionDAO.findElectionWithFinalVoteById(rpElectionId);
                     Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
-                    isReminderSent = accessVote.getIsReminderSent() || rpVote.getIsReminderSent();
+                    isReminderSent = accessVote.getIsReminderSent() || (Objects.nonNull(rpVote) && rpVote.getIsReminderSent());
                     pendingCase.setRpElectionId(rpElectionId);
-                    pendingCase.setAlreadyVoted(accessVote.getVote() != null && rpVote.getVote() != null);
-                    pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
-                    pendingCase.setRpVoteId(rpVote.getVoteId());
-                    pendingCase.setStatus(accessVote.getVote() == null || rpVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
-
+                    pendingCase.setAlreadyVoted(accessVote.getVote() != null && Objects.nonNull(rpVote) && rpVote.getVote() != null);
+                    pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());
+                    if (Objects.nonNull(rpVote)) {
+                        pendingCase.setRpVoteId(rpVote.getVoteId());
+                    }
+                    pendingCase.setStatus(accessVote.getVote() == null || (Objects.nonNull(rpVote) && rpVote.getVote() == null) ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
                 } else {
                     isReminderSent = (accessVote.getIsReminderSent());
                     pendingCase.setAlreadyVoted(accessVote.getVote() != null);
-                    pendingCase.setElectionStatus(election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());                 // if it's already voted, we should collect vote or do the final election vote
+                    pendingCase.setElectionStatus(election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());
                     pendingCase.setStatus(accessVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
                 }
                 setGeneralFields(pendingCase, election, accessVote, isReminderSent);
