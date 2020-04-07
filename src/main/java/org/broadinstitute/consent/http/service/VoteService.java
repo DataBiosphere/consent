@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,11 +76,11 @@ public class VoteService {
         voteDAO.updateVote(
                 vote.getVote(),
                 vote.getRationale(),
-                (vote.getUpdateDate() == null) ? now : vote.getUpdateDate(),
+                Objects.isNull(vote.getUpdateDate()) ? now : vote.getUpdateDate(),
                 vote.getVoteId(),
                 vote.getIsReminderSent(),
                 vote.getElectionId(),
-                (vote.getCreateDate() == null) ? now : vote.getCreateDate(),
+                Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
                 vote.getHasConcerns()
         );
         return voteDAO.findVoteById(vote.getVoteId());
@@ -177,13 +178,15 @@ public class VoteService {
         if (dac != null) {
             return user.getRoles().
                     stream().
-                    anyMatch(userRole ->
+                    anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
+                            Objects.nonNull(userRole.getDacId()) &&
                             userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) &&
-                                    userRole.getDacId().equals(dac.getDacId()));
+                            userRole.getDacId().equals(dac.getDacId()));
         }
         return user.getRoles().
                 stream().
-                anyMatch(userRole -> userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
+                anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
+                        userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
     }
 
     /**
@@ -192,13 +195,13 @@ public class VoteService {
      * @param vote The Vote to validate
      */
     private void validateVote(Vote vote) {
-        if (vote == null ||
-                vote.getVoteId() == null ||
-                vote.getDacUserId() == null ||
-                vote.getElectionId() == null) {
+        if (Objects.isNull(vote) ||
+                Objects.isNull(vote.getVoteId()) ||
+                Objects.isNull(vote.getDacUserId()) ||
+                Objects.isNull(vote.getElectionId())) {
             throw new IllegalArgumentException("Invalid vote: " + vote);
         }
-        if (voteDAO.findVoteById(vote.getVoteId()) == null) {
+        if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
             throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
         }
     }
