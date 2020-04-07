@@ -191,10 +191,14 @@ public class DacService {
         DACUser updatedUser = userService.findUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
+            IllegalArgumentException noTypeException = new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
+            if (Objects.isNull(e.getElectionType())) {
+                throw noTypeException;
+            }
             Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).stream().
                     filter(t -> t.getValue().equalsIgnoreCase(e.getElectionType())).findFirst();
             if (!type.isPresent()) {
-                throw new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
+                throw noTypeException;
             }
             boolean isManualReview = type.get().equals(ElectionType.DATA_ACCESS) && hasUseRestriction(e.getReferenceId());
             voteService.createVotesForUser(updatedUser, e, type.get(), isManualReview);
@@ -211,7 +215,7 @@ public class DacService {
         List<UserRole> dacRoles = user.
                 getRoles().
                 stream().
-                filter(r -> r.getDacId() != null).
+                filter(r -> Objects.nonNull(r.getDacId())).
                 filter(r -> r.getDacId().equals(dac.getDacId())).
                 filter(r -> r.getRoleId().equals(role.getRoleId())).
                 collect(Collectors.toList());
@@ -229,7 +233,9 @@ public class DacService {
 
     private boolean hasUseRestriction(String referenceId) {
         DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-        return dar.getData().getRestriction() != null;
+        return Objects.nonNull(dar) &&
+                Objects.nonNull(dar.getData()) &&
+                Objects.nonNull(dar.getData().getRestriction());
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {
@@ -320,7 +326,7 @@ public class DacService {
         List<Integer> dacIds = getDacIdsForUser(authUser);
 
         return consentManages.stream().
-                filter(c -> c.getDacId() == null || dacIds.contains(c.getDacId())).
+                filter(c -> Objects.isNull(c.getDacId()) || dacIds.contains(c.getDacId())).
                 collect(Collectors.toList());
     }
 
@@ -336,7 +342,7 @@ public class DacService {
 
         return consents.
                 stream().
-                filter(c -> c.getDacId() == null || dacIds.contains(c.getDacId())).
+                filter(c -> Objects.isNull(c.getDacId()) || dacIds.contains(c.getDacId())).
                 collect(Collectors.toList());
     }
 
@@ -353,7 +359,7 @@ public class DacService {
                 map(DataSet::getDataSetId).
                 collect(Collectors.toList());
         return elections.stream().
-                filter(e -> e.getDataSetId() == null || userDataSetIds.contains(e.getDataSetId())).
+                filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
                 collect(Collectors.toList());
     }
 
