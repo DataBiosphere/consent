@@ -83,6 +83,11 @@ class DataAccessParser {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.OTHER_TEXT)));
                     break;
                 }
+                // Handle legacy all lower cased case
+                case "othertext": {
+                    field.setValue(getDefaultValue(dar.getString(DarConstants.OTHER_TEXT)));
+                    break;
+                }
                 case DarConstants.PROFILE_NAME: {
                     field.setValue(getDefaultValue(researcherProperties.get(DarConstants.PROFILE_NAME)));
                     break;
@@ -258,7 +263,7 @@ class DataAccessParser {
         }
         return value;
     }
-    
+
     @SuppressWarnings("unchecked")
     private String parseDatasetDetail(Document dar) {
         ArrayList<Document> datasetDetail = (ArrayList<Document>) dar.get(DarConstants.DATASET_DETAIL);
