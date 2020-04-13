@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 
 import java.util.ArrayList;
@@ -170,7 +171,7 @@ public class DARModalDetailsDTO {
             manualReviewIsTrue();
         }
         if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
-            researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString("othertext"), true));
+            researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString(DarConstants.OTHER_TEXT), true));
             manualReviewIsTrue();
         }
         return researchList;

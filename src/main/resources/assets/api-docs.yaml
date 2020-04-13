@@ -2909,7 +2909,7 @@ definitions:
       other:
         type: boolean
         description: 'Defines if the purpose of the study is other than the above. If TRUE, triggers MANUAL REVIEW.'
-      othertext:
+      otherText:
         type: string
         description: 'Describes above field.'
       ontologies:

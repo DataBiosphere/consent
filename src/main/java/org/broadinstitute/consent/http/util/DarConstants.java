@@ -91,7 +91,7 @@ public class DarConstants {
 
     public static final String OTHER = "other";
 
-    public static final String OTHER_TEXT = "othertext";
+    public static final String OTHER_TEXT = "otherText";
 
     public static final String ONTOLOGIES = "ontologies";
 
