@@ -22,8 +22,6 @@ public interface DACUserAPI {
 
     DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
-    void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException;
-
     DACUser updateUserStatus(String status, Integer userId);
 
     DACUser updateUserRationale(String rationale, Integer userId);

@@ -1040,22 +1040,6 @@ paths:
           description: Returns the user.
           schema:
             $ref: '#/definitions/DACUser'
-    delete:
-      summary: delete
-      description: Deletes the user identified by the email.
-      parameters:
-        - name: email
-          in: path
-          description: The email of the user.
-          required: true
-          type: string
-      tags:
-        - User
-      responses:
-        200:
-          description: Response = User was deleted
-          schema:
-            type: string
   /api/dacuser/{id}:
     put:
       summary: update
@@ -2302,6 +2286,23 @@ paths:
                   type: array
                   items:
                     $ref: '#/definitions/HelpReport'
+  /api/user/{email}:
+    delete:
+      summary: Delete User by email
+      description: Deletes the user identified by the email.
+      parameters:
+        - name: email
+          in: path
+          description: The email of the user.
+          required: true
+          type: string
+      tags:
+        - User
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: string
   /api/user:
     post:
       summary: createResearcher

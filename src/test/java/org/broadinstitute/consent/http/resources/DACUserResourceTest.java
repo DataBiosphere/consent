@@ -128,14 +128,6 @@ public class DACUserResourceTest {
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
-    @Test
-    public void testDeleteUser() {
-        doNothing().when(dacUserAPI).deleteDACUser(any());
-        initResource();
-        Response response = resource.delete(RandomStringUtils.random(10), uriInfo);
-        assertEquals(200, response.getStatus());
-    }
-
     @Test(expected = NotFoundException.class)
     public void testRetrieveDACUserWithInvalidEmail() {
         when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());

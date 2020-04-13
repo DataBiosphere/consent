@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @deprecated Use UserService
@@ -115,23 +114,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         DACUser dacUser = userService.findUserByEmail(updatedUser.getEmail());
         dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
         return dacUser;
-    }
-
-    @Override
-    public void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException {
-        DACUser user = dacUserDAO.findDACUserByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("The user for the specified E-Mail address does not exist");
-        }
-        List<Integer> roleIds = userRoleDAO.
-                findRolesByUserId(user.getDacUserId()).
-                stream().
-                map(UserRole::getRoleId).
-                collect(Collectors.toList());
-        if (!roleIds.isEmpty()) {
-            userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
-        }
-        dacUserDAO.deleteDACUserByEmail(email);
     }
 
     @Override
