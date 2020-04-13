@@ -11,9 +11,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -53,8 +54,11 @@ public class UserResourceTest {
         authUser = new AuthUser(googleUser);
         MockitoAnnotations.initMocks(this);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-        when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
+        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
+    }
+
+    private void initResource() {
         userResource = new UserResource(userAPI, userService);
     }
 
@@ -71,6 +75,8 @@ public class UserResourceTest {
         roles.add(admin);
         user.setRoles(roles);
         when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+        initResource();
+
         Response response = userResource.createResearcher(uriInfo, authUser);
         Assert.assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
     }
@@ -79,6 +85,8 @@ public class UserResourceTest {
     public void testCreateFailingGoogleIdentity() {
         DACUser user = new DACUser();
         user.setEmail(TEST_EMAIL);
+        initResource();
+
         Response response = userResource.createResearcher(uriInfo, new AuthUser(TEST_EMAIL));
         Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
@@ -92,7 +100,10 @@ public class UserResourceTest {
         researcher.setName(UserRoles.RESEARCHER.getRoleName());
         roles.add(researcher);
         user.setRoles(roles);
+        when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
         when(userAPI.createUser(user)).thenReturn(user);
+        initResource();
+
         Response response = userResource.createResearcher(uriInfo, authUser);
         Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }

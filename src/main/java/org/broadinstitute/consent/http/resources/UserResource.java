@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.service.users.UserAPI;
 
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -47,11 +48,15 @@ public class UserResource extends Resource {
                     entity(new Error("Unable to verify google identity", Response.Status.BAD_REQUEST.getStatusCode())).
                     build();
         }
-        if (userService.findUserByEmail(googleUser.getEmail()) != null) {
-            return Response.
-                    status(Response.Status.CONFLICT).
-                    entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).
-                    build();
+        try {
+            if (userService.findUserByEmail(googleUser.getEmail()) != null) {
+                return Response.
+                        status(Response.Status.CONFLICT).
+                        entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).
+                        build();
+            }
+        } catch (NotFoundException nfe) {
+            // no-op, we expect to not find the new user in this case.
         }
         DACUser dacUser = new DACUser(googleUser);
         UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
