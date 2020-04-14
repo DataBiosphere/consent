@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.models.DACUser;
@@ -17,12 +18,14 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private DACUserDAO userDAO;
+    private ResearcherPropertyDAO researcherPropertyDAO;
     private UserRoleDAO roleDAO;
     private VoteDAO voteDAO;
 
     @Inject
-    public UserService(DACUserDAO userDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
+    public UserService(DACUserDAO userDAO, ResearcherPropertyDAO researcherPropertyDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
         this.userDAO = userDAO;
+        this.researcherPropertyDAO = researcherPropertyDAO;
         this.roleDAO = roleDAO;
         this.voteDAO = voteDAO;
     }
@@ -67,6 +70,7 @@ public class UserService {
             List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
             voteDAO.removeVotesByIds(voteIds);
         }
+        researcherPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
         userDAO.deleteDACUserByEmail(email);
     }
 

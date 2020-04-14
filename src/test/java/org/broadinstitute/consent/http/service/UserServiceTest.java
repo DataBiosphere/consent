@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -24,12 +25,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class UserServiceTest {
 
     @Mock
     private DACUserDAO userDAO;
+
+    @Mock
+    private ResearcherPropertyDAO researcherPropertyDAO;
 
     @Mock
     private UserRoleDAO roleDAO;
@@ -45,7 +50,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, roleDAO, voteDAO);
+        service = new UserService(userDAO, researcherPropertyDAO, roleDAO, voteDAO);
     }
 
     @Test
@@ -131,6 +136,7 @@ public class UserServiceTest {
     @Test
     public void testDeleteUser() {
         DACUser u = createUser();
+        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
         when(userDAO.findDACUserByEmail(any())).thenReturn(u);
         initService();
 

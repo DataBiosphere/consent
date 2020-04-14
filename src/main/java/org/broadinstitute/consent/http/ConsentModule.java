@@ -313,6 +313,7 @@ public class ConsentModule extends AbstractModule {
     UserService providesUserService() {
         return new UserService(
                 providesDACUserDAO(),
+                providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());
     }
