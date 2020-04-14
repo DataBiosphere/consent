@@ -81,7 +81,7 @@ public class UserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
         userService.deleteUserByEmail(email);
-        return Response.ok().entity("User was deleted").build();
+        return Response.ok().build();
     }
 
 }
