@@ -512,7 +512,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 List<Integer> datasetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                 if (datasetIdList != null && !datasetIdList.isEmpty()) {
                     if (datasetIdList.size() > 1) {
-                        logger.error("DAR " +
+                        logger.warn("DAR " +
                                 referenceId +
                                 " contains multiple datasetId values: " +
                                 StringUtils.join(datasetIdList, ", "));
