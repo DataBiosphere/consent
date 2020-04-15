@@ -311,7 +311,11 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     UserService providesUserService() {
-        return new UserService(providesDACUserDAO(), providesUserRoleDAO());
+        return new UserService(
+                providesDACUserDAO(),
+                providesResearcherPropertyDAO(),
+                providesUserRoleDAO(),
+                providesVoteDAO());
     }
 
     // Private helpers

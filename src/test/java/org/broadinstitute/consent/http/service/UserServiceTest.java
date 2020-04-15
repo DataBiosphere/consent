@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.service;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -20,9 +22,10 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class UserServiceTest {
@@ -31,7 +34,13 @@ public class UserServiceTest {
     private DACUserDAO userDAO;
 
     @Mock
+    private ResearcherPropertyDAO researcherPropertyDAO;
+
+    @Mock
     private UserRoleDAO roleDAO;
+
+    @Mock
+    private VoteDAO voteDAO;
 
     private UserService service;
 
@@ -41,7 +50,7 @@ public class UserServiceTest {
     }
 
     private void initService() {
-        service = new UserService(userDAO, roleDAO);
+        service = new UserService(userDAO, researcherPropertyDAO, roleDAO, voteDAO);
     }
 
     @Test
@@ -122,6 +131,27 @@ public class UserServiceTest {
         initService();
 
         service.findUserByEmail(u.getEmail());
+    }
+
+    @Test
+    public void testDeleteUser() {
+        DACUser u = createUser();
+        doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
+        when(userDAO.findDACUserByEmail(any())).thenReturn(u);
+        initService();
+
+        try {
+            service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+        } catch (Exception e) {
+            fail("Should not fail: " + e.getMessage());
+        }
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testDeleteUserFailure() {
+        when(userDAO.findDACUserByEmail(any())).thenThrow(new NotFoundException());
+        initService();
+        service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
     }
 
     private DACUser createUser() {
