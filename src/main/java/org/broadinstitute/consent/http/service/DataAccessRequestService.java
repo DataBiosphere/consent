@@ -378,38 +378,35 @@ public class DataAccessRequestService {
                         Optional<Election> electionOption = elections.stream().filter(e -> e.getElectionId().equals(c.getElectionId())).findFirst();
                         if (electionOption.isPresent()) {
                             Election election = electionOption.get();
-                            // Only calculate votes for the cases for open elections:
-                            if (election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue())) {
-                                List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
-                                List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
-                                Optional<Pair<Integer, Integer>> rpElectionIdOption = rpAccessElectionIdPairs.stream().
-                                        filter(p -> p.getRight().equals(election.getElectionId())).
-                                        findFirst();
-                                if (rpElectionIdOption.isPresent()) {
-                                    c.setRpElectionId(rpElectionIdOption.get().getKey());
-                                    Optional<Vote> rpVoteOption = userVotes.stream().filter(v -> v.getElectionId().equals(c.getRpElectionId())).findFirst();
-                                    rpVoteOption.ifPresent(vote -> c.setRpVoteId(vote.getVoteId()));
-                                }
-                                boolean isReminderSent = electionVotes.stream().
-                                        anyMatch(Vote::getIsReminderSent);
-                                boolean finalVote = electionVotes.stream().
-                                        filter(v -> v.getVote() != null).
-                                        filter(v -> v.getType() != null).
-                                        filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).
-                                        anyMatch(Vote::getVote);
-                                Optional<Vote> userVoteOption = electionVotes.stream().
-                                        filter(v -> v.getDacUserId().equals(user.getDacUserId())).
-                                        findFirst();
-                                c.setTotalVotes(electionVotes.size());
-                                c.setVotesLogged(electionVotes.size() - pendingVotes.size());
-                                c.setLogged(c.getVotesLogged() + "/" + c.getTotalVotes());
-                                c.setReminderSent(isReminderSent);
-                                c.setFinalVote(finalVote);
-                                c.setElectionVote(election.getFinalVote());
-                                if (userVoteOption.isPresent()) {
-                                    c.setVoteId(userVoteOption.get().getVoteId());
-                                    c.setAlreadyVoted(true);
-                                }
+                            List<Vote> electionVotes = electionVoteMap.get(election.getElectionId());
+                            List<Vote> pendingVotes = electionPendingVoteMap.get(election.getElectionId());
+                            Optional<Pair<Integer, Integer>> rpElectionIdOption = rpAccessElectionIdPairs.stream().
+                                    filter(p -> p.getRight().equals(election.getElectionId())).
+                                    findFirst();
+                            if (rpElectionIdOption.isPresent()) {
+                                c.setRpElectionId(rpElectionIdOption.get().getKey());
+                                Optional<Vote> rpVoteOption = userVotes.stream().filter(v -> v.getElectionId().equals(c.getRpElectionId())).findFirst();
+                                rpVoteOption.ifPresent(vote -> c.setRpVoteId(vote.getVoteId()));
+                            }
+                            boolean isReminderSent = electionVotes.stream().
+                                    anyMatch(Vote::getIsReminderSent);
+                            boolean finalVote = electionVotes.stream().
+                                    filter(v -> v.getVote() != null).
+                                    filter(v -> v.getType() != null).
+                                    filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).
+                                    anyMatch(Vote::getVote);
+                            Optional<Vote> userVoteOption = electionVotes.stream().
+                                    filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                                    findFirst();
+                            c.setTotalVotes(electionVotes.size());
+                            c.setVotesLogged(electionVotes.size() - pendingVotes.size());
+                            c.setLogged(c.getVotesLogged() + "/" + c.getTotalVotes());
+                            c.setReminderSent(isReminderSent);
+                            c.setFinalVote(finalVote);
+                            c.setElectionVote(election.getFinalVote());
+                            if (userVoteOption.isPresent()) {
+                                c.setVoteId(userVoteOption.get().getVoteId());
+                                c.setAlreadyVoted(true);
                             }
                             c.setElectionStatus(election.getStatus());
                             c.setReferenceId(election.getReferenceId());
