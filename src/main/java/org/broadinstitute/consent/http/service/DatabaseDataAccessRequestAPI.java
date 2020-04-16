@@ -95,6 +95,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final DataAccessRequestService dataAccessRequestService;
 
+    private final CounterService counterService;
+
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -102,8 +104,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
@@ -112,7 +114,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        this.counterService = counterService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.mongo = mongo;
         this.converter = converter;
@@ -295,7 +298,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Document createPartialDataAccessRequest(Document partialDar){
-        String seq = mongo.getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
+        String seq = counterService.getNextDarSequence();
         partialDar.put("createDate", new Date());
         partialDar.append(DarConstants.PARTIAL_DAR_CODE, "temp_DAR" + seq);
         mongo.getPartialDataAccessRequestCollection().insertOne(partialDar);
@@ -573,7 +576,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
         if (CollectionUtils.isNotEmpty(dataAccessRequestList)) {
-            String seq = mongo.getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
+            String seq = counterService.getNextDarSequence();
             if (dataAccessRequestList.size() > 1) {
                 IntStream.range(0, dataAccessRequestList.size())
                         .forEach(idx -> {

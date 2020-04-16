@@ -102,6 +102,7 @@ import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
@@ -231,6 +232,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
+        final CounterService counterService = injector.getProvider(CounterService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
@@ -238,7 +240,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final UserService userService = injector.getProvider(UserService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
-        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(counterService, dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());

@@ -53,6 +53,7 @@ public class DAOTestHelper {
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
     static ConsentDAO consentDAO;
+    static CounterDAO counterDAO;
     static DacDAO dacDAO;
     static DACUserDAO userDAO;
     static DataSetDAO dataSetDAO;
@@ -104,6 +105,7 @@ public class DAOTestHelper {
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
         consentDAO = jdbi.onDemand(ConsentDAO.class);
+        counterDAO = jdbi.onDemand(CounterDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
         userDAO = jdbi.onDemand(DACUserDAO.class);
         dataSetDAO = jdbi.onDemand(DataSetDAO.class);
@@ -143,6 +145,7 @@ public class DAOTestHelper {
         });
         createdDataAccessRequestReferenceIds.forEach(d ->
                 dataAccessRequestDAO.deleteByReferenceId(d));
+        counterDAO.deleteAll();
     }
 
     void createAssociation(String consentId, Integer datasetId) {

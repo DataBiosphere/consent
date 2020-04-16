@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -32,6 +33,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -63,6 +65,7 @@ public class ConsentModule extends AbstractModule {
     private final Jdbi jdbi;
     private final MongoConsentDB mongoInstance;
     private final ConsentDAO consentDAO;
+    private final CounterDAO counterDAO;
     private final ElectionDAO electionDAO;
     private final HelpReportDAO helpReportDAO;
     private final VoteDAO voteDAO;
@@ -97,6 +100,7 @@ public class ConsentModule extends AbstractModule {
         this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
+        this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
         this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
         this.helpReportDAO = this.jdbi.onDemand(HelpReportDAO.class);
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
@@ -165,6 +169,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ConsentDAO providesConsentDAO() {
         return consentDAO;
+    }
+
+    @Provides
+    CounterDAO providesCounterDAO() {
+        return counterDAO;
+    }
+
+    @Provides
+    CounterService providesCounterService() {
+        return new CounterService(providesCounterDAO());
     }
 
     @Provides
