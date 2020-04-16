@@ -141,6 +141,9 @@ public interface VoteDAO extends Transactional<VoteDAO> {
             + " and v.electionId IN (<electionIds>)")
     List<Vote> findVotesByElectionIdsAndUser(@BindList("electionIds") List<Integer> electionIds, @Bind("dacUserId") Integer dacUserId);
 
+    @SqlQuery("SELECT * FROM vote v WHERE v.dacuserid = :dacUserId ")
+    List<Vote> findVotesByUserId(@Bind("dacUserId") Integer dacUserId);
+
     @SqlQuery("select vote from vote v where v.electionId = :electionId and lower(v.type) = 'chairperson'")
     Boolean findChairPersonVoteByElectionId(@Bind("electionId") Integer electionId);
 

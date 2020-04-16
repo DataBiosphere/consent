@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -22,8 +23,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class UserResourceTest {
@@ -106,6 +109,14 @@ public class UserResourceTest {
 
         Response response = userResource.createResearcher(uriInfo, authUser);
         Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testDeleteUser() {
+        doNothing().when(userService).deleteUserByEmail(any());
+        initResource();
+        Response response = userResource.delete(RandomStringUtils.random(10), uriInfo);
+        assertEquals(200, response.getStatus());
     }
 
 }
