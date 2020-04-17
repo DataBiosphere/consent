@@ -36,7 +36,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      */
     @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
-            "  ORDER BY (data #>> '{}')::jsonb->>'sortDate' DESC")
+            "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
     List<DataAccessRequest> findAllPartialDataAccessRequests();
 
     /**
@@ -45,8 +45,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      */
     @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
-            "  AND ((data #>> '{}')::jsonb->'userId')::int = :userId " +
-            "  ORDER BY (data #>> '{}')::jsonb->>'sortDate' DESC")
+            "  AND ((data #>> '{}')::jsonb->>'userId')::numeric = :userId " +
+            "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
     List<DataAccessRequest> findAllPartialsByUserId(@Bind("userId") Integer userId);
 
     /**
