@@ -16,11 +16,11 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindAll() {
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAll();
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertTrue(dars.isEmpty());
 
         createDataAccessRequest();
-        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAll();
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
     }

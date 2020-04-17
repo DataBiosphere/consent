@@ -174,11 +174,11 @@ public class DataAccessRequestService {
     }
 
     public List<DataAccessRequest> findAllDataAccessRequests() {
-        return dataAccessRequestDAO.findAll();
+        return dataAccessRequestDAO.findAllDataAccessRequests();
     }
 
     public List<Document> findAllPartialDataAccessRequestDocuments() {
-        return dataAccessRequestDAO.findAllPartials().stream().
+        return dataAccessRequestDAO.findAllPartialDataAccessRequests().stream().
                 map(this::createDocumentFromDar).
                 collect(Collectors.toList());
     }
