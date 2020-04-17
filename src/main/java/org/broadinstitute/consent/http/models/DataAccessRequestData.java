@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import org.bson.Document;
 
 import java.util.List;
 
@@ -67,7 +68,6 @@ public class DataAccessRequestData {
     Boolean hmb;
     String status;
     Boolean poa;
-
     List<DatasetEntry> datasets;
     @SerializedName(value = "dar_code", alternate = "darCode")
     String darCode;
@@ -92,6 +92,10 @@ public class DataAccessRequestData {
 
     public static DataAccessRequestData fromString(String jsonString) {
         return new Gson().fromJson(jsonString, DataAccessRequestData.class);
+    }
+
+    public void updateFromDocument(Document document) {
+        // TODO: Flesh this out
     }
 
     public String getReferenceId() {

@@ -21,6 +21,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request")
     List<DataAccessRequest> findAll();
 
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>sortDate as sort, (data #>> '{}')::jsonb->>partial_dar_code AS partial " +
+            "  FROM data_access_request WHERE partial is not null ORDER BY sort DESC")
+    List<DataAccessRequest> findAllPartials();
+
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>sortDate as sort, (data #>> '{}')::jsonb->>partial_dar_code AS partial, (data #>> '{}')::jsonb->>userId AS userid " +
+            "  FROM data_access_request WHERE partial is not null AND userid = :userId ORDER BY sort DESC")
+    List<DataAccessRequest> findAllPartialsByUserId(@Bind("userId") Integer userId);
+
     @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id = :referenceId limit 1")
     DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 

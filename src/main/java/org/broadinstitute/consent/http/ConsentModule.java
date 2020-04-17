@@ -1,17 +1,14 @@
 package org.broadinstitute.consent.http;
 
-import com.github.fakemongo.Fongo;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
-import com.mongodb.MongoClient;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -31,7 +28,6 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -63,7 +59,6 @@ public class ConsentModule extends AbstractModule {
 
     private final Client client;
     private final Jdbi jdbi;
-    private final MongoConsentDB mongoInstance;
     private final ConsentDAO consentDAO;
     private final CounterDAO counterDAO;
     private final ElectionDAO electionDAO;
@@ -97,7 +92,6 @@ public class ConsentModule extends AbstractModule {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
-        this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
         this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
@@ -134,11 +128,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     Jdbi providesJdbi() {
         return this.jdbi;
-    }
-
-    @Provides
-    MongoConsentDB providesMongo() {
-        return this.mongoInstance;
     }
 
     @Provides
@@ -330,26 +319,6 @@ public class ConsentModule extends AbstractModule {
                 providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());
-    }
-
-    // Private helpers
-
-    private MongoConsentDB initMongoDBInstance() {
-        MongoClient mongoClient = getMongoClient();
-        String dbName = config.getMongoConfiguration().getDbName();
-        MongoConsentDB instance = new MongoConsentDB(mongoClient, dbName);
-        instance.configureMongo();
-        return instance;
-    }
-
-    private MongoClient getMongoClient() {
-        MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
-        if (mongoConfiguration.isTestMode()) {
-            Fongo fongo = new Fongo("TestServer");
-            return fongo.getMongo();
-        } else {
-            return mongoConfiguration.getMongoClient();
-        }
     }
 
 }

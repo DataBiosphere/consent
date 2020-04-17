@@ -49,7 +49,6 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -205,7 +204,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Clients
         final Jdbi jdbi = injector.getProvider(Jdbi.class).get();
-        final MongoConsentDB mongoInstance = injector.getProvider(MongoConsentDB.class).get();
         final Client client = injector.getProvider(Client.class).get();
         final UseRestrictionConverter useRestrictionConverter = injector.getProvider(UseRestrictionConverter.class).get();
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
@@ -240,7 +238,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final UserService userService = injector.getProvider(UserService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
-        DatabaseDataAccessRequestAPI.initInstance(counterService, dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(counterService, dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
@@ -273,7 +271,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         configureCors(env);
 
         // Health Checks
-        env.healthChecks().register("mongodb", new MongoHealthCheck(mongoInstance.getMongoClient(), config.getMongoConfiguration().getDbName()));
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
 

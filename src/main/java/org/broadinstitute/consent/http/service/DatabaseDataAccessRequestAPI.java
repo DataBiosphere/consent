@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
-import com.mongodb.BasicDBObject;
-import com.mongodb.Block;
-import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -14,7 +11,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
@@ -36,7 +32,6 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
@@ -68,8 +63,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private static Logger logger() {
         return Logger.getLogger("DatabaseDataAccessRequestAPI");
     }
-
-    private MongoConsentDB mongo;
 
     private final UseRestrictionConverter converter;
 
@@ -104,20 +97,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
-     *
-     * @param mongo The Data Access Object used to read/write data.
      */
-    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
         this.counterService = counterService;
         this.dataAccessRequestService = dataAccessRequestService;
-        this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
@@ -132,7 +122,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     public List<Document> createDataAccessRequest(Document dataAccessRequest) {
         List<Document> dataAccessList = new ArrayList<>();
         if (dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
-            mongo.getPartialDataAccessRequestCollection().findOneAndDelete(new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequest.getString(DarConstants.PARTIAL_DAR_CODE)));
+            String referenceId = dataAccessRequest.getString(DarConstants.REFERENCE_ID);
+            dataAccessRequestService.deleteByReferenceId(referenceId);
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
@@ -270,45 +261,55 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     // Partial Data Access Request Methods below
     @Override
     public List<Document> describePartialDataAccessRequests() {
-        return mongo.getPartialDataAccessRequestCollection().find().into(new ArrayList<>());
+        return dataAccessRequestService.findAllPartialDataAccessRequestDocuments();
     }
 
     @Override
     public Document describePartialDataAccessRequestById(String id) {
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
-        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
     @Override
     public void deletePartialDataAccessRequestById(String id) {
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
-        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+        dataAccessRequestService.deleteByReferenceId(id);
     }
 
     @Override
     public Document updatePartialDataAccessRequest(Document partialDar) {
-        BasicDBObject query = new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, partialDar.get(DarConstants.PARTIAL_DAR_CODE));
-        partialDar.remove(DarConstants.ID);
-        partialDar.put(DarConstants.SORT_DATE, new Date().getTime());
-        if (mongo.getPartialDataAccessRequestCollection().findOneAndReplace(query, partialDar) == null) {
+        String referenceId = partialDar.getString(DarConstants.REFERENCE_ID);
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        if (dar == null) {
             throw new NotFoundException("Partial Data access for the specified id does not exist");
         }
-        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+        DataAccessRequestData data = dar.getData();
+        data.setSortDate(new Date().getTime());
+        data.updateFromDocument(partialDar);
+        dataAccessRequestService.updateByReferenceId(referenceId, data);
+        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     @Override
     public Document createPartialDataAccessRequest(Document partialDar){
         String seq = counterService.getNextDarSequence();
-        partialDar.put("createDate", new Date());
-        partialDar.append(DarConstants.PARTIAL_DAR_CODE, "temp_DAR" + seq);
-        mongo.getPartialDataAccessRequestCollection().insertOne(partialDar);
+        Gson gson = new Gson();
+        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(partialDar));
+        darData.setCreateDate(new Date().getTime());
+        darData.setPartialDarCode("temp_DAR" + seq);
+        String referenceId = partialDar.getString(DarConstants.REFERENCE_ID);
+        if (referenceId == null) {
+            referenceId = UUID.randomUUID().toString();
+        }
+        darData.setReferenceId(referenceId);
+        partialDar.put(DarConstants.REFERENCE_ID, referenceId);
+        dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
         return partialDar;
     }
 
     @Override
     public List<Document> describePartialDataAccessRequestManage(Integer userId) {
-        FindIterable<Document> accessList = userId == null ? mongo.getPartialDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
-                : mongo.getPartialDataAccessRequestCollection().find(new BasicDBObject(DarConstants.USER_ID, userId)).sort(new BasicDBObject("sortDate", -1));
+        List<Document> accessList = userId == null
+                ? dataAccessRequestService.findAllPartialDataAccessRequestDocuments()
+                : dataAccessRequestService.findAllPartialDataAccessRequestDocumentsByUser(userId);
         List<Document> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)){
@@ -583,8 +584,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                                     dataAccessRequestList.get(idx).append(DarConstants.DAR_CODE, "DAR-" + seq + SUFFIX + idx);
                                     dataAccessRequestList.get(idx).remove(DarConstants.ID);
                                     if (dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE) != null) {
-                                        BasicDBObject query = new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE));
-                                        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+                                        String referenceId = dataAccessRequestList.get(idx).getString(DarConstants.REFERENCE_ID);
+                                        dataAccessRequestService.deleteByReferenceId(referenceId);
                                         dataAccessRequestList.get(idx).remove(DarConstants.PARTIAL_DAR_CODE);
                                     }
                                 }
@@ -610,10 +611,10 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
     }
 
-    private List getRequestIds(FindIterable<Document> access) {
+    private List getRequestIds(List<Document> access) {
         List<String> accessIds = new ArrayList<>();
         if (access != null) {
-            access.forEach((Block<Document>) document ->
+            access.forEach(document ->
                 accessIds.add(document.getString(DarConstants.REFERENCE_ID))
             );
         }

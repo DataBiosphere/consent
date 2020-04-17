@@ -52,16 +52,16 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    private ConsentDAO consentDAO;
-    private DacDAO dacDAO;
-    private DACUserDAO dacUserDAO;
-    private DataAccessRequestDAO dataAccessRequestDAO;
-    private DataSetDAO dataSetDAO;
-    private ElectionDAO electionDAO;
-    private DacService dacService;
-    private UserService userService;
-    private VoteDAO voteDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    private final ConsentDAO consentDAO;
+    private final DacDAO dacDAO;
+    private final DACUserDAO dacUserDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final DataSetDAO dataSetDAO;
+    private final ElectionDAO electionDAO;
+    private final DacService dacService;
+    private final UserService userService;
+    private final VoteDAO voteDAO;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -175,6 +175,18 @@ public class DataAccessRequestService {
 
     public List<DataAccessRequest> findAllDataAccessRequests() {
         return dataAccessRequestDAO.findAll();
+    }
+
+    public List<Document> findAllPartialDataAccessRequestDocuments() {
+        return dataAccessRequestDAO.findAllPartials().stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
+    }
+
+    public List<Document> findAllPartialDataAccessRequestDocumentsByUser(Integer userId) {
+        return dataAccessRequestDAO.findAllPartialsByUserId(userId).stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
     }
 
     /**

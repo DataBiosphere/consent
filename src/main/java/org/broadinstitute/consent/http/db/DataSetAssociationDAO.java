@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.db.mongo.DatasetAssociationMapper;
+import org.broadinstitute.consent.http.db.mapper.DatasetAssociationMapper;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
