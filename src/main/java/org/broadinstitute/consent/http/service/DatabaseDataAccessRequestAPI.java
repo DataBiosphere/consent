@@ -127,7 +127,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
-        List<Integer> datasets =  DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
+        List<Integer> datasets = DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
         if (CollectionUtils.isNotEmpty(datasets)) {
             Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasets);
             consentDataSets.forEach(consentDataSet -> {
@@ -283,8 +283,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         DataAccessRequestData data = dar.getData();
         data.setSortDate(new Date().getTime());
-        data.updateFromDocument(partialDar);
-        dataAccessRequestService.updateByReferenceId(referenceId, data);
+        Gson gson = new Gson();
+        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(partialDar));
+        dataAccessRequestService.updateByReferenceId(referenceId, darData);
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 

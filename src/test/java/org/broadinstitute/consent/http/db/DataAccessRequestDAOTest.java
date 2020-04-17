@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
@@ -20,9 +21,34 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(dars.isEmpty());
 
         createDataAccessRequest();
+        createPartialDataAccessRequest();
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
+    }
+
+    @Test
+    public void testFindAllPartials() {
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllPartialDataAccessRequests();
+        assertTrue(dars.isEmpty());
+
+        createDataAccessRequest();
+        createPartialDataAccessRequest();
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllPartialDataAccessRequests();
+        assertFalse(newDars.isEmpty());
+        assertEquals(1, newDars.size());
+    }
+
+    @Test
+    public void testFindAllPartialsByUserId() {
+        DataAccessRequest dar = createPartialDataAccessRequest();
+
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllPartialsByUserId(dar.getData().getUserId());
+        assertFalse(newDars.isEmpty());
+        assertEquals(1, newDars.size());
+
+        List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllPartialsByUserId(RandomUtils.nextInt(1, 100));
+        assertTrue(missingDars.isEmpty());
     }
 
     @Test

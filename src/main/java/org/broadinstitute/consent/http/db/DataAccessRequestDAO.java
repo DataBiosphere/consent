@@ -15,6 +15,9 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.List;
 
+/**
+ * For all json queries, note the double `??` for jdbi3 escaped jsonb operators: https://jdbi.org/#_postgresql
+ */
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
 @RegisterRowMapper(DataAccessRequestMapper.class)
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
@@ -23,25 +26,27 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * Find all non-partial DataAccessRequests
      * @return List<DataAccessRequest>
      */
-    // TODO: This is broken due to missing `partial_dar_code` field in the json.
-    // @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>partial_dar_code AS partial FROM data_access_request WHERE partial is null")
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+            "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] ")
     List<DataAccessRequest> findAllDataAccessRequests();
 
     /**
      * Find all partial DataAccessRequests, sorted descending order
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>sortDate as sort, (data #>> '{}')::jsonb->>partial_dar_code AS partial " +
-            "  FROM data_access_request WHERE partial is not null ORDER BY sort DESC")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+            "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
+            "  ORDER BY (data #>> '{}')::jsonb->>'sortDate' DESC")
     List<DataAccessRequest> findAllPartialDataAccessRequests();
 
     /**
      * Find all partial DataAccessRequests by user id, sorted descending order
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>sortDate as sort, (data #>> '{}')::jsonb->>partial_dar_code AS partial, (data #>> '{}')::jsonb->>userId AS userid " +
-            "  FROM data_access_request WHERE partial is not null AND userid = :userId ORDER BY sort DESC")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+            "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
+            "  AND ((data #>> '{}')::jsonb->'userId')::int = :userId " +
+            "  ORDER BY (data #>> '{}')::jsonb->>'sortDate' DESC")
     List<DataAccessRequest> findAllPartialsByUserId(@Bind("userId") Integer userId);
 
     /**
