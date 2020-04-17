@@ -1,15 +1,14 @@
 @Grab('io.github.http-builder-ng:http-builder-ng-core:1.0.4')
 @Grab('com.google.code.GSON:GSON:2.8.6')
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import groovy.json.JsonSlurper
 
 import static groovyx.net.http.HttpBuilder.configure
 import static groovyx.net.http.util.SslUtils.ignoreSslIssues
 
 /**
- * Simple script to query for all Data Access Requests that exist in Mongo and
- * recreate each one as a new Data Access Request in relational postgres database.
+ * Simple script to query for all Partial Data Access Requests that exist in Mongo and
+ * recreate each one as a new Partial Data Access Request in relational postgres database.
  *
  * Requires an authentication as an admin user.
  *

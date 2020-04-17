@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.mongodb.client.MongoCollection;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -13,6 +14,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -62,6 +64,7 @@ public class DataAccessRequestService {
     private final DacService dacService;
     private final UserService userService;
     private final VoteDAO voteDAO;
+    private final MongoConsentDB mongo;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -72,7 +75,8 @@ public class DataAccessRequestService {
     @Inject
     public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO,
                                     DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
-                                    DacService dacService, UserService userService, VoteDAO voteDAO) {
+                                    DacService dacService, UserService userService, VoteDAO voteDAO,
+                                    MongoConsentDB mongo) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
         this.dacUserDAO = dacUserDAO;
@@ -82,6 +86,7 @@ public class DataAccessRequestService {
         this.dacService = dacService;
         this.userService = userService;
         this.voteDAO = voteDAO;
+        this.mongo = mongo;
     }
 
     /**
@@ -495,6 +500,25 @@ public class DataAccessRequestService {
         return activeDars.stream().
                 filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
+    }
+
+    /**
+     * TODO: Remove in follow-up work
+     * Temporary Migration Service Call
+     * @return List<Document> All partial DARs
+     */
+    public List<Document> getAllMongoPartialDataAccessRequests() {
+        MongoCollection<Document> collection = mongo.getPartialDataAccessRequestCollection();
+        return collection.find().into(new ArrayList<>());
+    }
+
+    /**
+     * TODO: Remove in follow-up work
+     * Temporary Migration Service Call
+     * @return List<DataAccessRequest> All partial DARs
+     */
+    public List<DataAccessRequest> getAllPostgresPartialDataAccessRequests() {
+        return dataAccessRequestDAO.findAllPartialDataAccessRequests();
     }
 
 }

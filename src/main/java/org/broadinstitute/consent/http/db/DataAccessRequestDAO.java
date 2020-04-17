@@ -24,7 +24,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @return List<DataAccessRequest>
      */
     // TODO: This is broken due to missing `partial_dar_code` field in the json.
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>partial_dar_code AS partial FROM data_access_request WHERE partial is null")
+    // @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data, (data #>> '{}')::jsonb->>partial_dar_code AS partial FROM data_access_request WHERE partial is null")
+    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request")
     List<DataAccessRequest> findAllDataAccessRequests();
 
     /**

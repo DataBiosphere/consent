@@ -30,6 +30,11 @@ public class ConsentConfiguration extends Configuration {
     @Valid
     @NotNull
     @JsonProperty
+    private final MongoConfiguration mongo = new MongoConfiguration();
+
+    @Valid
+    @NotNull
+    @JsonProperty
     private final ServicesConfiguration services = new ServicesConfiguration();
 
     @Valid
@@ -78,6 +83,10 @@ public class ConsentConfiguration extends Configuration {
 
     public StoreConfiguration getCloudStoreConfiguration() {
         return googleStore;
+    }
+
+    public MongoConfiguration getMongoConfiguration() {
+        return mongo;
     }
 
     public ServicesConfiguration getServicesConfiguration() {

@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -204,6 +205,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Clients
         final Jdbi jdbi = injector.getProvider(Jdbi.class).get();
+        final MongoConsentDB mongoInstance = injector.getProvider(MongoConsentDB.class).get();
         final Client client = injector.getProvider(Client.class).get();
         final UseRestrictionConverter useRestrictionConverter = injector.getProvider(UseRestrictionConverter.class).get();
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();

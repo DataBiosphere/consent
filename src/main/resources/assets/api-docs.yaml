@@ -1145,6 +1145,65 @@ paths:
       responses:
         200:
           description: Returns the DAR collection
+  /api/dar/migrate/mongo:
+    get:
+      summary: Get All Partial DARs - Mongo
+      description: |
+        Admin only: Get All Partial DARs via mongo
+        Temporary API for migration purposes.
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns all Partial Data Access Requests mapped by their reference id
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataAccessRequest'
+        500:
+          description: Server Error
+  /api/dar/migrate/postgres:
+    get:
+      summary: Get All Partial DARs - Postgres
+      description: |
+        Admin only: Get All Partial DARs via the db
+        Temporary API for migration purposes.
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns all Partial Data Access Requests
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataAccessRequest'
+        500:
+          description: Server Error
+  /api/dar/migrate/{id}:
+    post:
+      summary: Create a Postgres Partial DAR
+      description: |
+        Admin only: Create a Postgres Partial DAR
+        Temporary API for migration purposes.
+      parameters:
+        - name: id
+          in: path
+          description: The reference id of the existing Partial DAR
+          required: true
+          type: string
+        - name: dar
+          in: body
+          description: The fields that represent a Partial DAR, json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequestData'
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the created Partial Data Access Request in json format.
+        500:
+          description: Internal Server Error.
   /api/dar/{id}:
     get:
       summary: describe
