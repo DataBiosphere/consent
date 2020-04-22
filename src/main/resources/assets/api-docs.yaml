@@ -2189,9 +2189,9 @@ paths:
       parameters:
         - name: voteId
           in: path
-          description: The vote id for a user's vote in an election
+          description: String value of the vote id for a user's vote in an election
           required: true
-          type: integer
+          type: string
       tags:
         - Notifier
       responses:
