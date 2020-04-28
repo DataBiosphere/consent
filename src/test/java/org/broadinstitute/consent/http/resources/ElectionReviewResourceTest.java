@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.resources;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ElectionReview;
 import org.broadinstitute.consent.http.models.Vote;
@@ -12,10 +14,9 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.ReviewResultsAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,6 +51,8 @@ public class ElectionReviewResourceTest {
     private ElectionAPI electionAPI;
     @Mock
     private ReviewResultsAPI reviewResultsAPI;
+    @Mock
+    private DataAccessRequestService darService;
 
     private ElectionReviewResource resource;
 
@@ -67,7 +70,7 @@ public class ElectionReviewResourceTest {
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(accessRequestAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractReviewResultsAPI.getInstance()).thenReturn(reviewResultsAPI);
-        resource = new ElectionReviewResource();
+        resource = new ElectionReviewResource(darService);
     }
 
     @Test
@@ -79,7 +82,7 @@ public class ElectionReviewResourceTest {
     }
 
     @Test
-    public void teestOpenElections() {
+    public void testOpenElections() {
         when(reviewResultsAPI.openElections()).thenReturn(true);
         initResource();
         String response = resource.openElections();
@@ -104,9 +107,11 @@ public class ElectionReviewResourceTest {
         consentElection.setElectionId(RandomUtils.nextInt(100, 1000));
         consentElection.setReferenceId(UUID.randomUUID().toString());
         when(electionAPI.getConsentElectionByDARElectionId(e.getElectionId())).thenReturn(consentElection);
-        Document d = new Document();
-        d.put(DarConstants.DATASET_ID, Collections.singletonList(1));
-        when(accessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(d);
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setDatasetId(Collections.singletonList(1));
+        dar.setData(data);
+        when(darService.findByReferenceId(any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(reviewResultsAPI.describeElectionReviewByElectionId(any(), any())).thenReturn(new ElectionReview());
         when(reviewResultsAPI.describeAgreementVote(any())).thenReturn(Collections.singletonList(new Vote()));
