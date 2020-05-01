@@ -2182,6 +2182,32 @@ paths:
           description: ElectionReview
           schema:
             $ref: '#/definitions/ElectionReview'
+  /api/electionReview/rp/{electionId}:
+    get:
+      summary: describeElectionById
+      description: Returns the ElectionReview from an Election identified by ElectionId. This endpoint can be used only for Research Purpose elections.
+      parameters:
+        - name: electionId
+          in: path
+          description: |
+            Election Id for the associated Data Access Election
+            (and not the associated RP Election, this is legacy behavior).
+          required: true
+          type: integer
+          format: int32
+        - name: isFinalAccess
+          in: query
+          description: Defines if the reviewVote array of the retrieved ElectionReview will contain or not the isFinalAccess = TRUE Vote.
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - ElectionReview
+      responses:
+        200:
+          description: ElectionReview
+          schema:
+            $ref: '#/definitions/ElectionReview'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
