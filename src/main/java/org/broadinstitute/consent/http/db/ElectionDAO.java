@@ -125,12 +125,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             " FROM election e " +
             " INNER JOIN vote v ON v.electionId = e.electionId AND LOWER(v.type) = 'chairperson' " +
             " INNER JOIN (SELECT referenceId, MAX(createDate) maxDate FROM election e WHERE LOWER(e.electionType) = LOWER(:type) GROUP BY referenceId) electionView " +
-            "     ON electionView.maxDate = e.createDate  " +
+            "     ON electionView.maxDate = e.createDate " +
             "     AND electionView.referenceId = e.referenceId " +
             "     AND LOWER(e.electionType) = LOWER(:type) " +
             "     AND e.finalAccessVote = :vote " +
             "     AND LOWER(e.status) != 'canceled' " +
-            "     ORDER BY createDate ASC")
+            " ORDER BY createDate ASC")
     List<Election> findLastElectionsByTypeAndFinalAccessVoteChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
 
     @SqlQuery("select count(*) from election e inner join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' where lower(e.electionType) = lower(:type) and lower(e.status) = lower(:status) and " +
