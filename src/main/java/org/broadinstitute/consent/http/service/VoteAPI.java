@@ -16,8 +16,6 @@ public interface VoteAPI {
 
     Vote describeVoteById(Integer voteId, String referenceId) throws NotFoundException;
 
-    Vote describeVoteFinalAccessVoteById(Integer requestId) throws NotFoundException;
-
     void deleteVote(Integer voteId, String referenceId) throws IllegalArgumentException, UnknownIdentifierException;
 
     void deleteVotes(String referenceId) throws IllegalArgumentException, UnknownIdentifierException;

@@ -13,20 +13,23 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class VoteService {
 
-    private DACUserDAO dacUserDAO;
-    private DataSetAssociationDAO dataSetAssociationDAO;
-    private ElectionDAO electionDAO;
-    private VoteDAO voteDAO;
+    private final DACUserDAO dacUserDAO;
+    private final DataSetAssociationDAO dataSetAssociationDAO;
+    private final ElectionDAO electionDAO;
+    private final VoteDAO voteDAO;
 
     @Inject
     public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO,
@@ -88,7 +91,7 @@ public class VoteService {
 
     /**
      * Create votes for an election
-     * <p>
+     *
      * TODO: Refactor duplicated code when DatabaseElectionAPI is fully replaced by ElectionService
      *
      * @param election       The Election
@@ -155,6 +158,29 @@ public class VoteService {
         List<Integer> dataOwners = dataSetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
         voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
+    }
+
+    /**
+     * Find the final access vote for this election. In practice, there can be more than one final vote
+     * if multiple chairpersons exist. If no one has voted yet, then they are effectively all the same
+     * null vote, so any one can be returned. If any chair(s) has voted, then we need to get the most recent
+     * vote as that will reflect the latest decision point of the chair(s).
+     *
+     * @param electionId Election Id
+     * @return Final Access Vote
+     * @throws NotFoundException No final vote exists for this election
+     */
+    public Vote describeFinalAccessVoteByElectionId(Integer electionId) throws NotFoundException {
+        List<Vote> votes = voteDAO.findFinalVotesByElectionId(electionId);
+        if (Objects.isNull(votes) || votes.isEmpty()) {
+            throw new NotFoundException("Could not find vote for specified id. Election id: " + electionId);
+        }
+        // Look for votes with a value, find by the most recent (max update date)
+        // Fall back to the first list vote if we can't find what we're looking for.
+        Optional<Vote> mostRecentVote = votes.stream().
+                filter(v -> Objects.nonNull(v.getVote())).
+                max(Comparator.comparing(Vote::getUpdateDate));
+        return mostRecentVote.orElse(votes.get(0));
     }
 
     /**
