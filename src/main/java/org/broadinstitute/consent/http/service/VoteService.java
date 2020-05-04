@@ -175,11 +175,6 @@ public class VoteService {
         if (Objects.isNull(votes) || votes.isEmpty()) {
             throw new NotFoundException("Could not find vote for specified id. Election id: " + electionId);
         }
-        // Look for the most recent vote with a value if there are more than one.
-        // If there's only one, or all votes null, then return the first one
-        if (votes.size() == 1 || votes.stream().allMatch(v -> Objects.isNull(v.getVote()))) {
-            return votes.get(0);
-        }
         // Look for votes with a value, find by the most recent (max update date)
         // Fall back to the first list vote if we can't find what we're looking for.
         Optional<Vote> mostRecentVote = votes.stream().
