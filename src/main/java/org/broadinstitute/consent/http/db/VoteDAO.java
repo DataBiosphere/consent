@@ -66,7 +66,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @Deprecated // This query can return a list of votes and should be avoided
     Vote findVoteByElectionIdAndType(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
-    @SqlQuery("select * from vote v where v.electionId = :electionId and lower(v.type) = 'final'")
+    @SqlQuery("SELECT * FROM vote v WHERE v.electionid = :electionId AND LOWER(v.type) = 'final'")
     List<Vote> findFinalVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId = :dacUserId and lower(v.type) = 'final'")
