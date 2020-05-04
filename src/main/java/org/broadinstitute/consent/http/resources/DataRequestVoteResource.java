@@ -157,9 +157,8 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/final")
     @PermitAll
-    public Vote describeFinalAccessVote(@PathParam("requestId") Integer requestId){
-        return api.describeVoteFinalAccessVoteById(requestId);
-
+    public Vote describeFinalAccessVote(@PathParam("requestId") Integer requestId) {
+        return voteService.describeFinalAccessVoteByElectionId(requestId);
     }
 
     @GET

@@ -18,11 +18,20 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -60,7 +69,7 @@ public class VoteServiceTest {
         initService();
 
         Collection<Vote> votes = service.findVotesByReferenceId(UUID.randomUUID().toString());
-        Assert.assertTrue(votes.isEmpty());
+        assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -93,7 +102,7 @@ public class VoteServiceTest {
         initService();
 
         Vote vote = service.updateVote(v);
-        Assert.assertNotNull(vote);
+        assertNotNull(vote);
     }
 
     @Test
@@ -102,13 +111,13 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 4 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
         // Final vote
         // Manual review Agreement vote
-        Assert.assertEquals(4, votes.size());
+        assertEquals(4, votes.size());
     }
 
     @Test
@@ -117,9 +126,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assert.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -128,12 +137,12 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, true);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 3 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
         // Final vote
-        Assert.assertEquals(3, votes.size());
+        assertEquals(3, votes.size());
     }
 
     @Test
@@ -142,9 +151,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assert.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -153,11 +162,11 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
-        Assert.assertEquals(2, votes.size());
+        assertEquals(2, votes.size());
     }
 
     @Test
@@ -166,9 +175,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assert.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -177,11 +186,11 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
-        Assert.assertEquals(2, votes.size());
+        assertEquals(2, votes.size());
     }
 
     @Test
@@ -190,9 +199,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assert.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -209,7 +218,117 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createDataOwnersReviewVotes(e);
-        Assert.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
+    }
+
+    /**
+     * Test the case where no final vote exists.
+     */
+    @Test(expected = NotFoundException.class)
+    public void testDescribeFinalAccessVoteByElectionId_NotFound() {
+        when(voteDAO.findFinalVotesByElectionId(any())).thenReturn(Collections.emptyList());
+        initService();
+        service.describeFinalAccessVoteByElectionId(1);
+    }
+
+    /**
+     * Test the case where a single final vote exists.
+     */
+    @Test
+    public void testDescribeFinalAccessVoteByElectionId_Case_1() {
+        Vote vote = new Vote();
+        vote.setVoteId(1);
+        when(voteDAO.findFinalVotesByElectionId(any())).thenReturn(Collections.singletonList(vote));
+        initService();
+        Vote foundVote = service.describeFinalAccessVoteByElectionId(1);
+        assertNotNull(foundVote);
+        assertEquals(vote.getVoteId(), foundVote.getVoteId());
+    }
+
+    /**
+     * Test the case where multiple final votes exist, but only one has a vote.
+     * Similar to case 3
+     */
+    @Test
+    public void testDescribeFinalAccessVoteByElectionId_Case_2() {
+        Vote v1 = new Vote();
+        Vote v2 = new Vote();
+        v1.setVoteId(1);
+        v1.setVote(true);
+        v2.setVoteId(2);
+        when(voteDAO.findFinalVotesByElectionId(any())).thenReturn(Arrays.asList(v1, v2));
+        initService();
+        Vote foundVote = service.describeFinalAccessVoteByElectionId(1);
+        assertNotNull(foundVote);
+        assertEquals(v1.getVoteId(), foundVote.getVoteId());
+    }
+
+    /**
+     * Test the case where multiple final votes exist, but a different one has a vote.
+     * Similar to case 2
+     */
+    @Test
+    public void testDescribeFinalAccessVoteByElectionId_Case_3() {
+        Vote v1 = new Vote();
+        Vote v2 = new Vote();
+        v1.setVoteId(1);
+        v2.setVoteId(2);
+        v2.setVote(true);
+        when(voteDAO.findFinalVotesByElectionId(any())).thenReturn(Arrays.asList(v1, v2));
+        initService();
+        Vote foundVote = service.describeFinalAccessVoteByElectionId(1);
+        assertNotNull(foundVote);
+        assertEquals(v2.getVoteId(), foundVote.getVoteId());
+    }
+
+    /**
+     * Test the case where multiple final votes exist, each with a vote, but with different update dates
+     * Similar to case 5
+     */
+    @Test
+    public void testDescribeFinalAccessVoteByElectionId_Case_4() {
+        LocalDate local = LocalDate.now();
+        ZoneId defaultZoneId = ZoneId.systemDefault();
+        Date now = Date.from(local.atStartOfDay(defaultZoneId).toInstant());
+        Date yesterday = Date.from(local.minusDays(1).atStartOfDay(defaultZoneId).toInstant());
+        Vote v1 = new Vote();
+        v1.setVoteId(1);
+        v1.setUpdateDate(now);
+        v1.setVote(false);
+        Vote v2 = new Vote();
+        v2.setVoteId(2);
+        v2.setUpdateDate(yesterday);
+        v2.setVote(true);
+        when(voteDAO.findFinalVotesByElectionId(any())).thenReturn(Arrays.asList(v1, v2));
+        initService();
+        Vote foundVote = service.describeFinalAccessVoteByElectionId(1);
+        assertNotNull(foundVote);
+        assertEquals(v1.getVoteId(), foundVote.getVoteId());
+    }
+
+    /**
+     * Test the case where multiple final votes exist, each with a vote, but with different update dates
+     * Similar to case 4
+     */
+    @Test
+    public void testDescribeFinalAccessVoteByElectionId_Case_5() {
+        LocalDate local = LocalDate.now();
+        ZoneId defaultZoneId = ZoneId.systemDefault();
+        Date now = Date.from(local.atStartOfDay(defaultZoneId).toInstant());
+        Date yesterday = Date.from(local.minusDays(1).atStartOfDay(defaultZoneId).toInstant());
+        Vote v1 = new Vote();
+        v1.setVoteId(1);
+        v1.setUpdateDate(yesterday);
+        v1.setVote(false);
+        Vote v2 = new Vote();
+        v2.setVoteId(2);
+        v2.setUpdateDate(now);
+        v2.setVote(true);
+        when(voteDAO.findFinalVotesByElectionId(any())).thenReturn(Arrays.asList(v1, v2));
+        initService();
+        Vote foundVote = service.describeFinalAccessVoteByElectionId(1);
+        assertNotNull(foundVote);
+        assertEquals(v2.getVoteId(), foundVote.getVoteId());
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
