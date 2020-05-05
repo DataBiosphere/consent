@@ -18,7 +18,7 @@ import java.util.List;
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
 
-    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId and lower(election.status) = 'open'")
+    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
