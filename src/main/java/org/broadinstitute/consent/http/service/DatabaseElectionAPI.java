@@ -275,11 +275,17 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         if (e.getElectionType().equals(ElectionType.RP.getValue())) {
             rpElectionId = e.getElectionId();
             darElectionId = electionDAO.findAccessElectionByElectionRPId(rpElectionId);
-            darReferenceId = Optional.ofNullable(electionDAO.findElectionById(darElectionId).getReferenceId()).orElse(null);
+            Election darElection = electionDAO.findElectionById(darElectionId);
+            if (Objects.nonNull(darElection)) {
+                darReferenceId = darElection.getReferenceId();
+            }
         } else {
             darElectionId = e.getElectionId();
             rpElectionId = electionDAO.findRPElectionByElectionAccessId(darElectionId);
-            rpReferenceId = Optional.ofNullable(electionDAO.findElectionById(rpElectionId).getReferenceId()).orElse(null);
+            Election rpElection = electionDAO.findElectionById(rpElectionId);
+            if (Objects.nonNull(rpElection)) {
+                rpReferenceId = rpElection.getReferenceId();
+            }
         }
         List<Vote> rpElectionVotes = voteDAO.findPendingVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingVotesByElectionId(darElectionId);
