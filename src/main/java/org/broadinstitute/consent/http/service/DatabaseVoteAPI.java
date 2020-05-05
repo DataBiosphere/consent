@@ -69,7 +69,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     public List<Vote> describeVotes(String referenceId) {
         List<Vote> resultVotes = voteDAO.findVotesByReferenceId(referenceId);
         if (resultVotes == null || resultVotes.isEmpty()) {
-            throw new NotFoundException("Could not find vote for specified object id. Object id: " + referenceId);
+            throw new NotFoundException("Could not find vote for specified reference id. Reference id: " + referenceId);
         }
         return resultVotes;
     }
