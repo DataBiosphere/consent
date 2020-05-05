@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.DataSetElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -172,7 +171,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             throw new NotFoundException("Election for specified id does not exist");
         }
         electionDAO.updateFinalAccessVote(electionId);
-        if(electionDAO.findFinalAccessVote(electionId)) {
+        List<Vote> finalVotes = voteDAO.findFinalVotesByElectionId(electionId);
+        boolean isApproved = finalVotes.stream().
+                filter(Objects::nonNull).
+                filter(v -> Objects.nonNull(v.getVote())).
+                anyMatch(Vote::getVote);
+        if (isApproved) {
             sendResearcherNotification(election.getReferenceId());
         }
         return electionDAO.findElectionWithFinalVoteById(electionId);

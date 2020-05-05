@@ -268,9 +268,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     Election findDULApprovedElectionByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery("select  v.vote from vote v where v.electionId = :electionId and lower(v.type) = 'final' ")
-    Boolean findFinalAccessVote(@Bind("electionId") Integer electionId);
-
     /**
      * Find the Dac for this election. Looks across associations to a dac via dataset and those
      * associated via the consent.
