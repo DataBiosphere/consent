@@ -246,7 +246,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         try {
             MailService.initInstance(config.getMailConfiguration());
-            EmailNotifierService.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
+            EmailNotifierService.initInstance(consentDAO, dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
         } catch (IOException e) {
             LOGGER.error("Mail Notification Service initialization error.", e);
         }
