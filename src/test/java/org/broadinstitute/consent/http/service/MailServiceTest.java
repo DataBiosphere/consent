@@ -17,9 +17,9 @@ import static org.mockito.Mockito.doNothing;
 
 public class MailServiceTest {
 
-    private static String TO = "to@broadinstitute.org";
-    private static String ID = "DUL-123";
-    private static String TYPE = "Data Use Limitations";
+    private static final String TO = "to@broadinstitute.org";
+    private static final String ID = "DUL-123";
+    private static final String TYPE = "Data Use Limitations";
     private MailService mailService;
 
     @Mock
@@ -57,7 +57,6 @@ public class MailServiceTest {
 
     @Test
     public void testNewCaseMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendNewCaseMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -67,7 +66,6 @@ public class MailServiceTest {
 
     @Test
     public void testReminderMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendReminderMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -77,7 +75,6 @@ public class MailServiceTest {
 
     @Test
     public void testDisabledDatasetMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendDisabledDatasetMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -87,7 +84,6 @@ public class MailServiceTest {
 
     @Test
     public void testNewDARRequests() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendNewDARRequests(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -97,7 +93,6 @@ public class MailServiceTest {
 
     @Test
     public void testCancelDARRequestMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendCancelDARRequestMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -107,7 +102,6 @@ public class MailServiceTest {
 
     @Test
     public void testFlaggedDarAdminApprovedMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendFlaggedDarAdminApprovedMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -117,7 +111,6 @@ public class MailServiceTest {
 
     @Test
     public void testClosedDatasetElectionsMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendClosedDatasetElectionsMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -127,7 +120,6 @@ public class MailServiceTest {
 
     @Test
     public void testDelegateResponsibilitiesMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendDelegateResponsibilitiesMessage(Collections.singleton(TO), template);
         } catch (Exception e) {
@@ -137,7 +129,6 @@ public class MailServiceTest {
 
     @Test
     public void testNewResearcherCreatedMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendNewResearcherCreatedMessage(Collections.singleton(TO), template);
         } catch (Exception e) {
@@ -147,7 +138,6 @@ public class MailServiceTest {
 
     @Test
     public void testNewHelpReportMessage() {
-        Assert.assertNotNull(mailService);
         try {
             mailService.sendNewHelpReportMessage(Collections.singleton(TO), template, "Test");
         } catch (Exception e) {
