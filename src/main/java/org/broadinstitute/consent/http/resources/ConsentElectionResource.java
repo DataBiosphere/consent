@@ -12,11 +12,10 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteService;
 
 import javax.annotation.security.PermitAll;
@@ -47,17 +46,18 @@ public class ConsentElectionResource extends Resource {
 
     private final ConsentService consentService;
     private final DacService dacService;
+    private final EmailNotifierService emailNotifierService;
     private final VoteService voteService;
     private final ElectionAPI api;
-    private final EmailNotifierAPI emailApi;
 
     @Inject
-    public ConsentElectionResource(ConsentService consentService, DacService dacService, VoteService voteService) {
+    public ConsentElectionResource(ConsentService consentService, DacService dacService,
+                                   EmailNotifierService emailNotifierService, VoteService voteService) {
         this.consentService = consentService;
         this.dacService = dacService;
+        this.emailNotifierService = emailNotifierService;
         this.voteService = voteService;
         this.api = AbstractElectionAPI.getInstance();
-        this.emailApi = AbstractEmailNotifierAPI.getInstance();
     }
 
     @POST
@@ -146,7 +146,7 @@ public class ConsentElectionResource extends Resource {
         List<Vote> dulVotes = votes.stream().
                 filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                 collect(Collectors.toList());
-        emailApi.sendNewCaseMessageToList(dulVotes, newElection);
+        emailNotifierService.sendNewCaseMessageToList(dulVotes, newElection);
         return info.getRequestUriBuilder().build();
     }
 

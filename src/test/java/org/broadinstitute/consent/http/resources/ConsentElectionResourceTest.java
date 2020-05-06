@@ -12,12 +12,11 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -55,8 +54,7 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
         AbstractElectionAPI.class,
-        AbstractVoteAPI.class,
-        AbstractEmailNotifierAPI.class})
+        AbstractVoteAPI.class})
 public class ConsentElectionResourceTest {
 
     @Mock
@@ -72,7 +70,7 @@ public class ConsentElectionResourceTest {
     VoteAPI voteAPI;
 
     @Mock
-    EmailNotifierAPI emailAPI;
+    EmailNotifierService emailNotifierService;
 
     @Mock
     VoteService voteService;
@@ -93,7 +91,6 @@ public class ConsentElectionResourceTest {
 
         PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
-        PowerMockito.mockStatic(AbstractEmailNotifierAPI.class);
 
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
@@ -101,7 +98,7 @@ public class ConsentElectionResourceTest {
         Election election = getElection();
         when(electionAPI.createElection(any(Election.class), anyString(), any(ElectionType.class))).thenReturn(election);
         when(voteService.createVotes(any(Election.class), any(ElectionType.class), anyBoolean())).thenReturn(getVotesForElection(election.getElectionId()));
-        doNothing().when(emailAPI).sendNewCaseMessageToList(anyList(), any(Election.class));
+        doNothing().when(emailNotifierService).sendNewCaseMessageToList(anyList(), any(Election.class));
     }
 
     @Test
@@ -254,8 +251,7 @@ public class ConsentElectionResourceTest {
     private void initResource() {
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
-        when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailAPI);
-        resource = new ConsentElectionResource(consentService, dacService, voteService);
+        resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService);
     }
 
     private Consent getConsent(Integer dacId) {

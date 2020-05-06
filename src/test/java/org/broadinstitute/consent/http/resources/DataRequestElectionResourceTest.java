@@ -4,12 +4,11 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -48,7 +47,6 @@ import static org.mockito.Mockito.when;
 @PrepareForTest({
         AbstractElectionAPI.class,
         AbstractVoteAPI.class,
-        AbstractEmailNotifierAPI.class,
         AbstractDataAccessRequestAPI.class,
         AbstractSummaryAPI.class
 })
@@ -59,7 +57,7 @@ public class DataRequestElectionResourceTest {
     @Mock
     private VoteAPI voteAPI;
     @Mock
-    private EmailNotifierAPI emailAPI;
+    private EmailNotifierService emailNotifierService;
     @Mock
     private DataAccessRequestAPI darApi;
     @Mock
@@ -78,12 +76,10 @@ public class DataRequestElectionResourceTest {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractElectionAPI.class);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
-        PowerMockito.mockStatic(AbstractEmailNotifierAPI.class);
         PowerMockito.mockStatic(AbstractDataAccessRequestAPI.class);
         PowerMockito.mockStatic(AbstractSummaryAPI.class);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
-        when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailAPI);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(darApi);
         when(AbstractSummaryAPI.getInstance()).thenReturn(summaryAPI);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
@@ -94,7 +90,7 @@ public class DataRequestElectionResourceTest {
     }
 
     private void initResource() {
-        resource = new DataRequestElectionResource(voteService);
+        resource = new DataRequestElectionResource(emailNotifierService, voteService);
     }
 
     @Test
@@ -102,7 +98,7 @@ public class DataRequestElectionResourceTest {
         when(electionAPI.createElection(any(), any(), any())).thenReturn(new Election());
         when(darApi.getField(any(), any())).thenReturn(null);
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
-        doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
+        doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
                 uriInfo,
@@ -119,7 +115,7 @@ public class DataRequestElectionResourceTest {
         when(electionAPI.createElection(any(), any(), any())).thenReturn(election);
         when(darApi.getField(any(), any())).thenReturn(new Object());
         when(voteService.createVotes(any(Election.class), any(), any())).thenReturn(Collections.emptyList());
-        doNothing().when(emailAPI).sendNewCaseMessageToList(any(), any());
+        doNothing().when(emailNotifierService).sendNewCaseMessageToList(any(), any());
         initResource();
         Response response = resource.createDataRequestElection(
                 uriInfo,

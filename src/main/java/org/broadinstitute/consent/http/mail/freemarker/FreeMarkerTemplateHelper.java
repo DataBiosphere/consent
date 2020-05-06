@@ -23,9 +23,9 @@ public class FreeMarkerTemplateHelper {
 
     Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
-    private final String HELP_REPORT_URL = "help_me";
+    private final String HELP_REPORT_URL = "home_help";
 
-    public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
+    public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
         freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         freeMarkerConfig.setClassForTemplateLoading(this.getClass(), config.getTemplateDirectory());

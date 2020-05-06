@@ -54,7 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class EmailNotifierService extends AbstractEmailNotifierAPI {
+public class EmailNotifierService {
 
     private final ConsentDAO consentDAO;
     private final DataAccessRequestService dataAccessRequestService;
@@ -77,8 +77,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private static final String CHAIR_CONSOLE_URL = "chair_console";
     private static final String MEMBER_CONSOLE_URL = "user_console";
     private static final String REVIEW_RESEARCHER_URL = "researcher_review";
-
-
 
     public enum ElectionTypeString {
 
@@ -106,11 +104,10 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    public static void initInstance(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService, VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO) {
-        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(consentDAO, dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, helper, serverUrl, serviceActive, researcherPropertyDAO));
-    }
-
-    public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService, VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO){
+    public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
+                                VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO,
+                                MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper,
+                                String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.dacUserDAO = dacUserDAO;
@@ -125,7 +122,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
-    @Override
     public void sendNewDARRequestMessage(String dataAccessRequestId, List<Integer> datasetIds) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
@@ -142,7 +138,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
         if (isServiceActive) {
             Set<DACUser> chairs = dacUserDAO.findUsersForElectionsByRoles(
@@ -159,7 +154,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendReminderMessage(Integer voteId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Map<String, String> data = retrieveForVote(voteId);
@@ -172,7 +166,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendNewCaseMessageToList(List<Vote> votes, Election election) throws MessagingException, IOException, TemplateException {
         if(isServiceActive) {
             String rpVoteId = "";
@@ -191,7 +184,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendDisabledDatasetsMessage(DACUser user, List<String> disabledDatasets, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(), disabledDatasets, dataAcessRequestId, SERVER_URL);
@@ -199,7 +191,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendCancelDARRequestMessage(List<DACUser> users, String dataAcessRequestId) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Writer template = templateHelper.getCancelledDarTemplate("DAC Member", dataAcessRequestId, SERVER_URL);
@@ -207,7 +198,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendClosedDataSetElectionsMessage(List<Election> elections) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
@@ -225,7 +215,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendAdminFlaggedDarApproved(String darCode, List<DACUser> admins, Map<DACUser, List<DataSet>> dataOwnersDataSets) throws MessagingException, IOException, TemplateException{
         if(isServiceActive){
             for(DACUser admin: admins) {
@@ -235,7 +224,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendNeedsPIApprovalMessage(Map<DACUser, List<DataSet>> dataSetMap, Document access, Integer amountOfTime) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             for(DACUser owner: dataSetMap.keySet()){
@@ -246,7 +234,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendUserDelegateResponsibilitiesMessage(DACUser user, Integer oldUser,  String newRole, List<Vote> delegatedVotes) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             String delegateURL = SERVER_URL + delegateURL(newRole);
@@ -258,7 +245,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendNewResearcherCreatedMessage(Integer researcherId, String action) throws IOException, TemplateException, MessagingException {
         DACUser createdResearcher = dacUserDAO.findDACUserById(researcherId);
         List<DACUser> admins = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
@@ -271,7 +257,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
         if(isServiceActive){
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
@@ -282,7 +267,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    @Override
     public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
         if(isServiceActive){
             DACUser user = dacUserDAO.findDACUserById(researcherId);

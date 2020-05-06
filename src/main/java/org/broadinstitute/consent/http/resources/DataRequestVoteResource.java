@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -12,14 +13,13 @@ import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -59,20 +59,21 @@ public class DataRequestVoteResource extends Resource {
     private final DataSetAPI dataSetAPI;
     private final DataSetAssociationAPI dataSetAssociationAPI;
     private final ElectionAPI electionAPI;
-    private final EmailNotifierAPI emailNotifierAPI;
+    private final EmailNotifierService emailNotifierService;
     private final VoteAPI api;
     private final VoteService voteService;
 
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
 
-    public DataRequestVoteResource(VoteService voteService) {
+    @Inject
+    public DataRequestVoteResource(EmailNotifierService emailNotifierService, VoteService voteService) {
+        this.emailNotifierService = emailNotifierService;
         this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
         this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
-        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
         this.api = AbstractVoteAPI.getInstance();
         this.voteService = voteService;
     }
@@ -230,9 +231,9 @@ public class DataRequestVoteResource extends Resource {
                 }
                 List<DACUser> admins = dacUserAPI.describeAdminUsersThatWantToReceiveMails();
                 if(CollectionUtils.isNotEmpty(admins)) {
-                    emailNotifierAPI.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
+                    emailNotifierService.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }
-                emailNotifierAPI.sendNeedsPIApprovalMessage(dataOwnerDataSet, access, approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
+                emailNotifierService.sendNeedsPIApprovalMessage(dataOwnerDataSet, access, approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
             }
         }
     }
@@ -240,7 +241,7 @@ public class DataRequestVoteResource extends Resource {
     private void validateCollectDAREmail(Vote vote) {
         if(!vote.getType().equals(VoteType.DATA_OWNER.getValue()) && electionAPI.validateCollectDAREmailCondition(vote)){
             try {
-                emailNotifierAPI.sendCollectMessage(vote.getElectionId());
+                emailNotifierService.sendCollectMessage(vote.getElectionId());
             } catch (MessagingException | IOException | TemplateException e) {
                 logger.severe("Error when sending email notification to Chairpersons to collect votes. Cause: " + e);
             }

@@ -31,10 +31,12 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -81,6 +83,8 @@ public class ConsentModule extends AbstractModule {
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
 
+    private final FreeMarkerTemplateHelper freeMarkerTemplateHelper;
+
     public static final String DB_ENV = "postgresql";
 
     ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
@@ -114,6 +118,8 @@ public class ConsentModule extends AbstractModule {
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
+
+        this.freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
     }
 
     @Override
@@ -124,7 +130,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     Client providesClient() {
-        return client;
+        return this.client;
     }
 
     @Provides
@@ -188,6 +194,31 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesDacService(),
                 providesDataAccessRequestService());
+    }
+
+    @Provides
+    FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
+        return freeMarkerTemplateHelper;
+    }
+
+    @Provides
+    EmailNotifierService providesEmailNotifierService() {
+        System.out.println(config.getMailConfiguration().getGoogleAccount());
+        String localUrl = config.getServicesConfiguration().getLocalURL();
+        boolean active = config.getMailConfiguration().isActivateEmailNotifications();
+        return new EmailNotifierService(
+                providesConsentDAO(),
+                providesDataAccessRequestService(),
+                providesVoteDAO(),
+                providesElectionDAO(),
+                providesDACUserDAO(),
+                providesMailMessageDAO(),
+                providesMailServiceDAO(),
+                providesFreeMarkerTemplateHelper(),
+                localUrl,
+                active,
+                providesResearcherPropertyDAO()
+        );
     }
 
     @Provides

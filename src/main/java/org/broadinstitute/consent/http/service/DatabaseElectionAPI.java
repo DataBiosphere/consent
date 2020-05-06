@@ -53,16 +53,16 @@ import java.util.stream.Collectors;
 @Deprecated // Use ElectionService
 public class DatabaseElectionAPI extends AbstractElectionAPI {
 
-    private MailMessageDAO mailMessageDAO;
-    private ElectionDAO electionDAO;
-    private ConsentDAO consentDAO;
-    private VoteDAO voteDAO;
-    private DACUserDAO dacUserDAO;
-    private DataSetDAO dataSetDAO;
-    private DataAccessRequestService dataAccessRequestService;
+    private final MailMessageDAO mailMessageDAO;
+    private final ElectionDAO electionDAO;
+    private final EmailNotifierService emailNotifierService;
+    private final ConsentDAO consentDAO;
+    private final VoteDAO voteDAO;
+    private final DACUserDAO dacUserDAO;
+    private final DataSetDAO dataSetDAO;
+    private final DataAccessRequestService dataAccessRequestService;
     private final String DUL_NOT_APROVED = "The Data Use Limitation Election related to this Dataset has not been approved yet.";
     private final String INACTIVE_DS = "Election was not created. The following DataSets are disabled : ";
-    private EmailNotifierAPI emailNotifierAPI;
     private static final Logger logger = LoggerFactory.getLogger("DatabaseElectionAPI");
     private final String DATA_USE_LIMITATION = "Data Use Limitation";
     private final String DATA_ACCESS_REQUEST = "Data Access Request";
@@ -77,8 +77,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dataAccessRequestService, dao, consentDAO, dacUserDAO, voteDAO, mailMessageDAO, dataSetDAO));
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, ElectionDAO dao, EmailNotifierService emailNotifierService, ConsentDAO consentDAO, DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dataAccessRequestService, dao, emailNotifierService, consentDAO, dacUserDAO, voteDAO, mailMessageDAO, dataSetDAO));
     }
 
     /**
@@ -88,7 +88,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * @param dao The Data Access Object used to read/write data.
      */
     @VisibleForTesting
-    DatabaseElectionAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO dao, ConsentDAO consentDAO, DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
+    DatabaseElectionAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO dao, EmailNotifierService emailNotifierService, ConsentDAO consentDAO, DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.electionDAO = dao;
         this.consentDAO = consentDAO;
@@ -96,7 +96,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         this.voteDAO = voteDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.dataSetDAO = dataSetDAO;
-        this.emailNotifierAPI = AbstractEmailNotifierAPI.getInstance();
+        this.emailNotifierService = emailNotifierService;
     }
 
     @Override
@@ -334,7 +334,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             if(validateAllDatasetElectionsAreClosed(dsElections)){
                 List<Election> darElections = new ArrayList<>();
                 darElections.add(electionDAO.findLastElectionByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_ACCESS.getValue()));
-                emailNotifierAPI.sendClosedDataSetElectionsMessage(darElections);
+                emailNotifierService.sendClosedDataSetElectionsMessage(darElections);
             }
         } catch (MessagingException | IOException | TemplateException e) {
             logger.error("Exception sending Closed Dataset Elections email. Cause: " + e.getMessage());
@@ -473,11 +473,11 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
             DACUser dacUser = dacUserDAO.findDACUserById(dar.getInteger("userId"));
             if(!createElection){
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierService.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
             }else{
                 updateDataAccessRequest(dataSetList, dar, referenceId);
-                emailNotifierAPI.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierService.sendDisabledDatasetsMessage(dacUser, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
             }
         }
         return dataSetList;
@@ -664,7 +664,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 datasetsDetail.add(new DatasetMailDTO(ds.getName(), DatasetUtil.parseAlias(ds.getAlias())))
             );
             Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            emailNotifierAPI.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
+            emailNotifierService.sendResearcherDarApproved(dar.get(DarConstants.DAR_CODE, String.class),  dar.get(DarConstants.USER_ID, Integer.class), datasetsDetail, consent.getTranslatedUseRestriction());
         }
     }
 }
