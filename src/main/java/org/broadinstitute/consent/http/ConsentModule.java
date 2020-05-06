@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -203,9 +204,6 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     EmailNotifierService providesEmailNotifierService() {
-        System.out.println(config.getMailConfiguration().getGoogleAccount());
-        String localUrl = config.getServicesConfiguration().getLocalURL();
-        boolean active = config.getMailConfiguration().isActivateEmailNotifications();
         return new EmailNotifierService(
                 providesConsentDAO(),
                 providesDataAccessRequestService(),
@@ -213,12 +211,18 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesDACUserDAO(),
                 providesMailMessageDAO(),
+                providesMailService(),
                 providesMailServiceDAO(),
                 providesFreeMarkerTemplateHelper(),
-                localUrl,
-                active,
+                config.getServicesConfiguration().getLocalURL(),
+                config.getMailConfiguration().isActivateEmailNotifications(),
                 providesResearcherPropertyDAO()
         );
+    }
+
+    @Provides
+    MailService providesMailService() {
+        return new MailService(config.getMailConfiguration());
     }
 
     @Provides

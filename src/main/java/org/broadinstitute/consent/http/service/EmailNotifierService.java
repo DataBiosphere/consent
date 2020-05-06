@@ -14,7 +14,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.MailService;
-import org.broadinstitute.consent.http.mail.MailServiceAPI;
 import org.broadinstitute.consent.http.mail.freemarker.DataSetPIMailModel;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
@@ -65,7 +64,7 @@ public class EmailNotifierService {
     private final ResearcherPropertyDAO researcherPropertyDAO;
     private final VoteDAO voteDAO;
     private final FreeMarkerTemplateHelper templateHelper;
-    private final MailServiceAPI mailService;
+    private final MailService mailService;
     private final String SERVER_URL;
     private final boolean isServiceActive;
 
@@ -106,8 +105,9 @@ public class EmailNotifierService {
 
     public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
                                 VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO,
-                                MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper,
-                                String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO) {
+                                MailMessageDAO emailDAO, MailService mailService, MailServiceDAO mailServiceDAO,
+                                FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive,
+                                ResearcherPropertyDAO researcherPropertyDAO) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.dacUserDAO = dacUserDAO;
@@ -116,7 +116,7 @@ public class EmailNotifierService {
         this.templateHelper = helper;
         this.emailDAO = emailDAO;
         this.mailServiceDAO = mailServiceDAO;
-        this.mailService = MailService.getInstance();
+        this.mailService = mailService;
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;
         this.researcherPropertyDAO = researcherPropertyDAO;

@@ -1,57 +1,53 @@
-package org.broadinstitute.consent.http.mail;
+package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.junit.After;
+import org.broadinstitute.consent.http.mail.MailService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import javax.mail.MessagingException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collections;
+
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 
 public class MailServiceTest {
 
     private static String TO = "to@broadinstitute.org";
     private static String ID = "DUL-123";
     private static String TYPE = "Data Use Limitations";
-    private MailServiceAPI mailService;
+    private MailService mailService;
+
+    @Mock
     private Writer template;
 
     @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
         MailConfiguration config = new MailConfiguration();
         config.setSendGridApiKey("test");
         config.setGoogleAccount("from@broadinstitute.org");
         config.setActivateEmailNotifications(false);
-        MailService.initInstance(config);
-        mailService = AbstractMailServiceAPI.MailServiceAPIHolder.getInstance();
-        template = new StringWriter();
-        template.write("Email Content");
-    }
-
-    @After
-    public void tearDown() {
-        MailService.clearInstance();
+        mailService = new MailService(config);
+        doNothing().when(template).write(anyString());
     }
 
     @Test(expected=MessagingException.class)
     public void testCollectMessageFailure() throws Exception {
-        MailService.clearInstance();
         MailConfiguration config = new MailConfiguration();
         config.setSendGridApiKey("test");
         config.setGoogleAccount("from@broadinstitute.org");
         config.setActivateEmailNotifications(true);
-        MailService.initInstance(config);
-        mailService = AbstractMailServiceAPI.MailServiceAPIHolder.getInstance();
-        Assert.assertNotNull(mailService);
+        mailService = new MailService(config);
         mailService.sendCollectMessage(Collections.singleton(TO), ID, TYPE, template);
     }
 
     @Test
-    public void testCollectMessage() throws Exception {
-        Assert.assertNotNull(mailService);
+    public void testCollectMessage() {
         try {
             mailService.sendCollectMessage(Collections.singleton(TO), ID, TYPE, template);
         } catch (Exception e) {
@@ -60,7 +56,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testNewCaseMessage() throws Exception {
+    public void testNewCaseMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendNewCaseMessage(Collections.singleton(TO), ID, TYPE, template);
@@ -70,7 +66,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testReminderMessage() throws Exception {
+    public void testReminderMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendReminderMessage(Collections.singleton(TO), ID, TYPE, template);
@@ -80,7 +76,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testDisabledDatasetMessage() throws Exception {
+    public void testDisabledDatasetMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendDisabledDatasetMessage(Collections.singleton(TO), ID, TYPE, template);
@@ -90,7 +86,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testNewDARRequests() throws Exception {
+    public void testNewDARRequests() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendNewDARRequests(Collections.singleton(TO), ID, TYPE, template);
@@ -100,7 +96,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testCancelDARRequestMessage() throws Exception {
+    public void testCancelDARRequestMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendCancelDARRequestMessage(Collections.singleton(TO), ID, TYPE, template);
@@ -110,7 +106,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testFlaggedDarAdminApprovedMessage() throws Exception {
+    public void testFlaggedDarAdminApprovedMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendFlaggedDarAdminApprovedMessage(Collections.singleton(TO), ID, TYPE, template);
@@ -120,7 +116,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testClosedDatasetElectionsMessage() throws Exception {
+    public void testClosedDatasetElectionsMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendClosedDatasetElectionsMessage(Collections.singleton(TO), ID, TYPE, template);
@@ -130,7 +126,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testDelegateResponsibilitiesMessage() throws Exception {
+    public void testDelegateResponsibilitiesMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendDelegateResponsibilitiesMessage(Collections.singleton(TO), template);
@@ -140,7 +136,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testNewResearcherCreatedMessage() throws Exception {
+    public void testNewResearcherCreatedMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendNewResearcherCreatedMessage(Collections.singleton(TO), template);
@@ -150,7 +146,7 @@ public class MailServiceTest {
     }
 
     @Test
-    public void testNewHelpReportMessage() throws Exception {
+    public void testNewHelpReportMessage() {
         Assert.assertNotNull(mailService);
         try {
             mailService.sendNewHelpReportMessage(Collections.singleton(TO), template, "Test");
@@ -158,6 +154,5 @@ public class MailServiceTest {
             Assert.fail("Should not throw exception");
         }
     }
-
 
 }

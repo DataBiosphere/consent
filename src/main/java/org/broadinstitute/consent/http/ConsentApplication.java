@@ -50,8 +50,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.mail.AbstractMailServiceAPI;
-import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -153,7 +151,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration.Dynamic;
 import javax.ws.rs.client.Client;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -242,13 +239,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
         DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO);
-
-        try {
-            MailService.initInstance(config.getMailConfiguration());
-        } catch (IOException e) {
-            LOGGER.error("Mail Notification Service initialization error.", e);
-        }
-
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
         DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO);
@@ -352,7 +342,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractMatchingServiceAPI.clearInstance();
                 AbstractMatchAPI.clearInstance();
                 AbstractMatchProcessAPI.clearInstance();
-                AbstractMailServiceAPI.clearInstance();
                 AbstractHelpReportAPI.clearInstance();
                 AbstractApprovalExpirationTimeAPI.clearInstance();
                 AbstractUseRestrictionValidatorAPI.clearInstance();
