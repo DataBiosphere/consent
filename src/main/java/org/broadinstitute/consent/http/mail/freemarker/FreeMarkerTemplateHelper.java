@@ -93,14 +93,14 @@ public class FreeMarkerTemplateHelper {
     }
 
     public Writer getDataCustodianApprovalTemplate(DataAccessRequest dataAccessRequest,
-                                                   List<DataSet> datasets, String dataDepositorName,
+                                                   List<DatasetMailDTO> datasets, String dataDepositorName,
                                                    String researcherEmail) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("data_custodian_approval.html");
         return generateDataCustodianApprovalTemplate(dataAccessRequest, datasets, dataDepositorName,
                 dataAccessRequest.getData().getDarCode(), researcherEmail, temp);
     }
 
-    private Writer generateDataCustodianApprovalTemplate(DataAccessRequest dataAccessRequest, List<DataSet> datasets,
+    private Writer generateDataCustodianApprovalTemplate(DataAccessRequest dataAccessRequest, List<DatasetMailDTO> datasets,
                                                          String dataDepositorName, String darCode,
                                                          String researcherEmail, Template temp) throws IOException, TemplateException {
         DataCustodianApprovalModel model = new DataCustodianApprovalModel(dataAccessRequest, datasets,

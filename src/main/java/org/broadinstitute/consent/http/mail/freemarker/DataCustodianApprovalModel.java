@@ -1,19 +1,19 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 import java.util.List;
 
 public class DataCustodianApprovalModel {
     DataAccessRequest dataAccessRequest;
-    List<DataSet> datasets;
+    List<DatasetMailDTO> datasets;
     String dataDepositorName;
     String darCode;
     String researcherEmail;
     String translatedUseRestriction;
 
-    public DataCustodianApprovalModel(DataAccessRequest dataAccessRequest, List<DataSet> datasets,
+    public DataCustodianApprovalModel(DataAccessRequest dataAccessRequest, List<DatasetMailDTO> datasets,
                                       String dataDepositorName, String darCode, String researcherEmail) {
         this.dataAccessRequest = dataAccessRequest;
         this.datasets = datasets;
@@ -32,11 +32,11 @@ public class DataCustodianApprovalModel {
         return this;
     }
 
-    public List<DataSet> getDatasets() {
+    public List<DatasetMailDTO> getDatasets() {
         return datasets;
     }
 
-    public DataCustodianApprovalModel setDatasets(List<DataSet> datasets) {
+    public DataCustodianApprovalModel setDatasets(List<DatasetMailDTO> datasets) {
         this.datasets = datasets;
         return this;
     }

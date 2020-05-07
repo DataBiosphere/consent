@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,10 +152,9 @@ public class MailService {
     }
 
     public void sendDataCustodianApprovalMessage(Set<String> toAddress, String fromAddress, Writer template,
-                                                 DataAccessRequest dataAccessRequest, List<DataSet> datasets,
-                                                 String userName) throws MessagingException {
+                                                 DataAccessRequest dataAccessRequest) throws MessagingException {
         Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAddress,
-                template, dataAccessRequest, datasets, userName);
+                template, dataAccessRequest);
         sendMessages(messages);
     }
 

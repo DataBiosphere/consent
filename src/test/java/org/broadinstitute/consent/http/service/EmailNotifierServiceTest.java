@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -92,11 +93,15 @@ public class EmailNotifierServiceTest {
         data.setDarCode("DAR-123456789");
         data.setTranslatedUseRestriction("Translated Use Restriction");
         dar.setData(data);
-        List<DataSet> datasets = new ArrayList<>();
+        List<DatasetMailDTO> datasets = new ArrayList<>();
+        datasets.add(new DatasetMailDTO("DS-1 Name", "DS-1 Alias"));
+        datasets.add(new DatasetMailDTO("DS-2 Name", "DS-2 Alias"));
+        datasets.add(new DatasetMailDTO("DS-3 Name", "DS-3 Alias"));
         String dataDepositorName = "Data Depositor Name";
+        String researcherEmail = "researcher@test.com";
         try {
             service.sendDataCustodianApprovalMessage(Collections.singleton(defaultAccount), defaultAccount,
-                    dar, datasets, dataDepositorName, defaultAccount);
+                    dar, datasets, dataDepositorName, researcherEmail);
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);
         }
