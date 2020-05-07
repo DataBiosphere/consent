@@ -145,4 +145,22 @@ public class MailServiceTest {
         }
     }
 
+    @Test
+    public void testNewResearcherApprovedMessage() {
+        try {
+            mailService.sendNewResearcherApprovedMessage(Collections.singleton(TO), template, "Test");
+        } catch (Exception e) {
+            Assert.fail("Should not throw exception");
+        }
+    }
+
+    @Test
+    public void testDataCustodianApprovalMessage() {
+        try {
+            mailService.sendDataCustodianApprovalMessage(TO, template, "Test");
+        } catch (Exception e) {
+            Assert.fail("Should not throw exception");
+        }
+    }
+
 }
