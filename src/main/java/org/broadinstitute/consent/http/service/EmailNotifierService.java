@@ -278,7 +278,6 @@ public class EmailNotifierService {
     }
 
     public void sendDataCustodianApprovalMessage(Set<String> toAddress,
-                                                 String fromAddress,
                                                  DataAccessRequest dataAccessRequest,
                                                  List<DatasetMailDTO> datasets,
                                                  String dataDepositorName,
@@ -286,7 +285,7 @@ public class EmailNotifierService {
         if (isServiceActive) {
             Writer template = templateHelper.getDataCustodianApprovalTemplate(dataAccessRequest, datasets,
                     dataDepositorName, researcherEmail);
-            mailService.sendDataCustodianApprovalMessage(toAddress, fromAddress, template,
+            mailService.sendDataCustodianApprovalMessage(toAddress, template,
                     dataAccessRequest.getData().getDarCode());
         }
     }
