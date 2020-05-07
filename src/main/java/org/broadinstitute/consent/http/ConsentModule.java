@@ -84,8 +84,6 @@ public class ConsentModule extends AbstractModule {
     private final AssociationDAO associationDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
 
-    private final FreeMarkerTemplateHelper freeMarkerTemplateHelper;
-
     public static final String DB_ENV = "postgresql";
 
     ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
@@ -119,8 +117,6 @@ public class ConsentModule extends AbstractModule {
         this.workspaceAuditDAO = this.jdbi.onDemand(WorkspaceAuditDAO.class);
         this.associationDAO = this.jdbi.onDemand(AssociationDAO.class);
         this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
-
-        this.freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
     }
 
     @Override
@@ -131,17 +127,17 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     Client providesClient() {
-        return this.client;
+        return client;
     }
 
     @Provides
     Jdbi providesJdbi() {
-        return this.jdbi;
+        return jdbi;
     }
 
     @Provides
     MongoConsentDB providesMongo() {
-        return this.mongoInstance;
+        return mongoInstance;
     }
 
     @Provides
@@ -199,7 +195,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
-        return freeMarkerTemplateHelper;
+        return new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
     }
 
     @Provides
