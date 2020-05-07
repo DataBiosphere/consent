@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.HelpReport;
@@ -89,6 +90,20 @@ public class FreeMarkerTemplateHelper {
     public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName, List<DatasetMailDTO> datasets, String dataUseRestriction, String email) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("researcher-dar-approved.html");
         return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
+    }
+
+    public Writer getDataCustodianApprovalTemplate(DataAccessRequest dataAccessRequest,
+                                                   List<DataSet> datasets,
+                                                   String userName) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("data_custodian_approval.html");
+        return generateDataCustodianApprovalTemplate(dataAccessRequest, datasets, userName, temp);
+    }
+
+    private Writer generateDataCustodianApprovalTemplate(DataAccessRequest dataAccessRequest, List<DataSet> datasets, String userName, Template temp) throws IOException, TemplateException {
+        DataCustodianApprovalModel model = new DataCustodianApprovalModel(dataAccessRequest, datasets, userName);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
     }
 
     private Writer generateResearcherApprovedTemplate(List<DatasetMailDTO> datasets,  String dataUseRestriction, String darCode, String researcherName, String email, Template temp) throws IOException, TemplateException {

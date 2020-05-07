@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
@@ -18,6 +19,8 @@ import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +49,7 @@ public class MailService {
     private final NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
     private final HelpReportMessage helpReportMessage = new HelpReportMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
+    private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
     public MailService(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
@@ -143,6 +147,14 @@ public class MailService {
 
     public void sendNewResearcherApprovedMessage(Set<String> researcherEmails, Writer template, String darCode) throws MessagingException {
         Collection<Mail> messages = researcherApprovedMessage.researcherApprovedMessage(researcherEmails, fromAccount, template, darCode);
+        sendMessages(messages);
+    }
+
+    public void sendDataCustodianApprovalMessage(Set<String> toAddress, String fromAddress, Writer template,
+                                                 DataAccessRequest dataAccessRequest, List<DataSet> datasets,
+                                                 String userName) throws MessagingException {
+        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAddress,
+                template, dataAccessRequest, datasets, userName);
         sendMessages(messages);
     }
 

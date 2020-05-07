@@ -275,6 +275,18 @@ public class EmailNotifierService {
         }
     }
 
+    public void sendDataCustodianApprovalMessage(Set<String> toAddress,
+                                                 String fromAddress,
+                                                 DataAccessRequest dataAccessRequest,
+                                                 List<DataSet> datasets,
+                                                 String userName) throws Exception {
+        if (isServiceActive) {
+            Writer template = templateHelper.getDataCustodianApprovalTemplate(dataAccessRequest, datasets, userName);
+            mailService.sendDataCustodianApprovalMessage(toAddress, fromAddress, template, dataAccessRequest,
+                    datasets, userName);
+        }
+    }
+
     private Set<String> getEmails(List<DACUser> users) {
         Set<String> emails = users.stream()
                 .map(u -> new ArrayList<String>(){{add(u.getEmail()); add(u.getAdditionalEmail());}})
