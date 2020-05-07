@@ -193,11 +193,15 @@ public class VoteService {
         List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
                 map(Election::getElectionId).
                 collect(Collectors.toList());
-        List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
-                filter(v -> v.getDacUserId().equals(user.getDacUserId())).
-                map(Vote::getVoteId).
-                collect(Collectors.toList());
-        voteDAO.removeVotesByIds(openUserVoteIds);
+        if (!openElectionIds.isEmpty()) {
+            List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
+                    filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                    map(Vote::getVoteId).
+                    collect(Collectors.toList());
+            if (!openUserVoteIds.isEmpty()) {
+                voteDAO.removeVotesByIds(openUserVoteIds);
+            }
+        }
     }
 
     private boolean isDacChairPerson(Dac dac, DACUser user) {

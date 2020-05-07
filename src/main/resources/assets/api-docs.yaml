@@ -918,6 +918,8 @@ paths:
       responses:
         200:
           description: Dac chairperson successfully removed
+        400:
+          description: Dacs require at least one chair.
         404:
           description: No DAC or User found with the provided ID
         500:
