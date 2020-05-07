@@ -99,8 +99,7 @@ public class EmailNotifierServiceTest {
         String dataDepositorName = "Data Depositor Name";
         String researcherEmail = "researcher@test.com";
         try {
-            service.sendDataCustodianApprovalMessage(Collections.singleton(defaultAccount), dar, datasets,
-                    dataDepositorName, researcherEmail);
+            service.sendDataCustodianApprovalMessage(defaultAccount, dar, datasets, dataDepositorName, researcherEmail);
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);
         }

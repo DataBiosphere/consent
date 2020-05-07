@@ -277,7 +277,7 @@ public class EmailNotifierService {
         }
     }
 
-    public void sendDataCustodianApprovalMessage(Set<String> toAddress,
+    public void sendDataCustodianApprovalMessage(String toAddress,
                                                  DataAccessRequest dataAccessRequest,
                                                  List<DatasetMailDTO> datasets,
                                                  String dataDepositorName,

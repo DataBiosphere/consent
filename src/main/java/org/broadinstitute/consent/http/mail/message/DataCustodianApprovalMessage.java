@@ -7,17 +7,18 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 public class DataCustodianApprovalMessage extends MailMessage {
 
     public List<Mail> dataCustodianApprovalMessage(
-            Set<String> toAddress,
+            String toAddress,
             String fromAddress,
             Writer template,
             String darCode) throws MessagingException {
-        return generateEmailMessages(toAddress, fromAddress, template, darCode, "");
+        return generateEmailMessages(Collections.singleton(toAddress), fromAddress, template, darCode, null);
     }
 
     @Override
