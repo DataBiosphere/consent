@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
@@ -92,11 +91,8 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
-     *
-     * @param dao The Data Access Object used to read/write data.
      */
-    @VisibleForTesting
-    DatabaseElectionAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO dao,
+    private DatabaseElectionAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO dao,
                         EmailNotifierService emailNotifierService, ConsentDAO consentDAO, DACUserDAO dacUserDAO,
                         VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO,
                         DataSetAssociationDAO datasetAssociationDAO) {
@@ -682,9 +678,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     /**
-     * For this Data Access Request, look for any datasets that require approval and have a data custodian.
-     * For each of those datasets, send a data custodian notification email that informs the custodian that
-     * a new Data Access Request has been approved.
+     * For this Data Access Request, look for any datasets that have a data custodian. Send a data custodian a
+     * notification email for their datasets with information about the new Data Access Request approval.
+     *
      * @param referenceId The DAR reference id
      */
     private void sendDataCustodianNotification(String referenceId) {
