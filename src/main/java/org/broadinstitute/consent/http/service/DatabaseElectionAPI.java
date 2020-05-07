@@ -694,9 +694,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
                     getDatasetAssociations(datasetIdList).stream().
                     collect(Collectors.groupingBy(DatasetAssociation::getDacuserId));
-            userToAssociationMap.forEach((userId, associationListList) -> {
+            userToAssociationMap.forEach((userId, associationList) -> {
                 DACUser custodian = dacUserDAO.findDACUserById(userId);
-                List<Integer> datasetIds = associationListList.stream().
+                List<Integer> datasetIds = associationList.stream().
                         map(DatasetAssociation::getDatasetId).collect(Collectors.toList());
                 List<DatasetMailDTO> mailDTOS = dataSetDAO.findDatasetsByIdList(datasetIds).stream().
                         map(d -> new DatasetMailDTO(d.getName(), DatasetUtil.parseAlias(d.getAlias()))).
