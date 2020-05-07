@@ -279,9 +279,11 @@ public class EmailNotifierService {
                                                  String fromAddress,
                                                  DataAccessRequest dataAccessRequest,
                                                  List<DataSet> datasets,
-                                                 String userName) throws Exception {
+                                                 String userName,
+                                                 String researcherEmail) throws Exception {
         if (isServiceActive) {
-            Writer template = templateHelper.getDataCustodianApprovalTemplate(dataAccessRequest, datasets, userName);
+            Writer template = templateHelper.getDataCustodianApprovalTemplate(dataAccessRequest, datasets, userName,
+                    researcherEmail);
             mailService.sendDataCustodianApprovalMessage(toAddress, fromAddress, template, dataAccessRequest,
                     datasets, userName);
         }

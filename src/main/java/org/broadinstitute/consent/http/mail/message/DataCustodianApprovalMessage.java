@@ -11,6 +11,9 @@ import java.util.Set;
 
 public class DataCustodianApprovalMessage extends MailMessage {
 
+    /* This message is sent to the Dataset Custodian when a DAR is approved by te DAC.*/
+    private final String DAC_APPROVED_DAR = "%s has been approved by the DAC.";
+
     public List<Mail> dataCustodianApprovalMessage(
             Set<String> toAddress,
             String fromAddress,
@@ -18,11 +21,12 @@ public class DataCustodianApprovalMessage extends MailMessage {
             DataAccessRequest dataAccessRequest,
             List<DataSet> datasets,
             String userName) throws MessagingException {
-        return generateEmailMessages(toAddress, fromAddress, template, null, userName);
+        return generateEmailMessages(toAddress, fromAddress, template, dataAccessRequest.getData().getDarCode(), userName);
     }
 
     @Override
-    String assignSubject(String referenceId, String type) {
-        return null;
+    String assignSubject(String darCode, String type) {
+        return String.format("%s has been approved by the DAC.", darCode);
     }
+
 }

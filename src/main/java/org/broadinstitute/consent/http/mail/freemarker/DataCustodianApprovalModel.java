@@ -8,12 +8,19 @@ import java.util.List;
 public class DataCustodianApprovalModel {
     DataAccessRequest dataAccessRequest;
     List<DataSet> datasets;
-    String userName;
+    String dataDepositorName;
+    String darCode;
+    String researcherEmail;
+    String translatedUseRestriction;
 
-    public DataCustodianApprovalModel(DataAccessRequest dataAccessRequest, List<DataSet> datasets, String userName) {
+    public DataCustodianApprovalModel(DataAccessRequest dataAccessRequest, List<DataSet> datasets,
+                                      String dataDepositorName, String darCode, String researcherEmail) {
         this.dataAccessRequest = dataAccessRequest;
         this.datasets = datasets;
-        this.userName = userName;
+        this.dataDepositorName = dataDepositorName;
+        this.darCode = darCode;
+        this.researcherEmail = researcherEmail;
+        this.translatedUseRestriction = dataAccessRequest.getData().getTranslatedUseRestriction();
     }
 
     public DataAccessRequest getDataAccessRequest() {
@@ -34,13 +41,39 @@ public class DataCustodianApprovalModel {
         return this;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getDataDepositorName() {
+        return dataDepositorName;
     }
 
-    public DataCustodianApprovalModel setUserName(String userName) {
-        this.userName = userName;
+    public DataCustodianApprovalModel setDataDepositorName(String dataDepositorName) {
+        this.dataDepositorName = dataDepositorName;
         return this;
     }
 
+    public String getDarCode() {
+        return darCode;
+    }
+
+    public DataCustodianApprovalModel setDarCode(String darCode) {
+        this.darCode = darCode;
+        return this;
+    }
+
+    public String getResearcherEmail() {
+        return researcherEmail;
+    }
+
+    public DataCustodianApprovalModel setResearcherEmail(String researcherEmail) {
+        this.researcherEmail = researcherEmail;
+        return this;
+    }
+
+    public String getTranslatedUseRestriction() {
+        return translatedUseRestriction;
+    }
+
+    public DataCustodianApprovalModel setTranslatedUseRestriction(String translatedUseRestriction) {
+        this.translatedUseRestriction = translatedUseRestriction;
+        return this;
+    }
 }
