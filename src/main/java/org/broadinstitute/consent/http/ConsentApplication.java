@@ -210,16 +210,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionDAO electionDAO = injector.getProvider(ElectionDAO.class).get();
         final HelpReportDAO helpReportDAO = injector.getProvider(HelpReportDAO.class).get();
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
-        final DataAccessRequestDAO dataAccessRequestDAO = injector.getProvider(DataAccessRequestDAO.class).get();
         final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
         final DataSetAssociationDAO dataSetAssociationDAO = injector.getProvider(DataSetAssociationDAO.class).get();
         final DACUserDAO dacUserDAO = injector.getProvider(DACUserDAO.class).get();
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
         final MatchDAO matchDAO = injector.getProvider(MatchDAO.class).get();
-        final MailMessageDAO emailDAO = injector.getProvider(MailMessageDAO.class).get();
+        final MailMessageDAO mailMessageDAO = injector.getProvider(MailMessageDAO.class).get();
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = injector.getProvider(ApprovalExpirationTimeDAO.class).get();
         final DataSetAuditDAO dataSetAuditDAO = injector.getProvider(DataSetAuditDAO.class).get();
-        final MailServiceDAO mailServiceDAO = injector.getProvider(MailServiceDAO.class).get();
         final ResearcherPropertyDAO researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
         final WorkspaceAuditDAO workspaceAuditDAO = injector.getProvider(WorkspaceAuditDAO.class).get();
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
@@ -253,9 +251,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
 
-        // Mail Services
-        DatabaseElectionAPI.initInstance(dataAccessRequestService, electionDAO, emailNotifierService, consentDAO,
-                dacUserDAO, voteDAO, emailDAO, dataSetDAO, dataSetAssociationDAO);
+        DatabaseElectionAPI.initInstance(consentDAO, dacUserDAO, dataAccessRequestService, dataSetAssociationDAO,
+                dataSetDAO, electionDAO, emailNotifierService, mailMessageDAO, voteDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 

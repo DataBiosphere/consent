@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,10 +148,8 @@ public class MailService {
         sendMessages(messages);
     }
 
-    public void sendDataCustodianApprovalMessage(String toAddress, Writer template,
-                                                 String darCode) throws MessagingException {
-        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, template,
-                darCode);
+    public void sendDataCustodianApprovalMessage(String toAddress, Writer template, String darCode) throws MessagingException {
+        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, template, darCode);
         sendMessages(messages);
     }
 

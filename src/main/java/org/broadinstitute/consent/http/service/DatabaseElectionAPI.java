@@ -76,35 +76,34 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * run() method). If called a second time it will throw an
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
-     *
-     * @param dao The Data Access Object instance that the API should use to
-     *            read/write data.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, ElectionDAO dao,
-                                    EmailNotifierService emailNotifierService, ConsentDAO consentDAO,
-                                    DACUserDAO dacUserDAO, VoteDAO voteDAO, MailMessageDAO mailMessageDAO,
-                                    DataSetDAO dataSetDAO, DataSetAssociationDAO datasetAssociationDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(dataAccessRequestService, dao, emailNotifierService,
-                consentDAO, dacUserDAO, voteDAO, mailMessageDAO, dataSetDAO, datasetAssociationDAO));
+    public static void initInstance(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
+                                    DataAccessRequestService dataAccessRequestService,
+                                    DataSetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO,
+                                    ElectionDAO electionDAO, EmailNotifierService emailNotifierService,
+                                    MailMessageDAO mailMessageDAO, VoteDAO voteDAO) {
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(consentDAO, dacUserDAO, dataAccessRequestService,
+                datasetAssociationDAO, dataSetDAO, electionDAO, emailNotifierService, mailMessageDAO, voteDAO));
     }
 
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    private DatabaseElectionAPI(DataAccessRequestService dataAccessRequestService, ElectionDAO dao,
-                        EmailNotifierService emailNotifierService, ConsentDAO consentDAO, DACUserDAO dacUserDAO,
-                        VoteDAO voteDAO, MailMessageDAO mailMessageDAO, DataSetDAO dataSetDAO,
-                        DataSetAssociationDAO datasetAssociationDAO) {
-        this.dataAccessRequestService = dataAccessRequestService;
-        this.electionDAO = dao;
+    private DatabaseElectionAPI(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
+                                DataAccessRequestService dataAccessRequestService,
+                                DataSetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
+                                EmailNotifierService emailNotifierService, MailMessageDAO mailMessageDAO,
+                                VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacUserDAO = dacUserDAO;
-        this.voteDAO = voteDAO;
-        this.mailMessageDAO = mailMessageDAO;
-        this.dataSetDAO = dataSetDAO;
-        this.emailNotifierService = emailNotifierService;
+        this.dataAccessRequestService = dataAccessRequestService;
         this.datasetAssociationDAO = datasetAssociationDAO;
+        this.dataSetDAO = dataSetDAO;
+        this.electionDAO = electionDAO;
+        this.emailNotifierService = emailNotifierService;
+        this.mailMessageDAO = mailMessageDAO;
+        this.voteDAO = voteDAO;
     }
 
     @Override
