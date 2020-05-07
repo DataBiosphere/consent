@@ -33,11 +33,6 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
     private final DataSetDAO dsDAO;
     private final UserRoleDAO userRoleDAO;
 
-
-    protected org.apache.log4j.Logger logger() {
-        return org.apache.log4j.Logger.getLogger("DataSetResource");
-    }
-
     public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dsAssociationDAO, DACUserDAO dacUserDAO, UserRoleDAO userRoleDAO) {
         DataSetAssociationAPIHolder.setInstance(new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, dacUserDAO, userRoleDAO));
     }
