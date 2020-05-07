@@ -13,7 +13,6 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.Before;
 import org.junit.Test;

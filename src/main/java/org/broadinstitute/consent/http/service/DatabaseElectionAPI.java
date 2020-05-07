@@ -691,16 +691,21 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
         List<Integer> datasetIdList = dar.getData().getDatasetId();
         if (CollectionUtils.isNotEmpty(datasetIdList)) {
-            List<DatasetAssociation> datasetAssociations = datasetAssociationDAO.getDatasetAssociations(datasetIdList);
-            datasetAssociations.forEach(da -> {
-                DACUser custodian = dacUserDAO.findDACUserById(da.getDacuserId());
-                DataSet dataset = dataSetDAO.findDataSetById(da.getDatasetId());
-                DatasetMailDTO mailDTO = new DatasetMailDTO(dataset.getName(), DatasetUtil.parseAlias(dataset.getAlias()));
+            Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
+                    getDatasetAssociations(datasetIdList).stream().
+                    collect(Collectors.groupingBy(DatasetAssociation::getDacuserId));
+            userToAssociationMap.forEach((userId, associationListList) -> {
+                DACUser custodian = dacUserDAO.findDACUserById(userId);
+                List<Integer> datasetIds = associationListList.stream().
+                        map(DatasetAssociation::getDatasetId).collect(Collectors.toList());
+                List<DatasetMailDTO> mailDTOS = dataSetDAO.findDatasetsByIdList(datasetIds).stream().
+                        map(d -> new DatasetMailDTO(d.getName(), DatasetUtil.parseAlias(d.getAlias()))).
+                        collect(Collectors.toList());
                 try {
                     emailNotifierService.sendDataCustodianApprovalMessage(
                             Collections.singleton(custodian.getEmail()),
                             dar,
-                            Collections.singletonList(mailDTO),
+                            mailDTOS,
                             custodian.getDisplayName(),
                             dar.getData().getAcademicEmail()
                     );
