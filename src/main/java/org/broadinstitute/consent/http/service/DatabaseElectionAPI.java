@@ -677,7 +677,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     }
 
     /**
-     * For this Data Access Request, look for any datasets that have a data custodian. Send a data custodian a
+     * For this Data Access Request, look for any datasets that have a data custodian. Send each custodian a
      * notification email for their datasets with information about the new Data Access Request approval.
      *
      * @param referenceId The DAR reference id
