@@ -702,12 +702,15 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                         map(d -> new DatasetMailDTO(d.getName(), DatasetUtil.parseAlias(d.getAlias()))).
                         collect(Collectors.toList());
                 try {
+                    String researcherEmail = Objects.nonNull(dar.getData().getAcademicEmail()) ?
+                            dar.getData().getAcademicEmail() :
+                            dar.getData().getResearcher();
                     emailNotifierService.sendDataCustodianApprovalMessage(
                             Collections.singleton(custodian.getEmail()),
                             dar,
                             mailDTOS,
                             custodian.getDisplayName(),
-                            dar.getData().getAcademicEmail()
+                            researcherEmail
                     );
                 } catch (Exception e) {
                     logger.error("Unable to send data custodian approval message: " + e);
