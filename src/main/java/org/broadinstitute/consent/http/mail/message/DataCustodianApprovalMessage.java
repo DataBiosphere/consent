@@ -16,13 +16,13 @@ public class DataCustodianApprovalMessage extends MailMessage {
             Set<String> toAddress,
             String fromAddress,
             Writer template,
-            DataAccessRequest dataAccessRequest) throws MessagingException {
-        return generateEmailMessages(toAddress, fromAddress, template, dataAccessRequest.getData().getDarCode(), "");
+            String darCode) throws MessagingException {
+        return generateEmailMessages(toAddress, fromAddress, template, darCode, "");
     }
 
     @Override
     String assignSubject(String darCode, String type) {
-        return String.format("%s has been approved by the DAC.", darCode);
+        return String.format("Data Access Request '%s' has been approved by the DAC", darCode);
     }
 
 }

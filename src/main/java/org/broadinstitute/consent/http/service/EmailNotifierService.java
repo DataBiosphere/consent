@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,6 +104,7 @@ public class EmailNotifierService {
         }
     }
 
+    @Inject
     public EmailNotifierService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
                                 VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO,
                                 MailMessageDAO emailDAO, MailService mailService, MailServiceDAO mailServiceDAO,
@@ -284,7 +286,8 @@ public class EmailNotifierService {
         if (isServiceActive) {
             Writer template = templateHelper.getDataCustodianApprovalTemplate(dataAccessRequest, datasets,
                     dataDepositorName, researcherEmail);
-            mailService.sendDataCustodianApprovalMessage(toAddress, fromAddress, template, dataAccessRequest);
+            mailService.sendDataCustodianApprovalMessage(toAddress, fromAddress, template,
+                    dataAccessRequest.getData().getDarCode());
         }
     }
 
@@ -400,11 +403,7 @@ public class EmailNotifierService {
         if (CollectionUtils.isEmpty(dsList)) {
             return "";
         }
-        String diseases = "";
-        for (String ds : dsList) {
-            diseases = diseases.concat(ds + ", ");
-        }
-        return diseases.substring(0, diseases.length() - 2);
+        return String.join(", ", dsList);
     }
 
     private void sendNewCaseMessage(Set<String> userAddress, String electionType, String entityId, Writer template) throws MessagingException {
