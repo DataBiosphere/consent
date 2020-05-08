@@ -6,34 +6,46 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Before;
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class WhitelistResourceTest extends ResourceTestHelper {
 
-    @Mock
-    private static GCSStore gcsStore;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @ClassRule
-    public static final ResourceTestRule resources = buildRule(new WhitelistResource(gcsStore));
+    private static final GCSStore gcsStore = mock(GCSStore.class);
+
+    @SuppressWarnings("deprecation")
+    @Rule
+    public ResourceTestRule resources = testRuleBuilder(new WhitelistResource(gcsStore)).build();
 
     @Before
-    public void setup () {
-        MockitoAnnotations.initMocks(this);
+    public void setup() {
+        try {
+            when(gcsStore.postWhitelist(any(), any())).thenReturn("");
+        } catch (Exception e) {
+            logger.error("Exception initializing test: " + e);
+            fail(e.getMessage());
+        }
     }
 
     @Test
     public void testPostWhitelist() {
+        String fileData = "Hello Multipart";
         FormDataMultiPart multiPart = new FormDataMultiPart()
-                .field("fileData", "Hello Multipart");
+                .field("fileData", fileData);
         Response response = resources.
                 target("api/whitelist").
                 register(MultiPartFeature.class).
@@ -44,7 +56,7 @@ public class WhitelistResourceTest extends ResourceTestHelper {
                 post(Entity.entity(multiPart, multiPart.getMediaType()));
         String results = response.readEntity(String.class);
         assertEquals(200, response.getStatus());
-        assertEquals("Hello Multipart", results);
+        assertEquals(fileData, results);
     }
 
     @Test

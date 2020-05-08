@@ -21,7 +21,7 @@ import java.util.Map;
 @SuppressWarnings("deprecation")
 public abstract class ResourceTestHelper {
 
-    private static OAuthCredentialAuthFilter<AuthUser> getFilter() {
+    OAuthCredentialAuthFilter<AuthUser> getFilter() {
         Map<String, String> authUserRoles = new HashMap<>();
         EnumSet.allOf(UserRoles.class).forEach(e -> authUserRoles.put(e.getRoleName(), e.getRoleName()));
         List<String> authUserNames = new ArrayList<>(authUserRoles.keySet());
@@ -41,14 +41,14 @@ public abstract class ResourceTestHelper {
      * @param resources Resource class instances to add to the test rule
      * @return ResourceTestRule
      */
-    static ResourceTestRule buildRule(Resource ... resources) {
+    ResourceTestRule.Builder testRuleBuilder(Resource ... resources) {
         ResourceTestRule.Builder builder = ResourceTestRule.builder()
                 .addProvider(MultiPartFeature.class)
                 .addProvider(RolesAllowedDynamicFeature.class)
                 .addProvider(new AuthDynamicFeature(getFilter()))
                 .addProvider(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
         Arrays.asList(resources).forEach(builder::addProvider);
-        return builder.build();
+        return builder;
     }
 
     /**
