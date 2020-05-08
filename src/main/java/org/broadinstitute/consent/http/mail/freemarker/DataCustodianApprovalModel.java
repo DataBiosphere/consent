@@ -1,35 +1,21 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 import java.util.List;
 
 public class DataCustodianApprovalModel {
-    DataAccessRequest dataAccessRequest;
     List<DatasetMailDTO> datasets;
     String dataDepositorName;
     String darCode;
     String researcherEmail;
-    String translatedUseRestriction;
 
-    public DataCustodianApprovalModel(DataAccessRequest dataAccessRequest, List<DatasetMailDTO> datasets,
+    public DataCustodianApprovalModel(List<DatasetMailDTO> datasets,
                                       String dataDepositorName, String darCode, String researcherEmail) {
-        this.dataAccessRequest = dataAccessRequest;
         this.datasets = datasets;
         this.dataDepositorName = dataDepositorName;
         this.darCode = darCode;
         this.researcherEmail = researcherEmail;
-        this.translatedUseRestriction = dataAccessRequest.getData().getTranslatedUseRestriction();
-    }
-
-    public DataAccessRequest getDataAccessRequest() {
-        return dataAccessRequest;
-    }
-
-    public DataCustodianApprovalModel setDataAccessRequest(DataAccessRequest dataAccessRequest) {
-        this.dataAccessRequest = dataAccessRequest;
-        return this;
     }
 
     public List<DatasetMailDTO> getDatasets() {
@@ -68,12 +54,4 @@ public class DataCustodianApprovalModel {
         return this;
     }
 
-    public String getTranslatedUseRestriction() {
-        return translatedUseRestriction;
-    }
-
-    public DataCustodianApprovalModel setTranslatedUseRestriction(String translatedUseRestriction) {
-        this.translatedUseRestriction = translatedUseRestriction;
-        return this;
-    }
 }

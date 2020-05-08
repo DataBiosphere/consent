@@ -22,6 +22,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.fail;
 
@@ -91,6 +92,7 @@ public class EmailNotifierServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         data.setDarCode("DAR-123456789");
         data.setTranslatedUseRestriction("Translated Use Restriction");
+        dar.setReferenceId(UUID.randomUUID().toString());
         dar.setData(data);
         List<DatasetMailDTO> datasets = new ArrayList<>();
         datasets.add(new DatasetMailDTO("DS-1 Name", "DS-1 Alias"));
@@ -99,7 +101,8 @@ public class EmailNotifierServiceTest {
         String dataDepositorName = "Data Depositor Name";
         String researcherEmail = "researcher@test.com";
         try {
-            service.sendDataCustodianApprovalMessage(defaultAccount, dar, datasets, dataDepositorName, researcherEmail);
+            service.sendDataCustodianApprovalMessage(defaultAccount, dar.getData().getDarCode(), datasets,
+                    dataDepositorName, researcherEmail);
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);
         }

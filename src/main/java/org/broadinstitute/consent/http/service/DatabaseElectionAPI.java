@@ -700,7 +700,10 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     String researcherEmail = Objects.nonNull(dar.getData().getAcademicEmail()) ?
                             dar.getData().getAcademicEmail() :
                             dar.getData().getResearcher();
-                    emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), dar, mailDTOS,
+                    String darCode = Objects.nonNull(dar.getData().getDarCode()) ?
+                            dar.getData().getDarCode() :
+                            dar.getReferenceId();
+                    emailNotifierService.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, mailDTOS,
                             custodian.getDisplayName(), researcherEmail);
                 } catch (Exception e) {
                     logger.error("Unable to send data custodian approval message: " + e);

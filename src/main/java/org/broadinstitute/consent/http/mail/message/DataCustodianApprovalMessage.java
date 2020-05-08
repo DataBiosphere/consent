@@ -23,7 +23,7 @@ public class DataCustodianApprovalMessage extends MailMessage {
 
     @Override
     String assignSubject(String darCode, String type) {
-        return String.format("Data Access Request '%s' has been approved by the DAC", darCode);
+        return String.format("%s has been approved by the DAC", darCode);
     }
 
 }

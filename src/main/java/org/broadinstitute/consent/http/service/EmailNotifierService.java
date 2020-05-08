@@ -278,15 +278,14 @@ public class EmailNotifierService {
     }
 
     public void sendDataCustodianApprovalMessage(String toAddress,
-                                                 DataAccessRequest dataAccessRequest,
+                                                 String darCode,
                                                  List<DatasetMailDTO> datasets,
                                                  String dataDepositorName,
                                                  String researcherEmail) throws Exception {
         if (isServiceActive) {
-            Writer template = templateHelper.getDataCustodianApprovalTemplate(dataAccessRequest, datasets,
-                    dataDepositorName, researcherEmail);
-            mailService.sendDataCustodianApprovalMessage(toAddress, template,
-                    dataAccessRequest.getData().getDarCode());
+            Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
+                    dataDepositorName, darCode, researcherEmail);
+            mailService.sendDataCustodianApprovalMessage(toAddress, template, darCode);
         }
     }
 
