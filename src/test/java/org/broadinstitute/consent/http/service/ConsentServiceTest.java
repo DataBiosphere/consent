@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -39,19 +36,13 @@ public class ConsentServiceTest {
     ElectionDAO electionDAO;
 
     @Mock
-    MongoConsentDB mongo;
-
-    @Mock
-    MongoCollection collection;
-
-    @Mock
-    FindIterable iterable;
-
-    @Mock
     VoteDAO voteDAO;
 
     @Mock
     DacService dacService;
+
+    @Mock
+    DataAccessRequestDAO dataAccessRequestDAO;
 
     @Before
     public void setUp() {
@@ -59,7 +50,7 @@ public class ConsentServiceTest {
     }
 
     private void initService() {
-        service = new ConsentService(consentDAO, electionDAO, mongo, voteDAO, dacService);
+        service = new ConsentService(consentDAO, electionDAO, voteDAO, dacService, dataAccessRequestDAO);
     }
 
     @Test
@@ -97,8 +88,7 @@ public class ConsentServiceTest {
         when(consentDAO.findConsentManageByStatus(anyString())).thenReturn(Collections.emptyList());
         when(voteDAO.findChairPersonVoteByElectionId(anyInt())).thenReturn(true);
         when(electionDAO.findElectionsWithFinalVoteByTypeAndStatus(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(collection.find(any(BasicDBObject.class))).thenReturn(iterable);
-        when(mongo.getDataAccessRequestCollection()).thenReturn(collection);
+        when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(Collections.emptyList());
         when(dacService.filterConsentManageByDAC(anyList(), any(AuthUser.class))).thenReturn(Collections.emptyList());
         initService();
 

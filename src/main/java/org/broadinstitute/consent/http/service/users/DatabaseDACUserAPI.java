@@ -4,12 +4,12 @@ package org.broadinstitute.consent.http.service.users;
 import freemarker.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -17,24 +17,24 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
+ * @deprecated Use UserService
  * Implementation class for DACUserAPI on top of DACUserDAO database support.
  */
+@Deprecated
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final DACUserDAO dacUserDAO;
     protected final UserRoleDAO userRoleDAO;
     private final UserHandlerAPI rolesHandler;
-    private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserService userService;
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, researcherPropertyDAO));
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, userService));
     }
 
     protected org.apache.log4j.Logger logger() {
@@ -47,11 +47,11 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, ResearcherPropertyDAO researcherPropertyDAO) {
+    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
         this.dacUserDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
         this.rolesHandler = userHandlerAPI;
-        this.researcherPropertyDAO = researcherPropertyDAO;
+        this.userService = userService;
     }
 
     @Override
@@ -73,28 +73,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser describeDACUserByEmail(String email) throws NotFoundException {
-        DACUser dacUser = dacUserDAO.findDACUserByEmail(email);
-        if (dacUser == null) {
-            throw new NotFoundException("Could not find dacUser for specified email : " + email);
-        }
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
-    }
-
-    @Override
     public List<DACUser> describeAdminUsersThatWantToReceiveMails() {
         return dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-    }
-
-    @Override
-    public DACUser describeDACUserById(Integer id) throws IllegalArgumentException {
-        DACUser dacUser = dacUserDAO.findDACUserById(id);
-        if (dacUser == null) {
-            throw new NotFoundException("Could not find dacUser for specified id : " + id);
-        }
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
     }
 
     @Override
@@ -105,7 +85,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException(status + " is not a valid status.");
         }
         dacUserDAO.updateUserStatus(statusId, userId);
-        return describeDACUserById(userId);
+        return userService.findUserById(userId);
     }
 
     @Override
@@ -115,7 +95,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
             throw new IllegalArgumentException("Rationale is required.");
         }
         dacUserDAO.updateUserRationale(rationale, userId);
-        return describeDACUserById(userId);
+        return userService.findUserById(userId);
     }
 
     @Override
@@ -131,37 +111,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        DACUser dacUser = describeDACUserByEmail(updatedUser.getEmail());
+        DACUser dacUser = userService.findUserByEmail(updatedUser.getEmail());
         dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
         return dacUser;
-    }
-
-    @Override
-    public void deleteDACUser(String email) throws IllegalArgumentException, NotFoundException {
-        DACUser user = dacUserDAO.findDACUserByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("The user for the specified E-Mail address does not exist");
-        }
-        List<Integer> roleIds = userRoleDAO.
-                findRolesByUserId(user.getDacUserId()).
-                stream().
-                map(UserRole::getRoleId).
-                collect(Collectors.toList());
-        if (!roleIds.isEmpty()) {
-            userRoleDAO.removeUserRoles(user.getDacUserId(), roleIds);
-        }
-        dacUserDAO.deleteDACUserByEmail(email);
-    }
-
-    @Override
-    public Collection<DACUser> describeUsers() {
-        Collection<DACUser> users = dacUserDAO.findUsers();
-        users.forEach(user -> {
-            // TODO: This nested dao call isn't scalable. See DUOS-404
-            String isProfileCompleted = researcherPropertyDAO.isProfileCompleted(user.getDacUserId());
-            user.setProfileCompleted(isProfileCompleted == null ? false : Boolean.valueOf(isProfileCompleted));
-        });
-        return users;
     }
 
     @Override

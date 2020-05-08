@@ -1,9 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.Block;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -13,7 +9,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
@@ -31,22 +26,21 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
@@ -61,7 +55,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private ConsentDAO consentDAO;
     private DataSetDAO datasetDAO;
     private MatchDAO matchDAO;
-    private final MongoConsentDB mongo;
+    private DataAccessRequestService dataAccessRequestService;
     private static final String SEPARATOR = "\t";
     private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
@@ -79,9 +73,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO userDAO, ConsentDAO consentDAO ,DataSetDAO datasetDAO, MatchDAO matchDAO, MongoConsentDB mongo, DataSetDAO dataSetDAO) {
-        SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dao, electionDAO, userDAO, consentDAO, datasetDAO, matchDAO,  mongo, dataSetDAO));
-
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, DACUserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO, MatchDAO matchDAO) {
+        SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dataAccessRequestService, dao, electionDAO, userDAO, consentDAO, datasetDAO, matchDAO));
     }
 
     /**
@@ -90,14 +83,14 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    protected DatabaseSummaryAPI(VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO ,MongoConsentDB mongo, DataSetDAO dataSetDAO) {
+    protected DatabaseSummaryAPI(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO) {
+        this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
         this.dacUserDAO = dacUserDAO;
         this.consentDAO = consentDAO;
         this.datasetDAO = datasetDAO;
         this.matchDAO = matchDAO;
-        this.mongo = mongo;
     }
 
     @Override
@@ -155,8 +148,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
 
     protected Summary getSummaryCases(String type) {
-        List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
+        List<String> statuses = Stream.of(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue()).
+                map(String::toLowerCase).
+                collect(Collectors.toList());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, statuses);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), true);
         Integer totalNegativeCases = electionDAO.findTotalElectionsByTypeStatusAndVote(type, ElectionStatus.CLOSED.getValue(), false);
@@ -164,8 +159,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     protected Summary getAccessSummaryCases(String type) {
-        List<String> status = Arrays.asList(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue());
-        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, status);
+        List<String> statuses = Stream.of(ElectionStatus.FINAL.getValue(), ElectionStatus.OPEN.getValue()).
+                map(String::toLowerCase).
+                collect(Collectors.toList());
+        List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(type, statuses);
         Integer totalPendingCases = openElections == null ? 0 : openElections.size();
         Integer totalPositiveCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, true);
         Integer totalNegativeCases = voteDAO.findTotalFinalVoteByElectionTypeAndVote(type, false);
@@ -187,8 +184,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         try {
             file = File.createTempFile("summary", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<String> electionStatus = new ArrayList<>(Arrays.asList(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()));
-                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), electionStatus);
+                List<String> statuses = Stream.of(ElectionStatus.CLOSED.getValue(), ElectionStatus.CANCELED.getValue()).
+                        map(String::toLowerCase).
+                        collect(Collectors.toList());
+                List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), statuses);
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
                     List<String> consentIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
                     List<Integer> electionIds = reviewedElections.stream().map(e -> e.getElectionId()).collect(Collectors.toList());
@@ -248,13 +247,12 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                 List<Election> reviewedElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.CLOSED.getValue());
                 List<Election> reviewedRPElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue());
                 if (!CollectionUtils.isEmpty(reviewedElections)) {
-                    List<String> darIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
-                    FindIterable<Document> dataAccessRequests = findDataAccessRequests(darIds);
-                    HashSet<Integer> datasetIds = new HashSet<>();
-                    dataAccessRequests.forEach((Block<Document>) dar -> {
-                        List<Integer> ids = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-                        datasetIds.addAll(ids);
-                    });
+                    List<String> referenceIds = reviewedElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toList());
+                    List<Document> dataAccessRequests = dataAccessRequestService.getDataAccessRequestsByReferenceIdsAsDocuments(referenceIds);
+                    List<Integer> datasetIds = dataAccessRequests.stream().
+                            map(dar -> DarUtil.getIntegerList(dar, DarConstants.DATASET_ID)).
+                            flatMap(List::stream).
+                            collect(Collectors.toList());
                     List<Association> associations = datasetDAO.getAssociationsForDataSetIdList(new ArrayList<>(datasetIds));
                     List<String> associatedConsentIds =   associations.stream().map(a -> a.getConsentId()).collect(Collectors.toList());
                     List<Election> reviewedConsentElections = electionDAO.findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(associatedConsentIds, ElectionStatus.CLOSED.getValue());
@@ -268,7 +266,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         rpVotes = voteDAO.findVotesByElectionIds(rpElectionIds);
                     } else rpVotes = null;
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
-                    List<Match> matchList = matchDAO.findMatchesPurposeId(darIds);
+                    List<Match> matchList = matchDAO.findMatchesPurposeId(referenceIds);
                     Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
                     Collection<DACUser> dacUsers = dacUserDAO.findUsers(dacUserIds);
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(darElectionIds);
@@ -379,12 +377,12 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     }
 
     @Override
-    public File describeDataSetElectionsVotesForDar(String darId) {
+    public File describeDataSetElectionsVotesForDar(String referenceId) {
         File file = null;
         try {
-            file = File.createTempFile("dar"+darId+"DatasetElectionsDetail", ".txt");
+            file = File.createTempFile("dar" + referenceId + "DatasetElectionsDetail", ".txt");
             try (FileWriter summaryWriter = new FileWriter(file)) {
-                List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(darId, ElectionType.DATA_SET.getValue());
+                List<Election> elections = electionDAO.findLastElectionsByReferenceIdAndType(referenceId, ElectionType.DATA_SET.getValue());
                 Map<Integer, List<Vote>> electionsData = new HashMap<>();
                 int maxNumberOfVotes = 0;
                 for(Election e: elections){
@@ -396,11 +394,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                 }
                 setDatasetElectionsHeader(summaryWriter, maxNumberOfVotes);
 
-                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(darId));
-                String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
+                String dar_code = dataAccessRequestService.findByReferenceId(referenceId).getData().getDarCode();
                 String dar_election_result;
                 try{
-                    dar_election_result = (electionDAO.findLastElectionByReferenceIdAndType(darId, ElectionType.DATA_ACCESS.getValue())).getFinalAccessVote() ? "Approved" : "Denied";
+                    dar_election_result = (electionDAO.findLastElectionByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue())).getFinalAccessVote() ? "Approved" : "Denied";
                 } catch (NullPointerException e){
                     dar_election_result = "Pending";
                 }
@@ -540,30 +537,11 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         );
     }
 
-    private Document findAssociatedDAR(FindIterable<Document> dataAccessRequests, String referenceId) {
-        Document dar = null;
-        MongoCursor<Document> itr = dataAccessRequests.iterator();
-        try {
-            while(itr.hasNext()){
-                Document next = itr.next();
-                if(next.get(DarConstants.ID).toString().equals(referenceId)){
-                    dar = next;
-                }
-            }
-        }finally {
-            itr.close();
-        }
-        return dar;
-    }
-
-
-    private FindIterable<Document> findDataAccessRequests(List<String> objectIds) {
-        ObjectId[] objarray = new ObjectId[objectIds.size()];
-        for(int i=0;i<objectIds.size();i++)
-            objarray[i] = new ObjectId(objectIds.get(i));
-        BasicDBObject in = new BasicDBObject("$in", objarray);
-        BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
-        return  mongo.getDataAccessRequestCollection().find(q);
+    private Document findAssociatedDAR(List<Document> dataAccessRequests, String referenceId) {
+        Optional<Document> documentOption = dataAccessRequests.stream().
+                filter(d -> d.getString(DarConstants.REFERENCE_ID).equalsIgnoreCase(referenceId)).
+                findFirst();
+        return documentOption.orElse(null);
     }
 
     private String booleanToString(Boolean b) {

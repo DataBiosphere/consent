@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -15,11 +12,14 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -56,31 +58,25 @@ public class DacServiceTest {
     private DacService service;
 
     @Mock
-    DacDAO dacDAO;
+    private DacDAO dacDAO;
 
     @Mock
-    DACUserDAO dacUserDAO;
+    private DACUserDAO dacUserDAO;
 
     @Mock
-    DataSetDAO dataSetDAO;
+    private DataSetDAO dataSetDAO;
 
     @Mock
-    ElectionDAO electionDAO;
+    private ElectionDAO electionDAO;
 
     @Mock
-    FindIterable iterable;
+    DataAccessRequestDAO dataAccessRequestDAO;
 
     @Mock
-    FindIterable projection;
+    private UserService userService;
 
     @Mock
-    MongoCollection collection;
-
-    @Mock
-    MongoConsentDB mongo;
-
-    @Mock
-    VoteService voteService;
+    private VoteService voteService;
 
     @Before
     public void setUp() {
@@ -88,7 +84,7 @@ public class DacServiceTest {
     }
 
     private void initService() {
-        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, mongo, voteService);
+        service = new DacService(dacDAO, dacUserDAO, dataSetDAO, electionDAO, dataAccessRequestDAO, userService, voteService);
     }
 
     @Test
@@ -175,17 +171,6 @@ public class DacServiceTest {
     }
 
     @Test
-    public void testFindUserById() {
-        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
-        when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
-        initService();
-
-        DACUser user = service.findUserById(1);
-        Assert.assertNotNull(user);
-        Assert.assertFalse(user.getRoles().isEmpty());
-    }
-
-    @Test
     public void testFindDatasetsByDacId() {
         when(dataSetDAO.findDatasetsByDac(anyInt())).thenReturn(Collections.singleton(getDatasetDTOs().get(0)));
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(getDacs());
@@ -207,28 +192,30 @@ public class DacServiceTest {
         Assert.assertFalse(users.isEmpty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testAddDacMember() {
-        when(dacDAO.findUserById(anyInt())).thenReturn(getDacUsers().get(0));
-        when(dacDAO.findUserRolesForUser(anyInt())).thenReturn(getDacUsers().get(0).getRoles());
+        DACUser user = getDacUsers().get(0);
+        Dac dac = getDacs().get(0);
+        when(userService.findUserById(any())).thenReturn(user);
+        when(userService.findUserById(any())).thenReturn(user);
+        when(dacDAO.findUserRolesForUser(any())).thenReturn(getDacUsers().get(0).getRoles());
         List<Election> elections = getElections().stream().
                 peek(e -> e.setElectionType(ElectionType.DATA_ACCESS.getValue())).
                 peek(e -> e.setReferenceId(new ObjectId().toHexString())).
                 collect(Collectors.toList());
-        when(projection.first()).thenReturn(new Document());
-        when(iterable.projection(any())).thenReturn(projection);
-        when(collection.find(any(BasicDBObject.class))).thenReturn(iterable);
-        when(mongo.getDataAccessRequestCollection()).thenReturn(collection);
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setData(new DataAccessRequestData());
+        dar.getData().setRestriction(new Everything());
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(electionDAO.findOpenElectionsByDacId(any())).thenReturn(elections);
         when(voteService.createVotes(any(), any(), anyBoolean())).thenReturn(Collections.emptyList());
         doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt());
         initService();
 
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        DACUser user = service.addDacMember(role, getDacUsers().get(0), getDacs().get(0));
-        Assert.assertNotNull(user);
-        Assert.assertFalse(user.getRoles().isEmpty());
+        DACUser user1 = service.addDacMember(role, user, dac);
+        Assert.assertNotNull(user1);
+        Assert.assertFalse(user1.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
     }
 
@@ -273,7 +260,7 @@ public class DacServiceTest {
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     }
 
-    @Test(expected = ForbiddenException.class)
+    @Test(expected = BadRequestException.class)
     public void testRemoveDacChairFailure() {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         Dac dac = getDacs().get(0);
@@ -373,9 +360,8 @@ public class DacServiceTest {
 
         List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
-        // Filtered documents should contain the ones the user has direct access to in addition to
-        // the unassociated ones:
-        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filtered.size());
+        // Filtered documents should only contain the ones the user has direct access to
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -396,9 +382,86 @@ public class DacServiceTest {
 
         List<Document> filtered = service.filterDarsByDAC(documents, getMemberAuthUser());
 
-        // Filtered documents should contain the ones the user has direct access to in addition to
-        // the unassociated ones:
-        Assert.assertEquals(unassociatedDataSets.size() + memberDataSets.size(), filtered.size());
+        // Filtered documents should contain the ones the user has direct access to
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
+    }
+
+    @Test
+    public void testFilterDataAccessRequestsByDAC_adminCase() {
+        // User is an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        List<DataAccessRequest> dars = getDataAccessRequests();
+
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getUser());
+        // As an admin, all docs should be returned.
+        Assert.assertEquals(dars.size(), filtered.size());
+    }
+
+    @Test
+    public void testFilterDataAccessRequestsByDAC_memberCase_1() {
+        // Member is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+
+        // Member has access to DataSet 1
+        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+
+        // There are no additional unassociated datasets
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(Collections.emptyList());
+        initService();
+
+        List<DataAccessRequest> dars = getDataAccessRequests();
+
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMemberAuthUser());
+
+        // Filtered documents should only contain the ones the user has direct access to:
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
+    }
+
+    @Test
+    public void testFilterDataAccessRequestsByDAC_memberCase_2() {
+        // Member is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+
+        // Member has access to datasets
+        List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+
+        // There are additional unassociated datasets
+        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        initService();
+
+        List<DataAccessRequest> dars = getDataAccessRequests();
+
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMemberAuthUser());
+
+        // Filtered documents should only contain the ones the user has direct access to
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
+    }
+
+    @Test
+    public void testFilterDataAccessRequestsByDAC_memberCase_3() {
+        // Member is not an admin user
+        when(dacUserDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+
+        // Member no direct access to datasets
+        List<DataSet> memberDataSets = Collections.emptyList();
+        when(dataSetDAO.findDataSetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+
+        // There are additional unassociated datasets
+        List<DataSet> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
+        when(dataSetDAO.findNonDACDataSets()).thenReturn(unassociatedDataSets);
+        initService();
+
+        List<DataAccessRequest> dars = getDataAccessRequests();
+
+        List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMemberAuthUser());
+
+        // Filtered documents should contain the ones the user has direct access to
+        Assert.assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -702,6 +765,24 @@ public class DacServiceTest {
                     List<Integer> dataSetIds = Collections.singletonList(i);
                     Document doc = new Document();
                     doc.put(DarConstants.DATASET_ID, dataSetIds);
+                    return doc;
+                }).collect(Collectors.toList());
+    }
+
+    /**
+     * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
+     */
+    private List<DataAccessRequest> getDataAccessRequests() {
+        return IntStream.range(1, 5).
+                mapToObj(i -> {
+                    String referenceId = UUID.randomUUID().toString();
+                    List<Integer> dataSetIds = Collections.singletonList(i);
+                    DataAccessRequest doc = new DataAccessRequest();
+                    doc.setReferenceId(referenceId);
+                    DataAccessRequestData data = new DataAccessRequestData();
+                    data.setDatasetId(dataSetIds);
+                    data.setReferenceId(referenceId);
+                    doc.setData(data);
                     return doc;
                 }).collect(Collectors.toList());
     }

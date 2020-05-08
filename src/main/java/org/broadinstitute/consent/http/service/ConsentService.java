@@ -1,22 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.Block;
-import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -28,18 +25,18 @@ public class ConsentService {
 
     private ConsentDAO consentDAO;
     private ElectionDAO electionDAO;
-    private MongoConsentDB mongo;
     private VoteDAO voteDAO;
     private DacService dacService;
+    private DataAccessRequestDAO dataAccessRequestDAO;
 
     @Inject
-    public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, MongoConsentDB mongo,
-                          VoteDAO voteDAO, DacService dacService) {
+    public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DacService dacService,
+                          DataAccessRequestDAO dataAccessRequestDAO) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
-        this.mongo = mongo;
         this.voteDAO = voteDAO;
         this.dacService = dacService;
+        this.dataAccessRequestDAO = dataAccessRequestDAO;
     }
 
     public Consent getById(String id) throws UnknownIdentifierException {
@@ -59,7 +56,6 @@ public class ConsentService {
         consentDAO.updateConsentDac(consentId, dacId);
     }
 
-    @SuppressWarnings("unchecked")
     public List<ConsentManage> describeConsentManage(AuthUser authUser) {
         List<ConsentManage> consentManageList = new ArrayList<>();
         consentManageList.addAll(collectUnreviewedConsents(consentDAO.findUnreviewedConsents()));
@@ -75,20 +71,17 @@ public class ConsentService {
         List<Election> openElections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
-            ObjectId[] objarray = new ObjectId[referenceIds.size()];
-            for (int i = 0; i < referenceIds.size(); i++)
-                objarray[i] = new ObjectId(referenceIds.get(i));
-            BasicDBObject in = new BasicDBObject("$in", objarray);
-            BasicDBObject q = new BasicDBObject(DarConstants.ID, in);
-            FindIterable<Document> dataAccessRequests = mongo.getDataAccessRequestCollection().find(q);
-            List<String> datasetIds = new ArrayList<>();
-            dataAccessRequests.forEach((Block<Document>) dar -> {
-                List<String> dataSets = dar.get(DarConstants.DATASET_ID, List.class);
-                datasetIds.addAll(dataSets);
-            });
+            List<DataAccessRequest> dataAccessRequests = dataAccessRequestDAO.findByReferenceIds(referenceIds);
+            List<String> datasetIds = dataAccessRequests.stream().
+                    map(DataAccessRequest::getData).
+                    map(DataAccessRequestData::getDatasetDetail).
+                    flatMap(List::stream).
+                    map(DatasetDetailEntry::getDatasetId).
+                    collect(Collectors.toList());
             List<String> consentIds = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(datasetIds)) {
-                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIds));
+                List<Integer> datasetIdIntValues = datasetIds.stream().map(Integer::valueOf).collect(Collectors.toList());
+                consentIds.addAll(consentDAO.getAssociationConsentIdsFromDatasetIds(datasetIdIntValues));
             }
 
             for (ConsentManage consentManage : consentManageList) {

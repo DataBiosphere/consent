@@ -13,19 +13,23 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class VoteService {
 
-    private DACUserDAO dacUserDAO;
-    private DataSetAssociationDAO dataSetAssociationDAO;
-    private ElectionDAO electionDAO;
-    private VoteDAO voteDAO;
+    private final DACUserDAO dacUserDAO;
+    private final DataSetAssociationDAO dataSetAssociationDAO;
+    private final ElectionDAO electionDAO;
+    private final VoteDAO voteDAO;
 
     @Inject
     public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO,
@@ -75,11 +79,11 @@ public class VoteService {
         voteDAO.updateVote(
                 vote.getVote(),
                 vote.getRationale(),
-                (vote.getUpdateDate() == null) ? now : vote.getUpdateDate(),
+                Objects.isNull(vote.getUpdateDate()) ? now : vote.getUpdateDate(),
                 vote.getVoteId(),
                 vote.getIsReminderSent(),
                 vote.getElectionId(),
-                (vote.getCreateDate() == null) ? now : vote.getCreateDate(),
+                Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
                 vote.getHasConcerns()
         );
         return voteDAO.findVoteById(vote.getVoteId());
@@ -87,7 +91,7 @@ public class VoteService {
 
     /**
      * Create votes for an election
-     * <p>
+     *
      * TODO: Refactor duplicated code when DatabaseElectionAPI is fully replaced by ElectionService
      *
      * @param election       The Election
@@ -157,6 +161,29 @@ public class VoteService {
     }
 
     /**
+     * Find the final access vote for this election. In practice, there can be more than one final vote
+     * if multiple chairpersons exist. If no one has voted yet, then they are effectively all the same
+     * null vote, so any one can be returned. If any chair(s) has voted, then we need to get the most recent
+     * vote as that will reflect the latest decision point of the chair(s).
+     *
+     * @param electionId Election Id
+     * @return Final Access Vote
+     * @throws NotFoundException No final vote exists for this election
+     */
+    public Vote describeFinalAccessVoteByElectionId(Integer electionId) throws NotFoundException {
+        List<Vote> votes = voteDAO.findFinalVotesByElectionId(electionId);
+        if (Objects.isNull(votes) || votes.isEmpty()) {
+            throw new NotFoundException("Could not find vote for specified id. Election id: " + electionId);
+        }
+        // Look for votes with a value, find by the most recent (max update date)
+        // Fall back to the first list vote if we can't find what we're looking for.
+        Optional<Vote> mostRecentVote = votes.stream().
+                filter(v -> Objects.nonNull(v.getVote())).
+                max(Comparator.comparing(Vote::getUpdateDate));
+        return mostRecentVote.orElse(votes.get(0));
+    }
+
+    /**
      * Delete any votes in Open elections for the specified user in the specified Dac.
      *
      * @param dac The Dac we are restricting elections to
@@ -166,24 +193,30 @@ public class VoteService {
         List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
                 map(Election::getElectionId).
                 collect(Collectors.toList());
-        List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
-                filter(v -> v.getDacUserId().equals(user.getDacUserId())).
-                map(Vote::getVoteId).
-                collect(Collectors.toList());
-        voteDAO.removeVotesByIds(openUserVoteIds);
+        if (!openElectionIds.isEmpty()) {
+            List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
+                    filter(v -> v.getDacUserId().equals(user.getDacUserId())).
+                    map(Vote::getVoteId).
+                    collect(Collectors.toList());
+            if (!openUserVoteIds.isEmpty()) {
+                voteDAO.removeVotesByIds(openUserVoteIds);
+            }
+        }
     }
 
     private boolean isDacChairPerson(Dac dac, DACUser user) {
         if (dac != null) {
             return user.getRoles().
                     stream().
-                    anyMatch(userRole ->
+                    anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
+                            Objects.nonNull(userRole.getDacId()) &&
                             userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) &&
-                                    userRole.getDacId().equals(dac.getDacId()));
+                            userRole.getDacId().equals(dac.getDacId()));
         }
         return user.getRoles().
                 stream().
-                anyMatch(userRole -> userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
+                anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
+                        userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
     }
 
     /**
@@ -192,13 +225,13 @@ public class VoteService {
      * @param vote The Vote to validate
      */
     private void validateVote(Vote vote) {
-        if (vote == null ||
-                vote.getVoteId() == null ||
-                vote.getDacUserId() == null ||
-                vote.getElectionId() == null) {
+        if (Objects.isNull(vote) ||
+                Objects.isNull(vote.getVoteId()) ||
+                Objects.isNull(vote.getDacUserId()) ||
+                Objects.isNull(vote.getElectionId())) {
             throw new IllegalArgumentException("Invalid vote: " + vote);
         }
-        if (voteDAO.findVoteById(vote.getVoteId()) == null) {
+        if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
             throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
         }
     }

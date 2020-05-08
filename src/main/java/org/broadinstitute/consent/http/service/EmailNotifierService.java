@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.BasicDBObject;
 import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +9,6 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -31,7 +29,6 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -56,6 +53,7 @@ import java.util.stream.Collectors;
 
 public class EmailNotifierService extends AbstractEmailNotifierAPI {
 
+    private DataAccessRequestService dataAccessRequestService;
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
     private DACUserDAO dacUserDAO;
@@ -66,7 +64,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
     private FreeMarkerTemplateHelper templateHelper;
     private MailServiceAPI mailService;
     private MailMessageDAO emailDAO;
-    private MongoConsentDB mongo;
     private String SERVER_URL;
     private boolean isServiceActive;
     private static final Logger logger = Logger.getLogger(EmailNotifierService.class.getName());
@@ -108,11 +105,12 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         }
     }
 
-    public static void initInstance(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO) {
-        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(voteDAO, mongo, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, helper, serverUrl, serviceActive, researcherPropertyDAO));
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO) {
+        EmailNotifierAPIHolder.setInstance(new EmailNotifierService(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, helper, serverUrl, serviceActive, researcherPropertyDAO));
     }
 
-    public EmailNotifierService(VoteDAO voteDAO, MongoConsentDB mongo, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO){
+    public EmailNotifierService(DataAccessRequestService dataAccessRequestService, VoteDAO voteDAO, ElectionDAO electionDAO, DACUserDAO dacUserDAO, MailMessageDAO emailDAO, MailServiceDAO mailServiceDAO, FreeMarkerTemplateHelper helper, String serverUrl, boolean serviceActive, ResearcherPropertyDAO researcherPropertyDAO){
+        this.dataAccessRequestService = dataAccessRequestService;
         this.dacUserDAO = dacUserDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -124,7 +122,6 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
         this.mailService = MailService.getInstance();
         this.SERVER_URL = serverUrl;
         this.isServiceActive = serviceActive;
-        this.mongo = mongo;
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
@@ -216,8 +213,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
             Map<String, List<Election>> reviewedDatasets = new HashMap<>();
             for(Election election: elections) {
                 List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-                BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(election.getReferenceId()));
-                String dar_code = mongo.getDataAccessRequestCollection().find(query).first().getString(DarConstants.DAR_CODE);
+                String dar_code = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(election.getReferenceId()).getString(DarConstants.DAR_CODE);
                 reviewedDatasets.put(dar_code, dsElections);
             }
             List<DACUser> users = dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
@@ -315,8 +311,7 @@ public class EmailNotifierService extends AbstractEmailNotifierAPI {
                         logger.severe("Could not find Consent related to ID " + voteInfo.getReferenceId() + " for delegation email sending. Cause " + e.getMessage());
                     }
                 } else {
-                    BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(voteInfo.getReferenceId()));
-                    Document dar = mongo.getDataAccessRequestCollection().find(query).first();
+                    Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(voteInfo.getReferenceId());
                     voteInfo.setElectionNumber(dar.getString(DarConstants.DAR_CODE));
                 }
                 voteInfo.setElectionType(retrieveElectionTypeString(voteInfo.getElectionType()));

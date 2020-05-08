@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
@@ -65,6 +66,8 @@ public class DataAccessRequestResourceTest {
     DataAccessRequestAPI dataAccessRequestAPI;
     @Mock
     DataSetAPI dataSetAPI;
+    @Mock
+    UserService userService;
 
     private DataAccessRequestResource resource;
     private Document dar;
@@ -98,7 +101,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store, userService);
         Consent consent = resource.describeConsentForDAR(darId);
         assertNotNull(consent);
     }
@@ -121,7 +124,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store, userService);
         Consent consent = resource.describeConsentForDAR(darId);
         assertNotNull(consent);
     }
@@ -139,7 +142,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store, userService);
         resource.describeConsentForDAR(darId);
     }
 
@@ -155,7 +158,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, store);
+        resource = new DataAccessRequestResource(dataAccessRequestService, store, userService);
         resource.describeConsentForDAR(darId);
     }
 

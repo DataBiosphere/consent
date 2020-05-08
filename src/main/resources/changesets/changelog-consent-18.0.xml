@@ -13,7 +13,7 @@
     <changeSet author="aracioppi" id="74">
         <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="emailentity">
-            <column name="entityReferenceId" type="varchar(255)"/>
+            <column name="entityreferenceid" type="varchar(255)"/>
         </addColumn>
     </changeSet>
 

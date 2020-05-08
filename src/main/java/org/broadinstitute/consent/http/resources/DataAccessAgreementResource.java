@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.UUID;
 
-@Path("{api : (api/)?}dar")
+@Path("api/dar")
 public class DataAccessAgreementResource extends Resource {
 
     private final GCSStore store;

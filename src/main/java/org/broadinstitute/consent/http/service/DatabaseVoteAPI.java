@@ -69,7 +69,7 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
     public List<Vote> describeVotes(String referenceId) {
         List<Vote> resultVotes = voteDAO.findVotesByReferenceId(referenceId);
         if (resultVotes == null || resultVotes.isEmpty()) {
-            throw new NotFoundException("Could not find vote for specified object id. Object id: " + referenceId);
+            throw new NotFoundException("Could not find vote for specified reference id. Reference id: " + referenceId);
         }
         return resultVotes;
     }
@@ -84,18 +84,6 @@ public class DatabaseVoteAPI extends AbstractVoteAPI {
         }
         return vote;
     }
-
-
-    @Override
-    public Vote describeVoteFinalAccessVoteById(Integer voteId)
-            throws IllegalArgumentException {
-        Vote vote = voteDAO.findVoteByElectionIdAndType(voteId, VoteType.FINAL.getValue());
-        if (vote == null) {
-            throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
-        }
-        return vote;
-    }
-
 
     @Override
     public void deleteVote(Integer voteId, String referenceId) {

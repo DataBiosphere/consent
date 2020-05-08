@@ -1,13 +1,8 @@
 version: 2.1
 
-executors:
-  jdk:
-    docker:
-      - image: circleci/openjdk:8-jdk-stretch
-
 jobs:
   test:
-    executor: jdk
+    machine: true
     steps:
       - checkout
       - restore_cache:

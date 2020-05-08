@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -125,6 +126,7 @@ import org.broadinstitute.consent.http.service.NihServiceAPI;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
@@ -214,6 +216,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionDAO electionDAO = injector.getProvider(ElectionDAO.class).get();
         final HelpReportDAO helpReportDAO = injector.getProvider(HelpReportDAO.class).get();
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
+        final DataAccessRequestDAO dataAccessRequestDAO = injector.getProvider(DataAccessRequestDAO.class).get();
         final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
         final DataSetAssociationDAO dataSetAssociationDAO = injector.getProvider(DataSetAssociationDAO.class).get();
         final DACUserDAO dacUserDAO = injector.getProvider(DACUserDAO.class).get();
@@ -234,8 +237,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
+        final UserService userService = injector.getProvider(UserService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
-        DatabaseDataAccessRequestAPI.initInstance(mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
@@ -243,16 +247,16 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         try {
             MailService.initInstance(config.getMailConfiguration());
-            EmailNotifierService.initInstance(voteDAO, mongoInstance, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
+            EmailNotifierService.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, emailDAO, mailServiceDAO, new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration()), config.getServicesConfiguration().getLocalURL(), config.getMailConfiguration().isActivateEmailNotifications(), researcherPropertyDAO);
         } catch (IOException e) {
             LOGGER.error("Mail Notification Service initialization error.", e);
         }
 
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
-        DatabaseMatchProcessAPI.initInstance(consentDAO, mongoInstance);
-        DatabaseSummaryAPI.initInstance(voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO, mongoInstance, dataSetDAO);
+        DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
+        DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO);
         DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, AbstractEmailNotifierAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance());
-        DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
+        DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         TranslateServiceImpl.initInstance(useRestrictionConverter);
@@ -263,7 +267,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
 
         // Mail Services
-        DatabaseElectionAPI.initInstance(electionDAO, consentDAO, dacUserDAO, mongoInstance, voteDAO, emailDAO, dataSetDAO);
+        DatabaseElectionAPI.initInstance(dataAccessRequestService, electionDAO, consentDAO, dacUserDAO, voteDAO, emailDAO, dataSetDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
@@ -281,17 +285,17 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, AbstractEmailNotifierAPI.getInstance());
-        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), researcherPropertyDAO);
+        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), userService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
-        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, googleStore));
+        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, googleStore, userService));
         env.jersey().register(DataSetResource.class);
         env.jersey().register(DataSetAssociationsResource.class);
-        env.jersey().register(ConsentResource.class);
-        env.jersey().register(ConsentAssociationResource.class);
-        env.jersey().register(new DataUseLetterResource(googleStore));
+        env.jersey().register(new ConsentResource(userService));
+        env.jersey().register(new ConsentAssociationResource(userService));
+        env.jersey().register(new DataUseLetterResource(googleStore, userService));
         env.jersey().register(new ConsentElectionResource(consentService, dacService, voteService));
         env.jersey().register(new DataRequestElectionResource(voteService));
         env.jersey().register(ConsentVoteResource.class);
@@ -299,20 +303,20 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DataRequestCasesResource(electionService, pendingCaseService));
         env.jersey().register(new DacResource(dacService));
-        env.jersey().register(DACUserResource.class);
-        env.jersey().register(ElectionReviewResource.class);
+        env.jersey().register(new DACUserResource(userService));
+        env.jersey().register(new ElectionReviewResource(dataAccessRequestService));
         env.jersey().register(new ConsentManageResource(consentService));
         env.jersey().register(new ElectionResource(voteService));
         env.jersey().register(MatchResource.class);
         env.jersey().register(EmailNotifierResource.class);
         env.jersey().register(HelpReportResource.class);
         env.jersey().register(ApprovalExpirationTimeResource.class);
-        env.jersey().register(new UserResource(userAPI));
-        env.jersey().register(new ResearcherResource(researcherService, userAPI));
+        env.jersey().register(new UserResource(userAPI, userService));
+        env.jersey().register(new ResearcherResource(researcherService, userService));
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
-        env.jersey().register(new NihAccountResource(nihAuthApi, DatabaseDACUserAPI.getInstance()));
+        env.jersey().register(new NihAccountResource(nihAuthApi, userService));
         env.jersey().register(new WhitelistResource(googleStore));
         env.jersey().register(injector.getInstance(VersionResource.class));
 
@@ -329,7 +333,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(RolesAllowedDynamicFeature.class);
         env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
         env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new DataRequestReportsResource(researcherService, DatabaseDACUserAPI.getInstance()));
+        env.jersey().register(new DataRequestReportsResource(researcherService, userService));
         // Register a listener to catch an application stop and clear out the API instance created above.
         // For normal exit, this is a no-op, but the junit tests that use the DropWizardAppRule will
         // repeatedly start and stop the application, all within the same JVM, causing the run() method to be

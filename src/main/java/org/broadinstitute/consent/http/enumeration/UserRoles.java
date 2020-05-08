@@ -36,4 +36,13 @@ public enum UserRoles {
         return null;
     }
 
+    public static UserRoles getUserRoleFromId(Integer roleId) {
+        for (UserRoles e : UserRoles.values()) {
+            if (e.getRoleId().equals(roleId)) {
+                return e;
+            }
+        }
+        return null;
+    }
+
 }

@@ -5,7 +5,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
@@ -94,7 +93,8 @@ public class DataAccessParserTest {
         Assert.isTrue(acroForm.getField(DarConstants.ORCID).getValueAsString().equals(ORCID));
         Assert.isTrue(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString().equals(RESEARCHER_GATE));
         Assert.isTrue(acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT).getValueAsString().equals(RESEARCH_OTHER_TEXT));
+        // Handle legacy all lower cased case
+        Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT.toLowerCase()).getValueAsString().equals(RESEARCH_OTHER_TEXT));
         Assert.isTrue(acroForm.getField(DarConstants.ORIGINS).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.HEALTH).getValueAsString().equals("Yes"));
         Assert.isTrue(acroForm.getField(DarConstants.MANUAL_REVIEW).getValueAsString().equals(MANUAL_REVIEW));

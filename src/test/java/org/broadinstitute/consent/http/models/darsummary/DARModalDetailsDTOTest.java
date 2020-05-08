@@ -50,7 +50,7 @@ public class DARModalDetailsDTOTest {
         when(darDocument.getBoolean("population")).thenReturn(true);
         when(darDocument.containsKey("other")).thenReturn(true);
         when(darDocument.getBoolean("other")).thenReturn(true);
-        when(darDocument.getString("othertext")).thenReturn(OTHERTEXT);
+        when(darDocument.getString("otherText")).thenReturn(OTHERTEXT);
 
         when(darDocument.get("ontologies")).thenReturn(ontologies());
 

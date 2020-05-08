@@ -5,6 +5,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Before;
@@ -42,6 +43,9 @@ public class DatabaseDACUserAPITest {
     @Mock
     UserHandlerAPI userHandlerAPI;
 
+    @Mock
+    UserService userService;
+
     private final String EMAIL = "test@gmail.com";
 
     private final String DISPLAY_NAME = "test";
@@ -50,7 +54,7 @@ public class DatabaseDACUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, null);
+        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, userService);
     }
 
     @Test
@@ -98,43 +102,6 @@ public class DatabaseDACUserAPITest {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().equals("The user needs a valid email to be able to login."));
         }
-    }
-
-    @Test
-    public void describeUserByNonExistentEmail() {
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(null);
-        try {
-            databaseDACUserAPI.describeDACUserByEmail(EMAIL);
-        } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find dacUser for specified email : " + EMAIL));
-        }
-    }
-
-    @Test
-    public void describeUserByEmail() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserByEmail(EMAIL)).thenReturn(dacUser);
-        DACUser user = databaseDACUserAPI.describeDACUserByEmail(EMAIL);
-        assertNotNull(user);
-    }
-
-    @Test
-    public void describeUserByNonExistentId() {
-        int id = 1;
-        when(dacUserDAO.findDACUserById(id)).thenReturn(null);
-        try {
-            databaseDACUserAPI.describeDACUserById(id);
-        } catch (NotFoundException e) {
-            assertTrue(e.getMessage().equals("Could not find dacUser for specified id : " + id));
-        }
-    }
-
-    @Test
-    public void describeUserById() {
-        DACUser dacUser = new DACUser(1, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.findDACUserById(1)).thenReturn(dacUser);
-        DACUser user = databaseDACUserAPI.describeDACUserById(1);
-        assertNotNull(user);
     }
 
 }
