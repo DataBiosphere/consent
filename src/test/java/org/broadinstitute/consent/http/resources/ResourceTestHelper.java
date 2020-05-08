@@ -37,9 +37,10 @@ public abstract class ResourceTestHelper {
     }
 
     /**
-     * Construct a basic class rule for a number of resources.
+     * Construct a basic test rule builder for any number of resources.
+     *
      * @param resources Resource class instances to add to the test rule
-     * @return ResourceTestRule
+     * @return ResourceTestRule.Builder
      */
     ResourceTestRule.Builder testRuleBuilder(Resource ... resources) {
         ResourceTestRule.Builder builder = ResourceTestRule.builder()
