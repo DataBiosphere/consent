@@ -38,7 +38,7 @@ public class StoreConfiguration {
     }
 
     public String getWhitelistBucket() {
-        return getBucket()+"/whitelist";
+        return getBucket() + "/whitelist";
     }
 
 }
