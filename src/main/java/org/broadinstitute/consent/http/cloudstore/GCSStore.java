@@ -110,7 +110,7 @@ public class GCSStore implements CloudStore {
     }
 
     @Override
-    public String postWhitelist(InputStream stream, String fileName) throws IOException {
+    public GenericUrl postWhitelist(InputStream stream, String fileName) throws IOException {
         GenericUrl url = generateURLForWhitelist(fileName);
         HttpResponse response = null;
         try {
@@ -131,7 +131,7 @@ public class GCSStore implements CloudStore {
                 }
             }
         }
-        return url.toString();
+        return url;
     }
 
     private GenericUrl generateURLForWhitelist(String fileName) {
