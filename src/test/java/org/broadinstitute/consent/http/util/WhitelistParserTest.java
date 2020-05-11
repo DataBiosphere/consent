@@ -16,13 +16,13 @@ public class WhitelistParserTest {
     public void testParseWhitelist() {
         WhitelistParser parser = new WhitelistParser();
         int numRows = 3;
-        String fileData = makeSampleWhitelistFile(numRows);
+        String fileData = makeSampleWhitelistFile(numRows, false);
         List<WhitelistEntry> entries = parser.parseWhitelist(fileData);
         assertFalse(entries.isEmpty());
         assertEquals(numRows, entries.size());
     }
 
-    private String makeSampleWhitelistFile(int rows) {
+    public String makeSampleWhitelistFile(int rows, boolean invalid) {
         String tab = "\t";
         String newline = "\n";
         StringBuilder builder = new StringBuilder();
@@ -36,7 +36,8 @@ public class WhitelistParserTest {
                 append(WhitelistHeaders.IT_DIRECTOR_EMAIL.getValue()).append(newline);
         for (int r = 0; r < rows; r++) {
             for (int i = 0; i < 7; i++) {
-                builder.append(RandomStringUtils.randomAlphabetic(10)).append(tab);
+                String data = (invalid && i <= 3) ? "" : RandomStringUtils.randomAlphabetic(10);
+                builder.append(data).append(tab);
             }
             builder.append(RandomStringUtils.randomAlphabetic(10)).append(newline);
         }
