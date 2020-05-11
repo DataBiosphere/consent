@@ -2551,8 +2551,8 @@ paths:
       tags:
         - Whitelist
       responses:
-        200:
-          description: Success
+        201:
+          description: Successfully Created
         404:
           description: Failure
   /status:
