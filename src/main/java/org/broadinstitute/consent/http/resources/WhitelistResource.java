@@ -32,11 +32,9 @@ public class WhitelistResource extends Resource {
     @POST
     @RolesAllowed(ADMIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postWhitelist(@Auth AuthUser user, @FormDataParam("fileData") String fileData) {
+    public Response postWhitelist(@Auth AuthUser user, @FormDataParam("data") String data) {
         try {
-            GenericUrl url = whitelistService.postWhitelist(fileData);
-            logger.debug(fileData);
-            logger.debug(url.toString());
+            GenericUrl url = whitelistService.postWhitelist(data);
             return Response.created(url.toURI()).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
