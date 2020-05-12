@@ -2553,8 +2553,10 @@ paths:
       responses:
         201:
           description: Successfully Created
-        404:
-          description: Failure
+        400:
+          description: Improper whitelist format
+        500:
+          description: Internal Server Error
   /status:
     get:
       summary: System Health Status
