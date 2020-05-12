@@ -84,6 +84,7 @@ import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
+import org.broadinstitute.consent.http.resources.WhitelistResource;
 import org.broadinstitute.consent.http.resources.WorkspaceResource;
 import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
@@ -127,6 +128,7 @@ import org.broadinstitute.consent.http.service.TranslateServiceImpl;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.WhitelistService;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
@@ -237,6 +239,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final UserService userService = injector.getProvider(UserService.class).get();
+        final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         DatabaseAuditServiceAPI.initInstance(workspaceAuditDAO, dacUserDAO, associationDAO);
         DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
@@ -316,6 +319,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihAuthApi, userService));
+        env.jersey().register(new WhitelistResource(whitelistService));
         env.jersey().register(injector.getInstance(VersionResource.class));
 
         // Authentication filters

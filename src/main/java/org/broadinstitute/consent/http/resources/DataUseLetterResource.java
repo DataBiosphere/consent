@@ -20,8 +20,6 @@ import org.broadinstitute.consent.http.service.AuditServiceAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -49,7 +47,6 @@ public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;
     private final GCSStore store;
-    private final DACUserAPI dacUserAPI;
     private final AuditServiceAPI auditServiceAPI;
     private final UserService userService;
 
@@ -57,7 +54,6 @@ public class DataUseLetterResource extends Resource {
     public DataUseLetterResource(GCSStore store, UserService userService) {
         this.api = AbstractConsentAPI.getInstance();
         this.store = store;
-        this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.userService = userService;
     }
@@ -164,8 +160,6 @@ public class DataUseLetterResource extends Resource {
             throw new NotFoundException(e);
         } catch (IOException e) {
             logger().error("Error when trying to read/write the file " + e.getMessage());
-        } catch (GeneralSecurityException e) {
-            logger().error("Security error: " + e.getMessage());
         }
         return null;
     }

@@ -39,20 +39,15 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.WhitelistService;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 public class ConsentModule extends AbstractModule {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConsentModule.class.getName());
 
     @Inject
     private final ConsentConfiguration config;
@@ -144,12 +139,7 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     GCSStore providesGCSStore() {
-        try {
-            return new GCSStore(config.getCloudStoreConfiguration());
-        } catch (GeneralSecurityException | IOException e) {
-            LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
-            throw new IllegalStateException(e);
-        }
+        return new GCSStore(config.getCloudStoreConfiguration());
     }
 
     @Provides
@@ -316,6 +306,11 @@ public class ConsentModule extends AbstractModule {
                 providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());
+    }
+
+    @Provides
+    WhitelistService providesWhitelistService() {
+        return new WhitelistService(providesGCSStore());
     }
 
     // Private helpers
