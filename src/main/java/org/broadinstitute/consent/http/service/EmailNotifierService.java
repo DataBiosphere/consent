@@ -285,7 +285,7 @@ public class EmailNotifierService {
         if (isServiceActive) {
             Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
                     dataDepositorName, darCode, researcherEmail);
-            mailService.sendDataCustodianApprovalMessage(toAddress, template, darCode);
+            mailService.sendDataCustodianApprovalMessage(toAddress, darCode, template);
         }
     }
 

@@ -16,8 +16,8 @@ public class DataCustodianApprovalMessage extends MailMessage {
     public List<Mail> dataCustodianApprovalMessage(
             String toAddress,
             String fromAddress,
-            Writer template,
-            String darCode) throws MessagingException {
+            String darCode,
+            Writer template) throws MessagingException {
         return generateEmailMessages(Collections.singleton(toAddress), fromAddress, template, darCode, null);
     }
 

@@ -148,8 +148,8 @@ public class MailService {
         sendMessages(messages);
     }
 
-    public void sendDataCustodianApprovalMessage(String toAddress, Writer template, String darCode) throws MessagingException {
-        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, template, darCode);
+    public void sendDataCustodianApprovalMessage(String toAddress, String darCode, Writer template) throws MessagingException {
+        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
         sendMessages(messages);
     }
 

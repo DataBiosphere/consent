@@ -157,7 +157,7 @@ public class MailServiceTest {
     @Test
     public void testDataCustodianApprovalMessage() {
         try {
-            mailService.sendDataCustodianApprovalMessage(TO, template, "Test");
+            mailService.sendDataCustodianApprovalMessage(TO, "Test", template);
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }
