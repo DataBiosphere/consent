@@ -21,7 +21,7 @@ public class WhitelistParser {
     public List<WhitelistEntry> parseWhitelist(String fileData) {
         List<WhitelistEntry> entries = new ArrayList<>();
         CSVParser parser = new CSVParserBuilder().withSeparator('\t').build();
-        try(CSVReader reader = new CSVReaderBuilder(new StringReader(fileData)).
+        try (CSVReader reader = new CSVReaderBuilder(new StringReader(fileData)).
                 withSkipLines(1).
                 withCSVParser(parser).
                 build()) {
@@ -37,31 +37,31 @@ public class WhitelistParser {
 
     private WhitelistEntry makeEntry(String[] line) {
         WhitelistEntry entry = new WhitelistEntry();
-        List<String> values =Arrays.asList(line);
+        List<String> values = Arrays.asList(line);
         try {
             if (values.get(WhitelistHeaders.ORGANIZATION.ordinal()) != null) {
-               entry.setOrganization(values.get(WhitelistHeaders.ORGANIZATION.ordinal()));
+                entry.setOrganization(values.get(WhitelistHeaders.ORGANIZATION.ordinal()));
             }
             if (values.get(WhitelistHeaders.COMMONS_ID.ordinal()) != null) {
-               entry.setCommonsId(values.get(WhitelistHeaders.COMMONS_ID.ordinal()));
+                entry.setCommonsId(values.get(WhitelistHeaders.COMMONS_ID.ordinal()));
             }
             if (values.get(WhitelistHeaders.NAME.ordinal()) != null) {
-               entry.setName(values.get(WhitelistHeaders.NAME.ordinal()));
+                entry.setName(values.get(WhitelistHeaders.NAME.ordinal()));
             }
             if (values.get(WhitelistHeaders.EMAIL.ordinal()) != null) {
-               entry.setEmail(values.get(WhitelistHeaders.EMAIL.ordinal()));
+                entry.setEmail(values.get(WhitelistHeaders.EMAIL.ordinal()));
             }
             if (values.get(WhitelistHeaders.SIGNING_OFFICIAL_NAME.ordinal()) != null) {
-               entry.setSigningOfficialName(values.get(WhitelistHeaders.SIGNING_OFFICIAL_NAME.ordinal()));
+                entry.setSigningOfficialName(values.get(WhitelistHeaders.SIGNING_OFFICIAL_NAME.ordinal()));
             }
             if (values.get(WhitelistHeaders.SIGNING_OFFICIAL_EMAIL.ordinal()) != null) {
-               entry.setSigningOfficialEmail(values.get(WhitelistHeaders.SIGNING_OFFICIAL_EMAIL.ordinal()));
+                entry.setSigningOfficialEmail(values.get(WhitelistHeaders.SIGNING_OFFICIAL_EMAIL.ordinal()));
             }
             if (values.get(WhitelistHeaders.IT_DIRECTOR_NAME.ordinal()) != null) {
-               entry.setItDirectorName(values.get(WhitelistHeaders.IT_DIRECTOR_NAME.ordinal()));
+                entry.setItDirectorName(values.get(WhitelistHeaders.IT_DIRECTOR_NAME.ordinal()));
             }
             if (values.get(WhitelistHeaders.IT_DIRECTOR_EMAIL.ordinal()) != null) {
-               entry.setItDirectorEmail(values.get(WhitelistHeaders.IT_DIRECTOR_EMAIL.ordinal()));
+                entry.setItDirectorEmail(values.get(WhitelistHeaders.IT_DIRECTOR_EMAIL.ordinal()));
             }
         } catch (IndexOutOfBoundsException e) {
             logger.error(e.getMessage());
