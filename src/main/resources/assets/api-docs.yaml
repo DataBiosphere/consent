@@ -918,6 +918,8 @@ paths:
       responses:
         200:
           description: Dac chairperson successfully removed
+        400:
+          description: Dacs require at least one chair.
         404:
           description: No DAC or User found with the provided ID
         500:
@@ -2534,6 +2536,27 @@ paths:
           description: The user doesn't exist in the system
           schema:
             $ref: '#/definitions/ErrorResponse'
+  /api/whitelist:
+    post:
+      summary: postWhitelist
+      description: Uploads Library Card Whitelist tsv to bucket - NEW!
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: data
+          in: formData
+          description: TSV file that contains whitelist information
+          required: true
+          type: file
+      tags:
+        - Whitelist
+      responses:
+        201:
+          description: Successfully Created
+        400:
+          description: Improper whitelist format
+        500:
+          description: Internal Server Error
   /status:
     get:
       summary: System Health Status

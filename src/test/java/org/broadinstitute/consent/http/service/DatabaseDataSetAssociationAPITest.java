@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
@@ -23,7 +24,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class DatabaseDataSetAssociationAPITest {
@@ -34,6 +37,8 @@ public class DatabaseDataSetAssociationAPITest {
     private DACUserDAO dacUserDAO;
     @Mock
     private DataSetDAO dsDAO;
+    @Mock
+    private UserRoleDAO userRoleDAO;
 
     DatabaseDataSetAssociationAPI associationAPI;
 
@@ -44,14 +49,14 @@ public class DatabaseDataSetAssociationAPITest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        associationAPI = new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, dacUserDAO);
+        associationAPI = new DatabaseDataSetAssociationAPI(dsDAO, dsAssociationDAO, dacUserDAO, userRoleDAO);
     }
 
     @Test
-    public void testGetAndVerifyUsersUserNotDataOwner() throws Exception {
+    public void testGetAndVerifyUsersUserNotDataOwner() {
+        when(dsDAO.findDataSetById(any())).thenReturn(ds1);
         when(dacUserDAO.findUsersWithRoles(anyObject())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
-        thrown.expect(BadRequestException.class);
-        thrown.expectMessage("User with id 1 is not a DATA_OWNER");
+        doNothing().when(userRoleDAO).insertSingleUserRole(any(), any());
         associationAPI.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 

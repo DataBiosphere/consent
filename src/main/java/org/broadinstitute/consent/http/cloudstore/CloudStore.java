@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.cloudstore;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.services.storage.model.Bucket;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,10 +17,14 @@ public interface CloudStore {
 
     String putStorageDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException;
 
+    Bucket getBucketMetadata() throws IOException, GeneralSecurityException;
+
     String postStorageDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException;
 
     GenericUrl generateURLForDocument(String fileName);
 
     String postOntologyDocument(InputStream stream, String type, String fileName) throws IOException, GeneralSecurityException, URISyntaxException;
+
+    GenericUrl postWhitelist(InputStream stream, String fileName) throws IOException, GeneralSecurityException;
 
 }

@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -259,7 +260,7 @@ public class DacServiceTest {
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     }
 
-    @Test(expected = ForbiddenException.class)
+    @Test(expected = BadRequestException.class)
     public void testRemoveDacChairFailure() {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         Dac dac = getDacs().get(0);

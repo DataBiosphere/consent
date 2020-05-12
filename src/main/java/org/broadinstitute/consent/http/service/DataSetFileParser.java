@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -9,10 +12,15 @@ import org.broadinstitute.consent.http.models.Dictionary;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("FieldCanBeLocal")
 public class DataSetFileParser {
 
     private final String BLANK_REQUIRED_FIELD = "Dataset %s - The required field: %s is empty in row %d.";
@@ -20,18 +28,19 @@ public class DataSetFileParser {
     private final String MISSING_COLUMNS = "Your file has more/less columns than expected. Expected quantity: %s";
     private final String MISSING_MISPLACED_HEADER = "The uploaded file does not comply with the accepted fields. Field: (%s)%s is not recognized/ordered correctly. It should be '%s'";
     private final String PLEASE_DOWNLOAD = "Please download the Dataset Spreadsheet Model from the 'Add Datasets' window.";
-    private int DATASET_NAME_INDEX = 0;
-    private int SAMPLE_COLLECTION_INDEX = 9;
-    private int CONSENT_ID_INDEX = 10;
+    private final int DATASET_NAME_INDEX = 0;
+    private final int SAMPLE_COLLECTION_INDEX = 9;
+    private final int CONSENT_ID_INDEX = 10;
 
     public ParseResult parseTSVFile(File file, List<Dictionary> allFields, Integer lastAlias, Boolean overwrite, List<String> predefinedDatasets) {
         ParseResult result = new ParseResult();
         List<String> errors = new ArrayList<>();
         List<DataSet> datasets = new ArrayList<>();
         List<String> allKeys = allFields.stream().map(Dictionary::getKey).collect(Collectors.toList());
-        List<Dictionary> requiredKeys = allFields.stream().filter(d -> d.getRequired()).collect(Collectors.toList());
+        List<Dictionary> requiredKeys = allFields.stream().filter(Dictionary::getRequired).collect(Collectors.toList());
         try {
-            CSVReader reader = new CSVReader(new FileReader(file), '\t');
+            CSVParser parser = new CSVParserBuilder().withSeparator('\t').build();
+            CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(parser).build();
             // reading headers from TSV
             errors.addAll(validateHeaderFields(reader.readNext(), allKeys));
             if (!errors.isEmpty()) {
@@ -96,9 +105,9 @@ public class DataSetFileParser {
 
     private List<String> validateConsentAndCollectionId(String[] record, String datasetName) {
         if (StringUtils.isEmpty(record[SAMPLE_COLLECTION_INDEX]) && StringUtils.isEmpty(record[CONSENT_ID_INDEX])) {
-            return Arrays.asList(String.format(BLANK_REQUIRED_FIELDS, datasetName));
+            return Collections.singletonList(String.format(BLANK_REQUIRED_FIELDS, datasetName));
         }
-        return Arrays.asList();
+        return Collections.emptyList();
     }
 
     private DataSet createDataSet(String[] record) {
@@ -114,18 +123,15 @@ public class DataSetFileParser {
     public List<DataSet> createAlias(final List<DataSet> dataSets, Integer lastAlias, List<String> predefinedDatasets) {
         int initialAlias = 3;
         List<DataSet> results = new ArrayList<>(dataSets);
-        for(DataSet ds: results) {
-            if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(predefinedDatasets.get(1))) {
+        for (DataSet ds : results) {
+            if (StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(predefinedDatasets.get(1))) {
                 ds.setAlias(2);
-            }
-            else if(StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(predefinedDatasets.get(0))){
+            } else if (StringUtils.isNotEmpty(ds.getName()) && ds.getName().equals(predefinedDatasets.get(0))) {
                 ds.setAlias(1);
-            }
-            else if(lastAlias == null || lastAlias < 3) {
+            } else if (lastAlias == null || lastAlias < 3) {
                 ds.setAlias(initialAlias);
                 ++initialAlias;
-            }
-            else if(ds.getAlias() == null || ds.getAlias() == 0){
+            } else if (ds.getAlias() == null || ds.getAlias() == 0) {
                 ds.setAlias(++lastAlias);
             }
         }
