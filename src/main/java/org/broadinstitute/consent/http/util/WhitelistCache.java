@@ -63,14 +63,7 @@ public class WhitelistCache {
         }
         List<WhitelistEntry> matchingEntries = cache.get(value);
         if (Objects.isNull(matchingEntries) || matchingEntries.isEmpty()) {
-            try {
-                loadCachesFromStorage();
-                // Try one more time ...
-                return Objects.isNull(cache.get(value)) ? Collections.emptyList() : cache.get(value);
-            } catch (Exception e) {
-                logger.error("Unable to load whitelist cache: " + e.getMessage());
-                return Collections.emptyList();
-            }
+            return Collections.emptyList();
         }
         return matchingEntries;
     }

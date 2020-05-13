@@ -2,11 +2,11 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 
@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
 
 public class UserService {
 
-    private DACUserDAO userDAO;
-    private ResearcherPropertyDAO researcherPropertyDAO;
-    private UserRoleDAO roleDAO;
-    private VoteDAO voteDAO;
+    private final DACUserDAO userDAO;
+    private final ResearcherPropertyDAO researcherPropertyDAO;
+    private final UserRoleDAO roleDAO;
+    private final VoteDAO voteDAO;
 
     @Inject
     public UserService(DACUserDAO userDAO, ResearcherPropertyDAO researcherPropertyDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
@@ -72,6 +72,10 @@ public class UserService {
         }
         researcherPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
         userDAO.deleteDACUserByEmail(email);
+    }
+
+    public List<ResearcherProperty> findAllUserProperties(Integer userId) {
+        return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 
 }

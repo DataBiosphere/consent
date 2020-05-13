@@ -2452,7 +2452,7 @@ paths:
         - Researcher
       responses:
         200:
-          description: Returns the user properties. Map<String, String> format.
+          description: Returns the user properties. Map<String, Object> format.
           schema:
             $ref: '#/definitions/UserProperties'
         404:

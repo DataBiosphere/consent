@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.WhitelistService;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,6 +36,9 @@ public class ResearcherResourceTest {
     UserService userService;
 
     @Mock
+    WhitelistService whitelistService;
+
+    @Mock
     private UriInfo uriInfo;
 
     @Mock
@@ -57,7 +61,7 @@ public class ResearcherResourceTest {
     }
 
     private void initResource() {
-        resource = new ResearcherResource(researcherService, userService);
+        resource = new ResearcherResource(researcherService, userService, whitelistService);
     }
 
     @Test

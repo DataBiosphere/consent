@@ -37,6 +37,7 @@ public enum ResearcherFields {
     NAME_DAA("nameDAA", false);
 
 
+    public static final String LIBRARY_CARD = "libraryCard";
     private String value;
     private Boolean required;
 
