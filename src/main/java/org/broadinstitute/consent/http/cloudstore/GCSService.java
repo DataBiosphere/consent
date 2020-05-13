@@ -17,10 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class GCSService {
 
@@ -83,12 +84,11 @@ public class GCSService {
     private List<Blob> listWhitelistItems() {
         Bucket bucket = storage.get(config.getBucket());
         Page<Blob> blobs = bucket.list();
-        List<Blob> matchingBlobs = new ArrayList<>();
-        for (Blob blob : blobs.iterateAll()) {
-            if (!blob.isDirectory() && blob.getName().contains(WhitelistService.WHITELIST_FILE_PREFIX)) {
-                matchingBlobs.add(blob);
-            }
-        }
+        List<Blob> matchingBlobs = StreamSupport.
+                stream(blobs.iterateAll().spliterator(), false).
+                filter(b -> !b.isDirectory()).
+                filter(b -> b.getName().contains(WhitelistService.WHITELIST_FILE_PREFIX)).
+                collect(Collectors.toList());
         Comparator<Blob> comparator = Comparator.comparing(BlobInfo::getCreateTime);
         Comparator<Blob> reversed = comparator.reversed();
         matchingBlobs.sort(reversed);

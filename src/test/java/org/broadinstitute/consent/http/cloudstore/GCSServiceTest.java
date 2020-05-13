@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -77,8 +78,8 @@ public class GCSServiceTest {
     @Test
     public void testGetMostRecentWhitelist() throws Exception {
         int count = 3; // Count value is used in Blob name, create time, and content
-        Iterator<Blob> blobIterator = makeBlobIterator(count);
-        when(iterable.iterator()).thenReturn(blobIterator);
+        Spliterator<Blob> blobSpliterator = makeBlobSpliterator(count);
+        when(iterable.spliterator()).thenReturn(blobSpliterator);
         when(blobs.iterateAll()).thenReturn(iterable);
         when(bucket.list()).thenReturn(blobs);
         when(storage.get(any(String.class))).thenReturn(bucket);
@@ -94,11 +95,11 @@ public class GCSServiceTest {
      * @return Iterator<Blob>
      */
     @SuppressWarnings("SameParameterValue")
-    private Iterator<Blob> makeBlobIterator(int i) {
+    private Spliterator<Blob> makeBlobSpliterator(int i) {
         List<Blob> blobs = IntStream.range(1, i + 1).
                 mapToObj(this::mockBlob).
                 collect(Collectors.toList());
-        return blobs.iterator();
+        return blobs.spliterator();
     }
 
     private Blob mockBlob(int i) {
