@@ -2,26 +2,27 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.inject.Inject;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
+import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.broadinstitute.consent.http.util.WhitelistParser;
 
 import javax.ws.rs.BadRequestException;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 public class WhitelistService {
 
-    private final GCSStore gcsStore;
+    public static final String WHITELIST_FILE_PREFIX = "lc_whitelist_";
+    private final GCSService gcsService;
+    private final WhitelistCache cache;
 
     @Inject
-    public WhitelistService(GCSStore gcsStore) {
-        this.gcsStore = gcsStore;
+    public WhitelistService(GCSService gcsService, WhitelistCache cache) {
+        this.gcsService = gcsService;
+        this.cache = cache;
     }
 
     /**
@@ -29,9 +30,9 @@ public class WhitelistService {
      *
      * @param fileData File Data
      * @return URL value of the posted file data
-     * @throws IOException The exception
+     * @throws BadRequestException The exception
      */
-    public GenericUrl postWhitelist(String fileData) throws BadRequestException, IOException {
+    public GenericUrl postWhitelist(String fileData) throws BadRequestException {
         if (!validateWhitelist(fileData)) {
             throw new BadRequestException("Invalid white list data");
         }
@@ -39,8 +40,11 @@ public class WhitelistService {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
         String timestamp = dateFormat.format(new Date());
         // push file to bucket
-        String fileName = "lc_whitelist_" + timestamp + ".tsv";
-        return gcsStore.postWhitelist(IOUtils.toInputStream(fileData, Charset.defaultCharset()), fileName);
+        String fileName = WHITELIST_FILE_PREFIX + timestamp + ".tsv";
+        GenericUrl url = gcsService.postWhitelist(fileData, fileName);
+        // regenerate caches
+        cache.loadCaches(fileData);
+        return url;
     }
 
     /**
