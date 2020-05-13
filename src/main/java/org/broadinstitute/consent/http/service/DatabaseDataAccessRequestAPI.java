@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -95,6 +96,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final DataAccessRequestService dataAccessRequestService;
 
+    private final WhitelistService whitelistService;
+
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -102,8 +105,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO, WhitelistService whitelistService) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO, whitelistService));
     }
 
     /**
@@ -112,7 +115,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      *
      * @param mongo The Data Access Object used to read/write data.
      */
-    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO, WhitelistService whitelistService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.mongo = mongo;
         this.converter = converter;
@@ -123,6 +126,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.dataSetDAO = dataSetDAO;
         this.dataAccessReportsParser = new DataAccessReportsParser();
         this.researcherPropertyDAO = researcherPropertyDAO;
+        this.whitelistService = whitelistService;
     }
 
     @Override
@@ -517,29 +521,34 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
                 researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId()) :
                 Collections.emptyList();
+        List<WhitelistEntry> entries = optionalUser.isPresent() ?
+                whitelistService.findWhitelistEntriesForUser(dacUser, researcherProperties) :
+                Collections.emptyList();
+        List<String> libraryCards = entries.stream().map(WhitelistEntry::getOrganization).collect(Collectors.toList());
         return darModalDetailsDTO
-            .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
-            .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
-            .setStatus(status)
-            .setRationale(rationale)
-            .setUserId(dar.getInteger(DarConstants.USER_ID))
-            .setDarCode(dar.getString(DarConstants.DAR_CODE))
-            .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
-            .setInstitutionName(dar.getString(DarConstants.INSTITUTION))
-            .setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE))
-            .setDepartment(dar.getString(DarConstants.DEPARTMENT))
-            .setCity(dar.getString(DarConstants.CITY))
-            .setCountry(dar.getString(DarConstants.COUNTRY))
-            .setNihUsername(dar.getString(DarConstants.NIH_USERNAME))
-            .setHaveNihUsername(StringUtils.isNotEmpty(dar.getString(DarConstants.NIH_USERNAME)))
-            .setIsThereDiseases(false)
-            .setIsTherePurposeStatements(false)
-            .setResearchType(dar)
-            .setDiseases(dar)
-            .setPurposeStatements(dar)
-            .setDatasets(datasets)
-            .setResearcherProperties(researcherProperties)
-            .setRus(dar.getString(DarConstants.RUS));
+                .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
+                .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
+                .setStatus(status)
+                .setRationale(rationale)
+                .setUserId(dar.getInteger(DarConstants.USER_ID))
+                .setDarCode(dar.getString(DarConstants.DAR_CODE))
+                .setPrincipalInvestigator(dar.getString(DarConstants.INVESTIGATOR))
+                .setInstitutionName(dar.getString(DarConstants.INSTITUTION))
+                .setProjectTitle(dar.getString(DarConstants.PROJECT_TITLE))
+                .setDepartment(dar.getString(DarConstants.DEPARTMENT))
+                .setCity(dar.getString(DarConstants.CITY))
+                .setCountry(dar.getString(DarConstants.COUNTRY))
+                .setNihUsername(dar.getString(DarConstants.NIH_USERNAME))
+                .setHaveNihUsername(StringUtils.isNotEmpty(dar.getString(DarConstants.NIH_USERNAME)))
+                .setIsThereDiseases(false)
+                .setIsTherePurposeStatements(false)
+                .setResearchType(dar)
+                .setDiseases(dar)
+                .setPurposeStatements(dar)
+                .setDatasets(datasets)
+                .setResearcherProperties(researcherProperties)
+                .setRus(dar.getString(DarConstants.RUS))
+                .setLibraryCard(libraryCards);
     }
 
     @SuppressWarnings("unchecked")

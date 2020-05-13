@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,8 @@ public class DatabaseDataAccessRequestAPITest {
     private DataSetDAO dataSetDAO;
     @Mock
     private DataAccessRequestService dataAccessRequestService;
+    @Mock
+    private WhitelistService whitelistService;
 
     private final Integer USER_ID = 3333;
 
@@ -66,7 +69,8 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        when(whitelistService.findWhitelistEntriesForUser(any(), any())).thenReturn(Collections.emptyList());
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO, whitelistService);
     }
 
     @Test
