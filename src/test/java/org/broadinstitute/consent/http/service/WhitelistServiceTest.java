@@ -36,27 +36,27 @@ public class WhitelistServiceTest {
 
     @Test
     public void testPostWhitelist_valid() {
-        String fileData = new WhitelistParserTest().makeSampleWhitelistFile(2, false);
+        String fileData = WhitelistParserTest.makeSampleWhitelistFile(2, false);
         GenericUrl url = service.postWhitelist(fileData);
         assertNotNull(url);
     }
 
     @Test(expected = BadRequestException.class)
     public void testPostWhitelist_invalid() {
-        String fileData = new WhitelistParserTest().makeSampleWhitelistFile(2, true);
+        String fileData = WhitelistParserTest.makeSampleWhitelistFile(2, true);
         service.postWhitelist(fileData);
     }
 
     @Test
     public void testValidateWhitelist_valid() {
-        String fileData = new WhitelistParserTest().makeSampleWhitelistFile(2, false);
+        String fileData = WhitelistParserTest.makeSampleWhitelistFile(2, false);
         boolean valid = service.validateWhitelist(fileData);
         assertTrue(valid);
     }
 
     @Test
     public void testValidateWhitelist_invalid() {
-        String fileData = new WhitelistParserTest().makeSampleWhitelistFile(2, true);
+        String fileData = WhitelistParserTest.makeSampleWhitelistFile(2, true);
         boolean valid = service.validateWhitelist(fileData);
         assertFalse(valid);
     }

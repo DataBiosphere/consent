@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -61,11 +62,11 @@ public class WhitelistCache {
             }
         }
         List<WhitelistEntry> matchingEntries = cache.get(value);
-        if (matchingEntries.isEmpty()) {
+        if (Objects.isNull(matchingEntries) || matchingEntries.isEmpty()) {
             try {
                 loadCachesFromStorage();
                 // Try one more time ...
-                return cache.get(value);
+                return Objects.isNull(cache.get(value)) ? Collections.emptyList() : cache.get(value);
             } catch (Exception e) {
                 logger.error("Unable to load whitelist cache: " + e.getMessage());
                 return Collections.emptyList();
