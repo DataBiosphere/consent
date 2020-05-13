@@ -277,9 +277,9 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
             }
             dataSetAssociationDAO.delete(dataset.getDataSetId());
             dsDAO.deleteDataSetsProperties(dataSetsId);
-            
+
             if (StringUtils.isNotEmpty(dataset.getObjectId())) {
-                dsDAO.logicalDataSetdelete(dataset.getDataSetId());
+                dsDAO.logicalDatasetDelete(dataset.getDataSetId());
             } else {
                 consentDAO.deleteAssociationsByDataSetId(dataset.getDataSetId());
                 dsDAO.deleteDataSets(dataSetsId);

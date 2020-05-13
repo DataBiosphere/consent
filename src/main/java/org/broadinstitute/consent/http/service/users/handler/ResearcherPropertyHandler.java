@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 
@@ -28,7 +28,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     private ResearcherPropertyDAO researcherPropertyDAO;
     private DACUserDAO dacUserDAO;
-    private final EmailNotifierAPI emailApi;
+    private final EmailNotifierService emailNotifierService;
     private DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
     private static final String ACTION_REGISTERED = "registered";
     private static final String ACTION_UPDATED = "updated";
@@ -37,10 +37,10 @@ public class ResearcherPropertyHandler implements ResearcherService {
         return org.apache.log4j.Logger.getLogger("DatabaseResearcherAPI");
     }
 
-    public ResearcherPropertyHandler(ResearcherPropertyDAO researcherPropertyDAO, DACUserDAO dacUserDAO, EmailNotifierAPI emailApi) {
+    public ResearcherPropertyHandler(ResearcherPropertyDAO researcherPropertyDAO, DACUserDAO dacUserDAO, EmailNotifierService emailNotifierService) {
         this.researcherPropertyDAO = researcherPropertyDAO;
         this.dacUserDAO = dacUserDAO;
-        this.emailApi = emailApi;
+        this.emailNotifierService = emailNotifierService;
     }
 
     @Override
@@ -207,7 +207,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
         String completed = researcherPropertyDAO.isProfileCompleted(userId);
         if (Boolean.parseBoolean(completed)) {
             try {
-                emailApi.sendNewResearcherCreatedMessage(userId, action);
+                emailNotifierService.sendNewResearcherCreatedMessage(userId, action);
             } catch (IOException | TemplateException | MessagingException e) {
                 logger().error("Error when notifying the admin(s) about the researcher action: " +
                         action + ", for user: " +

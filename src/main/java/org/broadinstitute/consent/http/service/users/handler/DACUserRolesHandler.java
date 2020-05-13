@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final String MEMBER = UserRoles.MEMBER.getRoleName();
     private final String DATA_OWNER = UserRoles.DATAOWNER.getRoleName();
     private final Map<String, Integer> roleIdMap;
-    private final EmailNotifierAPI emailNotifierAPI;
+    private final EmailNotifierService emailNotifierService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
 
     private final UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
@@ -49,19 +49,19 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
     private final UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
     private final UserRole dataOwner = new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName());
 
-    public DACUserRolesHandler(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
+    public DACUserRolesHandler(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierService emailNotifierService, DataAccessRequestAPI dataAccessRequestAPI) {
         this.dacUserDAO = userDao;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
         this.voteDAO = voteDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.roleIdMap = createRoleMap(userRoleDAO.findRoles());
-        this.emailNotifierAPI = emailNotifierAPI;
+        this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = dataAccessRequestAPI;
     }
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierAPI emailNotifierAPI, DataAccessRequestAPI dataAccessRequestAPI) {
-        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierAPI, dataAccessRequestAPI));
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO roleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, DataSetAssociationDAO datasetAssociationDAO, EmailNotifierService emailNotifierService, DataAccessRequestAPI dataAccessRequestAPI) {
+        UserHandlerAPIHolder.setInstance(new DACUserRolesHandler(userDao, roleDAO, electionDAO, voteDAO, datasetAssociationDAO, emailNotifierService, dataAccessRequestAPI));
     }
 
     private Map<String, Integer> createRoleMap(List<Role> roles) {
@@ -194,7 +194,7 @@ public class DACUserRolesHandler extends AbstractUserRolesHandler {
             });
             removeVotes(updatedUser, electionsIdToRemoveVotes);
             delegateVotes(updatedUser, doUserToDelegate, electionsIdToDelegateVotes);
-            emailNotifierAPI.sendUserDelegateResponsibilitiesMessage(
+            emailNotifierService.sendUserDelegateResponsibilitiesMessage(
                     doUserToDelegate,
                     updatedUser.getDacUserId(),
                     voteType.equalsIgnoreCase(VoteType.DATA_OWNER.getValue())? DATA_OWNER: MEMBER,

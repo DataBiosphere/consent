@@ -8,11 +8,10 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.SummaryAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -41,15 +40,15 @@ import java.util.stream.Collectors;
 public class DataRequestElectionResource extends Resource {
 
     private final ElectionAPI api;
-    private final EmailNotifierAPI emailApi;
+    private final EmailNotifierService emailNotifierService;
     private final DataAccessRequestAPI darApi;
     private final SummaryAPI summaryAPI;
     private final VoteService voteService;
 
     @Inject
-    public DataRequestElectionResource(VoteService voteService) {
+    public DataRequestElectionResource(EmailNotifierService emailNotifierService, VoteService voteService) {
         this.api = AbstractElectionAPI.getInstance();
-        this.emailApi = AbstractEmailNotifierAPI.getInstance();
+        this.emailNotifierService = emailNotifierService;
         this.darApi = AbstractDataAccessRequestAPI.getInstance();
         this.summaryAPI = AbstractSummaryAPI.getInstance();
         this.voteService = voteService;
@@ -76,7 +75,7 @@ public class DataRequestElectionResource extends Resource {
             List<Vote> darVotes = votes.stream().
                     filter(vote -> vote.getType().equals(VoteType.DAC.getValue())).
                     collect(Collectors.toList());
-            emailApi.sendNewCaseMessageToList(darVotes, accessElection);
+            emailNotifierService.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (Exception e) {
             return createExceptionResponse(e);

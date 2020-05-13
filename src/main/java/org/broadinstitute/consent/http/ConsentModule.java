@@ -31,10 +31,13 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.mail.MailService;
+import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -124,12 +127,12 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     Jdbi providesJdbi() {
-        return this.jdbi;
+        return jdbi;
     }
 
     @Provides
     MongoConsentDB providesMongo() {
-        return this.mongoInstance;
+        return mongoInstance;
     }
 
     @Provides
@@ -178,6 +181,34 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesDacService(),
                 providesDataAccessRequestService());
+    }
+
+    @Provides
+    FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
+        return new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
+    }
+
+    @Provides
+    EmailNotifierService providesEmailNotifierService() {
+        return new EmailNotifierService(
+                providesConsentDAO(),
+                providesDataAccessRequestService(),
+                providesVoteDAO(),
+                providesElectionDAO(),
+                providesDACUserDAO(),
+                providesMailMessageDAO(),
+                providesMailService(),
+                providesMailServiceDAO(),
+                providesFreeMarkerTemplateHelper(),
+                config.getServicesConfiguration().getLocalURL(),
+                config.getMailConfiguration().isActivateEmailNotifications(),
+                providesResearcherPropertyDAO()
+        );
+    }
+
+    @Provides
+    MailService providesMailService() {
+        return new MailService(config.getMailConfiguration());
     }
 
     @Provides

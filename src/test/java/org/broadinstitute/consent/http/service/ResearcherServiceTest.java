@@ -39,7 +39,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        AbstractEmailNotifierAPI.class,
         AbstractDACUserAPI.class
 })
 public class ResearcherServiceTest {
@@ -51,7 +50,7 @@ public class ResearcherServiceTest {
     private DACUserDAO dacUserDAO;
 
     @Mock
-    private EmailNotifierAPI emailApi;
+    private EmailNotifierService emailNotifierService;
 
     @Mock
     private DACUserAPI dacUserAPI;
@@ -74,14 +73,12 @@ public class ResearcherServiceTest {
         dacUser.setDisplayName(RandomStringUtils.random(10));
 
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractEmailNotifierAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
-        when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailApi);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
     }
 
     private void initService() {
-        service = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, emailApi);
+        service = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, emailNotifierService);
     }
 
     @Test
@@ -212,13 +209,13 @@ public class ResearcherServiceTest {
         doNothing().when(researcherPropertyDAO).insertAll(any());
         doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
         when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(dacUser);
-        doNothing().when(emailApi).sendNewResearcherCreatedMessage(any(), any());
+        doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
 
         List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
         Assert.assertFalse(foundProps.isEmpty());
         Assert.assertEquals(props.size(), foundProps.size());
-        verifyZeroInteractions(emailApi);
+        verifyZeroInteractions(emailNotifierService);
     }
 
     @Test
@@ -241,13 +238,13 @@ public class ResearcherServiceTest {
         doNothing().when(researcherPropertyDAO).insertAll(any());
         doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
         when(dacUserAPI.updateUserStatus(any(), any())).thenReturn(dacUser);
-        doNothing().when(emailApi).sendNewResearcherCreatedMessage(any(), any());
+        doNothing().when(emailNotifierService).sendNewResearcherCreatedMessage(any(), any());
         initService();
 
         List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
         Assert.assertFalse(foundProps.isEmpty());
         Assert.assertEquals(props.size(), foundProps.size());
-        verify(emailApi, atLeast(1)).sendNewResearcherCreatedMessage(any(), any());
+        verify(emailNotifierService, atLeast(1)).sendNewResearcherCreatedMessage(any(), any());
     }
 
 }

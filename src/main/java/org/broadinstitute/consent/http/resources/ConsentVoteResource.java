@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 
 import javax.annotation.security.PermitAll;
@@ -31,15 +31,16 @@ import java.util.logging.Logger;
 @Path("{api : (api/)?}consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
+    private final EmailNotifierService emailNotifierService;
     private final VoteAPI api;
     private final ElectionAPI electionAPI;
-    private final EmailNotifierAPI emailAPI;
     private static final Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
 
-    public ConsentVoteResource() {
+    @Inject
+    public ConsentVoteResource(EmailNotifierService emailNotifierService) {
+        this.emailNotifierService = emailNotifierService;
         this.api = AbstractVoteAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
-        this.emailAPI = AbstractEmailNotifierAPI.getInstance();
     }
 
     @POST
@@ -52,7 +53,7 @@ public class ConsentVoteResource extends Resource {
             Vote vote = api.firstVoteUpdate(rec, voteId);
             if(electionAPI.validateCollectEmailCondition(vote)){
                 try {
-                    emailAPI.sendCollectMessage(vote.getElectionId());
+                    emailNotifierService.sendCollectMessage(vote.getElectionId());
                 } catch (MessagingException | IOException | TemplateException e) {
                     logger.severe("Error when sending email notification to Chairpersons to collect votes. Cause: " + e);
                 }
