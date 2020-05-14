@@ -90,7 +90,7 @@ public class ResearcherResource extends Resource {
             List<String> orgs = entries.stream().
                     map(WhitelistEntry::getOrganization).
                     collect(Collectors.toList());
-            propMap.put(ResearcherFields.LIBRARY_CARD, orgs);
+            propMap.put(ResearcherFields.LIBRARY_CARDS, orgs);
             return Response.ok(propMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
