@@ -37,7 +37,6 @@ public class DARModalDetailsDTO {
     private List<DataSet> datasets;
     private List<ResearcherProperty> researcherProperties;
     private String rus;
-    private List<String> libraryCard;
 
     public DARModalDetailsDTO() {}
 
@@ -359,12 +358,4 @@ public class DARModalDetailsDTO {
         return this;
     }
 
-    public List<String> getLibraryCard() {
-        return libraryCard;
-    }
-
-    public DARModalDetailsDTO setLibraryCard(List<String> libraryCard) {
-        this.libraryCard = libraryCard;
-        return this;
-    }
 }
