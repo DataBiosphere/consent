@@ -1838,16 +1838,20 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ObjectId of the Dataset
+          description: ID of the Dataset
           required: true
           type: string
       tags:
         - Datasets
       responses:
         200:
-          description: The Dataset.
+          description: The Dataset with properties
+          schema:
+            $ref: '#/definitions/Dataset'
+        404:
+          description: Not Found
         500:
-          description: Server error.
+          description: Server error
     delete:
       summary: delete
       description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
