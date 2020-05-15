@@ -1836,7 +1836,7 @@ paths:
       summary: Get Dataset by Id
       description: Finds Dataset and DatasetProperties of the Dataset specified by id.
       parameters:
-        - name: datasetId
+        - name: id
           in: path
           description: ObjectId of the Dataset
           required: true
