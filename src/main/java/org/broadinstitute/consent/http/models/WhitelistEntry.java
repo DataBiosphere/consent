@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.common.base.Objects;
 import com.google.gson.Gson;
 
 public class WhitelistEntry {
@@ -83,6 +84,26 @@ public class WhitelistEntry {
     @Override
     public String toString() {
         return new Gson().toJson(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WhitelistEntry entry = (WhitelistEntry) o;
+        return Objects.equal(organization, entry.organization) &&
+                Objects.equal(commonsId, entry.commonsId) &&
+                Objects.equal(name, entry.name) &&
+                Objects.equal(email, entry.email) &&
+                Objects.equal(signingOfficialName, entry.signingOfficialName) &&
+                Objects.equal(signingOfficialEmail, entry.signingOfficialEmail) &&
+                Objects.equal(itDirectorName, entry.itDirectorName) &&
+                Objects.equal(itDirectorEmail, entry.itDirectorEmail);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(organization, commonsId, name, email, signingOfficialName, signingOfficialEmail, itDirectorName, itDirectorEmail);
     }
 
 }

@@ -4,14 +4,20 @@ import com.google.api.client.http.GenericUrl;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.broadinstitute.consent.http.util.WhitelistParser;
 
 import javax.ws.rs.BadRequestException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class WhitelistService {
 
@@ -49,6 +55,7 @@ public class WhitelistService {
 
     /**
      * Validate the required fields for Whitelist Entries
+     *
      * @param fileData String value of the file content
      * @return Valid: True, invalid: False
      */
@@ -58,6 +65,37 @@ public class WhitelistService {
                 entries.stream().noneMatch(e -> StringUtils.isBlank(e.getName())) &&
                 entries.stream().noneMatch(e -> StringUtils.isBlank(e.getEmail())) &&
                 entries.stream().noneMatch(e -> StringUtils.isBlank(e.getCommonsId()));
+    }
+
+    public List<WhitelistEntry> findWhitelistEntriesForUser(DACUser user, List<ResearcherProperty> props) {
+        List<WhitelistEntry> entries = new ArrayList<>();
+        entries.addAll(cache.queryByEmail(user.getEmail()));
+        entries.addAll(
+                props.stream().
+                        filter(p -> p.getPropertyKey().equalsIgnoreCase(ResearcherFields.ERA_USERNAME.getValue()) ||
+                                p.getPropertyKey().equalsIgnoreCase(ResearcherFields.ERA_COMMONS_ID.getValue())).
+                        map(p -> cache.queryByCommonsId(p.getPropertyValue())).
+                        flatMap(List::stream).
+                        filter(Objects::nonNull).
+                        distinct().
+                        collect(Collectors.toList()));
+        entries.addAll(
+                props.stream().
+                        filter(p -> p.getPropertyKey().equalsIgnoreCase(ResearcherFields.ACADEMIC_BUSINESS_EMAIL.getValue())).
+                        map(p -> cache.queryByEmail(p.getPropertyValue())).
+                        flatMap(List::stream).
+                        filter(Objects::nonNull).
+                        distinct().
+                        collect(Collectors.toList()));
+        entries.addAll(
+                props.stream().
+                        filter(p -> p.getPropertyKey().equalsIgnoreCase(ResearcherFields.INSTITUTION.getValue())).
+                        map(p -> cache.queryByOrganization(p.getPropertyValue())).
+                        flatMap(List::stream).
+                        filter(Objects::nonNull).
+                        distinct().
+                        collect(Collectors.toList()));
+        return entries.stream().distinct().collect(Collectors.toList());
     }
 
 }
