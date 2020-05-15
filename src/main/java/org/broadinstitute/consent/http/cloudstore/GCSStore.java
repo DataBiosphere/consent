@@ -19,14 +19,16 @@ import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
-@SuppressWarnings("deprecation")
+/**
+ * Use `GCSService` instead which uses standard google libraries for GCS access.
+ */
+@Deprecated
 public class GCSStore implements CloudStore {
 
     private final static HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
@@ -107,35 +109,6 @@ public class GCSStore implements CloudStore {
         insertRequest.getRequestHeaders().setCacheControl("private");
         insertRequest.execute();
         return generateURLForDocument(fileName).toString();
-    }
-
-    @Override
-    public GenericUrl postWhitelist(InputStream stream, String fileName) throws IOException {
-        GenericUrl url = generateURLForWhitelist(fileName);
-        HttpResponse response = null;
-        try {
-            initializeCloudStore();
-            HttpContent content = new InputStreamContent(MediaType.TEXT_PLAIN, stream);
-            HttpRequest request = buildHttpPutRequest(url, content);
-            request.getHeaders().setCacheControl("private");
-            response = request.execute();
-            if (response.getStatusCode() != 200) {
-                logger.error("Error uploading whitelist: " + response.getStatusMessage());
-            }
-        } finally {
-            if (null != response) {
-                try {
-                    response.disconnect();
-                } catch (IOException e) {
-                    logger.error("Error disconnecting response.", e);
-                }
-            }
-        }
-        return url;
-    }
-
-    private GenericUrl generateURLForWhitelist(String fileName) {
-        return new GenericUrl(sConfig.getEndpoint() + sConfig.getWhitelistBucket() + "/" + fileName);
     }
 
     private void initializeCloudStore() {

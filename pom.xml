@@ -544,10 +544,17 @@
       </exclusions>
     </dependency>
 
+    <!-- Deprecated - TODO: Remove this when GCSStore is removed -->
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
       <version>v1-rev20200430-1.30.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+      <version>1.108.0</version>
     </dependency>
 
     <dependency>

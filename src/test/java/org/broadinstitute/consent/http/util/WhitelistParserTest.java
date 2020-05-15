@@ -22,7 +22,7 @@ public class WhitelistParserTest {
         assertEquals(numRows, entries.size());
     }
 
-    public String makeSampleWhitelistFile(int rows, boolean invalid) {
+    public static String makeSampleWhitelistFile(int rows, boolean invalid) {
         String tab = "\t";
         String newline = "\n";
         StringBuilder builder = new StringBuilder();

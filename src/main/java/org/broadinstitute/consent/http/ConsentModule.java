@@ -9,6 +9,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MongoConfiguration;
@@ -43,6 +44,7 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
+import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
@@ -143,6 +145,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     GCSStore providesGCSStore() {
         return new GCSStore(config.getCloudStoreConfiguration());
+    }
+
+    @Provides
+    GCSService providesGCSService() {
+        return new GCSService(config.getCloudStoreConfiguration());
     }
 
     @Provides
@@ -341,7 +348,14 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     WhitelistService providesWhitelistService() {
-        return new WhitelistService(providesGCSStore());
+        return new WhitelistService(
+                providesGCSService(),
+                providesWhitelistCache());
+    }
+
+    @Provides
+    WhitelistCache providesWhitelistCache() {
+        return new WhitelistCache(providesGCSService());
     }
 
     // Private helpers
