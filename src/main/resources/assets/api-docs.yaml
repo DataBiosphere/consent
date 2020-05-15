@@ -1840,7 +1840,7 @@ paths:
           in: path
           description: ID of the Dataset
           required: true
-          type: string
+          type: integer
       tags:
         - Datasets
       responses:
