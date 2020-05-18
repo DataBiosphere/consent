@@ -1832,6 +1832,26 @@ paths:
         500:
           description: Server error.
   /api/dataset/{id}:
+    get:
+      summary: Get Dataset by Id
+      description: Finds Dataset and DatasetProperties of the Dataset specified by id.
+      parameters:
+        - name: id
+          in: path
+          description: ID of the Dataset
+          required: true
+          type: integer
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: The Dataset with properties
+          schema:
+            $ref: '#/definitions/Dataset'
+        404:
+          description: Not Found
+        500:
+          description: Server error
     delete:
       summary: delete
       description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
