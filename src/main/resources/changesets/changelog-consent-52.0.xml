@@ -12,11 +12,9 @@
             <column name="name" type="varchar(255)"/>
             <column name="count" type="bigint"/>
         </createTable>
-        <addAutoIncrement catalogName="cat"
-                          columnDataType="bigint"
+        <addAutoIncrement columnDataType="bigint"
                           columnName="count"
                           incrementBy="1"
-                          schemaName="public"
                           startWith="1"
                           tableName="counter"/>
         <!-- TODO: Select largest DAR id from data access request and set increment with that value -->
