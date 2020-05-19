@@ -298,7 +298,7 @@ public class DAOTestHelper {
         return null;
     }
 
-    DataAccessRequest createPartialDataAccessRequest() {
+    DataAccessRequest createDraftDataAccessRequest() {
         DataAccessRequestData data;
         try {
             String darDataString = FileUtils.readFileToString(
@@ -307,7 +307,7 @@ public class DAOTestHelper {
             data = DataAccessRequestData.fromString(darDataString);
             data.setPartialDarCode("temp_" + data.getDarCode());
             String referenceId = UUID.randomUUID().toString();
-            dataAccessRequestDAO.insert(referenceId, data);
+            dataAccessRequestDAO.insertDraft(referenceId, data);
             createdDataAccessRequestReferenceIds.add(referenceId);
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {

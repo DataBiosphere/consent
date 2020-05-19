@@ -189,7 +189,7 @@ public class DataAccessRequestService {
     }
 
     public List<Document> findAllPartialDataAccessRequestDocumentsByUser(Integer userId) {
-        return dataAccessRequestDAO.findAllPartialsByUserId(userId).stream().
+        return dataAccessRequestDAO.findAllDraftsByUserId(userId).stream().
                 map(this::createDocumentFromDar).
                 collect(Collectors.toList());
     }
@@ -288,7 +288,7 @@ public class DataAccessRequestService {
     }
 
     public DataAccessRequest insertDraftDataAccessRequest(String referencedId, DataAccessRequestData darData) {
-        dataAccessRequestDAO.insertDraftDar(referencedId, darData);
+        dataAccessRequestDAO.insertDraft(referencedId, darData);
         return findByReferenceId(referencedId);
     }
 

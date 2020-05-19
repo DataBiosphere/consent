@@ -27,7 +27,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @return List<DataAccessRequest>
      */
     @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
-            "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] ")
+            "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
+            "  AND draft != true ")
     List<DataAccessRequest> findAllDataAccessRequests();
 
     /**
@@ -45,10 +46,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @return List<DataAccessRequest>
      */
     @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
-            "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
+            "  WHERE ( (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
+            "          OR draft = true ) " +
             "  AND ((data #>> '{}')::jsonb->>'userId')::numeric = :userId " +
             "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
-    List<DataAccessRequest> findAllPartialsByUserId(@Bind("userId") Integer userId);
+    List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
 
     /**
      * Find DataAccessRequest by reference id
@@ -98,6 +100,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      */
     @RegisterArgumentFactory(JsonArgumentFactory.class)
     @SqlUpdate("INSERT INTO data_access_request (reference_id, draft, data) VALUES (:referenceId, true, to_jsonb(:data)) ")
-    void insertDraftDar(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
+    void insertDraft(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
+
+    /**
+     * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest
+     * @param referenceId String
+     */
+    @SqlUpdate("UPDATE data_access_request SET draft = false WHERE reference_id = :referenceId ")
+    void updateDraftByReferenceId(@Bind("referenceId") String referenceId);
 
 }

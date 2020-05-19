@@ -21,34 +21,48 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(dars.isEmpty());
 
         createDataAccessRequest();
-        createPartialDataAccessRequest();
+        createDraftDataAccessRequest();
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
     }
 
     @Test
-    public void testFindAllPartials() {
+    public void testFindAllDrafts() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertTrue(dars.isEmpty());
 
         createDataAccessRequest();
-        createPartialDataAccessRequest();
+        createDraftDataAccessRequest();
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
+        assertTrue(newDars.get(0).getDraft());
     }
 
     @Test
-    public void testFindAllPartialsByUserId() {
-        DataAccessRequest dar = createPartialDataAccessRequest();
+    public void testFindAllDraftsByUserId() {
+        DataAccessRequest dar = createDraftDataAccessRequest();
 
-        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllPartialsByUserId(dar.getData().getUserId());
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftsByUserId(dar.getData().getUserId());
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
 
-        List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllPartialsByUserId(RandomUtils.nextInt(1, 100));
+        List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(RandomUtils.nextInt(1, 100));
         assertTrue(missingDars.isEmpty());
+    }
+
+    @Test
+    public void updateDraftToNonDraft() {
+        DataAccessRequest dar = createDraftDataAccessRequest();
+
+        List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftsByUserId(dar.getData().getUserId());
+        assertFalse(draftDars1.isEmpty());
+        assertEquals(1, draftDars1.size());
+
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId);
+        List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftsByUserId(RandomUtils.nextInt(1, 100));
+        assertTrue(draftDars2.isEmpty());
     }
 
     @Test
