@@ -233,7 +233,9 @@ public class DataRequestVoteResource extends Resource {
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierService.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }
-                emailNotifierService.sendNeedsPIApprovalMessage(dataOwnerDataSet, access, approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
+                // See DUOS-654. We are temporarily disabling notifications to data owners, so commenting this code
+                // instead of deleting the code path completely.
+//                emailNotifierService.sendNeedsPIApprovalMessage(dataOwnerDataSet, access, approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
             }
         }
     }
