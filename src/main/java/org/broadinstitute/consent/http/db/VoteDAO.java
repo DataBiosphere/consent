@@ -18,7 +18,7 @@ import java.util.List;
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
 
-    @SqlQuery("select v.* from vote v inner join election on election.electionId = v.electionId where election.referenceId = :referenceId and lower(election.status) = 'open'")
+    @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.electionid = v.electionid WHERE election.referenceid = :referenceId")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery("select v.*, u.email, u.displayName from vote v inner join election on election.electionId = v.electionId inner join dacuser u on u.dacUserId = v.dacUserId "
@@ -63,7 +63,11 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                                             @Bind("voteType") String voteType);
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
+    @Deprecated // This query can return a list of votes and should be avoided
     Vote findVoteByElectionIdAndType(@Bind("electionId") Integer electionId, @Bind("type") String type);
+
+    @SqlQuery("SELECT * FROM vote v WHERE v.electionid = :electionId AND LOWER(v.type) = 'final'")
+    List<Vote> findFinalVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId = :dacUserId and lower(v.type) = 'final'")
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,

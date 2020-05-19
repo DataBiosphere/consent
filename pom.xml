@@ -11,13 +11,13 @@
 
   <properties>
     <java.version>1.8</java.version>
-    <liquibase.version>3.8.9</liquibase.version>
+    <liquibase.version>3.9.0</liquibase.version>
     <dropwizard.version>2.0.2</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
     <jetty.version>9.4.28.v20200408</jetty.version>
-    <owl.version>5.1.13</owl.version>
+    <owl.version>5.1.14</owl.version>
     <postgres.version>42.2.12</postgres.version>
-    <rdf4j-rio.version>3.1.3</rdf4j-rio.version>
+    <rdf4j-rio.version>3.2.0</rdf4j-rio.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
@@ -242,7 +242,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.12.2</version>
+        <version>3.13.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -512,13 +512,7 @@
     <dependency>
       <groupId>com.opencsv</groupId>
       <artifactId>opencsv</artifactId>
-      <version>4.6</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-beanutils</groupId>
-          <artifactId>commons-beanutils</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>5.2</version>
     </dependency>
 
     <dependency>
@@ -530,7 +524,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.14.0</version>
+      <version>1.14.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -550,10 +544,23 @@
       </exclusions>
     </dependency>
 
+    <!-- Deprecated - TODO: Remove this when GCSStore is removed -->
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20200326-1.30.9</version>
+      <version>v1-rev20200430-1.30.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+      <version>1.108.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+      <version>1.108.0</version>
     </dependency>
 
     <dependency>

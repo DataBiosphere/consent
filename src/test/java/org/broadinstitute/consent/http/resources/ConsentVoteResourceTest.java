@@ -5,10 +5,9 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.VoteAPI;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,8 +30,7 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
         AbstractVoteAPI.class,
-        AbstractElectionAPI.class,
-        AbstractEmailNotifierAPI.class
+        AbstractElectionAPI.class
 })
 public class ConsentVoteResourceTest {
 
@@ -41,7 +39,7 @@ public class ConsentVoteResourceTest {
     @Mock
     private ElectionAPI electionAPI;
     @Mock
-    private EmailNotifierAPI emailAPI;
+    private EmailNotifierService emailNotifierService;
 
     private ConsentVoteResource resource;
 
@@ -50,14 +48,12 @@ public class ConsentVoteResourceTest {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractVoteAPI.class);
         PowerMockito.mockStatic(AbstractElectionAPI.class);
-        PowerMockito.mockStatic(AbstractEmailNotifierAPI.class);
     }
 
     private void initResource() {
         when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailAPI);
-        resource = new ConsentVoteResource();
+        resource = new ConsentVoteResource(emailNotifierService);
     }
 
     @Test
@@ -70,7 +66,7 @@ public class ConsentVoteResourceTest {
         vote.setRationale("Test");
         when(voteAPI.firstVoteUpdate(any(), any())).thenReturn(vote);
         when(electionAPI.validateCollectEmailCondition(any())).thenReturn(true);
-        doNothing().when(emailAPI).sendCollectMessage(any());
+        doNothing().when(emailNotifierService).sendCollectMessage(any());
         initResource();
 
         Response response = resource.firstVoteUpdate(vote, UUID.randomUUID().toString(), vote.getVoteId());

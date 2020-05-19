@@ -5,11 +5,11 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
@@ -19,6 +19,8 @@ import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -27,40 +29,34 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class MailService extends AbstractMailServiceAPI {
+public class MailService {
 
-    private String fromAccount;
-    private SendGrid sendGrid;
-    private Boolean activateEmailNotifications;
-    private CollectMessage collectMessageCreator = new CollectMessage();
-    private NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
-    private NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
-    private ReminderMessage reminderMessageCreator = new ReminderMessage();
-    private DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
-    private DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
-    private FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
-    private ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
-    private DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
-    private NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
-    private HelpReportMessage helpReportMessage = new HelpReportMessage();
-    private ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final String fromAccount;
+    private final SendGrid sendGrid;
+    private final Boolean activateEmailNotifications;
+    private final CollectMessage collectMessageCreator = new CollectMessage();
+    private final NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
+    private final NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
+    private final ReminderMessage reminderMessageCreator = new ReminderMessage();
+    private final DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
+    private final DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
+    private final FlaggedDarApprovedMessage adminApprovedDarMessageCreator = new FlaggedDarApprovedMessage();
+    private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
+    private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
+    private final NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
+    private final HelpReportMessage helpReportMessage = new HelpReportMessage();
+    private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
+    private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
-    private Logger logger() {
-        return Logger.getLogger("MailService");
-    }
-
-    public static void initInstance(MailConfiguration config) throws IOException {
-        MailServiceAPIHolder.setInstance(new MailService(config));
-    }
-
-    private MailService(MailConfiguration config) throws IOException {
+    public MailService(MailConfiguration config) {
         this.fromAccount = config.getGoogleAccount();
         this.sendGrid = new SendGrid(config.getSendGridApiKey());
         this.activateEmailNotifications = config.isActivateEmailNotifications();
     }
 
     private void sendMessages(Collection<Mail> messages) throws MessagingException {
-        for (Mail message: messages) {
+        for (Mail message : messages) {
             sendMessage(message);
         }
     }
@@ -84,11 +80,11 @@ public class MailService extends AbstractMailServiceAPI {
                     throw new MessagingException(response.getBody());
                 }
             } catch (IOException ex) {
-                logger().error("Exception sending email: " + ex.getMessage());
+                logger.error("Exception sending email: " + ex.getMessage());
                 throw new MessagingException(ex.getMessage());
             }
         } else {
-            logger().debug("Not configured to send email");
+            logger.debug("Not configured to send email");
         }
     }
 
@@ -107,57 +103,53 @@ public class MailService extends AbstractMailServiceAPI {
         sendMessages(messages);
     }
 
-    @Override
     public void sendDisabledDatasetMessage(Set<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
         List<Mail> messages = disabledDatasetCreator.disabledDatasetMessage(toAddresses, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
-    @Override
     public void sendNewDARRequests(Set<String> toAddresses, String referenceId, String type, Writer template) throws MessagingException {
         Collection<Mail> messages = newDARMessageCreator.newDARRequestMessage(toAddresses, fromAccount, template, referenceId, type);
         sendMessages(messages);
     }
 
-    @Override
     public void sendCancelDARRequestMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         Collection<Mail> messages = darCancelMessageCreator.cancelDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
         sendMessages(messages);
     }
 
-    @Override
     public void sendClosedDatasetElectionsMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         Collection<Mail> messages = closedDatasetElections.closedDatasetElectionMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
         sendMessages(messages);
     }
 
-    @Override
     public void sendFlaggedDarAdminApprovedMessage(Set<String> toAddresses, String dataAccessRequestId, String type, Writer template) throws MessagingException {
         List<Mail> messages = adminApprovedDarMessageCreator.flaggedDarMessage(toAddresses, fromAccount, template, dataAccessRequestId, type);
         sendMessages(messages);
     }
 
-    @Override
     public void sendDelegateResponsibilitiesMessage(Set<String> userAddresses, Writer template) throws MessagingException {
         List<Mail> messages = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(userAddresses, fromAccount, template);
         sendMessages(messages);
     }
 
-    @Override
     public void sendNewResearcherCreatedMessage(Set<String> toAddresses, Writer template) throws MessagingException {
         List<Mail> messages = researcherCreatedMessage.newResearcherCreatedMessage(toAddresses, fromAccount, template, "", "");
         sendMessages(messages);
     }
 
-    @Override
-    public void sendNewHelpReportMessage(Set<String> usersAddress,  Writer template, String username) throws MessagingException {
+    public void sendNewHelpReportMessage(Set<String> usersAddress, Writer template, String username) throws MessagingException {
         Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template, username);
         sendMessages(messages);
     }
 
-    @Override
     public void sendNewResearcherApprovedMessage(Set<String> researcherEmails, Writer template, String darCode) throws MessagingException {
         Collection<Mail> messages = researcherApprovedMessage.researcherApprovedMessage(researcherEmails, fromAccount, template, darCode);
+        sendMessages(messages);
+    }
+
+    public void sendDataCustodianApprovalMessage(String toAddress, String darCode, Writer template) throws MessagingException {
+        Collection<Mail> messages = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
         sendMessages(messages);
     }
 

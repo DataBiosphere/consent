@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.HelpReport;
@@ -23,9 +24,9 @@ public class FreeMarkerTemplateHelper {
 
     Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
-    private final String HELP_REPORT_URL = "help_me";
+    private final String HELP_REPORT_URL = "home_help";
 
-    public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) throws IOException {
+    public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
         freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         freeMarkerConfig.setClassForTemplateLoading(this.getClass(), config.getTemplateDirectory());
@@ -89,6 +90,22 @@ public class FreeMarkerTemplateHelper {
     public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName, List<DatasetMailDTO> datasets, String dataUseRestriction, String email) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("researcher-dar-approved.html");
         return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
+    }
+
+    public Writer getDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets, String dataDepositorName,
+                                                   String darCode, String researcherEmail) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("data_custodian_approval.html");
+        return generateDataCustodianApprovalTemplate(datasets, dataDepositorName, darCode, researcherEmail, temp);
+    }
+
+    private Writer generateDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets,
+                                                         String dataDepositorName, String darCode,
+                                                         String researcherEmail, Template temp) throws IOException, TemplateException {
+        DataCustodianApprovalModel model = new DataCustodianApprovalModel(datasets,
+                dataDepositorName, darCode, researcherEmail);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
     }
 
     private Writer generateResearcherApprovedTemplate(List<DatasetMailDTO> datasets,  String dataUseRestriction, String darCode, String researcherName, String email, Template temp) throws IOException, TemplateException {

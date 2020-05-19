@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -206,10 +207,10 @@ public class DacService {
         return userService.findUserById(updatedUser.getDacUserId());
     }
 
-    public void removeDacMember(Role role, DACUser user, Dac dac) throws ForbiddenException {
+    public void removeDacMember(Role role, DACUser user, Dac dac) throws BadRequestException {
         if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
             if (dac.getChairpersons().size() <= 1) {
-                throw new ForbiddenException("Dac requires at least one chairperson.");
+                throw new BadRequestException("Dac requires at least one chairperson.");
             }
         }
         List<UserRole> dacRoles = user.

@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
@@ -32,7 +31,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -82,7 +81,7 @@ public class DataAccessRequestResource extends Resource {
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
     private final MatchProcessAPI matchProcessAPI;
-    private final EmailNotifierAPI emailApi;
+    private final EmailNotifierService emailNotifierService;
     private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final DataSetAPI dataSetAPI = AbstractDataSetAPI.getInstance();
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
@@ -91,12 +90,12 @@ public class DataAccessRequestResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, GCSStore store, UserService userService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, GCSStore store, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
+        this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
-        this.emailApi = AbstractEmailNotifierAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.store = store;
@@ -128,7 +127,7 @@ public class DataAccessRequestResource extends Resource {
             for (Document r : results) {
                 List<Integer> datasetIds = DarUtil.getIntegerList(r, DarConstants.DATASET_ID);
                 matchProcessAPI.processMatchesForPurpose(r.getString(DarConstants.REFERENCE_ID));
-                emailApi.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
+                emailNotifierService.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
             }
             return Response.created(uri).build();
         } catch (Exception e) {
@@ -418,7 +417,7 @@ public class DataAccessRequestResource extends Resource {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
             if (CollectionUtils.isNotEmpty(usersToNotify)) {
-                emailApi.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
             }
             return Response.ok().entity(dar).build();
         } catch (MessagingException | TemplateException | IOException e) {

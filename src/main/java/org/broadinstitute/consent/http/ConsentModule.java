@@ -8,6 +8,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MongoConfiguration;
@@ -31,29 +32,28 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.mail.MailService;
+import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.WhitelistService;
+import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 public class ConsentModule extends AbstractModule {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConsentModule.class.getName());
 
     @Inject
     private final ConsentConfiguration config;
@@ -132,12 +132,12 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     Jdbi providesJdbi() {
-        return this.jdbi;
+        return jdbi;
     }
 
     @Provides
     MongoConsentDB providesMongo() {
-        return this.mongoInstance;
+        return mongoInstance;
     }
 
     @Provides
@@ -147,12 +147,12 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     GCSStore providesGCSStore() {
-        try {
-            return new GCSStore(config.getCloudStoreConfiguration());
-        } catch (GeneralSecurityException | IOException e) {
-            LOGGER.error("Couldn't connect to to Google Cloud Storage.", e);
-            throw new IllegalStateException(e);
-        }
+        return new GCSStore(config.getCloudStoreConfiguration());
+    }
+
+    @Provides
+    GCSService providesGCSService() {
+        return new GCSService(config.getCloudStoreConfiguration());
     }
 
     @Provides
@@ -202,6 +202,34 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesDacService(),
                 providesDataAccessRequestService());
+    }
+
+    @Provides
+    FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
+        return new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
+    }
+
+    @Provides
+    EmailNotifierService providesEmailNotifierService() {
+        return new EmailNotifierService(
+                providesConsentDAO(),
+                providesDataAccessRequestService(),
+                providesVoteDAO(),
+                providesElectionDAO(),
+                providesDACUserDAO(),
+                providesMailMessageDAO(),
+                providesMailService(),
+                providesMailServiceDAO(),
+                providesFreeMarkerTemplateHelper(),
+                config.getServicesConfiguration().getLocalURL(),
+                config.getMailConfiguration().isActivateEmailNotifications(),
+                providesResearcherPropertyDAO()
+        );
+    }
+
+    @Provides
+    MailService providesMailService() {
+        return new MailService(config.getMailConfiguration());
     }
 
     @Provides
@@ -330,6 +358,18 @@ public class ConsentModule extends AbstractModule {
                 providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());
+    }
+
+    @Provides
+    WhitelistService providesWhitelistService() {
+        return new WhitelistService(
+                providesGCSService(),
+                providesWhitelistCache());
+    }
+
+    @Provides
+    WhitelistCache providesWhitelistCache() {
+        return new WhitelistCache(providesGCSService());
     }
 
     // Private helpers

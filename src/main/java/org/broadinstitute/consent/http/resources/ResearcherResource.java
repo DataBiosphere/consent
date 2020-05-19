@@ -3,11 +3,14 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.WhitelistService;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 
 import javax.annotation.security.PermitAll;
@@ -35,13 +38,15 @@ import java.util.stream.Stream;
 @Path("api/researcher")
 public class ResearcherResource extends Resource {
 
-    private ResearcherService researcherService;
+    private final ResearcherService researcherService;
     private final UserService userService;
+    private final WhitelistService whitelistService;
 
     @Inject
-    public ResearcherResource(ResearcherService researcherService, UserService userService) {
+    public ResearcherResource(ResearcherService researcherService, UserService userService, WhitelistService whitelistService) {
         this.researcherService = researcherService;
         this.userService = userService;
+        this.whitelistService = whitelistService;
     }
 
     @POST
@@ -77,7 +82,16 @@ public class ResearcherResource extends Resource {
             List<UserRoles> authedRoles = Stream.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN).
                     collect(Collectors.toList());
             validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
-            return Response.ok(researcherService.describeResearcherPropertiesMap(userId)).build();
+            DACUser dacUser = userService.findUserById(userId);
+            List<ResearcherProperty> props = userService.findAllUserProperties(userId);
+            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(dacUser, props);
+            Map<String, Object> propMap = props.stream().
+                    collect(Collectors.toMap(ResearcherProperty::getPropertyKey, ResearcherProperty::getPropertyValue));
+            List<String> orgs = entries.stream().
+                    map(WhitelistEntry::getOrganization).
+                    collect(Collectors.toList());
+            propMap.put(ResearcherFields.LIBRARY_CARDS, orgs);
+            return Response.ok(propMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

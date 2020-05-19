@@ -103,7 +103,7 @@ public class PendingCaseService {
         Integer dacUserId = dacUser.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
-                electionDAO.findElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
+                electionDAO.findLastElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
                 electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         List<Election> elections = dacService.filterElectionsByDAC(unfilteredElections, authUser);
         List<PendingCase> pendingCases = new ArrayList<>();
@@ -123,7 +123,6 @@ public class PendingCaseService {
                     isReminderSent = accessVote.getIsReminderSent() || (Objects.nonNull(rpVote) && rpVote.getIsReminderSent());
                     pendingCase.setRpElectionId(rpElectionId);
                     pendingCase.setAlreadyVoted(accessVote.getVote() != null && Objects.nonNull(rpVote) && rpVote.getVote() != null);
-                    pendingCase.setElectionStatus(rpElection.getStatus().equals(ElectionStatus.FINAL.getValue()) && election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());
                     if (Objects.nonNull(rpVote)) {
                         pendingCase.setRpVoteId(rpVote.getVoteId());
                     }
@@ -131,7 +130,6 @@ public class PendingCaseService {
                 } else {
                     isReminderSent = (accessVote.getIsReminderSent());
                     pendingCase.setAlreadyVoted(accessVote.getVote() != null);
-                    pendingCase.setElectionStatus(election.getStatus().equals(ElectionStatus.FINAL.getValue()) ? ElectionStatus.FINAL.getValue() : ElectionStatus.OPEN.getValue());
                     pendingCase.setStatus(accessVote.getVote() == null ? VoteStatus.PENDING.getValue() : VoteStatus.EDITABLE.getValue());
                 }
                 setGeneralFields(pendingCase, election, accessVote, isReminderSent);
@@ -199,7 +197,7 @@ public class PendingCaseService {
         pendingCase.setVoteId(vote.getVoteId());
         pendingCase.setIsReminderSent(isReminderSent);
         pendingCase.setCreateDate(election.getCreateDate());
-        pendingCase.setElectionStatus(pendingCase.getElectionStatus() == null ? election.getStatus() : pendingCase.getElectionStatus());
+        pendingCase.setElectionStatus(election.getStatus());
         pendingCase.setElectionId(election.getElectionId());
     }
 

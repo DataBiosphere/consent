@@ -1,14 +1,20 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.HelpReport;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.HelpReportAPI;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -20,11 +26,12 @@ import java.util.List;
 public class HelpReportResource extends Resource {
 
     private final HelpReportAPI helpReportAPI;
-    private final EmailNotifierAPI emailApi;
+    private final EmailNotifierService emailNotifierService;
 
-    public HelpReportResource(){
+    @Inject
+    public HelpReportResource(EmailNotifierService emailNotifierService) {
         this.helpReportAPI = AbstractHelpReportAPI.getInstance();
-        this.emailApi = AbstractEmailNotifierAPI.getInstance();
+        this.emailNotifierService = emailNotifierService;
     }
 
     @POST
@@ -33,7 +40,7 @@ public class HelpReportResource extends Resource {
     public Response createdHelpReport(@Context UriInfo info, HelpReport helpReport) {
         try {
             helpReport = helpReportAPI.create(helpReport);
-            emailApi.sendNewRequestHelpMessage(helpReport);
+            emailNotifierService.sendNewRequestHelpMessage(helpReport);
             URI uri = info.getRequestUriBuilder().path("{id}").build(helpReport.getReportId());
             return Response.created(uri).entity(helpReport).build();
         } catch (Exception e) {

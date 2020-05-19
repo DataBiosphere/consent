@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import com.google.inject.Inject;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.POST;
@@ -9,13 +9,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-@Path("{api : (api/)?}emailNotifier")
+@Path("api/emailNotifier")
 public class EmailNotifierResource extends Resource {
 
-    EmailNotifierAPI emailApi;
+    private final EmailNotifierService emailNotifierService;
 
-    public EmailNotifierResource(){
-        this.emailApi = AbstractEmailNotifierAPI.getInstance();
+    @Inject
+    public EmailNotifierResource(EmailNotifierService emailNotifierService){
+        this.emailNotifierService = emailNotifierService;
     }
 
     @POST
@@ -23,7 +24,7 @@ public class EmailNotifierResource extends Resource {
     @RolesAllowed({ADMIN, CHAIRPERSON})
     public Response sendReminderMessage(@PathParam("voteId") String voteId) {
         try {
-            emailApi.sendReminderMessage(Integer.valueOf(voteId));
+            emailNotifierService.sendReminderMessage(Integer.valueOf(voteId));
             return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);

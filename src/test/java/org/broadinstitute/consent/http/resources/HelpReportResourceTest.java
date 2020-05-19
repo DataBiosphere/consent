@@ -2,9 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.HelpReport;
-import org.broadinstitute.consent.http.service.AbstractEmailNotifierAPI;
 import org.broadinstitute.consent.http.service.AbstractHelpReportAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.HelpReportAPI;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,15 +28,14 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        AbstractHelpReportAPI.class,
-        AbstractEmailNotifierAPI.class
+        AbstractHelpReportAPI.class
 })
 public class HelpReportResourceTest {
 
     @Mock
     private HelpReportAPI helpReportAPI;
     @Mock
-    private EmailNotifierAPI emailApi;
+    private EmailNotifierService emailNotifierService;
     @Mock
     UriInfo info;
     @Mock
@@ -49,16 +47,14 @@ public class HelpReportResourceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractHelpReportAPI.class);
-        PowerMockito.mockStatic(AbstractEmailNotifierAPI.class);
     }
 
     private void initResource() {
         when(AbstractHelpReportAPI.getInstance()).thenReturn(helpReportAPI);
-        when(AbstractEmailNotifierAPI.getInstance()).thenReturn(emailApi);
         when(builder.path(anyString())).thenReturn(builder);
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
-        resource = new HelpReportResource();
+        resource = new HelpReportResource(emailNotifierService);
     }
 
     @Test
@@ -69,7 +65,7 @@ public class HelpReportResourceTest {
         report.setDescription(RandomStringUtils.random(100));
         //            emailApi.sendNewRequestHelpMessage(helpReport);
         when(helpReportAPI.create(any())).thenReturn(report);
-        doNothing().when(emailApi).sendNewRequestHelpMessage(any());
+        doNothing().when(emailNotifierService).sendNewRequestHelpMessage(any());
         initResource();
         Response response = resource.createdHelpReport(info, report);
         Assert.assertEquals(201, response.getStatus());
