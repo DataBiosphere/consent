@@ -168,7 +168,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/modalSummary/{id}")
     @PermitAll
     public Response getDataAcessRequestModalSummary(@PathParam("id") String id) {
-        Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
+        Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         Integer userId = obtainUserId(dar);
         DACUser user = null;
         try {
@@ -245,7 +245,7 @@ public class DataAccessRequestResource extends Resource {
             List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
             return dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, fieldValues);
         } else {
-            return dataAccessRequestAPI.describeDataAccessRequestById(id);
+            return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         }
     }
 
@@ -308,8 +308,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials")
     @RolesAllowed(RESEARCHER)
-    public List<Document> describePartialDataAccessRequests() {
-        return dataAccessRequestAPI.describePartialDataAccessRequests();
+    public List<Document> describeDraftDataAccessRequests() {
+        return dataAccessRequestService.findAllDraftDataAccessRequestsAsDocuments();
     }
 
     @POST
@@ -324,7 +324,7 @@ public class DataAccessRequestResource extends Resource {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
         try {
-            result = savePartialDarRequest(dar);
+            result = saveDraftDarRequest(dar);
             uri = info.getRequestUriBuilder().path("{id}").build(result.getString(DarConstants.REFERENCE_ID));
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
@@ -369,7 +369,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
         try {
-            dar = dataAccessRequestAPI.updatePartialDataAccessRequest(dar);
+            dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -380,8 +380,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/{id}")
     @RolesAllowed(RESEARCHER)
-    public Document describePartialDar(@PathParam("id") String id) {
-        return dataAccessRequestAPI.describePartialDataAccessRequestById(id);
+    public Document describeDraftDar(@PathParam("id") String id) {
+        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
 
@@ -389,9 +389,9 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/{id}")
     @RolesAllowed(RESEARCHER)
-    public Response deletePartialDar(@PathParam("id") String id, @Context UriInfo info) {
+    public Response deleteDraftDar(@PathParam("id") String id, @Context UriInfo info) {
         try {
-            dataAccessRequestAPI.deletePartialDataAccessRequestById(id);
+            dataAccessRequestService.deleteByReferenceId(id);
             return Response.ok().build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -402,8 +402,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials/manage")
     @RolesAllowed(RESEARCHER)
-    public Response describePartialManageDataAccessRequests(@QueryParam("userId") Integer userId) {
-        return Response.ok().entity(dataAccessRequestAPI.describePartialDataAccessRequestManage(userId)).build();
+    public Response describeDraftManageDataAccessRequests(@QueryParam("userId") Integer userId) {
+        return Response.ok().entity(dataAccessRequestAPI.describeDraftDataAccessRequestManage(userId)).build();
     }
 
 
@@ -528,9 +528,9 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(dar).build();
     }
 
-    private Document savePartialDarRequest(Document dar) throws Exception {
+    private Document saveDraftDarRequest(Document dar) throws Exception {
         dar.append(DarConstants.SORT_DATE, new Date().getTime());
-        return dataAccessRequestAPI.createPartialDataAccessRequest(dar);
+        return dataAccessRequestAPI.createDraftDataAccessRequest(dar);
     }
 
     private Integer obtainUserId(Document dar) {

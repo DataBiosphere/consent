@@ -182,13 +182,13 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findAllDataAccessRequests();
     }
 
-    public List<Document> findAllPartialDataAccessRequestDocuments() {
+    public List<Document> findAllDraftDataAccessRequestsAsDocuments() {
         return dataAccessRequestDAO.findAllDraftDataAccessRequests().stream().
                 map(this::createDocumentFromDar).
                 collect(Collectors.toList());
     }
 
-    public List<Document> findAllPartialDataAccessRequestDocumentsByUser(Integer userId) {
+    public List<Document> findAllDraftDataAccessRequestDocumentsByUser(Integer userId) {
         return dataAccessRequestDAO.findAllDraftsByUserId(userId).stream().
                 map(this::createDocumentFromDar).
                 collect(Collectors.toList());

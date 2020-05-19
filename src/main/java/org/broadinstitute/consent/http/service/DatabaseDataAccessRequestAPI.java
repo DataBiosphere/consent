@@ -258,59 +258,43 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
-    // Partial Data Access Request Methods below
     @Override
-    public List<Document> describePartialDataAccessRequests() {
-        return dataAccessRequestService.findAllPartialDataAccessRequestDocuments();
-    }
-
-    @Override
-    public Document describePartialDataAccessRequestById(String id) {
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-    }
-
-    @Override
-    public void deletePartialDataAccessRequestById(String id) {
-        dataAccessRequestService.deleteByReferenceId(id);
-    }
-
-    @Override
-    public Document updatePartialDataAccessRequest(Document partialDar) {
-        String referenceId = partialDar.getString(DarConstants.REFERENCE_ID);
+    public Document updateDraftDataAccessRequest(Document draftDar) {
+        String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
         if (dar == null) {
-            throw new NotFoundException("Partial Data access for the specified id does not exist");
+            throw new NotFoundException("Draft Data Access Request for the specified id does not exist");
         }
         DataAccessRequestData data = dar.getData();
         data.setSortDate(new Date().getTime());
         Gson gson = new Gson();
-        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(partialDar));
+        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
         dataAccessRequestService.updateByReferenceId(referenceId, darData);
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     @Override
-    public Document createPartialDataAccessRequest(Document partialDar){
+    public Document createDraftDataAccessRequest(Document draftDar){
         String seq = counterService.getNextDarSequence();
         Gson gson = new Gson();
-        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(partialDar));
+        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
         darData.setCreateDate(new Date().getTime());
         darData.setPartialDarCode("temp_DAR" + seq);
-        String referenceId = partialDar.getString(DarConstants.REFERENCE_ID);
+        String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
         if (referenceId == null) {
             referenceId = UUID.randomUUID().toString();
         }
         darData.setReferenceId(referenceId);
-        partialDar.put(DarConstants.REFERENCE_ID, referenceId);
-        dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
-        return partialDar;
+        draftDar.put(DarConstants.REFERENCE_ID, referenceId);
+        dataAccessRequestService.insertDraftDataAccessRequest(referenceId, darData);
+        return draftDar;
     }
 
     @Override
-    public List<Document> describePartialDataAccessRequestManage(Integer userId) {
+    public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
         List<Document> accessList = userId == null
-                ? dataAccessRequestService.findAllPartialDataAccessRequestDocuments()
-                : dataAccessRequestService.findAllPartialDataAccessRequestDocumentsByUser(userId);
+                ? dataAccessRequestService.findAllDraftDataAccessRequestsAsDocuments()
+                : dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(userId);
         List<Document> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)){

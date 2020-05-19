@@ -39,18 +39,12 @@ public interface DataAccessRequestAPI {
 
     List<String> describeDataAccessIdsForOwner(Integer userId);
 
-    // Partial Data Access Requests
-    Document createPartialDataAccessRequest(Document dataAccessRequest) throws MongoException;
+    // Draft/Partial Data Access Requests
+    Document createDraftDataAccessRequest(Document dataAccessRequest) throws MongoException;
 
-    List<Document> describePartialDataAccessRequests();
+    Document updateDraftDataAccessRequest(Document draftDar);
 
-    Document describePartialDataAccessRequestById(String id) throws NotFoundException;
-
-    void deletePartialDataAccessRequestById(String id) throws IllegalArgumentException;
-
-    Document updatePartialDataAccessRequest(Document partialDar);
-
-    List<Document> describePartialDataAccessRequestManage(Integer userId);
+    List<Document> describeDraftDataAccessRequestManage(Integer userId);
 
     Object getField(String requestId, String field);
 
