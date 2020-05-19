@@ -183,7 +183,7 @@ public class DataAccessRequestService {
     }
 
     public List<Document> findAllPartialDataAccessRequestDocuments() {
-        return dataAccessRequestDAO.findAllPartialDataAccessRequests().stream().
+        return dataAccessRequestDAO.findAllDraftDataAccessRequests().stream().
                 map(this::createDocumentFromDar).
                 collect(Collectors.toList());
     }
@@ -284,6 +284,11 @@ public class DataAccessRequestService {
 
     public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
         dataAccessRequestDAO.insert(referencedId, darData);
+        return findByReferenceId(referencedId);
+    }
+
+    public DataAccessRequest insertDraftDataAccessRequest(String referencedId, DataAccessRequestData darData) {
+        dataAccessRequestDAO.insertDraftDar(referencedId, darData);
         return findByReferenceId(referencedId);
     }
 
@@ -517,8 +522,8 @@ public class DataAccessRequestService {
      * Temporary Migration Service Call
      * @return List<DataAccessRequest> All partial DARs
      */
-    public List<DataAccessRequest> getAllPostgresPartialDataAccessRequests() {
-        return dataAccessRequestDAO.findAllPartialDataAccessRequests();
+    public List<DataAccessRequest> getAllPostgresDraftDataAccessRequests() {
+        return dataAccessRequestDAO.findAllDraftDataAccessRequests();
     }
 
 }

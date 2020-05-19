@@ -23,27 +23,28 @@ import java.util.List;
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
 
     /**
-     * Find all non-partial DataAccessRequests
+     * Find all non-draft/partial DataAccessRequests
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] ")
     List<DataAccessRequest> findAllDataAccessRequests();
 
     /**
-     * Find all partial DataAccessRequests, sorted descending order
+     * Find all draft/partial DataAccessRequests, sorted descending order
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
+            "  OR draft = true " +
             "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
-    List<DataAccessRequest> findAllPartialDataAccessRequests();
+    List<DataAccessRequest> findAllDraftDataAccessRequests();
 
     /**
-     * Find all partial DataAccessRequests by user id, sorted descending order
+     * Find all draft/partial DataAccessRequests by user id, sorted descending order
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
             "  AND ((data #>> '{}')::jsonb->>'userId')::numeric = :userId " +
             "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
@@ -54,7 +55,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @param referenceId String
      * @return DataAccessRequest
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id = :referenceId limit 1")
+    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id = :referenceId limit 1")
     DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
     /**
@@ -62,7 +63,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @param referenceIds List of Strings
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id IN (<referenceIds>)")
+    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id IN (<referenceIds>)")
     List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     /**
@@ -89,5 +90,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     @RegisterArgumentFactory(JsonArgumentFactory.class)
     @SqlUpdate("INSERT INTO data_access_request (reference_id, data) VALUES (:referenceId, to_jsonb(:data)) ")
     void insert(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
+
+    /**
+     * Insert DataAccessRequest by reference id and provided DataAccessRequestData
+     * @param referenceId String
+     * @param data DataAccessRequestData
+     */
+    @RegisterArgumentFactory(JsonArgumentFactory.class)
+    @SqlUpdate("INSERT INTO data_access_request (reference_id, draft, data) VALUES (:referenceId, true, to_jsonb(:data)) ")
+    void insertDraftDar(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
 
 }

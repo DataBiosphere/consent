@@ -13,6 +13,9 @@ public class DataAccessRequest {
     @JsonProperty
     public DataAccessRequestData data;
 
+    @JsonProperty
+    public Boolean draft;
+
     public DataAccessRequest() {
     }
 
@@ -38,6 +41,14 @@ public class DataAccessRequest {
 
     public void setData(DataAccessRequestData data) {
         this.data = data;
+    }
+
+    public Boolean getDraft() {
+        return draft;
+    }
+
+    public void setDraft(Boolean draft) {
+        this.draft = draft;
     }
 
 }

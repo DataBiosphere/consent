@@ -29,12 +29,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindAllPartials() {
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllPartialDataAccessRequests();
+        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertTrue(dars.isEmpty());
 
         createDataAccessRequest();
         createPartialDataAccessRequest();
-        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllPartialDataAccessRequests();
+        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(newDars.isEmpty());
         assertEquals(1, newDars.size());
     }

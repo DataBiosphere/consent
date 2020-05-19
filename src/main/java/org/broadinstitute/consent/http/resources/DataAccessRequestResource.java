@@ -471,7 +471,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/migrate/mongo")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response getAllMongoDataAccessRequests(@Auth AuthUser authUser) {
+    public Response getAllMongoPartialDARs(@Auth AuthUser authUser) {
         Map<String, Document> map = dataAccessRequestService.getAllMongoPartialDataAccessRequests().
                 stream().
                 collect(Collectors.toMap(d -> d.get(DarConstants.ID).toString(), d -> d));
@@ -489,8 +489,8 @@ public class DataAccessRequestResource extends Resource {
     @Path("/migrate/postgres")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response getAllPostgresDataAccessRequests(@Auth AuthUser authUser) {
-        List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresPartialDataAccessRequests();
+    public Response getAllPostgresDraftDARs(@Auth AuthUser authUser) {
+        List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDraftDataAccessRequests();
         return Response.ok().entity(data).build();
     }
 
@@ -505,7 +505,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("migrate/{id}")
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response convertDataAccessRequest(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
+    public Response convertDraftDAR(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
         DataAccessRequestData data = DataAccessRequestData.fromString(json);
         if (data.getCreateDate() == null) {
             // Original create date was inferred from mongo ObjectId.timestamp
@@ -523,7 +523,7 @@ public class DataAccessRequestResource extends Resource {
         }
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
         if (dar == null) {
-            dar = dataAccessRequestService.insertDataAccessRequest(id, data);
+            dar = dataAccessRequestService.insertDraftDataAccessRequest(id, data);
         }
         return Response.ok().entity(dar).build();
     }
