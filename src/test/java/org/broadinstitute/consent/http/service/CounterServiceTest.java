@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class CounterServiceTest {
@@ -29,11 +30,12 @@ public class CounterServiceTest {
 
     @Test
     public void testGetNextDarSequence() {
-        when(counterDAO.incrementCounter(any())).thenReturn(1);
-        when(counterDAO.getCounterById(any())).thenReturn(new Counter(1, CounterService.DAR_COUNTER, 10));
+        int count = 10;
+        doNothing().when(counterDAO).incrementCounter(any());
+        when(counterDAO.getCounterById(any())).thenReturn(new Counter(1, CounterService.DAR_COUNTER, count));
         initService();
 
         String seq = service.getNextDarSequence();
-        assertEquals("DAR-10", seq);
+        assertEquals(String.valueOf(count), seq);
     }
 }

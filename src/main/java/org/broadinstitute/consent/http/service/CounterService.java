@@ -15,9 +15,9 @@ public class CounterService {
     }
 
     public String getNextDarSequence() {
-        Integer counterId = counterDAO.incrementCounter(DAR_COUNTER);
-        Counter counter = counterDAO.getCounterById(counterId);
-        return DAR_COUNTER + "-" + counter.getCount();
+        counterDAO.incrementCounter(DAR_COUNTER);
+        Integer count = counterDAO.getLastCountByName(DAR_COUNTER);
+        return String.valueOf(count);
     }
 
 }

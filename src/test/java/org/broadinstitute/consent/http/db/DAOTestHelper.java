@@ -56,13 +56,13 @@ public class DAOTestHelper {
     static CounterDAO counterDAO;
     static DacDAO dacDAO;
     static DACUserDAO userDAO;
+    static DataAccessRequestDAO dataAccessRequestDAO;
     static DataSetDAO dataSetDAO;
     static ElectionDAO electionDAO;
-    static UserRoleDAO userRoleDAO;
-    static VoteDAO voteDAO;
-    static DataAccessRequestDAO dataAccessRequestDAO;
     static MailMessageDAO mailMessageDAO;
     static ResearcherPropertyDAO researcherPropertyDAO;
+    static UserRoleDAO userRoleDAO;
+    static VoteDAO voteDAO;
 
     private static List<Integer> createdDataSetIds = new ArrayList<>();
     private static List<Integer> createdDacIds = new ArrayList<>();

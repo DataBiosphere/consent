@@ -12,12 +12,6 @@
             <column name="name" type="varchar(255)"/>
             <column name="count" type="bigint"/>
         </createTable>
-        <addAutoIncrement columnDataType="bigint"
-                          columnName="count"
-                          incrementBy="1"
-                          startWith="1"
-                          tableName="counter"/>
-        <!-- TODO: Select largest DAR id from data access request and set increment with that value -->
         <rollback>
             <dropTable tableName="counter" />
         </rollback>
