@@ -6,7 +6,6 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
@@ -22,6 +21,8 @@ import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -185,6 +186,6 @@ public class DataUseLetterResource extends Resource {
 
     @Override
     protected Logger logger() {
-        return Logger.getLogger("DataUseLetterResource");
+        return LoggerFactory.getLogger(this.getClass());
     }
 }

@@ -13,6 +13,8 @@ import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
@@ -33,8 +35,8 @@ public class ResearcherPropertyHandler implements ResearcherService {
     private static final String ACTION_REGISTERED = "registered";
     private static final String ACTION_UPDATED = "updated";
 
-    protected org.apache.log4j.Logger logger() {
-        return org.apache.log4j.Logger.getLogger("DatabaseResearcherAPI");
+    protected Logger logger() {
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     public ResearcherPropertyHandler(ResearcherPropertyDAO researcherPropertyDAO, DACUserDAO dacUserDAO, EmailNotifierService emailNotifierService) {

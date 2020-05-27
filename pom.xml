@@ -12,7 +12,7 @@
   <properties>
     <java.version>1.8</java.version>
     <liquibase.version>3.9.0</liquibase.version>
-    <dropwizard.version>2.0.2</dropwizard.version>
+    <dropwizard.version>2.0.10</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
     <jetty.version>9.4.29.v20200521</jetty.version>
     <owl.version>5.1.14</owl.version>
@@ -427,12 +427,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-        </exclusion>
-      </exclusions>
       <scope>test</scope>
     </dependency>
 
@@ -549,12 +543,6 @@
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
       <version>v1-rev20200430-1.30.9</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-storage</artifactId>
-      <version>1.108.0</version>
     </dependency>
 
     <dependency>

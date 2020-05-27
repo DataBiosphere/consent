@@ -5,11 +5,11 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.DataSetAudit;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -24,6 +24,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import java.io.File;
@@ -65,8 +67,8 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private final  List<String> predefinedDatasets;
     private final Object aliasDBValueLock = new Object();
 
-    protected org.apache.log4j.Logger logger() {
-        return org.apache.log4j.Logger.getLogger("DataSetResource");
+    protected Logger logger() {
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     public static void initInstance(DataSetDAO dsDAO, DataSetAssociationDAO dataSetAssociationDAO, UserRoleDAO userRoleDAO, ConsentDAO consentDAO, DataSetAuditDAO dataSetAuditDAO, ElectionDAO electionDAO, List<String> predefinedDatasets) {

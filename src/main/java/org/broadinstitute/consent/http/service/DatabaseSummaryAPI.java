@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -26,6 +25,8 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -60,7 +61,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
     private static final String TEXT_DELIMITER = "\"";
     private static final String END_OF_LINE = System.lineSeparator();
     private static final String MANUAL_REVIEW = "Manual Review";
-    private static final Logger logger = Logger.getLogger(DatabaseSummaryAPI.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
     /**

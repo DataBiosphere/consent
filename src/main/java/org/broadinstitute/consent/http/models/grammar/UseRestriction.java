@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.Gson;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -24,7 +25,7 @@ import java.io.IOException;
 })
 public abstract class UseRestriction {
 
-    private static final Logger LOG = Logger.getLogger(UseRestriction.class);
+    private static final Logger logger = LoggerFactory.getLogger("org.broadinstitute.consent.http.models.grammar.UseRestriction");
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static UseRestriction parse(String str) throws IOException {
@@ -33,7 +34,7 @@ public abstract class UseRestriction {
             return reader.readValue(str);
 
         } catch (IOException e) {
-            LOG.error(String.format("Parse exception on \"%s\"", str));
+            logger.error(String.format("Parse exception on \"%s\"", str));
             throw e;
         }
     }
