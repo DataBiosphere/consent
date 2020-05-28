@@ -6,7 +6,6 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -23,6 +22,8 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -78,7 +79,6 @@ public class DataSetResource extends Resource {
             @PathParam("userId") Integer userId,
             @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
 
-        logger().debug("POSTing Data Set");
         List<DataSet> dataSets;
         List<String> errors = new ArrayList<>();
         if (part.getMediaType().getType().equals("text") &&
@@ -105,7 +105,7 @@ public class DataSetResource extends Resource {
                     return Response.ok(dataSets, MediaType.APPLICATION_JSON).build();
                 }
             } catch (Exception e) {
-                logger().fatal("POSTing Data Set", e);
+                logger().error("POSTing Data Set", e);
                 errors.add("A problem has occurred while uploading datasets - Contact Support");
             } finally {
                 if (inputFile != null) {
@@ -277,7 +277,7 @@ public class DataSetResource extends Resource {
 
     @Override
     protected Logger logger() {
-        return Logger.getLogger("DataSetResource");
+        return LoggerFactory.getLogger(this.getClass());
     }
 
 }

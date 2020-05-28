@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -13,6 +12,8 @@ import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.glassfish.jersey.client.ClientProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -20,11 +21,11 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
@@ -34,7 +35,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
     private DataSetAPI dsAPI;
     private WebTarget matchServiceTarget;
     private GenericType<ResponseMatchingObject> rmo = new GenericType<ResponseMatchingObject>(){};
-    private Logger logger = Logger.getLogger("DatabaseMatchingServiceAPI");
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public static void initInstance(Client client, ServicesConfiguration config) {
         MatchAPIHolder.setInstance(new DatabaseMatchingServiceAPI(client, config, AbstractConsentAPI.getInstance(), AbstractDataAccessRequestAPI.getInstance(), AbstractDataSetAPI.getInstance()));

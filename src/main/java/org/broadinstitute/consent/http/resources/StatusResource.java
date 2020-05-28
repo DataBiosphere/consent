@@ -2,7 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,7 +17,7 @@ import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 public class StatusResource {
 
     private Logger logger() {
-        return Logger.getLogger(StatusResource.class);
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     private HealthCheckRegistry healthChecks;
