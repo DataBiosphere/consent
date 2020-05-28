@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ParseResult;
+import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Before;
@@ -48,6 +49,9 @@ public class DatasetResourceTest {
     @Mock
     private DataAccessRequestAPI dataAccessRequestAPI;
 
+    @Mock
+    private UserService userService;
+
     private DataSetResource resource;
 
     @Before
@@ -60,7 +64,7 @@ public class DatasetResourceTest {
     private void initResource() {
         when(AbstractDataSetAPI.getInstance()).thenReturn(api);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
-        resource = new DataSetResource();
+        resource = new DataSetResource(userService);
     }
 
     @Test

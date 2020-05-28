@@ -1853,14 +1853,14 @@ paths:
         500:
           description: Server error
     delete:
-      summary: delete
+      summary: Delete Dataset
       description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
       parameters:
         - name: id
           in: path
-          description: ObjectId of the Dataset
+          description: ID of the Dataset
           required: true
-          type: string
+          type: integer
       tags:
         - Datasets
       responses:
