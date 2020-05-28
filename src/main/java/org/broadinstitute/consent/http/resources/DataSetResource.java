@@ -1,9 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.common.io.Resources;
+import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -14,6 +18,7 @@ import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.ParseResult;
+import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
@@ -54,10 +59,13 @@ public class DataSetResource extends Resource {
     private final String TSV_DELIMITER = "\t";
     private final DataSetAPI api;
     private final DataAccessRequestAPI dataAccessRequestAPI;
+    private final UserService userService;
 
-    public DataSetResource() {
+    @Inject
+    public DataSetResource(UserService userService) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.api = AbstractDataSetAPI.getInstance();
+        this.userService = userService;
     }
 
     @POST
@@ -203,13 +211,14 @@ public class DataSetResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{datasetObjectId}/{dacUserId}")
+    @Path("/{datasetId}")
     @RolesAllowed(ADMIN)
-    public Response delete(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
-        try{
-            api.deleteDataset(dataSetId, dacUserId);
+    public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer dataSetId, @Context UriInfo info) {
+        try {
+            DACUser dacUser = userService.findUserByEmail(authUser.getName());
+            api.deleteDataset(dataSetId, dacUser.getDacUserId());
             return Response.ok().build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
