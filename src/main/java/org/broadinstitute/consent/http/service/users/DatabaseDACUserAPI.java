@@ -13,6 +13,8 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
@@ -37,8 +39,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, userService));
     }
 
-    protected org.apache.log4j.Logger logger() {
-        return org.apache.log4j.Logger.getLogger("DatabaseDACUserAPI");
+    protected Logger logger() {
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     /**

@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -13,6 +12,8 @@ import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -129,6 +130,6 @@ public class ConsentAssociationResource extends Resource {
 
     @Override
     protected Logger logger() {
-        return Logger.getLogger("ConsentAssociationResource");
+        return LoggerFactory.getLogger(this.getClass());
     }
 }

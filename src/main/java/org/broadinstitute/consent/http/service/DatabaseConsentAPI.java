@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -20,6 +19,8 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.generic.GenericType;
 import org.jdbi.v3.core.statement.PreparedBatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
@@ -59,7 +60,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
         this.electionDAO = electionDAO;
         this.associationDAO = associationDAO;
         this.jdbi = jdbi;
-        this.logger = Logger.getLogger("DatabaseConsentAPI");
+        this.logger = LoggerFactory.getLogger(this.getClass());
         this.dataSetDAO = dataSetDAO;
     }
 

@@ -6,7 +6,6 @@ import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
@@ -37,6 +36,8 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
@@ -65,8 +66,8 @@ import java.util.stream.IntStream;
 @Deprecated
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private static Logger logger() {
-        return Logger.getLogger("DatabaseDataAccessRequestAPI");
+    private final Logger logger() {
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     private MongoConsentDB mongo;
@@ -554,7 +555,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                     collect(Collectors.toList());
             datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
         } catch (Exception e) {
-            logger().warn(e);
+            logger().warn(e.getMessage());
         }
         return datasets;
     }
