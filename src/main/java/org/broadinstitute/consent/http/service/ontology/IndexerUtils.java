@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.ontology;
 
 import com.google.common.collect.Lists;
-import com.twitter.util.CountDownLatch;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
@@ -13,7 +12,12 @@ import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.ResponseListener;
 import org.elasticsearch.client.RestClient;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.HasClassesInSignature;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
@@ -25,7 +29,14 @@ import javax.ws.rs.InternalServerErrorException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -230,7 +241,7 @@ public class IndexerUtils {
      * @return True if there are no errors, exception otherwise
      * @throws IOException The exception
      */
-    public Boolean bulkUploadTerms(RestClient client, String indexName, Collection<Term> terms) throws IOException {
+    public Boolean bulkUploadTerms(RestClient client, String indexName, Collection<Term> terms) throws IOException, InterruptedException {
         // Set the partition relatively small so we can fail fast for incremental uploads
         List<List<Term>> termLists = Lists.partition(new ArrayList<>(terms), 100);
         for (List<Term> termList: termLists) {

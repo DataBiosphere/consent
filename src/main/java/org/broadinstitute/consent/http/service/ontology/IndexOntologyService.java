@@ -50,7 +50,7 @@ public class IndexOntologyService implements Managed {
                 streamRec.setAtLeastOneOntologyIndexed(successfulUpload);
 
             }
-        } catch (OWLOntologyCreationException e) {
+        } catch (OWLOntologyCreationException | InterruptedException e) {
             throw new BadRequestException("Problem with OWL file.");
         }
 
