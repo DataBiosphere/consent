@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @Deprecated // Use ConsentService
 public class DatabaseConsentAPI extends AbstractConsentAPI {
 
-    private final AuditServiceAPI auditServiceAPI;
+    private final AuditService auditService;
     private final ConsentDAO consentDAO;
     private final ElectionDAO electionDAO;
     private final AssociationDAO associationDAO;
@@ -54,8 +54,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    private DatabaseConsentAPI(ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, Jdbi jdbi, DataSetDAO dataSetDAO) {
-        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
+    private DatabaseConsentAPI(AuditService auditService, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, Jdbi jdbi, DataSetDAO dataSetDAO) {
+        this.auditService = auditService;
         this.consentDAO = dao;
         this.electionDAO = electionDAO;
         this.associationDAO = associationDAO;
@@ -73,8 +73,8 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(Jdbi jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, DataSetDAO dataSetDAO) {
-        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(dao, electionDAO, associationDAO, jdbi, dataSetDAO));
+    public static void initInstance(AuditService auditService, Jdbi jdbi, ConsentDAO dao, ElectionDAO electionDAO, AssociationDAO associationDAO, DataSetDAO dataSetDAO) {
+        ConsentAPIHolder.setInstance(new DatabaseConsentAPI(auditService, dao, electionDAO, associationDAO, jdbi, dataSetDAO));
     }
 
     // Consent Methods
@@ -162,7 +162,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
             try {
                 consentDAO.deleteAllAssociationsForType(consentId, association.getAssociationType());
                 List<String> generatedIds = updateAssociations(consentId, association.getAssociationType(), association.getElements());
-                auditServiceAPI.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.CREATE.getValue(), createdByUserEmail);
+                auditService.saveAssociationAuditList(generatedIds, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.CREATE.getValue(), createdByUserEmail);
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
             }
@@ -195,7 +195,7 @@ public class DatabaseConsentAPI extends AbstractConsentAPI {
                 if (new_ids.size() > 0) {
                     processAssociation(new_ids);
                     List<String> ids = updateAssociations(consentId, association.getAssociationType(), new_ids);
-                    auditServiceAPI.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
+                    auditService.saveAssociationAuditList(ids, AuditTable.CONSENT_ASSOCIATIONS.getValue(), Actions.REPLACE.getValue(), modifiedByUserEmail);
                 }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Please verify element ids, some or all of them already exist");
