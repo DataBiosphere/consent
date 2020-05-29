@@ -70,7 +70,7 @@ public class ElectionService {
         if (elections.isEmpty()) {
             throw new NotFoundException("Couldn't find any closed elections");
         }
-        return elections;
+        return elections.stream().distinct().collect(Collectors.toList());
     }
 
 }
