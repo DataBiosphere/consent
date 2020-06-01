@@ -123,23 +123,23 @@ public class UserRolesHandler {
         }
     }
 
-    /* Removes data owners role, assigns votes (update) if needed, then removes
-     * and assigns the role.
+    /**
+     * Remove the Data Owner role and remove any open data owner votes the user may have.
+     *
+     * @param updatedUser The user to update
      */
     private void removeDataOwner(DACUser updatedUser) {
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), dataOwner.getRoleId());
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
-        removeDataOwnerVotes(updatedUser, openElectionIdsForThisUser);
-    }
-
-    private void removeDataOwnerVotes(DACUser updatedUser, List<Integer> openElectionIdsForThisUser) {
-        List<Integer> dataOwnerVoteIds = voteDAO.findVotesByUserId(updatedUser.getDacUserId()).stream().
-                filter(v -> v.getType().equalsIgnoreCase(VoteType.DATA_OWNER.getValue())).
-                filter(v -> openElectionIdsForThisUser.contains(v.getElectionId())).
-                map(Vote::getVoteId).
-                collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(dataOwnerVoteIds)) {
-            voteDAO.removeVotesByIds(dataOwnerVoteIds);
+        if (!openElectionIdsForThisUser.isEmpty()) {
+            List<Integer> dataOwnerVoteIds = voteDAO.findVotesByUserId(updatedUser.getDacUserId()).stream().
+                    filter(v -> v.getType().equalsIgnoreCase(VoteType.DATA_OWNER.getValue())).
+                    filter(v -> openElectionIdsForThisUser.contains(v.getElectionId())).
+                    map(Vote::getVoteId).
+                    collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(dataOwnerVoteIds)) {
+                voteDAO.removeVotesByIds(dataOwnerVoteIds);
+            }
         }
     }
 
@@ -165,7 +165,8 @@ public class UserRolesHandler {
     }
 
     /**
-     * Removes researcher role from updatedUser.
+     * Removes researcher role from updatedUser and cancels all data access requests,
+     * open data access elections, and open research purpose elections for the user's data access requests.
      *
      * @param updatedUser The user to update
      */
@@ -188,8 +189,7 @@ public class UserRolesHandler {
     }
 
     /**
-     * Assigns userToAssignRole the role sent as a parameter, if he does not
-     * have it yet.
+     * Assigns userToAssignRole the role sent as a parameter, if he does not have it yet.
      *
      * @param userToAssignRole User whose roles will be updated.
      * @param role             New role to add to @userToAssignRole .
@@ -205,15 +205,6 @@ public class UserRolesHandler {
 
     public boolean containsRole(Collection<UserRole> roles, String role) {
         return roles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(role));
-    }
-
-    public boolean containsAnyRole(Collection<UserRole> roles, String[] rolesToMatch) {
-        for (String role : rolesToMatch) {
-            if (containsRole(roles, role)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

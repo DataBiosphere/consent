@@ -158,15 +158,6 @@ public class UserRolesHandlerTest {
         assertFalse("This user isn't a data owner", result);
     }
 
-    @Test
-    public void testContainsAnyRole() {
-        initService();
-
-        List<UserRole> roles = new ArrayList<>(Arrays.asList(getChairpersonRole(), getDataOwnerRole(), getAdminRole()));
-        assertTrue("This user has admin role ", handler.containsAnyRole(roles, new String[]{ADMIN, RESEARCHER}));
-        assertFalse("This user is not an alumni ", handler.containsAnyRole(roles, new String[]{ALUMNI, RESEARCHER}));
-    }
-
     /**
      * Private helper methods
      **/
