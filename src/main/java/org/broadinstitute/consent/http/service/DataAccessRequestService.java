@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -290,6 +291,9 @@ public class DataAccessRequestService {
      */
     public DataAccessRequest cancelDataAccessRequest(String referenceId) {
         DataAccessRequest dar = findByReferenceId(referenceId);
+        if (Objects.isNull(dar)) {
+            throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
+        }
         DataAccessRequestData darData = dar.getData();
         darData.setStatus(ElectionStatus.CANCELED.getValue());
         updateByReferenceId(referenceId, darData);
