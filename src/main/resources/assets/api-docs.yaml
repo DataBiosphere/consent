@@ -1048,7 +1048,10 @@ paths:
       description: |
         Updates the user identified by the ID. Requires the authenticated user to have the same id
         as that of the user being updated except in the admin case - admins can update information
-        for other users.
+        for other users. Role changes are not allowed for Chairperson and Member roles using this endpoint.
+        All Chairperson and Member changes (additions or removals) are ignored. See
+        [DAC](/#!/DAC) endpoints for **POST/DELETE** endpoints for **/api/dac/{dacId}/chair/{userId}** and
+        **/api/dac/{dacId}/member/{userId}** calls.
       parameters:
         - name: id
           in: path
