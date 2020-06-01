@@ -52,7 +52,7 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
     private final DacDAO dacDAO;
     private final DACUserDAO dacUserDAO;
