@@ -208,20 +208,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     /**
      * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
      *
-     * @param userId User id
-     * @return List<String>
-     */
-    @Override
-    public List<String> describeDataAccessIdsForOwner(Integer userId) {
-        return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
-                map(d -> d.getString(DarConstants.REFERENCE_ID)).
-                collect(Collectors.toList());
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
      * @return List<Document>
      */
     @Override
@@ -316,15 +302,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             }
         }
         return darManage;
-    }
-
-    @Override
-    public Document cancelDataAccessRequest(String referenceId) {
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        DataAccessRequestData darData = dar.getData();
-        darData.setStatus(ElectionStatus.CANCELED.getValue());
-        dataAccessRequestService.updateByReferenceId(referenceId, darData);
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     @Override

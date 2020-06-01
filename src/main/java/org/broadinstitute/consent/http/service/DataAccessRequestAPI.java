@@ -37,8 +37,6 @@ public interface DataAccessRequestAPI {
 
     Document updateDataAccessRequest(Document dar, String id);
 
-    List<String> describeDataAccessIdsForOwner(Integer userId);
-
     // Partial Data Access Requests
     Document createPartialDataAccessRequest(Document dataAccessRequest) throws MongoException;
 
@@ -53,8 +51,6 @@ public interface DataAccessRequestAPI {
     List<Document> describePartialDataAccessRequestManage(Integer userId);
 
     Object getField(String requestId, String field);
-
-    Document cancelDataAccessRequest(String referenceId);
 
     List<DACUser> getUserEmailAndCancelElection(String referenceId);
 

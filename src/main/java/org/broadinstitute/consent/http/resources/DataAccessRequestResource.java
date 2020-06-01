@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -411,9 +412,9 @@ public class DataAccessRequestResource extends Resource {
     public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
         try {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
-            Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
+            DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
             if (CollectionUtils.isNotEmpty(usersToNotify)) {
-                emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getData().getDarCode());
             }
             return Response.ok().entity(dar).build();
         } catch (MessagingException | TemplateException | IOException e) {

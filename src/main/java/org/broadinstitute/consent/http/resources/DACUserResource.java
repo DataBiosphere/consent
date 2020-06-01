@@ -13,7 +13,7 @@ import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +98,7 @@ public class DACUserResource extends Resource {
             DACUser dacUser = dacUserAPI.updateDACUserById(userMap, userId);
             // Update email preference
             JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-            JsonElement updateUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+            JsonElement updateUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
                     dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
             );
@@ -215,9 +215,9 @@ public class DACUserResource extends Resource {
     private Map<String, DACUser> constructUserMapFromJson(String json) {
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
         Map<String, DACUser> userMap = new HashMap<>();
-        JsonElement updatedUser = jsonObject.get(DACUserRolesHandler.UPDATED_USER_KEY);
+        JsonElement updatedUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
         if (updatedUser != null && !updatedUser.isJsonNull()) {
-            userMap.put(DACUserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
+            userMap.put(UserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
         }
         return userMap;
     }
