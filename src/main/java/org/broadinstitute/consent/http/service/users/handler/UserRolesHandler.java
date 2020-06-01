@@ -10,14 +10,15 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.util.DarConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class UserRolesHandler {
@@ -54,19 +55,26 @@ public class UserRolesHandler {
      * @param updatedUser User we need to update.
      */
     public void updateRoles(DACUser updatedUser) {
-        // roles as should be ..
+        // Roles as should be ..
         List<UserRole> updatedRoles = updatedUser.getRoles();
+        List<Integer> updatedRoleIds = updatedRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
-        // roles as currently are ...
+        // Roles as currently are ...
         List<UserRole> originalRoles = userRoleDAO.findRolesByUserId(updatedUser.getDacUserId());
+        List<Integer> originalRoleIds = originalRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
-        // roles required to remove ...
-        List<UserRole> rolesToRemove = subtractAllRoles(originalRoles, updatedRoles);
+        // Roles to remove: Any original role that does not exist in the new role list
+        List<UserRole> rolesToRemove = originalRoles.stream().
+                filter(r -> !updatedRoleIds.contains(r.getRoleId())).
+                collect(Collectors.toList());
 
-        // roles to add ..
-        List<UserRole> rolesToAdd = subtractAllRoles(updatedRoles, originalRoles);
 
-        // removing deleted roles
+        // Roles to add: Any new role that does not exist in the original role list
+        List<UserRole> rolesToAdd = updatedRoles.stream().
+                filter(r -> !originalRoleIds.contains(r.getRoleId())).
+                collect(Collectors.toList());
+
+        // Remove deleted roles
         for (UserRole role : rolesToRemove) {
             switch (UserRoles.valueOf(role.getName().toUpperCase())) {
                 case CHAIRPERSON:
@@ -89,7 +97,8 @@ public class UserRolesHandler {
                     break;
             }
         }
-        // adding new roles
+
+        // Add new roles
         for (UserRole role : rolesToAdd) {
             switch (UserRoles.valueOf(role.getName().toUpperCase())) {
                 case CHAIRPERSON:
@@ -162,9 +171,11 @@ public class UserRolesHandler {
      */
     private void removeResearcher(DACUser updatedUser) {
         // Find list of related dars
-        List<String> referenceIds = dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> d.getInteger(DarConstants.USER_ID).equals(updatedUser.getDacUserId())).
-                map(d -> d.getString(DarConstants.REFERENCE_ID)).
+        List<String> referenceIds = dataAccessRequestService.findAllDataAccessRequests().stream().
+                filter(d -> Objects.nonNull(d.getData())).
+                filter(d -> Objects.nonNull(d.getData().getUserId())).
+                filter(d -> d.getData().getUserId().equals(updatedUser.getDacUserId())).
+                map(DataAccessRequest::getReferenceId).
                 collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(referenceIds)) {
             electionDAO.bulkCancelOpenElectionByReferenceIdAndType(ElectionType.DATA_ACCESS.getValue(), referenceIds);
@@ -190,12 +201,6 @@ public class UserRolesHandler {
             newRoles.add(role);
             userRoleDAO.insertUserRoles(newRoles, userToAssignRole.getDacUserId());
         }
-    }
-
-    // TODO: Rename and make this logic more transparent
-    private List<UserRole> subtractAllRoles(List<UserRole> roles, List<UserRole> toSubstractRoles) {
-        List<String> toSubtractRolesNames = toSubstractRoles.stream().map(role -> role.getName().toUpperCase()).collect(Collectors.toList());
-        return roles.stream().filter(rol -> !toSubtractRolesNames.contains(rol.getName().toUpperCase())).collect(Collectors.toList());
     }
 
     public boolean containsRole(Collection<UserRole> roles, String role) {

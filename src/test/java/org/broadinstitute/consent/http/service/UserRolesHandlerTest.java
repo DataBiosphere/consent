@@ -1,13 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.common.collect.Streams;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,10 +24,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class UserRolesHandlerTest {
@@ -42,86 +51,107 @@ public class UserRolesHandlerTest {
 
 
     @Before
-    public void setUp(){
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
+    }
+
+    private void initService() {
         handler = new UserRolesHandler(dacUserDAO, dataAccessRequestService, electionDAO, userRoleDAO, voteDAO);
     }
 
     @Test
-    public void testUpdateChairperson() {
-        // TODO: Should fail
+    public void testUpdateToChairperson() {
+        DACUser user = generateUser();
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
+        initService();
+
+        user.setRoles(Arrays.asList(getResearcherRole(), getChairpersonRole()));
+        handler.updateRoles(user);
+        verify(userRoleDAO, never()).insertSingleUserRole(any(), any());
     }
 
     @Test
-    public void testUpdateMember() {
-        // TODO: Should fail
+    public void testUpdateToMember() {
+        DACUser user = generateUser();
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
+        initService();
+
+        user.setRoles(Arrays.asList(getResearcherRole(), getMemberRole()));
+        handler.updateRoles(user);
+        verify(userRoleDAO, never()).insertSingleUserRole(any(), any());
     }
 
     @Test
-    public void testUpdateMultipleRoles() {
-        // TODO: Fix
-        DACUser originalDO = new DACUser(1, "originalDO@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(researcherList(), adminList()), null);
-        DACUser delegatedDO = new DACUser(2, "delegatedDO@broad.com", "Delegated Chairperson", new Date(), dataownerList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(dataownerList());
-        when(userRoleDAO.findRolesByUserId(2)).thenReturn(concatUserRoleLists(researcherList(), adminList()));
-        when(dacUserDAO.findDACUserByEmail("delegatedDO@broad.com")).thenReturn(delegatedDO);
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
-        handler.updateRoles(originalDO);
+    public void testAddRoles() {
+        DACUser user = generateUser();
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
+        initService();
+
+        user.setRoles(Arrays.asList(getResearcherRole(), getAlumniRole(), getDataOwnerRole()));
+        handler.updateRoles(user);
+        verify(userRoleDAO, times(2)).insertUserRoles(any(), any());
+        verify(userRoleDAO, never()).removeSingleUserRole(any(), any());
     }
 
     @Test
-    public void testPromoteAlumniToMember() {
-        // TODO: Fix
-        DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), memberList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(concatUserRoleLists(alumniList(), researcherList()));
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
-        handler.updateRoles(originalAlumni);
+    public void testRemoveRoles() {
+        DACUser user = generateUser();
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Arrays.asList(getResearcherRole(), getAlumniRole(), getDataOwnerRole()));
+        initService();
+
+        user.setRoles(Collections.singletonList(getResearcherRole()));
+        handler.updateRoles(user);
+        verify(userRoleDAO, never()).insertUserRoles(any(), any());
+        verify(userRoleDAO, times(2)).removeSingleUserRole(any(), any());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMinimumAdmins() {
+        DACUser user = generateUser();
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getAdminRole()));
+        initService();
+
+        user.setRoles(Collections.singletonList(getResearcherRole()));
+        handler.updateRoles(user);
     }
 
     @Test
-    public void testPromoteAlumniChairperson() {
-        // TODO: Should FAIL
-        DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(concatUserRoleLists(alumniList(), researcherList()));
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
-        handler.updateRoles(originalAlumni);
+    public void testRemoveDataOwnerRole() {
+        DACUser user = generateUser();
+        Vote doVote = generateDOVote(user);
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getDataOwnerRole()));
+        when(voteDAO.findVotesByUserId(any())).thenReturn(Collections.singletonList(doVote));
+        when(electionDAO.findDataSetOpenElectionIds(any())).thenReturn(Collections.singletonList(doVote.getElectionId()));
+        initService();
+
+        user.setRoles(Collections.singletonList(getResearcherRole()));
+        handler.updateRoles(user);
+        verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
+        verify(userRoleDAO, times(1)).removeSingleUserRole(any(), any());
+        verify(voteDAO, times(1)).removeVotesByIds(any());
     }
 
     @Test
-    public void testAddResearcher() {
-        // TODO: Fix
-        DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(researcherList(), memberList()), null);
-        DACUser delegatedMember = new DACUser(2, "delegatedMember@broad.com", "Delegated Chairperson", new Date(), memberList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(alumniList());
-        when(dacUserDAO.findDACUserByEmail("delegatedMember@broad.com")).thenReturn(delegatedMember);
-        when(userRoleDAO.findRolesByUserId(2)).thenReturn(memberList());
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
-        when(dacUserDAO.verifyAdminUsers()).thenReturn(2);
-        handler.updateRoles(originalAlumni);
-    }
+    public void testRemoveResearcherRole() {
+        DACUser user = generateUser();
+        DataAccessRequest dar = generateDar(user);
+        when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
+        when(dataAccessRequestService.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
+        initService();
 
-    @Test
-    public void testAddAlumni() {
-        // TODO: Fix
-        DACUser originalAlumni = new DACUser(1, "originalAlumni@broad.com", "Original Chairperson", new Date(), concatUserRoleLists(alumniList(), memberList()), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(memberList());
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
-        when(dacUserDAO.verifyAdminUsers()).thenReturn(2);
-        handler.updateRoles(originalAlumni);
-    }
-
-    @Test
-    public void testMemberToChair() {
-        // TODO: SHOULD FAIL
-        DACUser originalMember = new DACUser(1, "originalMember@broad.com", "Original Chairperson", new Date(), alumniList(), null);
-        when(userRoleDAO.findRolesByUserId(1)).thenReturn(chairpersonList());
-        when(electionDAO.verifyOpenElections()).thenReturn(0);
-        handler.updateRoles(originalMember);
+        user.setRoles(Collections.singletonList(getAlumniRole()));
+        handler.updateRoles(user);
+        verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
+        verify(userRoleDAO, times(1)).removeSingleUserRole(any(), any());
+        verify(electionDAO, times(2)).bulkCancelOpenElectionByReferenceIdAndType(any(), any());
+        verify(dataAccessRequestService, times(1)).cancelDataAccessRequest(any());
     }
 
     @Test
     public void testContainsRole() {
         List<UserRole> roles = new ArrayList<>(Collections.singletonList(getChairpersonRole()));
+        initService();
+
         boolean result = handler.containsRole(roles, CHAIRPERSON);
         assertTrue("This user is a chairperson ", result);
         result = handler.containsRole(roles, DATAOWNER);
@@ -130,12 +160,16 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testContainsAnyRole() {
+        initService();
+
         List<UserRole> roles = new ArrayList<>(Arrays.asList(getChairpersonRole(), getDataOwnerRole(), getAdminRole()));
         assertTrue("This user has admin role ", handler.containsAnyRole(roles, new String[]{ADMIN, RESEARCHER}));
         assertFalse("This user is not an alumni ", handler.containsAnyRole(roles, new String[]{ALUMNI, RESEARCHER}));
     }
 
-    /** Private helper methods **/
+    /**
+     * Private helper methods
+     **/
 
     private static final String CHAIRPERSON = UserRoles.CHAIRPERSON.getRoleName();
     private static final String MEMBER = UserRoles.MEMBER.getRoleName();
@@ -144,32 +178,31 @@ public class UserRolesHandlerTest {
     private static final String RESEARCHER = UserRoles.RESEARCHER.getRoleName();
     private static final String ADMIN = UserRoles.ADMIN.getRoleName();
 
-    private List<UserRole> concatUserRoleLists(List<UserRole> a, List<UserRole> b) {
-        return Streams.concat(a.stream(), b.stream()).collect(Collectors.toList());
+    private DataAccessRequest generateDar(DACUser user) {
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setUserId(user.getDacUserId());
+        dar.setReferenceId(UUID.randomUUID().toString());
+        dar.setData(data);
+        return dar;
     }
 
-    private List<UserRole> chairpersonList(){
-        return Collections.singletonList(getChairpersonRole());
+    private Vote generateDOVote(DACUser user) {
+        Vote doVote = new Vote();
+        doVote.setVote(true);
+        doVote.setType(VoteType.DATA_OWNER.getValue());
+        doVote.setDacUserId(user.getDacUserId());
+        doVote.setElectionId(RandomUtils.nextInt(1, 100));
+        return doVote;
     }
 
-    private List<UserRole> memberList(){
-        return Collections.singletonList(getMemberRole());
-    }
-
-    private List<UserRole> alumniList(){
-        return Collections.singletonList(getAlumniRole());
-    }
-
-    private List<UserRole> dataownerList(){
-        return Collections.singletonList(getDataOwnerRole());
-    }
-
-    private List<UserRole> researcherList(){
-        return Collections.singletonList(getResearcherRole());
-    }
-
-    private List<UserRole> adminList(){
-        return Collections.singletonList(getAdminRole());
+    private DACUser generateUser() {
+        return new DACUser(
+                RandomUtils.nextInt(1, 1000),
+                RandomStringUtils.random(10, true, false),
+                RandomStringUtils.random(10, true, false),
+                new Date()
+        );
     }
 
     private UserRole getMemberRole() {
