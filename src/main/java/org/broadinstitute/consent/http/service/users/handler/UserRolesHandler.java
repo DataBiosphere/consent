@@ -192,6 +192,7 @@ public class UserRolesHandler {
         }
     }
 
+    // TODO: Rename and make this logic more transparent
     private List<UserRole> subtractAllRoles(List<UserRole> roles, List<UserRole> toSubstractRoles) {
         List<String> toSubtractRolesNames = toSubstractRoles.stream().map(role -> role.getName().toUpperCase()).collect(Collectors.toList());
         return roles.stream().filter(rol -> !toSubtractRolesNames.contains(rol.getName().toUpperCase())).collect(Collectors.toList());
