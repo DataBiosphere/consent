@@ -45,18 +45,23 @@ public class WhitelistCacheTest {
         testIndividualCacheQueries();
     }
 
+    @Test
+    public void testEnsureDistinctEntries() {
+        // Doubling up the string data means we'll have duplicate raw entries.
+        // The individual cache queries should each ensure distinct values.
+        cache.loadCaches(whitelistData + whitelistData);
+        testIndividualCacheQueries();
+    }
+
     private void testIndividualCacheQueries() {
         whitelistEntries.forEach(e -> {
             List<WhitelistEntry> commonsMatches = cache.queryByCommonsId(e.getCommonsId());
             assertEquals(1, commonsMatches.size());
             List<WhitelistEntry> emailMatches = cache.queryByEmail(e.getEmail());
             assertEquals(1, emailMatches.size());
-            List<WhitelistEntry> orgMatches = cache.queryByOrganization(e.getOrganization());
-            assertEquals(1, orgMatches.size());
         });
         assertTrue(cache.queryByCommonsId("").isEmpty());
         assertTrue(cache.queryByEmail("").isEmpty());
-        assertTrue(cache.queryByOrganization("").isEmpty());
     }
 
 }

@@ -89,6 +89,7 @@ public class ResearcherResource extends Resource {
                     collect(Collectors.toMap(ResearcherProperty::getPropertyKey, ResearcherProperty::getPropertyValue));
             List<String> orgs = entries.stream().
                     map(WhitelistEntry::getOrganization).
+                    distinct().
                     collect(Collectors.toList());
             propMap.put(ResearcherFields.LIBRARY_CARDS, orgs);
             return Response.ok(propMap).build();

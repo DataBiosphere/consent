@@ -20,7 +20,6 @@ public class WhitelistCache {
 
     private final Map<String, List<WhitelistEntry>> commonsIdCache = new ConcurrentHashMap<>();
     private final Map<String, List<WhitelistEntry>> emailCache = new ConcurrentHashMap<>();
-    private final Map<String, List<WhitelistEntry>> organizationCache = new ConcurrentHashMap<>();
 
     @Inject
     public WhitelistCache(GCSService gcsService) {
@@ -34,7 +33,6 @@ public class WhitelistCache {
         List<WhitelistEntry> entries = new WhitelistParser().parseWhitelist(whitelistData);
         commonsIdCache.putAll(entries.stream().collect(Collectors.groupingBy(WhitelistEntry::getCommonsId)));
         emailCache.putAll(entries.stream().collect(Collectors.groupingBy(WhitelistEntry::getEmail)));
-        organizationCache.putAll(entries.stream().collect(Collectors.groupingBy(WhitelistEntry::getOrganization)));
     }
 
     public List<WhitelistEntry> queryByCommonsId(String commonsId) {
@@ -43,10 +41,6 @@ public class WhitelistCache {
 
     public List<WhitelistEntry> queryByEmail(String email) {
         return tryCache(emailCache, email);
-    }
-
-    public List<WhitelistEntry> queryByOrganization(String org) {
-        return tryCache(organizationCache, org);
     }
 
     private void loadCachesFromStorage() throws Exception {
@@ -65,7 +59,7 @@ public class WhitelistCache {
         if (Objects.isNull(matchingEntries) || matchingEntries.isEmpty()) {
             return Collections.emptyList();
         }
-        return matchingEntries;
+        return matchingEntries.stream().distinct().collect(Collectors.toList());
     }
 
 }

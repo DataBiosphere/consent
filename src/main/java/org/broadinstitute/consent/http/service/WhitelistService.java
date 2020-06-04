@@ -87,14 +87,6 @@ public class WhitelistService {
                         filter(Objects::nonNull).
                         distinct().
                         collect(Collectors.toList()));
-        entries.addAll(
-                props.stream().
-                        filter(p -> p.getPropertyKey().equalsIgnoreCase(ResearcherFields.INSTITUTION.getValue())).
-                        map(p -> cache.queryByOrganization(p.getPropertyValue())).
-                        flatMap(List::stream).
-                        filter(Objects::nonNull).
-                        distinct().
-                        collect(Collectors.toList()));
         return entries.stream().distinct().collect(Collectors.toList());
     }
 
