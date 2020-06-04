@@ -13,9 +13,8 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AuditServiceAPI;
+import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UserService;
@@ -48,14 +47,14 @@ public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;
     private final GCSStore store;
-    private final AuditServiceAPI auditServiceAPI;
+    private final AuditService auditService;
     private final UserService userService;
 
     @Inject
-    public DataUseLetterResource(GCSStore store, UserService userService) {
+    public DataUseLetterResource(AuditService auditService, GCSStore store, UserService userService) {
+        this.auditService = auditService;
         this.api = AbstractConsentAPI.getInstance();
         this.store = store;
-        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.userService = userService;
     }
 
@@ -94,7 +93,7 @@ public class DataUseLetterResource extends Resource {
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId, dulUrl, name);
             DACUser dacUser = userService.findUserByEmail(user.getName());
-            auditServiceAPI.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -125,7 +124,7 @@ public class DataUseLetterResource extends Resource {
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId,dulUrl, name);
             DACUser dacUser = userService.findUserByEmail(user.getName());
-            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));

@@ -12,12 +12,11 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
-import org.broadinstitute.consent.http.service.AuditServiceAPI;
+import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.MatchAPI;
@@ -52,7 +51,7 @@ public class ConsentResource extends Resource {
 
     private final ConsentAPI api;
     private final DACUserAPI dacUserAPI;
-    private final AuditServiceAPI auditServiceAPI;
+    private final AuditService auditService;
     private final MatchProcessAPI matchProcessAPI;
     private final MatchAPI matchAPI;
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
@@ -60,13 +59,13 @@ public class ConsentResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public ConsentResource(UserService userService) {
+    public ConsentResource(AuditService auditService, UserService userService) {
+        this.auditService = auditService;
         this.api = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.matchAPI = AbstractMatchAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
-        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
     }
@@ -112,7 +111,7 @@ public class ConsentResource extends Resource {
                 checkValidDUL(rec);
             }
             Consent consent = api.create(rec);
-            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.CREATE.getValue(), dacUser.getEmail());
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchProcessAPI.processMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
@@ -140,7 +139,7 @@ public class ConsentResource extends Resource {
             }
             DACUser dacUser = userService.findUserByEmail(user.getName());
             updated = api.update(id, updated);
-            auditServiceAPI.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(updated.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             matchProcessAPI.processMatchesForConsent(id);
             return Response.ok(updated).build();
         } catch (Exception e) {
