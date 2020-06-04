@@ -1048,7 +1048,10 @@ paths:
       description: |
         Updates the user identified by the ID. Requires the authenticated user to have the same id
         as that of the user being updated except in the admin case - admins can update information
-        for other users.
+        for other users. Role changes are not allowed for Chairperson and Member roles using this endpoint.
+        All Chairperson and Member changes (additions or removals) are ignored. See
+        [DAC](/#!/DAC) endpoints for **POST/DELETE** endpoints for **/api/dac/{dacId}/chair/{userId}** and
+        **/api/dac/{dacId}/member/{userId}** calls.
       parameters:
         - name: id
           in: path
@@ -1209,21 +1212,42 @@ paths:
             type: string
         404:
           description: The requested DAR couldn't be found.
+  /api/dar/cancel/{id}:
+    put:
+      summary: Cancel a Data Access Request
+      description: Cancel a Data Access Request
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Successful cancelation of the Data Access Request
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+        404:
+          description: Unable to find the Data Access Request with the provided id
+        500:
+          description: Internal error
   /api/dar/modalSummary/{id}:
-        get:
-          summary: getDataAcessRequestModalSummary
-          description: Retrieves a DARModalDetails.
-          parameters:
-            - name: id
-              in: path
-              description: The id of the DAR
-              required: true
-              type: string
-          tags:
-            - Data Access Request
-          responses:
-            200:
-              description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
+    get:
+      summary: getDataAcessRequestModalSummary
+      description: Retrieves a DARModalDetails.
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: 'Returns a DARModalDetails initialized with the DAR associated with the provided Id.'
   /api/dar/find/{id}:
     get:
       summary: describeSpecificFields

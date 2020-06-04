@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.ws.rs.NotFoundException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ public class DatabaseDACUserAPITest {
     UserRoleDAO userRoleDAO;
 
     @Mock
-    UserHandlerAPI userHandlerAPI;
+    UserRolesHandler userRolesHandler;
 
     @Mock
     UserService userService;
@@ -54,7 +53,7 @@ public class DatabaseDACUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, userService);
+        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
     }
 
     @Test

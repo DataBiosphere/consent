@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -52,16 +53,16 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    private ConsentDAO consentDAO;
-    private DacDAO dacDAO;
-    private DACUserDAO dacUserDAO;
-    private DataAccessRequestDAO dataAccessRequestDAO;
-    private DataSetDAO dataSetDAO;
-    private ElectionDAO electionDAO;
-    private DacService dacService;
-    private UserService userService;
-    private VoteDAO voteDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ConsentDAO consentDAO;
+    private final DacDAO dacDAO;
+    private final DACUserDAO dacUserDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final DataSetDAO dataSetDAO;
+    private final ElectionDAO electionDAO;
+    private final DacService dacService;
+    private final UserService userService;
+    private final VoteDAO voteDAO;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -280,6 +281,23 @@ public class DataAccessRequestService {
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
         List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
+    }
+
+    /**
+     * Cancel a Data Access Request
+     *
+     * @param referenceId The DAR Reference Id
+     * @return The updated DAR
+     */
+    public DataAccessRequest cancelDataAccessRequest(String referenceId) {
+        DataAccessRequest dar = findByReferenceId(referenceId);
+        if (Objects.isNull(dar)) {
+            throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
+        }
+        DataAccessRequestData darData = dar.getData();
+        darData.setStatus(ElectionStatus.CANCELED.getValue());
+        updateByReferenceId(referenceId, darData);
+        return findByReferenceId(referenceId);
     }
 
     private List<DataAccessRequestManage> createAccessRequestManage(

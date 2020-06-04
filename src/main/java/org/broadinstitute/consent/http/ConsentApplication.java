@@ -131,10 +131,9 @@ import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
 import org.broadinstitute.consent.http.service.users.UserAPI;
-import org.broadinstitute.consent.http.service.users.handler.AbstractUserRolesHandler;
-import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
@@ -228,8 +227,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
-        final VoteService voteService = injector.getProvider(VoteService.class).get();
+        final UserRolesHandler userRolesHandler = injector.getProvider(UserRolesHandler.class).get();
         final UserService userService = injector.getProvider(UserService.class).get();
+        final VoteService voteService = injector.getProvider(VoteService.class).get();
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
         DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
@@ -240,8 +240,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
         DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO);
-        DACUserRolesHandler.initInstance(dacUserDAO, userRoleDAO, electionDAO, voteDAO, dataSetAssociationDAO, emailNotifierService, AbstractDataAccessRequestAPI.getInstance());
-        DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), userService);
+        DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, userRolesHandler, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         TranslateServiceImpl.initInstance(useRestrictionConverter);
@@ -270,7 +269,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, emailNotifierService);
-        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, AbstractUserRolesHandler.getInstance(), userService);
+        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Now register our resources.
@@ -344,7 +343,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractHelpReportAPI.clearInstance();
                 AbstractApprovalExpirationTimeAPI.clearInstance();
                 AbstractUseRestrictionValidatorAPI.clearInstance();
-                AbstractUserRolesHandler.clearInstance();
                 AbstractOAuthAuthenticator.clearInstance();
                 super.lifeCycleStopped(event);
             }

@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -303,6 +304,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserRoleDAO providesUserRoleDAO() {
         return userRoleDAO;
+    }
+
+    @Provides
+    UserRolesHandler providesUserRolesHandler() {
+        return new UserRolesHandler(
+                providesDACUserDAO(),
+                providesDataAccessRequestService(),
+                providesElectionDAO(),
+                providesUserRoleDAO(),
+                providesVoteDAO());
     }
 
     @Provides
