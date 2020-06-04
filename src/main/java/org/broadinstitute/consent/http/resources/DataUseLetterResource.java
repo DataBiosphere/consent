@@ -6,7 +6,6 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
@@ -14,14 +13,15 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AuditServiceAPI;
+import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -47,14 +47,14 @@ public class DataUseLetterResource extends Resource {
 
     private final ConsentAPI api;
     private final GCSStore store;
-    private final AuditServiceAPI auditServiceAPI;
+    private final AuditService auditService;
     private final UserService userService;
 
     @Inject
-    public DataUseLetterResource(GCSStore store, UserService userService) {
+    public DataUseLetterResource(AuditService auditService, GCSStore store, UserService userService) {
+        this.auditService = auditService;
         this.api = AbstractConsentAPI.getInstance();
         this.store = store;
-        this.auditServiceAPI = AbstractAuditServiceAPI.getInstance();
         this.userService = userService;
     }
 
@@ -93,7 +93,7 @@ public class DataUseLetterResource extends Resource {
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId, dulUrl, name);
             DACUser dacUser = userService.findUserByEmail(user.getName());
-            auditServiceAPI.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -124,7 +124,7 @@ public class DataUseLetterResource extends Resource {
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId,dulUrl, name);
             DACUser dacUser = userService.findUserByEmail(user.getName());
-            auditServiceAPI.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
+            auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(String.format("Could not find consent with id %s", consentId));
@@ -185,6 +185,6 @@ public class DataUseLetterResource extends Resource {
 
     @Override
     protected Logger logger() {
-        return Logger.getLogger("DataUseLetterResource");
+        return LoggerFactory.getLogger(this.getClass());
     }
 }

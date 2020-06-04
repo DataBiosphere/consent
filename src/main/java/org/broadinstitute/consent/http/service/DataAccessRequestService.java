@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -54,7 +55,7 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
     private final DacDAO dacDAO;
     private final DACUserDAO dacUserDAO;
@@ -302,6 +303,23 @@ public class DataAccessRequestService {
     public List<Document> describeDataAccessRequests(AuthUser authUser) {
         List<Document> documents = getAllDataAccessRequestsAsDocuments();
         return dacService.filterDarsByDAC(documents, authUser);
+    }
+
+    /**
+     * Cancel a Data Access Request
+     *
+     * @param referenceId The DAR Reference Id
+     * @return The updated DAR
+     */
+    public DataAccessRequest cancelDataAccessRequest(String referenceId) {
+        DataAccessRequest dar = findByReferenceId(referenceId);
+        if (Objects.isNull(dar)) {
+            throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
+        }
+        DataAccessRequestData darData = dar.getData();
+        darData.setStatus(ElectionStatus.CANCELED.getValue());
+        updateByReferenceId(referenceId, darData);
+        return findByReferenceId(referenceId);
     }
 
     private List<DataAccessRequestManage> createAccessRequestManage(

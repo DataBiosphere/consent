@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -28,7 +28,7 @@ public class DatabaseUserAPITest {
     UserRoleDAO userRoleDAO;
 
     @Mock
-    UserHandlerAPI userHandlerAPI;
+    UserRolesHandler userRolesHandler;
 
     @Mock
     UserService userService;
@@ -40,7 +40,7 @@ public class DatabaseUserAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userHandlerAPI, userService);
+        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
     }
 
 

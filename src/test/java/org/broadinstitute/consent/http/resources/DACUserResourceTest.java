@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.service.users.handler.DACUserRolesHandler;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +85,7 @@ public class DACUserResourceTest {
         DACUser researcher = createDacUser(UserRoles.RESEARCHER);
         JsonObject json = new JsonObject();
         JsonElement userJson = new Gson().toJsonTree(researcher);
-        json.add(DACUserRolesHandler.UPDATED_USER_KEY, userJson);
+        json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
 
         when(userService.findUserByEmail(any())).thenReturn(researcher);
         when(dacUserAPI.updateDACUserById(any(), anyInt())).thenReturn(researcher);
@@ -101,7 +101,7 @@ public class DACUserResourceTest {
         DACUser researcher = createDacUser(UserRoles.RESEARCHER);
         JsonObject json = new JsonObject();
         JsonElement userJson = new Gson().toJsonTree(researcher);
-        json.add(DACUserRolesHandler.UPDATED_USER_KEY, userJson);
+        json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
 
         when(userService.findUserByEmail(any())).thenReturn(researcher);
         when(dacUserAPI.updateDACUserById(any(), anyInt())).thenReturn(researcher);
@@ -117,7 +117,7 @@ public class DACUserResourceTest {
         DACUser admin = createDacUser(UserRoles.ADMIN);
         JsonObject json = new JsonObject();
         JsonElement userJson = new Gson().toJsonTree(admin);
-        json.add(DACUserRolesHandler.UPDATED_USER_KEY, userJson);
+        json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
 
         when(userService.findUserByEmail(any())).thenReturn(admin);
         when(dacUserAPI.updateDACUserById(any(), anyInt())).thenReturn(admin);

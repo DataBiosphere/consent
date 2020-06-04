@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.GsonBuilder;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DataUse {
 
-    private static final Logger logger = Logger.getLogger(DataUse.class);
+    private static final Logger logger = LoggerFactory.getLogger("org.broadinstitute.consent.http.models.DataUse");
 
     private Boolean generalUse;
     private Boolean hmbResearch;

@@ -1,13 +1,14 @@
 package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
@@ -40,7 +41,7 @@ abstract public class Resource {
     public final static String RESEARCHER = "Researcher";
 
     protected Logger logger() {
-        return Logger.getLogger(this.getClass().getName());
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     protected Response createExceptionResponse(Exception e) {
@@ -63,7 +64,7 @@ abstract public class Resource {
             try {
                 output.write(IOUtils.toByteArray(inputStream));
             } catch (Exception e) {
-                logger().error(e);
+                logger().error(e.getMessage());
                 throw e;
             }
         };

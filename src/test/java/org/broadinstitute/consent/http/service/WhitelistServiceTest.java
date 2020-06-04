@@ -116,22 +116,6 @@ public class WhitelistServiceTest {
     }
 
     @Test
-    public void testFindWhitelistEntriesForUser_Org() {
-        String matchField = "org";
-        String fileData = generateWhitelistWithData(matchField);
-        DACUser user = new DACUser();
-        user.setDacUserId(1);
-        user.setEmail("email");
-        List<ResearcherProperty> properties = new ArrayList<>();
-        properties.add(new ResearcherProperty(1, ResearcherFields.INSTITUTION.getValue(), matchField));
-
-        initServices(fileData);
-        service.postWhitelist(fileData);
-        List<WhitelistEntry> entries = service.findWhitelistEntriesForUser(user, properties);
-        assertEquals(1, entries.size());
-    }
-
-    @Test
     public void testFindWhitelistEntriesForUser_NoResults() {
         String matchField = RandomStringUtils.random(5, true, true);
         String fileData = WhitelistParserTest.makeSampleWhitelistFile(2, false);

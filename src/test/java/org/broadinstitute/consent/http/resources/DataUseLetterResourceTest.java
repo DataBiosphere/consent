@@ -7,9 +7,8 @@ import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.grammar.Everything;
-import org.broadinstitute.consent.http.service.AbstractAuditServiceAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AuditServiceAPI;
+import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -41,8 +40,7 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
         AbstractConsentAPI.class,
-        AbstractDACUserAPI.class,
-        AbstractAuditServiceAPI.class
+        AbstractDACUserAPI.class
 })
 public class DataUseLetterResourceTest {
 
@@ -55,7 +53,7 @@ public class DataUseLetterResourceTest {
     @Mock
     private DACUserAPI dacUserAPI;
     @Mock
-    private AuditServiceAPI auditServiceAPI;
+    private AuditService auditService;
     @Mock
     private UserService userService;
 
@@ -67,7 +65,6 @@ public class DataUseLetterResourceTest {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(AbstractConsentAPI.class);
         PowerMockito.mockStatic(AbstractDACUserAPI.class);
-        PowerMockito.mockStatic(AbstractAuditServiceAPI.class);
     }
 
     private void initResource() {
@@ -77,8 +74,7 @@ public class DataUseLetterResourceTest {
         when(userService.findUserByEmail(any())).thenReturn(dacUser);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
-        when(AbstractAuditServiceAPI.getInstance()).thenReturn(auditServiceAPI);
-        resource = new DataUseLetterResource(store, userService);
+        resource = new DataUseLetterResource(auditService, store, userService);
     }
 
     @Test

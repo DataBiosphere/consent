@@ -108,10 +108,25 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             +" AND lower(e.electionType) = lower(:type)  order by createDate asc")
     List<Election> findLastElectionsWithFinalVoteByType(@Bind("type") String type);
 
-    @SqlQuery("select distinct e.electionId,  e.datasetId, v.vote finalVote, e.status, e.createDate, e.referenceId, e.useRestriction, e.translatedUseRestriction, v.rationale finalRationale, v.createDate finalVoteDate, " +
-            "e.lastUpdate, e.finalAccessVote, e.electionType, e.dataUseLetter, e.dulName, e.archived, e.version from election e inner join vote v on v.electionId = e.electionId where lower(e.electionType) = 'dataaccess' "+
-            "and e.finalAccessVote is true  and lower(v.type) = 'final' and lower(e.status) = lower(:status) order by e.createDate asc")
-    List<Election> findRequestElectionsWithFinalVoteByStatus(@Bind("status") String status);
+    @SqlQuery(" SELECT DISTINCT e.electionid, e.datasetid, v.vote finalvote, e.status, e.createdate, e.referenceid, " +
+            "   e.userestriction, e.translateduserestriction, v.rationale finalrationale, v.createdate finalvotedate, " +
+            "   e.lastupdate, e.finalaccessvote, e.electiontype, e.datauseletter, e.dulname, e.archived, e.version " +
+            " FROM election e " +
+            " INNER JOIN vote v ON v.electionid = e.electionid " +
+            " INNER JOIN " +
+            "   (SELECT e2.referenceid, MAX(e2.createDate) maxdate " +
+            "    FROM election e2 " +
+            "    WHERE LOWER(e2.electiontype) = 'dataaccess' " +
+            "    AND LOWER(e2.status) = LOWER(:status) " +
+            "    GROUP BY e2.referenceid) electionview " +
+            "       ON electionview.maxdate = e.createdate " +
+            "       AND electionview.referenceid = e.referenceid" +
+            " WHERE LOWER(e.electiontype) = 'dataaccess' " +
+            " AND e.finalAccessVote IS true " +
+            " AND LOWER(v.type) = 'final' " +
+            " AND LOWER(e.status) = LOWER(:status) " +
+            " ORDER BY e.createdate ASC ")
+    List<Election> findLastDataAccessElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
     @SqlQuery("select e.electionId,  e.datasetId, e.lastUpdate, v.vote finalVote, e.finalAccessVote, e.translatedUseRestriction, e.useRestriction, e.status, e.createDate, e.referenceId, e.electionType, " +
             "v.rationale finalRationale, v.createDate finalVoteDate, e.dataUseLetter, e.dulName, e.archived, e.version  from election e inner join " +

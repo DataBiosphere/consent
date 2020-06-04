@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -45,6 +46,7 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.WhitelistService;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.util.WhitelistCache;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -143,6 +145,13 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UseRestrictionConverter providesUseRestrictionConverter() {
         return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+    }
+
+    @Provides
+    AuditService providesAuditService() {
+        return new AuditService(
+                providesDACUserDAO(),
+                providesWorkspaceAuditDAO());
     }
 
     @Provides
@@ -309,6 +318,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserRoleDAO providesUserRoleDAO() {
         return userRoleDAO;
+    }
+
+    @Provides
+    UserRolesHandler providesUserRolesHandler() {
+        return new UserRolesHandler(
+                providesDACUserDAO(),
+                providesDataAccessRequestService(),
+                providesElectionDAO(),
+                providesUserRoleDAO(),
+                providesVoteDAO());
     }
 
     @Provides

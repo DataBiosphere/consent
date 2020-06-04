@@ -1,14 +1,30 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.common.io.Resources;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.ParseResult;
+import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
@@ -22,21 +38,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.*;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.*;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.json.JSONObject;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Path("{api : (api/)?}dataset")
 public class DataSetResource extends Resource {
@@ -45,10 +59,13 @@ public class DataSetResource extends Resource {
     private final String TSV_DELIMITER = "\t";
     private final DataSetAPI api;
     private final DataAccessRequestAPI dataAccessRequestAPI;
+    private final UserService userService;
 
-    public DataSetResource() {
+    @Inject
+    public DataSetResource(UserService userService) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.api = AbstractDataSetAPI.getInstance();
+        this.userService = userService;
     }
 
     @POST
@@ -62,7 +79,6 @@ public class DataSetResource extends Resource {
             @PathParam("userId") Integer userId,
             @DefaultValue("false") @QueryParam("overwrite") boolean overwrite) throws IOException {
 
-        logger().debug("POSTing Data Set");
         List<DataSet> dataSets;
         List<String> errors = new ArrayList<>();
         if (part.getMediaType().getType().equals("text") &&
@@ -89,7 +105,7 @@ public class DataSetResource extends Resource {
                     return Response.ok(dataSets, MediaType.APPLICATION_JSON).build();
                 }
             } catch (Exception e) {
-                logger().fatal("POSTing Data Set", e);
+                logger().error("POSTing Data Set", e);
                 errors.add("A problem has occurred while uploading datasets - Contact Support");
             } finally {
                 if (inputFile != null) {
@@ -195,13 +211,14 @@ public class DataSetResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{datasetObjectId}/{dacUserId}")
+    @Path("/{datasetId}")
     @RolesAllowed(ADMIN)
-    public Response delete(@PathParam("datasetObjectId") Integer dataSetId, @PathParam("dacUserId") Integer dacUserId, @Context UriInfo info) {
-        try{
-            api.deleteDataset(dataSetId, dacUserId);
+    public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer dataSetId, @Context UriInfo info) {
+        try {
+            DACUser dacUser = userService.findUserByEmail(authUser.getName());
+            api.deleteDataset(dataSetId, dacUser.getDacUserId());
             return Response.ok().build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
     }
@@ -260,7 +277,7 @@ public class DataSetResource extends Resource {
 
     @Override
     protected Logger logger() {
-        return Logger.getLogger("DataSetResource");
+        return LoggerFactory.getLogger(this.getClass());
     }
 
 }

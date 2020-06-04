@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
@@ -415,15 +416,15 @@ public class DataAccessRequestResource extends Resource {
     public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
         try {
             List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
-            Document dar = dataAccessRequestAPI.cancelDataAccessRequest(referenceId);
+            DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
             if (CollectionUtils.isNotEmpty(usersToNotify)) {
-                emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getString(DarConstants.DAR_CODE));
+                emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getData().getDarCode());
             }
             return Response.ok().entity(dar).build();
         } catch (MessagingException | TemplateException | IOException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("The Data Access Request was cancelled but the DAC/Admin couldn't be notified. Contact Support. ", Response.Status.BAD_REQUEST.getStatusCode())).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error("Internal server error on delete. Please try again later. ", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+            return createExceptionResponse(e);
         }
     }
 

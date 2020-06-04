@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.Gson;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
@@ -32,6 +31,7 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
+import org.slf4j.Logger;
 
 import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
@@ -60,8 +60,8 @@ import java.util.stream.IntStream;
 @Deprecated
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private static Logger logger() {
-        return Logger.getLogger("DatabaseDataAccessRequestAPI");
+    private final Logger logger() {
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     private final UseRestrictionConverter converter;
@@ -201,20 +201,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     /**
      * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
      *
-     * @param userId User id
-     * @return List<String>
-     */
-    @Override
-    public List<String> describeDataAccessIdsForOwner(Integer userId) {
-        return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
-                filter(d -> d.getInteger(DarConstants.USER_ID).equals(userId)).
-                map(d -> d.getString(DarConstants.REFERENCE_ID)).
-                collect(Collectors.toList());
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
-     *
      * @return List<Document>
      */
     @Override
@@ -304,15 +290,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             }
         }
         return darManage;
-    }
-
-    @Override
-    public Document cancelDataAccessRequest(String referenceId) {
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        DataAccessRequestData darData = dar.getData();
-        darData.setStatus(ElectionStatus.CANCELED.getValue());
-        dataAccessRequestService.updateByReferenceId(referenceId, darData);
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     @Override
@@ -543,7 +520,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                     collect(Collectors.toList());
             datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
         } catch (Exception e) {
-            logger().warn(e);
+            logger().warn(e.getMessage());
         }
         return datasets;
     }

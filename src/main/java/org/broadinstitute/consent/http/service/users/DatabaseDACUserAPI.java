@@ -10,9 +10,11 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
@@ -30,15 +32,15 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
     protected final DACUserDAO dacUserDAO;
     protected final UserRoleDAO userRoleDAO;
-    private final UserHandlerAPI rolesHandler;
+    private final UserRolesHandler rolesHandler;
     private final UserService userService;
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
-        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, userHandlerAPI, userService));
+    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
+        DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, rolesHandler, userService));
     }
 
-    protected org.apache.log4j.Logger logger() {
-        return org.apache.log4j.Logger.getLogger("DatabaseDACUserAPI");
+    protected Logger logger() {
+        return LoggerFactory.getLogger(this.getClass());
     }
 
     /**
@@ -47,10 +49,10 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
+    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
         this.dacUserDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
-        this.rolesHandler = userHandlerAPI;
+        this.rolesHandler = rolesHandler;
         this.userService = userService;
     }
 
@@ -99,13 +101,13 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateDACUserById(Map<String, DACUser> dac, Integer id) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException {
-        DACUser updatedUser = dac.get("updatedUser");
+    public DACUser updateDACUserById(Map<String, DACUser> dac, Integer id) throws IllegalArgumentException, NotFoundException {
+        DACUser updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
         // validate user exists
         validateExistentUserById(id);
         // validate required fields are not null or empty
         validateRequiredFields(updatedUser);
-        rolesHandler.updateRoles(dac);
+        rolesHandler.updateRoles(updatedUser);
         try {
             dacUserDAO.updateDACUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {

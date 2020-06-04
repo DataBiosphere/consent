@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserHandlerAPI;
+import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 
 import javax.ws.rs.BadRequestException;
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.List;
 @Deprecated
 public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
 
-    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserHandlerAPI userHandlerAPI, UserService userService) {
+    public DatabaseUserAPI(DACUserDAO userDAO, UserRoleDAO roleDAO, UserRolesHandler userHandlerAPI, UserService userService) {
         super(userDAO, roleDAO, userHandlerAPI, userService);
     }
 

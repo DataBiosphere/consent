@@ -48,8 +48,6 @@ public interface DataAccessRequestAPI {
 
     Object getField(String requestId, String field);
 
-    Document cancelDataAccessRequest(String referenceId);
-
     List<DACUser> getUserEmailAndCancelElection(String referenceId);
 
     boolean hasUseRestriction(String referenceId);
