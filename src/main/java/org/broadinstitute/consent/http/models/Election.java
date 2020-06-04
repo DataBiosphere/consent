@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 
 import java.util.Date;
@@ -262,4 +263,19 @@ public class Election {
     public void setProjectTitle(String projectTitle) {
         this.projectTitle = projectTitle;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Election election = (Election) o;
+        return Objects.equal(electionId, election.electionId) &&
+                Objects.equal(referenceId, election.referenceId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(electionId, referenceId);
+    }
+
 }

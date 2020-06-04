@@ -36,7 +36,7 @@ public class ElectionService {
         List<Election> elections;
         if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
             elections = dacService.filterElectionsByDAC(
-                    electionDAO.findRequestElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
+                    electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()),
                     authUser);
             List<String> referenceIds = elections.stream().map(Election::getReferenceId).collect(Collectors.toList());
             List<DataAccessRequest> dataAccessRequests = dataAccessRequestService.
@@ -70,7 +70,7 @@ public class ElectionService {
         if (elections.isEmpty()) {
             throw new NotFoundException("Couldn't find any closed elections");
         }
-        return elections;
+        return elections.stream().distinct().collect(Collectors.toList());
     }
 
 }
