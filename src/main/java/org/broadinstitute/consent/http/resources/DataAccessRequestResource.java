@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
@@ -17,6 +19,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -61,18 +64,25 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import com.google.gson.reflect.TypeToken;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -507,10 +517,29 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @RolesAllowed(ADMIN)
     public Response convertDraftDAR(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
-        DataAccessRequestData data = DataAccessRequestData.fromString(json);
+        // datasetId is a copy of datasets, but not in the same form as full DARs. Pull out the id and make that
+        // the datasetId property.
+        Gson gson = new Gson();
+        Map<String, Object> m = gson.fromJson(json, HashMap.class);
+//        if (m.containsKey("datasetId")) {
+//            Object datasetId = m.get("datasetId");
+//            String datasetIdString = gson.toJson(datasetId);
+//            JsonArray datasetIdArray = gson.fromJson(datasetIdString, JsonArray.class);
+//            Spliterator<JsonElement> spliterator = Spliterators.spliterator(datasetIdArray.iterator(), 0);
+//            List<DatasetDetailEntry> entries = gson.fromJson(entryJson, listType);
+//            if (Objects.nonNull(entries) && !entries.isEmpty()) {
+//                m.remove("datasetId");
+//                List<Integer> datasetIdList = entries.stream().
+//                        map(DatasetDetailEntry::getDatasetId).
+//                        map(Integer::valueOf).
+//                        collect(Collectors.toList());
+//                m.put("datasetId", datasetIdList);
+//            }
+//        }
+        String updatedJson = gson.toJson(m);
+        DataAccessRequestData data = DataAccessRequestData.fromString(updatedJson);
         if (data.getCreateDate() == null) {
             // Original create date was inferred from mongo ObjectId.timestamp
-            Gson gson = new Gson();
             JsonObject obj = gson.fromJson(json, JsonObject.class);
             long createDate = new Date().getTime();
             if (obj.has("_id")) {

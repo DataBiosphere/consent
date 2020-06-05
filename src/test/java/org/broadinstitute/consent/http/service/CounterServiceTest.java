@@ -35,12 +35,12 @@ public class CounterServiceTest {
         when(counterDAO.getMaxCountByName(any())).thenReturn(count);
         initService();
 
-        String seq = service.getNextDarSequence();
-        assertEquals(String.valueOf(count), seq);
+        Integer seq = service.getNextDarSequence();
+        assertEquals(count, seq.intValue());
     }
 
     @Test
-    public void testSetCounterByName() {
+    public void testSetDarCount() {
         doNothing().when(counterDAO).setCountByName(any(), any());
         initService();
         try {

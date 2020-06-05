@@ -262,7 +262,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Document createDraftDataAccessRequest(Document draftDar){
-        String seq = counterService.getNextDarSequence();
+        String seq = String.valueOf(counterService.getNextDarSequence());
         Gson gson = new Gson();
         DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
         darData.setCreateDate(new Date().getTime());
@@ -540,7 +540,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
         if (CollectionUtils.isNotEmpty(dataAccessRequestList)) {
-            String seq = counterService.getNextDarSequence();
+            String seq = String.valueOf(counterService.getNextDarSequence());
             if (dataAccessRequestList.size() > 1) {
                 IntStream.range(0, dataAccessRequestList.size())
                         .forEach(idx -> {
