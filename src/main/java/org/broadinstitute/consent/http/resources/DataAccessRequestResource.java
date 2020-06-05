@@ -16,10 +16,8 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
@@ -64,7 +62,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,13 +73,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import com.google.gson.reflect.TypeToken;
+import java.util.stream.StreamSupport;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -521,21 +515,23 @@ public class DataAccessRequestResource extends Resource {
         // the datasetId property.
         Gson gson = new Gson();
         Map<String, Object> m = gson.fromJson(json, HashMap.class);
-//        if (m.containsKey("datasetId")) {
-//            Object datasetId = m.get("datasetId");
-//            String datasetIdString = gson.toJson(datasetId);
-//            JsonArray datasetIdArray = gson.fromJson(datasetIdString, JsonArray.class);
-//            Spliterator<JsonElement> spliterator = Spliterators.spliterator(datasetIdArray.iterator(), 0);
-//            List<DatasetDetailEntry> entries = gson.fromJson(entryJson, listType);
-//            if (Objects.nonNull(entries) && !entries.isEmpty()) {
-//                m.remove("datasetId");
-//                List<Integer> datasetIdList = entries.stream().
-//                        map(DatasetDetailEntry::getDatasetId).
-//                        map(Integer::valueOf).
-//                        collect(Collectors.toList());
-//                m.put("datasetId", datasetIdList);
-//            }
-//        }
+        if (m.containsKey("datasetId")) {
+            Object datasetId = m.get("datasetId");
+            String datasetIdString = gson.toJson(datasetId);
+            JsonArray datasetIdArray = gson.fromJson(datasetIdString, JsonArray.class);
+            List<Integer> datasetIds = StreamSupport.stream(datasetIdArray.spliterator(), false).
+                    map(JsonElement::getAsJsonObject).
+                    map(o -> o.get("id")).
+                    filter(Objects::nonNull).
+                    filter(o -> !o.isJsonNull()).
+                    map(JsonElement::getAsString).
+                    map(Integer::valueOf).
+                    collect(Collectors.toList());
+            if (!datasetIds.isEmpty()) {
+                m.remove("datasetId");
+                m.put("datasetId", datasetIds);
+            }
+        }
         String updatedJson = gson.toJson(m);
         DataAccessRequestData data = DataAccessRequestData.fromString(updatedJson);
         if (data.getCreateDate() == null) {
@@ -572,30 +568,18 @@ public class DataAccessRequestResource extends Resource {
     }
 
     /**
-     * Data Access Requests have a `datasetId` that can refer to either a numeric id (newer model) or to
-     * a string value pointing to the sample collection id (legacy model).
-     *
      * @param id The DAR document id
-     * @return Optional integer value of the referenced dataset.
+     * @return Optional value of the referenced dataset id.
      */
     private Optional<Integer> getDatasetIdForDarId(String id) {
-        List datasetIdList = dataAccessRequestAPI.
-                describeDataAccessRequestFieldsById(id, Collections.singletonList(DarConstants.DATASET_ID)).
-                get("datasetId", List.class);
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetId())) ?
+                dar.getData().getDatasetId() :
+                Collections.emptyList();
         if (datasetIdList == null || datasetIdList.isEmpty()) {
             return Optional.empty();
-        } else {
-            Object datasetId = datasetIdList.get(0);
-            try {
-                return Optional.of(Integer.valueOf(datasetId.toString()));
-            } catch (NumberFormatException e) {
-                DataSet dataset = dataSetAPI.findDataSetByObjectId(datasetId.toString());
-                if (dataset != null) {
-                    return Optional.of(dataset.getDataSetId());
-                }
-            }
         }
-        return Optional.empty();
+        return Optional.of(datasetIdList.get(0));
     }
 
     static class UnreviewedCases {
