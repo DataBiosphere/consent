@@ -37,8 +37,6 @@ public interface DataAccessRequestAPI {
 
     Document updateDataAccessRequest(Document dar, String id);
 
-    List<String> describeDataAccessIdsForOwner(Integer userId);
-
     // Draft/Partial Data Access Requests
     Document createDraftDataAccessRequest(Document dataAccessRequest) throws MongoException;
 

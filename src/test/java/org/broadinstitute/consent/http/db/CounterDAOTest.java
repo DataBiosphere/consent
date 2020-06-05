@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import org.broadinstitute.consent.http.models.Counter;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
@@ -18,27 +17,25 @@ public class CounterDAOTest extends DAOTestHelper {
 
     @Test
     public void testIncrementDarCounter() {
-        counterDAO.insertCounter(CounterService.DAR_COUNTER, 0);
+        counterDAO.addCounter(CounterService.DAR_COUNTER, 0);
         int count = 5;
         for (int i = 0; i < count; i++) {
-            counterDAO.incrementCounter(CounterService.DAR_COUNTER);
+            counterDAO.incrementCountByName(CounterService.DAR_COUNTER);
         }
-        Integer lastCount = counterDAO.getLastCountByName(CounterService.DAR_COUNTER);
+        Integer lastCount = counterDAO.getMaxCountByName(CounterService.DAR_COUNTER);
         assertEquals(Integer.valueOf(count), lastCount);
     }
 
     @Test
     public void testIncrementRandomCounter() {
         String name = RandomStringUtils.random(10, true, false);
-        counterDAO.insertCounter(name, 0);
+        counterDAO.addCounter(name, 0);
         int count = 5;
         for (int i = 0; i < count; i++) {
-            counterDAO.incrementCounter(name);
+            counterDAO.incrementCountByName(name);
         }
-        Integer lastId = counterDAO.getLastCountByName(name);
-        Counter last = counterDAO.getCounterById(lastId);
-        assertEquals(count, last.getId().intValue());
-        assertEquals(count, last.getCount().intValue());
+        Integer maxCount = counterDAO.getMaxCountByName(name);
+        assertEquals(count, maxCount.intValue());
     }
 
 }

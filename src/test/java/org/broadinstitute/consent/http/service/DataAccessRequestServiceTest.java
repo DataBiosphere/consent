@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -44,6 +45,8 @@ public class DataAccessRequestServiceTest {
     @Mock
     private UserService userService;
     @Mock
+    private MongoConsentDB mongo;
+    @Mock
     private VoteDAO voteDAO;
 
     private DataAccessRequestService service;
@@ -55,7 +58,7 @@ public class DataAccessRequestServiceTest {
 
     private void initService() {
         service = new DataAccessRequestService(consentDAO, dataAccessRequestDAO, dacDAO, dacUserDAO, dataSetDAO,
-                electionDAO, dacService, userService, voteDAO);
+                electionDAO, dacService, userService, voteDAO, mongo);
     }
 
     @Test

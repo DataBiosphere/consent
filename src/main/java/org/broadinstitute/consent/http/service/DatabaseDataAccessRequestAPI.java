@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
@@ -60,7 +61,7 @@ import java.util.stream.IntStream;
 @Deprecated
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private final Logger logger() {
+    private Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
     }
 
