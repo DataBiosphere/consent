@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 // TODO: Rename this class to UserDAO - see DUOS-344
-@RegisterRowMapper(DACUserMapper.class)
+@RegisterRowMapper(UserMapper.class)
 public interface UserDAO extends Transactional<UserDAO> {
 
     @UseRowMapper(DACUserRoleMapper.class)

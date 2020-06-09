@@ -61,12 +61,12 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlUpdate("delete from dac where dac_id = :dacId")
     void deleteDac(@Bind("dacId") Integer dacId);
 
-    @UseRowMapper(DACUserMapper.class)
+    @UseRowMapper(UserMapper.class)
     @SqlQuery("select du.* from dacuser du " +
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId")
     List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
-    @UseRowMapper(DACUserMapper.class)
+    @UseRowMapper(UserMapper.class)
     @SqlQuery("select du.* from dacuser du " +
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId and ur.role_id = :roleId")
     List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);

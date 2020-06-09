@@ -8,7 +8,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DACUserMapper implements RowMapper<User> {
+public class UserMapper implements RowMapper<User> {
 
     public User map(ResultSet r, StatementContext ctx) throws SQLException {
         User user = new User();
