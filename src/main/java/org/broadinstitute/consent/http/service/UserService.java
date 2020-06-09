@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UserService {
 
@@ -46,12 +47,10 @@ public class UserService {
             throw new BadRequestException("User exists with this email address: " + user.getEmail());
         }
         dacUserID = userDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
-        if (user.getRoles() != null) {
-            insertUserRoles(user, dacUserID);
-        }
-        User foundUser = userDAO.findDACUserById(dacUserID);
-        foundUser.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
-        return foundUser;
+        insertUserRoles(user.getRoles(), dacUserID);
+        User createdUser = userDAO.findDACUserById(dacUserID);
+        createdUser.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        return createdUser;
     }
 
     public User findUserById(Integer id) throws NotFoundException {
@@ -119,7 +118,10 @@ public class UserService {
             roles.forEach(role -> {
                 if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
                         || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
-                    throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + UserRoles.DATAOWNER.getRoleName() + " and " + UserRoles.RESEARCHER.getRoleName());
+                    String validRoleNames = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).
+                            map(UserRoles::getRoleName).
+                            collect(Collectors.joining(", "));
+                    throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
                 }
             });
         } else {
@@ -127,8 +129,7 @@ public class UserService {
         }
     }
 
-    private void insertUserRoles(User user, Integer dacUserId) {
-        List<UserRole> roles = user.getRoles();
+    private void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
         roles.forEach(r -> {
             if (r.getRoleId() == null) {
                 r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));

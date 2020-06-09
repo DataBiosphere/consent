@@ -97,6 +97,24 @@ public class UserServiceTest {
     }
 
     @Test(expected = BadRequestException.class)
+    public void testCreateUserInvalidRole_1() {
+        User u = generateUser();
+        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
+        u.setRoles(roles);
+        initService();
+        service.createUser(u);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testCreateUserInvalidRole_2() {
+        User u = generateUser();
+        List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.MEMBER.getRoleId()));
+        u.setRoles(roles);
+        initService();
+        service.createUser(u);
+    }
+
+    @Test(expected = BadRequestException.class)
     public void testCreateUserNoEmail() {
         User u = generateUser();
         u.setEmail(null);
