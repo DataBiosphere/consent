@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,9 +29,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 public class UserResourceTest {
-
-    @Mock
-    private UserAPI userAPI;
 
     @Mock
     private UserService userService;
@@ -62,7 +58,7 @@ public class UserResourceTest {
     }
 
     private void initResource() {
-        userResource = new UserResource(userAPI, userService);
+        userResource = new UserResource(userService);
     }
 
     @Test
@@ -104,7 +100,7 @@ public class UserResourceTest {
         roles.add(researcher);
         user.setRoles(roles);
         when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-        when(userAPI.createUser(user)).thenReturn(user);
+        when(userService.createUser(user)).thenReturn(user);
         initResource();
 
         Response response = userResource.createResearcher(uriInfo, authUser);

@@ -10,7 +10,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.UserAPI;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -31,12 +30,10 @@ import java.util.Collections;
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
 
-    private final UserAPI userAPI;
     private final UserService userService;
 
     @Inject
-    public UserResource(UserAPI userAPI, UserService userService) {
-        this.userAPI = userAPI;
+    public UserResource(UserService userService) {
         this.userService = userService;
     }
 
@@ -67,7 +64,7 @@ public class UserResource extends Resource {
         dacUser.setRoles(Collections.singletonList(researcher));
         try {
             URI uri;
-            dacUser = userAPI.createUser(dacUser);
+            dacUser = userService.createUser(dacUser);
             uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(new URI(uri.toString().replace("user", "dacuser"))).entity(dacUser).build();
         } catch (Exception e) {

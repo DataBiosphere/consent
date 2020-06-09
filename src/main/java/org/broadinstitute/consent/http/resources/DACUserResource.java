@@ -58,7 +58,7 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response createDACUser(@Context UriInfo info, String json) {
         try {
-            User user = dacUserAPI.createDACUser(new User(json));
+            User user = userService.createUser(new User(json));
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
                     dacUserAPI.updateEmailPreference(aBoolean, user.getDacUserId())

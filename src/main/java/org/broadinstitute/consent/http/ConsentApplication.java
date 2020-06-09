@@ -35,7 +35,6 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -44,6 +43,7 @@ import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
@@ -129,8 +129,6 @@ import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
-import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -269,7 +267,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
         final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
-        final UserAPI userAPI = new DatabaseUserAPI(userDAO, userRoleDAO, userRolesHandler, userService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Now register our resources.
@@ -295,7 +292,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new HelpReportResource(emailNotifierService));
         env.jersey().register(ApprovalExpirationTimeResource.class);
         env.jersey().register(MatchResource.class);
-        env.jersey().register(new UserResource(userAPI, userService));
+        env.jersey().register(new UserResource(userService));
         env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));
