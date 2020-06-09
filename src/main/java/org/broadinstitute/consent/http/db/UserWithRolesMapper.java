@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DACUserRoleMapper implements RowMapper<User>, RowMapperHelper {
+public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
 
     private Map<Integer, User> users = new HashMap<>();
 
