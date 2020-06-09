@@ -840,7 +840,7 @@ paths:
         200:
           description: The added DAC Member
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         404:
           description: No DAC or User found with the provided ID
         409:
@@ -892,7 +892,7 @@ paths:
         200:
           description: The added DAC Chairperson
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         404:
           description: No DAC or User found with the provided ID
         409:
@@ -967,7 +967,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/DACUser'
+              $ref: '#/definitions/User'
         404:
           description: No DAC found with the provided ID
         500:
@@ -991,26 +991,26 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/DACUser'
+              $ref: '#/definitions/User'
         500:
           description: Internal Server Error
   /api/dacuser:
     post:
-      summary: createDACUser
-      description: Creates a DAC User
+      summary: Create User
+      description: Creates a User
       parameters:
         - name: dac
           in: body
           required: true
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
       tags:
         - User
       responses:
         200:
           description: Returns the created user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed user entity.
     get:
@@ -1024,7 +1024,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/DACUser'
+              $ref: '#/definitions/User'
   /api/dacuser/{email}:
     get:
       summary: describe
@@ -1041,7 +1041,7 @@ paths:
         200:
           description: Returns the user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
   /api/dacuser/{id}:
     put:
       summary: update
@@ -1066,14 +1066,14 @@ paths:
             properties:
               updatedUser:
                 description: The updated user information
-                $ref: '#/definitions/DACUser'
+                $ref: '#/definitions/User'
       tags:
         - User
       responses:
         200:
           description: Returns the updated user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Malformed user entity.
         403:
@@ -1095,7 +1095,7 @@ paths:
         200:
           description: Returns the user by status
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         500:
           description: Server Error
     put:
@@ -1121,7 +1121,7 @@ paths:
         200:
           description: Returns the updated user
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         500:
           description: Server Error
   /api/dar:
@@ -2404,7 +2404,7 @@ paths:
         200:
           description: Returns the created user.
           schema:
-            $ref: '#/definitions/DACUser'
+            $ref: '#/definitions/User'
         400:
           description: Unable to validate the user's google identity.
           schema:
@@ -3164,7 +3164,7 @@ definitions:
         description: The owner of the DAR
         type: object
         items:
-          $ref: '#/definitions/DACUser'
+          $ref: '#/definitions/User'
   Dataset:
     type: object
     properties:
@@ -3232,13 +3232,13 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/DACUser'
+          $ref: '#/definitions/User'
       not_associated_users:
         description: Non-associated Users
         type: array
         items:
           type: object
-          $ref: '#/definitions/DACUser'
+          $ref: '#/definitions/User'
   Dictionary:
     type: object
     properties:
@@ -3322,13 +3322,13 @@ definitions:
         description: List of Chairpersons
         type: array
         items:
-          $ref: '#/definitions/DACUser'
+          $ref: '#/definitions/User'
       members:
         description: List of Members
         type: array
         items:
-          $ref: '#/definitions/DACUser'
-  DACUser:
+          $ref: '#/definitions/User'
+  User:
     type: object
     properties:
       dacUserId:
