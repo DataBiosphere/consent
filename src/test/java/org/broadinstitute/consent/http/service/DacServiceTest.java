@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -30,7 +30,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -187,14 +186,14 @@ public class DacServiceTest {
         when(dacDAO.findUserRolesForUsers(any())).thenReturn(getDacUsers().get(0).getRoles());
         initService();
 
-        List<DACUser> users = service.findMembersByDacId(1);
+        List<User> users = service.findMembersByDacId(1);
         Assert.assertNotNull(users);
         Assert.assertFalse(users.isEmpty());
     }
 
     @Test
     public void testAddDacMember() {
-        DACUser user = getDacUsers().get(0);
+        User user = getDacUsers().get(0);
         Dac dac = getDacs().get(0);
         when(userService.findUserById(any())).thenReturn(user);
         when(userService.findUserById(any())).thenReturn(user);
@@ -213,7 +212,7 @@ public class DacServiceTest {
         initService();
 
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        DACUser user1 = service.addDacMember(role, user, dac);
+        User user1 = service.addDacMember(role, user, dac);
         Assert.assertNotNull(user1);
         Assert.assertFalse(user1.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
@@ -223,7 +222,7 @@ public class DacServiceTest {
     public void testRemoveDacMember() {
         Role role = new Role(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
         Dac dac = getDacs().get(0);
-        DACUser member = getDacUsers().get(1);
+        User member = getDacUsers().get(1);
         dac.setChairpersons(Collections.singletonList(getDacUsers().get(0)));
         dac.setMembers(Collections.singletonList(member));
         doNothing().when(dacDAO).removeDacMember(anyInt());
@@ -243,8 +242,8 @@ public class DacServiceTest {
     public void testRemoveDacChair() {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         Dac dac = getDacs().get(0);
-        DACUser chair1 = getDacUsers().get(0);
-        DACUser chair2 = getDacUsers().get(0);
+        User chair1 = getDacUsers().get(0);
+        User chair2 = getDacUsers().get(0);
         dac.setChairpersons(Arrays.asList(chair1, chair2));
         dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
         doNothing().when(dacDAO).removeDacMember(anyInt());
@@ -264,7 +263,7 @@ public class DacServiceTest {
     public void testRemoveDacChairFailure() {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         Dac dac = getDacs().get(0);
-        DACUser chair = getDacUsers().get(0);
+        User chair = getDacUsers().get(0);
         dac.setChairpersons(Collections.singletonList(chair));
         dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
         doNothing().when(dacDAO).removeDacMember(anyInt());
@@ -828,12 +827,12 @@ public class DacServiceTest {
     /**
      * @return A list of two users in a single DAC
      */
-    private List<DACUser> getDacUsers() {
+    private List<User> getDacUsers() {
         return Arrays.asList(getChair(), getMember());
     }
 
-    private DACUser getChair() {
-        DACUser chair = new DACUser();
+    private User getChair() {
+        User chair = new User();
         chair.setDacUserId(1);
         chair.setDisplayName("Chair");
         chair.setEmail("chair@duos.org");
@@ -842,8 +841,8 @@ public class DacServiceTest {
         return chair;
     }
 
-    private DACUser getMember() {
-        DACUser member = new DACUser();
+    private User getMember() {
+        User member = new User();
         member.setDacUserId(2);
         member.setDisplayName("Member");
         member.setEmail("member@duos.org");

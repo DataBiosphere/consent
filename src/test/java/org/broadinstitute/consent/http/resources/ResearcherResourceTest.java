@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.WhitelistService;
@@ -117,10 +117,10 @@ public class ResearcherResourceTest {
     @Test
     public void testDescribeAllResearcherPropertiesAdmin() {
         when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        DACUser authedDacUser = new DACUser();
-        authedDacUser.setDacUserId(1);
-        authedDacUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        User authedUser = new User();
+        authedUser.setDacUserId(1);
+        authedUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
         initResource();
 
         // Request properties for self
@@ -135,10 +135,10 @@ public class ResearcherResourceTest {
     @Test
     public void testDescribeAllResearcherPropertiesChair() {
         when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        DACUser authedDacUser = new DACUser();
-        authedDacUser.setDacUserId(1);
-        authedDacUser.addRole(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        User authedUser = new User();
+        authedUser.setDacUserId(1);
+        authedUser.addRole(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
         initResource();
 
         // Request properties for self
@@ -153,10 +153,10 @@ public class ResearcherResourceTest {
     @Test
     public void testDescribeAllResearcherPropertiesResearcher() {
         when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        DACUser authedDacUser = new DACUser();
-        authedDacUser.setDacUserId(1);
-        authedDacUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        User authedUser = new User();
+        authedUser.setDacUserId(1);
+        authedUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
         initResource();
 
         // Request properties for self
@@ -171,10 +171,10 @@ public class ResearcherResourceTest {
     @Test
     public void testGetResearcherPropertiesForDARAdmin() {
         when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        DACUser authedDacUser = new DACUser();
-        authedDacUser.setDacUserId(1);
-        authedDacUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        User authedUser = new User();
+        authedUser.setDacUserId(1);
+        authedUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
         initResource();
 
         // Request properties for self
@@ -189,10 +189,10 @@ public class ResearcherResourceTest {
     @Test
     public void testGetResearcherPropertiesForDARResearcher() {
         when(researcherService.describeResearcherPropertiesMap(any())).thenReturn(new HashMap<>());
-        DACUser authedDacUser = new DACUser();
-        authedDacUser.setDacUserId(1);
-        authedDacUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-        when(userService.findUserByEmail(anyString())).thenReturn(authedDacUser);
+        User authedUser = new User();
+        authedUser.setDacUserId(1);
+        authedUser.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+        when(userService.findUserByEmail(anyString())).thenReturn(authedUser);
         initResource();
 
         // Request properties for self

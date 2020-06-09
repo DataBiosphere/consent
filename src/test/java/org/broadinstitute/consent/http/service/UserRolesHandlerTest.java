@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -61,7 +61,7 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testUpdateToChairperson() {
-        DACUser user = generateUser();
+        User user = generateUser();
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
         initService();
 
@@ -72,7 +72,7 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testUpdateToMember() {
-        DACUser user = generateUser();
+        User user = generateUser();
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
         initService();
 
@@ -83,7 +83,7 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testAddRoles() {
-        DACUser user = generateUser();
+        User user = generateUser();
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
         initService();
 
@@ -95,7 +95,7 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testRemoveRoles() {
-        DACUser user = generateUser();
+        User user = generateUser();
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Arrays.asList(getResearcherRole(), getAlumniRole(), getDataOwnerRole()));
         initService();
 
@@ -107,7 +107,7 @@ public class UserRolesHandlerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testMinimumAdmins() {
-        DACUser user = generateUser();
+        User user = generateUser();
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getAdminRole()));
         initService();
 
@@ -117,7 +117,7 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testRemoveDataOwnerRole() {
-        DACUser user = generateUser();
+        User user = generateUser();
         Vote doVote = generateDOVote(user);
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getDataOwnerRole()));
         when(voteDAO.findVotesByUserId(any())).thenReturn(Collections.singletonList(doVote));
@@ -133,7 +133,7 @@ public class UserRolesHandlerTest {
 
     @Test
     public void testRemoveResearcherRole() {
-        DACUser user = generateUser();
+        User user = generateUser();
         DataAccessRequest dar = generateDar(user);
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(getResearcherRole()));
         when(dataAccessRequestService.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
@@ -169,7 +169,7 @@ public class UserRolesHandlerTest {
     private static final String RESEARCHER = UserRoles.RESEARCHER.getRoleName();
     private static final String ADMIN = UserRoles.ADMIN.getRoleName();
 
-    private DataAccessRequest generateDar(DACUser user) {
+    private DataAccessRequest generateDar(User user) {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         data.setUserId(user.getDacUserId());
@@ -178,7 +178,7 @@ public class UserRolesHandlerTest {
         return dar;
     }
 
-    private Vote generateDOVote(DACUser user) {
+    private Vote generateDOVote(User user) {
         Vote doVote = new Vote();
         doVote.setVote(true);
         doVote.setType(VoteType.DATA_OWNER.getValue());
@@ -187,8 +187,8 @@ public class UserRolesHandlerTest {
         return doVote;
     }
 
-    private DACUser generateUser() {
-        return new DACUser(
+    private User generateUser() {
+        return new User(
                 RandomUtils.nextInt(1, 1000),
                 RandomStringUtils.random(10, true, false),
                 RandomStringUtils.random(10, true, false),

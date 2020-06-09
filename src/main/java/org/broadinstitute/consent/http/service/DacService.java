@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,7 +66,7 @@ public class DacService {
         return dacDAO.findAll();
     }
 
-    public List<DACUser> findAllDACUsersBySearchString(String term) {
+    public List<User> findAllDACUsersBySearchString(String term) {
         return dacDAO.findAllDACUsersBySearchString(term).stream().distinct().collect(Collectors.toList());
     }
 
@@ -79,14 +78,14 @@ public class DacService {
      */
     public List<Dac> findAllDacsWithMembers() {
         List<Dac> dacs = dacDAO.findAll();
-        List<DACUser> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct().collect(Collectors.toList());
-        Map<Dac, List<DACUser>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
+        List<User> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct().collect(Collectors.toList());
+        Map<Dac, List<User>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
         return dacs.stream().peek(d -> {
-            List<DACUser> chairs = dacToUserMap.get(d).stream().
+            List<User> chairs = dacToUserMap.get(d).stream().
                     filter(u -> u.getRoles().stream().
                             anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
                     collect(Collectors.toList());
-            List<DACUser> members = dacToUserMap.get(d).stream().
+            List<User> members = dacToUserMap.get(d).stream().
                     filter(u -> u.getRoles().stream().
                             anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
                     collect(Collectors.toList());
@@ -103,10 +102,10 @@ public class DacService {
      * @param allDacMembers List of all DACUsers, i.e. users that are in any Dac.
      * @return Map of Dac to list of DACUser
      */
-    private Map<Dac, List<DACUser>> groupUsersByDacs(List<Dac> dacs, List<DACUser> allDacMembers) {
+    private Map<Dac, List<User>> groupUsersByDacs(List<Dac> dacs, List<User> allDacMembers) {
         Map<Integer, Dac> dacMap = dacs.stream().collect(Collectors.toMap(Dac::getDacId, d -> d));
-        Map<Integer, DACUser> userMap = allDacMembers.stream().collect(Collectors.toMap(DACUser::getDacUserId, u -> u));
-        Map<Dac, List<DACUser>> dacToUserMap = new HashMap<>();
+        Map<Integer, User> userMap = allDacMembers.stream().collect(Collectors.toMap(User::getDacUserId, u -> u));
+        Map<Dac, List<User>> dacToUserMap = new HashMap<>();
         dacs.forEach(d -> dacToUserMap.put(d, new ArrayList<>()));
         allDacMembers.stream().
                 flatMap(u -> u.getRoles().stream()).
@@ -114,7 +113,7 @@ public class DacService {
                         ur.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
                 forEach(ur -> {
                     Dac d = dacMap.get(ur.getDacId());
-                    DACUser u = userMap.get(ur.getUserId());
+                    User u = userMap.get(ur.getUserId());
                     if (d != null && u != null && dacToUserMap.containsKey(d)) {
                         dacToUserMap.get(d).add(u);
                     }
@@ -124,8 +123,8 @@ public class DacService {
 
     public Dac findById(Integer dacId) {
         Dac dac = dacDAO.findById(dacId);
-        List<DACUser> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId());
-        List<DACUser> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
+        List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId());
+        List<User> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
         dac.setChairpersons(chairs);
         dac.setMembers(members);
         return dac;
@@ -146,7 +145,7 @@ public class DacService {
         dacDAO.deleteDac(dacId);
     }
 
-    public DACUser findUserById(Integer id) throws IllegalArgumentException {
+    public User findUserById(Integer id) throws IllegalArgumentException {
         return userService.findUserById(id);
     }
 
@@ -166,11 +165,11 @@ public class DacService {
         return dataSetDAO.findDatasetsForConsentId(consentId);
     }
 
-    public List<DACUser> findMembersByDacId(Integer dacId) {
-        List<DACUser> dacUsers = dacDAO.findMembersByDacId(dacId);
-        List<Integer> allUserIds = dacUsers.
+    public List<User> findMembersByDacId(Integer dacId) {
+        List<User> users = dacDAO.findMembersByDacId(dacId);
+        List<Integer> allUserIds = users.
                 stream().
-                map(DACUser::getDacUserId).
+                map(User::getDacUserId).
                 distinct().
                 collect(Collectors.toList());
         Map<Integer, List<UserRole>> userRoleMap = new HashMap<>();
@@ -179,17 +178,17 @@ public class DacService {
                     stream().
                     collect(groupingBy(UserRole::getUserId)));
         }
-        dacUsers.forEach(u -> {
+        users.forEach(u -> {
             if (userRoleMap.containsKey(u.getDacUserId())) {
                 u.setRoles(userRoleMap.get(u.getDacUserId()));
             }
         });
-        return dacUsers;
+        return users;
     }
 
-    public DACUser addDacMember(Role role, DACUser user, Dac dac) throws IllegalArgumentException {
+    public User addDacMember(Role role, User user, Dac dac) throws IllegalArgumentException {
         dacDAO.addDacMember(role.getRoleId(), user.getDacUserId(), dac.getDacId());
-        DACUser updatedUser = userService.findUserById(user.getDacUserId());
+        User updatedUser = userService.findUserById(user.getDacUserId());
         List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
         for (Election e : elections) {
             IllegalArgumentException noTypeException = new IllegalArgumentException("Unable to determine election type for election id: " + e.getElectionId());
@@ -207,7 +206,7 @@ public class DacService {
         return userService.findUserById(updatedUser.getDacUserId());
     }
 
-    public void removeDacMember(Role role, DACUser user, Dac dac) throws BadRequestException {
+    public void removeDacMember(Role role, User user, Dac dac) throws BadRequestException {
         if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
             if (dac.getChairpersons().size() <= 1) {
                 throw new BadRequestException("Dac requires at least one chairperson.");
@@ -240,12 +239,12 @@ public class DacService {
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
+        User user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
         return user != null;
     }
 
     boolean isAuthUserChair(AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
+        User user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
         return user != null;
     }
 
@@ -253,7 +252,7 @@ public class DacService {
         if (isAuthUserChair(authUser)) {
             return true;
         }
-        DACUser user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
+        User user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
         return user != null;
     }
 

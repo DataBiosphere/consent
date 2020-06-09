@@ -5,7 +5,7 @@ import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +26,7 @@ public class DatabaseApprovalExpirationTimeAPITest {
     DatabaseApprovalExpirationTimeAPI databaseApprovalAPI;
 
     ApprovalExpirationTime validApproval = new ApprovalExpirationTime(1, 123, new Date(), new Date(), 5, "Testing approval period");
-    DACUser validUser = new DACUser();
+    User validUser = new User();
 
     @Before
     public void setUp(){

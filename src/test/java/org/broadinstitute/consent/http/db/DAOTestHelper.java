@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -215,7 +215,7 @@ public class DAOTestHelper {
         return consentDAO.findConsentById(consentId);
     }
 
-    DACUser createUser() {
+    User createUser() {
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
         int i3 = RandomUtils.nextInt(3, 5);
@@ -229,7 +229,7 @@ public class DAOTestHelper {
         return userDAO.findDACUserById(userId);
     }
 
-    DACUser createUserWithRole(Integer roleId) {
+    User createUserWithRole(Integer roleId) {
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
         int i3 = RandomUtils.nextInt(3, 5);
@@ -244,8 +244,8 @@ public class DAOTestHelper {
         return userDAO.findDACUserById(userId);
     }
 
-    DACUser createUserWithRoleInDac(Integer roleId, Integer dacId) {
-        DACUser user = createUserWithRole(roleId);
+    User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+        User user = createUserWithRole(roleId);
         dacDAO.addDacMember(roleId, user.getDacUserId(), dacId);
         return user;
     }

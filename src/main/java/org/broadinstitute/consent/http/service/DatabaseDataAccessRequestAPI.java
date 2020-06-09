@@ -20,7 +20,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -305,19 +305,19 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public List<DACUser> getUserEmailAndCancelElection(String referenceId) {
+    public List<User> getUserEmailAndCancelElection(String referenceId) {
         Election access = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
         Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
         updateElection(access, rp);
-        List<DACUser> dacUsers = new ArrayList<>();
+        List<User> users = new ArrayList<>();
         if (access != null){
             List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-            dacUsers.addAll(dacUserDAO.findUsers(userIds));
+            users.addAll(dacUserDAO.findUsers(userIds));
         } else {
-            dacUsers =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+            users =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
         }
-        return dacUsers;
+        return users;
     }
 
     @Override
@@ -360,7 +360,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
@@ -486,18 +486,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi) {
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
-        Optional<DACUser> optionalUser = Optional.ofNullable(dacUser);
-        String status = optionalUser.isPresent() ? dacUser.getStatus() : "";
-        String rationale = optionalUser.isPresent() ? dacUser.getRationale() : "";
+        Optional<User> optionalUser = Optional.ofNullable(user);
+        String status = optionalUser.isPresent() ? user.getStatus() : "";
+        String rationale = optionalUser.isPresent() ? user.getRationale() : "";
         List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
-                researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId()) :
+                researcherPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
-            .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
+            .setResearcherName(user, dar.getString(DarConstants.INVESTIGATOR))
             .setStatus(status)
             .setRationale(rationale)
             .setUserId(dar.getInteger(DarConstants.USER_ID))

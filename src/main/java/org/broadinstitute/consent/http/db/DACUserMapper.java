@@ -1,17 +1,17 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DACUserMapper implements RowMapper<DACUser> {
+public class DACUserMapper implements RowMapper<User> {
 
-    public DACUser map(ResultSet r, StatementContext ctx) throws SQLException {
-        DACUser user = new DACUser();
+    public User map(ResultSet r, StatementContext ctx) throws SQLException {
+        User user = new User();
         user.setDacUserId(r.getInt("dacUserId"));
         user.setEmail(r.getString("email"));
         user.setEmailPreference(r.getBoolean("email_preference"));

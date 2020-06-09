@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
@@ -51,7 +51,7 @@ public class DataSetAssociationsResource extends Resource {
     @PermitAll
     public Response getDatasetAssociations(@PathParam("dataSetId") Integer dataSetId) {
         try {
-            Map<String, Collection<DACUser>> userMap = api.findDataOwnersRelationWithDataset(dataSetId);
+            Map<String, Collection<User>> userMap = api.findDataOwnersRelationWithDataset(dataSetId);
             return Response.ok().entity(userMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

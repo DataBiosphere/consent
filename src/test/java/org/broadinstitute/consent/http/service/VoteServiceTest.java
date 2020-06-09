@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -332,7 +332,7 @@ public class VoteServiceTest {
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         UserRole chairRole = new UserRole();
         chairRole.setUserId(user.getDacUserId());

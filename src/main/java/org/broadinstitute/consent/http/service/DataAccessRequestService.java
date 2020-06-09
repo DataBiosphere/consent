@@ -18,7 +18,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -304,7 +304,7 @@ public class DataAccessRequestService {
             List<DataAccessRequest> documents,
             Map<String, Election> referenceIdElectionMap,
             AuthUser authUser) {
-        DACUser user = userService.findUserByEmail(authUser.getName());
+        User user = userService.findUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
                 map(d -> d.getData().getDatasetId()).
@@ -364,7 +364,7 @@ public class DataAccessRequestService {
     /**
      * Return a cloned, immutable list of DataAccessRequestManage objects with election and vote information populated
      */
-    private List<DataAccessRequestManage> populateElectionInformation(List<DataAccessRequestManage> darManages, Map<String, Election> referenceIdElectionMap, DACUser user) {
+    private List<DataAccessRequestManage> populateElectionInformation(List<DataAccessRequestManage> darManages, Map<String, Election> referenceIdElectionMap, User user) {
         Collection<Election> elections = referenceIdElectionMap.values();
         List<Integer> electionIds = referenceIdElectionMap.values().stream().
                 map(Election::getElectionId).collect(toList());
@@ -459,10 +459,10 @@ public class DataAccessRequestService {
                 }).collect(Collectors.collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
-    private Optional<DACUser> getOwnerUser(Object dacUserId) {
+    private Optional<User> getOwnerUser(Object dacUserId) {
         try {
             Integer userId = Integer.valueOf(dacUserId.toString());
-            Set<DACUser> users = dacUserDAO.findUsersWithRoles(Collections.singletonList(userId));
+            Set<User> users = dacUserDAO.findUsersWithRoles(Collections.singletonList(userId));
             return users.stream().findFirst();
         } catch (Exception e) {
             logger.error("Unable to determine user for dacUserId: " + dacUserId.toString() + "; " + e.getMessage());

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.api.client.http.GenericUrl;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.models.WhitelistHeaders;
@@ -87,7 +87,7 @@ public class WhitelistServiceTest {
     public void testFindWhitelistEntriesForUser_CommonsId() {
         String matchField = "commons";
         String fileData = generateWhitelistWithData(matchField);
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDacUserId(1);
         user.setEmail("email");
         List<ResearcherProperty> properties = new ArrayList<>();
@@ -103,7 +103,7 @@ public class WhitelistServiceTest {
     public void testFindWhitelistEntriesForUser_Email() {
         String matchField = "email";
         String fileData = generateWhitelistWithData(matchField);
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDacUserId(1);
         user.setEmail(matchField);
         List<ResearcherProperty> properties = new ArrayList<>();
@@ -119,7 +119,7 @@ public class WhitelistServiceTest {
     public void testFindWhitelistEntriesForUser_NoResults() {
         String matchField = RandomStringUtils.random(5, true, true);
         String fileData = WhitelistParserTest.makeSampleWhitelistFile(2, false);
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDacUserId(1);
         user.setEmail(matchField);
         List<ResearcherProperty> properties = new ArrayList<>();

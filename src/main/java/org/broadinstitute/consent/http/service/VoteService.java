@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
@@ -102,15 +102,15 @@ public class VoteService {
     @SuppressWarnings("DuplicatedCode")
     public List<Vote> createVotes(Election election, ElectionType electionType, Boolean isManualReview) {
         Dac dac = electionDAO.findDacForElection(election.getElectionId());
-        Set<DACUser> dacUsers;
+        Set<User> users;
         if (dac != null) {
-            dacUsers = dacUserDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
+            users = dacUserDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
         } else {
-            dacUsers = dacUserDAO.findNonDACUsersEnabledToVote();
+            users = dacUserDAO.findNonDACUsersEnabledToVote();
         }
         List<Vote> votes = new ArrayList<>();
-        if (dacUsers != null) {
-            for (DACUser user : dacUsers) {
+        if (users != null) {
+            for (User user : users) {
                 votes.addAll(createVotesForUser(user, election, electionType, isManualReview));
             }
         }
@@ -126,7 +126,7 @@ public class VoteService {
      * @param isManualReview Is election manual review
      * @return List of created votes
      */
-    List<Vote> createVotesForUser(DACUser user, Election election, ElectionType electionType, Boolean isManualReview) {
+    List<Vote> createVotesForUser(User user, Election election, ElectionType electionType, Boolean isManualReview) {
         Dac dac = electionDAO.findDacForElection(election.getElectionId());
         List<Vote> votes = new ArrayList<>();
         Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
@@ -189,7 +189,7 @@ public class VoteService {
      * @param dac The Dac we are restricting elections to
      * @param user The Dac member we are deleting votes for
      */
-    void deleteOpenDacVotesForUser(Dac dac, DACUser user) {
+    void deleteOpenDacVotesForUser(Dac dac, User user) {
         List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
                 map(Election::getElectionId).
                 collect(Collectors.toList());
@@ -204,7 +204,7 @@ public class VoteService {
         }
     }
 
-    private boolean isDacChairPerson(Dac dac, DACUser user) {
+    private boolean isDacChairPerson(Dac dac, User user) {
         if (dac != null) {
             return user.getRoles().
                     stream().

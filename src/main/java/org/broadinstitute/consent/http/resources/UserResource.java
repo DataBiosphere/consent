@@ -6,7 +6,7 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
@@ -62,7 +62,7 @@ public class UserResource extends Resource {
         } catch (NotFoundException nfe) {
             // no-op, we expect to not find the new user in this case.
         }
-        DACUser dacUser = new DACUser(googleUser);
+        User dacUser = new User(googleUser);
         UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         dacUser.setRoles(Collections.singletonList(researcher));
         try {

@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
@@ -30,7 +30,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsertEmail() {
-        DACUser chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
         DataSet dataset = createDataset();
         Consent c = createConsent(d.getDacId());
@@ -52,7 +52,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsertBulkEmailNoVotes() {
-        DACUser chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Dac d = createDac();
         DataSet dataset = createDataset();
         Consent c = createConsent(d.getDacId());

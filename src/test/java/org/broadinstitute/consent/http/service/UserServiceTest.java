@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,12 +55,12 @@ public class UserServiceTest {
 
     @Test
     public void testFindUserByIdNoRoles() {
-        DACUser u = createUser();
+        User u = createUser();
         when(userDAO.findDACUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
-        DACUser user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getDacUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertTrue(u.getRoles().isEmpty());
@@ -68,7 +68,7 @@ public class UserServiceTest {
 
     @Test
     public void testFindUserByIdWithRoles() {
-        DACUser u = createUser();
+        User u = createUser();
         List<UserRole> roleList = Arrays.asList(
                 createRole(UserRoles.RESEARCHER.getRoleId()),
                 createRole(UserRoles.MEMBER.getRoleId())
@@ -77,7 +77,7 @@ public class UserServiceTest {
         when(roleDAO.findRolesByUserId(any())).thenReturn(roleList);
         initService();
 
-        DACUser user = service.findUserById(u.getDacUserId());
+        User user = service.findUserById(u.getDacUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
@@ -86,7 +86,7 @@ public class UserServiceTest {
 
     @Test(expected = NotFoundException.class)
     public void testFindUserByIdNotFound() {
-        DACUser u = createUser();
+        User u = createUser();
         when(userDAO.findDACUserById(any())).thenReturn(null);
         initService();
 
@@ -95,12 +95,12 @@ public class UserServiceTest {
 
     @Test
     public void testFindUserByEmailNoRoles() {
-        DACUser u = createUser();
+        User u = createUser();
         when(userDAO.findDACUserByEmail(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
-        DACUser user = service.findUserByEmail(u.getEmail());
+        User user = service.findUserByEmail(u.getEmail());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertTrue(u.getRoles().isEmpty());
@@ -108,7 +108,7 @@ public class UserServiceTest {
 
     @Test
     public void testFindUserByEmailWithRoles() {
-        DACUser u = createUser();
+        User u = createUser();
         List<UserRole> roleList = Arrays.asList(
                 createRole(UserRoles.RESEARCHER.getRoleId()),
                 createRole(UserRoles.MEMBER.getRoleId())
@@ -117,7 +117,7 @@ public class UserServiceTest {
         when(roleDAO.findRolesByUserId(any())).thenReturn(roleList);
         initService();
 
-        DACUser user = service.findUserByEmail(u.getEmail());
+        User user = service.findUserByEmail(u.getEmail());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
@@ -126,7 +126,7 @@ public class UserServiceTest {
 
     @Test(expected = NotFoundException.class)
     public void testFindUserByEmailNotFound() {
-        DACUser u = createUser();
+        User u = createUser();
         when(userDAO.findDACUserByEmail(any())).thenReturn(null);
         initService();
 
@@ -135,7 +135,7 @@ public class UserServiceTest {
 
     @Test
     public void testDeleteUser() {
-        DACUser u = createUser();
+        User u = createUser();
         doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
         when(userDAO.findDACUserByEmail(any())).thenReturn(u);
         initService();
@@ -154,8 +154,8 @@ public class UserServiceTest {
         service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
     }
 
-    private DACUser createUser() {
-        DACUser u = new DACUser();
+    private User createUser() {
+        User u = new User();
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
         int i3 = RandomUtils.nextInt(3, 5);

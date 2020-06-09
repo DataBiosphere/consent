@@ -7,7 +7,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -215,8 +215,8 @@ public class DataSetResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer dataSetId, @Context UriInfo info) {
         try {
-            DACUser dacUser = userService.findUserByEmail(authUser.getName());
-            api.deleteDataset(dataSetId, dacUser.getDacUserId());
+            User user = userService.findUserByEmail(authUser.getName());
+            api.deleteDataset(dataSetId, user.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {
             return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();

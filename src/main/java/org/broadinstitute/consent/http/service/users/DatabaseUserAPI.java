@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -24,7 +24,7 @@ public class DatabaseUserAPI extends DatabaseDACUserAPI implements UserAPI {
     }
 
     @Override
-    public DACUser createUser(DACUser user) {
+    public User createUser(User user) {
         validateEmail(user.getEmail());
         validateRoles(user.getRoles());
         return createDACUser(user);

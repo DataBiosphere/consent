@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -30,7 +30,7 @@ public interface DacDAO extends Transactional<DacDAO> {
 
     @UseRowMapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id is not null inner join roles r on r.roleId = ur.role_id")
-    List<DACUser> findAllDACUserMemberships();
+    List<User> findAllDACUserMemberships();
 
     @UseRowMapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from dacuser du " +
@@ -39,7 +39,7 @@ public interface DacDAO extends Transactional<DacDAO> {
               " where lower(du.displayName) like concat('%', lower(:term), '%') " +
               " or lower(du.email) like concat('%', lower(:term), '%') " +
               " or lower(du.additional_email) like concat('%', lower(:term), '%') ")
-    List<DACUser> findAllDACUsersBySearchString(@Bind("term") String term);
+    List<User> findAllDACUsersBySearchString(@Bind("term") String term);
 
     @SqlQuery("select * from dac where dac_id = :dacId")
     Dac findById(@Bind("dacId") Integer dacId);
@@ -64,12 +64,12 @@ public interface DacDAO extends Transactional<DacDAO> {
     @UseRowMapper(DACUserMapper.class)
     @SqlQuery("select du.* from dacuser du " +
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId")
-    List<DACUser> findMembersByDacId(@Bind("dacId") Integer dacId);
+    List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
     @UseRowMapper(DACUserMapper.class)
     @SqlQuery("select du.* from dacuser du " +
               "inner join user_role ur on ur.user_id = du.dacUserId and ur.dac_id = :dacId and ur.role_id = :roleId")
-    List<DACUser> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
+    List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
     @SqlUpdate("insert into user_role (role_id, user_id, dac_id) values (:roleId, :userId, :dacId)")
     void addDacMember(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId, @Bind("dacId") Integer dacId);

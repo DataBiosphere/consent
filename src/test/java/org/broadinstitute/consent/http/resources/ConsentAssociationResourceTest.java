@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
 import org.broadinstitute.consent.http.service.UserService;
@@ -61,7 +61,7 @@ public class ConsentAssociationResourceTest {
 
     @Test
     public void testCreateAssociation() {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setEmail("test");
         when(api.hasWorkspaceAssociation(any())).thenReturn(false);
         when(userService.findUserByEmail(any())).thenReturn(user);
@@ -76,7 +76,7 @@ public class ConsentAssociationResourceTest {
 
     @Test
     public void testUpdateAssociation() {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setEmail("test");
         when(api.hasWorkspaceAssociation(any())).thenReturn(false);
         when(userService.findUserByEmail(any())).thenReturn(user);

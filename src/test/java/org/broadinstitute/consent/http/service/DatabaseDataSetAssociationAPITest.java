@@ -4,7 +4,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -106,10 +106,10 @@ public class DatabaseDataSetAssociationAPITest {
     DataSet ds1 = new DataSet(1, "DS-001", "DS-001", new Date(), true);
     DataSet ds2 = new DataSet(2, "DS-002", "DS-002", new Date(), true);
 
-    DACUser chairperson = new DACUser(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
-    DACUser member = new DACUser(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
-    DACUser dataOwner1 = new DACUser(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
-    DACUser dataOwner2 = new DACUser(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
+    User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList(), null);
+    User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList(), null);
+    User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
+    User dataOwner2 = new User(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList(), null);
 
     private List<UserRole> chairpersonList(){
         return Arrays.asList(getChairpersonRole());

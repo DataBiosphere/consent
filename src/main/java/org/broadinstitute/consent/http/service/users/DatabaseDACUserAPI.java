@@ -1,24 +1,20 @@
 package org.broadinstitute.consent.http.service.users;
 
 
-import freemarker.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +53,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
+    public User createDACUser(User dacUser) throws IllegalArgumentException {
         validateRequiredFields(dacUser);
         Integer dacUserID;
         try {
@@ -68,19 +64,19 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (dacUser.getRoles() != null) {
             insertUserRoles(dacUser, dacUserID);
         }
-        DACUser user = dacUserDAO.findDACUserById(dacUserID);
+        User user = dacUserDAO.findDACUserById(dacUserID);
         user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
 
     }
 
     @Override
-    public List<DACUser> describeAdminUsersThatWantToReceiveMails() {
+    public List<User> describeAdminUsersThatWantToReceiveMails() {
         return dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
 
     @Override
-    public DACUser updateUserStatus(String status, Integer userId) {
+    public User updateUserStatus(String status, Integer userId) {
         Integer statusId = RoleStatus.getValueByStatus(status);
         validateExistentUserById(userId);
         if (statusId == null) {
@@ -91,7 +87,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateUserRationale(String rationale, Integer userId) {
+    public User updateUserRationale(String rationale, Integer userId) {
         validateExistentUserById(userId);
         if (rationale == null) {
             throw new IllegalArgumentException("Rationale is required.");
@@ -101,8 +97,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public DACUser updateDACUserById(Map<String, DACUser> dac, Integer id) throws IllegalArgumentException, NotFoundException {
-        DACUser updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
+    public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
+        User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
         // validate user exists
         validateExistentUserById(id);
         // validate required fields are not null or empty
@@ -113,9 +109,9 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        DACUser dacUser = userService.findUserByEmail(updatedUser.getEmail());
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
+        User user = userService.findUserByEmail(updatedUser.getEmail());
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        return user;
     }
 
     @Override
@@ -129,7 +125,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         }
     }
 
-    private void validateRequiredFields(DACUser newDac) {
+    private void validateRequiredFields(User newDac) {
         if (StringUtils.isEmpty(newDac.getDisplayName())) {
             throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
         }
@@ -138,8 +134,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         }
     }
 
-    private void insertUserRoles(DACUser dacUser, Integer dacUserId) {
-        List<UserRole> roles = dacUser.getRoles();
+    private void insertUserRoles(User user, Integer dacUserId) {
+        List<UserRole> roles = user.getRoles();
         roles.forEach(r -> {
             if (r.getRoleId() == null) {
                 r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));

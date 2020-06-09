@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
@@ -113,16 +113,16 @@ abstract public class Resource {
      * `userId` parameter they are requesting information for.
      *
      * @param authedRoles   List of UserRoles enums
-     * @param authedDacUser The authenticated DACUser
+     * @param authedUser The authenticated DACUser
      * @param userId        The id of the DACUser the authenticated user is requesting access to
      */
-    void validateAuthedRoleUser(final List<UserRoles> authedRoles, final DACUser authedDacUser, final Integer userId) {
+    void validateAuthedRoleUser(final List<UserRoles> authedRoles, final User authedUser, final Integer userId) {
         List<Integer> authedRoleIds = authedRoles.stream().
                 map(UserRoles::getRoleId).
                 collect(Collectors.toList());
-        boolean authedUserHasRole = authedDacUser.getRoles().stream().
+        boolean authedUserHasRole = authedUser.getRoles().stream().
                 anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
-        if (!authedUserHasRole && !authedDacUser.getDacUserId().equals(userId)) {
+        if (!authedUserHasRole && !authedUser.getDacUserId().equals(userId)) {
             throw new ForbiddenException("User does not have permission");
         }
     }

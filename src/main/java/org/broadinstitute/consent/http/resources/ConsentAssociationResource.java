@@ -5,7 +5,7 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.ConsentAPI;
@@ -60,7 +60,7 @@ public class ConsentAssociationResource extends Resource {
                 }
             }
             logger().debug(msg);
-            DACUser dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getName());
             List<ConsentAssociation> result = api.createAssociation(consentId, body, dacUser.getEmail());
             URI assocURI = buildConsentAssociationURI(consentId);
             return Response.ok(result).location(assocURI).build();

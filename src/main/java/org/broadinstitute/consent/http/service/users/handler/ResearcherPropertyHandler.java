@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -47,7 +47,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     @Override
     public List<ResearcherProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
-        DACUser user = validateAuthUser(authUser);
+        User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         validateExistentFields(researcherPropertiesMap);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
@@ -58,7 +58,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     @Override
     public List<ResearcherProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
-        DACUser user = validateAuthUser(authUser);
+        User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
@@ -147,8 +147,8 @@ public class ResearcherPropertyHandler implements ResearcherService {
         }
     }
 
-    private DACUser validateAuthUser(AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
+    private User validateAuthUser(AuthUser authUser) {
+        User user = dacUserDAO.findDACUserByEmail(authUser.getName());
         if (user == null) {
             throw new NotFoundException("Auth User with email: " + authUser.getName() + " does not exist");
         }

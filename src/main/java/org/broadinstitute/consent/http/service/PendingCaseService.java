@@ -13,7 +13,7 @@ import org.broadinstitute.consent.http.enumeration.VoteStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -65,11 +65,11 @@ public class PendingCaseService {
     }
 
     public List<PendingCase> describeConsentPendingCases(AuthUser authUser) throws NotFoundException {
-        DACUser dacUser = userService.findUserByEmail(authUser.getName());
-        List<Integer> roleIds = dacUser.getRoles().stream().
+        User user = userService.findUserByEmail(authUser.getName());
+        List<Integer> roleIds = user.getRoles().stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
-        Integer dacUserId = dacUser.getDacUserId();
+        Integer dacUserId = user.getDacUserId();
         List<Election> elections = electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.TRANSLATE_DUL.getValue(), ElectionStatus.OPEN.getValue());
         List<PendingCase> pendingCases = dacService.filterElectionsByDAC(elections, authUser).
                 stream().
@@ -77,7 +77,7 @@ public class PendingCaseService {
                     Vote vote = voteDAO.findVoteByElectionIdAndDACUserId(e.getElectionId(), dacUserId);
                     if (vote == null) {
                         // Handle error case where user votes have not been created for the current election
-                        createMissingUserVotes(e, dacUser);
+                        createMissingUserVotes(e, user);
                         vote = voteDAO.findVoteByElectionIdAndDACUserId(e.getElectionId(), dacUserId);
                     }
                     if (vote != null) {
@@ -99,8 +99,8 @@ public class PendingCaseService {
     }
 
     public List<PendingCase> describeDataRequestPendingCases(AuthUser authUser) throws NotFoundException {
-        DACUser dacUser = userService.findUserByEmail(authUser.getName());
-        Integer dacUserId = dacUser.getDacUserId();
+        User user = userService.findUserByEmail(authUser.getName());
+        Integer dacUserId = user.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
                 electionDAO.findLastElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
@@ -263,7 +263,7 @@ public class PendingCaseService {
         }
     }
 
-    private void createMissingUserVotes(Election e, DACUser dacUser) {
+    private void createMissingUserVotes(Election e, User user) {
         ElectionType type = ElectionType.getFromValue(e.getElectionType());
         boolean isManualReview = false;
         if (type.equals(ElectionType.DATA_ACCESS)) {
@@ -276,11 +276,11 @@ public class PendingCaseService {
         }
         logger.info(String.format(
                 "Creating missing votes for user id '%s', election id '%s', reference id '%s' ",
-                dacUser.getDacUserId(),
+                user.getDacUserId(),
                 e.getElectionId(),
                 e.getReferenceId()
         ));
-        voteService.createVotesForUser(dacUser, e, type, isManualReview);
+        voteService.createVotesForUser(user, e, type, isManualReview);
     }
 
 }

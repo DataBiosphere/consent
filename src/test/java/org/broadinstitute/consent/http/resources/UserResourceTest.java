@@ -4,7 +4,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.UserAPI;
@@ -67,7 +67,7 @@ public class UserResourceTest {
 
     @Test
     public void testCreateExistingUser() {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setEmail(TEST_EMAIL);
         List<UserRole> roles = new ArrayList<>();
         UserRole admin = new UserRole();
@@ -86,7 +86,7 @@ public class UserResourceTest {
 
     @Test
     public void testCreateFailingGoogleIdentity() {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setEmail(TEST_EMAIL);
         initResource();
 
@@ -96,7 +96,7 @@ public class UserResourceTest {
 
     @Test
     public void createUserSuccess() {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDisplayName("Test");
         UserRole researcher = new UserRole();
         List<UserRole> roles = new ArrayList<>();

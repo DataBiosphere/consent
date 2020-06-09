@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class DACUser {
+public class User {
 
     @JsonProperty
     private Integer dacUserId;
@@ -44,17 +44,17 @@ public class DACUser {
     @JsonProperty
     private Boolean profileCompleted;
 
-    public DACUser() {
+    public User() {
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName, Date createDate) {
+    public User(Integer dacUserId, String email, String displayName, Date createDate) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
+    public User(Integer dacUserId, String email, String displayName, Date createDate, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
@@ -62,8 +62,8 @@ public class DACUser {
         this.additionalEmail = additionalEmail;
     }
 
-    public DACUser(Integer dacUserId, String email, String displayName, Date createDate,
-                   List<UserRole> roles, String additionalEmail) {
+    public User(Integer dacUserId, String email, String displayName, Date createDate,
+                List<UserRole> roles, String additionalEmail) {
         this.dacUserId = dacUserId;
         this.email = email;
         this.displayName = displayName;
@@ -72,7 +72,7 @@ public class DACUser {
         this.additionalEmail = additionalEmail;
     }
 
-    public DACUser(GoogleUser googleUser) {
+    public User(GoogleUser googleUser) {
         this.displayName = googleUser.getName();
         this.email = googleUser.getEmail();
     }
@@ -82,13 +82,13 @@ public class DACUser {
      *
      * @param json A json string that may or may not be correctly structured as a DACUser
      */
-    public DACUser(String json) {
+    public User(String json) {
         GsonBuilder builder = new GsonBuilder();
         // Register an adapter to manage the date types as long values
         builder.registerTypeAdapter(Date.class, (JsonDeserializer<Date>)
                 (json1, typeOfT, context) -> new Date(json1.getAsJsonPrimitive().getAsLong()));
         Gson gson = builder.create();
-        DACUser u = gson.fromJson(json, DACUser.class);
+        User u = gson.fromJson(json, User.class);
         if (u.getDacUserId() != null) {
             this.setDacUserId(u.getDacUserId());
         }
@@ -219,7 +219,7 @@ public class DACUser {
         if (getClass() != obj.getClass())
             return false;
 
-        DACUser other = (DACUser) obj;
+        User other = (User) obj;
         return new EqualsBuilder().append(dacUserId, other.dacUserId).isEquals();
     }
 

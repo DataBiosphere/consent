@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service.users;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -58,7 +58,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUser() {
-        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setDacUserId(3);
         UserRole role = new UserRole(1, UserRoles.RESEARCHER.getRoleName());
@@ -74,7 +74,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithExistentEmail() {
-        DACUser user = new DACUser(null, EMAIL, DISPLAY_NAME, new Date(), null);
+        User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
         when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
         try {
             databaseDACUserAPI.createDACUser(user);
@@ -85,7 +85,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithoutDisplayName() {
-        DACUser user = new DACUser(null, EMAIL, null, new Date(), null);
+        User user = new User(null, EMAIL, null, new Date(), null);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {
@@ -95,7 +95,7 @@ public class DatabaseDACUserAPITest {
 
     @Test
     public void createDACUserWithoutEmail() {
-        DACUser user = new DACUser(null, null, DISPLAY_NAME, new Date(), null);
+        User user = new User(null, null, DISPLAY_NAME, new Date(), null);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {

@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -30,30 +30,30 @@ public class UserService {
         this.voteDAO = voteDAO;
     }
 
-    public DACUser findUserById(Integer id) throws NotFoundException {
-        DACUser dacUser = userDAO.findDACUserById(id);
-        if (dacUser == null) {
+    public User findUserById(Integer id) throws NotFoundException {
+        User user = userDAO.findDACUserById(id);
+        if (user == null) {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
-        dacUser.setRoles(roleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
+        user.setRoles(roleDAO.findRolesByUserId(user.getDacUserId()));
+        return user;
     }
 
-    public DACUser findUserByEmail(String email) throws NotFoundException {
-        DACUser dacUser = userDAO.findDACUserByEmail(email);
-        if (dacUser == null) {
+    public User findUserByEmail(String email) throws NotFoundException {
+        User user = userDAO.findDACUserByEmail(email);
+        if (user == null) {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
-        dacUser.setRoles(roleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
+        user.setRoles(roleDAO.findRolesByUserId(user.getDacUserId()));
+        return user;
     }
 
-    public Collection<DACUser> describeUsers() {
+    public Collection<User> describeUsers() {
         return userDAO.findUsers();
     }
 
     public void deleteUserByEmail(String email) {
-        DACUser user = userDAO.findDACUserByEmail(email);
+        User user = userDAO.findDACUserByEmail(email);
         if (user == null) {
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
