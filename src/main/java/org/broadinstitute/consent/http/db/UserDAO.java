@@ -17,7 +17,7 @@ import java.util.Set;
 
 // TODO: Rename this class to UserDAO - see DUOS-344
 @RegisterRowMapper(DACUserMapper.class)
-public interface DACUserDAO extends Transactional<DACUserDAO> {
+public interface UserDAO extends Transactional<UserDAO> {
 
     @UseRowMapper(DACUserRoleMapper.class)
     @SqlQuery("select du.*, r.roleid, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +

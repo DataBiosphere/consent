@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -17,13 +17,13 @@ import java.util.stream.Collectors;
 
 public class UserService {
 
-    private final DACUserDAO userDAO;
+    private final UserDAO userDAO;
     private final ResearcherPropertyDAO researcherPropertyDAO;
     private final UserRoleDAO roleDAO;
     private final VoteDAO voteDAO;
 
     @Inject
-    public UserService(DACUserDAO userDAO, ResearcherPropertyDAO researcherPropertyDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
+    public UserService(UserDAO userDAO, ResearcherPropertyDAO researcherPropertyDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
         this.userDAO = userDAO;
         this.researcherPropertyDAO = researcherPropertyDAO;
         this.roleDAO = roleDAO;

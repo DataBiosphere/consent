@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -26,15 +26,15 @@ import java.util.stream.Collectors;
 
 public class VoteService {
 
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
 
     @Inject
-    public VoteService(DACUserDAO dacUserDAO, DataSetAssociationDAO dataSetAssociationDAO,
+    public VoteService(UserDAO userDAO, DataSetAssociationDAO dataSetAssociationDAO,
                        ElectionDAO electionDAO, VoteDAO voteDAO) {
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
@@ -104,9 +104,9 @@ public class VoteService {
         Dac dac = electionDAO.findDacForElection(election.getElectionId());
         Set<User> users;
         if (dac != null) {
-            users = dacUserDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
+            users = userDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
         } else {
-            users = dacUserDAO.findNonDACUsersEnabledToVote();
+            users = userDAO.findNonDACUsersEnabledToVote();
         }
         List<Vote> votes = new ArrayList<>();
         if (users != null) {

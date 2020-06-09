@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 public class UserRolesHandlerTest {
 
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     @Mock
     private ElectionDAO electionDAO;
     @Mock
@@ -56,7 +56,7 @@ public class UserRolesHandlerTest {
     }
 
     private void initService() {
-        handler = new UserRolesHandler(dacUserDAO, dataAccessRequestService, electionDAO, userRoleDAO, voteDAO);
+        handler = new UserRolesHandler(userDAO, dataAccessRequestService, electionDAO, userRoleDAO, voteDAO);
     }
 
     @Test

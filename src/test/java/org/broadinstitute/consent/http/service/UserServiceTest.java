@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 public class UserServiceTest {
 
     @Mock
-    private DACUserDAO userDAO;
+    private UserDAO userDAO;
 
     @Mock
     private ResearcherPropertyDAO researcherPropertyDAO;

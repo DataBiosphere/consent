@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
@@ -45,7 +45,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Mock
     private VoteDAO voteDAO;
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     @Mock
     private DataSetDAO dataSetDAO;
     @Mock
@@ -66,7 +66,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
     }
 
     @Test

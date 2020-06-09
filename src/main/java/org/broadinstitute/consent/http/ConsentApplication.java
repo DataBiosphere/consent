@@ -35,7 +35,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -210,7 +210,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
         final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
         final DataSetAssociationDAO dataSetAssociationDAO = injector.getProvider(DataSetAssociationDAO.class).get();
-        final DACUserDAO dacUserDAO = injector.getProvider(DACUserDAO.class).get();
+        final UserDAO userDAO = injector.getProvider(UserDAO.class).get();
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
         final MatchDAO matchDAO = injector.getProvider(MatchDAO.class).get();
         final MailMessageDAO mailMessageDAO = injector.getProvider(MailMessageDAO.class).get();
@@ -232,25 +232,25 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
-        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
-        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO, userRoleDAO);
+        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userDAO, userRoleDAO);
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
-        DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO);
-        DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, userRolesHandler, userService);
+        DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO);
+        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userRolesHandler, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         TranslateServiceImpl.initInstance(useRestrictionConverter);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, userRoleDAO);
-        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
+        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, userDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
 
-        DatabaseElectionAPI.initInstance(consentDAO, dacUserDAO, dataAccessRequestService, dataSetAssociationDAO,
+        DatabaseElectionAPI.initInstance(consentDAO, userDAO, dataAccessRequestService, dataSetAssociationDAO,
                 dataSetDAO, electionDAO, emailNotifierService, mailMessageDAO, voteDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -268,8 +268,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, emailNotifierService);
-        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
+        final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
+        final UserAPI userAPI = new DatabaseUserAPI(userDAO, userRoleDAO, userRolesHandler, userService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Now register our resources.

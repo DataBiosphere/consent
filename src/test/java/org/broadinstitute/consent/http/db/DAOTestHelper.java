@@ -54,7 +54,7 @@ public class DAOTestHelper {
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
     static ConsentDAO consentDAO;
     static DacDAO dacDAO;
-    static DACUserDAO userDAO;
+    static UserDAO userDAO;
     static DataSetDAO dataSetDAO;
     static ElectionDAO electionDAO;
     static UserRoleDAO userRoleDAO;
@@ -105,7 +105,7 @@ public class DAOTestHelper {
         jdbi.installPlugin(new GuavaPlugin());
         consentDAO = jdbi.onDemand(ConsentDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
-        userDAO = jdbi.onDemand(DACUserDAO.class);
+        userDAO = jdbi.onDemand(UserDAO.class);
         dataSetDAO = jdbi.onDemand(DataSetDAO.class);
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);

@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.models.WorkspaceAudit;
 
@@ -11,17 +11,17 @@ import java.util.List;
 
 public class AuditService {
 
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final WorkspaceAuditDAO workspaceAuditDAO;
 
     @Inject
-    public AuditService(DACUserDAO dacUserDAO, WorkspaceAuditDAO dao) {
-        this.dacUserDAO = dacUserDAO;
+    public AuditService(UserDAO userDAO, WorkspaceAuditDAO dao) {
+        this.userDAO = userDAO;
         this.workspaceAuditDAO = dao;
     }
 
     public void saveAssociationAuditList(List<String> ids, String modifiedTable, String changeAction, String modifiedByUserEmail) {
-        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = userDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
         List<WorkspaceAudit> auditList = createAuditList(ids, modifiedTable, changeAction, modifiedByUserId);
         workspaceAuditDAO.batchInsertWorkspaceAudit(auditList);
     }
@@ -36,7 +36,7 @@ public class AuditService {
     }
 
     public void saveConsentAudit(String consentId, String modifiedTable, String changeAction, String modifiedByUserEmail) {
-        int modifiedByUserId = dacUserDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
+        int modifiedByUserId = userDAO.findDACUserByEmail(modifiedByUserEmail).getDacUserId();
         saveAuditInfo(new WorkspaceAudit(consentId, modifiedTable, changeAction, modifiedByUserId, new Date()));
     }
 

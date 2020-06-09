@@ -7,7 +7,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -56,7 +56,7 @@ public class DataAccessRequestService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
     private final DacDAO dacDAO;
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DataSetDAO dataSetDAO;
     private final ElectionDAO electionDAO;
@@ -72,11 +72,11 @@ public class DataAccessRequestService {
 
     @Inject
     public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO,
-                                    DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
+                                    UserDAO userDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
                                     DacService dacService, UserService userService, VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
         this.dacDAO = dacDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
@@ -462,7 +462,7 @@ public class DataAccessRequestService {
     private Optional<User> getOwnerUser(Object dacUserId) {
         try {
             Integer userId = Integer.valueOf(dacUserId.toString());
-            Set<User> users = dacUserDAO.findUsersWithRoles(Collections.singletonList(userId));
+            Set<User> users = userDAO.findUsersWithRoles(Collections.singletonList(userId));
             return users.stream().findFirst();
         } catch (Exception e) {
             logger.error("Unable to determine user for dacUserId: " + dacUserId.toString() + "; " + e.getMessage());

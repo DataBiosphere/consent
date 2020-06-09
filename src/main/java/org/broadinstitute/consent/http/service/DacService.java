@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -42,7 +42,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class DacService {
 
     private DacDAO dacDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private DataSetDAO dataSetDAO;
     private ElectionDAO electionDAO;
     private DataAccessRequestDAO dataAccessRequestDAO;
@@ -50,11 +50,11 @@ public class DacService {
     private VoteService voteService;
 
     @Inject
-    public DacService(DacDAO dacDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO,
+    public DacService(DacDAO dacDAO, UserDAO userDAO, DataSetDAO dataSetDAO,
                       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO, UserService userService,
                       VoteService voteService) {
         this.dacDAO = dacDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.electionDAO = electionDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
@@ -239,12 +239,12 @@ public class DacService {
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {
-        User user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
+        User user = userDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
         return user != null;
     }
 
     boolean isAuthUserChair(AuthUser authUser) {
-        User user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
+        User user = userDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
         return user != null;
     }
 
@@ -252,7 +252,7 @@ public class DacService {
         if (isAuthUserChair(authUser)) {
             return true;
         }
-        User user = dacUserDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
+        User user = userDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
         return user != null;
     }
 

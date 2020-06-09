@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.service.users;
 
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
@@ -34,7 +34,7 @@ public class DatabaseDACUserAPITest {
     private DatabaseDACUserAPI databaseDACUserAPI;
 
     @Mock
-    DACUserDAO dacUserDAO;
+    UserDAO userDAO;
 
     @Mock
     UserRoleDAO userRoleDAO;
@@ -53,18 +53,18 @@ public class DatabaseDACUserAPITest {
     @Before
     public void setUp() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-        databaseDACUserAPI = new DatabaseDACUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
+        databaseDACUserAPI = new DatabaseDACUserAPI(userDAO, userRoleDAO, userRolesHandler, userService);
     }
 
     @Test
     public void createDACUser() {
         User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
+        when(userDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenReturn(3);
         user.setDacUserId(3);
         UserRole role = new UserRole(1, UserRoles.RESEARCHER.getRoleName());
         List<UserRole> roles = new ArrayList<>(Arrays.asList(role));
         user.setRoles(roles);
-        when(dacUserDAO.findDACUserById(3)).thenReturn(user);
+        when(userDAO.findDACUserById(3)).thenReturn(user);
         when(userRoleDAO.findRoleIdByName(UserRoles.RESEARCHER.getRoleName())).thenReturn(1);
         when(userRoleDAO.findRolesByUserId(3)).thenReturn(roles);
         user = databaseDACUserAPI.createDACUser(user);
@@ -75,7 +75,7 @@ public class DatabaseDACUserAPITest {
     @Test
     public void createDACUserWithExistentEmail() {
         User user = new User(null, EMAIL, DISPLAY_NAME, new Date(), null);
-        when(dacUserDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
+        when(userDAO.insertDACUser(anyString(), anyString(), any(Date.class))).thenThrow(UnableToExecuteStatementException.class);
         try {
             databaseDACUserAPI.createDACUser(user);
         } catch (IllegalArgumentException e) {

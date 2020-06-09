@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.service.users;
 
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
@@ -22,7 +22,7 @@ import java.util.List;
 public class DatabaseUserAPITest {
 
     @Mock
-    DACUserDAO dacUserDAO;
+    UserDAO userDAO;
 
     @Mock
     UserRoleDAO userRoleDAO;
@@ -40,7 +40,7 @@ public class DatabaseUserAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
+        userAPI = new DatabaseUserAPI(userDAO, userRoleDAO, userRolesHandler, userService);
     }
 
 

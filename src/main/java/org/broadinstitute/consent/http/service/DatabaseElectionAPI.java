@@ -5,7 +5,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -60,7 +60,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
     private final EmailNotifierService emailNotifierService;
     private final ConsentDAO consentDAO;
     private final VoteDAO voteDAO;
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final DataSetDAO dataSetDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
     private final DataAccessRequestService dataAccessRequestService;
@@ -77,12 +77,12 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
+    public static void initInstance(ConsentDAO consentDAO, UserDAO userDAO,
                                     DataAccessRequestService dataAccessRequestService,
                                     DataSetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO,
                                     ElectionDAO electionDAO, EmailNotifierService emailNotifierService,
                                     MailMessageDAO mailMessageDAO, VoteDAO voteDAO) {
-        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(consentDAO, dacUserDAO, dataAccessRequestService,
+        ElectionAPIHolder.setInstance(new DatabaseElectionAPI(consentDAO, userDAO, dataAccessRequestService,
                 datasetAssociationDAO, dataSetDAO, electionDAO, emailNotifierService, mailMessageDAO, voteDAO));
     }
 
@@ -90,13 +90,13 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    private DatabaseElectionAPI(ConsentDAO consentDAO, DACUserDAO dacUserDAO,
+    private DatabaseElectionAPI(ConsentDAO consentDAO, UserDAO userDAO,
                                 DataAccessRequestService dataAccessRequestService,
                                 DataSetAssociationDAO datasetAssociationDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
                                 EmailNotifierService emailNotifierService, MailMessageDAO mailMessageDAO,
                                 VoteDAO voteDAO) {
         this.consentDAO = consentDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dataAccessRequestService = dataAccessRequestService;
         this.datasetAssociationDAO = datasetAssociationDAO;
         this.dataSetDAO = dataSetDAO;
@@ -261,7 +261,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<Integer> votingUserIds = electionVotes.stream().
                 map(Vote::getDacUserId).
                 collect(Collectors.toList());
-        Set<User> votingUsers = dacUserDAO.findUsersWithRoles(votingUserIds);
+        Set<User> votingUsers = userDAO.findUsersWithRoles(votingUserIds);
         List<UserRole> votingMemberRoles = votingUsers.stream().flatMap(u -> u.getRoles().stream()).
                 filter(r -> r.getRoleId().equals(UserRoles.MEMBER.getRoleId())).
                 collect(Collectors.toList());
@@ -301,7 +301,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         }
         List<Vote> rpElectionVotes = voteDAO.findPendingVotesByElectionId(rpElectionId);
         List<Vote> darVotes = voteDAO.findPendingVotesByElectionId(darElectionId);
-        Set<User> electionChairs = dacUserDAO.findUsersForElectionsByRoles(
+        Set<User> electionChairs = userDAO.findUsersForElectionsByRoles(
                 Arrays.asList(darElectionId, rpElectionId),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
         List<Integer> chairIds = electionChairs.stream().map(User::getDacUserId).collect(Collectors.toList());
@@ -479,7 +479,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         List<String> disabledDataSets = dataSetList.stream().filter(ds -> !ds.getActive()).map(DataSet::getObjectId).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(disabledDataSets)) {
             boolean createElection = disabledDataSets.size() == dataSetList.size() ? false : true;
-            User user = dacUserDAO.findDACUserById(dar.getInteger("userId"));
+            User user = userDAO.findDACUserById(dar.getInteger("userId"));
             if(!createElection){
                 emailNotifierService.sendDisabledDatasetsMessage(user, disabledDataSets, dar.getString(DarConstants.DAR_CODE));
                 throw new IllegalArgumentException(INACTIVE_DS + disabledDataSets.toString());
@@ -604,9 +604,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
             Dac dac = electionDAO.findDacForElection(election.getElectionId());
             Set<User> users;
             if (dac != null) {
-                users = dacUserDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
+                users = userDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
             } else {
-                users = dacUserDAO.findNonDACUsersEnabledToVote();
+                users = userDAO.findNonDACUsersEnabledToVote();
             }
             if (users == null || users.isEmpty()) {
                 throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
@@ -690,7 +690,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     getDatasetAssociations(datasetIdList).stream().
                     collect(Collectors.groupingBy(DatasetAssociation::getDacuserId));
             userToAssociationMap.forEach((userId, associationList) -> {
-                User custodian = dacUserDAO.findDACUserById(userId);
+                User custodian = userDAO.findDACUserById(userId);
                 List<Integer> datasetIds = associationList.stream().
                         map(DatasetAssociation::getDatasetId).collect(Collectors.toList());
                 List<DatasetMailDTO> mailDTOS = dataSetDAO.findDatasetsByIdList(datasetIds).stream().

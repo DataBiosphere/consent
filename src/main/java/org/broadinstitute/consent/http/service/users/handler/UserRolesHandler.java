@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service.users.handler;
 
 import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -25,7 +25,7 @@ public class UserRolesHandler {
 
     public static final String UPDATED_USER_KEY = "updatedUser";
 
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final ElectionDAO electionDAO;
     private final UserRoleDAO userRoleDAO;
@@ -37,8 +37,8 @@ public class UserRolesHandler {
     private final UserRole dataOwner = new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName());
 
     @Inject
-    public UserRolesHandler(DACUserDAO userDao, DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
-        this.dacUserDAO = userDao;
+    public UserRolesHandler(UserDAO userDao, DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
+        this.userDAO = userDao;
         this.dataAccessRequestService = dataAccessRequestService;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
@@ -149,7 +149,7 @@ public class UserRolesHandler {
      * @param updatedUser The user to update
      */
     private void removeAdmin(User updatedUser) {
-        if (dacUserDAO.verifyAdminUsers() < 2) {
+        if (userDAO.verifyAdminUsers() < 2) {
             throw new IllegalArgumentException("At least one user with Admin roles should exist.");
         }
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), admin.getRoleId());
