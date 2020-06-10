@@ -58,13 +58,13 @@ public class UserRolesHandler {
     public void updateRoles(DACUser updatedUser) {
         // Roles as should be ..
         List<UserRole> updatedRoles = updatedUser.getRoles();
-        List<Integer> updatedRoleIds = updatedRoles.isEmpty() ?
+        List<Integer> updatedRoleIds = CollectionUtils.isEmpty(updatedRoles) ?
             Collections.emptyList() :
             updatedRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
         // Roles as currently are ...
         List<UserRole> originalRoles = userRoleDAO.findRolesByUserId(updatedUser.getDacUserId());
-        List<Integer> originalRoleIds = originalRoles.isEmpty() ?
+        List<Integer> originalRoleIds = CollectionUtils.isEmpty(originalRoles) ?
             Collections.emptyList() :
             originalRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
