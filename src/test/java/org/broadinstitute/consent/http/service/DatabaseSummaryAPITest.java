@@ -120,7 +120,7 @@ public class DatabaseSummaryAPITest {
     @Test
     public void testFormatTimeToDate() throws Exception {
         Calendar myCalendar = new GregorianCalendar(2016, 2, 11);
-        String getAsString = databaseSummaryAPI.formatTimeToDate(myCalendar.getTimeInMillis());
+        String getAsString = databaseSummaryAPI.formatLongToDate(myCalendar.getTimeInMillis());
         assertTrue(getAsString + " is the same date string for March 3, 2016 ", getAsString.equals("3/11/2016"));
     }
 
