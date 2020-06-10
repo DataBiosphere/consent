@@ -89,15 +89,17 @@ public class UserServiceTest {
         service.createUser(u);
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateUserNoRoles() {
         User u = generateUser();
         initService();
-        service.createUser(u);
+        User user = service.createUser(u);
+        assertFalse(user.getRoles().isEmpty());
+        assertEquals(UserRoles.RESEARCHER.getRoleId(), user.getRoles().get(0).getRoleId());
     }
 
     @Test(expected = BadRequestException.class)
-    public void testCreateUserInvalidRole_1() {
+    public void testCreateUserInvalidRoleCase1() {
         User u = generateUser();
         List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
         u.setRoles(roles);
@@ -106,7 +108,7 @@ public class UserServiceTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void testCreateUserInvalidRole_2() {
+    public void testCreateUserInvalidRoleCase2() {
         User u = generateUser();
         List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.MEMBER.getRoleId()));
         u.setRoles(roles);

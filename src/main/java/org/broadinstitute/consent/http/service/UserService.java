@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +38,11 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        // Default role is researcher.
+        if (Objects.isNull(user.getRoles()) || CollectionUtils.isNotEmpty(user.getRoles())) {
+            UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+            user.setRoles(Collections.singletonList(researcher));
+        }
         validateRequiredFields(user);
         Integer dacUserID;
         User existingUser = userDAO.findDACUserByEmail(user.getEmail());
@@ -105,19 +111,15 @@ public class UserService {
         if (Objects.isNull(user.getEmail()) || StringUtils.isEmpty(user.getEmail())) {
             throw new BadRequestException("Email address cannot be empty");
         }
-        if (Objects.nonNull(user.getRoles()) && CollectionUtils.isNotEmpty(user.getRoles())) {
-            user.getRoles().forEach(role -> {
-                if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
-                    || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
-                    String validRoleNames = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).
-                        map(UserRoles::getRoleName).
-                        collect(Collectors.joining(", "));
-                    throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
-                }
-            });
-        } else {
-            throw new BadRequestException("Roles are required.");
-        }
+        user.getRoles().forEach(role -> {
+            if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
+                || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
+                String validRoleNames = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).
+                    map(UserRoles::getRoleName).
+                    collect(Collectors.joining(", "));
+                throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
+            }
+        });
     }
 
     private void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
