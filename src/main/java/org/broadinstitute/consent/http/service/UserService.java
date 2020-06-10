@@ -1,6 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
@@ -12,15 +20,6 @@ import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class UserService {
 
@@ -38,9 +37,7 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        validateDisplayName(user.getDisplayName());
-        validateEmail(user.getEmail());
-        validateRoles(user.getRoles());
+        validateRequiredFields(user);
         Integer dacUserID;
         User existingUser = userDAO.findDACUserByEmail(user.getEmail());
         if (Objects.nonNull(existingUser)) {
@@ -101,26 +98,20 @@ public class UserService {
         return researcherPropertyDAO.findResearcherPropertiesByUser(userId);
     }
 
-    private void validateDisplayName(String displayName) {
-        if (StringUtils.isEmpty(displayName)) {
+    private void validateRequiredFields(User user) {
+        if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
             throw new BadRequestException("Display Name can't be null. The user needs a name to display.");
         }
-    }
-
-    private void validateEmail(String emailToValidate) {
-        if (StringUtils.isEmpty(emailToValidate)) {
+        if (Objects.isNull(user.getEmail()) || StringUtils.isEmpty(user.getEmail())) {
             throw new BadRequestException("Email address cannot be empty");
         }
-    }
-
-    private void validateRoles(List<UserRole> roles) {
-        if (CollectionUtils.isNotEmpty(roles)) {
-            roles.forEach(role -> {
+        if (Objects.nonNull(user.getRoles()) && CollectionUtils.isNotEmpty(user.getRoles())) {
+            user.getRoles().forEach(role -> {
                 if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
-                        || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
+                    || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
                     String validRoleNames = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).
-                            map(UserRoles::getRoleName).
-                            collect(Collectors.joining(", "));
+                        map(UserRoles::getRoleName).
+                        collect(Collectors.joining(", "));
                     throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
                 }
             });
