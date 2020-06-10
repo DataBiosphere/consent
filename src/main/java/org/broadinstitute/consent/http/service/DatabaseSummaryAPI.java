@@ -211,8 +211,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         summaryWriter.write(election.getStatus() + SEPARATOR);
                         summaryWriter.write(booleanToString(election.getArchived()) + SEPARATOR);
                         summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
-                        summaryWriter.write(
-                            formatLongToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
+                        summaryWriter.write(formatLongToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
                         summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
                         summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
@@ -307,8 +306,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
                                 summaryWriter.write(dar.get(DarConstants.DAR_CODE) + SEPARATOR);
-                                summaryWriter.write(
-                                    formatLongToDate(election.getCreateDate().getTime()) + SEPARATOR);
+                                summaryWriter.write(formatLongToDate(election.getCreateDate().getTime()) + SEPARATOR);
                                 summaryWriter.write(chairPerson.getDisplayName() + SEPARATOR);
                                 summaryWriter.write( booleanToString(finalVote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(finalVote.getRationale()) + SEPARATOR);
@@ -564,7 +562,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         int day = cal.get(Calendar.DAY_OF_MONTH);
         int month = cal.get(Calendar.MONTH) + 1;
         int year = cal.get(Calendar.YEAR);
-        return month + "/" + day + "/" + year;
+        return String.format("%d/%d/%d", month, day, year);
     }
 
     public String delimiterCheck(String delimitatedString){
