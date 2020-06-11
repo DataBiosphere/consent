@@ -39,7 +39,7 @@ public class UserService {
 
     public User createUser(User user) {
         // Default role is researcher.
-        if (Objects.isNull(user.getRoles()) || CollectionUtils.isNotEmpty(user.getRoles())) {
+        if (Objects.isNull(user.getRoles()) || CollectionUtils.isEmpty(user.getRoles())) {
             UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
             user.setRoles(Collections.singletonList(researcher));
         }
@@ -112,9 +112,10 @@ public class UserService {
             throw new BadRequestException("Email address cannot be empty");
         }
         user.getRoles().forEach(role -> {
-            if (!(role.getName().equalsIgnoreCase(UserRoles.DATAOWNER.getRoleName())
-                || role.getName().equalsIgnoreCase(UserRoles.RESEARCHER.getRoleName()))) {
-                String validRoleNames = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).
+            List<UserRoles> validRoles = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).collect(Collectors.toList());
+            List<String> validRoleNameList = validRoles.stream().map(UserRoles::getRoleName).collect(Collectors.toList());
+            if (!validRoleNameList.contains(role.getName())) {
+                String validRoleNames = validRoles.stream().
                     map(UserRoles::getRoleName).
                     collect(Collectors.joining(", "));
                 throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);

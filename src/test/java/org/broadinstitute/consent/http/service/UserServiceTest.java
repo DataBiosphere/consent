@@ -92,6 +92,8 @@ public class UserServiceTest {
     @Test
     public void testCreateUserNoRoles() {
         User u = generateUser();
+        when(userDAO.findDACUserById(any())).thenReturn(u);
+        when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId())));
         initService();
         User user = service.createUser(u);
         assertFalse(user.getRoles().isEmpty());
