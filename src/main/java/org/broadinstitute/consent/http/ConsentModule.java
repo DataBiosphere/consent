@@ -147,7 +147,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     AuditService providesAuditService() {
         return new AuditService(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesWorkspaceAuditDAO());
     }
 
@@ -182,7 +182,7 @@ public class ConsentModule extends AbstractModule {
                 providesConsentDAO(),
                 providesDataAccessRequestDAO(),
                 providesDacDAO(),
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesDacService(),
@@ -211,7 +211,7 @@ public class ConsentModule extends AbstractModule {
                 providesDataAccessRequestService(),
                 providesVoteDAO(),
                 providesElectionDAO(),
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesMailMessageDAO(),
                 providesMailService(),
                 providesMailServiceDAO(),
@@ -263,7 +263,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     VoteService providesVoteService() {
         return new VoteService(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataSetAssociationDAO(),
                 providesElectionDAO(),
                 providesVoteDAO());
@@ -288,7 +288,7 @@ public class ConsentModule extends AbstractModule {
     DacService providesDacService() {
         return new DacService(
                 providesDacDAO(),
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesDataAccessRequestDAO(),
@@ -297,7 +297,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    UserDAO providesDACUserDAO() {
+    UserDAO providesUserDAO() {
         return userDAO;
     }
 
@@ -309,7 +309,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserRolesHandler providesUserRolesHandler() {
         return new UserRolesHandler(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataAccessRequestService(),
                 providesElectionDAO(),
                 providesUserRoleDAO(),
@@ -359,7 +359,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserService providesUserService() {
         return new UserService(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());
