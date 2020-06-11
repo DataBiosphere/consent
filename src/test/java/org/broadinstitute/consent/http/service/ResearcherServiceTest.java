@@ -1,14 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
@@ -22,20 +35,6 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
@@ -89,8 +88,8 @@ public class ResearcherServiceTest {
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
         initService();
 
@@ -101,7 +100,7 @@ public class ResearcherServiceTest {
 
     @Test(expected = NotFoundException.class)
     public void testSetPropertiesNotFound() {
-        when(userDAO.findDACUserByEmail(any())).thenThrow(new NotFoundException("User Not Found"));
+        when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException("User Not Found"));
         initService();
 
         service.setProperties(new HashMap<>(), authUser);
@@ -111,8 +110,8 @@ public class ResearcherServiceTest {
     public void testSetPropertiesIllegalArgument() {
         Map<String, String> propMap = new HashMap<>();
         propMap.put(RandomStringUtils.random(10, true, false), RandomStringUtils.random(10, true, false));
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         initService();
 
         service.setProperties(propMap, authUser);
@@ -129,8 +128,8 @@ public class ResearcherServiceTest {
                 propMap.put(researcherField.getValue(), val);
             }
         }
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
         initService();
 
@@ -147,8 +146,8 @@ public class ResearcherServiceTest {
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(Collections.singletonList(prop));
         initService();
 
@@ -165,8 +164,8 @@ public class ResearcherServiceTest {
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         initService();
 
         service.updateProperties(propMap, authUser, true);
@@ -180,8 +179,8 @@ public class ResearcherServiceTest {
                 RandomStringUtils.random(10, true, false));
         Map<String, String> propMap = new HashMap<>();
         propMap.put(prop.getPropertyKey(), prop.getPropertyValue());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         initService();
 
         service.updateProperties(propMap, authUser, true);
@@ -201,8 +200,8 @@ public class ResearcherServiceTest {
         }
         props.add(new ResearcherProperty(user.getDacUserId(), ResearcherFields.COMPLETED.getValue(), Boolean.FALSE.toString()));
         propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.FALSE.toString());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
         when(researcherPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.FALSE.toString());
         doNothing().when(researcherPropertyDAO).deletePropertiesByUserAndKey(any());
@@ -230,8 +229,8 @@ public class ResearcherServiceTest {
         }
         props.add(new ResearcherProperty(user.getDacUserId(), ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString()));
         propMap.put(ResearcherFields.COMPLETED.getValue(), Boolean.TRUE.toString());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(user);
-        when(userDAO.findDACUserById(any())).thenReturn(user);
+        when(userDAO.findUserByEmail(any())).thenReturn(user);
+        when(userDAO.findUserById(any())).thenReturn(user);
         when(researcherPropertyDAO.findResearcherPropertiesByUser(any())).thenReturn(props);
         when(researcherPropertyDAO.isProfileCompleted(any())).thenReturn(Boolean.TRUE.toString());
         doNothing().when(researcherPropertyDAO).deletePropertiesByUserAndKey(any());

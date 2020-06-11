@@ -1,17 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,13 +13,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.broadinstitute.consent.http.enumeration.RoleStatus.getStatusByValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class UserDAOTest extends DAOTestHelper {
 
@@ -35,7 +34,7 @@ public class UserDAOTest extends DAOTestHelper {
         assertNotNull(user);
         assertFalse(user.getRoles().isEmpty());
         assertEquals(UserRoles.ADMIN.getRoleId(), user.getRoles().get(0).getRoleId());
-        User user2 = userDAO.findDACUserById(user.getDacUserId());
+        User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
         assertEquals(user.getEmail(), user2.getEmail());
     }
@@ -85,7 +84,7 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindDACUsersEnabledToVoteByDacEmpty() {
         Dac dac = createDac();
-        Collection<User> users = userDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
+        Collection<User> users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
         assertTrue(users.isEmpty());
     }
 
@@ -94,7 +93,7 @@ public class UserDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
-        Collection<User> users = userDAO.findDACUsersEnabledToVoteByDAC(dac.getDacId());
+        Collection<User> users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
         assertFalse(users.isEmpty());
     }
 
@@ -102,7 +101,7 @@ public class UserDAOTest extends DAOTestHelper {
     public void testFindNonDACUsersEnabledToVote() {
         createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         createUserWithRole(UserRoles.MEMBER.getRoleId());
-        Collection<User> users = userDAO.findNonDACUsersEnabledToVote();
+        Collection<User> users = userDAO.findNonDacUsersEnabledToVote();
         assertFalse(users.isEmpty());
     }
 
@@ -125,9 +124,9 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindDACUserByEmail() {
         User user = createUser();
-        User user1 = userDAO.findDACUserByEmail(user.getEmail());
+        User user1 = userDAO.findUserByEmail(user.getEmail());
         assertNotNull(user1);
-        User user2 = userDAO.findDACUserByEmail("no.one@nowhere.com");
+        User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
         Assert.assertNull(user2);
     }
 
@@ -140,20 +139,20 @@ public class UserDAOTest extends DAOTestHelper {
     public void testUpdateDACUser_case1() {
         User user = createUser();
         String newEmail = getRandomEmailAddress();
-        userDAO.updateDACUser(
+        userDAO.updateUser(
                 newEmail,
                 "Dac User Test",
                 user.getDacUserId(),
                 newEmail);
-        User user2 = userDAO.findDACUserById(user.getDacUserId());
+        User user2 = userDAO.findUserById(user.getDacUserId());
         assertEquals(user2.getEmail(), newEmail);
     }
 
     @Test
     public void testDeleteDACUserByEmail() {
         User user = createUser();
-        userDAO.deleteDACUserByEmail(user.getEmail());
-        User foundUser = userDAO.findDACUserByEmail(user.getEmail());
+        userDAO.deleteUserByEmail(user.getEmail());
+        User foundUser = userDAO.findUserByEmail(user.getEmail());
         assertNull(foundUser);
     }
 
@@ -217,7 +216,7 @@ public class UserDAOTest extends DAOTestHelper {
         Integer roleStatusId = RoleStatus.getValueByStatus(RoleStatus.APPROVED.name());
         String roleStatusName = getStatusByValue(roleStatusId);
         userDAO.updateUserStatus(roleStatusId, user.getDacUserId());
-        User user2 = userDAO.findDACUserById(user.getDacUserId());
+        User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
         assertEquals(roleStatusName, user2.getStatus());
     }
@@ -227,7 +226,7 @@ public class UserDAOTest extends DAOTestHelper {
         User user = createUser();
         String rationale = "New Rationale";
         userDAO.updateUserRationale(rationale, user.getDacUserId());
-        User user2 = userDAO.findDACUserById(user.getDacUserId());
+        User user2 = userDAO.findUserById(user.getDacUserId());
         assertNotNull(user2);
         assertEquals(user2.getRationale(), rationale);
     }
@@ -235,7 +234,7 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testFindDACUserByEmailAndRoleId() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        User user = userDAO.findDACUserByEmailAndRoleId(chair.getEmail(), UserRoles.CHAIRPERSON.getRoleId());
+        User user = userDAO.findUserByEmailAndRoleId(chair.getEmail(), UserRoles.CHAIRPERSON.getRoleId());
         assertNotNull(user);
         assertEquals(chair.getDacUserId(), user.getDacUserId());
         assertEquals(chair.getDisplayName(), user.getDisplayName());

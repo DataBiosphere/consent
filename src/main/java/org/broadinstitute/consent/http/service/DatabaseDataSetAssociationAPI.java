@@ -1,18 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DatasetAssociation;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import java.sql.BatchUpdateException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +9,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DatasetAssociation;
+import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 /**
  * Implementation class for DataSetAPI database support.
@@ -106,11 +105,11 @@ public class DatabaseDataSetAssociationAPI extends AbstractDataSetAssociationAPI
         List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
         Map<User, List<DataSet>> dataOwnerDataSetMap = new HashMap<>();
         dataSetAssociations.stream().forEach(dsa -> {
-            User dataOwner = userDAO.findDACUserById(dsa.getDacuserId());
+            User dataOwner = userDAO.findUserById(dsa.getDacuserId());
             if (!dataOwnerDataSetMap.containsKey(dataOwner)) {
-                dataOwnerDataSetMap.put(userDAO.findDACUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
+                dataOwnerDataSetMap.put(userDAO.findUserById(dsa.getDacuserId()), new ArrayList<>(Arrays.asList(dsDAO.findDataSetById(dsa.getDatasetId()))));
             } else {
-                dataOwnerDataSetMap.get(userDAO.findDACUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
+                dataOwnerDataSetMap.get(userDAO.findUserById(dsa.getDacuserId())).add(dsDAO.findDataSetById(dsa.getDatasetId()));
             }
         });
         return dataOwnerDataSetMap;

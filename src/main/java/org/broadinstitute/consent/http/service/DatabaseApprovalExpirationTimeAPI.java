@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service;
+
+import java.util.Date;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.util.DarConstants;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Date;
 
 
 /**
@@ -92,7 +92,7 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
         if(approvalExpirationTime.getUserId() == null){
             throw new IllegalArgumentException("User id is required");
         }else{
-            if(userDAO.findDACUserById(approvalExpirationTime.getUserId()) == null){
+            if(userDAO.findUserById(approvalExpirationTime.getUserId()) == null){
                 throw new IllegalArgumentException("The specified user id does not exist");
             }
         }

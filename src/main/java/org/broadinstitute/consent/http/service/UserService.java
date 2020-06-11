@@ -45,19 +45,19 @@ public class UserService {
         }
         validateRequiredFields(user);
         Integer dacUserID;
-        User existingUser = userDAO.findDACUserByEmail(user.getEmail());
+        User existingUser = userDAO.findUserByEmail(user.getEmail());
         if (Objects.nonNull(existingUser)) {
             throw new BadRequestException("User exists with this email address: " + user.getEmail());
         }
-        dacUserID = userDAO.insertDACUser(user.getEmail(), user.getDisplayName(), new Date());
+        dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
         insertUserRoles(user.getRoles(), dacUserID);
-        User createdUser = userDAO.findDACUserById(dacUserID);
+        User createdUser = userDAO.findUserById(dacUserID);
         createdUser.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return createdUser;
     }
 
     public User findUserById(Integer id) throws NotFoundException {
-        User user = userDAO.findDACUserById(id);
+        User user = userDAO.findUserById(id);
         if (user == null) {
             throw new NotFoundException("Unable to find user with id: " + id);
         }
@@ -66,7 +66,7 @@ public class UserService {
     }
 
     public User findUserByEmail(String email) throws NotFoundException {
-        User user = userDAO.findDACUserByEmail(email);
+        User user = userDAO.findUserByEmail(email);
         if (user == null) {
             throw new NotFoundException("Unable to find user with email: " + email);
         }
@@ -79,7 +79,7 @@ public class UserService {
     }
 
     public void deleteUserByEmail(String email) {
-        User user = userDAO.findDACUserByEmail(email);
+        User user = userDAO.findUserByEmail(email);
         if (user == null) {
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
@@ -97,7 +97,7 @@ public class UserService {
             voteDAO.removeVotesByIds(voteIds);
         }
         researcherPropertyDAO.deleteAllPropertiesByUser(user.getDacUserId());
-        userDAO.deleteDACUserByEmail(email);
+        userDAO.deleteUserByEmail(email);
     }
 
     public List<ResearcherProperty> findAllUserProperties(Integer userId) {

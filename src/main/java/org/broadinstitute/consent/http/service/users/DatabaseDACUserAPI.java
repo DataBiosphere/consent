@@ -56,14 +56,14 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateRequiredFields(dacUser);
         Integer dacUserID;
         try {
-            dacUserID = userDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
+            dacUserID = userDAO.insertUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
         if (dacUser.getRoles() != null) {
             insertUserRoles(dacUser, dacUserID);
         }
-        User user = userDAO.findDACUserById(dacUserID);
+        User user = userDAO.findUserById(dacUserID);
         user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
 
@@ -104,7 +104,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         validateRequiredFields(updatedUser);
         rolesHandler.updateRoles(updatedUser);
         try {
-            userDAO.updateDACUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
+            userDAO.updateUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
@@ -119,7 +119,7 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     private void validateExistentUserById(Integer id) {
-        if (userDAO.findDACUserById(id) == null) {
+        if (userDAO.findUserById(id) == null) {
             throw new NotFoundException("The user for the specified id does not exist");
         }
     }

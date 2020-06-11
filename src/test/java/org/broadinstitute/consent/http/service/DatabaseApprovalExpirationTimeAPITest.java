@@ -1,5 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.when;
+
 import java.util.Date;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
@@ -11,10 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.when;
 
 public class DatabaseApprovalExpirationTimeAPITest {
 
@@ -57,7 +57,7 @@ public class DatabaseApprovalExpirationTimeAPITest {
     @Test(expected = IllegalArgumentException.class)
     public void testValidateFieldsNoUserForId() throws Exception {
         when(approvalExpirationTimeDAO.findApprovalExpirationTime()).thenReturn(null);
-        when(userDAO.findDACUserById(validApproval.getUserId())).thenReturn(null);
+        when(userDAO.findUserById(validApproval.getUserId())).thenReturn(null);
         databaseApprovalAPI.create(validApproval);
     }
 
@@ -65,14 +65,14 @@ public class DatabaseApprovalExpirationTimeAPITest {
     public void testCreate() throws Exception {
         when(approvalExpirationTimeDAO.findApprovalExpirationTimeById(anyInt())).thenReturn(validApproval);
         when(approvalExpirationTimeDAO.findApprovalExpirationTime()).thenReturn(null);
-        when(userDAO.findDACUserById(anyInt())).thenReturn(validUser);
+        when(userDAO.findUserById(anyInt())).thenReturn(validUser);
         databaseApprovalAPI.create(validApproval);
     }
 
     @Test
     public void testUpdate() throws Exception {
         when(approvalExpirationTimeDAO.findApprovalExpirationTimeById(anyInt())).thenReturn(validApproval);
-        when(userDAO.findDACUserById(validApproval.getUserId())).thenReturn(validUser);
+        when(userDAO.findUserById(validApproval.getUserId())).thenReturn(validUser);
         ApprovalExpirationTime response = databaseApprovalAPI.update(validApproval, 1);
         assertTrue("The approval time is equal to the set mocked response: ", response.equals(validApproval));
     }

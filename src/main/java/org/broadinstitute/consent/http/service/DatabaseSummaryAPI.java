@@ -1,32 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.HeaderSummary;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AccessRP;
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.util.DatasetUtil;
-import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,8 +16,33 @@ import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.HeaderSummary;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AccessRP;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -411,7 +410,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
                     List<Vote> votes = electionsData.get(election.getElectionId());
                     for(Vote datasetVote : votes){
-                        User user = userDAO.findDACUserById(datasetVote.getDacUserId());
+                        User user = userDAO.findUserById(datasetVote.getDacUserId());
                         summaryWriter.write(user.getDisplayName() + SEPARATOR);
                         summaryWriter.write(user.getEmail() + SEPARATOR);
                         summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);

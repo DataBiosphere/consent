@@ -276,7 +276,7 @@ public class DacServiceTest {
 
     @Test
     public void testIsAuthUserAdmin_case1() {
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         Assert.assertTrue(service.isAuthUserAdmin(getUser()));
@@ -284,7 +284,7 @@ public class DacServiceTest {
 
     @Test
     public void testIsAuthUserAdmin_case2() {
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
         Assert.assertFalse(service.isAuthUserAdmin(getUser()));
@@ -292,7 +292,7 @@ public class DacServiceTest {
 
     @Test
     public void testIsAuthUserChair_case1() {
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         Assert.assertTrue(service.isAuthUserAdmin(getUser()));
@@ -300,7 +300,7 @@ public class DacServiceTest {
 
     @Test
     public void testIsAuthUserChair_case2() {
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
         Assert.assertFalse(service.isAuthUserAdmin(getUser()));
@@ -309,7 +309,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_adminCase() {
         // User is an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<Document> documents = getDocuments();
@@ -322,7 +322,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_memberCase_1() {
         // Member is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member has access to DataSet 1
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
@@ -343,7 +343,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_memberCase_2() {
         // Member is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member has access to datasets
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
@@ -365,7 +365,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDarsByDAC_memberCase_3() {
         // Member is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member no direct access to datasets
         List<DataSet> memberDataSets = Collections.emptyList();
@@ -387,7 +387,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_adminCase() {
         // User is an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -400,7 +400,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_1() {
         // Member is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member has access to DataSet 1
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
@@ -421,7 +421,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_2() {
         // Member is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member has access to datasets
         List<DataSet> memberDataSets = Collections.singletonList(getDatasets().get(0));
@@ -443,7 +443,7 @@ public class DacServiceTest {
     @Test
     public void testFilterDataAccessRequestsByDAC_memberCase_3() {
         // Member is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
+        when(userDAO.findUserByEmailAndRoleId(getMember().getEmail(), UserRoles.MEMBER.getRoleId())).thenReturn(getMember());
 
         // Member no direct access to datasets
         List<DataSet> memberDataSets = Collections.emptyList();
@@ -465,7 +465,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentManagesByDAC_adminCase() {
         // User is an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<ConsentManage> manages = getConsentManages();
@@ -478,7 +478,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentManagesByDAC_memberCase1() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member is a member of one DAC that has a single consent
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
@@ -495,7 +495,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentManagesByDAC_memberCase2() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member is a member of one DAC that has a single consent
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
@@ -521,7 +521,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentManagesByDAC_memberCase3() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member has no direct access to consented datasets
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());
@@ -546,7 +546,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentsByDAC_adminCase() {
         // User is an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<Consent> consents = getConsents();
@@ -559,7 +559,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentsByDAC_memberCase1() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member is a member of one DAC that has a single consent
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
@@ -576,7 +576,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentsByDAC_memberCase2() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member is a member of one DAC that has a single consent
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
@@ -602,7 +602,7 @@ public class DacServiceTest {
     @Test
     public void testFilterConsentsByDAC_memberCase3() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member has no direct access to consented datasets
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());
@@ -627,7 +627,7 @@ public class DacServiceTest {
     @Test
     public void testFilterElectionsByDAC_adminCase() {
         // User is an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
         List<Election> elections = getElections();
@@ -640,7 +640,7 @@ public class DacServiceTest {
     @Test
     public void testFilterElectionsByDAC_memberCase1() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member is a member of one DAC that has a single consented dataset
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
@@ -659,7 +659,7 @@ public class DacServiceTest {
     @Test
     public void testFilterElectionsByDAC_memberCase2() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member is a member of one DAC that has a single consented dataset
         List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
@@ -687,7 +687,7 @@ public class DacServiceTest {
     @Test
     public void testFilterElectionsByDAC_memberCase3() {
         // User is not an admin user
-        when(userDAO.findDACUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
         // Member has no direct access to elections via DAC or DataSet
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());

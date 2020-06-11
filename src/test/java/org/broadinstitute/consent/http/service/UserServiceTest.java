@@ -1,9 +1,23 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -13,21 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 
 public class UserServiceTest {
 
@@ -59,7 +58,7 @@ public class UserServiceTest {
         User u = generateUser();
         List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
-        when(userDAO.findDACUserById(any())).thenReturn(u);
+        when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roles);
         initService();
         try {
@@ -74,7 +73,7 @@ public class UserServiceTest {
         User u = generateUser();
         List<UserRole> roles = Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
-        when(userDAO.findDACUserByEmail(any())).thenReturn(u);
+        when(userDAO.findUserByEmail(any())).thenReturn(u);
         initService();
         service.createUser(u);
     }
@@ -92,7 +91,7 @@ public class UserServiceTest {
     @Test
     public void testCreateUserNoRoles() {
         User u = generateUser();
-        when(userDAO.findDACUserById(any())).thenReturn(u);
+        when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.singletonList(generateRole(UserRoles.RESEARCHER.getRoleId())));
         initService();
         User user = service.createUser(u);
@@ -129,7 +128,7 @@ public class UserServiceTest {
     @Test
     public void testFindUserByIdNoRoles() {
         User u = generateUser();
-        when(userDAO.findDACUserById(any())).thenReturn(u);
+        when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
@@ -146,7 +145,7 @@ public class UserServiceTest {
                 generateRole(UserRoles.RESEARCHER.getRoleId()),
                 generateRole(UserRoles.MEMBER.getRoleId())
         );
-        when(userDAO.findDACUserById(any())).thenReturn(u);
+        when(userDAO.findUserById(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roleList);
         initService();
 
@@ -160,7 +159,7 @@ public class UserServiceTest {
     @Test(expected = NotFoundException.class)
     public void testFindUserByIdNotFound() {
         User u = generateUser();
-        when(userDAO.findDACUserById(any())).thenReturn(null);
+        when(userDAO.findUserById(any())).thenReturn(null);
         initService();
 
         service.findUserById(u.getDacUserId());
@@ -169,7 +168,7 @@ public class UserServiceTest {
     @Test
     public void testFindUserByEmailNoRoles() {
         User u = generateUser();
-        when(userDAO.findDACUserByEmail(any())).thenReturn(u);
+        when(userDAO.findUserByEmail(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(Collections.emptyList());
         initService();
 
@@ -186,7 +185,7 @@ public class UserServiceTest {
                 generateRole(UserRoles.RESEARCHER.getRoleId()),
                 generateRole(UserRoles.MEMBER.getRoleId())
         );
-        when(userDAO.findDACUserByEmail(any())).thenReturn(u);
+        when(userDAO.findUserByEmail(any())).thenReturn(u);
         when(roleDAO.findRolesByUserId(any())).thenReturn(roleList);
         initService();
 
@@ -200,7 +199,7 @@ public class UserServiceTest {
     @Test(expected = NotFoundException.class)
     public void testFindUserByEmailNotFound() {
         User u = generateUser();
-        when(userDAO.findDACUserByEmail(any())).thenReturn(null);
+        when(userDAO.findUserByEmail(any())).thenReturn(null);
         initService();
 
         service.findUserByEmail(u.getEmail());
@@ -210,7 +209,7 @@ public class UserServiceTest {
     public void testDeleteUser() {
         User u = generateUser();
         doNothing().when(researcherPropertyDAO).deleteAllPropertiesByUser(any());
-        when(userDAO.findDACUserByEmail(any())).thenReturn(u);
+        when(userDAO.findUserByEmail(any())).thenReturn(u);
         initService();
 
         try {
@@ -222,7 +221,7 @@ public class UserServiceTest {
 
     @Test(expected = NotFoundException.class)
     public void testDeleteUserFailure() {
-        when(userDAO.findDACUserByEmail(any())).thenThrow(new NotFoundException());
+        when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
         initService();
         service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
     }

@@ -238,12 +238,12 @@ public class DacService {
     }
 
     boolean isAuthUserAdmin(AuthUser authUser) {
-        User user = userDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
+        User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), UserRoles.ADMIN.getRoleId());
         return user != null;
     }
 
     boolean isAuthUserChair(AuthUser authUser) {
-        User user = userDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
+        User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), UserRoles.CHAIRPERSON.getRoleId());
         return user != null;
     }
 
@@ -251,7 +251,7 @@ public class DacService {
         if (isAuthUserChair(authUser)) {
             return true;
         }
-        User user = userDAO.findDACUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
+        User user = userDAO.findUserByEmailAndRoleId(authUser.getName(), UserRoles.MEMBER.getRoleId());
         return user != null;
     }
 

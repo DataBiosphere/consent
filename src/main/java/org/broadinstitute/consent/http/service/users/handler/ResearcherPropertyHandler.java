@@ -1,23 +1,6 @@
 package org.broadinstitute.consent.http.service.users.handler;
 
 import freemarker.template.TemplateException;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +8,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResearcherPropertyHandler implements ResearcherService {
 
@@ -109,7 +108,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     private Map<String, String> getResearcherPropertiesForDAR(Map<String, String> properties, Integer userId) {
         Map<String, String> rpForDAR = new HashMap<>();
-        rpForDAR.put(ResearcherFields.INVESTIGATOR.getValue(), properties.getOrDefault(ResearcherFields.PI_NAME.getValue(), userDAO.findDACUserById(userId).getDisplayName()));
+        rpForDAR.put(ResearcherFields.INVESTIGATOR.getValue(), properties.getOrDefault(ResearcherFields.PI_NAME.getValue(), userDAO.findUserById(userId).getDisplayName()));
         rpForDAR.put(ResearcherFields.INSTITUTION.getValue(), properties.getOrDefault(ResearcherFields.INSTITUTION.getValue(), null));
         rpForDAR.put(ResearcherFields.DEPARTMENT.getValue(), properties.getOrDefault(ResearcherFields.DEPARTMENT.getValue(), null));
         rpForDAR.put(ResearcherFields.STREET_ADDRESS_1.getValue(), properties.getOrDefault(ResearcherFields.STREET_ADDRESS_1.getValue(), null));
@@ -142,13 +141,13 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     private void validateUser(Integer userId) {
-        if (userDAO.findDACUserById(userId) == null) {
+        if (userDAO.findUserById(userId) == null) {
             throw new NotFoundException("User with id: " + userId + " does not exists");
         }
     }
 
     private User validateAuthUser(AuthUser authUser) {
-        User user = userDAO.findDACUserByEmail(authUser.getName());
+        User user = userDAO.findUserByEmail(authUser.getName());
         if (user == null) {
             throw new NotFoundException("Auth User with email: " + authUser.getName() + " does not exist");
         }
@@ -213,7 +212,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
             } catch (IOException | TemplateException | MessagingException e) {
                 logger().error("Error when notifying the admin(s) about the researcher action: " +
                         action + ", for user: " +
-                        userDAO.findDACUserById(userId).getDisplayName());
+                        userDAO.findUserById(userId).getDisplayName());
             }
         }
     }
