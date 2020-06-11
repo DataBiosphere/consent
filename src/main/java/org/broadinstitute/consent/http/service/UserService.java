@@ -115,9 +115,7 @@ public class UserService {
             List<UserRoles> validRoles = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN).collect(Collectors.toList());
             List<String> validRoleNameList = validRoles.stream().map(UserRoles::getRoleName).collect(Collectors.toList());
             if (!validRoleNameList.contains(role.getName())) {
-                String validRoleNames = validRoles.stream().
-                    map(UserRoles::getRoleName).
-                    collect(Collectors.joining(", "));
+                String validRoleNames = String.join(", ", validRoleNameList);
                 throw new BadRequestException("Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
             }
         });
