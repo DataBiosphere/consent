@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import java.util.Objects;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
@@ -89,30 +91,66 @@ public class User {
                 (json1, typeOfT, context) -> new Date(json1.getAsJsonPrimitive().getAsLong()));
         Gson gson = builder.create();
         User u = gson.fromJson(json, User.class);
-        if (u.getDacUserId() != null) {
+        setUserId(u);
+        setEmail(u);
+        setDisplayName(u);
+        setCreateDate(u);
+        setAdditionalEmail(u);
+        setEmailPreference(u);
+        setRoles(u);
+        setStatus(u);
+        setRationale(u);
+    }
+
+    private void setUserId(User u) {
+        if (Objects.nonNull(u.getDacUserId())) {
             this.setDacUserId(u.getDacUserId());
         }
+    }
+
+    private void setEmail(User u) {
         if (!StringUtils.isEmpty(u.getEmail())) {
             this.setEmail(u.getEmail());
         }
+    }
+
+    private void setDisplayName(User u) {
         if (!StringUtils.isEmpty(u.getDisplayName())) {
             this.setDisplayName(u.getDisplayName());
         }
-        if (u.getCreateDate() != null) {
+    }
+
+    private void setCreateDate(User u) {
+        if (Objects.nonNull(u.getCreateDate())) {
             this.setCreateDate(u.getCreateDate());
         }
+    }
+
+    private void setAdditionalEmail(User u) {
         if (!StringUtils.isEmpty(u.getAdditionalEmail())) {
             this.setAdditionalEmail(u.getAdditionalEmail());
         }
-        if (u.getEmailPreference() != null) {
+    }
+
+    private void setEmailPreference(User u) {
+        if (Objects.nonNull(u.getEmailPreference())) {
             this.setEmailPreference(u.getEmailPreference());
         }
-        if (u.getRoles() != null && !u.getRoles().isEmpty()) {
+    }
+
+    private void setRoles(User u) {
+        if (CollectionUtils.isNotEmpty(u.getRoles())) {
             this.setRoles(u.getRoles());
         }
+    }
+
+    private void setStatus(User u) {
         if (!StringUtils.isEmpty(u.getStatus())) {
             this.setStatus(u.getStatus());
         }
+    }
+
+    private void setRationale(User u) {
         if (!StringUtils.isEmpty(u.getRationale())) {
             this.setRationale(u.getRationale());
         }
