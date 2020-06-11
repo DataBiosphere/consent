@@ -1,29 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.inject.Inject;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Role;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
+import static java.util.stream.Collectors.groupingBy;
 
-import javax.ws.rs.BadRequestException;
+import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,18 +15,38 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.groupingBy;
+import javax.ws.rs.BadRequestException;
+import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
 
 public class DacService {
 
-    private DacDAO dacDAO;
-    private UserDAO userDAO;
-    private DataSetDAO dataSetDAO;
-    private ElectionDAO electionDAO;
-    private DataAccessRequestDAO dataAccessRequestDAO;
-    private UserService userService;
-    private VoteService voteService;
+    private final DacDAO dacDAO;
+    private final UserDAO userDAO;
+    private final DataSetDAO dataSetDAO;
+    private final ElectionDAO electionDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
+    private final UserService userService;
+    private final VoteService voteService;
 
     @Inject
     public DacService(DacDAO dacDAO, UserDAO userDAO, DataSetDAO dataSetDAO,

@@ -1,22 +1,44 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.UserDAO;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.grammar.Everything;
@@ -28,29 +50,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 public class DacServiceTest {
 

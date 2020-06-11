@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.HelpReport;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
