@@ -44,12 +44,11 @@ public class UserService {
             user.setRoles(Collections.singletonList(researcher));
         }
         validateRequiredFields(user);
-        Integer dacUserID;
         User existingUser = userDAO.findUserByEmail(user.getEmail());
         if (Objects.nonNull(existingUser)) {
             throw new BadRequestException("User exists with this email address: " + user.getEmail());
         }
-        dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
+        Integer dacUserID = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
         insertUserRoles(user.getRoles(), dacUserID);
         User createdUser = userDAO.findUserById(dacUserID);
         createdUser.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
