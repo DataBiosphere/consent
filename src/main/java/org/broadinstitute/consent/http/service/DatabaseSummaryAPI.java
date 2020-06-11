@@ -211,7 +211,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         summaryWriter.write(election.getStatus() + SEPARATOR);
                         summaryWriter.write(booleanToString(election.getArchived()) + SEPARATOR);
                         summaryWriter.write(delimiterCheck(electionConsent.getTranslatedUseRestriction())+ SEPARATOR);
-                        summaryWriter.write(formatTimeToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
+                        summaryWriter.write(formatLongToDate(electionConsent.getCreateDate().getTime()) + SEPARATOR);
                         summaryWriter.write( chairPerson.getDisplayName() + SEPARATOR);
                         summaryWriter.write( booleanToString(chairPersonVote.getVote()) + SEPARATOR);
                         summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
@@ -306,7 +306,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 List<Vote> electionConsentVotes = consentVotes.stream().filter(cv -> cv.getElectionId().equals(consentElection.getElectionId())).collect(Collectors.toList());
                                 Vote chairPersonConsentVote =  electionConsentVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
                                 summaryWriter.write(dar.get(DarConstants.DAR_CODE) + SEPARATOR);
-                                summaryWriter.write(formatTimeToDate(election.getCreateDate().getTime()) + SEPARATOR);
+                                summaryWriter.write(formatLongToDate(election.getCreateDate().getTime()) + SEPARATOR);
                                 summaryWriter.write(chairPerson.getDisplayName() + SEPARATOR);
                                 summaryWriter.write( booleanToString(finalVote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(finalVote.getRationale()) + SEPARATOR);
@@ -324,13 +324,13 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }
                                 summaryWriter.write( dar.get(DarConstants.INVESTIGATOR)  + SEPARATOR);
                                 summaryWriter.write( dar.get(DarConstants.PROJECT_TITLE)  + SEPARATOR);
-                                List<Integer> dataSetIds = dar.get(DarConstants.DATASET_ID, ArrayList.class);
+                                List<Integer> dataSetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
                                 List<String> dataSetUUIds = new ArrayList<>();
                                 for (Integer id : dataSetIds) {
                                     dataSetUUIds.add(DatasetUtil.parseAlias(id));
                                 }
                                 summaryWriter.write( StringUtils.join(dataSetUUIds, ",")  + SEPARATOR);
-                                summaryWriter.write( formatTimeToDate(dar.getDate("sortDate").getTime())  + SEPARATOR);
+                                summaryWriter.write( formatLongToDate(dar.getLong(DarConstants.SORT_DATE))  + SEPARATOR);
                                 for (DACUser dacUser : electionDacUsers){
                                     summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
                                 }
@@ -556,14 +556,13 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
         return b != null && !b.isEmpty()  ? b : "-";
     }
 
-    public String formatTimeToDate(long time) {
+    public String formatLongToDate(long time) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(time);
-        Integer day = cal.get(Calendar.DAY_OF_MONTH);
-        Integer month = cal.get(Calendar.MONTH) + 1;
-        Integer year = cal.get(Calendar.YEAR);
-        String date = month.toString() + "/" + day.toString() + "/" + year.toString();
-        return date;
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+        int month = cal.get(Calendar.MONTH) + 1;
+        int year = cal.get(Calendar.YEAR);
+        return String.format("%d/%d/%d", month, day, year);
     }
 
     public String delimiterCheck(String delimitatedString){

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.users.handler;
 
 import com.google.inject.Inject;
+import java.util.Collections;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -57,11 +58,15 @@ public class UserRolesHandler {
     public void updateRoles(DACUser updatedUser) {
         // Roles as should be ..
         List<UserRole> updatedRoles = updatedUser.getRoles();
-        List<Integer> updatedRoleIds = updatedRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
+        List<Integer> updatedRoleIds = CollectionUtils.isEmpty(updatedRoles) ?
+            Collections.emptyList() :
+            updatedRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
         // Roles as currently are ...
         List<UserRole> originalRoles = userRoleDAO.findRolesByUserId(updatedUser.getDacUserId());
-        List<Integer> originalRoleIds = originalRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
+        List<Integer> originalRoleIds = CollectionUtils.isEmpty(originalRoles) ?
+            Collections.emptyList() :
+            originalRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
 
         // Roles to remove: Any original role that does not exist in the new role list
         List<UserRole> rolesToRemove = originalRoles.stream().
