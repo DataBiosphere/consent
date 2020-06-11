@@ -27,9 +27,6 @@ public class DAOContainer {
   private VoteDAO voteDAO;
   private WorkspaceAuditDAO workspaceAuditDAO;
 
-  public DAOContainer() {
-  }
-
   public ApprovalExpirationTimeDAO getApprovalExpirationTimeDAO() {
     return approvalExpirationTimeDAO;
   }
