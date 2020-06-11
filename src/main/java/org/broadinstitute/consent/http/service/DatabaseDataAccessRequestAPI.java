@@ -1,40 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -53,6 +19,39 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentDataSet;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @deprecated Use DataAccessRequestService
@@ -61,9 +60,7 @@ import java.util.stream.IntStream;
 @Deprecated
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
-    }
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final UseRestrictionConverter converter;
 
@@ -71,7 +68,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ConsentDAO consentDAO;
 
-    private  final ResearcherPropertyDAO  researcherPropertyDAO;
+    private final ResearcherPropertyDAO researcherPropertyDAO;
 
     private static final String DATA_SET_ID = "datasetId";
 
@@ -521,7 +518,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                     collect(Collectors.toList());
             datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
         } catch (Exception e) {
-            logger().warn(e.getMessage());
+            logger.warn(e.getMessage());
         }
         return datasets;
     }

@@ -52,24 +52,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
     }
 
     @Override
-    public User createDACUser(User dacUser) throws IllegalArgumentException {
-        validateRequiredFields(dacUser);
-        Integer dacUserID;
-        try {
-            dacUserID = userDAO.insertUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
-        } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email should be unique.", e);
-        }
-        if (dacUser.getRoles() != null) {
-            insertUserRoles(dacUser, dacUserID);
-        }
-        User user = userDAO.findUserById(dacUserID);
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
-        return user;
-
-    }
-
-    @Override
     public List<User> describeAdminUsersThatWantToReceiveMails() {
         return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
