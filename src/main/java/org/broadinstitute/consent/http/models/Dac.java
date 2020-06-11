@@ -27,10 +27,10 @@ public class Dac {
     private Date updateDate;
 
     @JsonProperty
-    private List<DACUser> chairpersons;
+    private List<User> chairpersons;
 
     @JsonProperty
-    private List<DACUser> members;
+    private List<User> members;
 
     private List<Integer> electionIds = new ArrayList<>();
 
@@ -77,19 +77,19 @@ public class Dac {
         this.updateDate = updateDate;
     }
 
-    public List<DACUser> getChairpersons() {
+    public List<User> getChairpersons() {
         return chairpersons;
     }
 
-    public void setChairpersons(List<DACUser> chairpersons) {
+    public void setChairpersons(List<User> chairpersons) {
         this.chairpersons = chairpersons;
     }
 
-    public List<DACUser> getMembers() {
+    public List<User> getMembers() {
         return members;
     }
 
-    public void setMembers(List<DACUser> members) {
+    public void setMembers(List<User> members) {
         this.members = members;
     }
 

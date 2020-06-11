@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service.users;
 
 import freemarker.template.TemplateException;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 
 import javax.mail.MessagingException;
@@ -16,15 +16,15 @@ import java.util.Map;
 @Deprecated
 public interface DACUserAPI {
 
-    DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException;
+    User createDACUser(User user) throws IllegalArgumentException;
 
-    List<DACUser> describeAdminUsersThatWantToReceiveMails();
+    List<User> describeAdminUsersThatWantToReceiveMails();
 
-    DACUser updateDACUserById(Map<String, DACUser> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
+    User updateDACUserById(Map<String, User> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;
 
-    DACUser updateUserStatus(String status, Integer userId);
+    User updateUserStatus(String status, Integer userId);
 
-    DACUser updateUserRationale(String rationale, Integer userId);
+    User updateUserRationale(String rationale, Integer userId);
 
     void updateEmailPreference(boolean preference, Integer userId);
 

@@ -5,7 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -79,7 +79,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final VoteDAO voteDAO;
 
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
 
     private final DataSetDAO dataSetDAO;
 
@@ -98,22 +98,22 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, DACUserDAO dacUserDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
         this.counterService = counterService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
         this.voteDAO = voteDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.dataSetDAO = dataSetDAO;
         this.dataAccessReportsParser = new DataAccessReportsParser();
         this.researcherPropertyDAO = researcherPropertyDAO;
@@ -294,19 +294,19 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public List<DACUser> getUserEmailAndCancelElection(String referenceId) {
+    public List<User> getUserEmailAndCancelElection(String referenceId) {
         Election access = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.DATA_ACCESS.getValue());
         Election rp = electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(referenceId, ElectionType.RP.getValue());
         updateElection(access, rp);
-        List<DACUser> dacUsers = new ArrayList<>();
+        List<User> users = new ArrayList<>();
         if (access != null){
             List<Vote> votes = voteDAO.findDACVotesByElectionId(access.getElectionId());
             List<Integer> userIds = votes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
-            dacUsers.addAll(dacUserDAO.findUsers(userIds));
+            users.addAll(userDAO.findUsers(userIds));
         } else {
-            dacUsers =  dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+            users =  userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
         }
-        return dacUsers;
+        return users;
     }
 
     @Override
@@ -349,7 +349,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException {
+    public byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PDDocument darDOC = new PDDocument();
         try {
@@ -475,18 +475,18 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi) {
+    public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
         List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
-        Optional<DACUser> optionalUser = Optional.ofNullable(dacUser);
-        String status = optionalUser.isPresent() ? dacUser.getStatus() : "";
-        String rationale = optionalUser.isPresent() ? dacUser.getRationale() : "";
+        Optional<User> optionalUser = Optional.ofNullable(user);
+        String status = optionalUser.isPresent() ? user.getStatus() : "";
+        String rationale = optionalUser.isPresent() ? user.getRationale() : "";
         List<ResearcherProperty> researcherProperties = optionalUser.isPresent() ?
-                researcherPropertyDAO.findResearcherPropertiesByUser(dacUser.getDacUserId()) :
+                researcherPropertyDAO.findResearcherPropertiesByUser(user.getDacUserId()) :
                 Collections.emptyList();
         return darModalDetailsDTO
             .setNeedDOApproval(electionApi.darDatasetElectionStatus((dar.getString(DarConstants.REFERENCE_ID))))
-            .setResearcherName(dacUser, dar.getString(DarConstants.INVESTIGATOR))
+            .setResearcherName(user, dar.getString(DarConstants.INVESTIGATOR))
             .setStatus(status)
             .setRationale(rationale)
             .setUserId(dar.getInteger(DarConstants.USER_ID))

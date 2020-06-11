@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -117,10 +117,10 @@ public class DacResource extends Resource {
     public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         checkMembership(dacId, userId);
         Role role = dacService.getMemberRole();
-        DACUser user = findDacUser(userId);
+        User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
         try {
-            DACUser member = dacService.addDacMember(role, user, dac);
+            User member = dacService.addDacMember(role, user, dac);
             return Response.ok().entity(member).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -132,7 +132,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN})
     public Response removeDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getMemberRole();
-        DACUser user = findDacUser(userId);
+        User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
         try {
             dacService.removeDacMember(role, user, dac);
@@ -148,10 +148,10 @@ public class DacResource extends Resource {
     public Response addDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         checkMembership(dacId, userId);
         Role role = dacService.getChairpersonRole();
-        DACUser user = findDacUser(userId);
+        User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
         try {
-            DACUser member = dacService.addDacMember(role, user, dac);
+            User member = dacService.addDacMember(role, user, dac);
             return Response.ok().entity(member).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -163,7 +163,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN})
     public Response removeDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("userId") Integer userId) {
         Role role = dacService.getChairpersonRole();
-        DACUser user = findDacUser(userId);
+        User user = findDacUser(userId);
         Dac dac = findDacById(dacId);
         try {
             dacService.removeDacMember(role, user, dac);
@@ -189,7 +189,7 @@ public class DacResource extends Resource {
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response findAllDacMembers(@PathParam("dacId") Integer dacId) {
         findDacById(dacId);
-        List<DACUser> members = dacService.findMembersByDacId(dacId);
+        List<User> members = dacService.findMembersByDacId(dacId);
         return Response.ok().entity(members).build();
     }
 
@@ -198,12 +198,12 @@ public class DacResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
     public Response filterUsers(@PathParam("term") String term) {
-        List<DACUser> users = dacService.findAllDACUsersBySearchString(term);
+        List<User> users = dacService.findAllDACUsersBySearchString(term);
         return Response.ok().entity(users).build();
     }
 
-    private DACUser findDacUser(Integer userId) {
-        DACUser user = dacService.findUserById(userId);
+    private User findDacUser(Integer userId) {
+        User user = dacService.findUserById(userId);
         if (user == null) {
             throw new NotFoundException("Unable to find User with the provided id: " + userId);
         }
@@ -219,8 +219,8 @@ public class DacResource extends Resource {
     }
 
     private void checkMembership(Integer dacId, Integer userId) {
-        List<DACUser> currentMembers = dacService.findMembersByDacId(dacId);
-        Optional<DACUser> isMember = currentMembers.
+        List<User> currentMembers = dacService.findMembersByDacId(dacId);
+        Optional<User> isMember = currentMembers.
                 stream().
                 filter(u -> u.getDacUserId().equals(userId)).
                 findFirst();

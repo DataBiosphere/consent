@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
@@ -17,7 +17,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindRolesByUserId() {
-        DACUser user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
         List<UserRole> roles = userRoleDAO.findRolesByUserId(user.getDacUserId());
         Assert.assertEquals(1, roles.size());
@@ -25,7 +25,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindRolesByUserEmail() {
-        DACUser user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
         List<UserRole> roles = userRoleDAO.findRolesByUserEmail(user.getEmail());
         Assert.assertEquals(1, roles.size());
@@ -50,18 +50,18 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsertUserRoles() {
-        DACUser user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         UserRole r = new UserRole();
         r.setRoleId(UserRoles.MEMBER.getRoleId());
         userRoleDAO.insertUserRoles(Collections.singletonList(r), user.getDacUserId());
-        Optional<DACUser> updatedUser = userDAO.findUsersWithRoles(Collections.singletonList(user.getDacUserId())).stream().findFirst();
+        Optional<User> updatedUser = userDAO.findUsersWithRoles(Collections.singletonList(user.getDacUserId())).stream().findFirst();
         Assert.assertTrue(updatedUser.isPresent());
         Assert.assertEquals(2, updatedUser.get().getRoles().size());
     }
 
     @Test
     public void testUpdateUserRoles() {
-        DACUser user = createUserWithRole(UserRoles.MEMBER.getRoleId());
+        User user = createUserWithRole(UserRoles.MEMBER.getRoleId());
         List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
         userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), UserRoles.MEMBER.getRoleId());
         List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
@@ -70,7 +70,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testRemoveUserRoles() {
-        DACUser user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
         Assert.assertFalse(currentRoles.isEmpty());
         List<Integer> roleIds = userRoleDAO.findRoles().stream().map(Role::getRoleId).collect(Collectors.toList());
@@ -86,7 +86,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testRemoveSingleUserRole() {
-        DACUser user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         List<UserRole> userRoles = userRoleDAO.findRolesByUserId(user.getDacUserId());
         Assert.assertFalse(userRoles.isEmpty());
         List<Role> roles = userRoleDAO.findRoles();
@@ -100,7 +100,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindRoleByNameAndUser() {
-        DACUser user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Integer roleId = userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), user.getDacUserId());
         Assert.assertNotNull(roleId);
 
@@ -110,7 +110,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindRoleByUserIdAndRoleId() {
-        DACUser user = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
+        User user = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
         UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getDacUserId(), UserRoles.DATAOWNER.getRoleId());
         Assert.assertNotNull(userRole);
     }

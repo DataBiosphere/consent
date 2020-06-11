@@ -8,7 +8,7 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -58,13 +58,13 @@ public class DACUserResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response createDACUser(@Context UriInfo info, String json) {
         try {
-            DACUser dacUser = dacUserAPI.createDACUser(new DACUser(json));
+            User user = userService.createUser(new User(json));
             // Update email preference
             getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
-                    dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
+                    dacUserAPI.updateEmailPreference(aBoolean, user.getDacUserId())
             );
-            URI uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
-            return Response.created(uri).entity(dacUser).build();
+            URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
+            return Response.created(uri).entity(user).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
@@ -73,7 +73,7 @@ public class DACUserResource extends Resource {
     @GET
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Collection<DACUser> describeAllUsers() {
+    public Collection<User> describeAllUsers() {
         return userService.describeUsers();
     }
 
@@ -81,7 +81,7 @@ public class DACUserResource extends Resource {
     @Path("/{email}")
     @Produces("application/json")
     @PermitAll
-    public DACUser describe(@PathParam("email") String email) {
+    public User describe(@PathParam("email") String email) {
         return userService.findUserByEmail(email);
     }
 
@@ -91,18 +91,18 @@ public class DACUserResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response update(@Auth AuthUser authUser, @Context UriInfo info, String json, @PathParam("id") Integer userId) {
-        Map<String, DACUser> userMap = constructUserMapFromJson(json);
+        Map<String, User> userMap = constructUserMapFromJson(json);
         try {
             validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), findByAuthUser(authUser), userId);
             URI uri = info.getRequestUriBuilder().path("{id}").build(userId);
-            DACUser dacUser = dacUserAPI.updateDACUserById(userMap, userId);
+            User user = dacUserAPI.updateDACUserById(userMap, userId);
             // Update email preference
             JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
             JsonElement updateUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
             getEmailPreferenceValueFromUserJson(updateUser.toString()).ifPresent(aBoolean ->
-                    dacUserAPI.updateEmailPreference(aBoolean, dacUser.getDacUserId())
+                    dacUserAPI.updateEmailPreference(aBoolean, user.getDacUserId())
             );
-            return Response.ok(uri).entity(dacUser).build();
+            return Response.ok(uri).entity(user).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -117,7 +117,7 @@ public class DACUserResource extends Resource {
     public Response updateStatus(@PathParam("userId") Integer userId, String json) {
         Optional<String> statusOpt = getMemberNameStringFromJson(json, "status");
         Optional<String> rationaleOpt = getMemberNameStringFromJson(json, "rationale");
-        DACUser user = userService.findUserById(userId);
+        User user = userService.findUserById(userId);
         if (statusOpt.isPresent()) {
             try {
                 user = dacUserAPI.updateUserStatus(statusOpt.get(), userId);
@@ -212,19 +212,19 @@ public class DACUserResource extends Resource {
      * @param json Raw json string from client
      * @return Map of operation to DACUser
      */
-    private Map<String, DACUser> constructUserMapFromJson(String json) {
+    private Map<String, User> constructUserMapFromJson(String json) {
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-        Map<String, DACUser> userMap = new HashMap<>();
+        Map<String, User> userMap = new HashMap<>();
         JsonElement updatedUser = jsonObject.get(UserRolesHandler.UPDATED_USER_KEY);
         if (updatedUser != null && !updatedUser.isJsonNull()) {
-            userMap.put(UserRolesHandler.UPDATED_USER_KEY, new DACUser(updatedUser.toString()));
+            userMap.put(UserRolesHandler.UPDATED_USER_KEY, new User(updatedUser.toString()));
         }
         return userMap;
     }
 
-    private DACUser findByAuthUser(AuthUser user) {
+    private User findByAuthUser(AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
-        DACUser dacUser = userService.findUserByEmail(googleUser.getEmail());
+        User dacUser = userService.findUserByEmail(googleUser.getEmail());
         if (dacUser == null) {
             throw new NotFoundException("Unable to find user :" + user.getName());
         }

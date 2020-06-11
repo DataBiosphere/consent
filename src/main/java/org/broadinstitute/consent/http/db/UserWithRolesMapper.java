@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -12,14 +12,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DACUserRoleMapper implements RowMapper<DACUser>, RowMapperHelper {
+public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
 
-    private Map<Integer, DACUser> users = new HashMap<>();
+    private Map<Integer, User> users = new HashMap<>();
 
-    public DACUser map(ResultSet r, StatementContext ctx) throws SQLException {
-        DACUser user;
+    public User map(ResultSet r, StatementContext ctx) throws SQLException {
+        User user;
         if (!users.containsKey(r.getInt("dacUserId"))) {
-            user = new DACUser();
+            user = new User();
             user.setDacUserId(r.getInt("dacUserId"));
             user.setEmail(r.getString("email"));
             user.setDisplayName(r.getString("displayName"));
@@ -41,7 +41,7 @@ public class DACUserRoleMapper implements RowMapper<DACUser>, RowMapperHelper {
         return user;
     }
 
-    private void addRole(ResultSet r, DACUser user) throws SQLException {
+    private void addRole(ResultSet r, User user) throws SQLException {
         if (r.getObject("user_role_id") != null &&
                 r.getObject("user_id") != null &&
                 r.getObject("roleId") != null) {

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.service.NihAuthApi;
 import org.broadinstitute.consent.http.service.UserService;
@@ -44,7 +44,7 @@ public class NihAccountResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response deleteNihAccount(@Auth AuthUser user) {
         try {
-            DACUser dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getName());
             nihAuthApi.deleteNihAccountById(dacUser.getDacUserId());
             return Response.ok().build();
         } catch (Exception e) {

@@ -1,23 +1,6 @@
 package org.broadinstitute.consent.http.service.users.handler;
 
 import freemarker.template.TemplateException;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.enumeration.RoleStatus;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,11 +8,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.RoleStatus;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResearcherPropertyHandler implements ResearcherService {
 
     private ResearcherPropertyDAO researcherPropertyDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private final EmailNotifierService emailNotifierService;
     private DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
     private static final String ACTION_REGISTERED = "registered";
@@ -39,15 +38,15 @@ public class ResearcherPropertyHandler implements ResearcherService {
         return LoggerFactory.getLogger(this.getClass());
     }
 
-    public ResearcherPropertyHandler(ResearcherPropertyDAO researcherPropertyDAO, DACUserDAO dacUserDAO, EmailNotifierService emailNotifierService) {
+    public ResearcherPropertyHandler(ResearcherPropertyDAO researcherPropertyDAO, UserDAO userDAO, EmailNotifierService emailNotifierService) {
         this.researcherPropertyDAO = researcherPropertyDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.emailNotifierService = emailNotifierService;
     }
 
     @Override
     public List<ResearcherProperty> setProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser) throws NotFoundException, IllegalArgumentException {
-        DACUser user = validateAuthUser(authUser);
+        User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         validateExistentFields(researcherPropertiesMap);
         List<ResearcherProperty> properties = getResearcherProperties(researcherPropertiesMap, user.getDacUserId());
@@ -58,7 +57,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     @Override
     public List<ResearcherProperty> updateProperties(Map<String, String> researcherPropertiesMap, AuthUser authUser, Boolean validate) throws NotFoundException, IllegalArgumentException {
-        DACUser user = validateAuthUser(authUser);
+        User user = validateAuthUser(authUser);
         researcherPropertiesMap.values().removeAll(Collections.singleton(null));
         if (validate) validateRequiredFields(researcherPropertiesMap);
         validateExistentFields(researcherPropertiesMap);
@@ -109,7 +108,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
 
     private Map<String, String> getResearcherPropertiesForDAR(Map<String, String> properties, Integer userId) {
         Map<String, String> rpForDAR = new HashMap<>();
-        rpForDAR.put(ResearcherFields.INVESTIGATOR.getValue(), properties.getOrDefault(ResearcherFields.PI_NAME.getValue(), dacUserDAO.findDACUserById(userId).getDisplayName()));
+        rpForDAR.put(ResearcherFields.INVESTIGATOR.getValue(), properties.getOrDefault(ResearcherFields.PI_NAME.getValue(), userDAO.findUserById(userId).getDisplayName()));
         rpForDAR.put(ResearcherFields.INSTITUTION.getValue(), properties.getOrDefault(ResearcherFields.INSTITUTION.getValue(), null));
         rpForDAR.put(ResearcherFields.DEPARTMENT.getValue(), properties.getOrDefault(ResearcherFields.DEPARTMENT.getValue(), null));
         rpForDAR.put(ResearcherFields.STREET_ADDRESS_1.getValue(), properties.getOrDefault(ResearcherFields.STREET_ADDRESS_1.getValue(), null));
@@ -142,13 +141,13 @@ public class ResearcherPropertyHandler implements ResearcherService {
     }
 
     private void validateUser(Integer userId) {
-        if (dacUserDAO.findDACUserById(userId) == null) {
+        if (userDAO.findUserById(userId) == null) {
             throw new NotFoundException("User with id: " + userId + " does not exists");
         }
     }
 
-    private DACUser validateAuthUser(AuthUser authUser) {
-        DACUser user = dacUserDAO.findDACUserByEmail(authUser.getName());
+    private User validateAuthUser(AuthUser authUser) {
+        User user = userDAO.findUserByEmail(authUser.getName());
         if (user == null) {
             throw new NotFoundException("Auth User with email: " + authUser.getName() + " does not exist");
         }
@@ -213,7 +212,7 @@ public class ResearcherPropertyHandler implements ResearcherService {
             } catch (IOException | TemplateException | MessagingException e) {
                 logger().error("Error when notifying the admin(s) about the researcher action: " +
                         action + ", for user: " +
-                        dacUserDAO.findDACUserById(userId).getDisplayName());
+                        userDAO.findUserById(userId).getDisplayName());
             }
         }
     }

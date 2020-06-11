@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -40,7 +40,7 @@ public class DatabaseSummaryAPITest {
     @Mock
     private ElectionDAO electionDAO;
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     @Mock
     private ConsentDAO consentDAO;
     @Mock
@@ -55,7 +55,7 @@ public class DatabaseSummaryAPITest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO));
+        databaseSummaryAPI = Mockito.spy(new DatabaseSummaryAPI(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO));
     }
 
     // In this tests we won't validate the resulting file, we will just validate the methods being called for each response given by the mocks is accurate.
@@ -120,7 +120,7 @@ public class DatabaseSummaryAPITest {
     @Test
     public void testFormatTimeToDate() throws Exception {
         Calendar myCalendar = new GregorianCalendar(2016, 2, 11);
-        String getAsString = databaseSummaryAPI.formatTimeToDate(myCalendar.getTimeInMillis());
+        String getAsString = databaseSummaryAPI.formatLongToDate(myCalendar.getTimeInMillis());
         assertTrue(getAsString + " is the same date string for March 3, 2016 ", getAsString.equals("3/11/2016"));
     }
 

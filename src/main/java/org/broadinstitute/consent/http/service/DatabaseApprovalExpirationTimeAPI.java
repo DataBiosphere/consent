@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service;
+
+import java.util.Date;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.util.DarConstants;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Date;
 
 
 /**
@@ -14,7 +14,7 @@ import java.util.Date;
 public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpirationTimeAPI {
 
     private ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
 
 
     /**
@@ -22,9 +22,9 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    protected DatabaseApprovalExpirationTimeAPI(ApprovalExpirationTimeDAO dao, DACUserDAO dacUserDAO) {
+    protected DatabaseApprovalExpirationTimeAPI(ApprovalExpirationTimeDAO dao, UserDAO userDAO) {
         this.approvalExpirationTimeDAO = dao;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
     }
 
     /**
@@ -36,8 +36,8 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
      * @param dao The Data Access Object instance that the API should use to read/write data.
      */
 
-    public static void initInstance(ApprovalExpirationTimeDAO dao, DACUserDAO dacUserDAO) {
-        ApprovalExpirationTimeAPIHolder.setInstance(new DatabaseApprovalExpirationTimeAPI(dao, dacUserDAO));
+    public static void initInstance(ApprovalExpirationTimeDAO dao, UserDAO userDAO) {
+        ApprovalExpirationTimeAPIHolder.setInstance(new DatabaseApprovalExpirationTimeAPI(dao, userDAO));
     }
 
 
@@ -92,7 +92,7 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
         if(approvalExpirationTime.getUserId() == null){
             throw new IllegalArgumentException("User id is required");
         }else{
-            if(dacUserDAO.findDACUserById(approvalExpirationTime.getUserId()) == null){
+            if(userDAO.findUserById(approvalExpirationTime.getUserId()) == null){
                 throw new IllegalArgumentException("The specified user id does not exist");
             }
         }

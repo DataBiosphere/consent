@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
@@ -48,7 +48,7 @@ public class EmailNotifierServiceTest {
     private ElectionDAO electionDAO;
 
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
 
     @Mock
     private MailMessageDAO emailDAO;
@@ -80,7 +80,7 @@ public class EmailNotifierServiceTest {
         fmConfig.setDefaultEncoding("UTF-8");
         fmConfig.setTemplateDirectory("/freemarker");
         FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
-        service = new EmailNotifierService(consentDAO, dataAccessRequestService, voteDAO, electionDAO, dacUserDAO,
+        service = new EmailNotifierService(consentDAO, dataAccessRequestService, voteDAO, electionDAO, userDAO,
                 emailDAO, mailService, mailServiceDAO, helper, serverUrl, serviceActive, researcherPropertyDAO);
     }
 

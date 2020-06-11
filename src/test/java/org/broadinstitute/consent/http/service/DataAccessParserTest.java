@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Test;
@@ -135,8 +135,8 @@ public class DataAccessParserTest {
         return datasetDetails;
     }
 
-    private DACUser populateUser() {
-        DACUser user = new DACUser();
+    private User populateUser() {
+        User user = new User();
         user.setStatus("approved");
         user.setRationale("granted bonafide");
         return user;

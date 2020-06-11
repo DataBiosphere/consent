@@ -6,11 +6,10 @@ import io.dropwizard.auth.Auth;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.UserAPI;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -31,12 +30,10 @@ import java.util.Collections;
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
 
-    private final UserAPI userAPI;
     private final UserService userService;
 
     @Inject
-    public UserResource(UserAPI userAPI, UserService userService) {
-        this.userAPI = userAPI;
+    public UserResource(UserService userService) {
         this.userService = userService;
     }
 
@@ -62,12 +59,12 @@ public class UserResource extends Resource {
         } catch (NotFoundException nfe) {
             // no-op, we expect to not find the new user in this case.
         }
-        DACUser dacUser = new DACUser(googleUser);
+        User dacUser = new User(googleUser);
         UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         dacUser.setRoles(Collections.singletonList(researcher));
         try {
             URI uri;
-            dacUser = userAPI.createUser(dacUser);
+            dacUser = userService.createUser(dacUser);
             uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
             return Response.created(new URI(uri.toString().replace("user", "dacuser"))).entity(dacUser).build();
         } catch (Exception e) {
