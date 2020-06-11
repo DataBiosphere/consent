@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -43,7 +43,7 @@ public class DataSetDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Consent consent = createConsent(dac.getDacId());
         createAssociation(consent.getConsentId(), dataset.getDataSetId());
-        DACUser user = createUser();
+        User user = createUser();
         createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getDacUserId(), dac.getDacId());
 
         List<DataSet> datasets = dataSetDAO.findDataSetsByAuthUserEmail(user.getEmail());

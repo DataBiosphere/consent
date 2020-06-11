@@ -9,7 +9,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
@@ -82,7 +82,7 @@ public class DACUserResourceTest {
 
     @Test
     public void testUpdateResearcherAsSelf() throws Exception {
-        DACUser researcher = createDacUser(UserRoles.RESEARCHER);
+        User researcher = createDacUser(UserRoles.RESEARCHER);
         JsonObject json = new JsonObject();
         JsonElement userJson = new Gson().toJsonTree(researcher);
         json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
@@ -98,7 +98,7 @@ public class DACUserResourceTest {
 
     @Test
     public void testUpdateResearcherAsSomeoneElse() throws Exception {
-        DACUser researcher = createDacUser(UserRoles.RESEARCHER);
+        User researcher = createDacUser(UserRoles.RESEARCHER);
         JsonObject json = new JsonObject();
         JsonElement userJson = new Gson().toJsonTree(researcher);
         json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
@@ -114,7 +114,7 @@ public class DACUserResourceTest {
 
     @Test
     public void testUpdateResearcherAsAdmin() throws Exception {
-        DACUser admin = createDacUser(UserRoles.ADMIN);
+        User admin = createDacUser(UserRoles.ADMIN);
         JsonObject json = new JsonObject();
         JsonElement userJson = new Gson().toJsonTree(admin);
         json.add(UserRolesHandler.UPDATED_USER_KEY, userJson);
@@ -145,7 +145,7 @@ public class DACUserResourceTest {
 
     @Test
     public void testUpdateStatus() {
-        DACUser user = createDacUser(UserRoles.RESEARCHER);
+        User user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setStatus("pending");
         user.setRationale("rationale");
@@ -159,7 +159,7 @@ public class DACUserResourceTest {
 
     @Test(expected = NotFoundException.class)
     public void testUpdateStatusUserNotFound() {
-        DACUser user = createDacUser(UserRoles.RESEARCHER);
+        User user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         when(userService.findUserById(any())).thenThrow(new NotFoundException());
         initResource();
@@ -169,7 +169,7 @@ public class DACUserResourceTest {
 
     @Test
     public void testUpdateStatusBadRequest() {
-        DACUser user = createDacUser(UserRoles.RESEARCHER);
+        User user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         user.setStatus("Bad Status");
         when(userService.findUserById(any())).thenReturn(user);
@@ -183,7 +183,7 @@ public class DACUserResourceTest {
     public void testConvertJsonToDACUser() {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
         String json = "{\"dacUserId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": 1302828677828, \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
-        DACUser user = new DACUser(json);
+        User user = new User(json);
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getDacUserId().intValue(), 1);
         Assert.assertEquals(user.getEmail(), "email");
@@ -194,16 +194,16 @@ public class DACUserResourceTest {
         System.out.println(user.toString());
     }
 
-    private DACUser createDacUser(UserRoles roles) {
-        DACUser dacUser = new DACUser();
-        dacUser.setDacUserId(RandomUtils.nextInt(1, 100));
-        dacUser.setDisplayName("name");
-        dacUser.setEmail("email");
-        dacUser.setAdditionalEmail("additional email");
-        dacUser.setEmailPreference(true);
+    private User createDacUser(UserRoles roles) {
+        User user = new User();
+        user.setDacUserId(RandomUtils.nextInt(1, 100));
+        user.setDisplayName("name");
+        user.setEmail("email");
+        user.setAdditionalEmail("additional email");
+        user.setEmailPreference(true);
         UserRole userRole = new UserRole(roles.getRoleId(), roles.getRoleName());
-        dacUser.setRoles(Collections.singletonList(userRole));
-        return dacUser;
+        user.setRoles(Collections.singletonList(userRole));
+        return user;
     }
 
 }

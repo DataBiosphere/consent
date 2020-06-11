@@ -1,27 +1,22 @@
 package org.broadinstitute.consent.http.service.users;
 
 
-import freemarker.template.TemplateException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @deprecated Use UserService
@@ -30,12 +25,12 @@ import java.util.Map;
 @Deprecated
 public class DatabaseDACUserAPI extends AbstractDACUserAPI {
 
-    protected final DACUserDAO dacUserDAO;
+    protected final UserDAO userDAO;
     protected final UserRoleDAO userRoleDAO;
     private final UserRolesHandler rolesHandler;
     private final UserService userService;
 
-    public static void initInstance(DACUserDAO userDao, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
+    public static void initInstance(UserDAO userDao, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
         DACUserAPIHolder.setInstance(new DatabaseDACUserAPI(userDao, userRoleDAO, rolesHandler, userService));
     }
 
@@ -49,87 +44,87 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
      *
      * @param userDAO The Data Access Object used to read/write data.
      */
-    DatabaseDACUserAPI(DACUserDAO userDAO, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
-        this.dacUserDAO = userDAO;
+    DatabaseDACUserAPI(UserDAO userDAO, UserRoleDAO userRoleDAO, UserRolesHandler rolesHandler, UserService userService) {
+        this.userDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
         this.rolesHandler = rolesHandler;
         this.userService = userService;
     }
 
     @Override
-    public DACUser createDACUser(DACUser dacUser) throws IllegalArgumentException {
+    public User createDACUser(User dacUser) throws IllegalArgumentException {
         validateRequiredFields(dacUser);
         Integer dacUserID;
         try {
-            dacUserID = dacUserDAO.insertDACUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
+            dacUserID = userDAO.insertUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email should be unique.", e);
         }
         if (dacUser.getRoles() != null) {
             insertUserRoles(dacUser, dacUserID);
         }
-        DACUser user = dacUserDAO.findDACUserById(dacUserID);
+        User user = userDAO.findUserById(dacUserID);
         user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
         return user;
 
     }
 
     @Override
-    public List<DACUser> describeAdminUsersThatWantToReceiveMails() {
-        return dacUserDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+    public List<User> describeAdminUsersThatWantToReceiveMails() {
+        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
     }
 
     @Override
-    public DACUser updateUserStatus(String status, Integer userId) {
+    public User updateUserStatus(String status, Integer userId) {
         Integer statusId = RoleStatus.getValueByStatus(status);
         validateExistentUserById(userId);
         if (statusId == null) {
             throw new IllegalArgumentException(status + " is not a valid status.");
         }
-        dacUserDAO.updateUserStatus(statusId, userId);
+        userDAO.updateUserStatus(statusId, userId);
         return userService.findUserById(userId);
     }
 
     @Override
-    public DACUser updateUserRationale(String rationale, Integer userId) {
+    public User updateUserRationale(String rationale, Integer userId) {
         validateExistentUserById(userId);
         if (rationale == null) {
             throw new IllegalArgumentException("Rationale is required.");
         }
-        dacUserDAO.updateUserRationale(rationale, userId);
+        userDAO.updateUserRationale(rationale, userId);
         return userService.findUserById(userId);
     }
 
     @Override
-    public DACUser updateDACUserById(Map<String, DACUser> dac, Integer id) throws IllegalArgumentException, NotFoundException {
-        DACUser updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
+    public User updateDACUserById(Map<String, User> dac, Integer id) throws IllegalArgumentException, NotFoundException {
+        User updatedUser = dac.get(UserRolesHandler.UPDATED_USER_KEY);
         // validate user exists
         validateExistentUserById(id);
         // validate required fields are not null or empty
         validateRequiredFields(updatedUser);
         rolesHandler.updateRoles(updatedUser);
         try {
-            dacUserDAO.updateDACUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
+            userDAO.updateUser(updatedUser.getEmail(), updatedUser.getDisplayName(), id, updatedUser.getAdditionalEmail());
         } catch (UnableToExecuteStatementException e) {
             throw new IllegalArgumentException("Email shoud be unique.");
         }
-        DACUser dacUser = userService.findUserByEmail(updatedUser.getEmail());
-        dacUser.setRoles(userRoleDAO.findRolesByUserId(dacUser.getDacUserId()));
-        return dacUser;
+        User user = userService.findUserByEmail(updatedUser.getEmail());
+        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
+        return user;
     }
 
     @Override
     public void updateEmailPreference(boolean preference, Integer userId) {
-        dacUserDAO.updateEmailPreference(preference, userId);
+        userDAO.updateEmailPreference(preference, userId);
     }
 
     private void validateExistentUserById(Integer id) {
-        if (dacUserDAO.findDACUserById(id) == null) {
+        if (userDAO.findUserById(id) == null) {
             throw new NotFoundException("The user for the specified id does not exist");
         }
     }
 
-    private void validateRequiredFields(DACUser newDac) {
+    private void validateRequiredFields(User newDac) {
         if (StringUtils.isEmpty(newDac.getDisplayName())) {
             throw new IllegalArgumentException("Display Name can't be null. The user needs a name to display.");
         }
@@ -138,8 +133,8 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         }
     }
 
-    private void insertUserRoles(DACUser dacUser, Integer dacUserId) {
-        List<UserRole> roles = dacUser.getRoles();
+    private void insertUserRoles(User user, Integer dacUserId) {
+        List<UserRole> roles = user.getRoles();
         roles.forEach(r -> {
             if (r.getRoleId() == null) {
                 r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));

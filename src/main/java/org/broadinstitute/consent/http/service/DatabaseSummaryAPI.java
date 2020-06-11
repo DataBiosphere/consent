@@ -1,32 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.HeaderSummary;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AccessRP;
-import org.broadinstitute.consent.http.models.Association;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.broadinstitute.consent.http.util.DatasetUtil;
-import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,8 +16,33 @@ import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.HeaderSummary;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AccessRP;
+import org.broadinstitute.consent.http.models.Association;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation class for VoteAPI on top of ElectionDAO database support.
@@ -52,7 +51,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
 
     private VoteDAO voteDAO;
     private ElectionDAO electionDAO;
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     private ConsentDAO consentDAO;
     private DataSetDAO datasetDAO;
     private MatchDAO matchDAO;
@@ -74,7 +73,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      * @param dao The Data Access Object instance that the API should use to
      *            read/write data.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, DACUserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO, MatchDAO matchDAO) {
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO, DataSetDAO datasetDAO, MatchDAO matchDAO) {
         SummaryAPIHolder.setInstance(new DatabaseSummaryAPI(dataAccessRequestService, dao, electionDAO, userDAO, consentDAO, datasetDAO, matchDAO));
     }
 
@@ -84,11 +83,11 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
      *
      * @param dao The Data Access Object used to read/write data.
      */
-    protected DatabaseSummaryAPI(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, DACUserDAO dacUserDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO) {
+    protected DatabaseSummaryAPI(DataAccessRequestService dataAccessRequestService, VoteDAO dao, ElectionDAO electionDAO, UserDAO userDAO, ConsentDAO consentDAO , DataSetDAO datasetDAO, MatchDAO matchDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.voteDAO = dao;
         this.electionDAO = electionDAO;
-        this.dacUserDAO = dacUserDAO;
+        this.userDAO = userDAO;
         this.consentDAO = consentDAO;
         this.datasetDAO = datasetDAO;
         this.matchDAO = matchDAO;
@@ -197,15 +196,15 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
                     List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
                     Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
-                    Collection<DACUser> dacUsers = dacUserDAO.findUsers(dacUserIds);
+                    Collection<User> users = userDAO.findUsers(dacUserIds);
                     for (Election election : reviewedElections) {
                         Consent electionConsent = consents.stream().filter(c -> c.getConsentId().equals(election.getReferenceId())).collect(singletonCollector());
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().map(e -> e.getDacUserId()).collect(Collectors.toList());
-                        Collection<DACUser> electionDacUsers = dacUsers.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
+                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
                         List<Vote> electionDACVotes = electionVotes.stream().filter(ev -> ev.getType().equals("DAC")).collect(Collectors.toList());
                         Vote chairPersonVote =  electionVotes.stream().filter(ev -> ev.getType().equals(CHAIRPERSON)).collect(singletonCollector());
-                        DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
+                        User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(chairPersonVote.getDacUserId())).collect(singletonCollector());
                         summaryWriter.write(delimiterCheck(electionConsent.getName()) + SEPARATOR);
                         summaryWriter.write(election.getVersion() + SEPARATOR);
                         summaryWriter.write(election.getStatus() + SEPARATOR);
@@ -217,8 +216,8 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                         summaryWriter.write( nullToString(chairPersonVote.getRationale()) + SEPARATOR);
                         if (electionDACVotes != null && electionDACVotes.size() > 0) {
                             for (Vote vote : electionDACVotes) {
-                                List<DACUser> dacUser = electionDacUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
-                                summaryWriter.write( dacUser.get(0).getDisplayName() + SEPARATOR);
+                                List<User> user = electionUsers.stream().filter(du -> du.getDacUserId().equals(vote.getDacUserId())).collect(Collectors.toList());
+                                summaryWriter.write( user.get(0).getDisplayName() + SEPARATOR);
                                 summaryWriter.write( booleanToString(vote.getVote()) + SEPARATOR);
                                 summaryWriter.write( nullToString(vote.getRationale())+ SEPARATOR);
                             }
@@ -269,14 +268,14 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     List<Vote> consentVotes = voteDAO.findVotesByElectionIds(consentElectionIds);
                     List<Match> matchList = matchDAO.findMatchesPurposeId(referenceIds);
                     Collection<Integer> dacUserIds = votes.stream().map(v -> v.getDacUserId()).collect(Collectors.toSet());
-                    Collection<DACUser> dacUsers = dacUserDAO.findUsers(dacUserIds);
+                    Collection<User> users = userDAO.findUsers(dacUserIds);
                     Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(darElectionIds);
                     setSummaryHeaderDataAccessRequest(summaryWriter, maxNumberOfDACMembers);
                     for (Election election : reviewedElections) {
 
                         List<Vote> electionVotes = votes.stream().filter(ev -> ev.getElectionId().equals(election.getElectionId())).collect(Collectors.toList());
                         List<Integer> electionVotesUserIds = electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.DAC.getValue())).map(e -> e.getDacUserId()).collect(Collectors.toList());
-                        Collection<DACUser> electionDacUsers = dacUsers.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
+                        Collection<User> electionUsers = users.stream().filter(du -> electionVotesUserIds.contains(du.getDacUserId())).collect(Collectors.toSet());
 
                         Vote finalVote =  electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue())).collect(singletonCollector());
                         Vote chairPersonVote =  electionVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
@@ -290,7 +289,7 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 chairPersonRPVote = electionRPVotes.stream().filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue())).collect(singletonCollector());
                             }
                         }
-                        DACUser chairPerson =  dacUsers.stream().filter(du -> du.getDacUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
+                        User chairPerson =  users.stream().filter(du -> du.getDacUserId().equals(finalVote.getDacUserId())).collect(singletonCollector());
                         Match match;
                         try {
                             match = matchList.stream().filter(m -> m.getPurpose().equals(election.getReferenceId())).collect(singletonCollector());
@@ -331,10 +330,10 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                                 }
                                 summaryWriter.write( StringUtils.join(dataSetUUIds, ",")  + SEPARATOR);
                                 summaryWriter.write( formatLongToDate(dar.getLong(DarConstants.SORT_DATE))  + SEPARATOR);
-                                for (DACUser dacUser : electionDacUsers){
-                                    summaryWriter.write( dacUser.getDisplayName() + SEPARATOR);
+                                for (User user : electionUsers){
+                                    summaryWriter.write( user.getDisplayName() + SEPARATOR);
                                 }
-                                for (int i = 0; i < (maxNumberOfDACMembers - electionDacUsers.size()); i++) {
+                                for (int i = 0; i < (maxNumberOfDACMembers - electionUsers.size()); i++) {
                                     summaryWriter.write(
                                             SEPARATOR);
                                 }
@@ -411,9 +410,9 @@ public class DatabaseSummaryAPI extends AbstractSummaryAPI {
                     summaryWriter.write(electionResult(election.getFinalAccessVote()) + SEPARATOR);
                     List<Vote> votes = electionsData.get(election.getElectionId());
                     for(Vote datasetVote : votes){
-                        DACUser dacUser = dacUserDAO.findDACUserById(datasetVote.getDacUserId());
-                        summaryWriter.write(dacUser.getDisplayName() + SEPARATOR);
-                        summaryWriter.write(dacUser.getEmail() + SEPARATOR);
+                        User user = userDAO.findUserById(datasetVote.getDacUserId());
+                        summaryWriter.write(user.getDisplayName() + SEPARATOR);
+                        summaryWriter.write(user.getEmail() + SEPARATOR);
                         summaryWriter.write(datasetVoteResult(datasetVote) + SEPARATOR);
                         summaryWriter.write(datasetVote.getRationale() == null ? "None" : datasetVote.getRationale());
                         summaryWriter.write(SEPARATOR);

@@ -13,6 +13,14 @@ import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.EnumSet;
+import java.util.List;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration.Dynamic;
+import javax.ws.rs.client.Client;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -35,7 +43,6 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -44,6 +51,7 @@ import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
@@ -129,8 +137,6 @@ import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DatabaseUserAPI;
-import org.broadinstitute.consent.http.service.users.UserAPI;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherPropertyHandler;
 import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
@@ -145,15 +151,6 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration.Dynamic;
-import javax.ws.rs.client.Client;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.EnumSet;
-import java.util.List;
 
 /**
  * Top-level entry point to the entire application.
@@ -210,7 +207,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteDAO voteDAO = injector.getProvider(VoteDAO.class).get();
         final DataSetDAO dataSetDAO = injector.getProvider(DataSetDAO.class).get();
         final DataSetAssociationDAO dataSetAssociationDAO = injector.getProvider(DataSetAssociationDAO.class).get();
-        final DACUserDAO dacUserDAO = injector.getProvider(DACUserDAO.class).get();
+        final UserDAO userDAO = injector.getProvider(UserDAO.class).get();
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
         final MatchDAO matchDAO = injector.getProvider(MatchDAO.class).get();
         final MailMessageDAO mailMessageDAO = injector.getProvider(MailMessageDAO.class).get();
@@ -232,25 +229,25 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
-        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
-        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, dacUserDAO, userRoleDAO);
+        DatabaseDataSetAssociationAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userDAO, userRoleDAO);
         DatabaseMatchingServiceAPI.initInstance(client, config.getServicesConfiguration());
         DatabaseMatchProcessAPI.initInstance(consentDAO, dataAccessRequestService);
-        DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, dacUserDAO, consentDAO, dataSetDAO, matchDAO);
-        DatabaseDACUserAPI.initInstance(dacUserDAO, userRoleDAO, userRolesHandler, userService);
+        DatabaseSummaryAPI.initInstance(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO, dataSetDAO, matchDAO);
+        DatabaseDACUserAPI.initInstance(userDAO, userRoleDAO, userRolesHandler, userService);
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         TranslateServiceImpl.initInstance(useRestrictionConverter);
         DatabaseHelpReportAPI.initInstance(helpReportDAO, userRoleDAO);
-        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, dacUserDAO);
+        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, userDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
 
-        DatabaseElectionAPI.initInstance(consentDAO, dacUserDAO, dataAccessRequestService, dataSetAssociationDAO,
+        DatabaseElectionAPI.initInstance(consentDAO, userDAO, dataAccessRequestService, dataSetAssociationDAO,
                 dataSetDAO, electionDAO, emailNotifierService, mailMessageDAO, voteDAO);
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -268,8 +265,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
         final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-        final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, dacUserDAO, emailNotifierService);
-        final UserAPI userAPI = new DatabaseUserAPI(dacUserDAO, userRoleDAO, userRolesHandler, userService);
+        final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
         // Now register our resources.
@@ -295,7 +291,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new HelpReportResource(emailNotifierService));
         env.jersey().register(ApprovalExpirationTimeResource.class);
         env.jersey().register(MatchResource.class);
-        env.jersey().register(new UserResource(userAPI, userService));
+        env.jersey().register(new UserResource(userService));
         env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
         env.jersey().register(WorkspaceResource.class);
         env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));

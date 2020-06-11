@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.UserService;
@@ -44,7 +44,7 @@ public class DataRequestReportsResource extends Resource {
     public Response downloadDataRequestPdfFile(@PathParam("requestId") String requestId) {
         Document dar = darApi.describeDataAccessRequestById(requestId);
         Map<String, String> researcherProperties = researcherService.describeResearcherPropertiesForDAR(dar.getInteger(DarConstants.USER_ID));
-        DACUser user = userService.findUserById(dar.getInteger(DarConstants.USER_ID));
+        User user = userService.findUserById(dar.getInteger(DarConstants.USER_ID));
         String fileName = "FullDARApplication-" + dar.getString(DarConstants.DAR_CODE);
         try {
             String sDUR = darApi.getStructuredDURForPdf(dar);

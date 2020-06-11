@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.mongodb.MongoException;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -52,7 +52,7 @@ public interface DataAccessRequestAPI {
 
     Object getField(String requestId, String field);
 
-    List<DACUser> getUserEmailAndCancelElection(String referenceId);
+    List<User> getUserEmailAndCancelElection(String referenceId);
 
     boolean hasUseRestriction(String referenceId);
 
@@ -60,7 +60,7 @@ public interface DataAccessRequestAPI {
 
     List<Document> describeDataAccessWithDataSetId(List<String> dataSetIds);
 
-    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, DACUser user, Boolean manualReview, String sDUR) throws IOException;
+    byte[] createDARDocument(Document dar, Map<String, String> researcherProperties, User user, Boolean manualReview, String sDUR) throws IOException;
 
     String getStructuredDURForPdf(Document dar);
 
@@ -70,7 +70,7 @@ public interface DataAccessRequestAPI {
 
     File createDataSetApprovedUsersDocument(Integer dataSetId) throws IOException;
 
-    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, DACUser dacUser, ElectionAPI electionApi);
+    DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi);
 
 }
 

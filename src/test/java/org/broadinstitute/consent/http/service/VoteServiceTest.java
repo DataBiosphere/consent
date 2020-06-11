@@ -1,33 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
-import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.NotFoundException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -39,12 +11,39 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 public class VoteServiceTest {
 
     private VoteService service;
 
     @Mock
-    DACUserDAO dacUserDAO;
+    UserDAO userDAO;
     @Mock
     DataSetAssociationDAO dataSetAssociationDAO;
     @Mock
@@ -60,7 +59,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(dacUserDAO, dataSetAssociationDAO, electionDAO, voteDAO);
+        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO);
     }
 
     @Test
@@ -332,7 +331,7 @@ public class VoteServiceTest {
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {
-        DACUser user = new DACUser();
+        User user = new User();
         user.setDacUserId(RandomUtils.nextInt(1, 10));
         UserRole chairRole = new UserRole();
         chairRole.setUserId(user.getDacUserId());
@@ -342,8 +341,8 @@ public class VoteServiceTest {
         Election e = new Election();
         when(electionDAO.findElectionById(anyInt())).thenReturn(e);
         when(datasetDAO.findDatasetAndDacIds()).thenReturn(Collections.emptyList());
-        when(dacUserDAO.findDACUsersEnabledToVoteByDAC(anyInt())).thenReturn(Collections.singleton(user));
-        when(dacUserDAO.findNonDACUsersEnabledToVote()).thenReturn(Collections.singleton(user));
+        when(userDAO.findUsersEnabledToVoteByDAC(anyInt())).thenReturn(Collections.singleton(user));
+        when(userDAO.findNonDacUsersEnabledToVote()).thenReturn(Collections.singleton(user));
         Vote v = new Vote();
         v.setVoteId(1);
         when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());

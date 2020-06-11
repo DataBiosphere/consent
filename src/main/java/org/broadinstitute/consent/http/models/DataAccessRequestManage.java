@@ -35,7 +35,7 @@ public class DataAccessRequestManage {
     private Integer datasetId;
     private Integer dacId;
     private List<String> errors = new ArrayList<>();
-    private DACUser ownerUser;
+    private User ownerUser;
 
     public DataAccessRequestManage() {
     }
@@ -264,11 +264,11 @@ public class DataAccessRequestManage {
         this.errors = errors;
     }
 
-    public DACUser getOwnerUser() {
+    public User getOwnerUser() {
         return ownerUser;
     }
 
-    public void setOwnerUser(DACUser ownerUser) {
+    public void setOwnerUser(User ownerUser) {
         this.ownerUser = ownerUser;
     }
 

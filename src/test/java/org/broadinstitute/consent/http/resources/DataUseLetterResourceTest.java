@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.grammar.Everything;
@@ -68,10 +68,10 @@ public class DataUseLetterResourceTest {
     }
 
     private void initResource() {
-        DACUser dacUser = new DACUser();
-        dacUser.setEmail(user.getName());
-        dacUser.setDacUserId(1);
-        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        User user = new User();
+        user.setEmail(this.user.getName());
+        user.setDacUserId(1);
+        when(userService.findUserByEmail(any())).thenReturn(user);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         resource = new DataUseLetterResource(auditService, store, userService);

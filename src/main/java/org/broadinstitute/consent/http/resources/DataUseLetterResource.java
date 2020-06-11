@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.enumeration.Actions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AuditService;
@@ -92,7 +92,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.postStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId, dulUrl, name);
-            DACUser dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getName());
             auditService.saveConsentAudit(consentId, AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return consent;
         } catch (UnknownIdentifierException e) {
@@ -123,7 +123,7 @@ public class DataUseLetterResource extends Resource {
             String toStoreFileName =  UUID.randomUUID() + "." + getFileExtension(part.getContentDisposition().getFileName());
             String dulUrl = store.putStorageDocument(uploadedDUL, part.getMediaType().toString(), toStoreFileName);
             Consent consent = api.updateConsentDul(consentId,dulUrl, name);
-            DACUser dacUser = userService.findUserByEmail(user.getName());
+            User dacUser = userService.findUserByEmail(user.getName());
             auditService.saveConsentAudit(consent.getConsentId(), AuditTable.CONSENT.getValue(), Actions.REPLACE.getValue(), dacUser.getEmail());
             return api.updateConsentDul(consentId,dulUrl, name);
         } catch (UnknownIdentifierException e) {

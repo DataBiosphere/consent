@@ -2,14 +2,14 @@ package org.broadinstitute.consent.http.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
@@ -45,7 +45,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Mock
     private VoteDAO voteDAO;
     @Mock
-    private DACUserDAO dacUserDAO;
+    private UserDAO userDAO;
     @Mock
     private DataSetDAO dataSetDAO;
     @Mock
@@ -66,7 +66,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, dacUserDAO, dataSetDAO, researcherPropertyDAO);
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
     }
 
     @Test
@@ -105,7 +105,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Test
     public void testCreateDARDocument() throws Exception {
         Document dar = getDocument(null, "845246551313515", null);
-        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new DACUser(), true, TRANSLATED_USE_RESTRICTION);
+        byte[] doc = databaseDataAccessRequestAPI.createDARDocument(dar, getResearcherProperties(), new User(), true, TRANSLATED_USE_RESTRICTION);
         Assert.assertNotNull(doc);
     }
 

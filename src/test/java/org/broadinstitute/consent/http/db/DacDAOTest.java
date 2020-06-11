@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -47,7 +47,7 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindDacsForEmail() {
         Dac dac = createDac();
-        DACUser chair = createUser();
+        User chair = createUser();
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
 
         List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
@@ -60,31 +60,31 @@ public class DacDAOTest extends DAOTestHelper {
         dacs.add(createDac());
         dacs.add(createDac());
         for (Dac dac : dacs) {
-            DACUser chair = createUser();
+            User chair = createUser();
             dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
-            DACUser member1 = createUser();
+            User member1 = createUser();
             dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member1.getDacUserId(), dac.getDacId());
-            DACUser member2 = createUser();
+            User member2 = createUser();
             dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member2.getDacUserId(), dac.getDacId());
         }
-        List<DACUser> allDacUsers = dacDAO.findAllDACUserMemberships();
-        Assert.assertEquals(6, allDacUsers.size());
+        List<User> allUsers = dacDAO.findAllDACUserMemberships();
+        Assert.assertEquals(6, allUsers.size());
     }
 
     @Test
     public void testFindAllDACUsersBySearchString_case1() {
         Dac dac = createDac();
-        DACUser chair = createUser();
+        User chair = createUser();
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
 
-        List<DACUser> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
+        List<User> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
         Assert.assertFalse(users.isEmpty());
         Assert.assertEquals(1, users.size());
     }
 
     @Test
     public void testFindAllDACUsersBySearchString_case2() {
-        List<DACUser> users = dacDAO.findAllDACUsersBySearchString("random");
+        List<User> users = dacDAO.findAllDACUsersBySearchString("random");
         Assert.assertTrue(users.isEmpty());
     }
 
@@ -104,16 +104,16 @@ public class DacDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
         Integer memberRoleId = UserRoles.MEMBER.getRoleId();
-        DACUser user1 = createUser();
+        User user1 = createUser();
         dacDAO.addDacMember(memberRoleId, user1.getDacUserId(), dac.getDacId());
-        DACUser user2 = createUser();
+        User user2 = createUser();
         dacDAO.addDacMember(memberRoleId, user2.getDacUserId(), dac.getDacId());
-        DACUser user3 = createUser();
+        User user3 = createUser();
         dacDAO.addDacMember(memberRoleId, user3.getDacUserId(), dac.getDacId());
-        DACUser user4 = createUser();
+        User user4 = createUser();
         dacDAO.addDacMember(chairRoleId, user4.getDacUserId(), dac.getDacId());
 
-        List<DACUser> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
+        List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
         Assert.assertNotNull(dacMembers);
         Assert.assertFalse(dacMembers.isEmpty());
         Assert.assertEquals(dacMembers.size(), 4);
@@ -124,21 +124,21 @@ public class DacDAOTest extends DAOTestHelper {
         Dac dac = createDac();
         Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
         Integer memberRoleId = UserRoles.MEMBER.getRoleId();
-        DACUser user1 = createUser();
+        User user1 = createUser();
         dacDAO.addDacMember(memberRoleId, user1.getDacUserId(), dac.getDacId());
-        DACUser user2 = createUser();
+        User user2 = createUser();
         dacDAO.addDacMember(memberRoleId, user2.getDacUserId(), dac.getDacId());
-        DACUser user3 = createUser();
+        User user3 = createUser();
         dacDAO.addDacMember(memberRoleId, user3.getDacUserId(), dac.getDacId());
-        DACUser user4 = createUser();
+        User user4 = createUser();
         dacDAO.addDacMember(chairRoleId, user4.getDacUserId(), dac.getDacId());
 
-        List<DACUser> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
+        List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
         Assert.assertNotNull(chairs);
         Assert.assertFalse(chairs.isEmpty());
         Assert.assertEquals(chairs.size(), 1);
 
-        List<DACUser> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
+        List<User> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
         Assert.assertNotNull(members);
         Assert.assertFalse(members.isEmpty());
         Assert.assertEquals(members.size(), 3);
@@ -148,7 +148,7 @@ public class DacDAOTest extends DAOTestHelper {
     public void testAddDacMember() {
         Dac dac = createDac();
         Integer roleId = UserRoles.MEMBER.getRoleId();
-        DACUser user = createUser();
+        User user = createUser();
         dacDAO.addDacMember(roleId, user.getDacUserId(), dac.getDacId());
         List<UserRole> memberRoles = dacDAO.findUserRolesForUser(user.getDacUserId());
         Assert.assertFalse(memberRoles.isEmpty());
@@ -166,7 +166,7 @@ public class DacDAOTest extends DAOTestHelper {
     public void testAddDacChair() {
         Dac dac = createDac();
         Integer roleId = UserRoles.CHAIRPERSON.getRoleId();
-        DACUser user = createUser();
+        User user = createUser();
         dacDAO.addDacMember(roleId, user.getDacUserId(), dac.getDacId());
         List<UserRole> chairRoles = dacDAO.findUserRolesForUser(user.getDacUserId());
         Assert.assertFalse(chairRoles.isEmpty());
@@ -200,8 +200,8 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindUserRolesForUsers() {
         Dac dac = createDac();
-        DACUser chair = createUser();
-        DACUser member = createUser();
+        User chair = createUser();
+        User member = createUser();
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getDacUserId(), dac.getDacId());
         dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member.getDacUserId(), dac.getDacId());
         List<Integer> userIds = Arrays.asList(chair.getDacUserId(), member.getDacUserId());

@@ -3,14 +3,14 @@ package org.broadinstitute.consent.http.service.users.handler;
 import com.google.inject.Inject;
 import java.util.Collections;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -26,7 +26,7 @@ public class UserRolesHandler {
 
     public static final String UPDATED_USER_KEY = "updatedUser";
 
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final ElectionDAO electionDAO;
     private final UserRoleDAO userRoleDAO;
@@ -38,8 +38,8 @@ public class UserRolesHandler {
     private final UserRole dataOwner = new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName());
 
     @Inject
-    public UserRolesHandler(DACUserDAO userDao, DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
-        this.dacUserDAO = userDao;
+    public UserRolesHandler(UserDAO userDao, DataAccessRequestService dataAccessRequestService, ElectionDAO electionDAO, UserRoleDAO roleDAO, VoteDAO voteDAO) {
+        this.userDAO = userDao;
         this.dataAccessRequestService = dataAccessRequestService;
         this.electionDAO = electionDAO;
         this.userRoleDAO = roleDAO;
@@ -55,7 +55,7 @@ public class UserRolesHandler {
      *
      * @param updatedUser User we need to update.
      */
-    public void updateRoles(DACUser updatedUser) {
+    public void updateRoles(User updatedUser) {
         // Roles as should be ..
         List<UserRole> updatedRoles = updatedUser.getRoles();
         List<Integer> updatedRoleIds = CollectionUtils.isEmpty(updatedRoles) ?
@@ -133,7 +133,7 @@ public class UserRolesHandler {
      *
      * @param updatedUser The user to update
      */
-    private void removeDataOwner(DACUser updatedUser) {
+    private void removeDataOwner(User updatedUser) {
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), dataOwner.getRoleId());
         List<Integer> openElectionIdsForThisUser = electionDAO.findDataSetOpenElectionIds(updatedUser.getDacUserId());
         if (!openElectionIdsForThisUser.isEmpty()) {
@@ -153,8 +153,8 @@ public class UserRolesHandler {
      *
      * @param updatedUser The user to update
      */
-    private void removeAdmin(DACUser updatedUser) {
-        if (dacUserDAO.verifyAdminUsers() < 2) {
+    private void removeAdmin(User updatedUser) {
+        if (userDAO.verifyAdminUsers() < 2) {
             throw new IllegalArgumentException("At least one user with Admin roles should exist.");
         }
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), admin.getRoleId());
@@ -165,7 +165,7 @@ public class UserRolesHandler {
      *
      * @param updatedUser The user to update
      */
-    private void removeAlumni(DACUser updatedUser) {
+    private void removeAlumni(User updatedUser) {
         userRoleDAO.removeSingleUserRole(updatedUser.getDacUserId(), alumni.getRoleId());
     }
 
@@ -175,7 +175,7 @@ public class UserRolesHandler {
      *
      * @param updatedUser The user to update
      */
-    private void removeResearcher(DACUser updatedUser) {
+    private void removeResearcher(User updatedUser) {
         // Find list of related dars
         List<String> referenceIds = dataAccessRequestService.findAllDataAccessRequests().stream().
                 filter(d -> Objects.nonNull(d.getData())).
@@ -199,7 +199,7 @@ public class UserRolesHandler {
      * @param userToAssignRole User whose roles will be updated.
      * @param role             New role to add to @userToAssignRole .
      */
-    private void assignNewRole(DACUser userToAssignRole, UserRole role) {
+    private void assignNewRole(User userToAssignRole, UserRole role) {
         List<UserRole> roles = userRoleDAO.findRolesByUserId(userToAssignRole.getDacUserId());
         if (!containsRole(roles, role.getName())) {
             List<UserRole> newRoles = new ArrayList<>();

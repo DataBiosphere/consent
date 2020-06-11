@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -167,7 +167,7 @@ public class DataAccessRequestResource extends Resource {
     public Response getDataAcessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestAPI.describeDataAccessRequestById(id);
         Integer userId = obtainUserId(dar);
-        DACUser user = null;
+        User user = null;
         try {
             user = userService.findUserById(userId);
         } catch (NotFoundException e) {
@@ -280,7 +280,7 @@ public class DataAccessRequestResource extends Resource {
     public Response describeManageDataAccessRequests(@QueryParam("userId") Integer userId, @Auth AuthUser authUser) {
         // If a user id is provided, ensure that is the current user.
         if (userId != null) {
-            DACUser user = userService.findUserByEmail(authUser.getName());
+            User user = userService.findUserByEmail(authUser.getName());
             if (!user.getDacUserId().equals(userId)) {
                 throw new BadRequestException("Unable to query for other users' information.");
             }
@@ -411,7 +411,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
         try {
-            List<DACUser> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
+            List<User> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
             if (CollectionUtils.isNotEmpty(usersToNotify)) {
                 emailNotifierService.sendCancelDARRequestMessage(usersToNotify, dar.getData().getDarCode());

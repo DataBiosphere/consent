@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.Test;
 

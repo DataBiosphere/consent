@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
@@ -100,7 +100,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testCreateConsent() throws Exception {
-        DACUser dacUser = new DACUser();
+        User dacUser = new User();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
@@ -121,7 +121,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testUpdateConsent() throws Exception {
-        DACUser dacUser = new DACUser();
+        User dacUser = new User();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
@@ -153,7 +153,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testMissingDataUseCreate() {
-        DACUser dacUser = new DACUser();
+        User dacUser = new User();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
@@ -168,7 +168,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testMissingDataUseUpdate() throws Exception {
-        DACUser dacUser = new DACUser();
+        User dacUser = new User();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
@@ -184,7 +184,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testInvalidDULCreate() throws Exception {
-        DACUser dacUser = new DACUser();
+        User dacUser = new User();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();
@@ -202,7 +202,7 @@ public class ConsentResourceTest {
 
     @Test
     public void testInvalidDULUpdate() throws Exception {
-        DACUser dacUser = new DACUser();
+        User dacUser = new User();
         dacUser.setEmail("test@email.com");
         AuthUser user = new AuthUser(dacUser.getEmail());
         Consent consent = new Consent();

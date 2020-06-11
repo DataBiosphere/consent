@@ -43,12 +43,12 @@ public class DacBuilder {
         return this;
     }
 
-    public DacBuilder setChairpersons(List<DACUser> chairpersons) {
+    public DacBuilder setChairpersons(List<User> chairpersons) {
         this.dac.setChairpersons(chairpersons);
         return this;
     }
 
-    public DacBuilder setMembers(List<DACUser> members) {
+    public DacBuilder setMembers(List<User> members) {
         this.dac.setMembers(members);
         return this;
     }

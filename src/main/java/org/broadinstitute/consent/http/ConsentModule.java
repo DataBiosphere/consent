@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DACUserDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
@@ -71,7 +71,7 @@ public class ConsentModule extends AbstractModule {
     private final DataSetDAO datasetDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
     private final DacDAO dacDAO;
-    private final DACUserDAO dacUserDAO;
+    private final UserDAO userDAO;
     private final UserRoleDAO userRoleDAO;
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
@@ -105,7 +105,7 @@ public class ConsentModule extends AbstractModule {
         this.datasetDAO = this.jdbi.onDemand(DataSetDAO.class);
         this.datasetAssociationDAO = this.jdbi.onDemand(DataSetAssociationDAO.class);
         this.dacDAO = this.jdbi.onDemand(DacDAO.class);
-        this.dacUserDAO = this.jdbi.onDemand(DACUserDAO.class);
+        this.userDAO = this.jdbi.onDemand(UserDAO.class);
         this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
@@ -147,7 +147,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     AuditService providesAuditService() {
         return new AuditService(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesWorkspaceAuditDAO());
     }
 
@@ -182,7 +182,7 @@ public class ConsentModule extends AbstractModule {
                 providesConsentDAO(),
                 providesDataAccessRequestDAO(),
                 providesDacDAO(),
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesDacService(),
@@ -211,7 +211,7 @@ public class ConsentModule extends AbstractModule {
                 providesDataAccessRequestService(),
                 providesVoteDAO(),
                 providesElectionDAO(),
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesMailMessageDAO(),
                 providesMailService(),
                 providesMailServiceDAO(),
@@ -263,7 +263,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     VoteService providesVoteService() {
         return new VoteService(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataSetAssociationDAO(),
                 providesElectionDAO(),
                 providesVoteDAO());
@@ -288,7 +288,7 @@ public class ConsentModule extends AbstractModule {
     DacService providesDacService() {
         return new DacService(
                 providesDacDAO(),
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataSetDAO(),
                 providesElectionDAO(),
                 providesDataAccessRequestDAO(),
@@ -297,8 +297,8 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    DACUserDAO providesDACUserDAO() {
-        return dacUserDAO;
+    UserDAO providesUserDAO() {
+        return userDAO;
     }
 
     @Provides
@@ -309,7 +309,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserRolesHandler providesUserRolesHandler() {
         return new UserRolesHandler(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesDataAccessRequestService(),
                 providesElectionDAO(),
                 providesUserRoleDAO(),
@@ -359,7 +359,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UserService providesUserService() {
         return new UserService(
-                providesDACUserDAO(),
+                providesUserDAO(),
                 providesResearcherPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO());

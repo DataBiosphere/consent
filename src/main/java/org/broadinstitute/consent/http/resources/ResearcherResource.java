@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DACUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.service.UserService;
@@ -82,9 +82,9 @@ public class ResearcherResource extends Resource {
             List<UserRoles> authedRoles = Stream.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN).
                     collect(Collectors.toList());
             validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
-            DACUser dacUser = userService.findUserById(userId);
+            User user = userService.findUserById(userId);
             List<ResearcherProperty> props = userService.findAllUserProperties(userId);
-            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(dacUser, props);
+            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
             Map<String, Object> propMap = props.stream().
                     collect(Collectors.toMap(ResearcherProperty::getPropertyKey, ResearcherProperty::getPropertyValue));
             List<String> orgs = entries.stream().
@@ -125,9 +125,9 @@ public class ResearcherResource extends Resource {
         }
     }
 
-    private DACUser findByAuthUser(AuthUser user) {
+    private User findByAuthUser(AuthUser user) {
         GoogleUser googleUser = user.getGoogleUser();
-        DACUser dacUser = userService.findUserByEmail(googleUser.getEmail());
+        User dacUser = userService.findUserByEmail(googleUser.getEmail());
         if (dacUser == null) {
             throw new NotFoundException("Unable to find user :" + user.getName());
         }
