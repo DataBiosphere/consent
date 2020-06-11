@@ -1,11 +1,20 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -15,15 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.NotFoundException;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 
 public class DataAccessRequestServiceTest {
 
@@ -56,8 +56,15 @@ public class DataAccessRequestServiceTest {
     }
 
     private void initService() {
-        service = new DataAccessRequestService(consentDAO, dataAccessRequestDAO, dacDAO, userDAO, dataSetDAO,
-                electionDAO, dacService, userService, voteDAO, mongo);
+        DAOContainer container = new DAOContainer();
+        container.setConsentDAO(consentDAO);
+        container.setDataAccessRequestDAO(dataAccessRequestDAO);
+        container.setDacDAO(dacDAO);
+        container.setUserDAO(userDAO);
+        container.setDatasetDAO(dataSetDAO);
+        container.setElectionDAO(electionDAO);
+        container.setVoteDAO(voteDAO);
+        service = new DataAccessRequestService(container, dacService, userService,mongo);
     }
 
     @Test
