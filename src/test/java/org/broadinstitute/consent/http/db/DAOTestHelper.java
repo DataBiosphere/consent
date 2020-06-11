@@ -45,29 +45,29 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public class DAOTestHelper {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     private static final int maxConnections = 100;
-    private static ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
+    private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
-    static ConsentDAO consentDAO;
-    static DacDAO dacDAO;
-    static UserDAO userDAO;
-    static DataSetDAO dataSetDAO;
-    static ElectionDAO electionDAO;
-    static UserRoleDAO userRoleDAO;
-    static VoteDAO voteDAO;
-    static DataAccessRequestDAO dataAccessRequestDAO;
-    static MailMessageDAO mailMessageDAO;
-    static ResearcherPropertyDAO researcherPropertyDAO;
+    protected static ConsentDAO consentDAO;
+    protected static DacDAO dacDAO;
+    protected static UserDAO userDAO;
+    protected static DataSetDAO dataSetDAO;
+    protected static ElectionDAO electionDAO;
+    protected static UserRoleDAO userRoleDAO;
+    protected static VoteDAO voteDAO;
+    protected static DataAccessRequestDAO dataAccessRequestDAO;
+    protected static MailMessageDAO mailMessageDAO;
+    protected static ResearcherPropertyDAO researcherPropertyDAO;
 
-    private static List<Integer> createdDataSetIds = new ArrayList<>();
-    private static List<Integer> createdDacIds = new ArrayList<>();
-    private static List<String> createdConsentIds = new ArrayList<>();
-    private static List<Integer> createdElectionIds = new ArrayList<>();
-    private static List<Integer> createdUserIds = new ArrayList<>();
-    private static List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
+    private static final List<Integer> createdDataSetIds = new ArrayList<>();
+    private static final List<Integer> createdDacIds = new ArrayList<>();
+    private static final List<String> createdConsentIds = new ArrayList<>();
+    private static final List<Integer> createdElectionIds = new ArrayList<>();
+    private static final List<Integer> createdUserIds = new ArrayList<>();
+    private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
 
     String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
@@ -144,11 +144,11 @@ public class DAOTestHelper {
                 dataAccessRequestDAO.deleteByReferenceId(d));
     }
 
-    void createAssociation(String consentId, Integer datasetId) {
+    protected void createAssociation(String consentId, Integer datasetId) {
         consentDAO.insertConsentAssociation(consentId, ASSOCIATION_TYPE_TEST, datasetId);
     }
 
-    Election createElection(String referenceId, Integer datasetId) {
+    protected Election createElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.DATA_ACCESS.getValue(),
                 ElectionStatus.OPEN.getValue(),
@@ -160,7 +160,7 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
-    Election createRPElection(String referenceId, Integer datasetId) {
+    protected Election createRPElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.RP.getValue(),
                 ElectionStatus.OPEN.getValue(),
@@ -172,30 +172,30 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
-    void closeElection(Election election) {
+    protected void closeElection(Election election) {
         electionDAO.updateElectionById(
                 election.getElectionId(),
                 ElectionStatus.CLOSED.getValue(),
                 new Date());
     }
 
-    Vote createDacVote(Integer userId, Integer electionId) {
+    protected Vote createDacVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
         return voteDAO.findVoteById(voteId);
     }
 
-    Vote createFinalVote(Integer userId, Integer electionId) {
+    protected Vote createFinalVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
         return voteDAO.findVoteById(voteId);
     }
 
-    Vote createChairpersonVote(Integer userId, Integer electionId) {
+    protected Vote createChairpersonVote(Integer userId, Integer electionId) {
         Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
         return voteDAO.findVoteById(voteId);
     }
 
     @SuppressWarnings("SameParameterValue")
-    Consent createConsent(Integer dacId) {
+    protected Consent createConsent(Integer dacId) {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
                 false,
@@ -214,7 +214,7 @@ public class DAOTestHelper {
         return consentDAO.findConsentById(consentId);
     }
 
-    User createUser() {
+    protected User createUser() {
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
         int i3 = RandomUtils.nextInt(3, 5);
@@ -228,7 +228,7 @@ public class DAOTestHelper {
         return userDAO.findUserById(userId);
     }
 
-    User createUserWithRole(Integer roleId) {
+    protected User createUserWithRole(Integer roleId) {
         int i1 = RandomUtils.nextInt(5, 10);
         int i2 = RandomUtils.nextInt(5, 10);
         int i3 = RandomUtils.nextInt(3, 5);
@@ -243,13 +243,13 @@ public class DAOTestHelper {
         return userDAO.findUserById(userId);
     }
 
-    User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
         User user = createUserWithRole(roleId);
         dacDAO.addDacMember(roleId, user.getDacUserId(), dacId);
         return user;
     }
 
-    Dac createDac() {
+    protected Dac createDac() {
         Integer id = dacDAO.createDac(
                 "Test_" + RandomStringUtils.random(20, true, true),
                 "Test_" + RandomStringUtils.random(20, true, true),
@@ -258,7 +258,7 @@ public class DAOTestHelper {
         return dacDAO.findById(id);
     }
 
-    DataSet createDataset() {
+    protected DataSet createDataset() {
         DataSet ds = new DataSet();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
         ds.setCreateDate(new Date());
@@ -270,13 +270,13 @@ public class DAOTestHelper {
         return dataSetDAO.findDataSetById(id);
     }
 
-    Date yesterday() {
+    protected Date yesterday() {
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
     }
 
-    DataAccessRequest createDataAccessRequest() {
+    protected DataAccessRequest createDataAccessRequest() {
         DataAccessRequestData data;
         try {
             String darDataString = FileUtils.readFileToString(

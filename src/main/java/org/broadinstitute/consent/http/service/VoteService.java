@@ -125,7 +125,7 @@ public class VoteService {
      * @param isManualReview Is election manual review
      * @return List of created votes
      */
-    List<Vote> createVotesForUser(User user, Election election, ElectionType electionType, Boolean isManualReview) {
+    public List<Vote> createVotesForUser(User user, Election election, ElectionType electionType, Boolean isManualReview) {
         Dac dac = electionDAO.findDacForElection(election.getElectionId());
         List<Vote> votes = new ArrayList<>();
         Integer dacVoteId = voteDAO.insertVote(user.getDacUserId(), election.getElectionId(), VoteType.DAC.getValue());
@@ -188,7 +188,7 @@ public class VoteService {
      * @param dac The Dac we are restricting elections to
      * @param user The Dac member we are deleting votes for
      */
-    void deleteOpenDacVotesForUser(Dac dac, User user) {
+    public void deleteOpenDacVotesForUser(Dac dac, User user) {
         List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
                 map(Election::getElectionId).
                 collect(Collectors.toList());

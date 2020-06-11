@@ -105,7 +105,7 @@ public class UserService {
 
     private void validateRequiredFields(User user) {
         if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
-            throw new BadRequestException("Display Name can't be null. The user needs a name to display.");
+            throw new BadRequestException("Display Name cannot be empty");
         }
         if (Objects.isNull(user.getEmail()) || StringUtils.isEmpty(user.getEmail())) {
             throw new BadRequestException("Email address cannot be empty");
