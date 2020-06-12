@@ -147,9 +147,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     public Response updateDataAccessRequest(Document dar, @PathParam("id") String id) {
         try {
-            if (dar.containsKey(DarConstants.RESTRICTION)) {
-                dar.remove(DarConstants.RESTRICTION);
-            }
+            dar.remove(DarConstants.RESTRICTION);
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
             if (!needsManualReview) {
                 // generates research purpose, if needed, and store it on Document rus
@@ -170,7 +168,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/modalSummary/{id}")
     @PermitAll
-    public Response getDataAcessRequestModalSummary(@PathParam("id") String id) {
+    public Response getDataAccessRequestModalSummary(@PathParam("id") String id) {
         Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         Integer userId = obtainUserId(dar);
         User user = null;
@@ -450,7 +448,7 @@ public class DataAccessRequestResource extends Resource {
     @PermitAll
     public Response getUseRestrictionFromQuestions(Document dar) {
         try {
-            Boolean needsManualReview = DarUtil.requiresManualReview(dar);
+            boolean needsManualReview = DarUtil.requiresManualReview(dar);
             if (!needsManualReview) {
                 UseRestriction useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
                 dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
@@ -504,6 +502,7 @@ public class DataAccessRequestResource extends Resource {
      * @param authUser AuthUser
      * @return Converted Partial DataAccessRequest
      */
+    @SuppressWarnings("unchecked")
     @POST
     @Path("migrate/{id}")
     @Produces("application/json")
