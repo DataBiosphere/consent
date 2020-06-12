@@ -322,7 +322,7 @@ public class DataAccessRequestResource extends Resource {
         }
         try {
             result = savePartialDarRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.getString(DarConstants.REFERENCE_ID));
+            uri = info.getRequestUriBuilder().path("/" + result.get(DarConstants.ID)).build();
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
