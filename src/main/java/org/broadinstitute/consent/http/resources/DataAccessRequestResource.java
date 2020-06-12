@@ -328,7 +328,7 @@ public class DataAccessRequestResource extends Resource {
         }
         try {
             result = saveDraftDarRequest(dar);
-            uri = info.getRequestUriBuilder().path("{id}").build(result.getString(DarConstants.REFERENCE_ID));
+            uri = info.getRequestUriBuilder().path("/" + result.get(DarConstants.REFERENCE_ID)).build();
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
             dataAccessRequestAPI.deleteDataAccessRequest(result);
@@ -552,7 +552,7 @@ public class DataAccessRequestResource extends Resource {
         return Response.ok().entity(dar).build();
     }
 
-    private Document saveDraftDarRequest(Document dar) throws Exception {
+    private Document saveDraftDarRequest(Document dar) {
         dar.append(DarConstants.SORT_DATE, new Date().getTime());
         return dataAccessRequestAPI.createDraftDataAccessRequest(dar);
     }
