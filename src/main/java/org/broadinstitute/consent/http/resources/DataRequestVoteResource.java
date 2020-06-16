@@ -2,32 +2,13 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
-
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
@@ -43,12 +24,29 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
@@ -60,7 +58,6 @@ public class DataRequestVoteResource extends Resource {
     private final DataSetAssociationAPI dataSetAssociationAPI;
     private final ElectionAPI electionAPI;
     private final EmailNotifierService emailNotifierService;
-    private final VoteAPI api;
     private final VoteService voteService;
 
     private static final Logger logger = Logger.getLogger(DataRequestVoteResource.class.getName());
@@ -74,7 +71,6 @@ public class DataRequestVoteResource extends Resource {
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
         this.dataSetAssociationAPI = AbstractDataSetAssociationAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
-        this.api = AbstractVoteAPI.getInstance();
         this.voteService = voteService;
     }
 
@@ -86,7 +82,7 @@ public class DataRequestVoteResource extends Resource {
                                           @PathParam("requestId") String requestId,
                                           @PathParam("id") Integer voteId) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, voteId);
+            Vote vote = voteService.firstVoteUpdate(rec, voteId);
             validateCollectDAREmail(vote);
             if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
@@ -107,11 +103,11 @@ public class DataRequestVoteResource extends Resource {
     public Response updateFinalAccessVote(Vote rec,
                                                  @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
-            Vote vote = api.firstVoteUpdate(rec, id);
+            Vote vote = voteService.firstVoteUpdate(rec, id);
             Document access = accessRequestAPI.describeDataAccessRequestById(requestId);
             List<Integer> dataSets = DarUtil.getIntegerList(access, DarConstants.DATASET_ID);
             if(access.containsKey(DarConstants.RESTRICTION)){
-                List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+                List<Vote> votes = vote.getType().equals(VoteType.FINAL.getValue()) ? voteService.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId()) :  voteService.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
                 if(vote.getVote() != null && votes.get(0).getVote() != null){
                     electionAPI.updateFinalAccessVoteDataRequestElection(rec.getElectionId());
                 }
@@ -134,7 +130,7 @@ public class DataRequestVoteResource extends Resource {
     public Response updateDataRequestVote(Vote rec,
                                           @PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
-            Vote vote = api.updateVote(rec, id, requestId);
+            Vote vote = voteService.updateVote(rec);
             if(electionAPI.checkDataOwnerToCloseElection(vote.getElectionId())){
                 electionAPI.closeDataOwnerApprovalElection(vote.getElectionId());
             }
@@ -149,9 +145,14 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     @PermitAll
-    public Vote describe(@PathParam("requestId") String requestId,
+    public Response describe(@PathParam("requestId") String requestId,
                          @PathParam("id") Integer id) {
-        return api.describeVoteById(id, requestId);
+        try {
+            Vote vote = voteService.findVoteById(id);
+            return Response.ok(vote).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
@@ -168,7 +169,8 @@ public class DataRequestVoteResource extends Resource {
     @PermitAll
     public Response describeDataOwnerVote(@PathParam("requestId") String requestId, @PathParam("dataOwnerId") Integer dataOwnerId){
         try{
-            return Response.ok(api.describeDataOwnerVote(requestId,dataOwnerId)).build();
+            Vote vote = voteService.describeDataOwnerVote(requestId, dataOwnerId);
+            return Response.ok(vote).build();
         }catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -178,7 +180,7 @@ public class DataRequestVoteResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public List<Vote> describeAllVotes(@PathParam("requestId") String requestId) {
-        return api.describeVotes(requestId);
+        return new ArrayList<>(voteService.findVotesByReferenceId(requestId));
     }
 
     @DELETE
@@ -187,7 +189,7 @@ public class DataRequestVoteResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response deleteVote(@PathParam("requestId") String requestId, @PathParam("id") Integer id) {
         try {
-            api.deleteVote(id, requestId);
+            voteService.deleteVote(id);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -201,7 +203,7 @@ public class DataRequestVoteResource extends Resource {
         try {
             if (requestId == null)
                 return Response.status(Response.Status.BAD_REQUEST).build();
-            api.deleteVotes(requestId);
+            voteService.deleteVotes(requestId);
             return Response.ok().entity("Votes for specified id have been deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -212,11 +214,11 @@ public class DataRequestVoteResource extends Resource {
         Vote agreementVote = null;
         Vote finalVote = null;
         if(vote.getType().equals(VoteType.FINAL.getValue())){
-            List<Vote> agreement = api.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId());
+            List<Vote> agreement = voteService.describeVoteByTypeAndElectionId(VoteType.AGREEMENT.getValue(), vote.getElectionId());
             agreementVote = CollectionUtils.isNotEmpty(agreement) ? agreement.get(0) : null;
             finalVote = vote;
         }else if(vote.getType().equals(VoteType.AGREEMENT.getValue())){
-            List<Vote> finalVotes = api.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
+            List<Vote> finalVotes = voteService.describeVoteByTypeAndElectionId(VoteType.FINAL.getValue(), vote.getElectionId());
             finalVote = CollectionUtils.isNotEmpty(finalVotes) ? finalVotes.get(0) : null;
             agreementVote = vote;
         }

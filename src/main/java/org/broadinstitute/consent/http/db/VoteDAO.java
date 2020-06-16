@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -11,9 +13,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Date;
-import java.util.List;
 
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
@@ -72,12 +71,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId = :dacUserId and lower(v.type) = 'final'")
     Vote findChairPersonVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
                                                      @Bind("dacUserId") Integer dacUserId);
-
-    @SqlQuery("select vote.voteId from vote inner join election on election.electionId = vote.electionId "
-            + "where election.referenceId = :referenceId "
-            + "and vote.voteId = :voteId")
-    Integer checkVoteById(@Bind("referenceId") String referenceId,
-                          @Bind("voteId") Integer voteId);
 
     @SqlUpdate("insert into vote (dacUserId, electionId, type, reminderSent) values (:dacUserId, :electionId, :type, false)")
     @GetGeneratedKeys

@@ -1,5 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
+import java.net.URI;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -12,13 +31,11 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.ElectionAPI;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.VoteAPI;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,31 +47,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-
 @SuppressWarnings("deprecation")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        AbstractElectionAPI.class,
-        AbstractVoteAPI.class})
+@PrepareForTest({AbstractElectionAPI.class})
 public class ConsentElectionResourceTest {
 
     @Mock
@@ -65,9 +60,6 @@ public class ConsentElectionResourceTest {
 
     @Mock
     ElectionAPI electionAPI;
-
-    @Mock
-    VoteAPI voteAPI;
 
     @Mock
     EmailNotifierService emailNotifierService;
@@ -90,7 +82,6 @@ public class ConsentElectionResourceTest {
         MockitoAnnotations.initMocks(this);
 
         PowerMockito.mockStatic(AbstractElectionAPI.class);
-        PowerMockito.mockStatic(AbstractVoteAPI.class);
 
         when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
         when(info.getRequestUriBuilder()).thenReturn(builder);
@@ -250,7 +241,6 @@ public class ConsentElectionResourceTest {
 
     private void initResource() {
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        when(AbstractVoteAPI.getInstance()).thenReturn(voteAPI);
         resource = new ConsentElectionResource(consentService, dacService, emailNotifierService, voteService);
     }
 

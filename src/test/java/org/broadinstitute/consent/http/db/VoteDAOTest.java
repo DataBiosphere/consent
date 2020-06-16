@@ -1,29 +1,28 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ElectionReviewVote;
-import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Assert;
-import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ElectionReviewVote;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.junit.Assert;
+import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 public class VoteDAOTest extends DAOTestHelper {
 
@@ -255,20 +254,6 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote foundVote = voteDAO.findChairPersonVoteByElectionIdAndDACUserId(election.getElectionId(), user.getDacUserId());
         assertNotNull(foundVote);
         assertEquals(vote.getVoteId(), foundVote.getVoteId());
-    }
-
-    @Test
-    public void testCheckVoteById() {
-        User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-        Dac dac = createDac();
-        Consent consent = createConsent(dac.getDacId());
-        DataSet dataset = createDataset();
-        Election election = createElection(consent.getConsentId(), dataset.getDataSetId());
-        Vote vote = createDacVote(user.getDacUserId(), election.getElectionId());
-
-        Integer voteId = voteDAO.checkVoteById(election.getReferenceId(), vote.getVoteId());
-        assertNotNull(voteId);
-        assertEquals(vote.getVoteId(), voteId);
     }
 
     @Test

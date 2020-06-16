@@ -59,7 +59,7 @@ public class VoteServiceTest {
     }
 
     private void initService() {
-        service = new VoteService(userDAO, dataSetAssociationDAO, electionDAO, voteDAO);
+        service = new VoteService(dataSetAssociationDAO, electionDAO, userDAO, voteDAO);
     }
 
     @Test

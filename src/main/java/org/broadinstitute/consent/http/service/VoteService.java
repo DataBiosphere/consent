@@ -25,17 +25,17 @@ import org.broadinstitute.consent.http.models.Vote;
 
 public class VoteService {
 
-    private final UserDAO userDAO;
     private final DataSetAssociationDAO dataSetAssociationDAO;
     private final ElectionDAO electionDAO;
+    private final UserDAO userDAO;
     private final VoteDAO voteDAO;
 
     @Inject
-    public VoteService(UserDAO userDAO, DataSetAssociationDAO dataSetAssociationDAO,
-                       ElectionDAO electionDAO, VoteDAO voteDAO) {
-        this.userDAO = userDAO;
+    public VoteService(DataSetAssociationDAO dataSetAssociationDAO, ElectionDAO electionDAO,
+            UserDAO userDAO, VoteDAO voteDAO) {
         this.dataSetAssociationDAO = dataSetAssociationDAO;
         this.electionDAO = electionDAO;
+        this.userDAO = userDAO;
         this.voteDAO = voteDAO;
     }
 
@@ -66,6 +66,94 @@ public class VoteService {
             v.setRationale(rationale);
             updateVote(v);
         });
+    }
+
+    /**
+     * Find a vote by id
+     *
+     * @param voteId The vote id
+     * @return Vote
+     * @throws NotFoundException The exception
+     */
+    public Vote findVoteById(Integer voteId) throws NotFoundException {
+        Vote vote = voteDAO.findVoteById(voteId);
+        if (vote == null) {
+            throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
+        }
+        return vote;
+    }
+
+    /**
+     * Delete a vote by id
+     *
+     * @param voteId The vote id
+     */
+    public void deleteVote(Integer voteId) {
+        if (voteDAO.findVoteById(voteId) == null) {
+            throw new NotFoundException("Does not exist vote for the specified id. Id: " + voteId);
+        }
+        voteDAO.deleteVoteById(voteId);
+    }
+
+    /**
+     * Delete votes for an election reference id
+     *
+     * @param referenceId The election's reference id
+     * @throws NotFoundException The exception
+     */
+    public void deleteVotes(String referenceId) throws NotFoundException {
+        if (electionDAO.findElectionsWithFinalVoteByReferenceId(referenceId) == null) {
+            throw new NotFoundException();
+        }
+        voteDAO.deleteVotes(referenceId);
+    }
+
+    /**
+     * Find the data owner vote for a reference id and user id
+     *
+     * @param referenceId data owner Election reference id
+     * @param dataOwnerId data owner user id
+     * @return data owner Vote
+     * @throws NotFoundException The exception
+     */
+    public Vote describeDataOwnerVote(String referenceId, Integer dataOwnerId) throws NotFoundException {
+        Vote vote = voteDAO.findVotesByReferenceIdTypeAndUser(
+                referenceId, dataOwnerId, VoteType.DATA_OWNER.getValue());
+        if (vote == null) {
+          throw new NotFoundException("Vote doesn't exist for the specified dataOwnerId");
+        }
+        return vote;
+    }
+
+    /**
+     * Update a vote for the first time.
+     *
+     * @param vote The vote with populated values
+     * @param voteId The vote id
+     * @return Updated vote
+     * @throws NotFoundException The exception
+     */
+    public Vote firstVoteUpdate(Vote vote,  Integer voteId) throws NotFoundException {
+        Vote existingVote = voteDAO.findVoteById(voteId);
+        if (Objects.isNull(existingVote)) {
+            throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
+        }
+        vote.setVoteId(voteId);
+        vote.setCreateDate(new Date());
+        vote.setElectionId(existingVote.getElectionId());
+        updateVote(vote);
+        return voteDAO.findVoteById(voteId);
+    }
+
+    /**
+     * Find votes by vote type and election id
+     *
+     * @param type The type of vote
+     * @param electionId The election id
+     * @return List of votes
+     */
+    public List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId) {
+        return voteDAO.findVoteByTypeAndElectionId(electionId, type);
     }
 
     /**

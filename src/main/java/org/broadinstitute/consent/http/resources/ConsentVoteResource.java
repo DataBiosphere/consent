@@ -2,13 +2,10 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.VoteAPI;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
@@ -23,24 +20,26 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.List;
-import java.util.logging.Logger;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.VoteService;
 
 
 @Path("{api : (api/)?}consent/{consentId}/vote")
 public class ConsentVoteResource extends Resource {
 
     private final EmailNotifierService emailNotifierService;
-    private final VoteAPI api;
     private final ElectionAPI electionAPI;
+    private final VoteService voteService;
     private static final Logger logger = Logger.getLogger(ConsentVoteResource.class.getName());
 
     @Inject
-    public ConsentVoteResource(EmailNotifierService emailNotifierService) {
+    public ConsentVoteResource(EmailNotifierService emailNotifierService, VoteService voteService) {
         this.emailNotifierService = emailNotifierService;
-        this.api = AbstractVoteAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
+        this.voteService = voteService;
     }
 
     @POST
@@ -50,7 +49,7 @@ public class ConsentVoteResource extends Resource {
     public Response firstVoteUpdate(Vote rec,
                                     @PathParam("consentId") String consentId, @PathParam("id") Integer voteId){
         try {
-            Vote vote = api.firstVoteUpdate(rec, voteId);
+            Vote vote = voteService.firstVoteUpdate(rec, voteId);
             if(electionAPI.validateCollectEmailCondition(vote)){
                 try {
                     emailNotifierService.sendCollectMessage(vote.getElectionId());
@@ -72,8 +71,8 @@ public class ConsentVoteResource extends Resource {
     public Response updateConsentVote(Vote rec,
                                       @PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
-            Vote vote = api.updateVote(rec, id, consentId);
-            return Response.ok(vote).build();
+            Vote updatedVote = voteService.updateVote(rec);
+            return Response.ok(updatedVote).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -83,16 +82,21 @@ public class ConsentVoteResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     @PermitAll
-    public Vote describe(@PathParam("consentId") String consentId,
+    public Response describe(@PathParam("consentId") String consentId,
                          @PathParam("id") Integer id) {
-        return api.describeVoteById(id, consentId);
+        try {
+            Vote vote = voteService.findVoteById(id);
+            return Response.ok(vote).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
     @Produces("application/json")
     @PermitAll
     public List<Vote> describeAllVotes(@PathParam("consentId") String consentId) {
-        return api.describeVotes(consentId);
+        return new ArrayList<>(voteService.findVotesByReferenceId(consentId));
     }
 
     @DELETE
@@ -101,7 +105,7 @@ public class ConsentVoteResource extends Resource {
     @RolesAllowed(ADMIN)
     public Response deleteVote(@PathParam("consentId") String consentId, @PathParam("id") Integer id) {
         try {
-            api.deleteVote(id, consentId);
+            voteService.deleteVote(id);
             return Response.status(Response.Status.OK).entity("Vote was deleted").build();
         }  catch (Exception e) {
             return createExceptionResponse(e);
@@ -116,7 +120,7 @@ public class ConsentVoteResource extends Resource {
             if (consentId == null) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
-            api.deleteVotes(consentId);
+            voteService.deleteVotes(consentId);
             return Response.ok().entity("Votes for specified consent have been deleted").build();
         } catch (Exception e) {
             return createExceptionResponse(e);
