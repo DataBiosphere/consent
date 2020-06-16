@@ -5,6 +5,7 @@ import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -179,8 +180,9 @@ public class DataRequestVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public List<Vote> describeAllVotes(@PathParam("requestId") String requestId) {
-        return new ArrayList<>(voteService.findVotesByReferenceId(requestId));
+    public Response describeAllVotes(@PathParam("requestId") String requestId) {
+        Collection<Vote> votes = voteService.findVotesByReferenceId(requestId);
+        return Response.ok(votes).build();
     }
 
     @DELETE

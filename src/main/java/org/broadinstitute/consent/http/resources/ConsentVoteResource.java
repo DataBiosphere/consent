@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
@@ -95,8 +96,9 @@ public class ConsentVoteResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public List<Vote> describeAllVotes(@PathParam("consentId") String consentId) {
-        return new ArrayList<>(voteService.findVotesByReferenceId(consentId));
+    public Response describeAllVotes(@PathParam("consentId") String consentId) {
+        Collection<Vote> votes = voteService.findVotesByReferenceId(consentId);
+        return Response.ok(votes).build();
     }
 
     @DELETE
