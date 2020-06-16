@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -31,12 +30,10 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
 import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
 import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
@@ -52,7 +49,6 @@ import org.bson.Document;
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private final DACUserAPI dacUserAPI;
     private final DataAccessRequestAPI accessRequestAPI;
     private final DataSetAPI dataSetAPI;
@@ -66,7 +62,6 @@ public class DataRequestVoteResource extends Resource {
     @Inject
     public DataRequestVoteResource(EmailNotifierService emailNotifierService, VoteService voteService) {
         this.emailNotifierService = emailNotifierService;
-        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
