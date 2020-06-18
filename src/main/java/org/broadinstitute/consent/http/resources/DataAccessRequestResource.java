@@ -62,6 +62,7 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
@@ -83,6 +84,7 @@ public class DataAccessRequestResource extends Resource {
     private final DataAccessRequestService dataAccessRequestService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
+    private final CounterService counterService;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierService emailNotifierService;
     private final TranslateService translateService = AbstractTranslateService.getInstance();
@@ -93,7 +95,8 @@ public class DataAccessRequestResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, GCSStore store, UserService userService) {
+    public DataAccessRequestResource(CounterService counterService, DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, GCSStore store, UserService userService) {
+        this.counterService = counterService;
         this.dataAccessRequestService = dataAccessRequestService;
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
@@ -493,6 +496,24 @@ public class DataAccessRequestResource extends Resource {
     public Response getAllPostgresDraftDARs(@Auth AuthUser authUser) {
         List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDraftDataAccessRequests();
         return Response.ok().entity(data).build();
+    }
+
+    /**
+     * TODO: Remove in follow-up work
+     * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     * Calculates the max count of all submitted DARs and sets the counter to that value.
+     *
+     * @param authUser AuthUser
+     * @return Converted Partial DataAccessRequest
+     */
+    @POST
+    @Path("migrate/counter")
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    public Response setCounter(@Auth AuthUser authUser) {
+        counterService.setMaxDarCount();
+        Integer max = counterService.getCurrentMaxDarSequence();
+        return Response.ok().entity(max).build();
     }
 
     /**
