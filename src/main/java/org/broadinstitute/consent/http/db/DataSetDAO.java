@@ -140,22 +140,26 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("SELECT * FROM consentassociations ca inner join dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.dataSetId IN (<dataSetIdList>)")
     List<Association> getAssociationsForDataSetIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
-    @RegisterRowMapper(AutocompleteMapper.class)
-    @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as objId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue, c.name) as concatenation FROM dataset d " +
-            " inner join consentassociations ca on ca.dataSetId = d.dataSetId and d.active = true" +
-            " inner join consents c on c.consentId = ca.consentId " +
-            " inner join election e on e.referenceId = ca.consentId " +
-            " inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
-            " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  +
-            "'inner join (SELECT referenceId,MAX(createDate) maxDate FROM" +
-            " election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate and ev.referenceId = e.referenceId " +
-            " and v.vote = true " +
-            " and (d.objectId like concat('%',:partial,'%') " +
-            " or d.name like concat('%',:partial,'%') " +
-            " or dsp.propertyValue like concat('%',:partial,'%')" +
-            " or c.name like concat('%',:partial,'%') )" +
-            " order by d.dataSetId")
-    List< Map<String, String>> getObjectIdsbyPartial(@Bind("partial") String partial);
+  @RegisterRowMapper(AutocompleteMapper.class)
+  @SqlQuery(
+      "SELECT DISTINCT d.datasetid AS id, d.objectid AS objid, CONCAT_WS(' | ', d.objectid, d.name, dsp.propertyvalue, c.name) AS concatenation "
+          + " FROM dataset d "
+          + " INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid AND d.active = true"
+          + " INNER JOIN consents c ON c.consentid = ca.consentId "
+          + " INNER JOIN election e ON e.referenceid = ca.consentid "
+          + " INNER JOIN datasetproperty dsp ON dsp.datasetid = d.datasetid and dsp.propertykey = 9 "
+          + " INNER JOIN vote v ON v.electionid = e.electionid AND LOWER(v.type) = 'chairperson' "
+          + " INNER JOIN (SELECT referenceid, MAX(createdate) maxdate "
+          + "             FROM election "
+          + "             WHERE LOWER(status) = 'closed' "
+          + "             GROUP BY referenceid) ev ON ev.maxdate = e.createdate AND ev.referenceid = e.referenceid "
+          + " AND v.vote = true "
+          + " AND (LOWER(d.objectid) LIKE LOWER(CONCAT('%', :partial, '%')) "
+          + "      OR LOWER(d.name) LIKE LOWER(CONCAT('%', :partial, '%')) "
+          + "      OR LOWER(dsp.propertyvalue) LIKE LOWER(CONCAT('%', :partial, '%')) "
+          + "      OR LOWER(c.name) LIKE LOWER(CONCAT('%', :partial, '%'))) "
+          + " ORDER BY d.datasetid ")
+  List<Map<String, String>> getDatasetsBySearchTerm(@Bind("partial") String partial);
 
     @RegisterRowMapper(AutocompleteMapper.class)
     @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as objId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue, c.name) as concatenation " +
