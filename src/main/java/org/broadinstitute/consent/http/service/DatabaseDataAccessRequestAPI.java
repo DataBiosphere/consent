@@ -259,15 +259,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     @Override
     public Document createDraftDataAccessRequest(Document draftDar){
-        String seq = String.valueOf(counterService.getNextDarSequence());
         Gson gson = new Gson();
         DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
         darData.setCreateDate(new Date().getTime());
-        darData.setPartialDarCode("temp_DAR" + seq);
         String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
         if (referenceId == null) {
             referenceId = UUID.randomUUID().toString();
         }
+        darData.setPartialDarCode("temp_DAR");
         darData.setReferenceId(referenceId);
         draftDar.put(DarConstants.REFERENCE_ID, referenceId);
         dataAccessRequestService.insertDraftDataAccessRequest(referenceId, darData);
