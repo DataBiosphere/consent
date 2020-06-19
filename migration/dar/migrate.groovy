@@ -34,7 +34,7 @@ static void migrateDars(String authToken, String uriHost) {
     }.post {
         response.parser('application/json') { cc, fs ->
             Object o = new JsonSlurper().parse(fs.inputStream)
-            log.info("Updated max counter to: ${o.toString()}")
+            logger.info("Updated max counter to: ${o.toString()}")
         }
         response.exception { t ->
             logger.error("Error setting the max DAR counter.")
