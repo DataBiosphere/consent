@@ -2,6 +2,7 @@
 @Grab('com.google.code.GSON:GSON:2.8.6')
 import com.google.gson.Gson
 import groovy.json.JsonSlurper
+import java.util.logging.Logger
 
 import static groovyx.net.http.HttpBuilder.configure
 import static groovyx.net.http.util.SslUtils.ignoreSslIssues
@@ -22,6 +23,7 @@ migrateDars(args[0], args[1])
 
 static void migrateDars(String authToken, String uriHost) {
 
+    Logger logger = Logger.getLogger("DarMigration:MigrateDars")
     configure {
         ignoreSslIssues execution
         request.uri = uriHost
@@ -32,10 +34,10 @@ static void migrateDars(String authToken, String uriHost) {
     }.post {
         response.parser('application/json') { cc, fs ->
             Object o = new JsonSlurper().parse(fs.inputStream)
-            println("Updated max counter to: ${o.toString()}")
+            log.info("Updated max counter to: ${o.toString()}")
         }
         response.exception { t ->
-            println("Error setting the max DAR counter.")
+            logger.error("Error setting the max DAR counter.")
             t.printStackTrace()
         }
     }
@@ -44,7 +46,7 @@ static void migrateDars(String authToken, String uriHost) {
         String referenceId = m.getKey()
         Object dar = m.getValue()
         createNewDar(authToken, uriHost, referenceId, dar)
-        println("Created new Dar for referenceId: ${referenceId}")
+        logger.info("Created new Dar for referenceId: ${referenceId}")
     }
 }
 
@@ -56,6 +58,7 @@ static void migrateDars(String authToken, String uriHost) {
  * @return The created Dar
  */
 static Object createNewDar(String authToken, String uriHost, String referenceId, Object dar) {
+    Logger logger = Logger.getLogger("DarMigration:CreateNewDar")
     configure {
         ignoreSslIssues execution
         request.uri = uriHost
@@ -69,7 +72,7 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
-            println("Error creating DAR for id: " + referenceId)
+            logger.error("Error creating DAR for id: " + referenceId)
             t.printStackTrace()
         }
     } as Object
@@ -81,6 +84,7 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
  * @return Map of dar entries, ReferenceId -> Mongo DAR Content in object format
  */
 static Map<String, Object> getMongoDars(String authToken, String uriHost) {
+    Logger logger = Logger.getLogger("DarMigration:GetMongoDars")
     configure {
         ignoreSslIssues execution
         request.uri = uriHost
@@ -93,7 +97,7 @@ static Map<String, Object> getMongoDars(String authToken, String uriHost) {
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
-            println("Error querying for DARs in Mongo: ")
+            logger.error("Error querying for DARs in Mongo: ")
             t.printStackTrace()
         }
     } as Map<String, Object>
