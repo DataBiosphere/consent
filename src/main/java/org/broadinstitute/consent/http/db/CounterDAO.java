@@ -34,8 +34,8 @@ public interface CounterDAO extends Transactional<CounterDAO> {
      * TODO: Remove in follow-up work
      */
     @SqlQuery("SELECT distinct (data #>> '{}')::jsonb->>'dar_code'::text AS dar_code " +
-        "  FROM data_access_request " +
-        "  WHERE (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL ")
+            "  FROM data_access_request " +
+            "  WHERE (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL ")
     List<String> findAllDarCodes();
 
 }
