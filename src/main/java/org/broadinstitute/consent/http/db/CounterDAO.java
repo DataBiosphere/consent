@@ -23,20 +23,19 @@ public interface CounterDAO extends Transactional<CounterDAO> {
 
     @SqlUpdate("UPDATE counter " +
             "   SET count = subquery.max_count + 1 " +
-            "   FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name ) AS subquery " +
+            "   FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name) AS subquery " +
             "   WHERE name = :name")
     void incrementCountByName(@Bind("name") String name);
 
-  /**
-   * TODO: Remove in follow-up work
-   */
-  @SqlQuery(
-      "SELECT distinct (data #>> '{}')::jsonb->>'dar_code'::text AS dar_code "
-          + "    FROM data_access_request "
-          + "    WHERE (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL")
-  List<String> findAllDarCodes();
-
     @SqlUpdate("DELETE FROM counter")
     void deleteAll();
+
+    /**
+     * TODO: Remove in follow-up work
+     */
+    @SqlQuery("SELECT distinct (data #>> '{}')::jsonb->>'dar_code'::text AS dar_code " +
+        "  FROM data_access_request " +
+        "  WHERE (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL ")
+    List<String> findAllDarCodes();
 
 }

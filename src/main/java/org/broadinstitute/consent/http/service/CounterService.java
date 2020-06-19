@@ -32,10 +32,11 @@ public class CounterService {
     /**
      * TODO: Remove in follow-up work
      * Temporary admin-only endpoint for mongo->postgres DAR conversion
+     * Updates the DAR Counter to be the maximum `dar_code` value of all current DARs
      */
     public void setMaxDarCount() {
-        Integer maxDarCode = findMaxDarCode();
-        Integer max = getNextDarSequence();
+        Integer maxDarCode = findMaxDarCodeValue();
+        Integer max = counterDAO.getMaxCountByName(DAR_COUNTER);
         if (Objects.isNull(max)) {
             counterDAO.addCounter(DAR_COUNTER, maxDarCode);
         } else {
@@ -46,10 +47,10 @@ public class CounterService {
   /**
    * TODO: Remove in follow-up work
    * Dar codes come in the flavors of:
-   * DAR-142-A-2, DAR-144-A-1, DAR-60 DAR-17, DAR-89, DAR-120, etc.
+   * DAR-142-A-0, DAR-142-A-1, DAR-142-A-2, DAR-60 DAR-17, DAR-144-A-0, DAR-89, DAR-120, etc.
    * Parse out the second element and find the max.
    */
-  public Integer findMaxDarCode() {
+  public Integer findMaxDarCodeValue() {
         List<String> codes = counterDAO.findAllDarCodes();
         return codes.stream().
             map(s -> {

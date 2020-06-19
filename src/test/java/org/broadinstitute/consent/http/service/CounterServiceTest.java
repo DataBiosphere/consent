@@ -63,7 +63,7 @@ public class CounterServiceTest {
         Collections.shuffle(darCodes);
         when(counterDAO.findAllDarCodes()).thenReturn(darCodes);
         initService();
-        Integer maxCode = service.findMaxDarCode();
+        Integer maxCode = service.findMaxDarCodeValue();
         assertEquals(max, maxCode + 1);
     }
 
