@@ -590,7 +590,9 @@ public class DataAccessRequestResource extends Resource {
     }
 
     private Document saveDraftDarRequest(Document dar) {
-        dar.append(DarConstants.SORT_DATE, new Date().getTime());
+        Date now = new Date();
+        dar.append(DarConstants.CREATE_DATE, now.getTime());
+        dar.append(DarConstants.SORT_DATE, now.getTime());
         return dataAccessRequestAPI.createDraftDataAccessRequest(dar);
     }
 

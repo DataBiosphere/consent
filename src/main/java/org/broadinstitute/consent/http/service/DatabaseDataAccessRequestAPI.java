@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,7 +34,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -70,8 +68,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     private final ConsentDAO consentDAO;
 
     private final ResearcherPropertyDAO researcherPropertyDAO;
-
-    private static final String DATA_SET_ID = "datasetId";
 
     private static final String SUFFIX = "-A-";
 
@@ -117,24 +113,39 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
+    /**
+     * In this method, we generate a list of possible DARs. Generate one DAR per dataset that is
+     * being requested.
+     *
+     * @param dataAccessRequest Document with populated DAR fields
+     * @return List of created DARs in document form
+     */
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) {
         List<Document> dataAccessList = new ArrayList<>();
+        // Previously saved draft dars will have partial code and a reference id
         if (dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
             String referenceId = dataAccessRequest.getString(DarConstants.REFERENCE_ID);
             dataAccessRequestService.deleteByReferenceId(referenceId);
-            dataAccessRequest.remove(DarConstants.ID);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
         List<Integer> datasets = DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
         if (CollectionUtils.isNotEmpty(datasets)) {
-            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasets);
-            consentDataSets.forEach(consentDataSet -> {
-                Document dataAccess = processDataSet(dataAccessRequest, consentDataSet);
+            Date now = new Date();
+            for (int dsId : datasets) {
+                Document dataAccess = new Document(dataAccessRequest);
+                if (Objects.isNull(dataAccess.get(DarConstants.CREATE_DATE))) {
+                    dataAccess.put(DarConstants.CREATE_DATE, now.getTime());
+                }
+                dataAccess.put(DarConstants.SORT_DATE, now.getTime());
+                dataAccess.remove(DarConstants.DATASET_ID);
+                dataAccess.put(DarConstants.DATASET_ID, Collections.singletonList(dsId));
+                String referenceId = UUID.randomUUID().toString();
+                dataAccess.put(DarConstants.REFERENCE_ID, referenceId);
                 dataAccessList.add(dataAccess);
-            });
+            }
         }
-        dataAccessRequest.remove(DATA_SET_ID);
+        dataAccessRequest.remove(DarConstants.DATASET_ID);
         insertDataAccess(dataAccessList);
         updateResearcherIdentification(dataAccessRequest);
         return dataAccessList;
@@ -559,21 +570,14 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             Gson gson = new Gson();
             dataAccessRequestList.forEach(d -> {
                 String referenceId = d.getString(DarConstants.REFERENCE_ID);
-                if (referenceId == null) {
-                    referenceId = UUID.randomUUID().toString();
-                }
                 DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(d));
                 darData.setReferenceId(referenceId);
-                d.put(DarConstants.REFERENCE_ID, referenceId);
-                if (darData.getCreateDate() == null) {
-                    darData.setCreateDate(new Date().getTime());
-                }
                 dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
             });
         }
     }
 
-    private List getRequestIds(List<Document> access) {
+    private List<String> getRequestIds(List<Document> access) {
         List<String> accessIds = new ArrayList<>();
         if (access != null) {
             access.forEach(document ->
@@ -583,33 +587,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return accessIds;
     }
 
-    private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
-        List<Document> dataSetList = new ArrayList<>();
-        List<Integer> datasetId = new ArrayList<>();
-        Document dataAccess = new Document(dataAccessRequest);
-        consentDataSet.getDataSets().forEach((k,v) -> {
-            Document document = new Document();
-            document.put(DATA_SET_ID,k);
-            datasetId.add(Integer.valueOf(k));
-            document.put("name", v);
-            dataSetList.add(document);
-            String objectId = dataSetDAO.findObjectIdByDataSetId(Integer.valueOf(k));
-            if (StringUtils.isNotEmpty(objectId)) {
-                document.put("objectId", objectId);
-            }
-        });
-        dataAccess.put(DarConstants.DATASET_ID, datasetId);
-        dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);
-        return dataAccess;
-    }
-
     protected List<ResearcherProperty> updateResearcherIdentification(Document dataAccessRequest) {
         Integer userId = dataAccessRequest.getInteger(DarConstants.USER_ID);
         String linkedIn = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
         String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
         String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
-        String urlDAA = dataAccessRequest.getString(ResearcherFields.URL_DAA.getValue());
-        String nameDAA = dataAccessRequest.getString(ResearcherFields.NAME_DAA.getValue());
         List<ResearcherProperty> rpList = new ArrayList<>();
         researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue(), ResearcherFields.NAME_DAA.getValue(), ResearcherFields.URL_DAA.getValue()), userId);
         if (StringUtils.isNotEmpty(linkedIn)) {
@@ -620,12 +602,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         if (StringUtils.isNotEmpty(researcherGate)) {
            rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
-        }
-        if (StringUtils.isNotEmpty(nameDAA)) {
-            rpList.add(new ResearcherProperty(userId, ResearcherFields.NAME_DAA.getValue(), nameDAA));
-        }
-        if (StringUtils.isNotEmpty(urlDAA)) {
-            rpList.add(new ResearcherProperty(userId, ResearcherFields.URL_DAA.getValue(), urlDAA));
         }
         if (CollectionUtils.isNotEmpty(rpList)) {
            researcherPropertyDAO.insertAll(rpList);
