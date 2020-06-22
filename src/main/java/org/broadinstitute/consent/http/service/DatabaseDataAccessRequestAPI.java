@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -258,15 +259,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public Document createDraftDataAccessRequest(Document draftDar){
+    public Document createDraftDataAccessRequest(Document draftDar) {
+        Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Gson gson = new Gson();
         DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
-        darData.setCreateDate(new Date().getTime());
+        darData.setCreateDate(now.getTime());
         String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
         if (referenceId == null) {
             referenceId = UUID.randomUUID().toString();
         }
-        darData.setPartialDarCode("temp_DAR");
+        darData.setPartialDarCode("temp_DAR_" + sdf.format(now));
         darData.setReferenceId(referenceId);
         draftDar.put(DarConstants.REFERENCE_ID, referenceId);
         dataAccessRequestService.insertDraftDataAccessRequest(referenceId, darData);
