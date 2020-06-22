@@ -37,7 +37,7 @@ static void migrateDars(String authToken, String uriHost) {
             logger.info("Updated max counter to: ${o.toString()}")
         }
         response.exception { t ->
-            logger.error("Error setting the max DAR counter.")
+            logger.severe("Error setting the max DAR counter.")
             t.printStackTrace()
         }
     }
@@ -72,7 +72,7 @@ static Object createNewDar(String authToken, String uriHost, String referenceId,
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
-            logger.error("Error creating DAR for id: " + referenceId)
+            logger.severe("Error creating DAR for id: " + referenceId)
             t.printStackTrace()
         }
     } as Object
@@ -97,7 +97,7 @@ static Map<String, Object> getMongoDars(String authToken, String uriHost) {
             new JsonSlurper().parse(fs.inputStream)
         }
         response.exception { t ->
-            logger.error("Error querying for DARs in Mongo: ")
+            logger.severe("Error querying for DARs in Mongo: ")
             t.printStackTrace()
         }
     } as Map<String, Object>

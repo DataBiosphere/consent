@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -537,14 +538,30 @@ public class DataAccessRequestResource extends Resource {
             Object datasetId = m.get("datasetId");
             String datasetIdString = gson.toJson(datasetId);
             JsonArray datasetIdArray = gson.fromJson(datasetIdString, JsonArray.class);
-            List<Integer> datasetIds = StreamSupport.stream(datasetIdArray.spliterator(), false).
-                    map(JsonElement::getAsJsonObject).
-                    map(o -> o.get("id")).
-                    filter(Objects::nonNull).
-                    filter(o -> !o.isJsonNull()).
-                    map(JsonElement::getAsString).
-                    map(Integer::valueOf).
-                    collect(Collectors.toList());
+            // Dataset ids are usually integers, but there are older cases where they are in
+            // SC-123 format, or Sample Collection ID. If that's the case, look up the dataset with
+            // that objectId and use that dataset's id.
+            List<String> datasetIdStrings = StreamSupport.stream(datasetIdArray.spliterator(), false).
+                map(JsonElement::getAsJsonObject).
+                map(o -> o.get("id")).
+                filter(Objects::nonNull).
+                filter(o -> !o.isJsonNull()).
+                map(JsonElement::getAsString).
+                collect(Collectors.toList());
+            List<Integer> datasetIds = new ArrayList<>();
+            datasetIdStrings.forEach(sId -> {
+                try{
+                    Integer intValue = Integer.valueOf(sId);
+                    datasetIds.add(intValue);
+                } catch (Exception e) {
+                    DataSet d = dataSetAPI.findDataSetByObjectId(sId);
+                    if (d != null) {
+                        datasetIds.add(d.getDataSetId());
+                    } else {
+                        logger().error("Unable to find a dataset for " + sId);
+                    }
+                }
+            });
             if (!datasetIds.isEmpty()) {
                 m.remove("datasetId");
                 m.put("datasetId", datasetIds);
