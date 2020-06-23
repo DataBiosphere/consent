@@ -351,12 +351,12 @@ public class DataAccessRequestService {
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
             }
-            darManage.setCreateDate(new Timestamp(dar.getData().getCreateDate()));
+            darManage.setCreateDate(dar.getData().getCreateDate());
             darManage.setRus(dar.getData().getRus());
             darManage.setProjectTitle(dar.getData().getProjectTitle());
             darManage.setDataRequestId(referenceId);
             darManage.setFrontEndId(dar.getData().getDarCode());
-            darManage.setSortDate(new Date(dar.getData().getSortDate()));
+            darManage.setSortDate(dar.getData().getSortDate());
             darManage.setIsCanceled(dar.getData().getStatus() != null && dar.getData().getStatus().equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");

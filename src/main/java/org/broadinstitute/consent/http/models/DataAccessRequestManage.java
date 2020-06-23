@@ -26,8 +26,8 @@ public class DataAccessRequestManage {
     private String projectTitle;
     private String frontEndId;
     private Integer electionId;
-    private Timestamp createDate;
-    private Date sortDate;
+    private Long createDate;
+    private Long sortDate;
     private Boolean electionVote;
     private Boolean isCanceled;
     private Boolean needsApproval;
@@ -184,19 +184,19 @@ public class DataAccessRequestManage {
         this.electionId = electionId;
     }
 
-    public Timestamp getCreateDate() {
+    public Long getCreateDate() {
         return createDate;
     }
 
-    public void setCreateDate(Timestamp createDate) {
+    public void setCreateDate(Long createDate) {
         this.createDate = createDate;
     }
 
-    public Date getSortDate() {
+    public Long getSortDate() {
         return sortDate;
     }
 
-    public void setSortDate(Date sortDate) {
+    public void setSortDate(Long sortDate) {
         this.sortDate = sortDate;
     }
 
