@@ -654,7 +654,7 @@
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>util-core_2.11</artifactId>
-      <version>20.5.0</version>
+      <version>20.6.0</version>
     </dependency>
 
     <!-- Required for mocking ontology and elastic search responses -->
