@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.Role;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.broadinstitute.consent.http.service.DacService;
-
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
@@ -20,16 +19,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.service.DacService;
 
 @Path("api/dac")
 public class DacResource extends Resource {
 
-    private DacService dacService;
+    private final DacService dacService;
     private static final Logger logger = Logger.getLogger(DacResource.class.getName());
 
     @Inject
@@ -48,7 +48,8 @@ public class DacResource extends Resource {
     @POST
     @Produces("application/json")
     @RolesAllowed({ADMIN})
-    public Response createDac(Dac dac) throws Exception {
+    public Response createDac(@Auth AuthUser authUser, String json) throws Exception {
+        Dac dac = new Gson().fromJson(json, Dac.class);
         if (dac == null) {
             throw new BadRequestException("DAC is required");
         }
@@ -69,7 +70,8 @@ public class DacResource extends Resource {
     @PUT
     @Produces("application/json")
     @RolesAllowed({ADMIN})
-    public Response updateDac(Dac dac) {
+    public Response updateDac(@Auth AuthUser authUser, String json) {
+        Dac dac = new Gson().fromJson(json, Dac.class);
         if (dac == null) {
             throw new BadRequestException("DAC is required");
         }

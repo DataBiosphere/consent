@@ -1,5 +1,17 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+
+import com.google.gson.Gson;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
 import org.broadinstitute.consent.http.service.DacService;
@@ -9,23 +21,16 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-
 public class DacResourceTest {
 
     @Mock
-    DacService dacService;
+    private DacService dacService;
 
     private DacResource dacResource;
+
+    private AuthUser authUser = new AuthUser("test@test.com");
+
+    private Gson gson = new Gson();
 
     @Before
     public void setUp() {
@@ -67,15 +72,13 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        Response response = dacResource.createDac(dac);
+        Response response = dacResource.createDac(authUser, gson.toJson(dac));
         Assert.assertEquals(200, response.getStatus());
     }
 
     @Test(expected = BadRequestException.class)
     public void testCreateDac_badRequest_1() throws Exception {
-        Dac dac = null;
-
-        dacResource.createDac(dac);
+        dacResource.createDac(authUser, null);
     }
 
     @Test(expected = BadRequestException.class)
@@ -87,7 +90,7 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        dacResource.createDac(dac);
+        dacResource.createDac(authUser, gson.toJson(dac));
     }
 
     @Test(expected = BadRequestException.class)
@@ -99,7 +102,7 @@ public class DacResourceTest {
         when(dacService.createDac(any(), any())).thenReturn(1);
         when(dacService.findById(1)).thenReturn(dac);
 
-        dacResource.createDac(dac);
+        dacResource.createDac(authUser, gson.toJson(dac));
     }
 
 
@@ -113,13 +116,13 @@ public class DacResourceTest {
         doNothing().when(dacService).updateDac(isA(String.class), isA(String.class), isA(Integer.class));
         when(dacService.findById(1)).thenReturn(dac);
 
-        Response response = dacResource.updateDac(dac);
+        Response response = dacResource.updateDac(authUser, gson.toJson(dac));
         Assert.assertEquals(200, response.getStatus());
     }
 
     @Test(expected = BadRequestException.class)
     public void testUpdateDac_badRequest_1() {
-        dacResource.updateDac(null);
+        dacResource.updateDac(authUser, null);
     }
 
     @Test(expected = BadRequestException.class)
@@ -129,7 +132,7 @@ public class DacResourceTest {
                 .setName("name")
                 .setDescription("description")
                 .build();
-        dacResource.updateDac(dac);
+        dacResource.updateDac(authUser, gson.toJson(dac));
     }
 
     @Test(expected = BadRequestException.class)
@@ -139,7 +142,7 @@ public class DacResourceTest {
                 .setName(null)
                 .setDescription("description")
                 .build();
-        dacResource.updateDac(dac);
+        dacResource.updateDac(authUser, gson.toJson(dac));
     }
 
     @Test(expected = BadRequestException.class)
@@ -149,7 +152,7 @@ public class DacResourceTest {
                 .setName("name")
                 .setDescription(null)
                 .build();
-        dacResource.updateDac(dac);
+        dacResource.updateDac(authUser, gson.toJson(dac));
     }
 
     @Test
