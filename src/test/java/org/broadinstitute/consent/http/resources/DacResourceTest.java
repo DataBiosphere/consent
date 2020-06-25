@@ -28,9 +28,9 @@ public class DacResourceTest {
 
     private DacResource dacResource;
 
-    private AuthUser authUser = new AuthUser("test@test.com");
+    private final AuthUser authUser = new AuthUser("test@test.com");
 
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     @Before
     public void setUp() {
