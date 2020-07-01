@@ -23,6 +23,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         DataAccessRequest dar = new DataAccessRequest();
         dar.setId(resultSet.getInt("id"));
         dar.setReferenceId(resultSet.getString("reference_id"));
+        dar.setDraft(resultSet.getBoolean("draft"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
         // Handle nested quotes
         String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");

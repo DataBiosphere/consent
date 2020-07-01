@@ -1,5 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,20 +39,6 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Implementation class for DataSetAPI database support.
@@ -259,7 +258,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
 
     @Override
     public List<Map<String, String>> autoCompleteDataSets(String partial) {
-        return dsDAO.getObjectIdsbyPartial(partial);
+        return dsDAO.getDatasetsBySearchTerm(partial);
     }
 
     @Override

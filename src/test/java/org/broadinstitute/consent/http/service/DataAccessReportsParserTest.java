@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.vividsolutions.jts.util.Assert;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -12,8 +11,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
+
+import static org.junit.Assert.assertTrue;
 
 public class DataAccessReportsParserTest {
 
@@ -54,35 +58,35 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            Assert.isTrue(columns.length == 12);
+            assertTrue(columns.length == 12);
             if(i == 0) {
-                Assert.isTrue(columns[0].equals(HeaderDAR.DAR_ID.getValue()));
-                Assert.isTrue(columns[1].equals(HeaderDAR.DATASET_NAME.getValue()));
-                Assert.isTrue(columns[2].equals(HeaderDAR.DATASET_ID.getValue()));
-                Assert.isTrue(columns[3].equals(HeaderDAR.CONSENT_ID.getValue()));
-                Assert.isTrue(columns[4].equals(HeaderDAR.DATA_REQUESTER_NAME.getValue()));
-                Assert.isTrue(columns[5].equals(HeaderDAR.ORGANIZATION.getValue()));
-                Assert.isTrue(columns[6].equals(HeaderDAR.CODED_VERSION_SDUL.getValue()));
-                Assert.isTrue(columns[7].equals(HeaderDAR.CODED_VERSION_DAR.getValue()));
-                Assert.isTrue(columns[8].equals(HeaderDAR.RESEARCH_PURPOSE.getValue()));
-                Assert.isTrue(columns[9].equals(HeaderDAR.DATE_REQUEST_SUBMISSION.getValue()));
-                Assert.isTrue(columns[10].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
-                Assert.isTrue(columns[11].equals(HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue()));
+                assertTrue(columns[0].equals(HeaderDAR.DAR_ID.getValue()));
+                assertTrue(columns[1].equals(HeaderDAR.DATASET_NAME.getValue()));
+                assertTrue(columns[2].equals(HeaderDAR.DATASET_ID.getValue()));
+                assertTrue(columns[3].equals(HeaderDAR.CONSENT_ID.getValue()));
+                assertTrue(columns[4].equals(HeaderDAR.DATA_REQUESTER_NAME.getValue()));
+                assertTrue(columns[5].equals(HeaderDAR.ORGANIZATION.getValue()));
+                assertTrue(columns[6].equals(HeaderDAR.CODED_VERSION_SDUL.getValue()));
+                assertTrue(columns[7].equals(HeaderDAR.CODED_VERSION_DAR.getValue()));
+                assertTrue(columns[8].equals(HeaderDAR.RESEARCH_PURPOSE.getValue()));
+                assertTrue(columns[9].equals(HeaderDAR.DATE_REQUEST_SUBMISSION.getValue()));
+                assertTrue(columns[10].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
+                assertTrue(columns[11].equals(HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue()));
             }
             if (i == 1) {
-                Assert.isTrue(columns[0].equals(DAR_CODE));
-                Assert.isTrue(columns[1].equals(NAME));
-                Assert.isTrue(columns[2].equals(""));
-                Assert.isTrue(columns[3].equals(CONSENT_NAME));
-                Assert.isTrue(columns[4].equals(REQUESTER));
-                Assert.isTrue(columns[5].equals(ORGANIZATION));
-                Assert.isTrue(columns[6].equals(sDUL.replace("\n", " ")));
-                Assert.isTrue(columns[7].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
-                Assert.isTrue(columns[8].equals(RUS_SUMMARY));
+                assertTrue(columns[0].equals(DAR_CODE));
+                assertTrue(columns[1].equals(NAME));
+                assertTrue(columns[2].equals(""));
+                assertTrue(columns[3].equals(CONSENT_NAME));
+                assertTrue(columns[4].equals(REQUESTER));
+                assertTrue(columns[5].equals(ORGANIZATION));
+                assertTrue(columns[6].equals(sDUL.replace("\n", " ")));
+                assertTrue(columns[7].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
+                assertTrue(columns[8].equals(RUS_SUMMARY));
             }
             i++;
         }
-        Assert.isTrue(i == 2);
+        assertTrue(i == 2);
     }
 
     @Test
@@ -101,29 +105,29 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            Assert.isTrue(columns.length == 8);
+            assertTrue(columns.length == 8);
             if(i == 0) {
-                Assert.isTrue(columns[0].equals(HeaderDAR.DAR_ID.getValue()));
-                Assert.isTrue(columns[1].equals(HeaderDAR.DATASET_NAME.getValue()));
-                Assert.isTrue(columns[2].equals(HeaderDAR.DATASET_ID.getValue()));
-                Assert.isTrue(columns[3].equals(HeaderDAR.CONSENT_ID.getValue()));
-                Assert.isTrue(columns[4].equals(HeaderDAR.CODED_VERSION_SDUL.getValue()));
-                Assert.isTrue(columns[5].equals(HeaderDAR.CODED_VERSION_DAR.getValue()));
-                Assert.isTrue(columns[6].equals(HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue()));
-                Assert.isTrue(columns[7].equals(HeaderDAR.APPROVED_DISAPPROVED.getValue()));
+                assertTrue(columns[0].equals(HeaderDAR.DAR_ID.getValue()));
+                assertTrue(columns[1].equals(HeaderDAR.DATASET_NAME.getValue()));
+                assertTrue(columns[2].equals(HeaderDAR.DATASET_ID.getValue()));
+                assertTrue(columns[3].equals(HeaderDAR.CONSENT_ID.getValue()));
+                assertTrue(columns[4].equals(HeaderDAR.CODED_VERSION_SDUL.getValue()));
+                assertTrue(columns[5].equals(HeaderDAR.CODED_VERSION_DAR.getValue()));
+                assertTrue(columns[6].equals(HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue()));
+                assertTrue(columns[7].equals(HeaderDAR.APPROVED_DISAPPROVED.getValue()));
             }
             if (i == 1) {
-                Assert.isTrue(columns[0].equals(DAR_CODE));
-                Assert.isTrue(columns[1].equals(NAME));
-                Assert.isTrue(columns[2].equals(""));
-                Assert.isTrue(columns[3].equals(CONSENT_NAME));
-                Assert.isTrue(columns[4].equals(sDUL.replace("\n", " ")));
-                Assert.isTrue(columns[5].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
-                Assert.isTrue(columns[7].equals("Yes"));
+                assertTrue(columns[0].equals(DAR_CODE));
+                assertTrue(columns[1].equals(NAME));
+                assertTrue(columns[2].equals(""));
+                assertTrue(columns[3].equals(CONSENT_NAME));
+                assertTrue(columns[4].equals(sDUL.replace("\n", " ")));
+                assertTrue(columns[5].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
+                assertTrue(columns[7].equals("Yes"));
             }
             i++;
         }
-        Assert.isTrue(i == 2);
+        assertTrue(i == 2);
     }
 
     @Test
@@ -140,20 +144,20 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            Assert.isTrue(columns.length == 6);
+            assertTrue(columns.length == 6);
             if(i == 0) {
-                Assert.isTrue(columns[0].equals(HeaderDAR.USERNAME.getValue()));
-                Assert.isTrue(columns[1].equals(HeaderDAR.NAME.getValue()));
-                Assert.isTrue(columns[2].equals(HeaderDAR.ORGANIZATION.getValue()));
-                Assert.isTrue(columns[3].equals(HeaderDAR.DAR_ID.getValue()));
-                Assert.isTrue(columns[4].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
-                Assert.isTrue(columns[5].equals(HeaderDAR.RENEWAL_DATE.getValue()));
+                assertTrue(columns[0].equals(HeaderDAR.USERNAME.getValue()));
+                assertTrue(columns[1].equals(HeaderDAR.NAME.getValue()));
+                assertTrue(columns[2].equals(HeaderDAR.ORGANIZATION.getValue()));
+                assertTrue(columns[3].equals(HeaderDAR.DAR_ID.getValue()));
+                assertTrue(columns[4].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
+                assertTrue(columns[5].equals(HeaderDAR.RENEWAL_DATE.getValue()));
             }
             if (i == 1) {
-                Assert.isTrue(columns[0].equals(EMAIL));
-                Assert.isTrue(columns[1].equals(REQUESTER));
-                Assert.isTrue(columns[2].equals(ORGANIZATION));
-                Assert.isTrue(columns[3].equals(DAR_CODE));
+                assertTrue(columns[0].equals(EMAIL));
+                assertTrue(columns[1].equals(REQUESTER));
+                assertTrue(columns[2].equals(ORGANIZATION));
+                assertTrue(columns[3].equals(DAR_CODE));
             }
             i++;
         }

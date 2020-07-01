@@ -7,7 +7,7 @@ import static groovyx.net.http.HttpBuilder.configure
 import static groovyx.net.http.util.SslUtils.ignoreSslIssues
 
 /**
- * Test script to validate the migration of production DARs.
+ * Test script to validate the migration of production Partial DARs.
  *
  * Requires an authentication as an admin user.
  *

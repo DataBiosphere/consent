@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
 import org.broadinstitute.consent.http.models.ConsentManage;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -11,11 +13,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 @RegisterRowMapper(ConsentMapper.class)
 public interface ConsentDAO extends Transactional<ConsentDAO> {
@@ -38,13 +35,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlQuery("select * from consents  where name in (<names>)")
     List<Consent> findConsentsFromConsentNames(@BindList("names") List<String> names);
-
-    @UseRowMapper(ConsentDataSetMapper.class)
-    @SqlQuery("SELECT c.consentId, cs.dataSetId, ds.name, ds.objectId " +
-            "FROM consents c INNER JOIN consentassociations cs ON c.consentId = cs.consentId " +
-            "INNER JOIN dataset ds on cs.dataSetId = ds.dataSetId " +
-            "WHERE cs.dataSetId IN (<datasetId>)")
-    Set<ConsentDataSet> getConsentIdAndDataSets(@BindList("datasetId") List<Integer> datasetId);
 
     @SqlQuery("select consentId from consents where consentId = :consentId and active=true")
     String checkConsentById(@Bind("consentId") String consentId);

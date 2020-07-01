@@ -1,39 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
-import java.sql.Timestamp;
+import com.mongodb.client.MongoCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,8 +19,37 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
@@ -63,6 +64,7 @@ public class DataAccessRequestService {
     private final DacService dacService;
     private final UserService userService;
     private final VoteDAO voteDAO;
+    private final MongoConsentDB mongo;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -71,18 +73,18 @@ public class DataAccessRequestService {
     private static final String DENIED = "Denied";
 
     @Inject
-    public DataAccessRequestService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DacDAO dacDAO,
-                                    UserDAO userDAO, DataSetDAO dataSetDAO, ElectionDAO electionDAO,
-                                    DacService dacService, UserService userService, VoteDAO voteDAO) {
-        this.consentDAO = consentDAO;
-        this.dacDAO = dacDAO;
-        this.userDAO = userDAO;
-        this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.dataSetDAO = dataSetDAO;
-        this.electionDAO = electionDAO;
+    public DataAccessRequestService(DAOContainer container, DacService dacService,
+                                    UserService userService, MongoConsentDB mongo) {
+        this.consentDAO = container.getConsentDAO();
+        this.dacDAO = container.getDacDAO();
+        this.userDAO = container.getUserDAO();
+        this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
+        this.dataSetDAO = container.getDatasetDAO();
+        this.electionDAO = container.getElectionDAO();
+        this.voteDAO = container.getVoteDAO();
         this.dacService = dacService;
         this.userService = userService;
-        this.voteDAO = voteDAO;
+        this.mongo = mongo;
     }
 
     /**
@@ -175,7 +177,19 @@ public class DataAccessRequestService {
     }
 
     public List<DataAccessRequest> findAllDataAccessRequests() {
-        return dataAccessRequestDAO.findAll();
+        return dataAccessRequestDAO.findAllDataAccessRequests();
+    }
+
+    public List<Document> findAllDraftDataAccessRequestsAsDocuments() {
+        return dataAccessRequestDAO.findAllDraftDataAccessRequests().stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
+    }
+
+    public List<Document> findAllDraftDataAccessRequestDocumentsByUser(Integer userId) {
+        return dataAccessRequestDAO.findAllDraftsByUserId(userId).stream().
+                map(this::createDocumentFromDar).
+                collect(Collectors.toList());
     }
 
     /**
@@ -271,6 +285,11 @@ public class DataAccessRequestService {
         return findByReferenceId(referencedId);
     }
 
+    public DataAccessRequest insertDraftDataAccessRequest(String referencedId, DataAccessRequestData darData) {
+        dataAccessRequestDAO.insertDraft(referencedId, darData);
+        return findByReferenceId(referencedId);
+    }
+
     /**
      * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
      * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
@@ -331,12 +350,12 @@ public class DataAccessRequestService {
             if (election != null) {
                 darManage.setElectionId(election.getElectionId());
             }
-            darManage.setCreateDate(new Timestamp(dar.getData().getCreateDate()));
+            darManage.setCreateDate(dar.getData().getCreateDate());
             darManage.setRus(dar.getData().getRus());
             darManage.setProjectTitle(dar.getData().getProjectTitle());
             darManage.setDataRequestId(referenceId);
             darManage.setFrontEndId(dar.getData().getDarCode());
-            darManage.setSortDate(new Date(dar.getData().getSortDate()));
+            darManage.setSortDate(dar.getData().getSortDate());
             darManage.setIsCanceled(dar.getData().getStatus() != null && dar.getData().getStatus().equals(ElectionStatus.CANCELED.getValue()));
             darManage.setNeedsApproval(CollectionUtils.isNotEmpty(dataSetsToApprove));
             darManage.setDataSetElectionResult(darManage.getNeedsApproval() ? NEEDS_APPROVAL : "");
@@ -501,6 +520,25 @@ public class DataAccessRequestService {
         return activeDars.stream().
                 filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
+    }
+
+    /**
+     * TODO: Remove in follow-up work
+     * Temporary Migration Service Call
+     * @return List<Document> All partial DARs
+     */
+    public List<Document> getAllMongoPartialDataAccessRequests() {
+        MongoCollection<Document> collection = mongo.getPartialDataAccessRequestCollection();
+        return collection.find().into(new ArrayList<>());
+    }
+
+    /**
+     * TODO: Remove in follow-up work
+     * Temporary Migration Service Call
+     * @return List<DataAccessRequest> All partial DARs
+     */
+    public List<DataAccessRequest> getAllPostgresDraftDataAccessRequests() {
+        return dataAccessRequestDAO.findAllDraftDataAccessRequests();
     }
 
 }

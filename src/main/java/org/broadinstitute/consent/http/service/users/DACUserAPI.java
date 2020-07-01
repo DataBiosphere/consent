@@ -16,8 +16,6 @@ import java.util.Map;
 @Deprecated
 public interface DACUserAPI {
 
-    User createDACUser(User user) throws IllegalArgumentException;
-
     List<User> describeAdminUsersThatWantToReceiveMails();
 
     User updateDACUserById(Map<String, User> dac, Integer userId) throws IllegalArgumentException, NotFoundException, UserRoleHandlerException, MessagingException, IOException, TemplateException;

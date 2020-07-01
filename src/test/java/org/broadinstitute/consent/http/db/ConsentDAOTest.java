@@ -1,26 +1,23 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.ConsentManage;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.ConsentManage;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.junit.Test;
 
 public class ConsentDAOTest extends DAOTestHelper {
 
@@ -80,20 +77,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         assertEquals(2, consents.size());
         assertTrue(names.contains(consent1.getName()));
         assertTrue(names.contains(consent2.getName()));
-    }
-
-    @Test
-    public void testGetConsentIdAndDataSets() {
-        Consent consent1 = createConsent(null);
-        DataSet dataset1 = createDataset();
-        createAssociation(consent1.getConsentId(), dataset1.getDataSetId());
-        Consent consent2 = createConsent(null);
-        DataSet dataset2 = createDataset();
-        createAssociation(consent2.getConsentId(), dataset2.getDataSetId());
-        List<Integer> datasetIds = Arrays.asList(dataset1.getDataSetId(), dataset2.getDataSetId());
-
-        Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasetIds);
-        assertEquals(2, consentDataSets.size());
     }
 
     @Test

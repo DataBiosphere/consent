@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import com.github.fakemongo.Fongo;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -9,6 +8,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
+import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -16,7 +16,8 @@ import org.broadinstitute.consent.http.configurations.MongoConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.AssociationDAO;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.CounterDAO;
+import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
@@ -36,6 +38,7 @@ import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
@@ -52,8 +55,6 @@ import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
-import javax.ws.rs.client.Client;
-
 public class ConsentModule extends AbstractModule {
 
     @Inject
@@ -65,6 +66,7 @@ public class ConsentModule extends AbstractModule {
     private final Jdbi jdbi;
     private final MongoConsentDB mongoInstance;
     private final ConsentDAO consentDAO;
+    private final CounterDAO counterDAO;
     private final ElectionDAO electionDAO;
     private final HelpReportDAO helpReportDAO;
     private final VoteDAO voteDAO;
@@ -99,6 +101,7 @@ public class ConsentModule extends AbstractModule {
         this.mongoInstance = initMongoDBInstance();
 
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
+        this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
         this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
         this.helpReportDAO = this.jdbi.onDemand(HelpReportDAO.class);
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
@@ -122,6 +125,31 @@ public class ConsentModule extends AbstractModule {
     protected void configure() {
         bind(Configuration.class).toInstance(config);
         bind(Environment.class).toInstance(environment);
+    }
+
+    @Provides
+    public DAOContainer providesDAOContainer() {
+        DAOContainer container = new DAOContainer();
+        container.setApprovalExpirationTimeDAO(providesApprovalExpirationTimeDAO());
+        container.setAssociationDAO(providesAssociationDAO());
+        container.setConsentDAO(providesConsentDAO());
+        container.setCounterDAO(providesCounterDAO());
+        container.setDacDAO(providesDacDAO());
+        container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
+        container.setDatasetAssociationDAO(providesDataSetAssociationDAO());
+        container.setDatasetAuditDAO(providesDataSetAuditDAO());
+        container.setDatasetDAO(providesDataSetDAO());
+        container.setElectionDAO(providesElectionDAO());
+        container.setHelpReportDAO(providesHelpReportDAO());
+        container.setMailMessageDAO(providesMailMessageDAO());
+        container.setMailServiceDAO(providesMailServiceDAO());
+        container.setMatchDAO(providesMatchDAO());
+        container.setResearcherPropertyDAO(providesResearcherPropertyDAO());
+        container.setUserDAO(providesUserDAO());
+        container.setUserRoleDAO(providesUserRoleDAO());
+        container.setVoteDAO(providesVoteDAO());
+        container.setWorkspaceAuditDAO(providesWorkspaceAuditDAO());
+        return container;
     }
 
     @Provides
@@ -177,17 +205,22 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
+    CounterDAO providesCounterDAO() {
+        return counterDAO;
+    }
+
+    @Provides
+    CounterService providesCounterService() {
+        return new CounterService(providesCounterDAO());
+    }
+
+    @Provides
     DataAccessRequestService providesDataAccessRequestService() {
         return new DataAccessRequestService(
-                providesConsentDAO(),
-                providesDataAccessRequestDAO(),
-                providesDacDAO(),
-                providesUserDAO(),
-                providesDataSetDAO(),
-                providesElectionDAO(),
+                providesDAOContainer(),
                 providesDacService(),
                 providesUserService(),
-                providesVoteDAO());
+                providesMongo());
     }
 
     @Provides
@@ -381,17 +414,19 @@ public class ConsentModule extends AbstractModule {
 
     private MongoConsentDB initMongoDBInstance() {
         MongoClient mongoClient = getMongoClient();
-        String dbName = config.getMongoConfiguration().getDbName();
+        String dbName = "consent";
         MongoConsentDB instance = new MongoConsentDB(mongoClient, dbName);
-        instance.configureMongo();
+        MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
+        if (!mongoConfiguration.isTestMode()) {
+            instance.configureMongo();
+        }
         return instance;
     }
 
     private MongoClient getMongoClient() {
         MongoConfiguration mongoConfiguration = config.getMongoConfiguration();
         if (mongoConfiguration.isTestMode()) {
-            Fongo fongo = new Fongo("TestServer");
-            return fongo.getMongo();
+            return null;
         } else {
             return mongoConfiguration.getMongoClient();
         }

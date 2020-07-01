@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.vividsolutions.jts.util.Assert;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
@@ -16,6 +15,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class DataAccessParserTest {
@@ -65,42 +66,42 @@ public class DataAccessParserTest {
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
-        Assert.isTrue(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString().equals(INSTITUTION));
-        Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
-        Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
-        Assert.isTrue(acroForm.getField(ResearcherFields.CITY.getValue()).getValueAsString().equals(CITY));
-        Assert.isTrue(acroForm.getField(ResearcherFields.ZIP_POSTAL_CODE.getValue()).getValueAsString().equals(POSTAL_CODE));
-        Assert.isTrue(acroForm.getField(ResearcherFields.COUNTRY.getValue()).getValueAsString().equals(COUNTRY));
-        Assert.isTrue(acroForm.getField(ResearcherFields.STATE.getValue()).getValueAsString().equals(STATE));
-        Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_2.getValue()).getValueAsString().equals(STREET_2));
-        Assert.isTrue(acroForm.getField(ResearcherFields.DIVISION.getValue()).getValueAsString().equals(DIVISION));
-        Assert.isTrue(acroForm.getField(DarConstants.INVESTIGATOR).getValueAsString().equals(PROFILE_NAME));
-        Assert.isTrue(acroForm.getField(DarConstants.ACADEMIC_BUSINESS_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
-        Assert.isTrue(acroForm.getField(DarConstants.ERA_COMMONS_ID).getValueAsString().equals(ERA_COMMONS_ID));
-        Assert.isTrue(acroForm.getField(DarConstants.PUBMED_ID).getValueAsString().equals(PUBMED_ID));
-        Assert.isTrue(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString().equals(SCIENTIFIC_URL));
-        Assert.isTrue(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString().equals(ACADEMIC_BUSINESS_EMAIL));
-        Assert.isTrue(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString().equals(PROJECT_TITLE));
-        Assert.isTrue(acroForm.getField(DarConstants.DATASET_ID).getValueAsString().equals(DATASET_NAME + " | " + OBJECT_ID));
-        Assert.isTrue(acroForm.getField(DarConstants.RUS).getValueAsString().equals(RUS));
-        Assert.isTrue(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString().equals(NON_TECH_RUS));
-        Assert.isTrue(acroForm.getField(DarConstants.METHODS).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.CONTROLS).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.OTHER).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.CHECK_COLLABORATOR).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.NIH_USERNAME).getValueAsString().equals(NIH_USERNAME));
-        Assert.isTrue(acroForm.getField(DarConstants.LINKEDIN).getValueAsString().equals(LINKEDIN));
-        Assert.isTrue(acroForm.getField(DarConstants.ORCID).getValueAsString().equals(ORCID));
-        Assert.isTrue(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString().equals(RESEARCHER_GATE));
-        Assert.isTrue(acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString().equals("Yes"));
+        assertEquals(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString(), INSTITUTION);
+        assertEquals(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
+        assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
+        assertEquals(acroForm.getField(ResearcherFields.CITY.getValue()).getValueAsString(), CITY);
+        assertEquals(acroForm.getField(ResearcherFields.ZIP_POSTAL_CODE.getValue()).getValueAsString(), POSTAL_CODE);
+        assertEquals(acroForm.getField(ResearcherFields.COUNTRY.getValue()).getValueAsString(), COUNTRY);
+        assertEquals(acroForm.getField(ResearcherFields.STATE.getValue()).getValueAsString(), STATE);
+        assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_2.getValue()).getValueAsString(), STREET_2);
+        assertEquals(acroForm.getField(ResearcherFields.DIVISION.getValue()).getValueAsString(), DIVISION);
+        assertEquals(acroForm.getField(DarConstants.INVESTIGATOR).getValueAsString(), PROFILE_NAME);
+        assertEquals(acroForm.getField(DarConstants.ACADEMIC_BUSINESS_EMAIL).getValueAsString(), ACADEMIC_BUSINESS_EMAIL);
+        assertEquals(acroForm.getField(DarConstants.ERA_COMMONS_ID).getValueAsString(), ERA_COMMONS_ID);
+        assertEquals(acroForm.getField(DarConstants.PUBMED_ID).getValueAsString(), PUBMED_ID);
+        assertEquals(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString(), SCIENTIFIC_URL);
+        assertEquals(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString(), ACADEMIC_BUSINESS_EMAIL);
+        assertEquals(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString(), PROJECT_TITLE);
+        assertEquals(acroForm.getField(DarConstants.DATASET_ID).getValueAsString(), DATASET_NAME + " | " + OBJECT_ID);
+        assertEquals(acroForm.getField(DarConstants.RUS).getValueAsString(), RUS);
+        assertEquals(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString(), NON_TECH_RUS);
+        assertEquals("Yes", acroForm.getField(DarConstants.METHODS).getValueAsString());
+        assertEquals("Yes", acroForm.getField(DarConstants.CONTROLS).getValueAsString());
+        assertEquals("Yes", acroForm.getField(DarConstants.OTHER).getValueAsString());
+        assertEquals("Yes", acroForm.getField(DarConstants.CHECK_COLLABORATOR).getValueAsString());
+        assertEquals(acroForm.getField(DarConstants.NIH_USERNAME).getValueAsString(), NIH_USERNAME);
+        assertEquals(acroForm.getField(DarConstants.LINKEDIN).getValueAsString(), LINKEDIN);
+        assertEquals(acroForm.getField(DarConstants.ORCID).getValueAsString(), ORCID);
+        assertEquals(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString(), RESEARCHER_GATE);
+        assertEquals("Yes", acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString());
         // Handle legacy all lower cased case
-        Assert.isTrue(acroForm.getField(DarConstants.OTHER_TEXT.toLowerCase()).getValueAsString().equals(RESEARCH_OTHER_TEXT));
-        Assert.isTrue(acroForm.getField(DarConstants.ORIGINS).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.HEALTH).getValueAsString().equals("Yes"));
-        Assert.isTrue(acroForm.getField(DarConstants.MANUAL_REVIEW).getValueAsString().equals(MANUAL_REVIEW));
-        Assert.isTrue(acroForm.getField(DarConstants.USER_STATUS).getValueAsString().equals(USER_STATUS));
-        Assert.isTrue(acroForm.getField(DarConstants.ADMIN_COMMENT).getValueAsString().equals(ADMIN_COMMENT));
-        Assert.isTrue(acroForm.getField(DarConstants.TRANSLATED_RESTRICTION).getValueAsString().equals(TRANSLATED_USE_RESTRICTION));
+        assertEquals(acroForm.getField(DarConstants.OTHER_TEXT.toLowerCase()).getValueAsString(), RESEARCH_OTHER_TEXT);
+        assertEquals("Yes", acroForm.getField(DarConstants.ORIGINS).getValueAsString());
+        assertEquals("Yes", acroForm.getField(DarConstants.HEALTH).getValueAsString());
+        assertEquals(acroForm.getField(DarConstants.MANUAL_REVIEW).getValueAsString(), MANUAL_REVIEW);
+        assertEquals(acroForm.getField(DarConstants.USER_STATUS).getValueAsString(), USER_STATUS);
+        assertEquals(acroForm.getField(DarConstants.ADMIN_COMMENT).getValueAsString(), ADMIN_COMMENT);
+        assertEquals(acroForm.getField(DarConstants.TRANSLATED_RESTRICTION).getValueAsString(), TRANSLATED_USE_RESTRICTION);
     }
 
     @Test
@@ -117,9 +118,9 @@ public class DataAccessParserTest {
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
-        Assert.isTrue(acroForm.getField(ResearcherFields.PROFILE_NAME.getValue()).getValueAsString().equals(PROFILE_NAME));
-        Assert.isTrue(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString().equals(DEPARTMENT));
-        Assert.isTrue(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString().equals(STREET_1));
+        assertEquals(acroForm.getField(ResearcherFields.PROFILE_NAME.getValue()).getValueAsString(), PROFILE_NAME);
+        assertEquals(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
+        assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
     }
 
     private InputStream getTemplateResource() {

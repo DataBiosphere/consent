@@ -52,6 +52,7 @@ public class DAOTestHelper {
 
     private static DropwizardTestSupport<ConsentConfiguration> testApp;
     protected static ConsentDAO consentDAO;
+    protected static CounterDAO counterDAO;
     protected static DacDAO dacDAO;
     protected static UserDAO userDAO;
     protected static DataSetDAO dataSetDAO;
@@ -103,6 +104,7 @@ public class DAOTestHelper {
         jdbi.installPlugin(new Gson2Plugin());
         jdbi.installPlugin(new GuavaPlugin());
         consentDAO = jdbi.onDemand(ConsentDAO.class);
+        counterDAO = jdbi.onDemand(CounterDAO.class);
         dacDAO = jdbi.onDemand(DacDAO.class);
         userDAO = jdbi.onDemand(UserDAO.class);
         dataSetDAO = jdbi.onDemand(DataSetDAO.class);
@@ -142,6 +144,7 @@ public class DAOTestHelper {
         });
         createdDataAccessRequestReferenceIds.forEach(d ->
                 dataAccessRequestDAO.deleteByReferenceId(d));
+        counterDAO.deleteAll();
     }
 
     protected void createAssociation(String consentId, Integer datasetId) {
@@ -285,6 +288,25 @@ public class DAOTestHelper {
             data = DataAccessRequestData.fromString(darDataString);
             String referenceId = UUID.randomUUID().toString();
             dataAccessRequestDAO.insert(referenceId, data);
+            createdDataAccessRequestReferenceIds.add(referenceId);
+            return dataAccessRequestDAO.findByReferenceId(referenceId);
+        } catch (IOException e) {
+            logger.error("Exception parsing dar data: " + e.getMessage());
+            fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
+        }
+        return null;
+    }
+
+    protected DataAccessRequest createDraftDataAccessRequest() {
+        DataAccessRequestData data;
+        try {
+            String darDataString = FileUtils.readFileToString(
+                    new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
+                    Charset.defaultCharset());
+            data = DataAccessRequestData.fromString(darDataString);
+            data.setPartialDarCode("temp_" + data.getDarCode());
+            String referenceId = UUID.randomUUID().toString();
+            dataAccessRequestDAO.insertDraft(referenceId, data);
             createdDataAccessRequestReferenceIds.add(referenceId);
             return dataAccessRequestDAO.findByReferenceId(referenceId);
         } catch (IOException e) {

@@ -55,7 +55,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -105,6 +104,7 @@ import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
@@ -194,7 +194,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Clients
         final Jdbi jdbi = injector.getProvider(Jdbi.class).get();
-        final MongoConsentDB mongoInstance = injector.getProvider(MongoConsentDB.class).get();
         final Client client = injector.getProvider(Client.class).get();
         final UseRestrictionConverter useRestrictionConverter = injector.getProvider(UseRestrictionConverter.class).get();
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
@@ -219,6 +218,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
+        final CounterService counterService = injector.getProvider(CounterService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
@@ -229,7 +229,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
-        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, mongoInstance, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(counterService, dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
@@ -253,7 +253,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         configureCors(env);
 
         // Health Checks
-        env.healthChecks().register("mongodb", new MongoHealthCheck(mongoInstance.getMongoClient(), config.getMongoConfiguration().getDbName()));
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
 
@@ -270,7 +269,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
-        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, googleStore, userService));
+        env.jersey().register(new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, googleStore, userService));
         env.jersey().register(new DataSetResource(userService));
         env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(new ConsentResource(auditService, userService));
