@@ -44,7 +44,7 @@ public class StatusResourceTest {
     }
 
     @Test
-    public void testUnhealthyMysql() {
+    public void testUnhealthyDatabase() {
         postgresql = Result.unhealthy(new Exception("Cannot connect to the postgresql database"));
         SortedMap<String, Result> checks = new TreeMap<>();
         checks.put(DB_ENV, postgresql);
