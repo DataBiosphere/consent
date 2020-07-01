@@ -487,7 +487,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
+        List<DataSet> datasets = populateDatasets(dar);
         Optional<User> optionalUser = Optional.ofNullable(user);
         String status = optionalUser.isPresent() ? user.getStatus() : "";
         String rationale = optionalUser.isPresent() ? user.getRationale() : "";
@@ -519,17 +519,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setRus(dar.getString(DarConstants.RUS));
     }
 
-    @SuppressWarnings("unchecked")
-    private List<DataSet> populateDatasets(Object datasetDetails) {
+    private List<DataSet> populateDatasets(Document dar) {
         List<DataSet> datasets = new ArrayList<>();
         try {
-            List<Integer> datasetIds = ((ArrayList<Document>) datasetDetails).
-                    stream().
-                    filter(d -> d.containsKey(DarConstants.DATASET_ID)).
-                    map(d -> d.getString(DarConstants.DATASET_ID)).
-                    map(Integer::valueOf).
-                    collect(Collectors.toList());
-            datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            if (!datasetIds.isEmpty()) {
+                datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
