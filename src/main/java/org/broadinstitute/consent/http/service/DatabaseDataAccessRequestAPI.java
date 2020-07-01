@@ -519,12 +519,13 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setRus(dar.getString(DarConstants.RUS));
     }
 
-    @SuppressWarnings("unchecked")
     private List<DataSet> populateDatasets(Document dar) {
         List<DataSet> datasets = new ArrayList<>();
         try {
             List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
-            datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            if (!datasetIds.isEmpty()) {
+                datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            }
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
