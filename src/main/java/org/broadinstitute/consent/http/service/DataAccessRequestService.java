@@ -62,7 +62,6 @@ public class DataAccessRequestService {
     private final DacService dacService;
     private final UserService userService;
     private final VoteDAO voteDAO;
-//    private final MongoConsentDB mongo;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -82,7 +81,6 @@ public class DataAccessRequestService {
         this.voteDAO = container.getVoteDAO();
         this.dacService = dacService;
         this.userService = userService;
-//        this.mongo = mongo;
     }
 
     /**
