@@ -2,7 +2,12 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.util.DatasetUtil;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,14 +22,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DarDecisionMetrics {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
   private String darId;
   private String dacId;
   private String datasetId;
-  private String dateSubmitted;
-  private String dateApproved;
-  private String dateDenied;
+  private Date dateSubmitted;
+  private Date dateApproved;
+  private Date dateDenied;
   private String darTurnaroundTime;
   private String dacDecision;
   private String algorithmDecision;
@@ -41,6 +44,7 @@ public class DarDecisionMetrics {
       Collection<Vote> rpVotes) {
 
     Gson gson = new Gson();
+    Logger logger = LoggerFactory.getLogger(this.getClass());
     logger.info("dar: " + gson.toJson(dar));
     logger.info("dac: " + gson.toJson(dac));
     logger.info("dataset: " + gson.toJson(dataset));
@@ -50,9 +54,43 @@ public class DarDecisionMetrics {
     logger.info("accessVotes: " + gson.toJson(accessVotes));
     logger.info("rpVotes: " + gson.toJson(rpVotes));
 
-    this.setDarId(dar.getReferenceId());
+    this.setDarId(dar.getData().getDarCode());
     if (Objects.nonNull(dac)) {
       this.setDacId(dac.getName());
+    }
+    if (Objects.nonNull(dataset)) {
+      this.setDacId(DatasetUtil.parseAlias(dataset.getAlias()));
+    }
+    if (Objects.nonNull(accessElection)) {
+      this.setDateSubmitted(accessElection.getCreateDate());
+    }
+    Vote finalVote = null;
+    Optional<Vote> finalVoteOpt =
+        accessVotes.stream()
+            .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
+            .findFirst();
+    if (finalVoteOpt.isPresent()) {
+      finalVote = finalVoteOpt.get();
+      if (finalVote.getVote()) {
+        this.setDateApproved(finalVote.getUpdateDate());
+        this.setDacDecision("Yes");
+      } else {
+        this.setDateDenied(finalVote.getUpdateDate());
+        this.setDacDecision("No");
+      }
+    }
+
+    if (Objects.nonNull(finalVote)) {
+      DateTime tot = null;
+      DateTime voteTime = new DateTime(finalVote.getUpdateDate());
+      if (Objects.nonNull(this.getDateSubmitted())) {
+        tot = voteTime.minus(this.getDateSubmitted().getTime());
+      } else if (Objects.nonNull(this.getDateDenied())) {
+        tot = voteTime.minus(this.getDateDenied().getTime());
+      }
+      if (Objects.nonNull(tot)) {
+        this.setDarTurnaroundTime(tot.toString());
+      }
     }
   }
 
@@ -80,27 +118,27 @@ public class DarDecisionMetrics {
     this.datasetId = datasetId;
   }
 
-  public String getDateSubmitted() {
+  public Date getDateSubmitted() {
     return dateSubmitted;
   }
 
-  public void setDateSubmitted(String dateSubmitted) {
+  public void setDateSubmitted(Date dateSubmitted) {
     this.dateSubmitted = dateSubmitted;
   }
 
-  public String getDateApproved() {
+  public Date getDateApproved() {
     return dateApproved;
   }
 
-  public void setDateApproved(String dateApproved) {
+  public void setDateApproved(Date dateApproved) {
     this.dateApproved = dateApproved;
   }
 
-  public String getDateDenied() {
+  public Date getDateDenied() {
     return dateDenied;
   }
 
-  public void setDateDenied(String dateDenied) {
+  public void setDateDenied(Date dateDenied) {
     this.dateDenied = dateDenied;
   }
 
