@@ -1,15 +1,17 @@
 package org.broadinstitute.consent.http.db;
 
 import java.util.List;
+import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
+import org.broadinstitute.consent.http.db.mapper.MatchMapper;
 import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
+import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
@@ -36,6 +38,7 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   List<Match> findMatchesForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   @SqlQuery("SELECT * FROM vote WHERE electionid IN (<electionIds>)")
+  @UseRowMapper(VoteMapper.class)
   List<Vote> findVotesByElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
   @SqlQuery("SELECT d.*, e.electionid as electionId "

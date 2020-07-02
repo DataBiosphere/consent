@@ -1,6 +1,14 @@
 package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
+import org.broadinstitute.consent.http.db.mapper.AutocompleteMapper;
+import org.broadinstitute.consent.http.db.mapper.BatchMapper;
+import org.broadinstitute.consent.http.db.mapper.DacMapper;
+import org.broadinstitute.consent.http.db.mapper.DataSetMapper;
+import org.broadinstitute.consent.http.db.mapper.DataSetPropertiesMapper;
+import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
+import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;

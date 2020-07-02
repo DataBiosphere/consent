@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import com.google.gson.JsonSyntaxException;
-import org.apache.commons.text.StringEscapeUtils;
-import org.broadinstitute.consent.http.db.RowMapperHelper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.mapper.RowMapper;

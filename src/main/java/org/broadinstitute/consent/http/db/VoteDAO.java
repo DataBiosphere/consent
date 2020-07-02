@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.db.mapper.ElectionReviewVoteMapper;
+import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.MetricsDAO;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
@@ -29,6 +30,7 @@ public class MetricsService {
     List<Integer> electionIds =
         elections.stream().map(Election::getElectionId).collect(Collectors.toList());
     List<Vote> votes = metricsDAO.findVotesByElectionIds(electionIds);
+    List<Dac> dacs = metricsDAO.findAllDacsForElectionIds(electionIds);
     List<DarDecisionMetrics> metricsList = new ArrayList<>();
     // TODO: Populate metricsList
     return metricsList;

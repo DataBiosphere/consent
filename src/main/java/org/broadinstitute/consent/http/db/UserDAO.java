@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.UserMapper;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
