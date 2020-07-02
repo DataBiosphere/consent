@@ -24,23 +24,23 @@ migrateDars(args[0], args[1])
 static void migrateDars(String authToken, String uriHost) {
 
     Logger logger = Logger.getLogger("DarMigration:MigrateDars")
-//    configure {
-//        ignoreSslIssues execution
-//        request.uri = uriHost
-//        request.uri.path = "/api/dar/migrate/counter"
-//        request.contentType = 'application/json'
-//        request.accept = 'application/json'
-//        request.headers['Authorization'] = 'Bearer ' + authToken
-//    }.post {
-//        response.parser('application/json') { cc, fs ->
-//            Object o = new JsonSlurper().parse(fs.inputStream)
-//            logger.info("Updated max counter to: ${o.toString()}")
-//        }
-//        response.exception { t ->
-//            logger.severe("Error setting the max DAR counter.")
-//            t.printStackTrace()
-//        }
-//    }
+    configure {
+        ignoreSslIssues execution
+        request.uri = uriHost
+        request.uri.path = "/api/dar/migrate/counter"
+        request.contentType = 'application/json'
+        request.accept = 'application/json'
+        request.headers['Authorization'] = 'Bearer ' + authToken
+    }.post {
+        response.parser('application/json') { cc, fs ->
+            Object o = new JsonSlurper().parse(fs.inputStream)
+            logger.info("Updated max counter to: ${o.toString()}")
+        }
+        response.exception { t ->
+            logger.severe("Error setting the max DAR counter.")
+            t.printStackTrace()
+        }
+    }
 
     getMongoDars(authToken, uriHost).each { m ->
         String referenceId = m.getKey()
