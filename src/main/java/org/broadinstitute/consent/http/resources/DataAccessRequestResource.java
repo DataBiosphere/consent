@@ -327,35 +327,6 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    @POST
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/partial/datasetCatalog")
-    @RolesAllowed(RESEARCHER)
-    /*
-     * Note: Run this endpoint only once, in order to apply datasets correspondent alias Id
-     * in MySql and replace objectId to datasetId in Mongodb
-     */
-    public Response createPartialDataAccessRequestFromCatalog(@QueryParam("userId") Integer userId, List<Integer> datasetIds) {
-        Document dar = new Document();
-        Collection<DataSetDTO> dataSets = dataSetAPI.describeDataSetsByReceiveOrder(datasetIds);
-        List<String> dataSetNames = dataSets.stream().map(dataset -> dataset.getPropertyValue("Dataset Name")).collect(Collectors.toList());
-        dar.append(DarConstants.USER_ID, userId);
-        try {
-            List<Map<String, String>> datasets = new ArrayList<>();
-            for (String datasetName : dataSetNames) {
-                List<Map<String, String>> ds = dataSetAPI.getCompleteDataSet(datasetName);
-                datasets.add(ds.get(0));
-            }
-            dar.append(DarConstants.DATASET_ID, datasets);
-            return Response.ok().entity(dar).build();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, " while fetching dataset details to export to DAR formulary. UserId: " + userId + ", datasets: " + datasetIds.toString() + ". Cause: " + e.getLocalizedMessage());
-            return createExceptionResponse(e);
-        }
-    }
-
-
     @PUT
     @Consumes("application/json")
     @Produces("application/json")

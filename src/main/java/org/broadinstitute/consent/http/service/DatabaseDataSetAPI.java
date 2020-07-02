@@ -262,10 +262,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public List<Map<String, String>> getCompleteDataSet(String dataSetName) {
-        return dsDAO.getObjectIdsbyDataSetName(dataSetName);
-    }
-    @Override
     public void deleteDataset(Integer dataSetId, Integer dacUserId) throws IllegalStateException {
         try {
             dsDAO.begin();
