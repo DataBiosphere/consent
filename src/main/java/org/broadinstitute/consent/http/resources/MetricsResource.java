@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import java.util.List;
-import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
