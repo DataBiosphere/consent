@@ -20,7 +20,7 @@ public class StatusResource {
         return LoggerFactory.getLogger(this.getClass());
     }
 
-    private HealthCheckRegistry healthChecks;
+    private final HealthCheckRegistry healthChecks;
 
     public StatusResource(HealthCheckRegistry healthChecks) {
         this.healthChecks = healthChecks;
@@ -31,8 +31,7 @@ public class StatusResource {
     public Response getStatus() {
         Map<String, HealthCheck.Result> results = healthChecks.runHealthChecks();
         HealthCheck.Result postgresql = results.getOrDefault(DB_ENV, HealthCheck.Result.unhealthy("Unable to access postgresql database"));
-        HealthCheck.Result mongodb = results.getOrDefault("mongodb", HealthCheck.Result.unhealthy("Unable to access mongodb database"));
-        if (postgresql.isHealthy() && mongodb.isHealthy()) {
+        if (postgresql.isHealthy()) {
             return Response.ok(results).build();
         } else {
             results.entrySet().

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.users;
 
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.NotFoundException;
@@ -11,7 +10,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.RoleStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -49,24 +47,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         this.userRoleDAO = userRoleDAO;
         this.rolesHandler = rolesHandler;
         this.userService = userService;
-    }
-
-    @Override
-    public User createDACUser(User dacUser) throws IllegalArgumentException {
-        validateRequiredFields(dacUser);
-        Integer dacUserID;
-        try {
-            dacUserID = userDAO.insertUser(dacUser.getEmail(), dacUser.getDisplayName(), new Date());
-        } catch (UnableToExecuteStatementException e) {
-            throw new IllegalArgumentException("Email should be unique.", e);
-        }
-        if (dacUser.getRoles() != null) {
-            insertUserRoles(dacUser, dacUserID);
-        }
-        User user = userDAO.findUserById(dacUserID);
-        user.setRoles(userRoleDAO.findRolesByUserId(user.getDacUserId()));
-        return user;
-
     }
 
     @Override
@@ -131,16 +111,6 @@ public class DatabaseDACUserAPI extends AbstractDACUserAPI {
         if (StringUtils.isEmpty(newDac.getEmail())) {
             throw new IllegalArgumentException("The user needs a valid email to be able to login.");
         }
-    }
-
-    private void insertUserRoles(User user, Integer dacUserId) {
-        List<UserRole> roles = user.getRoles();
-        roles.forEach(r -> {
-            if (r.getRoleId() == null) {
-                r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
-            }
-        });
-        userRoleDAO.insertUserRoles(roles, dacUserId);
     }
 
 }

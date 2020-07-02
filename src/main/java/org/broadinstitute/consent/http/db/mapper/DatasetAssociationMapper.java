@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.db.mongo;
+package org.broadinstitute.consent.http.db.mapper;
 
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.jdbi.v3.core.mapper.RowMapper;

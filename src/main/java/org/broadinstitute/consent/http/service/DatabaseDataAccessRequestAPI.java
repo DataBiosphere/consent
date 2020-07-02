@@ -1,50 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
-import com.mongodb.BasicDBObject;
-import com.mongodb.Block;
-import com.mongodb.client.FindIterable;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.ConsentDataSet;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.ResearcherProperty;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
-import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,10 +16,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
+import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @deprecated Use DataAccessRequestService
@@ -66,11 +59,7 @@ import java.util.stream.IntStream;
 @Deprecated
 public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
-    private final Logger logger() {
-        return LoggerFactory.getLogger(this.getClass());
-    }
-
-    private MongoConsentDB mongo;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final UseRestrictionConverter converter;
 
@@ -78,9 +67,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ConsentDAO consentDAO;
 
-    private  final ResearcherPropertyDAO  researcherPropertyDAO;
-
-    private static final String DATA_SET_ID = "datasetId";
+    private final ResearcherPropertyDAO researcherPropertyDAO;
 
     private static final String SUFFIX = "-A-";
 
@@ -96,6 +83,8 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final DataAccessRequestService dataAccessRequestService;
 
+    private final CounterService counterService;
+
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -103,19 +92,17 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
-     *
-     * @param mongo The Data Access Object used to read/write data.
      */
-    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, MongoConsentDB mongo, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        this.counterService = counterService;
         this.dataAccessRequestService = dataAccessRequestService;
-        this.mongo = mongo;
         this.converter = converter;
         this.electionDAO = electionDAO;
         this.consentDAO = consentDAO;
@@ -126,23 +113,39 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
 
+    /**
+     * In this method, we generate a list of possible DARs. Generate one DAR per dataset that is
+     * being requested.
+     *
+     * @param dataAccessRequest Document with populated DAR fields
+     * @return List of created DARs in document form
+     */
     @Override
     public List<Document> createDataAccessRequest(Document dataAccessRequest) {
         List<Document> dataAccessList = new ArrayList<>();
+        // Previously saved draft dars will have partial code and a reference id
         if (dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
-            mongo.getPartialDataAccessRequestCollection().findOneAndDelete(new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequest.getString(DarConstants.PARTIAL_DAR_CODE)));
-            dataAccessRequest.remove(DarConstants.ID);
+            String referenceId = dataAccessRequest.getString(DarConstants.REFERENCE_ID);
+            dataAccessRequestService.deleteByReferenceId(referenceId);
             dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
         }
-        List<Integer> datasets =  DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
+        List<Integer> datasets = DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
         if (CollectionUtils.isNotEmpty(datasets)) {
-            Set<ConsentDataSet> consentDataSets = consentDAO.getConsentIdAndDataSets(datasets);
-            consentDataSets.forEach(consentDataSet -> {
-                Document dataAccess = processDataSet(dataAccessRequest, consentDataSet);
+            Date now = new Date();
+            for (int dsId : datasets) {
+                Document dataAccess = new Document(dataAccessRequest);
+                if (Objects.isNull(dataAccess.get(DarConstants.CREATE_DATE))) {
+                    dataAccess.put(DarConstants.CREATE_DATE, now.getTime());
+                }
+                dataAccess.put(DarConstants.SORT_DATE, now.getTime());
+                dataAccess.remove(DarConstants.DATASET_ID);
+                dataAccess.put(DarConstants.DATASET_ID, Collections.singletonList(dsId));
+                String referenceId = UUID.randomUUID().toString();
+                dataAccess.put(DarConstants.REFERENCE_ID, referenceId);
                 dataAccessList.add(dataAccess);
-            });
+            }
         }
-        dataAccessRequest.remove(DATA_SET_ID);
+        dataAccessRequest.remove(DarConstants.DATASET_ID);
         insertDataAccess(dataAccessList);
         updateResearcherIdentification(dataAccessRequest);
         return dataAccessList;
@@ -251,48 +254,44 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
     }
 
-    // Partial Data Access Request Methods below
     @Override
-    public List<Document> describePartialDataAccessRequests() {
-        return mongo.getPartialDataAccessRequestCollection().find().into(new ArrayList<>());
-    }
-
-    @Override
-    public Document describePartialDataAccessRequestById(String id) {
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
-        return mongo.getPartialDataAccessRequestCollection().find(query).first();
-    }
-
-    @Override
-    public void deletePartialDataAccessRequestById(String id) {
-        BasicDBObject query = new BasicDBObject(DarConstants.ID, new ObjectId(id));
-        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
-    }
-
-    @Override
-    public Document updatePartialDataAccessRequest(Document partialDar) {
-        BasicDBObject query = new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, partialDar.get(DarConstants.PARTIAL_DAR_CODE));
-        partialDar.remove(DarConstants.ID);
-        partialDar.put(DarConstants.SORT_DATE, new Date().getTime());
-        if (mongo.getPartialDataAccessRequestCollection().findOneAndReplace(query, partialDar) == null) {
-            throw new NotFoundException("Partial Data access for the specified id does not exist");
+    public Document updateDraftDataAccessRequest(Document draftDar) {
+        String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        if (dar == null) {
+            throw new NotFoundException("Draft Data Access Request for the specified id does not exist");
         }
-        return mongo.getPartialDataAccessRequestCollection().find(query).first();
+        DataAccessRequestData data = dar.getData();
+        data.setSortDate(new Date().getTime());
+        Gson gson = new Gson();
+        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
+        dataAccessRequestService.updateByReferenceId(referenceId, darData);
+        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     @Override
-    public Document createPartialDataAccessRequest(Document partialDar){
-        String seq = mongo.getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
-        partialDar.put("createDate", new Date());
-        partialDar.append(DarConstants.PARTIAL_DAR_CODE, "temp_DAR" + seq);
-        mongo.getPartialDataAccessRequestCollection().insertOne(partialDar);
-        return partialDar;
+    public Document createDraftDataAccessRequest(Document draftDar) {
+        Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Gson gson = new Gson();
+        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
+        darData.setCreateDate(now.getTime());
+        String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
+        if (referenceId == null) {
+            referenceId = UUID.randomUUID().toString();
+        }
+        darData.setPartialDarCode("temp_DAR_" + sdf.format(now));
+        darData.setReferenceId(referenceId);
+        draftDar.put(DarConstants.REFERENCE_ID, referenceId);
+        dataAccessRequestService.insertDraftDataAccessRequest(referenceId, darData);
+        return draftDar;
     }
 
     @Override
-    public List<Document> describePartialDataAccessRequestManage(Integer userId) {
-        FindIterable<Document> accessList = userId == null ? mongo.getPartialDataAccessRequestCollection().find().sort(new BasicDBObject("sortDate", -1))
-                : mongo.getPartialDataAccessRequestCollection().find(new BasicDBObject(DarConstants.USER_ID, userId)).sort(new BasicDBObject("sortDate", -1));
+    public List<Document> describeDraftDataAccessRequestManage(Integer userId) {
+        List<Document> accessList = userId == null
+                ? dataAccessRequestService.findAllDraftDataAccessRequestsAsDocuments()
+                : dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(userId);
         List<Document> darManage = new ArrayList<>();
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)){
@@ -488,7 +487,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     @Override
     public DARModalDetailsDTO DARModalDetailsDTOBuilder(Document dar, User user, ElectionAPI electionApi) {
         DARModalDetailsDTO darModalDetailsDTO = new DARModalDetailsDTO();
-        List<DataSet> datasets = populateDatasets(dar.get(DarConstants.DATASET_DETAIL));
+        List<DataSet> datasets = populateDatasets(dar);
         Optional<User> optionalUser = Optional.ofNullable(user);
         String status = optionalUser.isPresent() ? user.getStatus() : "";
         String rationale = optionalUser.isPresent() ? user.getRationale() : "";
@@ -520,19 +519,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             .setRus(dar.getString(DarConstants.RUS));
     }
 
-    @SuppressWarnings("unchecked")
-    private List<DataSet> populateDatasets(Object datasetDetails) {
+    private List<DataSet> populateDatasets(Document dar) {
         List<DataSet> datasets = new ArrayList<>();
         try {
-            List<Integer> datasetIds = ((ArrayList<Document>) datasetDetails).
-                    stream().
-                    filter(d -> d.containsKey(DarConstants.DATASET_ID)).
-                    map(d -> d.getString(DarConstants.DATASET_ID)).
-                    map(Integer::valueOf).
-                    collect(Collectors.toList());
-            datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            List<Integer> datasetIds = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            if (!datasetIds.isEmpty()) {
+                datasets.addAll(dataSetDAO.findDataSetsByIdList(datasetIds));
+            }
         } catch (Exception e) {
-            logger().warn(e.getMessage());
+            logger.warn(e.getMessage());
         }
         return datasets;
     }
@@ -551,15 +546,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private void insertDataAccess(List<Document> dataAccessRequestList) {
         if (CollectionUtils.isNotEmpty(dataAccessRequestList)) {
-            String seq = mongo.getNextSequence(DarConstants.PARTIAL_DAR_CODE_COUNTER);
+            String seq = String.valueOf(counterService.getNextDarSequence());
             if (dataAccessRequestList.size() > 1) {
                 IntStream.range(0, dataAccessRequestList.size())
                         .forEach(idx -> {
                                     dataAccessRequestList.get(idx).append(DarConstants.DAR_CODE, "DAR-" + seq + SUFFIX + idx);
                                     dataAccessRequestList.get(idx).remove(DarConstants.ID);
                                     if (dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE) != null) {
-                                        BasicDBObject query = new BasicDBObject(DarConstants.PARTIAL_DAR_CODE, dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE));
-                                        mongo.getPartialDataAccessRequestCollection().findOneAndDelete(query);
+                                        String referenceId = dataAccessRequestList.get(idx).getString(DarConstants.REFERENCE_ID);
+                                        dataAccessRequestService.deleteByReferenceId(referenceId);
                                         dataAccessRequestList.get(idx).remove(DarConstants.PARTIAL_DAR_CODE);
                                     }
                                 }
@@ -571,48 +566,21 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             Gson gson = new Gson();
             dataAccessRequestList.forEach(d -> {
                 String referenceId = d.getString(DarConstants.REFERENCE_ID);
-                if (referenceId == null) {
-                    referenceId = UUID.randomUUID().toString();
-                }
                 DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(d));
                 darData.setReferenceId(referenceId);
-                d.put(DarConstants.REFERENCE_ID, referenceId);
-                if (darData.getCreateDate() == null) {
-                    darData.setCreateDate(new Date().getTime());
-                }
                 dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
             });
         }
     }
 
-    private List getRequestIds(FindIterable<Document> access) {
+    private List<String> getRequestIds(List<Document> access) {
         List<String> accessIds = new ArrayList<>();
         if (access != null) {
-            access.forEach((Block<Document>) document ->
+            access.forEach(document ->
                 accessIds.add(document.getString(DarConstants.REFERENCE_ID))
             );
         }
         return accessIds;
-    }
-
-    private Document processDataSet(Document dataAccessRequest, ConsentDataSet consentDataSet) {
-        List<Document> dataSetList = new ArrayList<>();
-        List<Integer> datasetId = new ArrayList<>();
-        Document dataAccess = new Document(dataAccessRequest);
-        consentDataSet.getDataSets().forEach((k,v) -> {
-            Document document = new Document();
-            document.put(DATA_SET_ID,k);
-            datasetId.add(Integer.valueOf(k));
-            document.put("name", v);
-            dataSetList.add(document);
-            String objectId = dataSetDAO.findObjectIdByDataSetId(Integer.valueOf(k));
-            if (StringUtils.isNotEmpty(objectId)) {
-                document.put("objectId", objectId);
-            }
-        });
-        dataAccess.put(DarConstants.DATASET_ID, datasetId);
-        dataAccess.put(DarConstants.DATASET_DETAIL,dataSetList);
-        return dataAccess;
     }
 
     protected List<ResearcherProperty> updateResearcherIdentification(Document dataAccessRequest) {
@@ -620,8 +588,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         String linkedIn = dataAccessRequest.getString(ResearcherFields.LINKEDIN_PROFILE.getValue());
         String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
         String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
-        String urlDAA = dataAccessRequest.getString(ResearcherFields.URL_DAA.getValue());
-        String nameDAA = dataAccessRequest.getString(ResearcherFields.NAME_DAA.getValue());
         List<ResearcherProperty> rpList = new ArrayList<>();
         researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue(), ResearcherFields.NAME_DAA.getValue(), ResearcherFields.URL_DAA.getValue()), userId);
         if (StringUtils.isNotEmpty(linkedIn)) {
@@ -632,12 +598,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         }
         if (StringUtils.isNotEmpty(researcherGate)) {
            rpList.add(new ResearcherProperty(userId, ResearcherFields.RESEARCHER_GATE.getValue(), researcherGate));
-        }
-        if (StringUtils.isNotEmpty(nameDAA)) {
-            rpList.add(new ResearcherProperty(userId, ResearcherFields.NAME_DAA.getValue(), nameDAA));
-        }
-        if (StringUtils.isNotEmpty(urlDAA)) {
-            rpList.add(new ResearcherProperty(userId, ResearcherFields.URL_DAA.getValue(), urlDAA));
         }
         if (CollectionUtils.isNotEmpty(rpList)) {
            researcherPropertyDAO.insertAll(rpList);

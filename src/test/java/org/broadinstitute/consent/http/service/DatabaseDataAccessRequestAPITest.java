@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
@@ -33,8 +32,6 @@ import static org.mockito.Mockito.when;
 public class DatabaseDataAccessRequestAPITest {
 
     @Mock
-    private MongoConsentDB mongo;
-    @Mock
     private UseRestrictionConverter converter;
     @Mock
     private ElectionDAO electionDAO;
@@ -50,6 +47,8 @@ public class DatabaseDataAccessRequestAPITest {
     private DataSetDAO dataSetDAO;
     @Mock
     private DataAccessRequestService dataAccessRequestService;
+    @Mock
+    private CounterService counterService;
 
     private final Integer USER_ID = 3333;
 
@@ -66,7 +65,7 @@ public class DatabaseDataAccessRequestAPITest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(dataAccessRequestService, mongo, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
+        databaseDataAccessRequestAPI = new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
     }
 
     @Test

@@ -24,6 +24,11 @@ public class DataAccessRequestData {
     String researcher;
     Integer userId;
     String isThePi;
+    String havePi;
+    String piEmail;
+    String profileName;
+    String pubmedId;
+    String scientificUrl;
     String urlDAA;
     String nameDAA;
     Boolean eraExpiration;
@@ -67,7 +72,6 @@ public class DataAccessRequestData {
     Boolean hmb;
     String status;
     Boolean poa;
-
     List<DatasetEntry> datasets;
     @SerializedName(value = "dar_code", alternate = "darCode")
     String darCode;
@@ -220,6 +224,46 @@ public class DataAccessRequestData {
 
     public void setIsThePi(String isThePi) {
         this.isThePi = isThePi;
+    }
+
+    public String getHavePi() {
+        return havePi;
+    }
+
+    public void setHavePi(String havePi) {
+        this.havePi = havePi;
+    }
+
+    public String getPiEmail() {
+        return piEmail;
+    }
+
+    public void setPiEmail(String piEmail) {
+        this.piEmail = piEmail;
+    }
+
+    public String getProfileName() {
+        return profileName;
+    }
+
+    public void setProfileName(String profileName) {
+        this.profileName = profileName;
+    }
+
+    public String getPubmedId() {
+        return pubmedId;
+    }
+
+    public void setPubmedId(String pubmedId) {
+        this.pubmedId = pubmedId;
+    }
+
+    public String getScientificUrl() {
+        return scientificUrl;
+    }
+
+    public void setScientificUrl(String scientificUrl) {
+        this.scientificUrl = scientificUrl;
     }
 
     public String getUrlDAA() {

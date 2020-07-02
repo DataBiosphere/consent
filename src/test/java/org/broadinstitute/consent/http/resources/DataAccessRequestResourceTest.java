@@ -1,7 +1,16 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
@@ -10,6 +19,7 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
@@ -19,9 +29,6 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DACUserAPI;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,13 +37,6 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Collections;
-
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
@@ -58,6 +58,8 @@ public class DataAccessRequestResourceTest {
     @Mock
     ElectionAPI electionAPI;
     @Mock
+    CounterService counterService;
+    @Mock
     EmailNotifierService emailNotifierService;
     @Mock
     GCSStore store;
@@ -71,8 +73,6 @@ public class DataAccessRequestResourceTest {
     UserService userService;
 
     private DataAccessRequestResource resource;
-    private Document dar;
-    private String darId;
 
     @Before
     public void setUp() {
@@ -91,18 +91,17 @@ public class DataAccessRequestResourceTest {
      * Positive case where a DAR references a numeric dataset id
      */
     @Test
-    public void testDescribeConsentForDAR_case1() throws Exception {
-        dar = DataRequestSamplesHolder.getSampleDarWithId();
-        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
-        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+    public void testDescribeConsentForDarCase1() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
-        Consent consent = resource.describeConsentForDAR(darId);
+        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        Consent consent = resource.describeConsentForDAR(dar.getReferenceId());
         assertNotNull(consent);
     }
 
@@ -110,13 +109,11 @@ public class DataAccessRequestResourceTest {
      * Positive case where a DAR references a string dataset id
      */
     @Test
-    public void testDescribeConsentForDAR_case2() throws Exception {
-        dar = DataRequestSamplesHolder.getSampleDarWithId();
-        dar.put(DarConstants.DATASET_ID, Collections.singletonList("SC-12345"));
-        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
+    public void testDescribeConsentForDarCase2() throws Exception {
+        DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         DataSet dataSet = new DataSet();
         dataSet.setDataSetId(1);
-        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
         when(dataSetAPI.findDataSetByObjectId(any())).thenReturn(dataSet);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
@@ -124,8 +121,8 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
-        Consent consent = resource.describeConsentForDAR(darId);
+        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        Consent consent = resource.describeConsentForDAR(dar.getReferenceId());
         assertNotNull(consent);
     }
 
@@ -133,33 +130,41 @@ public class DataAccessRequestResourceTest {
      * Negative case where a DAR references an invalid dataset id
      */
     @Test(expected = NotFoundException.class)
-    public void testDescribeConsentForDAR_case3() throws Exception {
-        dar = DataRequestSamplesHolder.getSampleDarWithId();
-        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
-        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+    public void testDescribeConsentForDarCase3() throws Exception {
+        DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(null);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
-        resource.describeConsentForDAR(darId);
+        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        resource.describeConsentForDAR(dar.getReferenceId());
     }
 
     /**
      * Negative case where a DAR does not reference a dataset id
      */
     @Test(expected = NotFoundException.class)
-    public void testDescribeConsentForDAR_case4() throws Exception {
-        dar = DataRequestSamplesHolder.getSampleDarWithId();
-        dar.remove(DarConstants.DATASET_ID);
-        darId = DarUtil.getObjectIdFromDocument(dar).toHexString();
-        when(dataAccessRequestAPI.describeDataAccessRequestFieldsById(any(), any())).thenReturn(dar);
+    public void testDescribeConsentForDarCase4() throws Exception {
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.getData().setDatasetId(null);
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
-        resource.describeConsentForDAR(darId);
+        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        resource.describeConsentForDAR(dar.getReferenceId());
+    }
+
+    private DataAccessRequest generateDataAccessRequest() {
+        DataAccessRequest dar = new DataAccessRequest();
+        DataAccessRequestData data = new DataAccessRequestData();
+        dar.setReferenceId(UUID.randomUUID().toString());
+        data.setReferenceId(dar.getReferenceId());
+        data.setDatasetId(Arrays.asList(1, 2));
+        dar.setData(data);
+        return dar;
     }
 
 }
