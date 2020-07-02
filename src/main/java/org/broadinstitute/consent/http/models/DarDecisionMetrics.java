@@ -64,25 +64,27 @@ public class DarDecisionMetrics {
     if (Objects.nonNull(accessElection)) {
       this.setDateSubmitted(accessElection.getCreateDate());
     }
-    Vote finalVote = null;
-    Optional<Vote> finalVoteOpt =
+    Vote finalAccessVote = null;
+    Optional<Vote> finalAccessVoteOpt =
         accessVotes.stream()
             .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
             .findFirst();
-    if (finalVoteOpt.isPresent()) {
-      finalVote = finalVoteOpt.get();
-      if (finalVote.getVote()) {
-        this.setDateApproved(finalVote.getUpdateDate());
-        this.setDacDecision("Yes");
-      } else {
-        this.setDateDenied(finalVote.getUpdateDate());
-        this.setDacDecision("No");
+    if (finalAccessVoteOpt.isPresent()) {
+      finalAccessVote = finalAccessVoteOpt.get();
+      if (Objects.nonNull(finalAccessVote.getVote())) {
+        if (finalAccessVote.getVote()) {
+          this.setDateApproved(finalAccessVote.getUpdateDate());
+          this.setDacDecision("Yes");
+        } else {
+          this.setDateDenied(finalAccessVote.getUpdateDate());
+          this.setDacDecision("No");
+        }
       }
     }
 
-    if (Objects.nonNull(finalVote)) {
+    if (Objects.nonNull(finalAccessVote)) {
       DateTime tot = null;
-      DateTime voteTime = new DateTime(finalVote.getUpdateDate());
+      DateTime voteTime = new DateTime(finalAccessVote.getUpdateDate());
       if (Objects.nonNull(this.getDateSubmitted())) {
         tot = voteTime.minus(this.getDateSubmitted().getTime());
       } else if (Objects.nonNull(this.getDateDenied())) {
@@ -92,6 +94,18 @@ public class DarDecisionMetrics {
         this.setDarTurnaroundTime(tot.toString());
       }
     }
+
+    if (Objects.nonNull(match)) {
+      String decision = match.getMatch() ? "Yes" : "No";
+      this.setAlgorithmDecision(decision);
+    }
+
+    Vote finalRpVote = null;
+    Optional<Vote> finalRpVoteOpt =
+        accessVotes.stream()
+            .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
+            .findFirst();
+
   }
 
   public String getDarId() {

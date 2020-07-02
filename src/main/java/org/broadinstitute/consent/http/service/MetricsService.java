@@ -48,11 +48,13 @@ public class MetricsService {
             dataAccessRequest -> {
               Integer datasetId =
                   dataAccessRequest.getData().getDatasetId().stream().findFirst().orElse(0);
+
               DataSet dataset =
                   datasets.stream()
                       .filter(d -> d.getDataSetId().equals(datasetId))
                       .findFirst()
                       .orElse(null);
+
               Optional<Election> accessElection =
                   elections.stream()
                       .filter(
@@ -64,6 +66,7 @@ public class MetricsService {
                               e.getElectionType()
                                   .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()))
                       .findFirst();
+
               Optional<Election> rpElection =
                   elections.stream()
                       .filter(
@@ -72,11 +75,13 @@ public class MetricsService {
                                   .equalsIgnoreCase(dataAccessRequest.getReferenceId()))
                       .filter(e -> e.getElectionType().equalsIgnoreCase(ElectionType.RP.getValue()))
                       .findFirst();
+
               Optional<Match> match =
                   matches.stream()
                       .filter(
                           m -> m.getPurpose().equalsIgnoreCase(dataAccessRequest.getReferenceId()))
                       .findFirst();
+
               List<Vote> accessVotes =
                   accessElection
                       .map(
@@ -105,18 +110,13 @@ public class MetricsService {
                                   .findFirst())
                       .flatMap(Function.identity());
 
-              Election finalAccessElection = accessElection.orElse(null);
-              Election finalRpElection = rpElection.orElse(null);
-              Dac finalDac = dac.orElse(null);
-              Match finalMatch = match.orElse(null);
-
               return new DarDecisionMetrics(
                   dataAccessRequest,
-                  finalDac,
+                  dac.orElse(null),
                   dataset,
-                  finalAccessElection,
-                  finalRpElection,
-                  finalMatch,
+                  accessElection.orElse(null),
+                  rpElection.orElse(null),
+                  match.orElse(null),
                   accessVotes,
                   rpVotes);
             })
