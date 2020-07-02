@@ -28,12 +28,12 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   List<DataAccessRequest> findAllDars();
 
   @SqlQuery(
-      " SELECT * FROM election "
+      " SELECT e.* FROM election e "
           + " INNER JOIN "
           + "   (SELECT e.referenceid, MAX(e.createdate) AS maxDate "
           + "    FROM election e "
           + "    GROUP BY e.referenceid ) electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId "
-          + " AND referenceid in (<referenceIds>) ")
+          + " WHERE e.referenceid in (<referenceIds>) ")
   @UseRowMapper(SimpleElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
       @BindList("referenceIds") List<String> referenceIds);
