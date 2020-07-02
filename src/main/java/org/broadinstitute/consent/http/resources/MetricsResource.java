@@ -27,7 +27,6 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/dar")
   @Produces("application/json")
-  @PermitAll
   public Response getMetricsData() {
     logger.info("Getting Metrics Data");
     List<DarDecisionMetrics> metrics = metricsService.generateDarDecisionMetrics();
