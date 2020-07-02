@@ -1,10 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -15,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,7 +18,6 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
@@ -48,9 +42,7 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -63,7 +55,6 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
@@ -85,7 +76,6 @@ public class DataAccessRequestResource extends Resource {
     private final DataAccessRequestService dataAccessRequestService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final ConsentAPI consentAPI;
-    private final CounterService counterService;
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierService emailNotifierService;
     private final TranslateService translateService = AbstractTranslateService.getInstance();
@@ -96,8 +86,7 @@ public class DataAccessRequestResource extends Resource {
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(CounterService counterService, DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, GCSStore store, UserService userService) {
-        this.counterService = counterService;
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, GCSStore store, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
@@ -463,130 +452,6 @@ public class DataAccessRequestResource extends Resource {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
-    }
-
-    /**
-     * TODO: Remove in follow-up work
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     *
-     * @param authUser AuthUser
-     * @return List of all Partial DataAccessRequests in Mongo
-     */
-    @GET
-    @Path("/migrate/mongo")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response getAllMongoPartialDARs(@Auth AuthUser authUser) {
-        Map<String, Document> map = dataAccessRequestService.getAllMongoPartialDataAccessRequests().
-                stream().
-                collect(Collectors.toMap(d -> d.get(DarConstants.ID).toString(), d -> d));
-        return Response.ok().entity(map).build();
-    }
-
-    /**
-     * TODO: Remove in follow-up work
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     *
-     * @param authUser AuthUser
-     * @return List of all Partial DataAccessRequests in Postgres
-     */
-    @GET
-    @Path("/migrate/postgres")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response getAllPostgresDraftDARs(@Auth AuthUser authUser) {
-        List<DataAccessRequest> data = dataAccessRequestService.getAllPostgresDraftDataAccessRequests();
-        return Response.ok().entity(data).build();
-    }
-
-    /**
-     * TODO: Remove in follow-up work
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     * Calculates the max count of all submitted DARs and sets the counter to that value.
-     *
-     * @param authUser AuthUser
-     * @return Converted Partial DataAccessRequest
-     */
-    @POST
-    @Path("migrate/counter")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response setCounter(@Auth AuthUser authUser) {
-        counterService.setMaxDarCount();
-        Integer max = counterService.getCurrentMaxDarSequence();
-        return Response.ok().entity(max).build();
-    }
-
-    /**
-     * TODO: Remove in follow-up work
-     * Temporary admin-only endpoint for mongo->postgres DAR conversion
-     *
-     * @param authUser AuthUser
-     * @return Converted Partial DataAccessRequest
-     */
-    @SuppressWarnings("unchecked")
-    @POST
-    @Path("migrate/{id}")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response convertDraftDAR(@Auth AuthUser authUser, @PathParam("id") String id, String json) {
-        // datasetId is a copy of datasets, but not in the same form as full DARs. Pull out the id and make that
-        // the datasetId property.
-        Gson gson = new Gson();
-        Map<String, Object> m = gson.fromJson(json, HashMap.class);
-        if (m.containsKey("datasetId")) {
-            Object datasetId = m.get("datasetId");
-            String datasetIdString = gson.toJson(datasetId);
-            JsonArray datasetIdArray = gson.fromJson(datasetIdString, JsonArray.class);
-            // Dataset ids are usually integers, but there are older cases where they are in
-            // SC-123 format, or Sample Collection ID. If that's the case, look up the dataset with
-            // that objectId and use that dataset's id.
-            List<String> datasetIdStrings = StreamSupport.stream(datasetIdArray.spliterator(), false).
-                map(JsonElement::getAsJsonObject).
-                map(o -> o.get("id")).
-                filter(Objects::nonNull).
-                filter(o -> !o.isJsonNull()).
-                map(JsonElement::getAsString).
-                collect(Collectors.toList());
-            List<Integer> datasetIds = new ArrayList<>();
-            datasetIdStrings.forEach(sId -> {
-                try{
-                    Integer intValue = Integer.valueOf(sId);
-                    datasetIds.add(intValue);
-                } catch (Exception e) {
-                    DataSet d = dataSetAPI.findDataSetByObjectId(sId);
-                    if (d != null) {
-                        datasetIds.add(d.getDataSetId());
-                    } else {
-                        logger().error("Unable to find a dataset for " + sId);
-                    }
-                }
-            });
-            if (!datasetIds.isEmpty()) {
-                m.remove("datasetId");
-                m.put("datasetId", datasetIds);
-            }
-        }
-        String updatedJson = gson.toJson(m);
-        DataAccessRequestData data = DataAccessRequestData.fromString(updatedJson);
-        if (data.getCreateDate() == null) {
-            // Original create date was inferred from mongo ObjectId.timestamp
-            JsonObject obj = gson.fromJson(json, JsonObject.class);
-            long createDate = new Date().getTime();
-            if (obj.has("_id")) {
-                JsonObject idObject = obj.getAsJsonObject("_id");
-                if (idObject.has("timestamp")) {
-                    long timestamp = idObject.get("timestamp").getAsLong();
-                    createDate = timestamp * 1000; // Fix Mongo's timestamp
-                }
-            }
-            data.setCreateDate(createDate);
-        }
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        if (dar == null) {
-            dar = dataAccessRequestService.insertDraftDataAccessRequest(id, data);
-        }
-        return Response.ok().entity(dar).build();
     }
 
     private Document saveDraftDarRequest(Document dar) {

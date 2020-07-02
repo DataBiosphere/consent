@@ -23,12 +23,6 @@ public class DarConstants {
 
     public static final String RUS = "rus";
 
-    /**
-     * Use REFERENCE_ID as a replacement for this field
-     */
-    @Deprecated
-    public static final String ID = "_id";
-
     public static final String DATA_ACCESS_REQUEST_ID = "data_access_request_id";
 
     public static final String REFERENCE_ID = "reference_id";

@@ -39,6 +39,4 @@ public interface DataSetAPI {
 
     List<DataSet>findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList);
 
-    DataSet findDataSetByObjectId(String objectId);
-
 }

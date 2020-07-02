@@ -18,9 +18,6 @@ public interface CounterDAO extends Transactional<CounterDAO> {
     @SqlQuery("SELECT MAX(count) FROM counter c WHERE name = :name ")
     Integer getMaxCountByName(@Bind("name") String name);
 
-    @SqlUpdate("UPDATE counter SET count = :count WHERE name = :name ")
-    void setCountByName(@Bind("count") Integer count, @Bind("name") String name);
-
     @SqlUpdate("UPDATE counter " +
             "   SET count = subquery.max_count + 1 " +
             "   FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name) AS subquery " +
@@ -29,13 +26,5 @@ public interface CounterDAO extends Transactional<CounterDAO> {
 
     @SqlUpdate("DELETE FROM counter")
     void deleteAll();
-
-    /**
-     * TODO: Remove in follow-up work
-     */
-    @SqlQuery("SELECT distinct (data #>> '{}')::jsonb->>'dar_code'::text AS dar_code " +
-            "  FROM data_access_request " +
-            "  WHERE (data #>> '{}')::jsonb->>'dar_code' IS NOT NULL ")
-    List<String> findAllDarCodes();
 
 }

@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.service.AbstractElectionAPI;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DataSetAPI;
@@ -57,8 +56,6 @@ public class DataAccessRequestResourceTest {
     DACUserAPI dacUserAPI;
     @Mock
     ElectionAPI electionAPI;
-    @Mock
-    CounterService counterService;
     @Mock
     EmailNotifierService emailNotifierService;
     @Mock
@@ -100,7 +97,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
         Consent consent = resource.describeConsentForDAR(dar.getReferenceId());
         assertNotNull(consent);
     }
@@ -115,13 +112,12 @@ public class DataAccessRequestResourceTest {
         DataSet dataSet = new DataSet();
         dataSet.setDataSetId(1);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
-        when(dataSetAPI.findDataSetByObjectId(any())).thenReturn(dataSet);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
         Consent consent = resource.describeConsentForDAR(dar.getReferenceId());
         assertNotNull(consent);
     }
@@ -138,7 +134,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
         resource.describeConsentForDAR(dar.getReferenceId());
     }
 
@@ -153,7 +149,7 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
-        resource = new DataAccessRequestResource(counterService, dataAccessRequestService, emailNotifierService, store, userService);
+        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, store, userService);
         resource.describeConsentForDAR(dar.getReferenceId());
     }
 

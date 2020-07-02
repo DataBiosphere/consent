@@ -321,11 +321,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
-    @Override
-    public DataSet findDataSetByObjectId(String objectId) {
-        return dsDAO.findDataSetByObjectId(objectId);
-    }
-
     public DataSetDTO getDataSetDTO(Integer dataSetId) {
         Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByDataSetId(dataSetId);
         for (DataSetDTO d : dataSet) {

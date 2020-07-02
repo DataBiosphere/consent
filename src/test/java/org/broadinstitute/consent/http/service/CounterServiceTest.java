@@ -44,28 +44,28 @@ public class CounterServiceTest {
         assertEquals(count, seq.intValue());
     }
 
-    @Test
-    public void testSetDarCount() {
-        doNothing().when(counterDAO).setCountByName(any(), any());
-        initService();
-        try {
-            service.setMaxDarCount();
-        } catch (Exception e) {
-            fail("Failed: " + e);
-        }
-    }
+//    @Test
+//    public void testSetDarCount() {
+//        doNothing().when(counterDAO).setCountByName(any(), any());
+//        initService();
+//        try {
+//            service.setMaxDarCount();
+//        } catch (Exception e) {
+//            fail("Failed: " + e);
+//        }
+//    }
 
-    @Test
-    public void testFindMaxDarCode() {
-        int min = 1;
-        int max = 201;
-        List<String> darCodes = generateDarCodes(min, max);
-        Collections.shuffle(darCodes);
-        when(counterDAO.findAllDarCodes()).thenReturn(darCodes);
-        initService();
-        Integer maxCode = service.findMaxDarCodeValue();
-        assertEquals(max, maxCode + 1);
-    }
+//    @Test
+//    public void testFindMaxDarCode() {
+//        int min = 1;
+//        int max = 201;
+//        List<String> darCodes = generateDarCodes(min, max);
+//        Collections.shuffle(darCodes);
+//        when(counterDAO.findAllDarCodes()).thenReturn(darCodes);
+//        initService();
+//        Integer maxCode = service.findMaxDarCodeValue();
+//        assertEquals(max, maxCode + 1);
+//    }
 
     private List<String> generateDarCodes(int min, int max) {
         return IntStream.range(min, max)
