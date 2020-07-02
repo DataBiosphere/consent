@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 
+import org.broadinstitute.consent.http.db.mapper.ApprovalExpirationTimeMapper;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
