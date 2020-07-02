@@ -105,6 +105,13 @@ public class DarDecisionMetrics {
         accessVotes.stream()
             .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
             .findFirst();
+    if (finalRpVoteOpt.isPresent()) {
+      finalRpVote = finalRpVoteOpt.get();
+    }
+    if (Objects.nonNull(finalRpVote) && Objects.nonNull(finalRpVote.getVote())) {
+      String decision = finalRpVote.getVote() ? "Yes" : "No";
+      this.setSrpDecision(decision);
+    }
 
   }
 
