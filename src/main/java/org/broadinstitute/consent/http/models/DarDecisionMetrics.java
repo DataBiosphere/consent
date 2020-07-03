@@ -1,15 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.gson.Gson;
-import java.util.Collection;
+import java.time.Duration;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import java.util.Optional;
-import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.util.DatasetUtil;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Generate a row of summary data in the form of:
@@ -39,159 +34,120 @@ public class DarDecisionMetrics {
       DataSet dataset,
       Election accessElection,
       Election rpElection,
-      Match match,
-      Collection<Vote> accessVotes,
-      Collection<Vote> rpVotes) {
-
-    Gson gson = new Gson();
-    Logger logger = LoggerFactory.getLogger(this.getClass());
-    logger.info("dar: " + gson.toJson(dar));
-    logger.info("dac: " + gson.toJson(dac));
-    logger.info("dataset: " + gson.toJson(dataset));
-    logger.info("accessElection: " + gson.toJson(accessElection));
-    logger.info("rpElection: " + gson.toJson(rpElection));
-    logger.info("match: " + gson.toJson(match));
-    logger.info("accessVotes: " + gson.toJson(accessVotes));
-    logger.info("rpVotes: " + gson.toJson(rpVotes));
-
-    this.setDarId(dar.getData().getDarCode());
-    if (Objects.nonNull(dac)) {
-      this.setDacId(dac.getName());
-    }
-    if (Objects.nonNull(dataset)) {
-      this.setDacId(DatasetUtil.parseAlias(dataset.getAlias()));
-    }
-    if (Objects.nonNull(accessElection)) {
-      this.setDateSubmitted(accessElection.getCreateDate());
-    }
-    Vote finalAccessVote = null;
-    Optional<Vote> finalAccessVoteOpt =
-        accessVotes.stream()
-            .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
-            .findFirst();
-    if (finalAccessVoteOpt.isPresent()) {
-      finalAccessVote = finalAccessVoteOpt.get();
-      if (Objects.nonNull(finalAccessVote.getVote())) {
-        if (finalAccessVote.getVote()) {
-          this.setDateApproved(finalAccessVote.getUpdateDate());
-          this.setDacDecision("Yes");
-        } else {
-          this.setDateDenied(finalAccessVote.getUpdateDate());
-          this.setDacDecision("No");
-        }
-      }
-    }
-
-    if (Objects.nonNull(finalAccessVote)) {
-      DateTime tot = null;
-      DateTime voteTime = new DateTime(finalAccessVote.getUpdateDate());
-      if (Objects.nonNull(this.getDateSubmitted())) {
-        tot = voteTime.minus(this.getDateSubmitted().getTime());
-      } else if (Objects.nonNull(this.getDateDenied())) {
-        tot = voteTime.minus(this.getDateDenied().getTime());
-      }
-      if (Objects.nonNull(tot)) {
-        this.setDarTurnaroundTime(tot.toString());
-      }
-    }
-
-    if (Objects.nonNull(match)) {
-      String decision = match.getMatch() ? "Yes" : "No";
-      this.setAlgorithmDecision(decision);
-    }
-
-    Vote finalRpVote = null;
-    Optional<Vote> finalRpVoteOpt =
-        accessVotes.stream()
-            .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
-            .findFirst();
-    if (finalRpVoteOpt.isPresent()) {
-      finalRpVote = finalRpVoteOpt.get();
-    }
-    if (Objects.nonNull(finalRpVote) && Objects.nonNull(finalRpVote.getVote())) {
-      String decision = finalRpVote.getVote() ? "Yes" : "No";
-      this.setSrpDecision(decision);
-    }
-
+      Match match) {
+    this.setDarId(dar);
+    this.setDacId(dac);
+    this.setDatasetId(dataset);
+    this.setDacDecision(accessElection);
+    this.setDateSubmitted(accessElection);
+    this.setDateApproved(accessElection);
+    this.setDateDenied(accessElection);
+    this.setDarTurnaroundTime(accessElection);
+    this.setAlgorithmDecision(match);
+    this.setSrpDecision(rpElection);
   }
 
   public String getDarId() {
     return darId;
   }
 
-  public void setDarId(String darId) {
-    this.darId = darId;
+  public void setDarId(DataAccessRequest dar) {
+    if (Objects.nonNull(dar) && Objects.nonNull(dar.getData()))
+    this.darId = dar.getData().getDarCode();
   }
 
   public String getDacId() {
     return dacId;
   }
 
-  public void setDacId(String dacId) {
-    this.dacId = dacId;
+  public void setDacId(Dac dac) {
+    if (Objects.nonNull(dac)) {
+      this.dacId = dac.getName();
+    }
   }
 
   public String getDatasetId() {
     return datasetId;
   }
 
-  public void setDatasetId(String datasetId) {
-    this.datasetId = datasetId;
+  public void setDatasetId(DataSet dataset) {
+    if (Objects.nonNull(dataset)) {
+      this.datasetId = DatasetUtil.parseAlias(dataset.getAlias());
+    }
   }
 
   public Date getDateSubmitted() {
     return dateSubmitted;
   }
 
-  public void setDateSubmitted(Date dateSubmitted) {
-    this.dateSubmitted = dateSubmitted;
+  public void setDateSubmitted(Election election) {
+    if (Objects.nonNull(election)) {
+      this.dateSubmitted = election.getCreateDate();
+    }
   }
 
   public Date getDateApproved() {
     return dateApproved;
   }
 
-  public void setDateApproved(Date dateApproved) {
-    this.dateApproved = dateApproved;
+  public void setDateApproved(Election election) {
+    if (Objects.nonNull(election) && election.getFinalAccessVote()) {
+      this.dateApproved = election.getFinalVoteDate();
+    }
   }
 
   public Date getDateDenied() {
     return dateDenied;
   }
 
-  public void setDateDenied(Date dateDenied) {
-    this.dateDenied = dateDenied;
+  public void setDateDenied(Election election) {
+    if (Objects.nonNull(election) && !election.getFinalAccessVote()) {
+      this.dateDenied = election.getFinalVoteDate();
+    }
   }
 
   public String getDarTurnaroundTime() {
     return darTurnaroundTime;
   }
 
-  public void setDarTurnaroundTime(String darTurnaroundTime) {
-    this.darTurnaroundTime = darTurnaroundTime;
+  public void setDarTurnaroundTime(Election election) {
+    if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
+      Calendar submittedDate = Calendar.getInstance();
+      Calendar finalDate = Calendar.getInstance();
+      submittedDate.setTime(this.getDateSubmitted());
+      finalDate.setTime(election.getFinalVoteDate());
+      Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
+      this.darTurnaroundTime = duration.toString();
+    }
   }
 
   public String getDacDecision() {
     return dacDecision;
   }
 
-  public void setDacDecision(String dacDecision) {
-    this.dacDecision = dacDecision;
+  public void setDacDecision(Election election) {
+    if (Objects.nonNull(election) && election.getFinalAccessVote()) {
+      this.dacDecision = election.getFinalAccessVote() ? "Yes" : "No";
+    }
   }
 
   public String getAlgorithmDecision() {
     return algorithmDecision;
   }
 
-  public void setAlgorithmDecision(String algorithmDecision) {
-    this.algorithmDecision = algorithmDecision;
+  public void setAlgorithmDecision(Match match) {
+    if (Objects.nonNull(match) && Objects.nonNull(match.getMatch())) {
+      this.algorithmDecision = match.getMatch() ? "Yes" : "No";
+    }
   }
 
   public String getSrpDecision() {
     return srpDecision;
   }
 
-  public void setSrpDecision(String srpDecision) {
-    this.srpDecision = srpDecision;
+  public void setSrpDecision(Election election) {
+    if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
+      this.srpDecision = election.getFinalVote() ? "Yes" : "No";
+    }
   }
 }

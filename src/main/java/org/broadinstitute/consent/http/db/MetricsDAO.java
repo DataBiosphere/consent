@@ -42,10 +42,6 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
   @UseRowMapper(MatchMapper.class)
   List<Match> findMatchesForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
-  @SqlQuery("SELECT * FROM vote WHERE electionid IN (<electionIds>)")
-  @UseRowMapper(VoteMapper.class)
-  List<Vote> findVotesByElectionIds(@BindList("electionIds") List<Integer> electionIds);
-
   @SqlQuery(
       "SELECT d.*, e.electionid as electionId "
           + "FROM dac d "

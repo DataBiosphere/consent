@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -15,7 +14,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.Vote;
 
 public class MetricsService {
 
@@ -41,7 +39,6 @@ public class MetricsService {
     List<Match> matches = metricsDAO.findMatchesForReferenceIds(referenceIds);
     List<Integer> electionIds =
         elections.stream().map(Election::getElectionId).collect(Collectors.toList());
-    List<Vote> votes = metricsDAO.findVotesByElectionIds(electionIds);
     List<Dac> dacs = metricsDAO.findAllDacsForElectionIds(electionIds);
     return dars.stream()
         .map(
@@ -82,24 +79,6 @@ public class MetricsService {
                           m -> m.getPurpose().equalsIgnoreCase(dataAccessRequest.getReferenceId()))
                       .findFirst();
 
-              List<Vote> accessVotes =
-                  accessElection
-                      .map(
-                          election ->
-                              votes.stream()
-                                  .filter(v -> v.getElectionId().equals(election.getElectionId()))
-                                  .collect(Collectors.toList()))
-                      .orElse(Collections.emptyList());
-
-              List<Vote> rpVotes =
-                  rpElection
-                      .map(
-                          election ->
-                              votes.stream()
-                                  .filter(v -> v.getElectionId().equals(election.getElectionId()))
-                                  .collect(Collectors.toList()))
-                      .orElse(Collections.emptyList());
-
               Optional<Dac> dac =
                   accessElection
                       .map(
@@ -116,9 +95,7 @@ public class MetricsService {
                   dataset,
                   accessElection.orElse(null),
                   rpElection.orElse(null),
-                  match.orElse(null),
-                  accessVotes,
-                  rpVotes);
+                  match.orElse(null));
             })
         .collect(Collectors.toList());
   }
