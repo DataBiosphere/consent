@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 /**
@@ -24,6 +25,7 @@ public class DarDecisionMetrics {
   private Date dateApproved;
   private Date dateDenied;
   private String darTurnaroundTime;
+  private long darTurnaroundTimeMillis;
   private String dacDecision;
   private String algorithmDecision;
   private String srpDecision;
@@ -51,16 +53,16 @@ public class DarDecisionMetrics {
     return darId;
   }
 
-  public void setDarId(DataAccessRequest dar) {
+  private void setDarId(DataAccessRequest dar) {
     if (Objects.nonNull(dar) && Objects.nonNull(dar.getData()))
-    this.darId = dar.getData().getDarCode();
+      this.darId = dar.getData().getDarCode();
   }
 
   public String getDacId() {
     return dacId;
   }
 
-  public void setDacId(Dac dac) {
+  private void setDacId(Dac dac) {
     if (Objects.nonNull(dac)) {
       this.dacId = dac.getName();
     }
@@ -70,7 +72,7 @@ public class DarDecisionMetrics {
     return datasetId;
   }
 
-  public void setDatasetId(DataSet dataset) {
+  private void setDatasetId(DataSet dataset) {
     if (Objects.nonNull(dataset)) {
       this.datasetId = DatasetUtil.parseAlias(dataset.getAlias());
     }
@@ -80,7 +82,7 @@ public class DarDecisionMetrics {
     return dateSubmitted;
   }
 
-  public void setDateSubmitted(Election election) {
+  private void setDateSubmitted(Election election) {
     if (Objects.nonNull(election)) {
       this.dateSubmitted = election.getCreateDate();
     }
@@ -90,9 +92,19 @@ public class DarDecisionMetrics {
     return dateApproved;
   }
 
-  public void setDateApproved(Election election) {
+  /**
+   * Use the update date as a proxy if vote date doesn't exist TODO: Need a story to track updating
+   * the final vote date properly
+   *
+   * @param election The election
+   */
+  private void setDateApproved(Election election) {
     if (Objects.nonNull(election) && election.getFinalAccessVote()) {
-      this.dateApproved = election.getFinalVoteDate();
+      if (Objects.nonNull(election.getFinalVoteDate())) {
+        this.dateApproved = election.getFinalVoteDate();
+      } else {
+        this.dateApproved = election.getLastUpdateDate();
+      }
     }
   }
 
@@ -100,9 +112,19 @@ public class DarDecisionMetrics {
     return dateDenied;
   }
 
-  public void setDateDenied(Election election) {
+  /**
+   * Use the update date as a proxy if vote date doesn't exist TODO: Need a story to track updating
+   * the final vote date properly
+   *
+   * @param election The election
+   */
+  private void setDateDenied(Election election) {
     if (Objects.nonNull(election) && !election.getFinalAccessVote()) {
-      this.dateDenied = election.getFinalVoteDate();
+      if (Objects.nonNull(election.getFinalVoteDate())) {
+        this.dateDenied = election.getFinalVoteDate();
+      } else {
+        this.dateDenied = election.getLastUpdateDate();
+      }
     }
   }
 
@@ -110,22 +132,40 @@ public class DarDecisionMetrics {
     return darTurnaroundTime;
   }
 
-  public void setDarTurnaroundTime(Election election) {
-    if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
-      Calendar submittedDate = Calendar.getInstance();
-      Calendar finalDate = Calendar.getInstance();
-      submittedDate.setTime(this.getDateSubmitted());
-      finalDate.setTime(election.getFinalVoteDate());
-      Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
-      this.darTurnaroundTime = duration.toString();
+  /**
+   * Use the update date as a proxy if vote date doesn't exist TODO: Need a story to track updating
+   * the final vote date properly
+   *
+   * @param election The election
+   */
+  private void setDarTurnaroundTime(Election election) {
+    if (Objects.nonNull(election)) {
+      Date finalVoteDate =
+          Objects.nonNull(election.getFinalVoteDate())
+              ? election.getFinalVoteDate()
+              : election.getLastUpdateDate();
+      if (Objects.nonNull(finalVoteDate)) {
+        Calendar submittedDate = Calendar.getInstance();
+        Calendar finalDate = Calendar.getInstance();
+        submittedDate.setTime(this.getDateSubmitted());
+        finalDate.setTime(finalVoteDate);
+        Duration duration = Duration.between(submittedDate.toInstant(), finalDate.toInstant());
+        this.darTurnaroundTimeMillis = duration.toMillis();
+        this.darTurnaroundTime =
+            DurationFormatUtils.formatDurationWords(duration.toMillis(), true, true);
+      }
     }
+  }
+
+  public long getDarTurnaroundTimeMillis() {
+    return darTurnaroundTimeMillis;
   }
 
   public String getDacDecision() {
     return dacDecision;
   }
 
-  public void setDacDecision(Election election) {
+  private void setDacDecision(Election election) {
     if (Objects.nonNull(election) && election.getFinalAccessVote()) {
       this.dacDecision = election.getFinalAccessVote() ? "Yes" : "No";
     }
@@ -135,7 +175,7 @@ public class DarDecisionMetrics {
     return algorithmDecision;
   }
 
-  public void setAlgorithmDecision(Match match) {
+  private void setAlgorithmDecision(Match match) {
     if (Objects.nonNull(match) && Objects.nonNull(match.getMatch())) {
       this.algorithmDecision = match.getMatch() ? "Yes" : "No";
     }
@@ -145,7 +185,7 @@ public class DarDecisionMetrics {
     return srpDecision;
   }
 
-  public void setSrpDecision(Election election) {
+  private void setSrpDecision(Election election) {
     if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
       this.srpDecision = election.getFinalVote() ? "Yes" : "No";
     }
