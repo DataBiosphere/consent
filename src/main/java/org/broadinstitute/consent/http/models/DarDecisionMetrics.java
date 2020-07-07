@@ -93,8 +93,9 @@ public class DarDecisionMetrics {
   }
 
   /**
-   * Use the update date as a proxy if vote date doesn't exist TODO: Need a story to track updating
-   * the final vote date properly
+   * Use the update date as a proxy if vote date doesn't exist
+   *
+   * <p>TODO: Need a story to track updating the final vote date properly
    *
    * @param election The election
    */
@@ -113,8 +114,9 @@ public class DarDecisionMetrics {
   }
 
   /**
-   * Use the update date as a proxy if vote date doesn't exist TODO: Need a story to track updating
-   * the final vote date properly
+   * Use the update date as a proxy if vote date doesn't exist
+   *
+   * <p>TODO: Need a story to track updating the final vote date properly
    *
    * @param election The election
    */
@@ -133,8 +135,9 @@ public class DarDecisionMetrics {
   }
 
   /**
-   * Use the update date as a proxy if vote date doesn't exist TODO: Need a story to track updating
-   * the final vote date properly
+   * Use the update date as a proxy if vote date doesn't exist
+   *
+   * <p>TODO: Need a story to track updating the final vote date properly
    *
    * @param election The election
    */
@@ -185,9 +188,24 @@ public class DarDecisionMetrics {
     return srpDecision;
   }
 
+  /**
+   * Use finalAccessVote as a proxy if finalVote is null
+   *
+   * <p>TODO: Need a story to track updating the final vote date properly
+   *
+   * @param election The election
+   */
   private void setSrpDecision(Election election) {
-    if (Objects.nonNull(election) && Objects.nonNull(election.getFinalVote())) {
-      this.srpDecision = election.getFinalVote() ? "Yes" : "No";
+    if (Objects.nonNull(election)) {
+      Boolean rpVote =
+          Objects.nonNull(election.getFinalVote())
+              ? election.getFinalVote()
+              : Objects.nonNull(election.getFinalAccessVote())
+                  ? election.getFinalAccessVote()
+                  : null;
+      if (Objects.nonNull(rpVote)) {
+        this.srpDecision = rpVote ? "Yes" : "No";
+      }
     }
   }
 }
