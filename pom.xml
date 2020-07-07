@@ -11,10 +11,9 @@
 
   <properties>
     <java.version>1.8</java.version>
-    <liquibase.version>3.10.0</liquibase.version>
-    <dropwizard.version>2.0.10</dropwizard.version>
+    <liquibase.version>3.10.1</liquibase.version>
+    <dropwizard.version>2.0.11</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
-    <jetty.version>9.4.29.v20200521</jetty.version>
     <owl.version>5.1.14</owl.version>
     <postgres.version>42.2.14</postgres.version>
     <rdf4j-rio.version>3.2.3</rdf4j-rio.version>
@@ -281,12 +280,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlets</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>
-
-    <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
       <version>2.12.0</version>
@@ -548,7 +541,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>1.111.0</version>
+      <version>1.111.1</version>
     </dependency>
 
     <dependency>
