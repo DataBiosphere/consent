@@ -12,7 +12,7 @@
   <properties>
     <java.version>1.8</java.version>
     <liquibase.version>3.10.1</liquibase.version>
-    <dropwizard.version>2.0.10</dropwizard.version>
+    <dropwizard.version>2.0.11</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
     <jetty.version>9.4.29.v20200521</jetty.version>
     <owl.version>5.1.14</owl.version>
