@@ -63,7 +63,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     matchDAO.insertAll(Collections.singletonList(m));
 
     List<Match> matches =
-        metricsDAO.findMatchesForReferenceIds(Collections.singletonList(dar.getReferenceId()));
+        metricsDAO.findMatchesForPurposeIds(Collections.singletonList(dar.getReferenceId()));
     assertFalse(matches.isEmpty());
     assertEquals(1, matches.size());
   }
@@ -92,7 +92,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     DataSet dataset = createDataset();
 
     List<DataSet> datasets =
-        metricsDAO.findDatasetsByIdList(Collections.singletonList(dataset.getDataSetId()));
+        metricsDAO.findDatasetsByIds(Collections.singletonList(dataset.getDataSetId()));
     assertFalse(datasets.isEmpty());
     assertEquals(1, datasets.size());
   }

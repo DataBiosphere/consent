@@ -34,9 +34,9 @@ public class MetricsService {
             .map(DataAccessRequestData::getDatasetId)
             .flatMap(List::stream)
             .collect(Collectors.toList());
-    List<DataSet> datasets = metricsDAO.findDatasetsByIdList(datasetIds);
+    List<DataSet> datasets = metricsDAO.findDatasetsByIds(datasetIds);
     List<Election> elections = metricsDAO.findLastElectionsByReferenceIds(referenceIds);
-    List<Match> matches = metricsDAO.findMatchesForReferenceIds(referenceIds);
+    List<Match> matches = metricsDAO.findMatchesForPurposeIds(referenceIds);
     List<Integer> electionIds =
         elections.stream().map(Election::getElectionId).collect(Collectors.toList());
     List<Dac> dacs = metricsDAO.findAllDacsForElectionIds(electionIds);

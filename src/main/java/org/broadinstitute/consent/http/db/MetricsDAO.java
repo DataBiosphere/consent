@@ -30,7 +30,7 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
           + " INNER JOIN "
           + "   (SELECT e.referenceid, MAX(e.createdate) AS maxDate "
           + "    FROM election e "
-          + "    GROUP BY e.referenceid ) electionView ON electionView.maxDate = e.createDate AND electionView.referenceId = e.referenceId "
+          + "    GROUP BY e.referenceid ) electionView ON electionView.maxDate = e.createdate AND electionView.referenceid = e.referenceid "
           + " WHERE e.referenceid in (<referenceIds>) ")
   @UseRowMapper(SimpleElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
@@ -38,25 +38,25 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
 
   @SqlQuery("SELECT * FROM match_entity WHERE purpose IN (<referenceIds>)")
   @UseRowMapper(MatchMapper.class)
-  List<Match> findMatchesForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  List<Match> findMatchesForPurposeIds(@BindList("referenceIds") List<String> referenceIds);
 
   @SqlQuery(
-      "SELECT d.*, e.electionid as electionId "
+      "SELECT d.*, e.electionid as electionid "
           + "FROM dac d "
           + "INNER JOIN consents c on d.dac_id = c.dac_id "
-          + "INNER JOIN consentassociations a on a.consentId = c.consentId "
-          + "INNER JOIN election e on e.datasetId = a.dataSetId "
+          + "INNER JOIN consentassociations a on a.consentid = c.consentid "
+          + "INNER JOIN election e on e.datasetid = a.datasetid "
           + "WHERE e.electionid in (<electionIds>)"
           + "UNION "
-          + "SELECT d.*, e.electionId as electionId "
+          + "SELECT d.*, e.electionid as electionid "
           + "FROM dac d "
           + "INNER JOIN consents c on d.dac_id = c.dac_id "
-          + "INNER JOIN election e on e.referenceId = c.consentId "
+          + "INNER JOIN election e on e.referenceid = c.consentid "
           + "WHERE e.electionid in (<electionIds>)")
   @UseRowMapper(DacMapper.class)
   List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
-  @SqlQuery("SELECT * FROM dataset WHERE datasetid IN (<datasetIdList>)")
+  @SqlQuery("SELECT * FROM dataset WHERE datasetid IN (<datasetIds>)")
   @UseRowMapper(DataSetMapper.class)
-  List<DataSet> findDatasetsByIdList(@BindList("datasetIdList") List<Integer> datasetIdList);
+  List<DataSet> findDatasetsByIds(@BindList("datasetIds") List<Integer> datasetIds);
 }

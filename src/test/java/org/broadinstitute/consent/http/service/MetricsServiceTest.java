@@ -41,9 +41,9 @@ public class MetricsServiceTest {
     int darCount = RandomUtils.nextInt(1, 100);
     int datasetCount = RandomUtils.nextInt(1, 100);
     when(metricsDAO.findAllDars()).thenReturn(generateDars(darCount));
-    when(metricsDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
+    when(metricsDAO.findDatasetsByIds(any())).thenReturn(generateDatasets(datasetCount));
     when(metricsDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
-    when(metricsDAO.findMatchesForReferenceIds(any())).thenReturn(Collections.emptyList());
+    when(metricsDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
     when(metricsDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
     initService();
     List<DarDecisionMetrics> metrics = service.generateDarDecisionMetrics();
