@@ -62,8 +62,38 @@ public class MetricsDAOTest extends DAOTestHelper {
     m.setCreateDate(new Date());
     matchDAO.insertAll(Collections.singletonList(m));
 
-    List<Match> matches = metricsDAO.findMatchesForReferenceIds(Collections.singletonList(dar.getReferenceId()));
+    List<Match> matches =
+        metricsDAO.findMatchesForReferenceIds(Collections.singletonList(dar.getReferenceId()));
     assertFalse(matches.isEmpty());
     assertEquals(1, matches.size());
+  }
+
+  @Test
+  public void testFindAllDacsForElectionIds() {
+    Dac dac = createDac();
+    Consent consent = createConsent(dac.getDacId());
+    DataSet dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setDatasetId(Collections.singletonList(dataset.getDataSetId()));
+    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
+    createAssociation(consent.getConsentId(), dataset.getDataSetId());
+    Election election = createElection(dar.getReferenceId(), dataset.getDataSetId());
+    electionDAO.updateElectionById(
+        election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date(), true);
+
+    List<Dac> dacs =
+        metricsDAO.findAllDacsForElectionIds(Collections.singletonList(election.getElectionId()));
+    assertFalse(dacs.isEmpty());
+    assertEquals(1, dacs.size());
+  }
+
+  @Test
+  public void testFindDatasetsByIdList() {
+    DataSet dataset = createDataset();
+
+    List<DataSet> datasets =
+        metricsDAO.findDatasetsByIdList(Collections.singletonList(dataset.getDataSetId()));
+    assertFalse(datasets.isEmpty());
+    assertEquals(1, datasets.size());
   }
 }
