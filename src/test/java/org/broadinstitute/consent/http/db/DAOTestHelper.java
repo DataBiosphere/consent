@@ -61,6 +61,7 @@ public class DAOTestHelper {
     protected static VoteDAO voteDAO;
     protected static DataAccessRequestDAO dataAccessRequestDAO;
     protected static MailMessageDAO mailMessageDAO;
+    protected static MetricsDAO metricsDAO;
     protected static ResearcherPropertyDAO researcherPropertyDAO;
 
     private static final List<Integer> createdDataSetIds = new ArrayList<>();
@@ -113,6 +114,7 @@ public class DAOTestHelper {
         voteDAO = jdbi.onDemand(VoteDAO.class);
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
+        metricsDAO = jdbi.onDemand(MetricsDAO.class);
         researcherPropertyDAO = jdbi.onDemand(ResearcherPropertyDAO.class);
     }
 
