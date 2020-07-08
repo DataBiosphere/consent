@@ -8,13 +8,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.service.MetricsService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Path("/metrics")
 public class MetricsResource extends Resource {
-
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final MetricsService metricsService;
 
@@ -24,14 +20,12 @@ public class MetricsResource extends Resource {
   }
 
   @GET
-  @Path("/dar")
+  @Path("/dar/decision")
   @Produces(MediaType.TEXT_PLAIN)
   public Response getMetricsData() {
-    logger.info("Getting Metrics Data");
     String joiner = "\t";
     StringBuilder tsv = new StringBuilder(DarDecisionMetrics.getHeaderRow(joiner));
     metricsService.generateDarDecisionMetrics().forEach(m -> tsv.append(m.toString(joiner)));
     return Response.ok(tsv.toString()).build();
   }
-
 }

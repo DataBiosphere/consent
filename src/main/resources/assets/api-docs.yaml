@@ -2673,7 +2673,7 @@ paths:
           description: Improper whitelist format
         500:
           description: Internal Server Error
-  /metrics/dar:
+  /metrics/dar/decision:
     get:
       summary: DAR Decision Metrics
       description: DAR Decision Metrics
