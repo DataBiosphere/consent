@@ -69,7 +69,6 @@ public class DAOTestHelper {
     private static final List<Integer> createdDacIds = new ArrayList<>();
     private static final List<String> createdConsentIds = new ArrayList<>();
     private static final List<Integer> createdElectionIds = new ArrayList<>();
-    private static final List<Integer> createdMatchIds = new ArrayList<>();
     private static final List<Integer> createdUserIds = new ArrayList<>();
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
 
