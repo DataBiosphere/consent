@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.service.MetricsService;
@@ -25,11 +25,13 @@ public class MetricsResource extends Resource {
 
   @GET
   @Path("/dar")
-  @Produces("application/json")
+  @Produces(MediaType.TEXT_PLAIN)
   public Response getMetricsData() {
     logger.info("Getting Metrics Data");
-    List<DarDecisionMetrics> metrics = metricsService.generateDarDecisionMetrics();
-    return Response.ok(metrics).build();
+    String joiner = "\t";
+    StringBuilder tsv = new StringBuilder(DarDecisionMetrics.getHeaderRow(joiner));
+    metricsService.generateDarDecisionMetrics().forEach(m -> tsv.append(m.toString(joiner)));
+    return Response.ok(tsv.toString()).build();
   }
 
 }

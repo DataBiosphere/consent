@@ -2677,6 +2677,8 @@ paths:
     get:
       summary: DAR Decision Metrics
       description: DAR Decision Metrics
+      produces:
+        - "text/plain"
       tags:
         - Metrics
       responses:
