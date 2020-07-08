@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
 import org.junit.Test;
 
 public class MetricsDAOTest extends DAOTestHelper {
@@ -46,5 +47,23 @@ public class MetricsDAOTest extends DAOTestHelper {
         metricsDAO.findLastElectionsByReferenceIds(Collections.singletonList(dar.referenceId));
     assertFalse(elections.isEmpty());
     assertEquals(1, elections.size());
+  }
+
+  @Test
+  public void testFindMatchesForReferenceIds() {
+    Dac dac = createDac();
+    Consent consent = createConsent(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequest();
+    Match m = new Match();
+    m.setConsent(consent.getConsentId());
+    m.setPurpose(dar.getReferenceId());
+    m.setMatch(true);
+    m.setFailed(false);
+    m.setCreateDate(new Date());
+    matchDAO.insertAll(Collections.singletonList(m));
+
+    List<Match> matches = metricsDAO.findMatchesForReferenceIds(Collections.singletonList(dar.getReferenceId()));
+    assertFalse(matches.isEmpty());
+    assertEquals(1, matches.size());
   }
 }

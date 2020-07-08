@@ -60,6 +60,7 @@ public class DAOTestHelper {
     protected static UserRoleDAO userRoleDAO;
     protected static VoteDAO voteDAO;
     protected static DataAccessRequestDAO dataAccessRequestDAO;
+    protected static MatchDAO matchDAO;
     protected static MailMessageDAO mailMessageDAO;
     protected static MetricsDAO metricsDAO;
     protected static ResearcherPropertyDAO researcherPropertyDAO;
@@ -68,6 +69,7 @@ public class DAOTestHelper {
     private static final List<Integer> createdDacIds = new ArrayList<>();
     private static final List<String> createdConsentIds = new ArrayList<>();
     private static final List<Integer> createdElectionIds = new ArrayList<>();
+    private static final List<Integer> createdMatchIds = new ArrayList<>();
     private static final List<Integer> createdUserIds = new ArrayList<>();
     private static final List<String> createdDataAccessRequestReferenceIds = new ArrayList<>();
 
@@ -113,6 +115,7 @@ public class DAOTestHelper {
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+        matchDAO = jdbi.onDemand(MatchDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
         metricsDAO = jdbi.onDemand(MetricsDAO.class);
         researcherPropertyDAO = jdbi.onDemand(ResearcherPropertyDAO.class);
@@ -127,6 +130,7 @@ public class DAOTestHelper {
     public void tearDown() {
         // Order is important for FK constraints
         createdConsentIds.forEach(id -> {
+            matchDAO.deleteMatchByConsentId(id);
             voteDAO.deleteVotes(id);
             consentDAO.deleteAllAssociationsForConsent(id);
             consentDAO.deleteConsent(id);
