@@ -238,11 +238,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public void deleteDataAccessRequest(Document document) {
-        dataAccessRequestService.deleteByReferenceId(document.getString(DarConstants.REFERENCE_ID));
-    }
-
-    @Override
     public Document updateDataAccessRequest(Document dataAccessRequest, String id) {
         if (dataAccessRequestService.findByReferenceId(id) == null) {
             throw new NotFoundException("Data access for the specified id does not exist");
