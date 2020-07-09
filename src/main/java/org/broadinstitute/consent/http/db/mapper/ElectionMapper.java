@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.RowMapperHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionFields;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;

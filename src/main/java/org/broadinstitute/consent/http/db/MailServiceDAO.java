@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.db.mapper.VoteAndElectionModelMapper;
 import org.broadinstitute.consent.http.mail.freemarker.VoteAndElectionModel;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
