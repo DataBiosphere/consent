@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.db.mapper.DatabaseRoleMapper;
+import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;

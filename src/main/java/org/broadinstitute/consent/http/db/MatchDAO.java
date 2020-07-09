@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.db.mapper.MatchMapper;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -52,12 +53,11 @@ public interface MatchDAO extends Transactional<MatchDAO> {
                      @Bind("purposeId") String purpose,
                      @Bind("failed") Boolean failed);
 
-    @SqlBatch("delete from match_entity where matchId = :matchId")
-    void deleteMatchs(@Bind("matchId") Collection<Integer> matchId);
+    @SqlBatch("DELETE FROM match_entity WHERE matchid IN (<matchIds>)")
+    void deleteMatches(@BindList("matchIds") Collection<Integer> matchIds);
 
-
-    @SqlUpdate("delete from match_entity where matchId = :id")
-    void deleteMatch(@Bind("id") Integer matchId);
+    @SqlUpdate("DELETE FROM match_entity WHERE consent = :consentId")
+    void deleteMatchByConsentId(@Bind("consentId") String consentId);
 
     @SqlQuery("SELECT COUNT(*) FROM match_entity where matchEntity = :matchEntity and failed ='FALSE' ")
     Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);

@@ -1,5 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
+import org.broadinstitute.consent.http.db.mapper.DacMapper;
+import org.broadinstitute.consent.http.db.mapper.RoleMapper;
+import org.broadinstitute.consent.http.db.mapper.UserMapper;
+import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
+import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Role;
