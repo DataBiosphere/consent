@@ -14,7 +14,7 @@
     <liquibase.version>3.10.1</liquibase.version>
     <dropwizard.version>2.0.11</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
-    <owl.version>5.1.14</owl.version>
+    <owl.version>5.1.15</owl.version>
     <postgres.version>42.2.14</postgres.version>
     <rdf4j-rio.version>3.2.3</rdf4j-rio.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
