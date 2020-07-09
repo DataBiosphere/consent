@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -40,6 +41,7 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -73,6 +75,7 @@ public class ConsentModule extends AbstractModule {
     private final UserRoleDAO userRoleDAO;
     private final MatchDAO matchDAO;
     private final MailMessageDAO mailMessageDAO;
+    private final MetricsDAO metricsDAO;
     private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
     private final DataSetAuditDAO datasetAuditDAO;
     private final MailServiceDAO mailServiceDAO;
@@ -107,6 +110,7 @@ public class ConsentModule extends AbstractModule {
         this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
         this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
         this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
+        this.metricsDAO = this.jdbi.onDemand(MetricsDAO.class);
         this.approvalExpirationTimeDAO = this.jdbi.onDemand(ApprovalExpirationTimeDAO.class);
         this.datasetAuditDAO = this.jdbi.onDemand(DataSetAuditDAO.class);
         this.mailServiceDAO = this.jdbi.onDemand(MailServiceDAO.class);
@@ -346,6 +350,16 @@ public class ConsentModule extends AbstractModule {
     @Provides
     MailMessageDAO providesMailMessageDAO() {
         return mailMessageDAO;
+    }
+
+    @Provides
+    MetricsDAO providesMetricsDAO() {
+        return metricsDAO;
+    }
+
+    @Provides
+    MetricsService providesMetricsService() {
+        return new MetricsService(providesMetricsDAO());
     }
 
     @Provides

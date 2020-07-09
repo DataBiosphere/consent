@@ -314,7 +314,6 @@ public class DataAccessRequestResource extends Resource {
             uri = info.getRequestUriBuilder().path("/" + result.get(DarConstants.REFERENCE_ID)).build();
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
-            dataAccessRequestAPI.deleteDataAccessRequest(result);
             return createExceptionResponse(e);
         }
     }

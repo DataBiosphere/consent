@@ -347,6 +347,7 @@ public class DataAccessRequestService {
             darManage.setCreateDate(dar.getData().getCreateDate());
             darManage.setRus(dar.getData().getRus());
             darManage.setProjectTitle(dar.getData().getProjectTitle());
+            darManage.setReferenceId(referenceId);
             darManage.setDataRequestId(referenceId);
             darManage.setFrontEndId(dar.getData().getDarCode());
             darManage.setSortDate(dar.getData().getSortDate());

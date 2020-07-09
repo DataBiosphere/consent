@@ -52,7 +52,7 @@ public class DatabaseMatchAPI extends AbstractMatchAPI {
     @Override
     public void deleteMatches(List<Integer> ids){
         if(CollectionUtils.isNotEmpty(ids)){
-            matchDAO.deleteMatchs(ids);
+            matchDAO.deleteMatches(ids);
         }
     }
 
