@@ -581,7 +581,11 @@
       <type>jar</type>
     </dependency>
 
-    <!-- Necessary until all Document -> DataAccessRequest conversions have completed -->
+    <!--
+    Necessary until all Document -> DataAccessRequest conversions have completed
+    TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
+    TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
+    -->
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
