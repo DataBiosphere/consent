@@ -383,19 +383,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-core</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.yaml</groupId>
-          <artifactId>snakeyaml</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- https://www.sourceclear.com/vulnerability-database/security/denial-of-service-dos-/java/sid-22499 -->
-    <dependency>
-      <groupId>org.yaml</groupId>
-      <artifactId>snakeyaml</artifactId>
-      <version>1.26</version>
     </dependency>
 
     <dependency>
@@ -632,6 +619,14 @@
         <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
+        </exclusion>
+        <!--
+          The following clashes with jakarta.validation:jakarta.validation-api and
+          prevents configurations from loading when running locally
+        -->
+        <exclusion>
+          <groupId>javax.validation</groupId>
+          <artifactId>validation-api</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
