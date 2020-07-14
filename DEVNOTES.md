@@ -15,7 +15,7 @@ cd consent
 mvn clean test package 
 ```
 
-Tests spin up embedded mongo and http servers that run against localhost. 
+Tests spin up embedded postgres and http servers that run against localhost. 
 Ensure that your test environment supports that. 
 
 

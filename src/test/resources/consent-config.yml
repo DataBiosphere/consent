@@ -18,14 +18,6 @@ googleStore:
   password: password
   bucket: bucket
   endpoint: endpoint
-mongo:
-  uri: mongodb://localhost:27017
-  host1:
-  host2:
-  dbName: consent
-  username:
-  password:
-  testMode: true
 # Logging settings
 logging:
   # default logging level

@@ -1,23 +1,21 @@
 package org.broadinstitute.consent.http.service;
 
-import com.mongodb.MongoException;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.UseRestrictionDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.bson.Document;
 
-import javax.ws.rs.NotFoundException;
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 @Deprecated // Use DataAccessRequestService
 public interface DataAccessRequestAPI {
 
-    List<Document> createDataAccessRequest(Document dataAccessRequest) throws MongoException;
+    List<Document> createDataAccessRequest(Document dataAccessRequest);
 
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
@@ -36,7 +34,7 @@ public interface DataAccessRequestAPI {
     Document updateDataAccessRequest(Document dar, String id);
 
     // Draft/Partial Data Access Requests
-    Document createDraftDataAccessRequest(Document dataAccessRequest) throws MongoException;
+    Document createDraftDataAccessRequest(Document dataAccessRequest);
 
     Document updateDraftDataAccessRequest(Document draftDar);
 

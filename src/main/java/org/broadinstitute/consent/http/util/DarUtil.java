@@ -2,18 +2,15 @@ package org.broadinstitute.consent.http.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.bson.Document;
 
 
 public class DarUtil {
@@ -57,16 +54,6 @@ public class DarUtil {
                 filter(Objects::nonNull).
                 map(o -> Integer.valueOf(o.toString())).
                 collect(Collectors.toList());
-    }
-
-    public static ObjectId getObjectIdFromDocument(Document document) {
-        LinkedHashMap id = (LinkedHashMap) document.get(DarConstants.ID);
-        return new ObjectId(
-                Integer.valueOf(id.get("timestamp").toString()),
-                Integer.valueOf(id.get("machineIdentifier").toString()),
-                Short.valueOf(id.get("processIdentifier").toString()),
-                Integer.valueOf(id.get("counter").toString())
-        );
     }
 
 }

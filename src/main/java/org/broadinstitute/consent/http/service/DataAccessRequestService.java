@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import com.mongodb.client.MongoCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,7 +30,6 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.mongo.MongoConsentDB;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -64,7 +62,6 @@ public class DataAccessRequestService {
     private final DacService dacService;
     private final UserService userService;
     private final VoteDAO voteDAO;
-    private final MongoConsentDB mongo;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -74,7 +71,7 @@ public class DataAccessRequestService {
 
     @Inject
     public DataAccessRequestService(DAOContainer container, DacService dacService,
-                                    UserService userService, MongoConsentDB mongo) {
+                                    UserService userService) {
         this.consentDAO = container.getConsentDAO();
         this.dacDAO = container.getDacDAO();
         this.userDAO = container.getUserDAO();
@@ -84,7 +81,6 @@ public class DataAccessRequestService {
         this.voteDAO = container.getVoteDAO();
         this.dacService = dacService;
         this.userService = userService;
-        this.mongo = mongo;
     }
 
     /**
@@ -244,7 +240,6 @@ public class DataAccessRequestService {
     private Document createDocumentFromDar(DataAccessRequest d) {
         Document document = Document.parse(gson.toJson(d.getData()));
         document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
-        document.put(DarConstants.ID, d.getReferenceId());
         document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
         return document;
     }
@@ -272,7 +267,6 @@ public class DataAccessRequestService {
         if (findByReferenceId(referenceId) == null) {
             throw new NotFoundException("Data access for the specified id does not exist");
         }
-        document.remove(DarConstants.ID);
         document.put(DarConstants.REFERENCE_ID, referenceId);
         String documentJson = gson.toJson(document);
         DataAccessRequestData darData = DataAccessRequestData.fromString(documentJson);
@@ -521,25 +515,6 @@ public class DataAccessRequestService {
         return activeDars.stream().
                 filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
-    }
-
-    /**
-     * TODO: Remove in follow-up work
-     * Temporary Migration Service Call
-     * @return List<Document> All partial DARs
-     */
-    public List<Document> getAllMongoPartialDataAccessRequests() {
-        MongoCollection<Document> collection = mongo.getPartialDataAccessRequestCollection();
-        return collection.find().into(new ArrayList<>());
-    }
-
-    /**
-     * TODO: Remove in follow-up work
-     * Temporary Migration Service Call
-     * @return List<DataAccessRequest> All partial DARs
-     */
-    public List<DataAccessRequest> getAllPostgresDraftDataAccessRequests() {
-        return dataAccessRequestDAO.findAllDraftDataAccessRequests();
     }
 
 }

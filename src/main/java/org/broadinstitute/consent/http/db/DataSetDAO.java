@@ -169,14 +169,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           + " ORDER BY d.datasetid ")
   List<Map<String, String>> getDatasetsBySearchTerm(@Bind("partial") String partial);
 
-    @RegisterRowMapper(AutocompleteMapper.class)
-    @SqlQuery("SELECT DISTINCT d.dataSetId as id, d.objectId as objId, CONCAT_WS(' | ', d.objectId, d.name, dsp.propertyValue, c.name) as concatenation " +
-            "FROM dataset d inner join datasetproperty dsp on dsp.dataSetId = d.dataSetId and dsp.propertyKey IN (9) " +
-            "inner join consentassociations ca on ca.dataSetId = d.dataSetId and d.active = true " +
-            "inner join consents c on c.consentId = ca.consentId " +
-            "WHERE d.name = :name")
-    List< Map<String, String>> getObjectIdsbyDataSetName(@Bind("name")String name);
-
     @SqlQuery("SELECT ca.associationId FROM consentassociations ca INNER JOIN dataset ds on ds.dataSetId = ca.dataSetId WHERE ds.objectId = :objectId")
     Integer getConsentAssociationByObjectId(@Bind("objectId") String objectId);
 

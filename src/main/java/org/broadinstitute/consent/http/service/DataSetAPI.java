@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 public interface DataSetAPI {
 
@@ -29,8 +28,6 @@ public interface DataSetAPI {
 
     List<Map<String, String>> autoCompleteDataSets(String partial);
 
-    List<Map<String, String>> getCompleteDataSet(String dataSetName);
-
     void deleteDataset(Integer datasetId, Integer dacUserId);
 
     void disableDataset(Integer dataSetId, Boolean active);
@@ -38,7 +35,5 @@ public interface DataSetAPI {
     DataSet updateNeedsReviewDataSets(Integer dataSetId, Boolean needsApproval);
 
     List<DataSet>findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList);
-
-    DataSet findDataSetByObjectId(String objectId);
 
 }

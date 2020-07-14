@@ -291,7 +291,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         List<String> accessRequestIds = getRequestIds(accessList);
         if (CollectionUtils.isNotEmpty(accessRequestIds)){
             for(Document doc: accessList){
-                doc.append("dataRequestId", doc.get(DarConstants.ID).toString());
+                doc.append("dataRequestId", doc.get(DarConstants.REFERENCE_ID).toString());
                 darManage.add(doc);
             }
         }
@@ -546,7 +546,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
                 IntStream.range(0, dataAccessRequestList.size())
                         .forEach(idx -> {
                                     dataAccessRequestList.get(idx).append(DarConstants.DAR_CODE, "DAR-" + seq + SUFFIX + idx);
-                                    dataAccessRequestList.get(idx).remove(DarConstants.ID);
                                     if (dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE) != null) {
                                         String referenceId = dataAccessRequestList.get(idx).getString(DarConstants.REFERENCE_ID);
                                         dataAccessRequestService.deleteByReferenceId(referenceId);

@@ -262,10 +262,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     }
 
     @Override
-    public List<Map<String, String>> getCompleteDataSet(String dataSetName) {
-        return dsDAO.getObjectIdsbyDataSetName(dataSetName);
-    }
-    @Override
     public void deleteDataset(Integer dataSetId, Integer dacUserId) throws IllegalStateException {
         try {
             dsDAO.begin();
@@ -319,11 +315,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public List<DataSet> findNeedsApprovalDataSetByObjectId(List<Integer> dataSetIdList) {
         return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
-    }
-
-    @Override
-    public DataSet findDataSetByObjectId(String objectId) {
-        return dsDAO.findDataSetByObjectId(objectId);
     }
 
     public DataSetDTO getDataSetDTO(Integer dataSetId) {
