@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -23,7 +24,14 @@ import org.mockito.MockitoAnnotations;
 
 public class MetricsServiceTest {
 
-  @Mock private MetricsDAO metricsDAO;
+  @Mock
+  private DacService dacService;
+
+  @Mock
+  private DataSetDAO dataSetDAO;
+
+  @Mock
+  private MetricsDAO metricsDAO;
 
   private MetricsService service;
 
@@ -33,7 +41,7 @@ public class MetricsServiceTest {
   }
 
   private void initService() {
-    service = new MetricsService(metricsDAO);
+    service = new MetricsService(dacService, dataSetDAO, metricsDAO);
   }
 
   @Test

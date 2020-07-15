@@ -2,25 +2,34 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
+import org.broadinstitute.consent.http.models.DarDecisionMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 public class MetricsService {
 
+  private final DacService dacService;
+  private final DataSetDAO dataSetDAO;
   private final MetricsDAO metricsDAO;
 
   @Inject
-  public MetricsService(MetricsDAO metricsDAO) {
+  public MetricsService(DacService dacService, DataSetDAO dataSetDAO, MetricsDAO metricsDAO) {
+    this.dacService = dacService;
+    this.dataSetDAO = dataSetDAO;
     this.metricsDAO = metricsDAO;
   }
 
@@ -96,6 +105,27 @@ public class MetricsService {
                   accessElection.orElse(null),
                   rpElection.orElse(null),
                   match.orElse(null));
+            })
+        .collect(Collectors.toList());
+  }
+
+  public List<DarDecisionMetricsSummary> generateDarDecisionMetricSummaries() {
+    List<Dac> dacs = dacService.findAllDacsWithMembers();
+    List<DarDecisionMetrics> metrics = generateDarDecisionMetrics();
+    Set<DataSetDTO> datasets = dataSetDAO.findDatasetsWithDacs();
+    return dacs.stream()
+        .map(
+            dac -> {
+              List<DarDecisionMetrics> dacFilteredMetrics =
+                  metrics.stream()
+                      .filter(m -> Objects.nonNull(m.getDacName()))
+                      .filter(m -> m.getDacName().equalsIgnoreCase(dac.getName()))
+                      .collect(Collectors.toList());
+              List<DataSetDTO> dacFilteredDatasets =
+                  datasets.stream()
+                      .filter(ds -> ds.getDacId().equals(dac.getDacId()))
+                      .collect(Collectors.toList());
+              return new DarDecisionMetricsSummary(dac, dacFilteredDatasets, dacFilteredMetrics);
             })
         .collect(Collectors.toList());
   }

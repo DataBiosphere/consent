@@ -21,7 +21,7 @@ public class DarDecisionMetrics {
 
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private String darId;
-  private String dacId;
+  private String dacName;
   private String datasetId;
   private Date dateSubmitted;
   private Date dateApproved;
@@ -40,7 +40,7 @@ public class DarDecisionMetrics {
       Election rpElection,
       Match match) {
     this.setDarId(dar);
-    this.setDacId(dac);
+    this.setDacName(dac);
     this.setDatasetId(dataset);
     this.setDacDecision(accessElection);
     this.setDateSubmitted(accessElection);
@@ -64,12 +64,12 @@ public class DarDecisionMetrics {
         "Algorithm Decision",
         "Structured Research Purpose Decision",
         "\n");
-
   }
+
   public String toString(String joiner) {
     return String.join(joiner,
         getValue(this.getDarId()),
-        getValue(getDacId()),
+        getValue(getDacName()),
         getValue(getDatasetId()),
         getValue(getDateSubmitted()),
         getValue(getDateApproved()),
@@ -98,13 +98,13 @@ public class DarDecisionMetrics {
       this.darId = dar.getData().getDarCode();
   }
 
-  public String getDacId() {
-    return dacId;
+  public String getDacName() {
+    return dacName;
   }
 
-  private void setDacId(Dac dac) {
+  private void setDacName(Dac dac) {
     if (Objects.nonNull(dac)) {
-      this.dacId = dac.getName();
+      this.dacName = dac.getName();
     }
   }
 

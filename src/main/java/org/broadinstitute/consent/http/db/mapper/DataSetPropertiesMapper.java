@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -19,11 +20,15 @@ public class DataSetPropertiesMapper implements RowMapper<DataSetDTO> {
   public DataSetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
     DataSetDTO dataSetDTO;
+    int dacId = r.getInt("dac_id");
     Integer dataSetId = r.getInt("dataSetId");
     String consentId = r.getString("consentId");
     Integer alias = r.getInt("alias");
     if (!dataSets.containsKey(dataSetId)) {
       dataSetDTO = new DataSetDTO(new ArrayList<>());
+      if (dacId > 0) {
+        dataSetDTO.setDacId(dacId);
+      }
       dataSetDTO.setConsentId(consentId);
       dataSetDTO.setAlias(alias);
       dataSetDTO.setDataSetId(dataSetId);
