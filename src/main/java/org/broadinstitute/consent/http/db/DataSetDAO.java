@@ -51,9 +51,6 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlQuery("select * from dataset where objectId = :objectId")
     DataSet findDataSetByObjectId(@Bind("objectId") String objectId);
 
-    @SqlQuery("select objectId from dataset where dataSetId = :dataSetId")
-    String findObjectIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
-
     @SqlQuery("select * from dataset where objectId = :objectId")
     Integer findDataSetIdByObjectId(@Bind("objectId") String objectId);
 
@@ -89,14 +86,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     void updateDataSetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId and d.name is not null inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.dataSetId = :dataSetId order by d.dataSetId, k.displayOrder")
@@ -110,7 +107,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId , c.translatedUseRestriction " +
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.dataSetId in (<dataSetIdList>) order by d.dataSetId, k.receiveOrder")
@@ -225,7 +222,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      * @return Set of datasets, with properties, that are associated to a single DAC.
      */
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId , c.translatedUseRestriction from dataset d " +
+    @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction from dataset d " +
             " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
             " left outer join dictionary k on k.keyId = p.propertyKey " +
             " inner join consentassociations a on a.dataSetId = d.dataSetId " +
