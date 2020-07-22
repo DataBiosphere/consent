@@ -9,7 +9,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 /**
- * Generate a row of summary data in the form of:
+ * Generate a row of dar decision data in the form of:
  *
  * <p>DAR ID: DAR-123-A-0 DAC ID: Broad DAC Dataset ID: DS-00001 Date Submitted: 01-01-2020 Date
  * Approved: 01-02-2020 Date Denied: 01-02-2020 DAR ToT: 1 day DAC Decision: Yes/No Algorithm
@@ -52,7 +52,8 @@ public class DarDecisionMetrics {
   }
 
   public static String getHeaderRow(String joiner) {
-    return String.join(joiner,
+    return String.join(
+        joiner,
         "DAR ID",
         "DAC ID",
         "Dataset ID",
@@ -67,7 +68,8 @@ public class DarDecisionMetrics {
   }
 
   public String toString(String joiner) {
-    return String.join(joiner,
+    return String.join(
+        joiner,
         getValue(this.getDarId()),
         getValue(getDacName()),
         getValue(getDatasetId()),
@@ -79,14 +81,6 @@ public class DarDecisionMetrics {
         getValue(getAlgorithmDecision()),
         getValue(getSrpDecision()),
         "\n");
-  }
-
-  private String getValue(String str) {
-    return Objects.nonNull(str) ? str : "";
-  }
-
-  private String getValue(Date date) {
-    return Objects.nonNull(date) ? sdf.format(date) : "";
   }
 
   public String getDarId() {
@@ -247,5 +241,13 @@ public class DarDecisionMetrics {
         this.srpDecision = rpVote ? "Yes" : "No";
       }
     }
+  }
+
+  private String getValue(String str) {
+    return Objects.nonNull(str) ? str : "";
+  }
+
+  private String getValue(Date date) {
+    return Objects.nonNull(date) ? sdf.format(date) : "";
   }
 }

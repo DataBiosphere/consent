@@ -6,7 +6,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
-public class DarDecisionMetricsSummary {
+/**
+ * Generate a row of dac decision data.
+ *
+ * <p>TODO: Future task to add Used DUOS Algorithm for Decision Support: Yes/No
+ */
+public class DacDecisionMetrics {
 
   Dac dac;
   List<DataSetDTO> datasets;
@@ -54,22 +59,14 @@ public class DarDecisionMetricsSummary {
         "\n");
   }
 
-  private String getValue(String str) {
-    return Objects.nonNull(str) ? str : "";
-  }
-
-  private String getValue(Integer i) {
-    return Objects.nonNull(i) ? i.toString() : "";
-  }
-
-  public DarDecisionMetricsSummary(
+  public DacDecisionMetrics(
       Dac dac, List<DataSetDTO> datasets, List<DarDecisionMetrics> metrics) {
     this.setDac(dac);
     this.setDatasets(datasets);
     this.setMetrics(metrics);
     this.setChairCount(dac);
     this.setMemberCount(dac);
-    this.setDatasets(datasets);
+    this.setDatasetCount(datasets);
 
     this.setDarsReceived(metrics.size());
     List<DarDecisionMetrics> completedDarMetrics =
@@ -105,7 +102,7 @@ public class DarDecisionMetricsSummary {
     return dac;
   }
 
-  public void setDac(Dac dac) {
+  private void setDac(Dac dac) {
     this.dac = dac;
   }
 
@@ -113,7 +110,7 @@ public class DarDecisionMetricsSummary {
     return datasets;
   }
 
-  public void setDatasets(List<DataSetDTO> datasets) {
+  private void setDatasets(List<DataSetDTO> datasets) {
     this.datasets = datasets;
   }
 
@@ -121,7 +118,7 @@ public class DarDecisionMetricsSummary {
     return metrics;
   }
 
-  public void setMetrics(List<DarDecisionMetrics> metrics) {
+  private void setMetrics(List<DarDecisionMetrics> metrics) {
     this.metrics = metrics;
   }
 
@@ -129,7 +126,7 @@ public class DarDecisionMetricsSummary {
     return chairCount;
   }
 
-  public void setChairCount(Dac dac) {
+  private void setChairCount(Dac dac) {
     if (Objects.nonNull(dac.getChairpersons()) && !dac.getChairpersons().isEmpty()) {
       this.chairCount = dac.getChairpersons().size();
     }
@@ -139,7 +136,7 @@ public class DarDecisionMetricsSummary {
     return memberCount;
   }
 
-  public void setMemberCount(Dac dac) {
+  private void setMemberCount(Dac dac) {
     if (Objects.nonNull(dac.getMembers()) && !dac.getMembers().isEmpty()) {
       this.memberCount = dac.getMembers().size();
     }
@@ -149,7 +146,7 @@ public class DarDecisionMetricsSummary {
     return datasetCount;
   }
 
-  public void setDatasetCount(List<DataSet> datasets) {
+  private void setDatasetCount(List<DataSetDTO> datasets) {
     if (Objects.nonNull(datasets) && !datasets.isEmpty()) {
       this.datasetCount = datasets.size();
     }
@@ -159,7 +156,7 @@ public class DarDecisionMetricsSummary {
     return darsReceived;
   }
 
-  public void setDarsReceived(Integer darsReceived) {
+  private void setDarsReceived(Integer darsReceived) {
     this.darsReceived = darsReceived;
   }
 
@@ -167,7 +164,7 @@ public class DarDecisionMetricsSummary {
     return percentDARsReviewed;
   }
 
-  public void setPercentDARsReviewed(Integer percentDARsReviewed) {
+  private void setPercentDARsReviewed(Integer percentDARsReviewed) {
     this.percentDARsReviewed = percentDARsReviewed;
   }
 
@@ -175,7 +172,7 @@ public class DarDecisionMetricsSummary {
     return averageTurnaroundTimeMillis;
   }
 
-  public void setAverageTurnaroundTimeMillis(Double averageTurnaroundTimeMillis) {
+  private void setAverageTurnaroundTimeMillis(Double averageTurnaroundTimeMillis) {
     this.averageTurnaroundTimeMillis = averageTurnaroundTimeMillis;
   }
 
@@ -183,7 +180,7 @@ public class DarDecisionMetricsSummary {
     return averageTurnaroundTime;
   }
 
-  public void setAverageTurnaroundTime() {
+  private void setAverageTurnaroundTime() {
     if (Objects.nonNull(this.getAverageTurnaroundTimeMillis())) {
       this.averageTurnaroundTime =
           DurationFormatUtils.formatDurationWords(
@@ -195,7 +192,7 @@ public class DarDecisionMetricsSummary {
     return percentRevealAlgorithm;
   }
 
-  public void setPercentRevealAlgorithm(Integer percentRevealAlgorithm) {
+  private void setPercentRevealAlgorithm(Integer percentRevealAlgorithm) {
     this.percentRevealAlgorithm = percentRevealAlgorithm;
   }
 
@@ -203,7 +200,7 @@ public class DarDecisionMetricsSummary {
     return percentAgreementAlgorithm;
   }
 
-  public void setPercentAgreementAlgorithm(Integer percentAgreementAlgorithm) {
+  private void setPercentAgreementAlgorithm(Integer percentAgreementAlgorithm) {
     this.percentAgreementAlgorithm = percentAgreementAlgorithm;
   }
 
@@ -211,7 +208,15 @@ public class DarDecisionMetricsSummary {
     return percentSRPAccurate;
   }
 
-  public void setPercentSRPAccurate(Integer percentSRPAccurate) {
+  private void setPercentSRPAccurate(Integer percentSRPAccurate) {
     this.percentSRPAccurate = percentSRPAccurate;
+  }
+
+  private String getValue(String str) {
+    return Objects.nonNull(str) ? str : "";
+  }
+
+  private String getValue(Integer i) {
+    return Objects.nonNull(i) ? i.toString() : "";
   }
 }

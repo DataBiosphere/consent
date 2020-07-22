@@ -2620,6 +2620,19 @@ paths:
           description: Improper whitelist format
         500:
           description: Internal Server Error
+  /metrics/dac/decision:
+    get:
+      summary: Dac Decision Metrics
+      description: Dac Decision Metrics
+      produces:
+        - "text/plain"
+      tags:
+        - Metrics
+      responses:
+        200:
+          description: Dac Decision Metrics
+        500:
+          description: Internal Server Error
   /metrics/dar/decision:
     get:
       summary: DAR Decision Metrics

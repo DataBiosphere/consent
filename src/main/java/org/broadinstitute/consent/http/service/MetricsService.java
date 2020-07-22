@@ -11,8 +11,8 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
-import org.broadinstitute.consent.http.models.DarDecisionMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -109,7 +109,7 @@ public class MetricsService {
         .collect(Collectors.toList());
   }
 
-  public List<DarDecisionMetricsSummary> generateDarDecisionMetricSummaries() {
+  public List<DacDecisionMetrics> generateDacDecisionMetrics() {
     List<Dac> dacs = dacService.findAllDacsWithMembers();
     List<DarDecisionMetrics> metrics = generateDarDecisionMetrics();
     Set<DataSetDTO> datasets = dataSetDAO.findDatasetsWithDacs();
@@ -125,7 +125,7 @@ public class MetricsService {
                   datasets.stream()
                       .filter(ds -> ds.getDacId().equals(dac.getDacId()))
                       .collect(Collectors.toList());
-              return new DarDecisionMetricsSummary(dac, dacFilteredDatasets, dacFilteredMetrics);
+              return new DacDecisionMetrics(dac, dacFilteredDatasets, dacFilteredMetrics);
             })
         .collect(Collectors.toList());
   }
