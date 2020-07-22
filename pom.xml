@@ -70,7 +70,7 @@
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
         <!-- 4.0.1 seems to break when formatted as json -->
-        <version>4.0.0</version>
+        <version>4.0.1</version>
         <executions>
           <execution>
             <id>get-the-git-infos</id>
