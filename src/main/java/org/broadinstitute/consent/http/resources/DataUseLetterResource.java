@@ -4,25 +4,10 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
-import org.broadinstitute.consent.http.enumeration.Actions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.AbstractConsentAPI;
-import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentAPI;
-import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.UserService;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.UUID;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -37,10 +22,24 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.UUID;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSStore;
+import org.broadinstitute.consent.http.enumeration.Actions;
+import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.AbstractConsentAPI;
+import org.broadinstitute.consent.http.service.AuditService;
+import org.broadinstitute.consent.http.service.ConsentAPI;
+import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("{auth: (basic/|api/)?}consent/{id}/dul")
 public class DataUseLetterResource extends Resource {
@@ -140,7 +139,7 @@ public class DataUseLetterResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATAOWNER})
     public Response getDUL(@PathParam("id") String consentId, @QueryParam("electionId") Integer electionId) {
-        String msg = String.format("GETing Data Use Letter for consent with id '%s' and Election Id '%s", consentId, electionId);
+        String msg = String.format("Getting Data Use Letter for consent with id '%s' and Election Id '%s", consentId, electionId);
         logger().debug(msg);
         Election election = null;
         try {
@@ -158,8 +157,8 @@ public class DataUseLetterResource extends Resource {
                     .build();
         } catch (UnknownIdentifierException e) {
             throw new NotFoundException(e);
-        } catch (IOException e) {
-            logger().error("Error when trying to read/write the file " + e.getMessage());
+        } catch (Exception e) {
+            logger().error("Error " + msg);
         }
         return null;
     }

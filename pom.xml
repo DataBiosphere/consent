@@ -12,7 +12,7 @@
   <properties>
     <java.version>1.8</java.version>
     <liquibase.version>4.0.0</liquibase.version>
-    <dropwizard.version>2.0.11</dropwizard.version>
+    <dropwizard.version>2.0.12</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.15</owl.version>
     <postgres.version>42.2.14</postgres.version>
@@ -69,6 +69,7 @@
       <plugin>
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
+        <!-- 4.0.1 seems to break when formatted as json -->
         <version>4.0.0</version>
         <executions>
           <execution>
@@ -602,14 +603,14 @@
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>util-core_2.11</artifactId>
-      <version>20.6.0</version>
+      <version>20.7.0</version>
     </dependency>
 
     <!-- Required for mocking ontology and elastic search responses -->
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-netty</artifactId>
-      <version>5.11.0</version>
+      <version>5.11.1</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
