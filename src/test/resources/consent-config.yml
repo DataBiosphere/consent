@@ -24,11 +24,7 @@ logging:
   level: WARN
   # logger specific levels
   loggers:
-    ConsentAssociationResource: WARN
-    AllAssociationsResource: WARN
-    ConsentApplication: WARN
-    ConsentModule: WARN
-    DatabaseResearchPurposeAPI: WARN
+    "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
 services:
     ontologyURL: http://localhost:8180/
     localURL: http://localhost:8000/#/
