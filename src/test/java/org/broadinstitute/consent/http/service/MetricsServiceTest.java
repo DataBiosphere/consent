@@ -5,7 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -13,10 +15,17 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.MetricsDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -24,14 +33,11 @@ import org.mockito.MockitoAnnotations;
 
 public class MetricsServiceTest {
 
-  @Mock
-  private DacService dacService;
+  @Mock private DacService dacService;
 
-  @Mock
-  private DataSetDAO dataSetDAO;
+  @Mock private DataSetDAO dataSetDAO;
 
-  @Mock
-  private MetricsDAO metricsDAO;
+  @Mock private MetricsDAO metricsDAO;
 
   private MetricsService service;
 
@@ -48,19 +54,79 @@ public class MetricsServiceTest {
   public void testGenerateDarDecisionMetricsNCase() {
     int darCount = RandomUtils.nextInt(1, 100);
     int datasetCount = RandomUtils.nextInt(1, 100);
-    when(metricsDAO.findAllDars()).thenReturn(generateDars(darCount));
-    when(metricsDAO.findDatasetsByIds(any())).thenReturn(generateDatasets(datasetCount));
-    when(metricsDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
-    when(metricsDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
-    when(metricsDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
+    initializeMetricsDAOCalls(darCount, datasetCount);
     initService();
     List<DarDecisionMetrics> metrics = service.generateDarDecisionMetrics();
     assertFalse(metrics.isEmpty());
     assertEquals(darCount, metrics.size());
   }
 
+  @Test
+  public void testGenerateDacDecisionMetricsNCase() {
+    int darCount = RandomUtils.nextInt(1, 100);
+    int datasetCount = RandomUtils.nextInt(1, 100);
+    initializeMetricsDAOCalls(darCount, datasetCount);
+
+    initService();
+    List<DacDecisionMetrics> metrics = service.generateDacDecisionMetrics();
+    assertFalse(metrics.isEmpty());
+  }
+
+  private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
+    when(metricsDAO.findAllDars()).thenReturn(generateDars(darCount));
+    when(metricsDAO.findDatasetsByIds(any())).thenReturn(generateDatasets(datasetCount));
+    when(metricsDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
+    when(metricsDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
+    when(metricsDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
+    Dac dac = generateDac();
+    when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
+    List<DataSetDTO> datasetDTOs = generateDatasetDTO(datasetCount);
+    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOs));
+  }
+
+  private Dac generateDac() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setDescription("description");
+    dac.setName("dac1");
+    User chairUser = new User();
+    chairUser.setDacUserId(1);
+    chairUser.setEmail("chair@test.org");
+    chairUser.setDisplayName("Chair");
+    UserRole chairRole =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chairUser.setRoles(Collections.singletonList(chairRole));
+    User memberUser = new User();
+    memberUser.setDacUserId(2);
+    memberUser.setEmail("member@test.org");
+    memberUser.setDisplayName("Member");
+    UserRole memberRole =
+        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    memberUser.setRoles(Collections.singletonList(memberRole));
+    dac.setChairpersons(Collections.singletonList(chairUser));
+    dac.setMembers(Collections.singletonList(memberUser));
+    return dac;
+  }
+
+  private List<DataSetDTO> generateDatasetDTO(int datasetCount) {
+    Dac dac = generateDac();
+    return generateDatasets(datasetCount).stream()
+        .map(
+            ds -> {
+              DataSetDTO dto = new DataSetDTO();
+              dto.setDacId(dac.getDacId());
+              dto.setAlias(ds.getAlias());
+              dto.setDataSetId(ds.getDataSetId());
+              DataSetPropertyDTO name = new DataSetPropertyDTO("Dataset Name", ds.getName());
+              DataSetPropertyDTO consent = new DataSetPropertyDTO("Consent ID", ds.getName());
+              dto.setProperties(Arrays.asList(name, consent));
+              return dto;
+            })
+        .collect(Collectors.toList());
+  }
+
   private List<DataAccessRequest> generateDars(int count) {
-    return IntStream.range(1, count+1)
+    return IntStream.range(1, count + 1)
         .mapToObj(
             i -> {
               String referenceId = UUID.randomUUID().toString();
@@ -78,7 +144,7 @@ public class MetricsServiceTest {
   }
 
   private List<DataSet> generateDatasets(int count) {
-    return IntStream.range(1, count+1)
+    return IntStream.range(1, count + 1)
         .mapToObj(
             i -> {
               DataSet d = new DataSet();

@@ -59,8 +59,7 @@ public class DacDecisionMetrics {
         "\n");
   }
 
-  public DacDecisionMetrics(
-      Dac dac, List<DataSetDTO> datasets, List<DarDecisionMetrics> metrics) {
+  public DacDecisionMetrics(Dac dac, List<DataSetDTO> datasets, List<DarDecisionMetrics> metrics) {
     this.setDac(dac);
     this.setDatasets(datasets);
     this.setMetrics(metrics);
@@ -73,8 +72,10 @@ public class DacDecisionMetrics {
         metrics.stream()
             .filter(m -> Objects.nonNull(m.getDacDecision()))
             .collect(Collectors.toList());
-    long percentReviewed = (long) completedDarMetrics.size() / (long) metrics.size() * 100;
-    this.setPercentDARsReviewed((int) percentReviewed);
+    if (!metrics.isEmpty()) {
+      long percentReviewed = (long) completedDarMetrics.size() / (long) metrics.size() * 100;
+      this.setPercentDARsReviewed((int) percentReviewed);
+    }
     completedDarMetrics.stream()
         .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
         .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
@@ -87,15 +88,17 @@ public class DacDecisionMetrics {
             .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
             .collect(Collectors.toList());
 
-    long percentAgreement = (long) agreementMetrics.size() / (long) completedDarMetrics.size();
-    this.setPercentAgreementAlgorithm((int) percentAgreement);
+    if (!completedDarMetrics.isEmpty()) {
+      long percentAgreement = (long) agreementMetrics.size() / (long) completedDarMetrics.size();
+      this.setPercentAgreementAlgorithm((int) percentAgreement);
 
-    List<DarDecisionMetrics> srpMetrics =
-        completedDarMetrics.stream()
-            .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
-            .collect(Collectors.toList());
-    long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
-    this.setPercentSRPAccurate((int) percentSrp);
+      List<DarDecisionMetrics> srpMetrics =
+          completedDarMetrics.stream()
+              .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
+              .collect(Collectors.toList());
+      long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
+      this.setPercentSRPAccurate((int) percentSrp);
+    }
   }
 
   public Dac getDac() {
