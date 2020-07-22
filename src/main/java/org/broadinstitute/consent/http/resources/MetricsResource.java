@@ -23,7 +23,7 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/dar/decision")
   @Produces(MediaType.TEXT_PLAIN)
-  public Response getMetricsData() {
+  public Response getDarMetricsData() {
     String joiner = "\t";
     StringBuilder tsv = new StringBuilder(DarDecisionMetrics.getHeaderRow(joiner));
     metricsService.generateDarDecisionMetrics().forEach(m -> tsv.append(m.toString(joiner)));
