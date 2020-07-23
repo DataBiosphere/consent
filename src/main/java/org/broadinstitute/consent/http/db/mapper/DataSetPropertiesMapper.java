@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -13,7 +12,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 public class DataSetPropertiesMapper implements RowMapper<DataSetDTO> {
 
-  private Map<Integer, DataSetDTO> dataSets = new LinkedHashMap<>();
+  private final Map<Integer, DataSetDTO> dataSets = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";
   private static final String PROPERTY_PROPERTYVALUE = "propertyValue";
 

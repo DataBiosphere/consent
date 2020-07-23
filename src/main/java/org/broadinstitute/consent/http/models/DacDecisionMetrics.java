@@ -13,19 +13,19 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
  */
 public class DacDecisionMetrics {
 
-  Dac dac;
-  List<DataSetDTO> datasets;
-  List<DarDecisionMetrics> metrics;
-  Integer chairCount;
-  Integer memberCount;
-  Integer datasetCount;
-  Integer darsReceived;
-  Integer percentDARsReviewed;
-  Double averageTurnaroundTimeMillis;
-  String averageTurnaroundTime;
-  Integer percentRevealAlgorithm;
-  Integer percentAgreementAlgorithm;
-  Integer percentSRPAccurate;
+  private Dac dac;
+  private List<DataSetDTO> datasets;
+  private List<DarDecisionMetrics> metrics;
+  private Integer chairCount;
+  private Integer memberCount;
+  private Integer datasetCount;
+  private Integer darsReceived;
+  private Integer percentDARsReviewed;
+  private Double averageTurnaroundTimeMillis;
+  private String averageTurnaroundTime;
+  private Integer percentRevealAlgorithm;
+  private Integer percentAgreementAlgorithm;
+  private Integer percentSRPAccurate;
 
   public static String getHeaderRow(String joiner) {
     return String.join(
@@ -53,7 +53,7 @@ public class DacDecisionMetrics {
         getValue(getDarsReceived()),
         getValue(getPercentDARsReviewed()),
         getValue(getAverageTurnaroundTime()),
-        "",
+        getValue(getPercentRevealAlgorithm()),
         getValue(getPercentAgreementAlgorithm()),
         getValue(getPercentSRPAccurate()),
         "\n");
@@ -102,6 +102,7 @@ public class DacDecisionMetrics {
       long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
       this.setPercentSRPAccurate((int) percentSrp);
     }
+    setPercentRevealAlgorithm(0); // Placeholder for "% Reveal DUOS Algorithm"
   }
 
   public Dac getDac() {
