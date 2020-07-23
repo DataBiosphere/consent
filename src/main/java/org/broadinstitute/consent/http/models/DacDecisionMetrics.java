@@ -85,6 +85,8 @@ public class DacDecisionMetrics {
 
     List<DarDecisionMetrics> agreementMetrics =
         completedDarMetrics.stream()
+            .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
+            .filter(m -> Objects.nonNull(m.getDacDecision()))
             .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
             .collect(Collectors.toList());
 
@@ -94,6 +96,7 @@ public class DacDecisionMetrics {
 
       List<DarDecisionMetrics> srpMetrics =
           completedDarMetrics.stream()
+              .filter(m -> Objects.nonNull(m.getSrpDecision()))
               .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
               .collect(Collectors.toList());
       long percentSrp = (long) srpMetrics.size() / (long) completedDarMetrics.size();
