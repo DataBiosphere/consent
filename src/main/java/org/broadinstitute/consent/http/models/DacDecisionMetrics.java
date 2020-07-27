@@ -8,8 +8,6 @@ import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 /**
  * Generate a row of dac decision data.
- *
- * <p>TODO: Future task to add Used DUOS Algorithm for Decision Support: Yes/No
  */
 public class DacDecisionMetrics {
 

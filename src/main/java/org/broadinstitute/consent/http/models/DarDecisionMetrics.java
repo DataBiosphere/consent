@@ -14,8 +14,6 @@ import org.broadinstitute.consent.http.util.DatasetUtil;
  * <p>DAR ID: DAR-123-A-0 DAC ID: Broad DAC Dataset ID: DS-00001 Date Submitted: 01-01-2020 Date
  * Approved: 01-02-2020 Date Denied: 01-02-2020 DAR ToT: 1 day DAC Decision: Yes/No Algorithm
  * Decision: Yes/No Structured Research Purpose Decision: Yes/No
- *
- * <p>TODO: Future task to add Used DUOS Algorithm for Decision Support: Yes/No
  */
 public class DarDecisionMetrics {
 
