@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.DacDecisionMetrics;
 import org.broadinstitute.consent.http.models.DarDecisionMetrics;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.junit.Before;
@@ -30,12 +31,22 @@ public class MetricsResourceTest {
   }
 
   @Test
-  public void testGetMetricsData() {
+  public void testGetDarMetricsData() {
     when(service.generateDarDecisionMetrics()).thenReturn(Collections.emptyList());
     initResource();
-    Response response = resource.getMetricsData();
+    Response response = resource.getDarMetricsData();
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
     assertTrue(response.getEntity().toString().contains(DarDecisionMetrics.getHeaderRow("\t")));
+  }
+
+  @Test
+  public void testGetDacMetricsData() {
+    when(service.generateDarDecisionMetrics()).thenReturn(Collections.emptyList());
+    initResource();
+    Response response = resource.getDacMetricsData();
+    assertEquals(200, response.getStatus());
+    assertFalse(response.getEntity().toString().isEmpty());
+    assertTrue(response.getEntity().toString().contains(DacDecisionMetrics.getHeaderRow("\t")));
   }
 }

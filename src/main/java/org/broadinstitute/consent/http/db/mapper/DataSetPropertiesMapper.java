@@ -12,18 +12,22 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 public class DataSetPropertiesMapper implements RowMapper<DataSetDTO> {
 
-  private Map<Integer, DataSetDTO> dataSets = new LinkedHashMap<>();
+  private final Map<Integer, DataSetDTO> dataSets = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";
   private static final String PROPERTY_PROPERTYVALUE = "propertyValue";
 
   public DataSetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
     DataSetDTO dataSetDTO;
+    int dacId = r.getInt("dac_id");
     Integer dataSetId = r.getInt("dataSetId");
     String consentId = r.getString("consentId");
     Integer alias = r.getInt("alias");
     if (!dataSets.containsKey(dataSetId)) {
       dataSetDTO = new DataSetDTO(new ArrayList<>());
+      if (dacId > 0) {
+        dataSetDTO.setDacId(dacId);
+      }
       dataSetDTO.setConsentId(consentId);
       dataSetDTO.setAlias(alias);
       dataSetDTO.setDataSetId(dataSetId);

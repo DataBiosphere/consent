@@ -359,7 +359,11 @@ public class ConsentModule extends AbstractModule {
 
     @Provides
     MetricsService providesMetricsService() {
-        return new MetricsService(providesMetricsDAO());
+        return new MetricsService(
+                providesDacService(),
+                providesDataSetDAO(),
+                providesMetricsDAO()
+        );
     }
 
     @Provides

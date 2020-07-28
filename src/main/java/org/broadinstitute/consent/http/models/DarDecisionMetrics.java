@@ -9,19 +9,17 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 /**
- * Generate a row of summary data in the form of:
+ * Generate a row of dar decision data in the form of:
  *
  * <p>DAR ID: DAR-123-A-0 DAC ID: Broad DAC Dataset ID: DS-00001 Date Submitted: 01-01-2020 Date
  * Approved: 01-02-2020 Date Denied: 01-02-2020 DAR ToT: 1 day DAC Decision: Yes/No Algorithm
  * Decision: Yes/No Structured Research Purpose Decision: Yes/No
- *
- * <p>TODO: Future task to add Used DUOS Algorithm for Decision Support: Yes/No
  */
 public class DarDecisionMetrics {
 
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private String darId;
-  private String dacId;
+  private String dacName;
   private String datasetId;
   private Date dateSubmitted;
   private Date dateApproved;
@@ -40,7 +38,7 @@ public class DarDecisionMetrics {
       Election rpElection,
       Match match) {
     this.setDarId(dar);
-    this.setDacId(dac);
+    this.setDacName(dac);
     this.setDatasetId(dataset);
     this.setDacDecision(accessElection);
     this.setDateSubmitted(accessElection);
@@ -52,7 +50,8 @@ public class DarDecisionMetrics {
   }
 
   public static String getHeaderRow(String joiner) {
-    return String.join(joiner,
+    return String.join(
+        joiner,
         "DAR ID",
         "DAC ID",
         "Dataset ID",
@@ -64,12 +63,13 @@ public class DarDecisionMetrics {
         "Algorithm Decision",
         "Structured Research Purpose Decision",
         "\n");
-
   }
+
   public String toString(String joiner) {
-    return String.join(joiner,
+    return String.join(
+        joiner,
         getValue(this.getDarId()),
-        getValue(getDacId()),
+        getValue(getDacName()),
         getValue(getDatasetId()),
         getValue(getDateSubmitted()),
         getValue(getDateApproved()),
@@ -81,14 +81,6 @@ public class DarDecisionMetrics {
         "\n");
   }
 
-  private String getValue(String str) {
-    return Objects.nonNull(str) ? str : "";
-  }
-
-  private String getValue(Date date) {
-    return Objects.nonNull(date) ? sdf.format(date) : "";
-  }
-
   public String getDarId() {
     return darId;
   }
@@ -98,13 +90,13 @@ public class DarDecisionMetrics {
       this.darId = dar.getData().getDarCode();
   }
 
-  public String getDacId() {
-    return dacId;
+  public String getDacName() {
+    return dacName;
   }
 
-  private void setDacId(Dac dac) {
+  private void setDacName(Dac dac) {
     if (Objects.nonNull(dac)) {
-      this.dacId = dac.getName();
+      this.dacName = dac.getName();
     }
   }
 
@@ -247,5 +239,13 @@ public class DarDecisionMetrics {
         this.srpDecision = rpVote ? "Yes" : "No";
       }
     }
+  }
+
+  private String getValue(String str) {
+    return Objects.nonNull(str) ? str : "";
+  }
+
+  private String getValue(Date date) {
+    return Objects.nonNull(date) ? sdf.format(date) : "";
   }
 }

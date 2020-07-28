@@ -1,15 +1,16 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.DataSetProperty;
-import org.broadinstitute.consent.http.util.DatasetUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.broadinstitute.consent.http.util.DatasetUtil;
 
 
 public class DataSetDTO {
+
+    @JsonProperty
+    private Integer dacId;
 
     @JsonProperty
     private Integer dataSetId;
@@ -45,6 +46,14 @@ public class DataSetDTO {
     private String objectId;
 
     public DataSetDTO() {
+    }
+
+    public Integer getDacId() {
+        return dacId;
+    }
+
+    public void setDacId(Integer dacId) {
+        this.dacId = dacId;
     }
 
     public DataSetDTO(List<DataSetPropertyDTO> properties) {

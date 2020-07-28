@@ -80,6 +80,25 @@ public class DataSetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindDatasetsWithDacsCase1() {
+        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsWithDacs();
+        assertTrue(datasets.isEmpty());
+    }
+
+    @Test
+    public void testFindDatasetsWithDacsCase2() {
+        DataSet dataset = createDataset();
+        DataSet dataset2 = createDataset();
+        Dac dac = createDac();
+        Consent consent = createConsent(dac.getDacId());
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+        createAssociation(consent.getConsentId(), dataset2.getDataSetId());
+        Set<DataSetDTO> datasets = dataSetDAO.findDatasetsWithDacs();
+        assertFalse(datasets.isEmpty());
+        assertEquals(2, datasets.size());
+    }
+
+    @Test
     public void testFindDatasetAndDacIds() {
         DataSet dataset = createDataset();
         Dac dac = createDac();
