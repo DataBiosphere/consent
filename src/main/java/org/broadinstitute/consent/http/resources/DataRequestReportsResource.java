@@ -36,7 +36,6 @@ public class DataRequestReportsResource extends Resource {
         this.userService = userService;
     }
 
-    // TODO: Undocumented
     @GET
     @PermitAll
     @Produces("application/pdf")

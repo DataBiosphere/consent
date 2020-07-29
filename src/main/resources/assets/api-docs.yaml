@@ -1478,6 +1478,27 @@ paths:
             type: string
         404:
           description: The DAR or the election couldn't be found.
+  /api/dataRequest/{requestId}/pdf:
+    get:
+      summary: DAR in PDF format
+      description: Returns the PDF for the requested DAR
+      produces:
+        - "application/octet-stream"
+      parameters:
+        - name: requestId
+          in: path
+          description: The id of the DAR
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the requested DAR in PDF form
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+        404:
+          description: The election or the DAR couldn't be found.
   /api/consent/{id}/dul:
     get:
       summary: getDUL
