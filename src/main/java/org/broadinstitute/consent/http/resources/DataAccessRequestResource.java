@@ -33,8 +33,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -74,11 +72,10 @@ public class DataAccessRequestResource extends Resource {
     private final TranslateService translateService = AbstractTranslateService.getInstance();
     private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final ElectionAPI electionAPI;
-    private final GCSStore store;
     private final UserService userService;
 
     @Inject
-    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, GCSStore store, UserService userService) {
+    public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, EmailNotifierService emailNotifierService, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.emailNotifierService = emailNotifierService;
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
@@ -86,7 +83,6 @@ public class DataAccessRequestResource extends Resource {
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
         this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
-        this.store = store;
         this.userService = userService;
     }
 
@@ -120,7 +116,6 @@ public class DataAccessRequestResource extends Resource {
             return Response.created(uri).build();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error creating data access request ", e);
-            store.deleteStorageDocument(dar.getString(ResearcherFields.URL_DAA.getValue()));
             return createExceptionResponse(e);
         }
     }
