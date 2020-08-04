@@ -2342,81 +2342,81 @@ paths:
           description: Server error.
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /api/report:
-      post:
-        summary: createdHelpReport
-        description: Creates a HelpReport
-        parameters:
-          - name: helpReport
-            in: body
-            description: HelpReport to be created
-            required: true
-            schema:
-               $ref: '#/definitions/HelpReport'
-        tags:
-          - Report
-        responses:
-          200:
-            description: HelpReport
-            schema:
-              $ref: '#/definitions/HelpReport'
-          400:
-            description: Bad Request
-  /api/report/{id}:
-      get:
-        summary: describe
-        description: Returns the HelpReport identified by Id.
-        parameters:
-          - name: id
-            in: path
-            description: HelpReport Id
-            required: true
-            type: integer
-            format: int32
-        tags:
-          - Report
-        responses:
-           200:
-              description: HelpReport
-              schema:
-                $ref: '#/definitions/HelpReport'
-           400:
-              description: HelpReport not found.
-      delete:
-        summary: delete
-        description: Deletes the HelpReport identified by Id.
-        parameters:
-           - name: id
-             in: path
-             description: HelpReport Id
-             required: true
-             type: integer
-             format: int32
-        tags:
-            - Report
-        responses:
-          200:
-            description: Report was deleted
-  /api/report/user/{userId}:
-        get:
-          summary: describeAllReportsByUser
-          description: Returns a collection of the HelpReports made by the specified user.
-          parameters:
-            - name: userId
-              in: path
-              description: UserId
-              required: true
-              type: integer
-              format: int32
-          tags:
-            - Report
-          responses:
-             200:
-                description: An array of the HelpReports made by the user.
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/definitions/HelpReport'
+#  /api/report:
+#      post:
+#        summary: createdHelpReport
+#        description: Creates a HelpReport
+#        parameters:
+#          - name: helpReport
+#            in: body
+#            description: HelpReport to be created
+#            required: true
+#            schema:
+#               $ref: '#/definitions/HelpReport'
+#        tags:
+#          - Report
+#        responses:
+#          200:
+#            description: HelpReport
+#            schema:
+#              $ref: '#/definitions/HelpReport'
+#          400:
+#            description: Bad Request
+#  /api/report/{id}:
+#      get:
+#        summary: describe
+#        description: Returns the HelpReport identified by Id.
+#        parameters:
+#          - name: id
+#            in: path
+#            description: HelpReport Id
+#            required: true
+#            type: integer
+#            format: int32
+#        tags:
+#          - Report
+#        responses:
+#           200:
+#              description: HelpReport
+#              schema:
+#                $ref: '#/definitions/HelpReport'
+#           400:
+#              description: HelpReport not found.
+#      delete:
+#        summary: delete
+#        description: Deletes the HelpReport identified by Id.
+#        parameters:
+#           - name: id
+#             in: path
+#             description: HelpReport Id
+#             required: true
+#             type: integer
+#             format: int32
+#        tags:
+#            - Report
+#        responses:
+#          200:
+#            description: Report was deleted
+#  /api/report/user/{userId}:
+#        get:
+#          summary: describeAllReportsByUser
+#          description: Returns a collection of the HelpReports made by the specified user.
+#          parameters:
+#            - name: userId
+#              in: path
+#              description: UserId
+#              required: true
+#              type: integer
+#              format: int32
+#          tags:
+#            - Report
+#          responses:
+#             200:
+#                description: An array of the HelpReports made by the user.
+#                schema:
+#                  type: array
+#                  items:
+#                    $ref: '#/definitions/HelpReport'
   /api/user/{email}:
     delete:
       summary: Delete User by email
@@ -3444,30 +3444,30 @@ definitions:
       code:
         type: integer
         description: The response status code
-  HelpReport:
-    type: object
-    properties:
-      reportId:
-        type: integer
-        format: int32
-        description: ID of the report.
-      userName:
-        type: string
-        description: Name of user that made the report.
-      createDate:
-        type: string
-        format: date
-        description: Describes the date the Report was created.
-      subject:
-         type: string
-         description: Subject of the report.
-      description:
-         type: string
-         description: Content of the report.
-      userId:
-         type: integer
-         format: int32
-         description: ID of user that made the report.
+#  HelpReport:
+#    type: object
+#    properties:
+#      reportId:
+#        type: integer
+#        format: int32
+#        description: ID of the report.
+#      userName:
+#        type: string
+#        description: Name of user that made the report.
+#      createDate:
+#        type: string
+#        format: date
+#        description: Describes the date the Report was created.
+#      subject:
+#         type: string
+#         description: Subject of the report.
+#      description:
+#         type: string
+#         description: Content of the report.
+#      userId:
+#         type: integer
+#         format: int32
+#         description: ID of user that made the report.
   OntologyFileMetaData:
     type: object
     properties:

@@ -5,6 +5,12 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.CollectMessage;
@@ -13,7 +19,6 @@ import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage
 import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.FlaggedDarApprovedMessage;
-import org.broadinstitute.consent.http.mail.message.HelpReportMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherCreatedMessage;
@@ -21,13 +26,6 @@ import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.mail.MessagingException;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 public class MailService {
 
@@ -45,7 +43,6 @@ public class MailService {
     private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
     private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private final NewResearcherCreatedMessage researcherCreatedMessage = new NewResearcherCreatedMessage();
-    private final HelpReportMessage helpReportMessage = new HelpReportMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
 
@@ -135,11 +132,6 @@ public class MailService {
 
     public void sendNewResearcherCreatedMessage(Set<String> toAddresses, Writer template) throws MessagingException {
         List<Mail> messages = researcherCreatedMessage.newResearcherCreatedMessage(toAddresses, fromAccount, template, "", "");
-        sendMessages(messages);
-    }
-
-    public void sendNewHelpReportMessage(Set<String> usersAddress, Writer template, String username) throws MessagingException {
-        Collection<Mail> messages = helpReportMessage.newHelpReportMessage(usersAddress, fromAccount, template, username);
         sendMessages(messages);
     }
 

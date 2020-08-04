@@ -22,7 +22,6 @@ import org.broadinstitute.consent.http.db.DataSetAssociationDAO;
 import org.broadinstitute.consent.http.db.DataSetAuditDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.HelpReportDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MailServiceDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -66,7 +65,6 @@ public class ConsentModule extends AbstractModule {
     private final ConsentDAO consentDAO;
     private final CounterDAO counterDAO;
     private final ElectionDAO electionDAO;
-    private final HelpReportDAO helpReportDAO;
     private final VoteDAO voteDAO;
     private final DataSetDAO datasetDAO;
     private final DataSetAssociationDAO datasetAssociationDAO;
@@ -101,7 +99,6 @@ public class ConsentModule extends AbstractModule {
         this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
         this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
         this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
-        this.helpReportDAO = this.jdbi.onDemand(HelpReportDAO.class);
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
         this.datasetDAO = this.jdbi.onDemand(DataSetDAO.class);
         this.datasetAssociationDAO = this.jdbi.onDemand(DataSetAssociationDAO.class);
@@ -139,7 +136,6 @@ public class ConsentModule extends AbstractModule {
         container.setDatasetAuditDAO(providesDataSetAuditDAO());
         container.setDatasetDAO(providesDataSetDAO());
         container.setElectionDAO(providesElectionDAO());
-        container.setHelpReportDAO(providesHelpReportDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
         container.setMailServiceDAO(providesMailServiceDAO());
         container.setMatchDAO(providesMatchDAO());
@@ -274,11 +270,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ElectionDAO providesElectionDAO() {
         return electionDAO;
-    }
-
-    @Provides
-    HelpReportDAO providesHelpReportDAO() {
-        return helpReportDAO;
     }
 
     @Provides
