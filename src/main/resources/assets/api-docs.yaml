@@ -1511,6 +1511,11 @@ paths:
           description: Id of the consent at which belongs the Data Use Letter.
           required: true
           type: string
+        - name: electionId
+          in: query
+          required: false
+          description: Optional election id for the consent election
+          type: integer
       tags:
         - Consent
       responses:
