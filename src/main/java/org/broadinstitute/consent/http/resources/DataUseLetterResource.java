@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -140,6 +141,7 @@ public class DataUseLetterResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATAOWNER})
     public Response getDUL(@PathParam("id") String consentId, @QueryParam("electionId") Integer electionId) {
+        // electionId is optional, handle cases where there is no election for the consent.
         String msg = String.format("Getting Data Use Letter for consent with id '%s' and Election Id '%s", consentId, electionId);
         Election election = null;
         try {
