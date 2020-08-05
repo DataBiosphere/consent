@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -14,12 +20,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ConsentService {
 
@@ -72,12 +72,17 @@ public class ConsentService {
         if (!openElections.isEmpty()) {
             List<String> referenceIds = openElections.stream().map(Election::getReferenceId).collect(Collectors.toList());
             List<DataAccessRequest> dataAccessRequests = dataAccessRequestDAO.findByReferenceIds(referenceIds);
-            List<String> datasetIds = dataAccessRequests.stream().
-                    map(DataAccessRequest::getData).
-                    map(DataAccessRequestData::getDatasetDetail).
-                    flatMap(List::stream).
-                    map(DatasetDetailEntry::getDatasetId).
-                    collect(Collectors.toList());
+            List<String> datasetIds =
+                dataAccessRequests.stream()
+                    .filter(Objects::nonNull)
+                    .map(DataAccessRequest::getData)
+                    .filter(Objects::nonNull)
+                    .map(DataAccessRequestData::getDatasetDetail)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .map(DatasetDetailEntry::getDatasetId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
             List<String> consentIds = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(datasetIds)) {
                 List<Integer> datasetIdIntValues = datasetIds.stream().map(Integer::valueOf).collect(Collectors.toList());
