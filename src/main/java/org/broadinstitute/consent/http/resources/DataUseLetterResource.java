@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
