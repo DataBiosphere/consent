@@ -7,6 +7,7 @@ import io.dropwizard.auth.Auth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -139,12 +140,12 @@ public class DataUseLetterResource extends Resource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATAOWNER})
     public Response getDUL(@PathParam("id") String consentId, @QueryParam("electionId") Integer electionId) {
+        // electionId is optional, handle cases where there is no election for the consent.
         String msg = String.format("Getting Data Use Letter for consent with id '%s' and Election Id '%s", consentId, electionId);
-        logger().debug(msg);
         Election election = null;
         try {
             Consent consent = api.retrieve(consentId);
-            if (StringUtils.isNotEmpty(consent.getLastElectionStatus())) {
+            if (StringUtils.isNotEmpty(consent.getLastElectionStatus()) && Objects.nonNull(electionId)) {
                 election = api.retrieveElection(electionId, consentId);
             }
             String fileUrl = election != null ? election.getDataUseLetter() : consent.getDataUseLetter();
