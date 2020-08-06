@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+
+import java.io.Writer;
+import java.util.Collections;
+import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.junit.Assert;
@@ -7,13 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.mail.MessagingException;
-import java.io.Writer;
-import java.util.Collections;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 
 public class MailServiceTest {
 
@@ -131,15 +130,6 @@ public class MailServiceTest {
     public void testNewResearcherCreatedMessage() {
         try {
             mailService.sendNewResearcherCreatedMessage(Collections.singleton(TO), template);
-        } catch (Exception e) {
-            Assert.fail("Should not throw exception");
-        }
-    }
-
-    @Test
-    public void testNewHelpReportMessage() {
-        try {
-            mailService.sendNewHelpReportMessage(Collections.singleton(TO), template, "Test");
         } catch (Exception e) {
             Assert.fail("Should not throw exception");
         }

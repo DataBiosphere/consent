@@ -13,7 +13,6 @@ import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.darsummary.SummaryItem;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -23,7 +22,6 @@ public class FreeMarkerTemplateHelper {
 
     Configuration freeMarkerConfig;
     private final String CREATE_DAR_URL = "admin_manage_access";
-    private final String HELP_REPORT_URL = "home_help";
 
     public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) {
         freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_22);
@@ -81,11 +79,6 @@ public class FreeMarkerTemplateHelper {
         return generateClosedDatasetElectionsTemplate(elections, darCode, serverUrl, temp);
     }
 
-    public Writer getHelpReportTemplate(HelpReport helpReport, String serverUrl) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("new-help-report.html");
-        return generateHelpReportTemplate(helpReport, serverUrl + HELP_REPORT_URL, temp);
-    }
-
     public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName, List<DatasetMailDTO> datasets, String dataUseRestriction, String email) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("researcher-dar-approved.html");
         return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
@@ -114,14 +107,6 @@ public class FreeMarkerTemplateHelper {
                 .setDatasets(datasets)
                 .setDataUseRestriction(dataUseRestriction)
                 .setResearcherEmail(email);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
-
-
-    private Writer generateHelpReportTemplate(HelpReport helpReport, String serverUrl, Template temp) throws IOException, TemplateException {
-        NewHelpReportTemplate model = new NewHelpReportTemplate(helpReport.getUserName(), helpReport.getSubject(), helpReport.getDescription(), helpReport.getCreateDate(), serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

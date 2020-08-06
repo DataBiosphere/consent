@@ -17,7 +17,6 @@ public class DAOContainer {
   private DataSetAuditDAO datasetAuditDAO;
   private DataSetDAO datasetDAO;
   private ElectionDAO electionDAO;
-  private HelpReportDAO helpReportDAO;
   private MailMessageDAO mailMessageDAO;
   private MailServiceDAO mailServiceDAO;
   private MatchDAO matchDAO;
@@ -108,14 +107,6 @@ public class DAOContainer {
 
   public void setElectionDAO(ElectionDAO electionDAO) {
     this.electionDAO = electionDAO;
-  }
-
-  public HelpReportDAO getHelpReportDAO() {
-    return helpReportDAO;
-  }
-
-  public void setHelpReportDAO(HelpReportDAO helpReportDAO) {
-    this.helpReportDAO = helpReportDAO;
   }
 
   public MailMessageDAO getMailMessageDAO() {

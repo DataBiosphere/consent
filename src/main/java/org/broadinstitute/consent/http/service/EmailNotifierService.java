@@ -39,7 +39,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.HelpReport;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -254,16 +253,6 @@ public class EmailNotifierService {
             for(User admin: admins){
                 Writer template = getNewResearcherCreatedTemplate(admin.getDisplayName(), createdResearcher.getDisplayName(), researcherProfileURL, action);
                 mailService.sendNewResearcherCreatedMessage(getEmails(Collections.singletonList(admin)), template);
-            }
-        }
-    }
-
-    public void sendNewRequestHelpMessage(HelpReport helpReport) throws MessagingException, IOException, TemplateException {
-        if(isServiceActive){
-            List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
-            if(CollectionUtils.isNotEmpty(users)) {
-                Writer template = templateHelper.getHelpReportTemplate(helpReport, SERVER_URL);
-                mailService.sendNewHelpReportMessage(getEmails(users), template, helpReport.getUserName());
             }
         }
     }
