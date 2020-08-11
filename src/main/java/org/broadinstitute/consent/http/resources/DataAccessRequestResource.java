@@ -90,6 +90,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
+    @Deprecated
     public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {

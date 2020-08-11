@@ -9,6 +9,8 @@
             <column name="user_id" type="bigint"/>
             <column name="create_date" type="timestamp"/>
             <column name="sort_date" type="timestamp"/>
+            <column name="submission_date" type="timestamp"/>
+            <column name="update_date" type="timestamp"/>
         </addColumn>
         <sql>
             update data_access_request
@@ -25,10 +27,17 @@
             set sort_date = to_timestamp(((data #>> '{}')::jsonb->>'sortDate')::numeric/1000)
             where sort_date is null
         </sql>
+        <sql>
+            update data_access_request
+            set update_date = to_timestamp(((data #>> '{}')::jsonb->>'sortDate')::numeric/1000)
+            where update_date is null
+        </sql>
         <rollback>
             <dropColumn columnName="user_id" tableName="data_access_request" />
             <dropColumn columnName="create_date" tableName="data_access_request" />
             <dropColumn columnName="sort_date" tableName="data_access_request" />
+            <dropColumn columnName="submission_date" tableName="data_access_request" />
+            <dropColumn columnName="update_date" tableName="data_access_request" />
         </rollback>
     </changeSet>
 

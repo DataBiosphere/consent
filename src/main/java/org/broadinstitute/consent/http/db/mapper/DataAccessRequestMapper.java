@@ -25,6 +25,8 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setUserId(resultSet.getInt("user_id"));
         dar.setCreateDate(resultSet.getDate("create_date"));
         dar.setSortDate(resultSet.getDate("sort_date"));
+        dar.setSubmissionDate(resultSet.getDate("submission_date"));
+        dar.setUpdateDate(resultSet.getDate("update_date"));
         String darDataString = resultSet.getObject("data", PGobject.class).getValue();
         // Handle nested quotes
         String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");

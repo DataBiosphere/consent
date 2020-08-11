@@ -76,7 +76,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
         matchProcessAPI.processMatchesForPurpose(r.getReferenceId());
         emailNotifierService.sendNewDARRequestMessage(r.getData().getDarCode(), r.getData().getDatasetId());
       }
-      return Response.created(uri).build();
+      return Response.created(uri).entity(results).build();
     } catch (Exception e) {
       logger.log(Level.SEVERE, "Error creating data access request ", e);
       return createExceptionResponse(e);

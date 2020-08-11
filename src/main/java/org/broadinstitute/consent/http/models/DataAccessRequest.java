@@ -19,6 +19,10 @@ public class DataAccessRequest {
 
   @JsonProperty public Date sortDate;
 
+  @JsonProperty public Date submissionDate;
+
+  @JsonProperty public Date updateDate;
+
   public DataAccessRequest() {}
 
   public Integer getId() {
@@ -75,5 +79,21 @@ public class DataAccessRequest {
 
   public void setSortDate(Date sortDate) {
     this.sortDate = sortDate;
+  }
+
+  public Date getSubmissionDate() {
+    return submissionDate;
+  }
+
+  public void setSubmissionDate(Date submissionDate) {
+    this.submissionDate = submissionDate;
+  }
+
+  public Date getUpdateDate() {
+    return updateDate;
+  }
+
+  public void setUpdateDate(Date updateDate) {
+    this.updateDate = updateDate;
   }
 }

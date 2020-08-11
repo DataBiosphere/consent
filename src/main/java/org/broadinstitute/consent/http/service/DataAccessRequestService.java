@@ -414,17 +414,22 @@ public class DataAccessRequestService {
                             user.getDacUserId(),
                             new Date(darData.getCreateDate()),
                             new Date(darData.getSortDate()),
-                            darData
-                        );
+                            now,
+                            now,
+                            darData);
+                        newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
                     } else {
+                        String referenceId = UUID.randomUUID().toString();
                         dataAccessRequestDAO.insertVersion2(
-                            dataAccessRequest.getReferenceId(),
+                            referenceId,
                             user.getDacUserId(),
                             new Date(darData.getCreateDate()),
                             new Date(darData.getSortDate()),
+                            now,
+                            now,
                             darData);
+                        newDARList.add(findByReferenceId(referenceId));
                     }
-                    newDARList.add(dataAccessRequest);
                 } else {
                     String referenceId = UUID.randomUUID().toString();
                     dataAccessRequestDAO.insertVersion2(
@@ -432,6 +437,8 @@ public class DataAccessRequestService {
                         user.getDacUserId(),
                         new Date(darData.getCreateDate()),
                         new Date(darData.getSortDate()),
+                        now,
+                        now,
                         darData);
                     newDARList.add(findByReferenceId(referenceId));
                 }

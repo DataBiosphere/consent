@@ -1143,6 +1143,10 @@ paths:
       responses:
         200:
           description: Returns the created Data Access Request.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataAccessRequest'
         500:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}:
