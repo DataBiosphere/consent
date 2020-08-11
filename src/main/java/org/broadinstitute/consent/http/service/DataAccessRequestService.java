@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
@@ -54,6 +55,7 @@ public class DataAccessRequestService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConsentDAO consentDAO;
+    private final CounterService counterService;
     private final DacDAO dacDAO;
     private final UserDAO userDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -68,11 +70,13 @@ public class DataAccessRequestService {
     private static final String NEEDS_APPROVAL = "Needs Approval";
     private static final String APPROVED = "Approved";
     private static final String DENIED = "Denied";
+    private static final String SUFFIX = "-A-";
 
     @Inject
-    public DataAccessRequestService(DAOContainer container, DacService dacService,
-                                    UserService userService) {
+    public DataAccessRequestService(CounterService counterService, DAOContainer container,
+            DacService dacService, UserService userService) {
         this.consentDAO = container.getConsentDAO();
+        this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
         this.userDAO = container.getUserDAO();
         this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
@@ -373,6 +377,67 @@ public class DataAccessRequestService {
                 populateDacInformation(requestsManage),
                 referenceIdElectionMap,
                 user);
+    }
+
+    /**
+     * Generate a list of DARs split by dataset id. Generate one DAR per dataset that is
+     * being requested. In the case of a single dataset DAR, update the existing value.
+     * In the case of multiple dataset DARs, update the first one and create new ones for each
+     * additional dataset past the first.
+     *
+     * @param dataAccessRequest DataAccessRequest with populated DAR data
+     * @return List of created DARs.
+     */
+    public List<DataAccessRequest> createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
+        Date now = new Date();
+        List<DataAccessRequest> newDARList = new ArrayList<>();
+        DataAccessRequestData darData = dataAccessRequest.getData();
+        darData.setPartialDarCode(null);
+        darData.setUserId(user.getDacUserId());
+        if (Objects.isNull(darData.getCreateDate())) {
+            darData.setCreateDate(now.getTime());
+        }
+        darData.setSortDate(now.getTime());
+        List<Integer> datasets = dataAccessRequest.getData().getDatasetId();
+        if (CollectionUtils.isNotEmpty(datasets)) {
+            String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
+            for (int idx = 0; idx < datasets.size(); idx++) {
+                String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
+                darData.setDatasetId(Collections.singletonList(datasets.get(idx)));
+                darData.setDarCode(darCode);
+                if (idx == 0) {
+                    DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
+                    if (Objects.nonNull(alreadyExists)) {
+                        dataAccessRequestDAO.updateDraftByReferenceId(dataAccessRequest.getReferenceId());
+                        dataAccessRequestDAO.updateDataByReferenceIdVersion2(
+                            dataAccessRequest.getReferenceId(),
+                            user.getDacUserId(),
+                            new Date(darData.getCreateDate()),
+                            new Date(darData.getSortDate()),
+                            darData
+                        );
+                    } else {
+                        dataAccessRequestDAO.insertVersion2(
+                            dataAccessRequest.getReferenceId(),
+                            user.getDacUserId(),
+                            new Date(darData.getCreateDate()),
+                            new Date(darData.getSortDate()),
+                            darData);
+                    }
+                    newDARList.add(dataAccessRequest);
+                } else {
+                    String referenceId = UUID.randomUUID().toString();
+                    dataAccessRequestDAO.insertVersion2(
+                        referenceId,
+                        user.getDacUserId(),
+                        new Date(darData.getCreateDate()),
+                        new Date(darData.getSortDate()),
+                        darData);
+                    newDARList.add(findByReferenceId(referenceId));
+                }
+            }
+        }
+        return newDARList;
     }
 
     /**

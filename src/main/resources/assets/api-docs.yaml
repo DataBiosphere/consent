@@ -1124,6 +1124,53 @@ paths:
             $ref: '#/definitions/User'
         500:
           description: Server Error
+
+
+
+  /api/dar/v2:
+    post:
+      summary: Create Data Access Request, version 2
+      description: Creates a Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: The fields that represent a DAR in json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the created Data Access Request.
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/{referenceId}:
+    get:
+      summary: Get a Data Access Request by ID
+      description: Returns the created Data Access Request.
+      parameters:
+        - name: id
+          in: path
+          description: The id of the Data Access Request
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a Data Access Request
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+        400:
+          description: The provided ID is not a valid DAR identifier
+        404:
+          description: No DAR can be found with the provided identifier
+        500:
+          description: Server Error
+
+
+
   /api/dar:
     post:
       summary: createdDataAccessRequest

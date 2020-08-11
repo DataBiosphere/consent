@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -26,7 +27,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * Find all non-draft/partial DataAccessRequests
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+    @SqlQuery("SELECT id, reference_id, draft, user_id, create_date, sort_date, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE not (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
             "  AND draft != true ")
     List<DataAccessRequest> findAllDataAccessRequests();
@@ -35,7 +36,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * Find all draft/partial DataAccessRequests, sorted descending order
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+    @SqlQuery("SELECT id, reference_id, draft, user_id, create_date, sort_date, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
             "  OR draft = true " +
             "  ORDER BY ((data #>> '{}')::jsonb->>'sortDate')::numeric DESC")
@@ -45,7 +46,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * Find all draft/partial DataAccessRequests by user id, sorted descending order
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request " +
+    @SqlQuery("SELECT id, reference_id, draft, user_id, create_date, sort_date, (data #>> '{}')::jsonb AS data FROM data_access_request " +
             "  WHERE ( (data #>> '{}')::jsonb ??| array['partial_dar_code', 'partialDarCode'] " +
             "          OR draft = true ) " +
             "  AND ((data #>> '{}')::jsonb->>'userId')::numeric = :userId " +
@@ -57,7 +58,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @param referenceId String
      * @return DataAccessRequest
      */
-    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id = :referenceId limit 1")
+    @SqlQuery("SELECT id, reference_id, draft, user_id, create_date, sort_date, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id = :referenceId limit 1")
     DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
     /**
@@ -65,7 +66,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
      * @param referenceIds List of Strings
      * @return List<DataAccessRequest>
      */
-    @SqlQuery("SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id IN (<referenceIds>)")
+    @SqlQuery("SELECT id, reference_id, draft, user_id, create_date, sort_date, (data #>> '{}')::jsonb AS data FROM data_access_request WHERE reference_id IN (<referenceIds>)")
     List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     /**
@@ -76,6 +77,24 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     @RegisterArgumentFactory(JsonArgumentFactory.class)
     @SqlUpdate("UPDATE data_access_request SET data = to_jsonb(:data) WHERE reference_id = :referenceId")
     void updateDataByReferenceId(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
+
+    /**
+     * Update DataAccessRequest by reference id and provided DataAccessRequestData
+     * @param referenceId String
+     * @param userId Integer
+     * @param createDate Date
+     * @param sortDate Date
+     * @param data DataAccessRequestData
+     */
+    @RegisterArgumentFactory(JsonArgumentFactory.class)
+    @SqlUpdate("UPDATE data_access_request SET data = to_jsonb(:data), user_id = :userId, create_date = :createDate, sort_date = :sortDate WHERE reference_id = :referenceId")
+    void updateDataByReferenceIdVersion2(
+        @Bind("referenceId") String referenceId,
+        @Bind("userId") Integer userId,
+        @Bind("createDate") Date createDate,
+        @Bind("sortDate") Date sortDate,
+        @Bind("data") @Json DataAccessRequestData data
+    );
 
     /**
      * Delete DataAccessRequest by reference id
@@ -92,6 +111,23 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     @RegisterArgumentFactory(JsonArgumentFactory.class)
     @SqlUpdate("INSERT INTO data_access_request (reference_id, data) VALUES (:referenceId, to_jsonb(:data)) ")
     void insert(@Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
+
+    /**
+     * Insert DataAccessRequest by reference id and provided DataAccessRequestData
+     * @param referenceId String
+     * @param userId Integer
+     * @param createDate Date
+     * @param sortDate Date
+     * @param data DataAccessRequestData
+     */
+    @RegisterArgumentFactory(JsonArgumentFactory.class)
+    @SqlUpdate("INSERT INTO data_access_request (reference_id, user_id, create_date, sort_date, data) VALUES (:referenceId, :userId, :createDate, :sortDate, to_jsonb(:data)) ")
+    void insertVersion2(
+        @Bind("referenceId") String referenceId,
+        @Bind("userId") Integer userId,
+        @Bind("createDate") Date createDate,
+        @Bind("sortDate") Date sortDate,
+        @Bind("data") @Json DataAccessRequestData data);
 
     /**
      * Insert DataAccessRequest by reference id and provided DataAccessRequestData

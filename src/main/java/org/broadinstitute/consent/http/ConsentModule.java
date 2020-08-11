@@ -207,6 +207,7 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DataAccessRequestService providesDataAccessRequestService() {
         return new DataAccessRequestService(
+                providesCounterService(),
                 providesDAOContainer(),
                 providesDacService(),
                 providesUserService());

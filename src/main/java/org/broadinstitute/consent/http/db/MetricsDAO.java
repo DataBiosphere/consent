@@ -21,7 +21,7 @@ public interface MetricsDAO extends Transactional<MetricsDAO> {
 
   @RegisterRowMapper(DataAccessRequestMapper.class)
   @SqlQuery(
-      "SELECT id, reference_id, draft, (data #>> '{}')::jsonb AS data FROM data_access_request "
+      "SELECT id, reference_id, draft, user_id, create_date, sort_date, (data #>> '{}')::jsonb AS data FROM data_access_request "
           + " WHERE draft != true ")
   List<DataAccessRequest> findAllDars();
 
