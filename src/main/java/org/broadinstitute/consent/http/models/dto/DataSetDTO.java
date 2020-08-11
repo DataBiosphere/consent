@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 
@@ -45,9 +44,6 @@ public class DataSetDTO {
 
     @JsonProperty
     private String objectId;
-
-    @JsonProperty
-    public DataUse dataUse;
 
     public DataSetDTO() {
     }
