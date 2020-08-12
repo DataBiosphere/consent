@@ -3,11 +3,17 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.Gson;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
+import liquibase.pro.packaged.U;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -19,6 +25,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -87,6 +94,21 @@ public class DataAccessRequestServiceTest {
         initService();
 
         service.cancelDataAccessRequest(dar.getReferenceId());
+    }
+
+    @Test
+    public void testCreateDataAccessRequest() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.getData().setDatasetId(Arrays.asList(1, 2, 3));
+        User user = new User(1, "email@test.org", "Display Name", new Date());
+        when(counterService.getNextDarSequence()).thenReturn(1);
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
+        doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
+        initService();
+        List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
+        assertEquals(3, newDars.size());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
