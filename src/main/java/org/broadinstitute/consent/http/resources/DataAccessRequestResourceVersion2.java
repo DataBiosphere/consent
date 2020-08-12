@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -56,7 +57,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
-  public Response createDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+  public Response createDataAccessRequest(
+      @Auth AuthUser authUser, @Context UriInfo info, String json) {
     User user = findUserByEmail(authUser.getName());
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = DataAccessRequestData.fromString(json);
@@ -74,9 +76,15 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       URI uri = info.getRequestUriBuilder().build();
       for (DataAccessRequest r : results) {
         matchProcessAPI.processMatchesForPurpose(r.getReferenceId());
-        emailNotifierService.sendNewDARRequestMessage(r.getData().getDarCode(), r.getData().getDatasetId());
+        emailNotifierService.sendNewDARRequestMessage(
+            r.getData().getDarCode(), r.getData().getDatasetId());
       }
-      return Response.created(uri).entity(results).build();
+      return Response.created(uri)
+          .entity(
+              results.stream()
+                  .map(DataAccessRequest::convertToSimplifiedDar)
+                  .collect(Collectors.toList()))
+          .build();
     } catch (Exception e) {
       logger.log(Level.SEVERE, "Error creating data access request ", e);
       return createExceptionResponse(e);
@@ -91,7 +99,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {
-        return Response.status(Response.Status.OK).entity(dar).build();
+        return Response.status(Response.Status.OK).entity(dar.convertToSimplifiedDar()).build();
       }
       return Response.status(Response.Status.NOT_FOUND)
           .entity(
@@ -111,5 +119,4 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
     return user;
   }
-
 }

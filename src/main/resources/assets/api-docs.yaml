@@ -1151,12 +1151,12 @@ paths:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}:
     get:
-      summary: Get a Data Access Request by ID
+      summary: Get a Data Access Request by Reference ID
       description: Returns the created Data Access Request.
       parameters:
-        - name: id
+        - name: referenceId
           in: path
-          description: The id of the Data Access Request
+          description: The referenceId of the Data Access Request
           required: true
           type: string
       tags:
@@ -1167,7 +1167,7 @@ paths:
           schema:
             $ref: '#/definitions/DataAccessRequest'
         400:
-          description: The provided ID is not a valid DAR identifier
+          description: The provided Reference Id is not a valid DAR identifier
         404:
           description: No DAR can be found with the provided identifier
         500:

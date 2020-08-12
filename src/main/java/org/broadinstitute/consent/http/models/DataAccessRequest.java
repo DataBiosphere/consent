@@ -1,9 +1,23 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.CaseFormat;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class DataAccessRequest {
+
+  private static final List<String> DEPRECATED_PROPS = Arrays.asList("referenceId", "investigator",
+      "institution", "department", "address1", "city", "zipcode", "zipCode", "state", "country",
+      "researcher", "userId", "isThePi", "havePi", "piEmail", "profileName", "pubmedId",
+      "scientificUrl", "urlDAA", "nameDAA", "eraExpiration", "academicEmail", "eraAuthorized",
+      "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail");
 
   @JsonProperty public Integer id;
 
@@ -95,5 +109,30 @@ public class DataAccessRequest {
 
   public void setUpdateDate(Date updateDate) {
     this.updateDate = updateDate;
+  }
+
+  /**
+   * Merges the DAR and the DAR Data into a single Map
+   * Ignores a series of deprecated keys
+   * Null values are ignored by default
+   *
+   * @return Map<String, Object> Dar in simple map format
+   */
+  public Map<String, Object> convertToSimplifiedDar() {
+    Gson gson = new Gson();
+    JsonObject dar = gson.toJsonTree(this).getAsJsonObject();
+    dar.remove("data");
+    JsonObject darData = gson.toJsonTree(this.getData()).getAsJsonObject();
+    DEPRECATED_PROPS.forEach(darData::remove);
+    for (String dataKey: darData.keySet()) {
+      String camelCasedDataKey = dataKey.contains("_") ?
+          CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, dataKey) :
+          dataKey;
+      if (!dar.has(camelCasedDataKey)) {
+        dar.add(camelCasedDataKey, darData.get(dataKey));
+      }
+    }
+    Type darMapType = new TypeToken<Map<String, Object>>() {}.getType();
+    return gson.fromJson(dar.toString(), darMapType);
   }
 }
