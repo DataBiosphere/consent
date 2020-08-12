@@ -98,7 +98,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
-    data.setDatasetId(Arrays.asList(1, 2));
+    data.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
     return dar;
   }

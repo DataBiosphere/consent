@@ -76,7 +76,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       for (DataAccessRequest r : results) {
         matchProcessAPI.processMatchesForPurpose(r.getReferenceId());
         emailNotifierService.sendNewDARRequestMessage(
-            r.getData().getDarCode(), r.getData().getDatasetId());
+            r.getData().getDarCode(), r.getData().getDatasetIds());
       }
       return Response.created(uri)
           .entity(

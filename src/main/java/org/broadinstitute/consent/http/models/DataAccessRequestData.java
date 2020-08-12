@@ -14,7 +14,7 @@ public class DataAccessRequestData {
     String address1;
     String address2;
     String city;
-    @SerializedName(value = "zipcode", alternate = "zipCode")
+    @SerializedName(value = "zipCode", alternate = "zipcode")
     String zipCode;
     String state;
     String country;
@@ -39,7 +39,7 @@ public class DataAccessRequestData {
     String researcherGate;
 
     String rus;
-    @SerializedName(value = "non_tech_rus", alternate = "nonTechRus")
+    @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
     String nonTechRus;
     Boolean diseases;
     Boolean methods;
@@ -56,33 +56,34 @@ public class DataAccessRequestData {
     @SerializedName(value = "illegalbehave", alternate = "illegalBehavior")
     Boolean illegalBehavior;
     Boolean addiction;
-    @SerializedName(value = "sexualdiseases", alternate = "sexualDiseases")
+    @SerializedName(value = "sexualDiseases", alternate = "sexualdiseases")
     Boolean sexualDiseases;
-    @SerializedName(value = "stigmatizediseases", alternate = "stigmatizedDiseases")
+    @SerializedName(value = "stigmatizedDiseases", alternate = "stigmatizediseases")
     Boolean stigmatizedDiseases;
-    @SerializedName(value = "vulnerablepop", alternate = "vulnerablePopulation")
+    @SerializedName(value = "vulnerablePopulation", alternate = "vulnerablepop")
     Boolean vulnerablePopulation;
-    @SerializedName(value = "popmigration", alternate = "populationMigration")
+    @SerializedName(value = "populationMigration", alternate = "popmigration")
     Boolean populationMigration;
-    @SerializedName(value = "psychtraits", alternate = "psychiatricTraits")
+    @SerializedName(value = "psychiatricTraits", alternate = "psychtraits")
     Boolean psychiatricTraits;
-    @SerializedName(value = "nothealth", alternate = "notHealth")
+    @SerializedName(value = "notHealth", alternate = "nothealth")
     Boolean notHealth;
     Boolean hmb;
     String status;
     Boolean poa;
     List<DatasetEntry> datasets;
-    @SerializedName(value = "dar_code", alternate = "darCode")
+    @SerializedName(value = "darCode", alternate = "dar_code")
     String darCode;
-    @SerializedName(value = "partial_dar_code", alternate = "partialDarCode")
+    @SerializedName(value = "partialDarCode", alternate = "partial_dar_code")
     String partialDarCode;
     Object restriction;
-    @SerializedName(value = "valid_restriction", alternate = "validRestriction")
+    @SerializedName(value = "validRestriction", alternate = "valid_restriction")
     Boolean validRestriction;
     String translatedUseRestriction;
     Long createDate;
     Long sortDate;
-    List<Integer> datasetId;
+    @SerializedName(value = "datasetIds", alternate = "datasetId")
+    List<Integer> datasetIds;
     List<DatasetDetailEntry> datasetDetail;
 
     Boolean cloudUse;
@@ -559,12 +560,12 @@ public class DataAccessRequestData {
         this.sortDate = sortDate;
     }
 
-    public List<Integer> getDatasetId() {
-        return datasetId;
+    public List<Integer> getDatasetIds() {
+        return datasetIds;
     }
 
-    public void setDatasetId(List<Integer> datasetId) {
-        this.datasetId = datasetId;
+    public void setDatasetIds(List<Integer> datasetIds) {
+        this.datasetIds = datasetIds;
     }
 
     public List<DatasetDetailEntry> getDatasetDetail() {

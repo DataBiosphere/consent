@@ -434,8 +434,8 @@ public class DataAccessRequestResource extends Resource {
      */
     private Optional<Integer> getDatasetIdForDarId(String id) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetId())) ?
-                dar.getData().getDatasetId() :
+        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) ?
+                dar.getData().getDatasetIds() :
                 Collections.emptyList();
         if (datasetIdList == null || datasetIdList.isEmpty()) {
             return Optional.empty();

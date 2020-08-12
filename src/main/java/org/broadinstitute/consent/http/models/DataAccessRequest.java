@@ -123,8 +123,6 @@ public class DataAccessRequest {
     JsonObject dar = GSON.toJsonTree(this).getAsJsonObject();
     dar.remove("data");
     JsonObject darData = GSON.toJsonTree(this.getData()).getAsJsonObject();
-    // Rename `datasetId` -> `datasetIds` before removing it from darData
-    dar.add("datasetIds", darData.get("datasetId"));
     DEPRECATED_PROPS.forEach(darData::remove);
     for (String dataKey: darData.keySet()) {
       String camelCasedDataKey = dataKey.contains("_") ?

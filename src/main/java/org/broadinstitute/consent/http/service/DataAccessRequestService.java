@@ -324,7 +324,7 @@ public class DataAccessRequestService {
         User user = userService.findUserByEmail(authUser.getName());
         List<DataAccessRequestManage> requestsManage = new ArrayList<>();
         List<Integer> datasetIdsForDatasetsToApprove = documents.stream().
-                map(d -> d.getData().getDatasetId()).
+                map(d -> d.getData().getDatasetIds()).
                 flatMap(List::stream).
                 collect(toList());
         List<DataSet> dataSetsToApprove = dataSetDAO.
@@ -337,7 +337,7 @@ public class DataAccessRequestService {
         documents.forEach(dar -> {
             DataAccessRequestManage darManage = new DataAccessRequestManage();
             String referenceId = dar.getReferenceId();
-            List<Integer> darDatasetIds = dar.getData().getDatasetId();
+            List<Integer> darDatasetIds = dar.getData().getDatasetIds();
             if (darDatasetIds.size() > 1) {
                 darManage.addError("DAR has more than one dataset association: " + ArrayUtils.toString(darDatasetIds));
             }
@@ -399,12 +399,12 @@ public class DataAccessRequestService {
             darData.setCreateDate(now.getTime());
         }
         darData.setSortDate(now.getTime());
-        List<Integer> datasets = dataAccessRequest.getData().getDatasetId();
+        List<Integer> datasets = dataAccessRequest.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasets)) {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
             for (int idx = 0; idx < datasets.size(); idx++) {
                 String darCode = (datasets.size() == 1) ? darCodeSequence: darCodeSequence + SUFFIX + idx ;
-                darData.setDatasetId(Collections.singletonList(datasets.get(idx)));
+                darData.setDatasetIds(Collections.singletonList(datasets.get(idx)));
                 darData.setDarCode(darCode);
                 if (idx == 0) {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());

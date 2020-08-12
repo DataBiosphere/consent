@@ -96,7 +96,7 @@ public class DataAccessRequestServiceTest {
     @Test
     public void testCreateDataAccessRequest() {
         DataAccessRequest dar = generateDataAccessRequest();
-        dar.getData().setDatasetId(Arrays.asList(1, 2, 3));
+        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
         User user = new User(1, "email@test.org", "Display Name", new Date());
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
