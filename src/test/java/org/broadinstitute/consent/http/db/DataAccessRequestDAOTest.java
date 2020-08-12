@@ -75,12 +75,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindByReferenceId() {
-        // no-op ... tested by createDataAccessRequest()
-        assertTrue(true);
-    }
-
-    @Test
     public void testFindByReferenceIds() {
         DataAccessRequest dar1 = createDataAccessRequest();
         DataAccessRequest dar2 = createDataAccessRequest();
@@ -91,12 +85,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertNotNull(dars);
         assertFalse(dars.isEmpty());
         assertEquals(3, dars.size());
-    }
-
-    @Test
-    public void testDeleteByReferenceId() {
-        // no-op ... tested by tearDown()
-        assertTrue(true);
     }
 
     @Test
@@ -127,8 +115,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testInsert() {
-        // no-op ... tested by createDataAccessRequestV2()
-        assertTrue(true);
+        DataAccessRequest dar = createDataAccessRequest();
+        assertNotNull(dar);
     }
 
     @Test
