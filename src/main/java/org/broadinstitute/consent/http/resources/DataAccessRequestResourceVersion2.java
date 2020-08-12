@@ -93,7 +93,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Path("/{referenceId}")
   @Produces("application/json")
   @PermitAll
-  public Response describe(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+  public Response getByReferenceId(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {

@@ -8,12 +8,16 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -53,14 +57,6 @@ public class DataAccessRequestResourceVersion2Test {
 
   private void initResource() {
     try {
-      when(userService.findUserByEmail(any())).thenReturn(user);
-      when(builder.path(anyString())).thenReturn(builder);
-      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
-      when(info.getRequestUriBuilder()).thenReturn(builder);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
-          .thenReturn(Collections.emptyList());
-      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
-      doNothing().when(emailNotifierService).sendNewDARRequestMessage(any(), any());
       when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
       resource =
           new DataAccessRequestResourceVersion2(
@@ -71,9 +67,39 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPost() {
+  public void testCreateDataAccessRequest() {
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(builder.path(anyString())).thenReturn(builder);
+      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+      when(info.getRequestUriBuilder()).thenReturn(builder);
+      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
+          .thenReturn(Collections.emptyList());
+      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
+      doNothing().when(emailNotifierService).sendNewDARRequestMessage(any(), any());
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
     initResource();
     Response response = resource.createDataAccessRequest(authUser, info, "");
     assertEquals(201, response.getStatus());
+  }
+
+  @Test
+  public void testGetByReferenceId() {
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    initResource();
+    Response response = resource.getByReferenceId(authUser, "");
+    assertEquals(200, response.getStatus());
+  }
+
+  private DataAccessRequest generateDataAccessRequest() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    data.setReferenceId(dar.getReferenceId());
+    data.setDatasetId(Arrays.asList(1, 2));
+    dar.setData(data);
+    return dar;
   }
 }
