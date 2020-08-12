@@ -6,8 +6,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -35,8 +33,6 @@ import org.broadinstitute.consent.http.service.UserService;
 @Path("api/dar/v2")
 public class DataAccessRequestResourceVersion2 extends Resource {
 
-  private static final Logger logger =
-      Logger.getLogger(DataAccessRequestResourceVersion2.class.getName());
   private final DataAccessRequestService dataAccessRequestService;
   private final MatchProcessAPI matchProcessAPI;
   private final EmailNotifierService emailNotifierService;
@@ -62,6 +58,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     User user = findUserByEmail(authUser.getName());
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = DataAccessRequestData.fromString(json);
+    if (Objects.isNull(data)) {
+      data = new DataAccessRequestData();
+    }
     if (Objects.nonNull(data.getReferenceId())) {
       dar.setReferenceId(data.getReferenceId());
     } else {
@@ -86,7 +85,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
                   .collect(Collectors.toList()))
           .build();
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "Error creating data access request ", e);
       return createExceptionResponse(e);
     }
   }

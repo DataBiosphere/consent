@@ -17,7 +17,10 @@ public class DataAccessRequest {
       "institution", "department", "address1", "city", "zipcode", "zipCode", "state", "country",
       "researcher", "userId", "isThePi", "havePi", "piEmail", "profileName", "pubmedId",
       "scientificUrl", "urlDAA", "nameDAA", "eraExpiration", "academicEmail", "eraAuthorized",
-      "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail");
+      "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail", "datasets",
+      "datasetId");
+
+  private static final Gson GSON = new Gson();
 
   @JsonProperty public Integer id;
 
@@ -117,10 +120,11 @@ public class DataAccessRequest {
    * @return Map<String, Object> Dar in simple map format
    */
   public Map<String, Object> convertToSimplifiedDar() {
-    Gson gson = new Gson();
-    JsonObject dar = gson.toJsonTree(this).getAsJsonObject();
+    JsonObject dar = GSON.toJsonTree(this).getAsJsonObject();
     dar.remove("data");
-    JsonObject darData = gson.toJsonTree(this.getData()).getAsJsonObject();
+    JsonObject darData = GSON.toJsonTree(this.getData()).getAsJsonObject();
+    // Rename `datasetId` -> `datasetIds` before removing it from darData
+    dar.add("datasetIds", darData.get("datasetId"));
     DEPRECATED_PROPS.forEach(darData::remove);
     for (String dataKey: darData.keySet()) {
       String camelCasedDataKey = dataKey.contains("_") ?
@@ -131,6 +135,6 @@ public class DataAccessRequest {
       }
     }
     Type darMapType = new TypeToken<Map<String, Object>>() {}.getType();
-    return gson.fromJson(dar.toString(), darMapType);
+    return GSON.fromJson(dar.toString(), darMapType);
   }
 }
