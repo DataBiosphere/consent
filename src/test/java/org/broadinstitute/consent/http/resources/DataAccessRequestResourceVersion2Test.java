@@ -93,6 +93,22 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(200, response.getStatus());
   }
 
+  @Test
+  public void updateByReferenceId() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+      when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+    initResource();
+    Response response = resource.updateByReferenceId(authUser, "", "{}");
+    assertEquals(200, response.getStatus());
+  }
+
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();

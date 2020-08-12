@@ -90,7 +90,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
-    @Deprecated
+    @Deprecated // Use DataAccessRequestResourceVersion2
     public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {
@@ -126,6 +126,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     @RolesAllowed(RESEARCHER)
+    @Deprecated // Use DataAccessRequestResourceVersion2
     public Response updateDataAccessRequest(Document dar, @PathParam("id") String id) {
         try {
             dar.remove(DarConstants.RESTRICTION);
@@ -187,7 +188,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     @Produces("application/json")
     @PermitAll
-    @Deprecated
+    @Deprecated // Use DataAccessRequestResourceVersion2
     public Response describe(@PathParam("id") String id) {
         try {
             Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);

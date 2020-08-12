@@ -448,6 +448,18 @@ public class DataAccessRequestService {
         return newDARList;
     }
 
+    public DataAccessRequest updateByReferenceIdVersion2(User user, DataAccessRequest dar) {
+        Date now = new Date();
+        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
+            user.getDacUserId(),
+            dar.getCreateDate(),
+            now,
+            dar.getSubmissionDate(),
+            now,
+            dar.getData());
+        return findByReferenceId(dar.getReferenceId());
+    }
+
     /**
      * Return a cloned, immutable list of DataAccessRequestManage objects with election and vote information populated
      */

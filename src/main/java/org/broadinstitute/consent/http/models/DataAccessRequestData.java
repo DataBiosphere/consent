@@ -49,11 +49,11 @@ public class DataAccessRequestData {
     private String otherText;
     private List<OntologyEntry> ontologies;
     private Boolean forProfit;
-    @SerializedName(value = "onegender", alternate = "oneGender")
+    @SerializedName(value = "oneGender", alternate = "onegender")
     private Boolean oneGender;
     private String gender;
     private Boolean pediatric;
-    @SerializedName(value = "illegalbehave", alternate = "illegalBehavior")
+    @SerializedName(value = "illegalBehavior", alternate = "illegalbehave")
     private Boolean illegalBehavior;
     private Boolean addiction;
     @SerializedName(value = "sexualDiseases", alternate = "sexualdiseases")
@@ -86,8 +86,8 @@ public class DataAccessRequestData {
     private List<Integer> datasetIds;
     private List<DatasetDetailEntry> datasetDetail;
 
-    private Boolean cloudUse;
     private Boolean anvilUse;
+    private Boolean cloudUse;
     private String cloudProvider;
     private String cloudProviderType;
     private Boolean geneticStudiesOnly;

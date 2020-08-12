@@ -108,6 +108,19 @@ public class DataAccessRequestServiceTest {
         assertEquals(3, newDars.size());
     }
 
+    @Test
+    public void testUpdateByReferenceIdVersion2() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        User user = new User(1, "email@test.org", "Display Name", new Date());
+        dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(),
+            any(), any(), any(), any());
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+        initService();
+        DataAccessRequest newDar = service.updateByReferenceIdVersion2(user, dar);
+        assertNotNull(newDar);
+    }
+
     private DataAccessRequest generateDataAccessRequest() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();

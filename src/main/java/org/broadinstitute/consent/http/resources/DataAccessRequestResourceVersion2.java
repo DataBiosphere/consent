@@ -13,6 +13,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -54,24 +55,25 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
   public Response createDataAccessRequest(
-      @Auth AuthUser authUser, @Context UriInfo info, String json) {
+      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     User user = findUserByEmail(authUser.getName());
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = DataAccessRequestData.fromString(json);
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData data = DataAccessRequestData.fromString(dar);
     if (Objects.isNull(data)) {
       data = new DataAccessRequestData();
     }
     if (Objects.nonNull(data.getReferenceId())) {
-      dar.setReferenceId(data.getReferenceId());
+      newDar.setReferenceId(data.getReferenceId());
     } else {
       String referenceId = UUID.randomUUID().toString();
-      dar.setReferenceId(referenceId);
+      newDar.setReferenceId(referenceId);
       data.setReferenceId(referenceId);
     }
-    dar.setData(data);
+    newDar.setData(data);
 
     try {
-      List<DataAccessRequest> results = dataAccessRequestService.createDataAccessRequest(user, dar);
+      List<DataAccessRequest> results =
+          dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
       for (DataAccessRequest r : results) {
         matchProcessAPI.processMatchesForPurpose(r.getReferenceId());
@@ -93,7 +95,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Path("/{referenceId}")
   @Produces("application/json")
   @PermitAll
-  public Response getByReferenceId(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+  public Response getByReferenceId(
+      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {
@@ -107,6 +110,26 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("/{referenceId}")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  public Response updateByReferenceId(
+      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      originalDar.setData(data);
+      DataAccessRequest updatedDar =
+          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+      matchProcessAPI.processMatchesForPurpose(referenceId);
+      return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
   }
 

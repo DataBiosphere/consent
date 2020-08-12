@@ -1148,7 +1148,7 @@ paths:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}:
     get:
-      summary: Get a Data Access Request by Reference ID
+      summary: Get a Data Access Request by Reference Id
       description: Returns the created Data Access Request.
       parameters:
         - name: referenceId
@@ -1169,6 +1169,28 @@ paths:
           description: No DAR can be found with the provided identifier
         500:
           description: Server Error
+    put:
+      summary: Update a Data Access Request by Reference Id
+      description: Returns the updated Data Access Request.
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          type: string
+        - name: dar
+          in: body
+          description: The fields that represent a DAR in json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a Data Access Request
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
   /api/dar:
     post:
       summary: createdDataAccessRequest
@@ -1224,7 +1246,9 @@ paths:
           description: Server Error
     put:
       summary: updateDataAccessRequest
-      description: Updates the DAR identified by the dar_code.
+      description: |
+        DEPRECATED: Use PUT /api/dar/v2/{referenceId}
+        Updates the DAR identified by the dar_code.
       parameters:
         - name: id
           in: path
@@ -3008,110 +3032,149 @@ definitions:
       referenceId:
         type: string
         description: The reference id for this DAR
-      investigator:
+      userId:
+        type: integer
+        format: int32
+        description: Describes the id of the User (Researcher).
+      createDate:
         type: string
-        description: 'Describes the name of the Principal Investigator.'
-      institution:
+        description: Creation Date
+      sortDate:
         type: string
-        description: 'Describes the name of Institution.'
-      department:
+        description: Sort Date
+      submissionDate:
         type: string
-        description: 'Describes the name of the Institution Department.'
-      division:
+        description: Submission Date
+      updateDate:
         type: string
-        description: 'Describes the name of the Division.'
-      address1:
+        description: Update Date
+      draft:
+        type: boolean
+        description: Draft status of this DAR
+      darCode:
         type: string
-        description: 'Describes the principal address.'
-      address2:
+        description: Unique DAR Code
+      partialDarCode:
         type: string
-        description: 'Describes the secondary address. Optional.'
-      city:
-        type: string
-        description: 'Describes the name of the City.'
-      state:
-        type: string
-        description: 'Describes the name of the State.'
-      zipcode:
-        type: string
-        description: 'Describes the Zip Code number.'
-      country:
-        type: string
-        description: 'Describes the name of the Country.'
+        description: Unique Partial DAR Code
       projectTitle:
         type: string
-        description: 'Describes the Project Title.'
-      datasetId:
+        description: Project Title
+      datasetIds:
         type: array
         items:
           type: string
-        description: 'Array of Dataset Ids.'
+        description: Array of Dataset Ids
       rus:
         type: string
-        description: 'Describes the Research Use Statement.'
-      non_tech_rus:
+        description: Describes the Research Use Statement
+      nonTechRus:
         type: string
-        description: 'Describes the Non Technical Summary.'
+        description: Describes the Non Technical Summary
       diseases:
         type: boolean
-        description: 'Defines if the purpose of the study is disease-related.'
+        description: Defines if the purpose of the study is disease-related
       methods:
         type: boolean
-        description: 'Defines if the purpose of the study is for Methods development.'
+        description: Defines if the purpose of the study is for Methods development
       controls:
         type: boolean
-        description: 'Defines if the purpose of the study is to increase the number of controls available for a comparison group.'
+        description: Defines if the purpose of the study is to increase the number of controls available for a comparison group
       population:
         type: boolean
-        description: 'Defines if the purpose of the study is to understand variation in the general population.'
+        description: Defines if the purpose of the study is to understand variation in the general population
       other:
         type: boolean
-        description: 'Defines if the purpose of the study is other than the above. If TRUE, triggers MANUAL REVIEW.'
+        description: Defines if the purpose of the study is other than the above
       otherText:
         type: string
-        description: 'Describes above field.'
+        description: Describes above field
       ontologies:
         type: array
         items:
           type: string
-        description: 'Array of Ontologies.'
+        description: Array of ontology terms
       forProfit:
         type: boolean
-        description: 'Describes if data will be used for commercial purposes.'
+        description: Describes if data will be used for commercial purposes
       oneGender:
         type: boolean
-        description: 'Describes if study is gender specific.'
+        description: Describes if study is gender specific
+      gender:
+        type: string
+        description: F/M if oneGender is specified
       pediatric:
         type: boolean
-        description: 'Describes if study is restricted to a pediatric population.'
-      illegalbehave:
+        description: Describes if study is restricted to a pediatric population
+      illegalbehavior:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
+        description: If TRUE, triggers MANUAL REVIEW.
       addiction:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      sexualdiseases:
+        description: If TRUE, triggers MANUAL REVIEW
+      sexualDiseases:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      stigmatizediseases:
+        description: If TRUE, triggers MANUAL REVIEW
+      stigmatizeDiseases:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      vulnerablepop:
+        description: If TRUE, triggers MANUAL REVIEW
+      vulnerablePopulation:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      popmigration:
+        description: If TRUE, triggers MANUAL REVIEW
+      populationMigration:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      psychtraits:
+        description: If TRUE, triggers MANUAL REVIEW
+      psychiatricTraits:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      nothealth:
+        description: If TRUE, triggers MANUAL REVIEW
+      notHealth:
         type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      userId:
-        type: integer
-        format: int32
-        description: 'Describes the id of the User (Researcher).'
+        description: If TRUE, triggers MANUAL REVIEW
+      hmb:
+        type: boolean
+        description: HMB Research
+      poa:
+        type: boolean
+        description: Populations Origins Ancestry Research
+      anvilUse:
+        type: boolean
+        description: Anvil Use
+      cloudUse:
+        type: boolean
+        description: Cloud Use
+      cloudProvider:
+        type: string
+        description: Cloud Use Provider
+      cloudProviderType:
+        type: string
+        description: Cloud Use Provider Type
+      geneticStudiesOnly:
+        type: boolean
+        description: Genetic Studies Only
+      irb:
+        type: boolean
+        description: IRB Approval Required
+      irbDocumentLocation:
+        type: string
+        description: IRB Document Location
+      irbProtocolExpiration:
+        type: string
+        description: IRB Protocol Expiration
+      publication:
+        type: boolean
+        description: Publication Required
+      collaboration:
+        type: boolean
+        description: Collaboration Required
+      collaborationLetterLocation:
+        type: string
+        description: Collaboration Letter Location
+      forensicActivities:
+        type: boolean
+        description: Study involves Forensic Activities
+      sharingDistribution:
+        type: boolean
+        description: Study requires sharing disctribution
   DataAccessRequestManage:
     type: object
     properties:

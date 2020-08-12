@@ -18,7 +18,7 @@ public class DataAccessRequest {
       "researcher", "userId", "isThePi", "havePi", "piEmail", "profileName", "pubmedId",
       "scientificUrl", "urlDAA", "nameDAA", "eraExpiration", "academicEmail", "eraAuthorized",
       "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail", "datasets",
-      "datasetId");
+      "datasetId", "validRestriction", "translatedUseRestriction", "createDate", "sortDate");
 
   private static final Gson GSON = new Gson();
 
