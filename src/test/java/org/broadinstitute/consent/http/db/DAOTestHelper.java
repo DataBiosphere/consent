@@ -302,6 +302,26 @@ public class DAOTestHelper {
         return null;
     }
 
+    protected DataAccessRequest createDataAccessRequestV2() {
+        DataAccessRequestData data;
+        Date now = new Date();
+        Integer userId = createUser().getDacUserId();
+        try {
+            String darDataString = FileUtils.readFileToString(
+                    new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
+                    Charset.defaultCharset());
+            data = DataAccessRequestData.fromString(darDataString);
+            String referenceId = UUID.randomUUID().toString();
+            dataAccessRequestDAO.insertVersion2(referenceId, userId, now, now, now, now, data);
+            createdDataAccessRequestReferenceIds.add(referenceId);
+            return dataAccessRequestDAO.findByReferenceId(referenceId);
+        } catch (IOException e) {
+            logger.error("Exception parsing dar data: " + e.getMessage());
+            fail("Unable to create a Data Access Request from sample data: " + e.getMessage());
+        }
+        return null;
+    }
+
     protected DataAccessRequest createDraftDataAccessRequest() {
         DataAccessRequestData data;
         try {
