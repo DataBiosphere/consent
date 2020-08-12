@@ -37,8 +37,6 @@ public class DataAccessRequest {
 
   @JsonProperty public Date updateDate;
 
-  public DataAccessRequest() {}
-
   public Integer getId() {
     return id;
   }
