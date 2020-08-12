@@ -41,8 +41,8 @@ public class DataAccessRequestResourceVersion2Test {
   @Mock private MatchProcessAPI matchProcessAPI;
   @Mock private EmailNotifierService emailNotifierService;
   @Mock private UserService userService;
-  @Mock UriInfo info;
-  @Mock UriBuilder builder;
+  @Mock private UriInfo info;
+  @Mock private UriBuilder builder;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final User user = new User(1, authUser.getName(), "Display Name", new Date());

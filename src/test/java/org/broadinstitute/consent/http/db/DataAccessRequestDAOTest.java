@@ -77,6 +77,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindByReferenceId() {
         // no-op ... tested by createDataAccessRequest()
+        assert(true);
     }
 
     @Test
@@ -95,6 +96,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testDeleteByReferenceId() {
         // no-op ... tested by tearDown()
+        assert(true);
     }
 
     @Test
@@ -126,6 +128,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testInsert() {
         // no-op ... tested by createDataAccessRequest()
+        assert(true);
     }
 
     @Test
