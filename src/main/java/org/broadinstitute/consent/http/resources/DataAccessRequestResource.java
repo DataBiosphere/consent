@@ -187,6 +187,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     @Produces("application/json")
     @PermitAll
+    @Deprecated
     public Response describe(@PathParam("id") String id) {
         try {
             Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);

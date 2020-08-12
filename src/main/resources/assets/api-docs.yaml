@@ -1124,9 +1124,6 @@ paths:
             $ref: '#/definitions/User'
         500:
           description: Server Error
-
-
-
   /api/dar/v2:
     post:
       summary: Create Data Access Request, version 2
@@ -1172,13 +1169,12 @@ paths:
           description: No DAR can be found with the provided identifier
         500:
           description: Server Error
-
-
-
   /api/dar:
     post:
       summary: createdDataAccessRequest
-      description: Creates a Data Access Request
+      description: |
+        DEPRECATED: Use POST /api/dar/v2
+        Creates a Data Access Request
       parameters:
         - name: dar
           in: body
@@ -1204,7 +1200,9 @@ paths:
   /api/dar/{id}:
     get:
       summary: describe
-      description: Retrieves the DAR identified by the ID
+      description: |
+        DEPRECATED: Use GET /api/dar/v2/{referenceId}
+        Retrieves the DAR identified by the ID
       parameters:
         - name: id
           in: path
