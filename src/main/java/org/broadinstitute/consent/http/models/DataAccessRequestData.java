@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 
 public class DataAccessRequestData {
@@ -85,6 +84,20 @@ public class DataAccessRequestData {
     Long sortDate;
     List<Integer> datasetId;
     List<DatasetDetailEntry> datasetDetail;
+
+    Boolean cloudUse;
+    Boolean anvilUse;
+    String cloudProvider;
+    String cloudProviderType;
+    Boolean geneticStudiesOnly;
+    Boolean irb;
+    String irbDocumentLocation;
+    String irbProtocolExpiration;
+    Boolean publication;
+    Boolean collaboration;
+    String collaborationLetterLocation;
+    Boolean forensicActivities;
+    Boolean sharingDistribution;
 
     public DataAccessRequestData() {
     }
@@ -608,5 +621,109 @@ public class DataAccessRequestData {
 
     public void setPoa(Boolean poa) {
         this.poa = poa;
+    }
+
+    public Boolean getCloudUse() {
+        return cloudUse;
+    }
+
+    public void setCloudUse(Boolean cloudUse) {
+        this.cloudUse = cloudUse;
+    }
+
+    public Boolean getAnvilUse() {
+        return anvilUse;
+    }
+
+    public void setAnvilUse(Boolean anvilUse) {
+        this.anvilUse = anvilUse;
+    }
+
+    public String getCloudProvider() {
+        return cloudProvider;
+    }
+
+    public void setCloudProvider(String cloudProvider) {
+        this.cloudProvider = cloudProvider;
+    }
+
+    public String getCloudProviderType() {
+        return cloudProviderType;
+    }
+
+    public void setCloudProviderType(String cloudProviderType) {
+        this.cloudProviderType = cloudProviderType;
+    }
+
+    public Boolean getGeneticStudiesOnly() {
+        return geneticStudiesOnly;
+    }
+
+    public void setGeneticStudiesOnly(Boolean geneticStudiesOnly) {
+        this.geneticStudiesOnly = geneticStudiesOnly;
+    }
+
+    public Boolean getIrb() {
+        return irb;
+    }
+
+    public void setIrb(Boolean irb) {
+        this.irb = irb;
+    }
+
+    public String getIrbDocumentLocation() {
+        return irbDocumentLocation;
+    }
+
+    public void setIrbDocumentLocation(String irbDocumentLocation) {
+        this.irbDocumentLocation = irbDocumentLocation;
+    }
+
+    public String getIrbProtocolExpiration() {
+        return irbProtocolExpiration;
+    }
+
+    public void setIrbProtocolExpiration(String irbProtocolExpiration) {
+        this.irbProtocolExpiration = irbProtocolExpiration;
+    }
+
+    public Boolean getPublication() {
+        return publication;
+    }
+
+    public void setPublication(Boolean publication) {
+        this.publication = publication;
+    }
+
+    public Boolean getCollaboration() {
+        return collaboration;
+    }
+
+    public void setCollaboration(Boolean collaboration) {
+        this.collaboration = collaboration;
+    }
+
+    public String getCollaborationLetterLocation() {
+        return collaborationLetterLocation;
+    }
+
+    public void setCollaborationLetterLocation(String collaborationLetterLocation) {
+        this.collaborationLetterLocation = collaborationLetterLocation;
+    }
+
+    public Boolean getForensicActivities() {
+        return forensicActivities;
+    }
+
+    public void setForensicActivities(Boolean forensicActivities) {
+        this.forensicActivities = forensicActivities;
+    }
+
+    public Boolean getSharingDistribution() {
+        return sharingDistribution;
+    }
+
+    public void setSharingDistribution(Boolean sharingDistribution) {
+        this.sharingDistribution = sharingDistribution;
     }
 }
