@@ -6,102 +6,99 @@ import java.util.List;
 
 public class DataAccessRequestData {
 
-    String referenceId;
-    String investigator;
-    String institution;
-    String department;
-    String division;
-    String address1;
-    String address2;
-    String city;
+    private String referenceId;
+    private String investigator;
+    private String institution;
+    private String department;
+    private String division;
+    private String address1;
+    private String address2;
+    private String city;
     @SerializedName(value = "zipCode", alternate = "zipcode")
-    String zipCode;
-    String state;
-    String country;
-    String projectTitle;
-    Boolean checkCollaborator;
-    String researcher;
-    Integer userId;
-    String isThePi;
-    String havePi;
-    String piEmail;
-    String profileName;
-    String pubmedId;
-    String scientificUrl;
-    String urlDAA;
-    String nameDAA;
-    Boolean eraExpiration;
-    String academicEmail;
-    Boolean eraAuthorized;
-    String nihUsername;
-    String linkedIn;
-    String orcid;
-    String researcherGate;
+    private String zipCode;
+    private String state;
+    private String country;
+    private String projectTitle;
+    private Boolean checkCollaborator;
+    private String researcher;
+    private Integer userId;
+    private String isThePi;
+    private String havePi;
+    private String piEmail;
+    private String profileName;
+    private String pubmedId;
+    private String scientificUrl;
+    private String urlDAA;
+    private String nameDAA;
+    private Boolean eraExpiration;
+    private String academicEmail;
+    private Boolean eraAuthorized;
+    private String nihUsername;
+    private String linkedIn;
+    private String orcid;
+    private String researcherGate;
 
-    String rus;
+    private String rus;
     @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
-    String nonTechRus;
-    Boolean diseases;
-    Boolean methods;
-    Boolean controls;
-    Boolean population;
-    Boolean other;
-    String otherText;
-    List<OntologyEntry> ontologies;
-    Boolean forProfit;
+    private String nonTechRus;
+    private Boolean diseases;
+    private Boolean methods;
+    private Boolean controls;
+    private Boolean population;
+    private Boolean other;
+    private String otherText;
+    private List<OntologyEntry> ontologies;
+    private Boolean forProfit;
     @SerializedName(value = "onegender", alternate = "oneGender")
-    Boolean oneGender;
-    String gender;
-    Boolean pediatric;
+    private Boolean oneGender;
+    private String gender;
+    private Boolean pediatric;
     @SerializedName(value = "illegalbehave", alternate = "illegalBehavior")
-    Boolean illegalBehavior;
-    Boolean addiction;
+    private Boolean illegalBehavior;
+    private Boolean addiction;
     @SerializedName(value = "sexualDiseases", alternate = "sexualdiseases")
-    Boolean sexualDiseases;
+    private Boolean sexualDiseases;
     @SerializedName(value = "stigmatizedDiseases", alternate = "stigmatizediseases")
-    Boolean stigmatizedDiseases;
+    private Boolean stigmatizedDiseases;
     @SerializedName(value = "vulnerablePopulation", alternate = "vulnerablepop")
-    Boolean vulnerablePopulation;
+    private Boolean vulnerablePopulation;
     @SerializedName(value = "populationMigration", alternate = "popmigration")
-    Boolean populationMigration;
+    private Boolean populationMigration;
     @SerializedName(value = "psychiatricTraits", alternate = "psychtraits")
-    Boolean psychiatricTraits;
+    private Boolean psychiatricTraits;
     @SerializedName(value = "notHealth", alternate = "nothealth")
-    Boolean notHealth;
-    Boolean hmb;
-    String status;
-    Boolean poa;
-    List<DatasetEntry> datasets;
+    private Boolean notHealth;
+    private Boolean hmb;
+    private String status;
+    private Boolean poa;
+    private List<DatasetEntry> datasets;
     @SerializedName(value = "darCode", alternate = "dar_code")
-    String darCode;
+    private String darCode;
     @SerializedName(value = "partialDarCode", alternate = "partial_dar_code")
-    String partialDarCode;
-    Object restriction;
+    private String partialDarCode;
+    private Object restriction;
     @SerializedName(value = "validRestriction", alternate = "valid_restriction")
-    Boolean validRestriction;
-    String translatedUseRestriction;
-    Long createDate;
-    Long sortDate;
+    private Boolean validRestriction;
+    private String translatedUseRestriction;
+    private Long createDate;
+    private Long sortDate;
     @SerializedName(value = "datasetIds", alternate = "datasetId")
-    List<Integer> datasetIds;
-    List<DatasetDetailEntry> datasetDetail;
+    private List<Integer> datasetIds;
+    private List<DatasetDetailEntry> datasetDetail;
 
-    Boolean cloudUse;
-    Boolean anvilUse;
-    String cloudProvider;
-    String cloudProviderType;
-    Boolean geneticStudiesOnly;
-    Boolean irb;
-    String irbDocumentLocation;
-    String irbProtocolExpiration;
-    Boolean publication;
-    Boolean collaboration;
-    String collaborationLetterLocation;
-    Boolean forensicActivities;
-    Boolean sharingDistribution;
-
-    public DataAccessRequestData() {
-    }
+    private Boolean cloudUse;
+    private Boolean anvilUse;
+    private String cloudProvider;
+    private String cloudProviderType;
+    private Boolean geneticStudiesOnly;
+    private Boolean irb;
+    private String irbDocumentLocation;
+    private String irbProtocolExpiration;
+    private Boolean publication;
+    private Boolean collaboration;
+    private String collaborationLetterLocation;
+    private Boolean forensicActivities;
+    private Boolean sharingDistribution;
 
     @Override
     public String toString() {
