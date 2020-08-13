@@ -68,9 +68,9 @@ public class DataSetResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("/test")
-    @RolesAllowed({ADMIN,CHAIRPERSON})
+    @PermitAll
     public Response createDataSet(@Context UriInfo info, DataSet dataSet) {
-        Integer status = dataSetService.createDataSet(dataSet.getName(), null, dataSet.getObjectId(), dataSet.getActive(), dataSet.getAlias());
+//        Integer status = dataSetService.createDataSet(dataSet.getName(), null, dataSet.getObjectId(), dataSet.getActive(), dataSet.getAlias());
         return Response.ok().build();
     }
 

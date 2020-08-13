@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import org.broadinstitute.consent.http.db.DataSetDAO;
-import org.broadinstitute.consent.http.models.DataSet;
 
 import javax.inject.Inject;
 import java.util.Date;
