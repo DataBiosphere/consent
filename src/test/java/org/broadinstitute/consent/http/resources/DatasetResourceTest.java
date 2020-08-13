@@ -1,12 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.testing.ResourceHelpers;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.ParseResult;
-import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.*;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Before;
@@ -50,6 +45,9 @@ public class DatasetResourceTest {
     private DataAccessRequestAPI dataAccessRequestAPI;
 
     @Mock
+    private DataSetService dataSetService;
+
+    @Mock
     private UserService userService;
 
     private DataSetResource resource;
@@ -64,7 +62,7 @@ public class DatasetResourceTest {
     private void initResource() {
         when(AbstractDataSetAPI.getInstance()).thenReturn(api);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
-        resource = new DataSetResource(userService);
+        resource = new DataSetResource(dataSetService, userService);
     }
 
     @Test

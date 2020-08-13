@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Consent
   description: A set of web-services containing methods for ingesting and retrieving expressions representing data use restrictions found within consent forms.
-  version: 1.0.1
+  version: 1.0.2
   license:
     name: BSD
     url: 'http://opensource.org/licenses/BSD-3-Clause'
@@ -1863,6 +1863,19 @@ paths:
             type: array
             items:
               type: string
+  /api/dataset/test:
+    post:
+      summary: createDataSet
+      description: Creates the Dataset from JSON
+      consumes:
+        - application/json
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: Successfully created Dataset
+          schema:
+            $ref: '#/definitions/Dataset'
   /api/dataset/sample:
     get:
       summary: getDataSetSample
