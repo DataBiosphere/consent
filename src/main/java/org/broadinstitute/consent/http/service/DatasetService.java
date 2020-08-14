@@ -16,8 +16,11 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSet createDataset(String json) {
-        DataSet dataset = new DataSet(json);
+    public DataSet createTestDataSet(String json) {
+        return new DataSet(json);
+    }
+
+    public Integer createDataset(String name, String objectId, Boolean active, Integer alias) {
         Date now = new Date();
 
         //     Integer insertDataset(
@@ -26,8 +29,7 @@ public class DatasetService {
         //     @Bind("objectId") String objectId,
         //     @Bind("active") Boolean active,
         //     @Bind("alias") Integer alias);
-//        return dataSetDAO.insertDataset(name, now, objectId, active, alias);
-        return dataset;
+        return dataSetDAO.insertDataset(name, now, objectId, active, alias);
     }
 
 }

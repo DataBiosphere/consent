@@ -75,9 +75,9 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @Path("/test")
     @PermitAll
-    public Response createDataset(@Auth AuthUser user, String dataset) {
-        DataSet ds = datasetService.createDataset(dataset);
-        return Response.ok().status(201).build();
+    public Response createDataset(@Auth AuthUser user, String json) {
+        DataSet dataset = datasetService.createTestDataSet(json);
+        return Response.ok().entity(dataset).status(201).build();
     }
 
     @POST

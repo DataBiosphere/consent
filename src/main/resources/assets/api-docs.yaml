@@ -1869,6 +1869,12 @@ paths:
       description: Creates the Dataset from JSON (WIP)
       consumes:
         - application/json
+      parameters:
+        - name: json
+          in: body
+          description: Submitted dataset registration form
+          required: true
+          type: string
       tags:
         - Datasets
       responses:
