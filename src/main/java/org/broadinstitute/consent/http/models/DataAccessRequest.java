@@ -3,15 +3,17 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.CaseFormat;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DataAccessRequest {
-
-  private static final Gson GSON = new Gson();
 
   @JsonProperty public Integer id;
 
@@ -25,10 +27,9 @@ public class DataAccessRequest {
 
   @JsonProperty public Date createDate;
 
-  /**
-   * Legacy property on DARs. Used to display the sort order for a DAR.
-   * In practice, this also functions as the Update Date.
-   * See also https://broadinstitute.atlassian.net/browse/DUOS-728
+  /*
+   * Legacy property on DARs. Used to display the sort order for a DAR. In practice, this also
+   * functions as the Update Date. See also https://broadinstitute.atlassian.net/browse/DUOS-728
    */
   @JsonProperty public Date sortDate;
 
@@ -109,26 +110,54 @@ public class DataAccessRequest {
   }
 
   /**
-   * Merges the DAR and the DAR Data into a single Map
-   * Ignores a series of deprecated keys
-   * Null values are ignored by default
+   * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
+   * values are ignored by default
    *
    * @return Map<String, Object> Dar in simple map format
    */
   public Map<String, Object> convertToSimplifiedDar() {
-    JsonObject dar = GSON.toJsonTree(this).getAsJsonObject();
-    dar.remove("data");
-    JsonObject darData = GSON.toJsonTree(this.getData()).getAsJsonObject();
+    // Serialize dates as longs, but do not deserialize longs into dates so we can output long
+    // values in the final result.
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(Date.class, (JsonSerializer<Date>) (date, type, jsonSerializationContext) -> new JsonPrimitive(date.getTime()))
+        .create();
+    DataAccessRequestData dataCopy = this.getData();
+    this.setData(null);
+
+    String serializedDar = gson.toJson(shallowCopy(this));
+    JsonObject dar = gson.fromJson(serializedDar, JsonObject.class);
+
+    String serializedDarData = gson.toJson(dataCopy);
+    JsonObject darData = gson.fromJson(serializedDarData, JsonObject.class);
+
     DataAccessRequestData.DEPRECATED_PROPS.forEach(darData::remove);
-    for (String dataKey: darData.keySet()) {
-      String camelCasedDataKey = dataKey.contains("_") ?
-          CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, dataKey) :
-          dataKey;
+    for (String dataKey : darData.keySet()) {
+      String camelCasedDataKey =
+          dataKey.contains("_")
+              ? CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, dataKey)
+              : dataKey;
       if (!dar.has(camelCasedDataKey)) {
         dar.add(camelCasedDataKey, darData.get(dataKey));
       }
     }
     Type darMapType = new TypeToken<Map<String, Object>>() {}.getType();
-    return GSON.fromJson(dar.toString(), darMapType);
+    return gson.fromJson(dar.toString(), darMapType);
+  }
+
+  /**
+   * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates
+   * when calling Gson.toJson on `this`
+   * @param dar DataAccessRequest
+   * @return Shallow copy of DataAccessRequest
+   */
+  private Map<String, Object> shallowCopy(DataAccessRequest dar) {
+    Map<String, Object> copy = new HashMap<>();
+    copy.put("id", dar.getId());
+    copy.put("referenceId", dar.getReferenceId());
+    copy.put("createDate", dar.getCreateDate().getTime());
+    copy.put("updateDate", dar.getUpdateDate().getTime());
+    copy.put("sortDate", dar.getSortDate().getTime());
+    copy.put("submissionDate", dar.getSubmissionDate().getTime());
+    return copy;
   }
 }
