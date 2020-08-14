@@ -4,6 +4,7 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
 import java.util.Date;
+import org.broadinstitute.consent.http.models.DataSet;
 
 
 public class DatasetService {
@@ -15,7 +16,8 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public Integer createDataset(String name, Date createDate, String objectId, Boolean active, Integer alias) {
+    public DataSet createDataset(String json) {
+        DataSet dataset = new DataSet(json);
         Date now = new Date();
 
         //     Integer insertDataset(
@@ -24,7 +26,8 @@ public class DatasetService {
         //     @Bind("objectId") String objectId,
         //     @Bind("active") Boolean active,
         //     @Bind("alias") Integer alias);
-        return dataSetDAO.insertDataset(name, now, objectId, active, alias);
+//        return dataSetDAO.insertDataset(name, now, objectId, active, alias);
+        return dataset;
     }
 
 }
