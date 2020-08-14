@@ -3034,22 +3034,22 @@ definitions:
     properties:
       referenceId:
         type: string
-        description: The reference id for this DAR
+        description: The reference id for this DAR. Not modifiable once created.
       userId:
         type: integer
         format: int32
-        description: Describes the id of the User (Researcher).
+        description: Describes the id of the User. Not modifiable once created.
       createDate:
-        type: string
+        type: number
         description: Creation Date
       sortDate:
-        type: string
+        type: number
         description: Sort Date
       submissionDate:
-        type: string
+        type: number
         description: Submission Date
       updateDate:
-        type: string
+        type: number
         description: Update Date
       draft:
         type: boolean
@@ -3094,9 +3094,9 @@ definitions:
         description: Describes above field
       ontologies:
         type: array
+        description: Array of ontology terms
         items:
           type: string
-        description: Array of ontology terms
       forProfit:
         type: boolean
         description: Describes if data will be used for commercial purposes
@@ -3177,7 +3177,7 @@ definitions:
         description: Study involves Forensic Activities
       sharingDistribution:
         type: boolean
-        description: Study requires sharing disctribution
+        description: Study requires sharing distribution
   DataAccessRequestManage:
     type: object
     properties:
