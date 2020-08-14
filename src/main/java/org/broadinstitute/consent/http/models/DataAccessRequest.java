@@ -12,6 +12,7 @@ import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class DataAccessRequest {
 
@@ -147,17 +148,18 @@ public class DataAccessRequest {
   /**
    * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates
    * when calling Gson.toJson on `this`
+   *
    * @param dar DataAccessRequest
    * @return Shallow copy of DataAccessRequest
    */
   private Map<String, Object> shallowCopy(DataAccessRequest dar) {
     Map<String, Object> copy = new HashMap<>();
-    copy.put("id", dar.getId());
-    copy.put("referenceId", dar.getReferenceId());
-    copy.put("createDate", dar.getCreateDate().getTime());
-    copy.put("updateDate", dar.getUpdateDate().getTime());
-    copy.put("sortDate", dar.getSortDate().getTime());
-    copy.put("submissionDate", dar.getSubmissionDate().getTime());
+    if (Objects.nonNull(dar.getId())) copy.put("id", dar.getId());
+    if (Objects.nonNull(dar.getReferenceId())) copy.put("referenceId", dar.getReferenceId());
+    if (Objects.nonNull(dar.getCreateDate())) copy.put("createDate", dar.getCreateDate().getTime());
+    if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
+    if (Objects.nonNull(dar.getSortDate())) copy.put("sortDate", dar.getSortDate().getTime());
+    if (Objects.nonNull(dar.getSubmissionDate())) copy.put("submissionDate", dar.getSubmissionDate().getTime());
     return copy;
   }
 }
