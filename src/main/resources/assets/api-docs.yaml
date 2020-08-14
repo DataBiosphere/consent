@@ -1872,10 +1872,18 @@ paths:
       tags:
         - Datasets
       responses:
-        200:
+        201:
           description: Successfully created Dataset
           schema:
             $ref: '#/definitions/Dataset'
+        400:
+          description: External Error (invalid input)
+          schema:
+            type: string
+        500:
+          description: Internal Error (something went wrong processing a valid input)
+          schema:
+            type: string
   /api/dataset/sample:
     get:
       summary: getDataSetSample

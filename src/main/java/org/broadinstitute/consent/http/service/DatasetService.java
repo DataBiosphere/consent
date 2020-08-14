@@ -6,16 +6,16 @@ import javax.inject.Inject;
 import java.util.Date;
 
 
-public class DataSetService {
+public class DatasetService {
 
     private final DataSetDAO dataSetDAO;
 
     @Inject
-    public DataSetService(DataSetDAO dataSetDAO) {
+    public DatasetService(DataSetDAO dataSetDAO) {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public Integer createDataSet(String name, Date createDate, String objectId, Boolean active, Integer alias) {
+    public Integer createDataset(String name, Date createDate, String objectId, Boolean active, Integer alias) {
         Date now = new Date();
 
         //     Integer insertDataset(

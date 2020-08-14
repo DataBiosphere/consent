@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.DataSetService;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ParseResult;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -51,7 +51,7 @@ public class DatasetResourceTest {
     private DataAccessRequestAPI dataAccessRequestAPI;
 
     @Mock
-    private DataSetService dataSetService;
+    private DatasetService datasetService;
 
     @Mock
     private UserService userService;
@@ -68,7 +68,7 @@ public class DatasetResourceTest {
     private void initResource() {
         when(AbstractDataSetAPI.getInstance()).thenReturn(api);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
-        resource = new DataSetResource(dataSetService, userService);
+        resource = new DataSetResource(datasetService, userService);
     }
 
     @Test
