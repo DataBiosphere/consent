@@ -6,19 +6,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 public class DataAccessRequest {
-
-  private static final List<String> DEPRECATED_PROPS = Arrays.asList("referenceId", "investigator",
-      "institution", "department", "address1", "city", "zipcode", "zipCode", "state", "country",
-      "researcher", "userId", "isThePi", "havePi", "piEmail", "profileName", "pubmedId",
-      "scientificUrl", "urlDAA", "nameDAA", "eraExpiration", "academicEmail", "eraAuthorized",
-      "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail", "datasets",
-      "datasetId", "validRestriction", "translatedUseRestriction", "createDate", "sortDate");
 
   private static final Gson GSON = new Gson();
 
@@ -34,6 +25,11 @@ public class DataAccessRequest {
 
   @JsonProperty public Date createDate;
 
+  /**
+   * Legacy property on DARs. Used to display the sort order for a DAR.
+   * In practice, this also functions as the Update Date.
+   * See also https://broadinstitute.atlassian.net/browse/DUOS-728
+   */
   @JsonProperty public Date sortDate;
 
   @JsonProperty public Date submissionDate;
@@ -123,7 +119,7 @@ public class DataAccessRequest {
     JsonObject dar = GSON.toJsonTree(this).getAsJsonObject();
     dar.remove("data");
     JsonObject darData = GSON.toJsonTree(this.getData()).getAsJsonObject();
-    DEPRECATED_PROPS.forEach(darData::remove);
+    DataAccessRequestData.DEPRECATED_PROPS.forEach(darData::remove);
     for (String dataKey: darData.keySet()) {
       String camelCasedDataKey = dataKey.contains("_") ?
           CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, dataKey) :

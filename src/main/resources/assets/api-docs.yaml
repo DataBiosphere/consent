@@ -2758,14 +2758,17 @@ definitions:
         type: string
         format: date
         description: Creation Date.
-      lastUpdate:
+      updateDate:
         type: string
         format: date
         description: Date of the last update.
       sortDate:
         type: string
         format: date
-        description: The lastest modification date.
+        description: |
+          DEPRECATED: Use updateDate
+          The lastest modification date. This has historically been used to
+          determine sort order in addition to update date.
       translatedUseRestriction:
         type: string
         format: date
@@ -3106,7 +3109,7 @@ definitions:
       pediatric:
         type: boolean
         description: Describes if study is restricted to a pediatric population
-      illegalbehavior:
+      illegalBehavior:
         type: boolean
         description: If TRUE, triggers MANUAL REVIEW.
       addiction:
@@ -3115,7 +3118,7 @@ definitions:
       sexualDiseases:
         type: boolean
         description: If TRUE, triggers MANUAL REVIEW
-      stigmatizeDiseases:
+      stigmatizedDiseases:
         type: boolean
         description: If TRUE, triggers MANUAL REVIEW
       vulnerablePopulation:

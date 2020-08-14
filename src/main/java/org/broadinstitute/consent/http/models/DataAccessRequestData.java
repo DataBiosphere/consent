@@ -2,9 +2,25 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import java.util.Arrays;
 import java.util.List;
 
 public class DataAccessRequestData {
+
+    /**
+     * These properties are deprecated and should no longer be used.
+     * In many cases, they represent user properties, consent related properties,
+     * or duplicate existing DAR fields.
+     * See https://broadinstitute.atlassian.net/browse/DUOS-728 for more info.
+     */
+    public static final List<String> DEPRECATED_PROPS = Arrays
+        .asList("referenceId", "investigator",
+            "institution", "department", "address1", "address", "city", "zipcode", "zipCode",
+            "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
+            "profileName", "pubmedId", "scientificUrl", "urlDAA", "nameDAA", "eraExpiration",
+            "academicEmail", "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate",
+            "datasetDetail", "datasets", "datasetId", "validRestriction",
+            "translatedUseRestriction", "createDate", "sortDate");
 
     private String referenceId;
     private String investigator;

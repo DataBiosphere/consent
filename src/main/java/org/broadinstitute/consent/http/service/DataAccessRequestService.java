@@ -391,14 +391,15 @@ public class DataAccessRequestService {
      */
     public List<DataAccessRequest> createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
         Date now = new Date();
+        long nowTime = now.getTime();
         List<DataAccessRequest> newDARList = new ArrayList<>();
         DataAccessRequestData darData = dataAccessRequest.getData();
         darData.setPartialDarCode(null);
         darData.setUserId(user.getDacUserId());
         if (Objects.isNull(darData.getCreateDate())) {
-            darData.setCreateDate(now.getTime());
+            darData.setCreateDate(nowTime);
         }
-        darData.setSortDate(now.getTime());
+        darData.setSortDate(nowTime);
         List<Integer> datasets = dataAccessRequest.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasets)) {
             String darCodeSequence = "DAR-" + counterService.getNextDarSequence();

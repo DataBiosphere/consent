@@ -81,10 +81,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
   /**
    * Update DataAccessRequest by reference id and provided DataAccessRequestData
+   * Deprecated. Use `updateDataByReferenceIdVersion2`
    *
    * @param referenceId String
    * @param data DataAccessRequestData
    */
+  @Deprecated
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
       "UPDATE data_access_request SET data = to_jsonb(:data) WHERE reference_id = :referenceId")
@@ -92,15 +94,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
 
   /**
-   * Update DataAccessRequest by reference id and provided DataAccessRequestData
+   * Update DataAccessRequest properties by reference id.
+   * This version supercedes updateDataByReferenceId.
    *
    * @param referenceId String
-   * @param userId Integer
-   * @param createDate Date
-   * @param sortDate Date
-   * @param submissionDate Date
-   * @param updateDate Date
-   * @param data DataAccessRequestData
+   * @param userId Integer User
+   * @param createDate Date Creation Date
+   * @param sortDate Date Sorting Date
+   * @param submissionDate Date Submission Date
+   * @param updateDate Date Update Date
+   * @param data DataAccessRequestData DAR Properties
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
@@ -124,10 +127,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
   /**
    * Insert DataAccessRequest by reference id and provided DataAccessRequestData
+   * Deprecated. Use `insertVersion2`
    *
    * @param referenceId String
    * @param data DataAccessRequestData
    */
+  @Deprecated
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
       "INSERT INTO data_access_request (reference_id, data) VALUES (:referenceId, to_jsonb(:data)) ")
@@ -135,15 +140,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
 
   /**
-   * Insert DataAccessRequest by reference id and provided DataAccessRequestData
+   * Create new DataAccessRequest.
+   * This version supercedes `insert`
    *
    * @param referenceId String
-   * @param userId Integer
-   * @param createDate Date
-   * @param sortDate Date
-   * @param submissionDate Date
-   * @param updateDate Date
-   * @param data DataAccessRequestData
+   * @param userId Integer User
+   * @param createDate Date Creation Date
+   * @param sortDate Date Sorting Date
+   * @param submissionDate Date Submission Date
+   * @param updateDate Date Update Date
+   * @param data DataAccessRequestData DAR Properties
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
