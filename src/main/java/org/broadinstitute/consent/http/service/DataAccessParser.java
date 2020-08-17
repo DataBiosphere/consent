@@ -140,8 +140,8 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.NON_TECH_RUS:
-                    // Handle legacy "non_tech_rush"
-                case "non_tech_rush": {
+                    // Handle legacy "non_tech_rus"
+                case "non_tech_rus": {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.NON_TECH_RUS)));
                     break;
                 }
