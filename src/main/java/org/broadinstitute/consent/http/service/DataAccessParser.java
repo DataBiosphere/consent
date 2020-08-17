@@ -169,8 +169,8 @@ class DataAccessParser {
                     break;
                 }
                 case DarConstants.ILLEGAL_BEHAVE:
-                    // Handle legacy "onegender"
-                case "illegal_behave": {
+                    // Handle legacy "illegalbehave"
+                case "illegalbehave": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ILLEGAL_BEHAVE)));
                     break;
                 }
