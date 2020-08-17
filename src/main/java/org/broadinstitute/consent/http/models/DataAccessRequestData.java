@@ -15,11 +15,11 @@ public class DataAccessRequestData {
      */
     public static final List<String> DEPRECATED_PROPS = Arrays
         .asList("referenceId", "investigator",
-            "institution", "department", "address1", "address", "city", "zipcode", "zipCode",
+            "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
             "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
             "profileName", "pubmedId", "scientificUrl", "urlDAA", "nameDAA", "eraExpiration",
             "academicEmail", "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate",
-            "datasetDetail", "datasets", "datasetId", "validRestriction",
+            "datasetDetail", "datasets", "datasetId", "validRestriction", "restriction",
             "translatedUseRestriction", "createDate", "sortDate");
 
     private String referenceId;
@@ -98,7 +98,7 @@ public class DataAccessRequestData {
     private String translatedUseRestriction;
     private Long createDate;
     private Long sortDate;
-    @SerializedName(value = "datasetIds", alternate = "datasetId")
+    @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
     private List<DatasetDetailEntry> datasetDetail;
 
