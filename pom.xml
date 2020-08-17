@@ -15,7 +15,7 @@
     <dropwizard.version>2.0.12</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.16</owl.version>
-    <postgres.version>42.2.14</postgres.version>
+    <postgres.version>42.2.15</postgres.version>
     <rdf4j-rio.version>3.3.1</rdf4j-rio.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
