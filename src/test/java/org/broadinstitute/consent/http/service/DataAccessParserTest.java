@@ -64,9 +64,6 @@ public class DataAccessParserTest {
                         false,
                         PDDocument.load(getTemplateResource()).getDocumentCatalog().getAcroForm(),
                         TRANSLATED_USE_RESTRICTION);
-
-        acroForm.getFields().forEach(f -> System.out.println(f.getFullyQualifiedName()));
-
         assertEquals(acroForm.getField(ResearcherFields.INSTITUTION.getValue()).getValueAsString(), INSTITUTION);
         assertEquals(acroForm.getField(ResearcherFields.DEPARTMENT.getValue()).getValueAsString(), DEPARTMENT);
         assertEquals(acroForm.getField(ResearcherFields.STREET_ADDRESS_1.getValue()).getValueAsString(), STREET_1);
