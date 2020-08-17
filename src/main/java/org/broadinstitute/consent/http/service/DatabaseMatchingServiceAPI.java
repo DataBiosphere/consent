@@ -1,6 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
@@ -10,23 +22,11 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.models.matching.RequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.ResponseMatchingObject;
 import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
@@ -69,10 +69,12 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
 
     @Override
     public Match findMatchForPurpose(String purposeId){
-        Document dar = dataAccessAPI.describeDataAccessRequestById(purposeId);
-        Consent consent = findRelatedConsents(purposeId);
         Match match = null;
-        if(dar != null){
+        Document dar = dataAccessAPI.describeDataAccessRequestById(purposeId);
+        if (Objects.nonNull(dar)) {
+            List<Integer> dataSetIdList = DarUtil.getIntegerList(dar, DarConstants.DATASET_ID);
+            Consent consent = findRelatedConsent(dataSetIdList);
+            if (Objects.nonNull(consent)) {
                 try {
                     match = singleEntitiesMatch(consent, dar);
                 } catch (Exception e) {
@@ -80,6 +82,7 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
                     match = createMatch(consent.getConsentId(), purposeId, true, false);
                 }
             }
+        }
         return match;
     }
 
@@ -152,10 +155,9 @@ public class DatabaseMatchingServiceAPI extends AbstractMatchingServiceAPI {
         return consent;
     }
 
-    private Consent findRelatedConsents(String purposeId){
-        List<Integer> dataSetIdList = (dataAccessAPI.describeDataAccessRequestFieldsById(purposeId, Arrays.asList(DarConstants.DATASET_ID))).get("datasetId", List.class);
+    private Consent findRelatedConsent(List<Integer> dataSetIdList) {
         Consent consent =  null;
-        if(CollectionUtils.isNotEmpty(dataSetIdList)){
+        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
             consent = consentAPI.getConsentFromDatasetID(dataSetIdList.get(0));
         }
         return consent;
