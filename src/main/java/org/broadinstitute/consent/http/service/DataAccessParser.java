@@ -1,5 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
@@ -8,14 +15,6 @@ import org.broadinstitute.consent.http.enumeration.ResearcherFields;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 class DataAccessParser {
 
@@ -129,7 +128,9 @@ class DataAccessParser {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.PROJECT_TITLE)));
                     break;
                 }
-                case DarConstants.DATASET_ID: {
+                case DarConstants.DATASET_ID:
+                    // Handle legacy "datasetId"
+                case "datasetId": {
                     String parsedDatasets = parseDatasetDetail(dar);
                     field.setValue(parsedDatasets);
                     break;
@@ -138,7 +139,9 @@ class DataAccessParser {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.RUS)));
                     break;
                 }
-                case DarConstants.NON_TECH_RUS: {
+                case DarConstants.NON_TECH_RUS:
+                    // Handle legacy "non_tech_rush"
+                case "non_tech_rush": {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.NON_TECH_RUS)));
                     break;
                 }
@@ -151,7 +154,9 @@ class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.FOR_PROFIT)));
                     break;
                 }
-                case DarConstants.ONE_GENDER: {
+                case DarConstants.ONE_GENDER:
+                    // Handle legacy "onegender"
+                case "onegender": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ONE_GENDER)));
                     break;
                 }
@@ -163,7 +168,9 @@ class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.PEDIATRIC)));
                     break;
                 }
-                case DarConstants.ILLEGAL_BEHAVE: {
+                case DarConstants.ILLEGAL_BEHAVE:
+                    // Handle legacy "onegender"
+                case "illegal_behave": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ILLEGAL_BEHAVE)));
                     break;
                 }
@@ -171,27 +178,39 @@ class DataAccessParser {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.ADDICTION)));
                     break;
                 }
-                case DarConstants.SEXUAL_DISEASES: {
+                case DarConstants.SEXUAL_DISEASES:
+                    // Handle legacy "sexualdiseases"
+                case "sexualdiseases": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.SEXUAL_DISEASES)));
                     break;
                 }
-                case DarConstants.STIGMATIZED_DISEASES: {
+                case DarConstants.STIGMATIZED_DISEASES:
+                    // Handle legacy "stigmatizediseases"
+                case "stigmatizediseases": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.STIGMATIZED_DISEASES)));
                     break;
                 }
-                case DarConstants.VULNERABLE_POP: {
+                case DarConstants.VULNERABLE_POP:
+                    // Handle legacy "vulnerablepop"
+                case "vulnerablepop": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.VULNERABLE_POP)));
                     break;
                 }
-                case DarConstants.POP_MIGRATION: {
+                case DarConstants.POP_MIGRATION:
+                    // Handle legacy "popmigration"
+                case "popmigration": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.POP_MIGRATION)));
                     break;
                 }
-                case DarConstants.PSYCH_TRAITS: {
+                case DarConstants.PSYCH_TRAITS:
+                    // Handle legacy "psychtraits"
+                case "psychtraits": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.PSYCH_TRAITS)));
                     break;
                 }
-                case DarConstants.NOT_HEALTH: {
+                case DarConstants.NOT_HEALTH:
+                    // Handle legacy "nothealth"
+                case "nothealth": {
                     field.setValue(getYesOrNoValue(dar.getBoolean(DarConstants.NOT_HEALTH)));
                     break;
                 }
