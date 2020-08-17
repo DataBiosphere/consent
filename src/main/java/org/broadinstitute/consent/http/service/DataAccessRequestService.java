@@ -449,6 +449,13 @@ public class DataAccessRequestService {
         return newDARList;
     }
 
+    /**
+     * Update an existing DataAccessRequest. Replaces DataAccessRequestData.
+     *
+     * @param user The User
+     * @param dar The DataAccessRequest
+     * @return The updated DataAccessRequest
+     */
     public DataAccessRequest updateByReferenceIdVersion2(User user, DataAccessRequest dar) {
         Date now = new Date();
         dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
