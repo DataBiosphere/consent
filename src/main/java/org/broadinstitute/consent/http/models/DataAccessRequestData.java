@@ -109,10 +109,12 @@ public class DataAccessRequestData {
     private Boolean geneticStudiesOnly;
     private Boolean irb;
     private String irbDocumentLocation;
+    private String irbDocumentName;
     private String irbProtocolExpiration;
     private Boolean publication;
     private Boolean collaboration;
     private String collaborationLetterLocation;
+    private String collaborationLetterName;
     private Boolean forensicActivities;
     private Boolean sharingDistribution;
 
@@ -693,6 +695,14 @@ public class DataAccessRequestData {
         this.irbDocumentLocation = irbDocumentLocation;
     }
 
+    public String getIrbDocumentName() {
+        return irbDocumentName;
+    }
+
+    public void setIrbDocumentName(String irbDocumentName) {
+        this.irbDocumentName = irbDocumentName;
+    }
+
     public String getIrbProtocolExpiration() {
         return irbProtocolExpiration;
     }
@@ -723,6 +733,14 @@ public class DataAccessRequestData {
 
     public void setCollaborationLetterLocation(String collaborationLetterLocation) {
         this.collaborationLetterLocation = collaborationLetterLocation;
+    }
+
+    public String getCollaborationLetterName() {
+        return collaborationLetterName;
+    }
+
+    public void setCollaborationLetterName(String collaborationLetterName) {
+        this.collaborationLetterName = collaborationLetterName;
     }
 
     public Boolean getForensicActivities() {
