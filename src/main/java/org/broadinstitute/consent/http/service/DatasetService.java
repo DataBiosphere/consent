@@ -16,12 +16,10 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSet createTestDataSet(String json) {
-        return new DataSet(json);
-    }
-
-    public Integer createDataset(String name, String objectId, Boolean active, Integer alias) {
+    public DataSet createDataset(String name) {
         Date now = new Date();
+        int lastAlias = dataSetDAO.findLastAlias();
+        int alias = lastAlias + 1;
 
         //     Integer insertDataset(
         //     @Bind("name") String name,
@@ -29,7 +27,18 @@ public class DatasetService {
         //     @Bind("objectId") String objectId,
         //     @Bind("active") Boolean active,
         //     @Bind("alias") Integer alias);
-        return dataSetDAO.insertDataset(name, now, objectId, active, alias);
+        int id = dataSetDAO.insertDataset(name, now, null, false, alias);
+        DataSet result = dataSetDAO.findDataSetById(id);
+        return result;
+    }
+
+    // return -1 if no ds found
+    public Integer findDatasetByName(String name) {
+        Integer result = dataSetDAO.getDataSetByName(name);
+        if (result == null) {
+            return -1;
+        }
+        return result;
     }
 
 }

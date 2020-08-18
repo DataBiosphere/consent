@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.io.File;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -75,8 +77,19 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @Path("/test")
     @PermitAll
-    public Response createDataset(@Auth AuthUser user, String json) {
-        DataSet dataset = datasetService.createTestDataSet(json);
+    public Response createDataset(@Auth AuthUser user, String json) throws Exception {
+        DataSet ds = new Gson().fromJson(json, DataSet.class);
+        if (ds == null) {
+            throw new BadRequestException("Dataset is required");
+        }
+        if (ds.getName() == null) {
+            throw new BadRequestException("Dataset name is required");
+        }
+        Integer nameId = datasetService.findDatasetByName(ds.getName());
+        if (nameId >= 0) {
+            throw new Exception("Dataset name: " + ds.getName() + " is already in use");
+        }
+        DataSet dataset = datasetService.createDataset(ds.getName());
         return Response.ok().entity(dataset).status(201).build();
     }
 
