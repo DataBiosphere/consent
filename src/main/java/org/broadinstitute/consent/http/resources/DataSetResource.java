@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -36,6 +38,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -85,11 +88,14 @@ public class DataSetResource extends Resource {
         if (ds.getName() == null) {
             throw new BadRequestException("Dataset name is required");
         }
+        if (ds.getProperties() == null) {
+            throw new BadRequestException("Dataset must contain required properties");
+        }
         Integer nameId = datasetService.findDatasetByName(ds.getName());
         if (nameId >= 0) {
             throw new Exception("Dataset name: " + ds.getName() + " is already in use");
         }
-        DataSet dataset = datasetService.createDataset(ds.getName());
+        DataSet dataset = datasetService.createDataset(ds.getName(), ds.getProperties());
         return Response.ok().entity(dataset).status(201).build();
     }
 
