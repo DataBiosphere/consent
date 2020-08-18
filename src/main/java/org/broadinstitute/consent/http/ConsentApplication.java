@@ -66,6 +66,7 @@ import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DataAccessAgreementResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
+import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersion2;
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
 import org.broadinstitute.consent.http.resources.DataRequestElectionResource;
 import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
@@ -266,6 +267,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
+        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, userService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService));
         env.jersey().register(new DataSetResource(userService));
         env.jersey().register(DataSetAssociationsResource.class);

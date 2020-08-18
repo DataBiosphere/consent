@@ -683,7 +683,7 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      */
     private void sendDataCustodianNotification(String referenceId) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        List<Integer> datasetIdList = dar.getData().getDatasetId();
+        List<Integer> datasetIdList = dar.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasetIdList)) {
             Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
                     getDatasetAssociations(datasetIdList).stream().

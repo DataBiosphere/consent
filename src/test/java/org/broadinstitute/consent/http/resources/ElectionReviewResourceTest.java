@@ -109,7 +109,7 @@ public class ElectionReviewResourceTest {
         when(electionAPI.getConsentElectionByDARElectionId(e.getElectionId())).thenReturn(consentElection);
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
-        data.setDatasetId(Collections.singletonList(1));
+        data.setDatasetIds(Collections.singletonList(1));
         dar.setData(data);
         when(darService.findByReferenceId(any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());

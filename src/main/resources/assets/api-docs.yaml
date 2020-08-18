@@ -1124,10 +1124,79 @@ paths:
             $ref: '#/definitions/User'
         500:
           description: Server Error
+  /api/dar/v2:
+    post:
+      summary: Create Data Access Request, version 2
+      description: Creates a Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: The fields that represent a DAR in json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the created Data Access Request.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataAccessRequest'
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/{referenceId}:
+    get:
+      summary: Get a Data Access Request by Reference Id
+      description: Returns the created Data Access Request.
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a Data Access Request
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+        400:
+          description: The provided Reference Id is not a valid DAR identifier
+        404:
+          description: No DAR can be found with the provided identifier
+        500:
+          description: Server Error
+    put:
+      summary: Update a Data Access Request by Reference Id
+      description: Returns the updated Data Access Request.
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          type: string
+        - name: dar
+          in: body
+          description: The fields that represent a DAR in json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns a Data Access Request
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
   /api/dar:
     post:
       summary: createdDataAccessRequest
-      description: Creates a Data Access Request
+      description: |
+        DEPRECATED: Use POST /api/dar/v2
+        Creates a Data Access Request
       parameters:
         - name: dar
           in: body
@@ -1153,7 +1222,9 @@ paths:
   /api/dar/{id}:
     get:
       summary: describe
-      description: Retrieves the DAR identified by the ID
+      description: |
+        DEPRECATED: Use GET /api/dar/v2/{referenceId}
+        Retrieves the DAR identified by the ID
       parameters:
         - name: id
           in: path
@@ -1175,7 +1246,9 @@ paths:
           description: Server Error
     put:
       summary: updateDataAccessRequest
-      description: Updates the DAR identified by the dar_code.
+      description: |
+        DEPRECATED: Use PUT /api/dar/v2/{referenceId}
+        Updates the DAR identified by the dar_code.
       parameters:
         - name: id
           in: path
@@ -2685,14 +2758,17 @@ definitions:
         type: string
         format: date
         description: Creation Date.
-      lastUpdate:
+      updateDate:
         type: string
         format: date
         description: Date of the last update.
       sortDate:
         type: string
         format: date
-        description: The lastest modification date.
+        description: |
+          DEPRECATED: Use updateDate
+          The lastest modification date. This has historically been used to
+          determine sort order in addition to update date.
       translatedUseRestriction:
         type: string
         format: date
@@ -2958,111 +3034,150 @@ definitions:
     properties:
       referenceId:
         type: string
-        description: The reference id for this DAR
-      investigator:
-        type: string
-        description: 'Describes the name of the Principal Investigator.'
-      institution:
-        type: string
-        description: 'Describes the name of Institution.'
-      department:
-        type: string
-        description: 'Describes the name of the Institution Department.'
-      division:
-        type: string
-        description: 'Describes the name of the Division.'
-      address1:
-        type: string
-        description: 'Describes the principal address.'
-      address2:
-        type: string
-        description: 'Describes the secondary address. Optional.'
-      city:
-        type: string
-        description: 'Describes the name of the City.'
-      state:
-        type: string
-        description: 'Describes the name of the State.'
-      zipcode:
-        type: string
-        description: 'Describes the Zip Code number.'
-      country:
-        type: string
-        description: 'Describes the name of the Country.'
-      projectTitle:
-        type: string
-        description: 'Describes the Project Title.'
-      datasetId:
-        type: array
-        items:
-          type: string
-        description: 'Array of Dataset Ids.'
-      rus:
-        type: string
-        description: 'Describes the Research Use Statement.'
-      non_tech_rus:
-        type: string
-        description: 'Describes the Non Technical Summary.'
-      diseases:
-        type: boolean
-        description: 'Defines if the purpose of the study is disease-related.'
-      methods:
-        type: boolean
-        description: 'Defines if the purpose of the study is for Methods development.'
-      controls:
-        type: boolean
-        description: 'Defines if the purpose of the study is to increase the number of controls available for a comparison group.'
-      population:
-        type: boolean
-        description: 'Defines if the purpose of the study is to understand variation in the general population.'
-      other:
-        type: boolean
-        description: 'Defines if the purpose of the study is other than the above. If TRUE, triggers MANUAL REVIEW.'
-      otherText:
-        type: string
-        description: 'Describes above field.'
-      ontologies:
-        type: array
-        items:
-          type: string
-        description: 'Array of Ontologies.'
-      forProfit:
-        type: boolean
-        description: 'Describes if data will be used for commercial purposes.'
-      oneGender:
-        type: boolean
-        description: 'Describes if study is gender specific.'
-      pediatric:
-        type: boolean
-        description: 'Describes if study is restricted to a pediatric population.'
-      illegalbehave:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      addiction:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      sexualdiseases:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      stigmatizediseases:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      vulnerablepop:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      popmigration:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      psychtraits:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
-      nothealth:
-        type: boolean
-        description: 'If TRUE, triggers MANUAL REVIEW.'
+        description: The reference id for this DAR. Not modifiable once created.
       userId:
         type: integer
         format: int32
-        description: 'Describes the id of the User (Researcher).'
+        description: Describes the id of the User. Not modifiable once created.
+      createDate:
+        type: number
+        description: Creation Date
+      sortDate:
+        type: number
+        description: Sort Date
+      submissionDate:
+        type: number
+        description: Submission Date
+      updateDate:
+        type: number
+        description: Update Date
+      draft:
+        type: boolean
+        description: Draft status of this DAR
+      darCode:
+        type: string
+        description: Unique DAR Code
+      partialDarCode:
+        type: string
+        description: Unique Partial DAR Code
+      projectTitle:
+        type: string
+        description: Project Title
+      datasetIds:
+        type: array
+        items:
+          type: string
+        description: Array of Dataset Ids
+      rus:
+        type: string
+        description: Describes the Research Use Statement
+      nonTechRus:
+        type: string
+        description: Describes the Non Technical Summary
+      diseases:
+        type: boolean
+        description: Defines if the purpose of the study is disease-related
+      methods:
+        type: boolean
+        description: Defines if the purpose of the study is for Methods development
+      controls:
+        type: boolean
+        description: Defines if the purpose of the study is to increase the number of controls available for a comparison group
+      population:
+        type: boolean
+        description: Defines if the purpose of the study is to understand variation in the general population
+      other:
+        type: boolean
+        description: Defines if the purpose of the study is other than the above
+      otherText:
+        type: string
+        description: Describes above field
+      ontologies:
+        type: array
+        description: Array of ontology terms
+        items:
+          type: string
+      forProfit:
+        type: boolean
+        description: Describes if data will be used for commercial purposes
+      oneGender:
+        type: boolean
+        description: Describes if study is gender specific
+      gender:
+        type: string
+        description: F/M if oneGender is specified
+      pediatric:
+        type: boolean
+        description: Describes if study is restricted to a pediatric population
+      illegalBehavior:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW.
+      addiction:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      sexualDiseases:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      stigmatizedDiseases:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      vulnerablePopulation:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      populationMigration:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      psychiatricTraits:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      notHealth:
+        type: boolean
+        description: If TRUE, triggers MANUAL REVIEW
+      hmb:
+        type: boolean
+        description: HMB Research
+      poa:
+        type: boolean
+        description: Populations Origins Ancestry Research
+      anvilUse:
+        type: boolean
+        description: Anvil Use
+      cloudUse:
+        type: boolean
+        description: Cloud Use
+      cloudProvider:
+        type: string
+        description: Cloud Use Provider
+      cloudProviderType:
+        type: string
+        description: Cloud Use Provider Type
+      geneticStudiesOnly:
+        type: boolean
+        description: Genetic Studies Only
+      irb:
+        type: boolean
+        description: IRB Approval Required
+      irbDocumentLocation:
+        type: string
+        description: IRB Document Location
+      irbProtocolExpiration:
+        type: string
+        description: IRB Protocol Expiration
+      publication:
+        type: boolean
+        description: Publication Required
+      collaboration:
+        type: boolean
+        description: Collaboration Required
+      collaborationLetterLocation:
+        type: string
+        description: Collaboration Letter Location
+      forensicActivities:
+        type: boolean
+        description: Study involves Forensic Activities
+      sharingDistribution:
+        type: boolean
+        description: Study requires sharing distribution
   DataAccessRequestManage:
     type: object
     properties:

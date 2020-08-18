@@ -1,12 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,8 +9,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+import org.junit.Test;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class DataAccessParserTest {
@@ -37,7 +36,6 @@ public class DataAccessParserTest {
     private final String SCIENTIFIC_URL = "www.test.org";
     private final String PI_EMAIL = "vvtest@gmail.com";
     private final String PROJECT_TITLE = "Tittle Test";
-    private final String OBJECT_ID = "SC-01253";
     private final String DATASET_NAME = "Dataset Name";
     private final Integer DATASET_ID = 111;
     private final String RUS = "Purpose";
@@ -82,9 +80,7 @@ public class DataAccessParserTest {
         assertEquals(acroForm.getField(DarConstants.SCIENTIFIC_URL).getValueAsString(), SCIENTIFIC_URL);
         assertEquals(acroForm.getField(DarConstants.PI_EMAIL).getValueAsString(), ACADEMIC_BUSINESS_EMAIL);
         assertEquals(acroForm.getField(DarConstants.PROJECT_TITLE).getValueAsString(), PROJECT_TITLE);
-        assertEquals(acroForm.getField(DarConstants.DATASET_ID).getValueAsString(), DATASET_NAME + " | " + OBJECT_ID);
         assertEquals(acroForm.getField(DarConstants.RUS).getValueAsString(), RUS);
-        assertEquals(acroForm.getField(DarConstants.NON_TECH_RUS).getValueAsString(), NON_TECH_RUS);
         assertEquals("Yes", acroForm.getField(DarConstants.METHODS).getValueAsString());
         assertEquals("Yes", acroForm.getField(DarConstants.CONTROLS).getValueAsString());
         assertEquals("Yes", acroForm.getField(DarConstants.OTHER).getValueAsString());

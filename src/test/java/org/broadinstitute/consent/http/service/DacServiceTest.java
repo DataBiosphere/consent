@@ -778,7 +778,7 @@ public class DacServiceTest {
                     DataAccessRequest doc = new DataAccessRequest();
                     doc.setReferenceId(referenceId);
                     DataAccessRequestData data = new DataAccessRequestData();
-                    data.setDatasetId(dataSetIds);
+                    data.setDatasetIds(dataSetIds);
                     data.setReferenceId(referenceId);
                     doc.setData(data);
                     return doc;

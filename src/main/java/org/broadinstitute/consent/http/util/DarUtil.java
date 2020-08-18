@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,12 +49,15 @@ public class DarUtil {
                 filter(field -> form.containsKey(field) && Boolean.valueOf(form.get(field).toString())).collect(Collectors.toList()).isEmpty();
     }
 
-    public static  List<Integer> getIntegerList(Document dar, String key) {
+    public static List<Integer> getIntegerList(Document dar, String key) {
         List<?> datasets = dar.get(key, List.class);
-        return datasets.stream().
+        if (Objects.nonNull(datasets)) {
+            return datasets.stream().
                 filter(Objects::nonNull).
                 map(o -> Integer.valueOf(o.toString())).
                 collect(Collectors.toList());
+        }
+        return Collections.emptyList();
     }
 
 }

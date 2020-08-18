@@ -1,17 +1,18 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
-
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.User;
+import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
 
@@ -74,11 +75,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindByReferenceId() {
-        // no-op ... tested by createDataAccessRequest()
-    }
-
-    @Test
     public void testFindByReferenceIds() {
         DataAccessRequest dar1 = createDataAccessRequest();
         DataAccessRequest dar2 = createDataAccessRequest();
@@ -92,11 +88,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testDeleteByReferenceId() {
-        // no-op ... tested by tearDown()
-    }
-
-    @Test
     public void testUpdateByReferenceId() {
         DataAccessRequest dar = createDataAccessRequest();
         String rus = RandomStringUtils.random(10, true, false);
@@ -106,6 +97,32 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertEquals(rus, updatedDar.getData().getRus());
         assertFalse(updatedDar.getData().getValidRestriction());
+    }
+
+    @Test
+    public void testUpdateByReferenceIdVersion2() {
+        DataAccessRequest dar = createDataAccessRequestV2();
+        Date now = new Date();
+        User user = createUser();
+        String rus = RandomStringUtils.random(10, true, false);
+        dar.getData().setRus(rus);
+        dar.getData().setValidRestriction(false);
+        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, dar.getData());
+        DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+        assertEquals(rus, updatedDar.getData().getRus());
+        assertFalse(updatedDar.getData().getValidRestriction());
+    }
+
+    @Test
+    public void testInsert() {
+        DataAccessRequest dar = createDataAccessRequest();
+        assertNotNull(dar);
+    }
+
+    @Test
+    public void testInsertVersion2() {
+        DataAccessRequest dar = createDataAccessRequestV2();
+        assertNotNull(dar);
     }
 
     @Test

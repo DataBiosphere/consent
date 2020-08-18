@@ -1,7 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -16,27 +36,10 @@ import org.broadinstitute.consent.http.util.DarConstants;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 public class DatabaseMatchingServiceAPITest {
 
@@ -157,8 +160,8 @@ public class DatabaseMatchingServiceAPITest {
     }
 
     @Test
-    public void testFindMatchForPurpose(){
-        Match match =  matchApi.findMatchForPurpose("DAR-2");
+    public void testFindMatchForPurpose() {
+        Match match = matchApi.findMatchForPurpose("DAR-2");
         assertTrue(match.getMatch());
         assertTrue(!match.getFailed());
     }
@@ -229,6 +232,7 @@ public class DatabaseMatchingServiceAPITest {
             "\t\t}]\n" +
             "\t},\n" +
             "\t\"datasetId\": [1],\n" +
+            "\t\"datasetIds\": [1],\n" +
             "\t\"datasetDetail\": [{\n" +
             "\t\t\"datasetId\": 1,\n" +
             "\t\t\"name\": \"UHN_AsaWW (University of Toronto)-Carcinoid\"\n" +

@@ -2,92 +2,121 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-
+import java.util.Arrays;
 import java.util.List;
 
 public class DataAccessRequestData {
 
-    String referenceId;
-    String investigator;
-    String institution;
-    String department;
-    String division;
-    String address1;
-    String address2;
-    String city;
-    @SerializedName(value = "zipcode", alternate = "zipCode")
-    String zipCode;
-    String state;
-    String country;
-    String projectTitle;
-    Boolean checkCollaborator;
-    String researcher;
-    Integer userId;
-    String isThePi;
-    String havePi;
-    String piEmail;
-    String profileName;
-    String pubmedId;
-    String scientificUrl;
-    String urlDAA;
-    String nameDAA;
-    Boolean eraExpiration;
-    String academicEmail;
-    Boolean eraAuthorized;
-    String nihUsername;
-    String linkedIn;
-    String orcid;
-    String researcherGate;
+    /**
+     * These properties are deprecated and should no longer be used.
+     * In many cases, they represent user properties, consent related properties,
+     * or duplicate existing DAR fields.
+     * See https://broadinstitute.atlassian.net/browse/DUOS-728 for more info.
+     */
+    public static final List<String> DEPRECATED_PROPS = Arrays
+        .asList("referenceId", "investigator",
+            "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
+            "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
+            "profileName", "pubmedId", "scientificUrl", "urlDAA", "nameDAA", "eraExpiration",
+            "academicEmail", "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate",
+            "datasetDetail", "datasets", "datasetId", "validRestriction", "restriction",
+            "translatedUseRestriction", "createDate", "sortDate");
 
-    String rus;
-    @SerializedName(value = "non_tech_rus", alternate = "nonTechRus")
-    String nonTechRus;
-    Boolean diseases;
-    Boolean methods;
-    Boolean controls;
-    Boolean population;
-    Boolean other;
-    String otherText;
-    List<OntologyEntry> ontologies;
-    Boolean forProfit;
-    @SerializedName(value = "onegender", alternate = "oneGender")
-    Boolean oneGender;
-    String gender;
-    Boolean pediatric;
-    @SerializedName(value = "illegalbehave", alternate = "illegalBehavior")
-    Boolean illegalBehavior;
-    Boolean addiction;
-    @SerializedName(value = "sexualdiseases", alternate = "sexualDiseases")
-    Boolean sexualDiseases;
-    @SerializedName(value = "stigmatizediseases", alternate = "stigmatizedDiseases")
-    Boolean stigmatizedDiseases;
-    @SerializedName(value = "vulnerablepop", alternate = "vulnerablePopulation")
-    Boolean vulnerablePopulation;
-    @SerializedName(value = "popmigration", alternate = "populationMigration")
-    Boolean populationMigration;
-    @SerializedName(value = "psychtraits", alternate = "psychiatricTraits")
-    Boolean psychiatricTraits;
-    @SerializedName(value = "nothealth", alternate = "notHealth")
-    Boolean notHealth;
-    Boolean hmb;
-    String status;
-    Boolean poa;
-    List<DatasetEntry> datasets;
-    @SerializedName(value = "dar_code", alternate = "darCode")
-    String darCode;
-    @SerializedName(value = "partial_dar_code", alternate = "partialDarCode")
-    String partialDarCode;
-    Object restriction;
-    @SerializedName(value = "valid_restriction", alternate = "validRestriction")
-    Boolean validRestriction;
-    String translatedUseRestriction;
-    Long createDate;
-    Long sortDate;
-    List<Integer> datasetId;
-    List<DatasetDetailEntry> datasetDetail;
+    private String referenceId;
+    private String investigator;
+    private String institution;
+    private String department;
+    private String division;
+    private String address1;
+    private String address2;
+    private String city;
+    @SerializedName(value = "zipCode", alternate = "zipcode")
+    private String zipCode;
+    private String state;
+    private String country;
+    private String projectTitle;
+    private Boolean checkCollaborator;
+    private String researcher;
+    private Integer userId;
+    private String isThePi;
+    private String havePi;
+    private String piEmail;
+    private String profileName;
+    private String pubmedId;
+    private String scientificUrl;
+    private String urlDAA;
+    private String nameDAA;
+    private Boolean eraExpiration;
+    private String academicEmail;
+    private Boolean eraAuthorized;
+    private String nihUsername;
+    private String linkedIn;
+    private String orcid;
+    private String researcherGate;
 
-    public DataAccessRequestData() {
-    }
+    private String rus;
+    @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
+    private String nonTechRus;
+    private Boolean diseases;
+    private Boolean methods;
+    private Boolean controls;
+    private Boolean population;
+    private Boolean other;
+    private String otherText;
+    private List<OntologyEntry> ontologies;
+    private Boolean forProfit;
+    @SerializedName(value = "oneGender", alternate = "onegender")
+    private Boolean oneGender;
+    private String gender;
+    private Boolean pediatric;
+    @SerializedName(value = "illegalBehavior", alternate = "illegalbehave")
+    private Boolean illegalBehavior;
+    private Boolean addiction;
+    @SerializedName(value = "sexualDiseases", alternate = "sexualdiseases")
+    private Boolean sexualDiseases;
+    @SerializedName(value = "stigmatizedDiseases", alternate = "stigmatizediseases")
+    private Boolean stigmatizedDiseases;
+    @SerializedName(value = "vulnerablePopulation", alternate = "vulnerablepop")
+    private Boolean vulnerablePopulation;
+    @SerializedName(value = "populationMigration", alternate = "popmigration")
+    private Boolean populationMigration;
+    @SerializedName(value = "psychiatricTraits", alternate = "psychtraits")
+    private Boolean psychiatricTraits;
+    @SerializedName(value = "notHealth", alternate = "nothealth")
+    private Boolean notHealth;
+    private Boolean hmb;
+    private String status;
+    private Boolean poa;
+    private List<DatasetEntry> datasets;
+    @SerializedName(value = "darCode", alternate = "dar_code")
+    private String darCode;
+    @SerializedName(value = "partialDarCode", alternate = "partial_dar_code")
+    private String partialDarCode;
+    private Object restriction;
+    @SerializedName(value = "validRestriction", alternate = "valid_restriction")
+    private Boolean validRestriction;
+    private String translatedUseRestriction;
+    private Long createDate;
+    private Long sortDate;
+    @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
+    private List<Integer> datasetIds;
+    private List<DatasetDetailEntry> datasetDetail;
+
+    private Boolean anvilUse;
+    private Boolean cloudUse;
+    private String cloudProvider;
+    private String cloudProviderType;
+    private Boolean geneticStudiesOnly;
+    private Boolean irb;
+    private String irbDocumentLocation;
+    private String irbDocumentName;
+    private String irbProtocolExpiration;
+    private Boolean publication;
+    private Boolean collaboration;
+    private String collaborationLetterLocation;
+    private String collaborationLetterName;
+    private Boolean forensicActivities;
+    private Boolean sharingDistribution;
 
     @Override
     public String toString() {
@@ -546,12 +575,12 @@ public class DataAccessRequestData {
         this.sortDate = sortDate;
     }
 
-    public List<Integer> getDatasetId() {
-        return datasetId;
+    public List<Integer> getDatasetIds() {
+        return datasetIds;
     }
 
-    public void setDatasetId(List<Integer> datasetId) {
-        this.datasetId = datasetId;
+    public void setDatasetIds(List<Integer> datasetIds) {
+        this.datasetIds = datasetIds;
     }
 
     public List<DatasetDetailEntry> getDatasetDetail() {
@@ -608,5 +637,125 @@ public class DataAccessRequestData {
 
     public void setPoa(Boolean poa) {
         this.poa = poa;
+    }
+
+    public Boolean getCloudUse() {
+        return cloudUse;
+    }
+
+    public void setCloudUse(Boolean cloudUse) {
+        this.cloudUse = cloudUse;
+    }
+
+    public Boolean getAnvilUse() {
+        return anvilUse;
+    }
+
+    public void setAnvilUse(Boolean anvilUse) {
+        this.anvilUse = anvilUse;
+    }
+
+    public String getCloudProvider() {
+        return cloudProvider;
+    }
+
+    public void setCloudProvider(String cloudProvider) {
+        this.cloudProvider = cloudProvider;
+    }
+
+    public String getCloudProviderType() {
+        return cloudProviderType;
+    }
+
+    public void setCloudProviderType(String cloudProviderType) {
+        this.cloudProviderType = cloudProviderType;
+    }
+
+    public Boolean getGeneticStudiesOnly() {
+        return geneticStudiesOnly;
+    }
+
+    public void setGeneticStudiesOnly(Boolean geneticStudiesOnly) {
+        this.geneticStudiesOnly = geneticStudiesOnly;
+    }
+
+    public Boolean getIrb() {
+        return irb;
+    }
+
+    public void setIrb(Boolean irb) {
+        this.irb = irb;
+    }
+
+    public String getIrbDocumentLocation() {
+        return irbDocumentLocation;
+    }
+
+    public void setIrbDocumentLocation(String irbDocumentLocation) {
+        this.irbDocumentLocation = irbDocumentLocation;
+    }
+
+    public String getIrbDocumentName() {
+        return irbDocumentName;
+    }
+
+    public void setIrbDocumentName(String irbDocumentName) {
+        this.irbDocumentName = irbDocumentName;
+    }
+
+    public String getIrbProtocolExpiration() {
+        return irbProtocolExpiration;
+    }
+
+    public void setIrbProtocolExpiration(String irbProtocolExpiration) {
+        this.irbProtocolExpiration = irbProtocolExpiration;
+    }
+
+    public Boolean getPublication() {
+        return publication;
+    }
+
+    public void setPublication(Boolean publication) {
+        this.publication = publication;
+    }
+
+    public Boolean getCollaboration() {
+        return collaboration;
+    }
+
+    public void setCollaboration(Boolean collaboration) {
+        this.collaboration = collaboration;
+    }
+
+    public String getCollaborationLetterLocation() {
+        return collaborationLetterLocation;
+    }
+
+    public void setCollaborationLetterLocation(String collaborationLetterLocation) {
+        this.collaborationLetterLocation = collaborationLetterLocation;
+    }
+
+    public String getCollaborationLetterName() {
+        return collaborationLetterName;
+    }
+
+    public void setCollaborationLetterName(String collaborationLetterName) {
+        this.collaborationLetterName = collaborationLetterName;
+    }
+
+    public Boolean getForensicActivities() {
+        return forensicActivities;
+    }
+
+    public void setForensicActivities(Boolean forensicActivities) {
+        this.forensicActivities = forensicActivities;
+    }
+
+    public Boolean getSharingDistribution() {
+        return sharingDistribution;
+    }
+
+    public void setSharingDistribution(Boolean sharingDistribution) {
+        this.sharingDistribution = sharingDistribution;
     }
 }

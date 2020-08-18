@@ -90,6 +90,7 @@ public class DataAccessRequestResource extends Resource {
     @Consumes("application/json")
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
+    @Deprecated // Use DataAccessRequestResourceVersion2
     public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {
@@ -125,6 +126,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/{id}")
     @RolesAllowed(RESEARCHER)
+    @Deprecated // Use DataAccessRequestResourceVersion2
     public Response updateDataAccessRequest(Document dar, @PathParam("id") String id) {
         try {
             dar.remove(DarConstants.RESTRICTION);
@@ -186,6 +188,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     @Produces("application/json")
     @PermitAll
+    @Deprecated // Use DataAccessRequestResourceVersion2
     public Response describe(@PathParam("id") String id) {
         try {
             Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
@@ -432,8 +435,8 @@ public class DataAccessRequestResource extends Resource {
      */
     private Optional<Integer> getDatasetIdForDarId(String id) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
-        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetId())) ?
-                dar.getData().getDatasetId() :
+        List<Integer> datasetIdList = (Objects.nonNull(dar.getData()) && Objects.nonNull(dar.getData().getDatasetIds())) ?
+                dar.getData().getDatasetIds() :
                 Collections.emptyList();
         if (datasetIdList == null || datasetIdList.isEmpty()) {
             return Optional.empty();

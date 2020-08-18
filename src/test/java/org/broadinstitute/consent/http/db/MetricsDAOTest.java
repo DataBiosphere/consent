@@ -36,7 +36,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     Consent consent = createConsent(dac.getDacId());
     DataSet dataset = createDataset();
     DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setDatasetId(Collections.singletonList(dataset.getDataSetId()));
+    dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
     Election election = createElection(dar.getReferenceId(), dataset.getDataSetId());
@@ -74,7 +74,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     Consent consent = createConsent(dac.getDacId());
     DataSet dataset = createDataset();
     DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setDatasetId(Collections.singletonList(dataset.getDataSetId()));
+    dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
     Election election = createElection(dar.getReferenceId(), dataset.getDataSetId());

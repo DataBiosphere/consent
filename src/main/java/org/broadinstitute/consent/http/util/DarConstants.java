@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.util;
 
 public class DarConstants {
 
-    public static final String DATASET_ID = "datasetId";
+    public static final String DATASET_ID = "datasetIds";
 
     public static final String OBJECT_ID = "objectId";
 
@@ -17,7 +17,7 @@ public class DarConstants {
 
     public static final String DATASET_DETAIL = "datasetDetail";
 
-    public static final String DAR_CODE = "dar_code";
+    public static final String DAR_CODE = "darCode";
 
     public static final String VALID_RESTRICTION = "valid_restriction";
 
@@ -25,15 +25,13 @@ public class DarConstants {
 
     public static final String DATA_ACCESS_REQUEST_ID = "data_access_request_id";
 
-    public static final String REFERENCE_ID = "reference_id";
+    public static final String REFERENCE_ID = "referenceId";
 
     public static final String RESTRICTION = "restriction";
 
     public static final String TRANSLATED_RESTRICTION = "translatedUseRestriction";
 
-    public static final String PARTIAL_DAR_CODE = "partial_dar_code";
-
-    public static final String PARTIAL_DAR_CODE_COUNTER = "partial_dar_code_counter";
+    public static final String PARTIAL_DAR_CODE = "partialDarCode";
 
     public static final String STATUS = "status";
 
@@ -73,7 +71,7 @@ public class DarConstants {
 
     public static final String PI_EMAIL = "piEmail";
 
-    public static final String NON_TECH_RUS = "non_tech_rus";
+    public static final String NON_TECH_RUS = "nonTechRus";
 
     public static final String DISEASES = "diseases";
 
@@ -91,25 +89,25 @@ public class DarConstants {
 
     public static final String FOR_PROFIT = "forProfit";
 
-    public static final String ONE_GENDER = "onegender";
+    public static final String ONE_GENDER = "oneGender";
 
     public static final String PEDIATRIC = "pediatric";
 
-    public static final String ILLEGAL_BEHAVE = "illegalbehave";
+    public static final String ILLEGAL_BEHAVE = "illegalBehavior";
 
     public static final String ADDICTION = "addiction";
 
-    public static final String SEXUAL_DISEASES = "sexualdiseases";
+    public static final String SEXUAL_DISEASES = "sexualDiseases";
 
-    public static final String STIGMATIZED_DISEASES = "stigmatizediseases";
+    public static final String STIGMATIZED_DISEASES = "stigmatizedDiseases";
 
-    public static final String VULNERABLE_POP = "vulnerablepop";
+    public static final String VULNERABLE_POP = "vulnerablePopulation";
 
-    public static final String POP_MIGRATION = "popmigration";
+    public static final String POP_MIGRATION = "populationMigration";
 
-    public static final String PSYCH_TRAITS = "psychtraits";
+    public static final String PSYCH_TRAITS = "psychiatricTraits";
 
-    public static final String NOT_HEALTH = "nothealth";
+    public static final String NOT_HEALTH = "notHealth";
 
     public static final String GENDER = "gender";
 
