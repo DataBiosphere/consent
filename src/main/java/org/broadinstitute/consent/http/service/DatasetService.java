@@ -25,12 +25,6 @@ public class DatasetService {
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
 
-        //     Integer insertDataset(
-        //     @Bind("name") String name,
-        //     @Bind("createDate") Date createDate,
-        //     @Bind("objectId") String objectId,
-        //     @Bind("active") Boolean active,
-        //     @Bind("alias") Integer alias);
         Integer id = dataSetDAO.insertDataset(name, now, null, false, alias);
 
         List<DataSetProperty> propertyList = this.processDatasetProperties(id, now, properties);
@@ -49,9 +43,7 @@ public class DatasetService {
         return result;
     }
 
-    //    @SqlBatch("insert into datasetproperty (dataSetId, propertyKey, propertyValue, createDate )" +
-    //            " values (:dataSetId, :propertyKey, :propertyValue, :createDate)")
-    //    void insertDataSetsProperties(@BindBean List<DataSetProperty> dataSetPropertiesList);
+    // assumes that you will receive non-null values for all properties in receiveOrder
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date now, Set<DataSetProperty> properties) {
         List<DataSetProperty> result = new ArrayList<>(11);
         Iterator<DataSetProperty> iterator = properties.iterator();
