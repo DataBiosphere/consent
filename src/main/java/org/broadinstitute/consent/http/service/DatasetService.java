@@ -47,14 +47,11 @@ public class DatasetService {
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date now, Set<DataSetProperty> properties) {
         List<DataSetProperty> result = new ArrayList<>(11);
         Iterator<DataSetProperty> iterator = properties.iterator();
-        int keyId = 1;
         while (iterator.hasNext()) {
             DataSetProperty dsp = iterator.next();
             dsp.setDataSetId(datasetId);
-            dsp.setPropertyKey(keyId);
             dsp.setCreateDate(now);
             result.add(dsp);
-            keyId++;
         }
         return result;
     }
