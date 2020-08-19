@@ -8,8 +8,8 @@ import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
 import java.util.Date;
-import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 
 public class DatasetService {
 
@@ -20,7 +20,7 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSet createDataset(String name, Set<DataSetProperty> properties) {
+    public DataSetDTO createDataset(String name, Set<DataSetProperty> properties) {
         Date now = new Date();
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
@@ -30,8 +30,11 @@ public class DatasetService {
         List<DataSetProperty> propertyList = this.processDatasetProperties(id, now, properties);
         dataSetDAO.insertDataSetsProperties(propertyList);
 
-        DataSet result = dataSetDAO.findDataSetById(id);
-        return result;
+        Set<DataSetDTO> result = dataSetDAO.findDataSetWithPropertiesByDataSetIdWithOuterJoins(id);
+        for (DataSetDTO dataset : result ) {
+            return dataset;
+        }
+        return null;
     }
 
     // return -1 if no ds found
