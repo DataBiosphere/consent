@@ -61,7 +61,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertFalse(draftDars1.isEmpty());
         assertEquals(1, draftDars1.size());
 
-        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId);
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, false);
         List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftsByUserId(RandomUtils.nextInt(1, 100));
         assertTrue(draftDars2.isEmpty());
     }

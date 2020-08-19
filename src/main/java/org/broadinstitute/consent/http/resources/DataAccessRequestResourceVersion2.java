@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -57,20 +58,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response createDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     User user = findUserByEmail(authUser.getName());
-    DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = DataAccessRequestData.fromString(dar);
-    if (Objects.isNull(data)) {
-      data = new DataAccessRequestData();
-    }
-    if (Objects.nonNull(data.getReferenceId())) {
-      newDar.setReferenceId(data.getReferenceId());
-    } else {
-      String referenceId = UUID.randomUUID().toString();
-      newDar.setReferenceId(referenceId);
-      data.setReferenceId(referenceId);
-    }
-    newDar.setData(data);
-
+    DataAccessRequest newDar = parseDarFromJsonString(dar);
     try {
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
@@ -133,11 +121,51 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/draft")
+  @RolesAllowed(RESEARCHER)
+  public Response createDraftDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, String dar) {
+    User user = findUserByEmail(authUser.getName());
+    DataAccessRequest newDar = parseDarFromJsonString(dar);
+    try {
+      DataAccessRequest result = dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
+      URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
+      return Response.created(uri).entity(result).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private User findUserByEmail(String email) {
     User user = userService.findUserByEmail(email);
     if (user == null) {
       throw new NotFoundException("Unable to find User with the provided email: " + email);
     }
     return user;
+  }
+
+  private DataAccessRequest parseDarFromJsonString(String json) {
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData data = DataAccessRequestData.fromString(json);
+    if (Objects.isNull(data)) {
+      data = new DataAccessRequestData();
+    }
+    if (Objects.nonNull(data.getReferenceId())) {
+      newDar.setReferenceId(data.getReferenceId());
+    } else {
+      String referenceId = UUID.randomUUID().toString();
+      newDar.setReferenceId(referenceId);
+      data.setReferenceId(referenceId);
+    }
+    if (Objects.nonNull(data.getCreateDate())) {
+      newDar.setCreateDate(new Date(data.getCreateDate()));
+    }
+    if (Objects.nonNull(data.getSortDate())) {
+      newDar.setSortDate(new Date(data.getSortDate()));
+    }
+    newDar.setData(data);
+    return newDar;
   }
 }

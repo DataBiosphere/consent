@@ -301,14 +301,16 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial")
     @RolesAllowed(RESEARCHER)
-    public Response createPartialDataAccessRequest(@Context UriInfo info, Document dar) {
+    @Deprecated
+    public Response createPartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
+        User user = findUserByEmail(authUser.getName());
         URI uri;
         Document result = null;
         if ((dar.size() == 1 && dar.containsKey("userId")) || (dar.size() == 0)) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
         }
         try {
-            result = saveDraftDarRequest(dar);
+            result = saveDraftDarRequest(user, dar);
             uri = info.getRequestUriBuilder().path("/" + result.get(DarConstants.REFERENCE_ID)).build();
             return Response.created(uri).entity(result).build();
         } catch (Exception e) {
@@ -414,11 +416,11 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
-    private Document saveDraftDarRequest(Document dar) {
+    private Document saveDraftDarRequest(User user, Document dar) {
         Date now = new Date();
         dar.append(DarConstants.CREATE_DATE, now.getTime());
         dar.append(DarConstants.SORT_DATE, now.getTime());
-        return dataAccessRequestAPI.createDraftDataAccessRequest(dar);
+        return dataAccessRequestAPI.createDraftDataAccessRequest(user, dar);
     }
 
     private Integer obtainUserId(Document dar) {
@@ -453,4 +455,11 @@ public class DataAccessRequestResource extends Resource {
         }
     }
 
+    private User findUserByEmail(String email) {
+        User user = userService.findUserByEmail(email);
+        if (user == null) {
+            throw new NotFoundException("Unable to find User with the provided email: " + email);
+        }
+        return user;
+    }
 }

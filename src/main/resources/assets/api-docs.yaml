@@ -1191,6 +1191,25 @@ paths:
           description: Returns a Data Access Request
           schema:
             $ref: '#/definitions/DataAccessRequest'
+  /api/dar/v2/draft:
+    post:
+      summary: Create Draft Data Access Request
+      description: Create Draft Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: The fields that represent a Data Access Request, json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the created draft Data Access Request.
+        500:
+          description: Internal Server Error.
+
   /api/dar:
     post:
       summary: createdDataAccessRequest
@@ -1404,7 +1423,9 @@ paths:
   /api/dar/partial:
     post:
       summary: Create Partial Data Access Request
-      description: Create Partial Data Access Request
+      description: |
+        DEPRECATED: Use POST /api/dar/v2/draft
+        Create Partial Data Access Request
       parameters:
         - name: dar
           in: body

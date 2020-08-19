@@ -180,6 +180,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @param referenceId String
    */
-  @SqlUpdate("UPDATE data_access_request SET draft = false WHERE reference_id = :referenceId ")
-  void updateDraftByReferenceId(@Bind("referenceId") String referenceId);
+  @SqlUpdate("UPDATE data_access_request SET draft = :draft WHERE reference_id = :referenceId ")
+  void updateDraftByReferenceId(@Bind("referenceId") String referenceId, @Bind("draft") Boolean draft);
 }

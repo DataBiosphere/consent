@@ -34,7 +34,7 @@ public interface DataAccessRequestAPI {
     Document updateDataAccessRequest(Document dar, String id);
 
     // Draft/Partial Data Access Requests
-    Document createDraftDataAccessRequest(Document dataAccessRequest);
+    Document createDraftDataAccessRequest(User user, Document dataAccessRequest);
 
     Document updateDraftDataAccessRequest(Document draftDar);
 

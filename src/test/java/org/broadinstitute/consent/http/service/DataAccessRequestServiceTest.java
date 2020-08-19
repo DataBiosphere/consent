@@ -100,7 +100,7 @@ public class DataAccessRequestServiceTest {
         User user = new User(1, "email@test.org", "Display Name", new Date());
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
-        doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any());
+        doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any(), any());
         doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
         initService();
