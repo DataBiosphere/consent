@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -77,7 +78,7 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @Path("/test")
     @PermitAll
-    public Response createDataset(@Auth AuthUser user, String json) throws Exception {
+    public Response createDataset(@Auth AuthUser user, String json) {
         DataSet ds = new Gson().fromJson(json, DataSet.class);
         if (ds == null) {
             throw new BadRequestException("Dataset is required");
@@ -90,7 +91,7 @@ public class DataSetResource extends Resource {
         }
         Integer nameId = datasetService.findDatasetByName(ds.getName());
         if (nameId >= 0) {
-            throw new Exception("Dataset name: " + ds.getName() + " is already in use");
+            throw new BadRequestException("Dataset name: " + ds.getName() + " is already in use");
         }
         DataSetDTO dataset = datasetService.createDataset(ds.getName(), ds.getProperties());
         return Response.ok().entity(dataset).status(201).build();
