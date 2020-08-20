@@ -1,12 +1,7 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,9 +9,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class DARModalDetailsDTOTest {
 
@@ -32,14 +31,13 @@ public class DARModalDetailsDTOTest {
     private final String OTHERTEXT = "Other text";
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         when(darDocument.getString(DarConstants.DAR_CODE)).thenReturn(DAR_CODE);
         when(darDocument.getString(DarConstants.INVESTIGATOR)).thenReturn(INVESTIGATOR);
         when(darDocument.getString(DarConstants.INSTITUTION)).thenReturn(INSTITUTION);
         when(darDocument.getString(DarConstants.PROJECT_TITLE)).thenReturn(TITLE);
         when(darDocument.get(DarConstants.DATASET_DETAIL)).thenReturn(datasetDetail);
-
         when(darDocument.containsKey(DarConstants.DISEASES)).thenReturn(true);
         when(darDocument.getBoolean(DarConstants.DISEASES)).thenReturn(true);
         when(darDocument.containsKey(DarConstants.METHODS)).thenReturn(true);
@@ -51,9 +49,7 @@ public class DARModalDetailsDTOTest {
         when(darDocument.containsKey(DarConstants.OTHER)).thenReturn(true);
         when(darDocument.getBoolean(DarConstants.OTHER)).thenReturn(true);
         when(darDocument.getString(DarConstants.OTHER_TEXT)).thenReturn(OTHERTEXT);
-
         when(darDocument.get(DarConstants.ONTOLOGIES)).thenReturn(ontologies());
-
         when(darDocument.getBoolean(DarConstants.FOR_PROFIT)).thenReturn(false);
         when(darDocument.getBoolean(DarConstants.ONE_GENDER)).thenReturn(true);
         when(darDocument.getString(DarConstants.GENDER)).thenReturn("F");
