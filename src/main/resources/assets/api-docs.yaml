@@ -1936,6 +1936,33 @@ paths:
             type: array
             items:
               type: string
+  /api/dataset/test:
+    post:
+      summary: Creates the Dataset from JSON
+      description: Creates the Dataset from JSON (WIP)
+      consumes:
+        - application/json
+      parameters:
+        - name: json
+          in: body
+          description: Submitted dataset registration form
+          required: true
+          type: string
+      tags:
+        - Datasets
+      responses:
+        201:
+          description: Successfully created Dataset
+          schema:
+            $ref: '#/definitions/Dataset'
+        400:
+          description: External Error (invalid input)
+          schema:
+            type: string
+        500:
+          description: Internal Error (something went wrong processing a valid input)
+          schema:
+            type: string
   /api/dataset/sample:
     get:
       summary: getDataSetSample

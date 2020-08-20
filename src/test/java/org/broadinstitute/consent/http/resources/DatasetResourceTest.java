@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.testing.ResourceHelpers;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ParseResult;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -50,7 +52,13 @@ public class DatasetResourceTest {
     private DataAccessRequestAPI dataAccessRequestAPI;
 
     @Mock
+    private DatasetService datasetService;
+
+    @Mock
     private UserService userService;
+
+    @Mock
+    private AuthUser authUser;
 
     private DataSetResource resource;
 
@@ -64,7 +72,14 @@ public class DatasetResourceTest {
     private void initResource() {
         when(AbstractDataSetAPI.getInstance()).thenReturn(api);
         when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
-        resource = new DataSetResource(userService);
+        resource = new DataSetResource(datasetService, userService);
+    }
+
+    @Test
+    public void testCreateDataset() throws Exception {
+        initResource();
+        Response response = resource.createDataset(authUser, "");
+        assertEquals(201,response.getStatus());
     }
 
     @Test

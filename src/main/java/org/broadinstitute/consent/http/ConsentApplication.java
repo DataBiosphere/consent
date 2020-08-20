@@ -106,6 +106,7 @@ import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
@@ -219,6 +220,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final CounterService counterService = injector.getProvider(CounterService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
+        final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
@@ -269,7 +271,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, userService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService));
-        env.jersey().register(new DataSetResource(userService));
+        env.jersey().register(new DataSetResource(datasetService, userService));
         env.jersey().register(DataSetAssociationsResource.class);
         env.jersey().register(new ConsentResource(auditService, userService));
         env.jersey().register(new ConsentAssociationResource(userService));
