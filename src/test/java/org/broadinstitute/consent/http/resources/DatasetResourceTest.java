@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.testing.ResourceHelpers;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
@@ -77,8 +78,13 @@ public class DatasetResourceTest {
 
     @Test
     public void testCreateDataset() throws Exception {
+        DataSetDTO result = new DataSetDTO();
+        when(datasetService.findDatasetByName("test")).thenReturn(-1);
+        when(datasetService.createDataset(any(), any())).thenReturn(result);
+
         initResource();
-        Response response = resource.createDataset(authUser, "");
+        Response response = resource.createDataset(authUser, "{\"name\":\"test\",\"properties\":[]}");
+
         assertEquals(201,response.getStatus());
     }
 
