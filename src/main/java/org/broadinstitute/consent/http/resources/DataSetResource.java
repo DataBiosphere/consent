@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ParseResult;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -57,14 +58,26 @@ public class DataSetResource extends Resource {
     private final String END_OF_LINE = System.lineSeparator();
     private final String TSV_DELIMITER = "\t";
     private final DataSetAPI api;
+    private final DatasetService datasetService;
     private final DataAccessRequestAPI dataAccessRequestAPI;
     private final UserService userService;
 
     @Inject
-    public DataSetResource(UserService userService) {
+    public DataSetResource(DatasetService datasetService, UserService userService) {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.api = AbstractDataSetAPI.getInstance();
+        this.datasetService = datasetService;
         this.userService = userService;
+    }
+
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/test")
+    @PermitAll
+    public Response createDataset(@Auth AuthUser user, String json) {
+        DataSet dataset = datasetService.createTestDataSet(json);
+        return Response.ok().entity(dataset).status(201).build();
     }
 
     @POST

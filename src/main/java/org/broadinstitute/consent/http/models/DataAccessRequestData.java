@@ -117,6 +117,8 @@ public class DataAccessRequestData {
     private String collaborationLetterName;
     private Boolean forensicActivities;
     private Boolean sharingDistribution;
+    private List<Collaborator> labCollaborators;
+    private List<Collaborator> internalCollaborators;
 
     @Override
     public String toString() {
@@ -757,5 +759,23 @@ public class DataAccessRequestData {
 
     public void setSharingDistribution(Boolean sharingDistribution) {
         this.sharingDistribution = sharingDistribution;
+    }
+
+    public List<Collaborator> getLabCollaborators() {
+        return labCollaborators;
+    }
+
+    public void setLabCollaborators(
+        List<Collaborator> labCollaborators) {
+        this.labCollaborators = labCollaborators;
+    }
+
+    public List<Collaborator> getInternalCollaborators() {
+        return internalCollaborators;
+    }
+
+    public void setInternalCollaborators(
+        List<Collaborator> internalCollaborators) {
+        this.internalCollaborators = internalCollaborators;
     }
 }
