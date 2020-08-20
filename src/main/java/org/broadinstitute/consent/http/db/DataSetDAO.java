@@ -102,7 +102,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
   @UseRowMapper(DataSetPropertiesMapper.class)
   @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
       "FROM dataset d " +
-      "LEFT OUTER JOIN datasetproperty dp on dp.dataSetId = d.dataSetId" +
+      "LEFT OUTER JOIN datasetproperty dp on dp.dataSetId = d.dataSetId " +
       "LEFT OUTER JOIN dictionary k on k.keyId = dp.propertyKey " +
       "LEFT OUTER JOIN consentassociations ca on ca.dataSetId = d.dataSetId " +
       "LEFT OUTER JOIN consents c on c.consentId = ca.consentId " +

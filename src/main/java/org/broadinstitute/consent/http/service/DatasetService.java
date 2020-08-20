@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 
 public class DatasetService {
 
@@ -20,14 +21,14 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSetDTO createDataset(String name, Set<DataSetProperty> properties) {
+    public DataSetDTO createDataset(DataSetDTO dataset, String name) {
         Date now = new Date();
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
 
-        Integer id = dataSetDAO.insertDataset(name, now, null, false, alias);
+        Integer id = dataSetDAO.insertDataset(name, now, dataset.getObjectId(), dataset.getActive(), alias);
 
-        List<DataSetProperty> propertyList = processDatasetProperties(id, now, properties);
+        List<DataSetProperty> propertyList = processDatasetProperties(id, now, dataset.getProperties());
         dataSetDAO.insertDataSetsProperties(propertyList);
 
         DataSetDTO result = new DataSetDTO();
@@ -49,13 +50,15 @@ public class DatasetService {
     }
 
     // assumes that you will receive non-null values for all properties in receiveOrder
-    public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date now, Set<DataSetProperty> properties) {
-        List<DataSetProperty> result = new ArrayList<>(11);
-        Iterator<DataSetProperty> iterator = properties.iterator();
-        while (iterator.hasNext()) {
-            DataSetProperty dsp = iterator.next();
-            dsp.setDataSetId(datasetId);
+    public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date now, List<DataSetPropertyDTO> properties) {
+        List<DataSetProperty> result = new ArrayList<>(10);
+        // start at 1 to skip manually creating dataset name property
+        for (int i = 1; i < properties.size(); i++) {
+            DataSetProperty dsp = new DataSetProperty();
             dsp.setCreateDate(now);
+            dsp.setDataSetId(datasetId);
+            dsp.setPropertyKey(i+1);
+            dsp.setPropertyValue(properties.get(i).getPropertyValue());
             result.add(dsp);
         }
         return result;

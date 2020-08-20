@@ -20,6 +20,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -78,21 +79,22 @@ public class DataSetResource extends Resource {
     @Path("/v2")
     @PermitAll
     public Response createDataset(@Auth AuthUser user, String json) {
-        DataSet ds = new Gson().fromJson(json, DataSet.class);
+        DataSetDTO ds = new Gson().fromJson(json, DataSetDTO.class);
         if (ds == null) {
             throw new BadRequestException("Dataset is required");
-        }
-        if (ds.getName() == null) {
-            throw new BadRequestException("Dataset name is required");
         }
         if (ds.getProperties() == null) {
             throw new BadRequestException("Dataset must contain required properties");
         }
-        Integer nameId = datasetService.findDatasetByName(ds.getName());
-        if (nameId >= 0) {
-            throw new BadRequestException("Dataset name: " + ds.getName() + " is already in use");
+        String name = ds.getPropertyValue("Dataset Name");
+        if (name == null) {
+            throw new BadRequestException("Dataset name is required");
         }
-        DataSetDTO dataset = datasetService.createDataset(ds.getName(), ds.getProperties());
+        Integer nameId = datasetService.findDatasetByName(name);
+        if (nameId >= 0) {
+            throw new NotFoundException("Dataset name: " + name + " is already in use");
+        }
+        DataSetDTO dataset = datasetService.createDataset(ds, name);
         return Response.ok().entity(dataset).status(201).build();
     }
 
