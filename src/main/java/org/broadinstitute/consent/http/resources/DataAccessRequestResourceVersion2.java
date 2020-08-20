@@ -138,6 +138,24 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @PUT
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/draft/{referenceId}")
+  @RolesAllowed(RESEARCHER)
+  public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      originalDar.setData(data);
+      DataAccessRequest updatedDar = dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+      return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private User findUserByEmail(String email) {
     User user = userService.findUserByEmail(email);
     if (user == null) {

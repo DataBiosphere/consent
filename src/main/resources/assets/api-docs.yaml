@@ -1209,6 +1209,29 @@ paths:
           description: Returns the created draft Data Access Request.
         500:
           description: Internal Server Error.
+  /api/dar/v2/draft/{referenceId}:
+    put:
+      summary: Update Draft Data Access Request
+      description: Update Draft Data Access Request
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          type: string
+        - name: dar
+          in: body
+          description: The fields that represent a Data Access Request, json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the upated draft Data Access Request.
+        500:
+          description: Internal Server Error.
 
   /api/dar:
     post:

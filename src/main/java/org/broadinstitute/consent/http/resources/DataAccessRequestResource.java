@@ -301,7 +301,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial")
     @RolesAllowed(RESEARCHER)
-    @Deprecated
+    @Deprecated // Use DataAccessRequestResourceVersion2.createDraftDataAccessRequest
     public Response createPartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
         User user = findUserByEmail(authUser.getName());
         URI uri;
@@ -323,6 +323,7 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial")
     @RolesAllowed(RESEARCHER)
+    @Deprecated // Use DataAccessRequestResourceVersion2.updateDraftDataAccessRequest
     public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
         try {
             dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
