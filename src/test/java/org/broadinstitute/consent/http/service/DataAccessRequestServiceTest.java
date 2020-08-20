@@ -121,6 +121,30 @@ public class DataAccessRequestServiceTest {
         assertNotNull(newDar);
     }
 
+    @Test
+    public void testInsertDraftDataAccessRequest() {
+        User user = new User();
+        user.setDacUserId(1);
+        DataAccessRequest draft = generateDataAccessRequest();
+        doNothing()
+            .when(dataAccessRequestDAO)
+            .insertVersion2(any(), any(), any(), any(), any(), any(), any());
+        doNothing()
+            .when(dataAccessRequestDAO)
+            .updateDraftByReferenceId(any(), any());
+        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
+        initService();
+        DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
+        assertNotNull(dar);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInsertDraftDataAccessRequestFailure() {
+        initService();
+        DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
+        assertNotNull(dar);
+    }
+
     private DataAccessRequest generateDataAccessRequest() {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
