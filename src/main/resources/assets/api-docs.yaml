@@ -3077,6 +3077,24 @@ definitions:
       updateStatus:
         type: boolean
         description: Indicates if a consent has been updated from orsp
+  Collaborator:
+    type: object
+    properties:
+      approverStatus:
+        type: boolean
+        description: Collaborator approver/downloader status
+      email:
+        type: string
+        description: Collaborator email
+      eraCommonsId:
+        type: string
+        description: Collaborator era commons id
+      name:
+        type: string
+        description: Collaborator name
+      title:
+        type: string
+        description: Collaborator title
   DataAccessRequest:
     type: object
     properties:
@@ -3226,6 +3244,18 @@ definitions:
       sharingDistribution:
         type: boolean
         description: Study requires sharing distribution
+      internalCollaborators:
+        type: array
+        description: Array of ontology terms
+        items:
+          type: object
+          $ref: '#/definitions/Collaborator'
+      labCollaborators:
+        type: array
+        description: Array of ontology terms
+        items:
+          type: object
+          $ref: '#/definitions/Collaborator'
   DataAccessRequestManage:
     type: object
     properties:
