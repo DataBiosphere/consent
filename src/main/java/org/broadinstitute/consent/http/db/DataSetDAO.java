@@ -101,10 +101,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
   @UseRowMapper(DataSetPropertiesMapper.class)
   @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
-      "from dataset d left outer join datasetproperty dp on dp.dataSetId = d.dataSetId left outer join dictionary k on k.keyId = dp.propertyKey " +
-      "left outer join consentassociations ca on ca.dataSetId = d.dataSetId left outer join consents c on c.consentId = ca.consentId " +
-      "where d.dataSetId = :dataSetId order by d.dataSetId, k.displayOrder")
-  Set<DataSetDTO> findDataSetWithPropertiesByDataSetIdWithOuterJoins(@Bind("dataSetId") Integer dataSetId);
+      "FROM dataset d " +
+      "LEFT OUTER JOIN datasetproperty dp on dp.dataSetId = d.dataSetId" +
+      "LEFT OUTER JOIN dictionary k on k.keyId = dp.propertyKey " +
+      "LEFT OUTER JOIN consentassociations ca on ca.dataSetId = d.dataSetId " +
+      "LEFT OUTER JOIN consents c on c.consentId = ca.consentId " +
+      "WHERE d.dataSetId = :datasetId " +
+      "ORDER BY d.dataSetId, k.displayOrder")
+  Set<DataSetDTO> findDatasetDTOWithPropsByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId " +

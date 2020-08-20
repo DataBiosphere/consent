@@ -1863,7 +1863,7 @@ paths:
             type: array
             items:
               type: string
-  /api/dataset/test:
+  /api/dataset/v2:
     post:
       summary: Creates the Dataset from JSON
       description: Creates the Dataset from JSON (WIP)
@@ -1872,7 +1872,7 @@ paths:
       parameters:
         - name: json
           in: body
-          description: Submitted dataset registration form
+          description:  Dataset in json format
           required: true
           type: string
       tags:

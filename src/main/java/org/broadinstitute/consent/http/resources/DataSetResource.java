@@ -75,7 +75,7 @@ public class DataSetResource extends Resource {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    @Path("/test")
+    @Path("/v2")
     @PermitAll
     public Response createDataset(@Auth AuthUser user, String json) {
         DataSet ds = new Gson().fromJson(json, DataSet.class);

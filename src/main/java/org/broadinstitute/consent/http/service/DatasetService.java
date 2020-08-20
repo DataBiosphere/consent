@@ -27,11 +27,11 @@ public class DatasetService {
 
         Integer id = dataSetDAO.insertDataset(name, now, null, false, alias);
 
-        List<DataSetProperty> propertyList = this.processDatasetProperties(id, now, properties);
+        List<DataSetProperty> propertyList = processDatasetProperties(id, now, properties);
         dataSetDAO.insertDataSetsProperties(propertyList);
 
         DataSetDTO result = new DataSetDTO();
-        Set<DataSetDTO> set = dataSetDAO.findDataSetWithPropertiesByDataSetIdWithOuterJoins(id);
+        Set<DataSetDTO> set = dataSetDAO.findDatasetDTOWithPropsByDatasetId(id);
 
         for (DataSetDTO ds : set) {
             result = ds;
