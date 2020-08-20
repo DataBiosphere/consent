@@ -57,9 +57,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @RolesAllowed(RESEARCHER)
   public Response createDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
-    User user = findUserByEmail(authUser.getName());
-    DataAccessRequest newDar = parseDarFromJsonString(dar);
     try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest newDar = parseDarFromJsonString(dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
@@ -127,9 +127,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Path("/draft")
   @RolesAllowed(RESEARCHER)
   public Response createDraftDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, String dar) {
-    User user = findUserByEmail(authUser.getName());
-    DataAccessRequest newDar = parseDarFromJsonString(dar);
     try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest newDar = parseDarFromJsonString(dar);
       DataAccessRequest result = dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
       return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
