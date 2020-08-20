@@ -132,7 +132,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     try {
       DataAccessRequest result = dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
-      return Response.created(uri).entity(result).build();
+      return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
