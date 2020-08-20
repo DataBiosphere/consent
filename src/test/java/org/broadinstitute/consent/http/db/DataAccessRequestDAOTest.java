@@ -57,13 +57,26 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void updateDraftToNonDraft() {
         DataAccessRequest dar = createDraftDataAccessRequest();
 
-        List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftsByUserId(dar.getData().getUserId());
+        List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(draftDars1.isEmpty());
         assertEquals(1, draftDars1.size());
 
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, false);
-        List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftsByUserId(RandomUtils.nextInt(1, 100));
+        List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertTrue(draftDars2.isEmpty());
+    }
+
+    @Test
+    public void updateNonDraftToDraft() {
+        DataAccessRequest dar = createDataAccessRequest();
+
+        List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
+        assertTrue(draftDars1.isEmpty());
+
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
+        List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
+        assertFalse(draftDars2.isEmpty());
+        assertEquals(1, draftDars2.size());
     }
 
     @Test
