@@ -83,7 +83,7 @@ public class DatasetResourceTest {
         when(datasetService.createDataset(any(), any())).thenReturn(result);
 
         initResource();
-        Response response = resource.createDataset(authUser, "{\"name\":\"test\",\"properties\":[]}");
+        Response response = resource.createDataset(authUser, "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
 
         assertEquals(201,response.getStatus());
     }
