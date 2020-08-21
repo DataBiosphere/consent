@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
