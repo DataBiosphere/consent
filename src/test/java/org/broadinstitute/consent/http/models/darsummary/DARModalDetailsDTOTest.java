@@ -1,12 +1,7 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,9 +9,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.bson.Document;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class DARModalDetailsDTOTest {
 
@@ -32,42 +31,37 @@ public class DARModalDetailsDTOTest {
     private final String OTHERTEXT = "Other text";
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         when(darDocument.getString(DarConstants.DAR_CODE)).thenReturn(DAR_CODE);
         when(darDocument.getString(DarConstants.INVESTIGATOR)).thenReturn(INVESTIGATOR);
         when(darDocument.getString(DarConstants.INSTITUTION)).thenReturn(INSTITUTION);
         when(darDocument.getString(DarConstants.PROJECT_TITLE)).thenReturn(TITLE);
         when(darDocument.get(DarConstants.DATASET_DETAIL)).thenReturn(datasetDetail);
-
-        when(darDocument.containsKey("diseases")).thenReturn(true);
-        when(darDocument.getBoolean("diseases")).thenReturn(true);
-        when(darDocument.containsKey("methods")).thenReturn(true);
-        when(darDocument.getBoolean("methods")).thenReturn(true);
-        when(darDocument.containsKey("controls")).thenReturn(true);
-        when(darDocument.getBoolean("controls")).thenReturn(true);
-        when(darDocument.containsKey("population")).thenReturn(true);
-        when(darDocument.getBoolean("population")).thenReturn(true);
-        when(darDocument.containsKey("other")).thenReturn(true);
-        when(darDocument.getBoolean("other")).thenReturn(true);
-        when(darDocument.getString("otherText")).thenReturn(OTHERTEXT);
-
-        when(darDocument.get("ontologies")).thenReturn(ontologies());
-
-        when(darDocument.getBoolean("forProfit")).thenReturn(false);
-        when(darDocument.getBoolean("onegender")).thenReturn(true);
-        when(darDocument.getString("gender")).thenReturn("F");
-        when(darDocument.getBoolean("pediatric")).thenReturn(true);
-        when(darDocument.getBoolean("illegalbehave")).thenReturn(true);
-        when(darDocument.getBoolean("addiction")).thenReturn(true);
-        when(darDocument.getBoolean("sexualdiseases")).thenReturn(true);
-        when(darDocument.getBoolean("stigmatizediseases")).thenReturn(true);
-        when(darDocument.getBoolean("vulnerablepop")).thenReturn(true);
-        when(darDocument.getBoolean("popmigration")).thenReturn(true);
-        when(darDocument.getBoolean("psychtraits")).thenReturn(true);
-        when(darDocument.getBoolean("nothealth")).thenReturn(true);
-        when(darDocument.getBoolean("popmigration")).thenReturn(true);
-
+        when(darDocument.containsKey(DarConstants.DISEASES)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.DISEASES)).thenReturn(true);
+        when(darDocument.containsKey(DarConstants.METHODS)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.METHODS)).thenReturn(true);
+        when(darDocument.containsKey(DarConstants.CONTROLS)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.CONTROLS)).thenReturn(true);
+        when(darDocument.containsKey(DarConstants.POPULATION)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.POPULATION)).thenReturn(true);
+        when(darDocument.containsKey(DarConstants.OTHER)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.OTHER)).thenReturn(true);
+        when(darDocument.getString(DarConstants.OTHER_TEXT)).thenReturn(OTHERTEXT);
+        when(darDocument.get(DarConstants.ONTOLOGIES)).thenReturn(ontologies());
+        when(darDocument.getBoolean(DarConstants.FOR_PROFIT)).thenReturn(false);
+        when(darDocument.getBoolean(DarConstants.ONE_GENDER)).thenReturn(true);
+        when(darDocument.getString(DarConstants.GENDER)).thenReturn("F");
+        when(darDocument.getBoolean(DarConstants.PEDIATRIC)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.ILLEGAL_BEHAVE)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.ADDICTION)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.SEXUAL_DISEASES)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.STIGMATIZED_DISEASES)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.VULNERABLE_POP)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.POP_MIGRATION)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.PSYCH_TRAITS)).thenReturn(true);
+        when(darDocument.getBoolean(DarConstants.NOT_HEALTH)).thenReturn(true);
         when(darDocument.get(DarConstants.DATASET_DETAIL)).thenReturn(getDatasetDetail());
     }
 
