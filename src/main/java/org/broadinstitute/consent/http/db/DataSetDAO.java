@@ -100,14 +100,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetDTO> findDataSetWithPropertiesByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
   @UseRowMapper(DataSetPropertiesMapper.class)
-  @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
+  @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction " +
       "FROM dataset d " +
-      "LEFT OUTER JOIN datasetproperty dp on dp.dataSetId = d.dataSetId " +
-      "LEFT OUTER JOIN dictionary k on k.keyId = dp.propertyKey " +
-      "LEFT OUTER JOIN consentassociations ca on ca.dataSetId = d.dataSetId " +
-      "LEFT OUTER JOIN consents c on c.consentId = ca.consentId " +
-      "WHERE d.dataSetId = :datasetId " +
-      "ORDER BY d.dataSetId, k.displayOrder")
+      "LEFT OUTER JOIN datasetproperty dp on dp.datasetid = d.datasetid " +
+      "LEFT OUTER JOIN dictionary k on k.keyid = dp.propertykey " +
+      "LEFT OUTER JOIN consentassociations ca on ca.datasetid = d.datasetid " +
+      "LEFT OUTER JOIN consents c on c.consentid = ca.consentid " +
+      "WHERE d.datasetid = :datasetId " +
+      "ORDER BY d.datasetid, k.displayorder")
   Set<DataSetDTO> findDatasetDTOWithPropsByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
@@ -184,7 +184,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     String getAssociatedConsentIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
     @SqlQuery("SELECT dataSetId FROM dataset WHERE name = :name")
-    Integer getDataSetByName(@Bind("name") String name);
+    Integer getDatasetIdByName(@Bind("name") String name);
+
+    @SqlQuery("SELECT * FROM dataset WHERE lower(name) = lower(:name) LIMIT 1")
+    DataSet findDatasetByName(@Bind("name") String name);
 
     @SqlQuery("select *  from dataset where name in (<names>) ")
     List<DataSet> searchDataSetsByNameList(@BindList("names") List<String> names);

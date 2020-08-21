@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -90,8 +91,8 @@ public class DataSetResource extends Resource {
         if (name == null) {
             throw new BadRequestException("Dataset name is required");
         }
-        Integer nameId = datasetService.findDatasetByName(name);
-        if (nameId >= 0) {
+        DataSet datasetNameAlreadyUsed = datasetService.findDatasetByName(name);
+        if (Objects.nonNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Dataset name: " + name + " is already in use");
         }
         DataSetDTO dataset = datasetService.createDataset(ds, name);
