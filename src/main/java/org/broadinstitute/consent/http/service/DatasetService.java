@@ -48,11 +48,9 @@ public class DatasetService {
     return dataSetDAO.findDatasetByName(name);
   }
 
-  // assumes that you will receive non-null values for all properties in receiveOrder
   public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date now,
       List<DataSetPropertyDTO> properties) {
     List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
-    // removes Dataset Name property, which is generated and doesn't need to be manually inserted
 
     return properties.stream()
         .filter(p -> !p.getPropertyName().equals("Dataset Name"))
