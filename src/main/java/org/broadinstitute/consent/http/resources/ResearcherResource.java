@@ -84,9 +84,10 @@ public class ResearcherResource extends Resource {
             validateAuthedRoleUser(authedRoles, findByAuthUser(authUser), userId);
             User user = userService.findUserById(userId);
             List<ResearcherProperty> props = userService.findAllUserProperties(userId);
-            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
             Map<String, Object> propMap = props.stream().
-                    collect(Collectors.toMap(ResearcherProperty::getPropertyKey, ResearcherProperty::getPropertyValue));
+                collect(Collectors.toMap(ResearcherProperty::getPropertyKey, ResearcherProperty::getPropertyValue));
+            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
+            propMap.put(ResearcherFields.LIBRARY_CARD_ENTRIES, entries);
             List<String> orgs = entries.stream().
                     map(WhitelistEntry::getOrganization).
                     distinct().
