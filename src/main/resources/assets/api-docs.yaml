@@ -1874,7 +1874,8 @@ paths:
           in: body
           description:  Dataset in json format
           required: true
-          type: string
+          schema:
+            $ref: '#/definitions/Dataset'
       tags:
         - Datasets
       responses:
