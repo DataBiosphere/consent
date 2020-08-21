@@ -177,12 +177,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       newDar.setReferenceId(referenceId);
       data.setReferenceId(referenceId);
     }
-    if (Objects.nonNull(data.getCreateDate())) {
-      newDar.setCreateDate(new Date(data.getCreateDate()));
-    }
-    if (Objects.nonNull(data.getSortDate())) {
-      newDar.setSortDate(new Date(data.getSortDate()));
-    }
     newDar.setData(data);
     return newDar;
   }
