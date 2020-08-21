@@ -79,7 +79,7 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDataset() throws Exception {
         DataSetDTO result = new DataSetDTO();
-        when(datasetService.findDatasetByName("test")).thenReturn(-1);
+        when(datasetService.findDatasetByName("test")).thenReturn(null);
         when(datasetService.createDataset(any(), any())).thenReturn(result);
 
         initResource();
