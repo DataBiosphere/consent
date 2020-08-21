@@ -84,48 +84,48 @@ public class DARModalDetailsDTO {
 
     public List<SummaryItem> generatePurposeStatementsSummary(Document darDocument) {
         List<SummaryItem> psList = new ArrayList<>();
-        if(darDocument.getBoolean("forProfit")){
+        if(darDocument.getBoolean(DarConstants.FOR_PROFIT)){
             psList.add(new SummaryItem(SummaryConstants.PS_FOR_PROFIT, false));
         }
-        if(darDocument.getBoolean("onegender")) {
-            if (darDocument.getString("gender").equals("F")) {
+        if(darDocument.getBoolean(DarConstants.ONE_GENDER)) {
+            if (darDocument.getString(DarConstants.GENDER).equalsIgnoreCase("F")) {
                 psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_FEMALE, false));
             } else {
                 psList.add(new SummaryItem("Gender: ", SummaryConstants.PS_GENDER_MALE, false));
             }
         }
-        if(darDocument.getBoolean("pediatric")){
+        if(darDocument.getBoolean(DarConstants.PEDIATRIC)){
             psList.add(new SummaryItem("Pediatric: ", SummaryConstants.PS_PEDIATRIC_STUDY, false));
         }
-        if(darDocument.getBoolean("illegalbehave")){
+        if(darDocument.getBoolean(DarConstants.ILLEGAL_BEHAVE)){
             psList.add(new SummaryItem("Illegal Behavior: ", SummaryConstants.PS_ILLEGAL_BEHAVIOR_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("addiction")){
+        if(darDocument.getBoolean(DarConstants.ADDICTION)){
             psList.add(new SummaryItem("Addiction: ", SummaryConstants.PS_ADDICTIONS_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("sexualdiseases")){
+        if(darDocument.getBoolean(DarConstants.SEXUAL_DISEASES)){
             psList.add(new SummaryItem("Sexual Diseases: ", SummaryConstants.PS_SEXUAL_DISEASES_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("stigmatizediseases")){
+        if(darDocument.getBoolean(DarConstants.STIGMATIZED_DISEASES)){
             psList.add(new SummaryItem("Stigmatized Diseases: ", SummaryConstants.PS_STIGMATIZING_ILLNESSES_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("vulnerablepop")){
+        if(darDocument.getBoolean(DarConstants.VULNERABLE_POP)){
             psList.add(new SummaryItem("Vulnerable Population: ", SummaryConstants.PS_VULNERABLE_POPULATION_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("popmigration")){
-            psList.add(new SummaryItem("population Migration: ", SummaryConstants.PS_POPULATION_MIGRATION_STUDY, true));
+        if(darDocument.getBoolean(DarConstants.POP_MIGRATION)){
+            psList.add(new SummaryItem("Population Migration: ", SummaryConstants.PS_POPULATION_MIGRATION_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("psychtraits")){
-            psList.add(new SummaryItem("Psycological Traits: ", SummaryConstants.PS_PSYCOLOGICAL_TRAITS_STUDY, true));
+        if(darDocument.getBoolean(DarConstants.PSYCH_TRAITS)){
+            psList.add(new SummaryItem("Psychological Traits: ", SummaryConstants.PS_PSYCOLOGICAL_TRAITS_STUDY, true));
             sensitivePopulationIsTrue();
         }
-        if(darDocument.getBoolean("nothealth")){
+        if(darDocument.getBoolean(DarConstants.NOT_HEALTH)){
             psList.add(new SummaryItem("Not Health Related: ", SummaryConstants.PS_NOT_HEALT_RELATED_STUDY
                     , true));
             sensitivePopulationIsTrue();
@@ -137,7 +137,7 @@ public class DARModalDetailsDTO {
     }
 
     private List<String> generateDiseasesSummary(Document darDocument) {
-        List<Map<String, String>> ontologies = (List<Map<String, String>>) darDocument.get("ontologies");
+        List<Map<String, String>> ontologies = (List<Map<String, String>>) darDocument.get(DarConstants.ONTOLOGIES);
         List<String> diseases = new ArrayList<>();
         if(!CollectionUtils.isEmpty(ontologies)) {
             setIsThereDiseases(true);
@@ -150,27 +150,27 @@ public class DARModalDetailsDTO {
 
     private List<SummaryItem> generateResearchTypeSummary(Document darDocument) {
         List<SummaryItem> researchList = new ArrayList<>();
-        if(darDocument.containsKey("diseases") && darDocument.getBoolean("diseases")){
+        if(darDocument.containsKey(DarConstants.DISEASES) && darDocument.getBoolean(DarConstants.DISEASES)){
             researchList.add(new SummaryItem(SummaryConstants.RT_DISEASE_RELATED, SummaryConstants.RT_DISEASE_RELATED_DETAIL, false));
         }
-        if(darDocument.containsKey("methods") && darDocument.getBoolean("methods")){
+        if(darDocument.containsKey(DarConstants.METHODS) && darDocument.getBoolean(DarConstants.METHODS)){
             researchList.add(new SummaryItem(SummaryConstants.RT_METHODS_DEVELOPMENT, SummaryConstants.RT_METHODS_DEVELOPMENT_DETAIL, false));
         }
-        if(darDocument.containsKey("controls") && darDocument.getBoolean("controls")){
+        if(darDocument.containsKey(DarConstants.CONTROLS) && darDocument.getBoolean(DarConstants.CONTROLS)){
             researchList.add(new SummaryItem(SummaryConstants.RT_CONTROLS, SummaryConstants.RT_CONTROLS_DETAIL, false));
         }
-        if(darDocument.containsKey("population") && darDocument.getBoolean("population")){
+        if(darDocument.containsKey(DarConstants.POPULATION) && darDocument.getBoolean(DarConstants.POPULATION)){
             researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION, SummaryConstants.RT_POPULATION_DETAIL, true));
             manualReviewIsTrue();
         }
-        if(darDocument.containsKey("hmb") && darDocument.getBoolean("hmb")){
+        if(darDocument.containsKey(DarConstants.HMB) && darDocument.getBoolean(DarConstants.HMB)){
             researchList.add(new SummaryItem(SummaryConstants.RT_HEALTH_BIOMEDICAL, SummaryConstants.RT_HEALTH_BIOMEDICAL_DETAIL, false));
         }
-        if(darDocument.containsKey("poa") && darDocument.getBoolean("poa")){
+        if(darDocument.containsKey(DarConstants.POA) && darDocument.getBoolean(DarConstants.POA)){
             researchList.add(new SummaryItem(SummaryConstants.RT_POPULATION_ORIGINS, SummaryConstants.RT_POPULATION_ORIGINS_DETAIL, true));
             manualReviewIsTrue();
         }
-        if(darDocument.containsKey("other") && darDocument.getBoolean("other")){
+        if(darDocument.containsKey(DarConstants.OTHER) && darDocument.getBoolean(DarConstants.OTHER)){
             researchList.add(new SummaryItem(SummaryConstants.RT_OTHER, darDocument.getString(DarConstants.OTHER_TEXT), true));
             manualReviewIsTrue();
         }
