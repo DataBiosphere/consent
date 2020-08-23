@@ -431,7 +431,6 @@ public class DataAccessRequestService {
                         dataAccessRequestDAO.updateDataByReferenceIdVersion2(
                             dataAccessRequest.getReferenceId(),
                             user.getDacUserId(),
-                            new Date(darData.getCreateDate()),
                             new Date(darData.getSortDate()),
                             now,
                             now,
@@ -477,7 +476,6 @@ public class DataAccessRequestService {
         Date now = new Date();
         dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
             user.getDacUserId(),
-            dar.getCreateDate(),
             now,
             dar.getSubmissionDate(),
             now,

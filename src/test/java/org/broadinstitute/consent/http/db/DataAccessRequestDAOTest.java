@@ -120,7 +120,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String rus = RandomStringUtils.random(10, true, false);
         dar.getData().setRus(rus);
         dar.getData().setValidRestriction(false);
-        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), user.getDacUserId(), now, now, now, now, dar.getData());
+        dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(), user.getDacUserId(), now, now, now, dar.getData());
         DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertEquals(rus, updatedDar.getData().getRus());
         assertFalse(updatedDar.getData().getValidRestriction());

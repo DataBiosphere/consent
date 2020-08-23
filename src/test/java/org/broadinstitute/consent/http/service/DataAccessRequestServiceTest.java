@@ -101,7 +101,7 @@ public class DataAccessRequestServiceTest {
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(), any(), any(), any());
         doNothing().when(dataAccessRequestDAO).insertVersion2(any(), any(), any(), any(), any(), any(), any());
         initService();
         List<DataAccessRequest> newDars = service.createDataAccessRequest(user, dar);
@@ -113,7 +113,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         User user = new User(1, "email@test.org", "Display Name", new Date());
         dar.getData().setDatasetIds(Arrays.asList(1, 2, 3));
-        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(), any(),
+        doNothing().when(dataAccessRequestDAO).updateDataByReferenceIdVersion2(any(), any(),
             any(), any(), any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         initService();
