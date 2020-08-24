@@ -45,6 +45,18 @@ public class DataSet {
     public DataSet() {
     }
 
+    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias, Integer createUserId, Date updateDate, Integer updateUserId) {
+        this.dataSetId = dataSetId;
+        this.objectId = objectId;
+        this.name = name;
+        this.createDate = createDate;
+        this.active = active;
+        this.alias = alias;
+        this.createUserId = createUserId;
+        this.updateDate = updateDate;
+        this.updateUserId = updateUserId;
+    }
+
     public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
         this.dataSetId = dataSetId;
         this.objectId = objectId;

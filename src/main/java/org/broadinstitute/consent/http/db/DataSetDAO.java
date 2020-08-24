@@ -42,6 +42,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @GetGeneratedKeys
     Integer insertDataset(@Bind("name") String name, @Bind("createDate") Date createDate, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
 
+    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) VALUES (:name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, :alias)")
+    @GetGeneratedKeys
+    Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Date createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
+
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
 

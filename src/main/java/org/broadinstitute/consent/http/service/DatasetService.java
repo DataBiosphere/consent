@@ -30,7 +30,7 @@ public class DatasetService {
     int alias = lastAlias + 1;
 
     Integer id = dataSetDAO
-        .insertDataset(name, now, dataset.getObjectId(), dataset.getActive(), alias);
+        .insertDatasetV2(name, now, dacUserId, dataset.getObjectId(), dataset.getActive(), alias);
 
     List<DataSetProperty> propertyList = processDatasetProperties(id, now, dataset.getProperties());
     dataSetDAO.insertDataSetsProperties(propertyList);
