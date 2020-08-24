@@ -156,12 +156,14 @@ public class DataAccessRequest {
    */
   private Map<String, Object> shallowCopy(DataAccessRequest dar) {
     Map<String, Object> copy = new HashMap<>();
+    if (Objects.nonNull(dar.getCreateDate())) copy.put("createDate", dar.getCreateDate().getTime());
+    if (Objects.nonNull(dar.getDraft())) copy.put("draft", dar.getDraft());
     if (Objects.nonNull(dar.getId())) copy.put("id", dar.getId());
     if (Objects.nonNull(dar.getReferenceId())) copy.put("referenceId", dar.getReferenceId());
-    if (Objects.nonNull(dar.getCreateDate())) copy.put("createDate", dar.getCreateDate().getTime());
-    if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
     if (Objects.nonNull(dar.getSortDate())) copy.put("sortDate", dar.getSortDate().getTime());
     if (Objects.nonNull(dar.getSubmissionDate())) copy.put("submissionDate", dar.getSubmissionDate().getTime());
+    if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
+    if (Objects.nonNull(dar.getUserId())) copy.put("userId", dar.getUserId());
     return copy;
   }
 }
