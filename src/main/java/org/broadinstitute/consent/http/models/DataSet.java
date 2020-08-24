@@ -20,6 +20,15 @@ public class DataSet {
     private Date createDate;
 
     @JsonProperty
+    private Integer createUserId;
+
+    @JsonProperty
+    private Date updateDate;
+
+    @JsonProperty
+    private Integer updateUserId;
+
+    @JsonProperty
     private Boolean active;
 
     @JsonProperty
@@ -88,6 +97,22 @@ public class DataSet {
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
     }
+
+    public Integer getCreateUserId() { return createUserId; }
+
+    public void setCreateUserId(Integer createUserId) { this.createUserId = createUserId; }
+
+    public Date getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(Date updateDate) {
+        this.updateDate = updateDate;
+    }
+
+    public Integer getUpdateUserId() { return updateUserId; }
+
+    public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
 
     public Set<DataSetProperty> getProperties() {
         return properties;

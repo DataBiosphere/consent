@@ -79,7 +79,9 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @Path("/v2")
     @PermitAll
-    public Response createDataset(@Auth AuthUser user, String json) {
+    public Response createDataset(@Auth AuthUser authUser, String json) {
+        User user = userService.findUserByEmail(authUser.getName());
+        Integer dacUserId = user.getDacUserId();
         DataSetDTO ds = new Gson().fromJson(json, DataSetDTO.class);
         if (ds == null) {
             throw new BadRequestException("Dataset is required");
@@ -95,7 +97,7 @@ public class DataSetResource extends Resource {
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Dataset name: " + name + " is already in use");
         }
-        DataSetDTO dataset = datasetService.createDataset(ds, name);
+        DataSetDTO dataset = datasetService.createDataset(ds, name, dacUserId);
         return Response.ok().entity(dataset).status(201).build();
     }
 
