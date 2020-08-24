@@ -118,10 +118,11 @@ public class DataAccessRequest {
    * @return Map<String, Object> Dar in simple map format
    */
   public Map<String, Object> convertToSimplifiedDar() {
-    // Serialize dates as longs, but do not deserialize longs into dates so we can output long
-    // values in the final result.
+    // Serialize dates/timestamps as longs, but do not deserialize longs into dates so we can
+    // output long values in the final result.
     Gson gson = new GsonBuilder()
         .registerTypeAdapter(Date.class, (JsonSerializer<Date>) (date, type, jsonSerializationContext) -> new JsonPrimitive(date.getTime()))
+        .registerTypeAdapter(Timestamp.class, (JsonSerializer<Timestamp>) (timestamp, type, jsonSerializationContext) -> new JsonPrimitive(timestamp.getTime()))
         .create();
     DataAccessRequestData dataCopy = this.getData();
     this.setData(null);
