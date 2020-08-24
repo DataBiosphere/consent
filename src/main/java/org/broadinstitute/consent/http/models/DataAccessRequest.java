@@ -9,6 +9,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,17 +27,17 @@ public class DataAccessRequest {
 
   @JsonProperty public Integer userId;
 
-  @JsonProperty public Date createDate;
+  @JsonProperty public Timestamp createDate;
 
   /*
    * Legacy property on DARs. Used to display the sort order for a DAR. In practice, this also
    * functions as the Update Date. See also https://broadinstitute.atlassian.net/browse/DUOS-728
    */
-  @JsonProperty public Date sortDate;
+  @JsonProperty public Timestamp sortDate;
 
-  @JsonProperty public Date submissionDate;
+  @JsonProperty public Timestamp submissionDate;
 
-  @JsonProperty public Date updateDate;
+  @JsonProperty public Timestamp updateDate;
 
   public Integer getId() {
     return id;
@@ -82,7 +83,7 @@ public class DataAccessRequest {
     return createDate;
   }
 
-  public void setCreateDate(Date createDate) {
+  public void setCreateDate(Timestamp createDate) {
     this.createDate = createDate;
   }
 
@@ -90,23 +91,23 @@ public class DataAccessRequest {
     return sortDate;
   }
 
-  public void setSortDate(Date sortDate) {
+  public void setSortDate(Timestamp sortDate) {
     this.sortDate = sortDate;
   }
 
-  public Date getSubmissionDate() {
+  public Timestamp getSubmissionDate() {
     return submissionDate;
   }
 
-  public void setSubmissionDate(Date submissionDate) {
+  public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
   }
 
-  public Date getUpdateDate() {
+  public Timestamp getUpdateDate() {
     return updateDate;
   }
 
-  public void setUpdateDate(Date updateDate) {
+  public void setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
   }
 
