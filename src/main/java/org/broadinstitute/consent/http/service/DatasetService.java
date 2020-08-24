@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import java.util.Date;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,7 +25,9 @@ public class DatasetService {
     }
 
     public DataSet createDataset(DataSetDTO dataset, String name) {
-        Date now = new Date();
+        Date date = new Date();
+        long time = date.getTime();
+        Timestamp now = new Timestamp(time);
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.sql.Timestamp;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.AutocompleteMapper;
@@ -42,6 +43,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlUpdate("insert into dataset (name, createDate, objectId, active, alias) values (:name, :createDate, :objectId, :active, :alias)")
     @GetGeneratedKeys
     Integer insertDataset(@Bind("name") String name, @Bind("createDate") Date createDate, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
+
+    @SqlUpdate("INSERT INTO dataset (name, createdate, create_user_id, update_date, update_user_id, objectId, active, alias) VALUES (:name, :createDate, :createUserId, :createDate, :createUserId, :objectId, :active, :alias)")
+    @GetGeneratedKeys
+    Integer insertDatasetV2(@Bind("name") String name, @Bind("createDate") Timestamp createDate, @Bind("createUserId") Integer createUserId, @Bind("objectId") String objectId, @Bind("active") Boolean active, @Bind("alias") Integer alias);
 
     @SqlQuery("select * from dataset where dataSetId = :dataSetId")
     DataSet findDataSetById(@Bind("dataSetId") Integer dataSetId);
