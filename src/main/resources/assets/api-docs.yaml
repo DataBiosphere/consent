@@ -3125,6 +3125,9 @@ definitions:
       title:
         type: string
         description: Collaborator title
+      uuid:
+        type: string
+        description: Optional uuid for this collaborator
   DataAccessRequest:
     type: object
     properties:
