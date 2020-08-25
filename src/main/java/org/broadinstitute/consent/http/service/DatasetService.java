@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
@@ -34,13 +32,7 @@ public class DatasetService {
     List<DataSetProperty> propertyList = processDatasetProperties(id, now, dataset.getProperties());
     dataSetDAO.insertDataSetsProperties(propertyList);
 
-    DataSetDTO result = new DataSetDTO();
-    Set<DataSetDTO> set = dataSetDAO.findDatasetDTOWithPropsByDatasetId(id);
-
-    for (DataSetDTO ds : set) {
-      result = ds;
-    }
-    return result;
+    return findDatasetDTOById(id);
   }
 
   public DataSet findDatasetByName(String name) {
@@ -48,13 +40,11 @@ public class DatasetService {
   }
 
   public DataSetDTO findDatasetDTOById(Integer id) {
-    DataSetDTO result = new DataSetDTO();
-    Set<DataSetDTO> set = dataSetDAO.findDatasetDTOWithPropsByDatasetId(id);
-
-    for (DataSetDTO ds : set) {
-      result = ds;
-    }
-    return result;
+    return dataSetDAO
+        .findDatasetDTOWithPropsByDatasetId(id)
+        .stream()
+        .findFirst()
+        .orElse(new DataSetDTO());
   }
 
   public List<DataSetPropertyDTO> findInvalidProperties(List<DataSetPropertyDTO> properties) {
@@ -75,7 +65,7 @@ public class DatasetService {
             p -> {
               Dictionary dictionary = dictionaries.stream()
                   .filter(d -> d.getKey().equals(p.getPropertyName()))
-                  .findAny().get();
+                  .findFirst().get();
               return new DataSetProperty(datasetId, dictionary.getKeyId(), p.getPropertyValue(),
                   now);
             }
