@@ -15,8 +15,8 @@
     <dropwizard.version>2.0.12</dropwizard.version>
     <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.16</owl.version>
-    <postgres.version>42.2.15</postgres.version>
-    <rdf4j-rio.version>3.3.1</rdf4j-rio.version>
+    <postgres.version>42.2.16</postgres.version>
+    <rdf4j-rio.version>3.4.0</rdf4j-rio.version>
     <swagger.ui.version>2.2.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
@@ -242,7 +242,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.14.3</version>
+        <version>3.14.4</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -339,7 +339,7 @@
     <dependency>
       <groupId>org.dhatim</groupId>
       <artifactId>dropwizard-sentry</artifactId>
-      <version>2.0.0-5</version>
+      <version>2.0.12-1</version>
     </dependency>
 
     <dependency>
