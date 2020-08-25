@@ -7,12 +7,14 @@ import io.dropwizard.auth.Auth;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
@@ -79,16 +81,21 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @Path("/v2")
     @PermitAll
-    public Response createDataset(@Auth AuthUser user, String json) {
+    public Response createDataset(@Auth AuthUser user, @Context UriInfo info, String json) {
         DataSetDTO ds = new Gson().fromJson(json, DataSetDTO.class);
-        if (ds == null) {
+        if (Objects.isNull(ds)) {
             throw new BadRequestException("Dataset is required");
         }
-        if (ds.getProperties() == null) {
+        if (Objects.isNull(ds.getProperties())) {
             throw new BadRequestException("Dataset must contain required properties");
         }
+        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(ds.getProperties());
+        if (invalidProperties.size() > 0) {
+            List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(Collectors.toList());
+            throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
+        }
         String name = ds.getPropertyValue("Dataset Name");
-        if (name == null) {
+        if (Objects.isNull(name)) {
             throw new BadRequestException("Dataset name is required");
         }
         DataSet datasetNameAlreadyUsed = datasetService.findDatasetByName(name);
@@ -96,7 +103,8 @@ public class DataSetResource extends Resource {
             throw new NotFoundException("Dataset name: " + name + " is already in use");
         }
         DataSetDTO dataset = datasetService.createDataset(ds, name);
-        return Response.ok().entity(dataset).status(201).build();
+        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(ds.getDataSetId());
+        return Response.created(uri).entity(dataset).build();
     }
 
     @POST
@@ -167,7 +175,7 @@ public class DataSetResource extends Resource {
     @PermitAll
     public Response describeDataSet( @PathParam("datasetId") Integer datasetId){
         try {
-            return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
+            return Response.ok(datasetService.findDatasetDTOById(datasetId), MediaType.APPLICATION_JSON).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

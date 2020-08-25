@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
@@ -48,6 +47,24 @@ public class DatasetService {
     return dataSetDAO.findDatasetByName(name);
   }
 
+  public DataSetDTO findDatasetDTOById(Integer id) {
+    DataSetDTO result = new DataSetDTO();
+    Set<DataSetDTO> set = dataSetDAO.findDatasetDTOWithPropsByDatasetId(id);
+
+    for (DataSetDTO ds : set) {
+      result = ds;
+    }
+    return result;
+  }
+
+  public List<DataSetPropertyDTO> findInvalidProperties(List<DataSetPropertyDTO> properties) {
+    List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
+    List<String> keys = dictionaries.stream().map(d -> d.getKey()).collect(Collectors.toList());
+
+    List<DataSetPropertyDTO> invalidProperties = properties.stream().filter(p -> !keys.contains(p.getPropertyName())).collect(Collectors.toList());
+    return invalidProperties;
+  }
+
   public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date now,
       List<DataSetPropertyDTO> properties) {
     List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
@@ -58,11 +75,7 @@ public class DatasetService {
             p -> {
               Dictionary dictionary = dictionaries.stream()
                   .filter(d -> d.getKey().equals(p.getPropertyName()))
-                  .findAny()
-                  .orElse(null);
-              if (Objects.isNull(dictionary)) {
-                throw new NotFoundException("The given property name could not be recognized or associated with a key: " + p.getPropertyName());
-              }
+                  .findAny().get();
               return new DataSetProperty(datasetId, dictionary.getKeyId(), p.getPropertyValue(),
                   now);
             }
