@@ -1191,6 +1191,10 @@ paths:
           description: Returns a Data Access Request
           schema:
             $ref: '#/definitions/DataAccessRequest'
+        403:
+          description: Updates are restricted to the create user.
+        500:
+          description: Internal Server Error.
   /api/dar/v2/draft:
     post:
       summary: Create Draft Data Access Request
@@ -1230,6 +1234,8 @@ paths:
       responses:
         201:
           description: Returns the upated draft Data Access Request.
+        403:
+          description: Updates are restricted to the create user.
         500:
           description: Internal Server Error.
 

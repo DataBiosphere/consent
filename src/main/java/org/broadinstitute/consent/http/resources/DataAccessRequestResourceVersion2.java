@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -109,6 +110,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     try {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
       originalDar.setData(data);
       DataAccessRequest updatedDar =
@@ -116,7 +118,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       matchProcessAPI.processMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+      return createExceptionResponse(e);
     }
   }
 
@@ -125,11 +127,13 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Produces("application/json")
   @Path("/draft")
   @RolesAllowed(RESEARCHER)
-  public Response createDraftDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, String dar) {
+  public Response createDraftDataAccessRequest(
+      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest newDar = parseDarFromJsonString(dar);
-      DataAccessRequest result = dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
+      DataAccessRequest result =
+          dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
       return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
     } catch (Exception e) {
@@ -142,13 +146,16 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Produces("application/json")
   @Path("/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
-  public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+  public Response updatePartialDataAccessRequest(
+      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
     try {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
       originalDar.setData(data);
-      DataAccessRequest updatedDar = dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+      DataAccessRequest updatedDar =
+          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -178,5 +185,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
     newDar.setData(data);
     return newDar;
+  }
+
+  private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
+    if (!user.getDacUserId().equals(dar.getUserId())) {
+      throw new ForbiddenException("User not authorized to update this Data Access Request");
+    }
   }
 }
