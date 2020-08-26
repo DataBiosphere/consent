@@ -174,7 +174,6 @@ public class DataSetDAOTest extends DAOTestHelper {
         assertEquals(properties.size(), 1);
     }
 
-
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }
