@@ -37,10 +37,8 @@ public class DatasetService {
     }
 
     public Set<DataSetProperty> getDatasetProperties(Integer datasetId) {
-        Set<DataSetPropertyDTO> properties = dataSetDAO.findDatasetPropertiesByDatasetId(datasetId);
-        return properties.stream().map(property ->
-            new DataSetProperty(null, null, property.getPropertyValue(), null)
-        ).collect(Collectors.toSet());
+        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(datasetId);
+        return properties;
     }
 
     public DataSet getDatasetWithPropertiesById(Integer datasetId) {
