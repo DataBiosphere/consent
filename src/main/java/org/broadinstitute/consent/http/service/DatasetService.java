@@ -1,15 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
-import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-
 
 public class DatasetService {
 
