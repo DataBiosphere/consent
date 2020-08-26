@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -98,6 +99,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.dataSetId = :dataSetId order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetWithPropertiesByDataSetId(@Bind("dataSetId") Integer dataSetId);
+
+    @SqlQuery(
+        "SELECT k.key, dp.propertyvalue FROM dataset d "
+            + "INNER JOIN datasetproperty dp on dp.datasetid = d.datasetid WHERE d.datasetid = :datasetId "
+            + "INNER JOIN dictionary k on k.keyid = dp.propertykey"
+    )
+    Set<DataSetPropertyDTO> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId " +
