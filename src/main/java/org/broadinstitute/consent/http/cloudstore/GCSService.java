@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.cloudstore;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.gax.paging.Page;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -11,17 +12,23 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.service.WhitelistService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.channels.Channels;
+import java.nio.charset.Charset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.ws.rs.NotFoundException;
+import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.broadinstitute.consent.http.service.WhitelistService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GCSService {
 
@@ -95,4 +102,28 @@ public class GCSService {
         return matchingBlobs;
     }
 
+    public GenericUrl storeDocument(InputStream content, String mediaType, String fileName)
+        throws IOException {
+        byte[] bytes = IOUtils.toByteArray(content);
+        BlobId blobId = BlobId.of(config.getBucket(), fileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
+        Blob blob = storage.create(blobInfo, bytes);
+        return new GenericUrl(blob.getMediaLink());
+    }
+
+    public InputStream getDocument(GenericUrl url) throws NotFoundException {
+        String fileName = url.getPathParts().stream().reduce((i, j) -> j).orElse("");
+        Bucket bucket = storage.get(config.getBucket());
+        Page<Blob> blobs = bucket.list();
+        Optional<Blob> blobOptional = StreamSupport.
+            stream(blobs.iterateAll().spliterator(), false).
+            filter(b -> !b.isDirectory()).
+            filter(b -> b.getName().contains(fileName)).
+            findFirst();
+        if (blobOptional.isPresent()) {
+            return new ByteArrayInputStream(blobOptional.get().getContent());
+        } else {
+            throw new NotFoundException("URL Not Found: " + url.toString());
+        }
+    }
 }
