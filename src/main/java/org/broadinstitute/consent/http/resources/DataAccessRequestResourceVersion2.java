@@ -59,7 +59,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getName());
-      DataAccessRequest newDar = createDarFromJsonString(dar);
+      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
@@ -134,7 +134,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getName());
-      DataAccessRequest newDar = createDarFromJsonString(dar);
+      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       DataAccessRequest result =
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
@@ -176,15 +176,34 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     return user;
   }
 
-  private DataAccessRequest createDarFromJsonString(String json) {
+  private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
     DataAccessRequestData data = DataAccessRequestData.fromString(json);
     if (Objects.isNull(data)) {
       data = new DataAccessRequestData();
     }
-    String referenceId = UUID.randomUUID().toString();
-    newDar.setReferenceId(referenceId);
-    data.setReferenceId(referenceId);
+    // When posting a submitted dar, there are two cases:
+    // 1. those that existed previously as a draft dar
+    // 2. those that are brand new
+    // Validate the provided referenceId with the authenticated user and draft status
+    // Those that do not validate are considered a brand new dar
+    if (Objects.nonNull(data.getReferenceId())) {
+      DataAccessRequest existingDar =
+          dataAccessRequestService.findByReferenceId(data.getReferenceId());
+      if (Objects.nonNull(existingDar)
+          && existingDar.getUserId().equals(user.getDacUserId())
+          && existingDar.getDraft()) {
+        newDar.setReferenceId(data.getReferenceId());
+      } else {
+        String referenceId = UUID.randomUUID().toString();
+        newDar.setReferenceId(referenceId);
+        data.setReferenceId(referenceId);
+      }
+    } else {
+      String referenceId = UUID.randomUUID().toString();
+      newDar.setReferenceId(referenceId);
+      data.setReferenceId(referenceId);
+    }
     newDar.setData(data);
     return newDar;
   }
