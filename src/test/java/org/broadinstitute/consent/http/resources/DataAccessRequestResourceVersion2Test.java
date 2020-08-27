@@ -16,6 +16,7 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -41,6 +42,7 @@ public class DataAccessRequestResourceVersion2Test {
   @Mock private DataAccessRequestService dataAccessRequestService;
   @Mock private MatchProcessAPI matchProcessAPI;
   @Mock private EmailNotifierService emailNotifierService;
+  @Mock private GCSService gcsService;
   @Mock private UserService userService;
   @Mock private UriInfo info;
   @Mock private UriBuilder builder;
@@ -64,7 +66,7 @@ public class DataAccessRequestResourceVersion2Test {
       when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
       resource =
           new DataAccessRequestResourceVersion2(
-              dataAccessRequestService, emailNotifierService, userService);
+              dataAccessRequestService, emailNotifierService, gcsService, userService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }

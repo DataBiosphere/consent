@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -19,8 +22,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import org.apache.commons.io.FilenameUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -31,23 +39,28 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("api/dar/v2")
 public class DataAccessRequestResourceVersion2 extends Resource {
 
   private final DataAccessRequestService dataAccessRequestService;
-  private final MatchProcessAPI matchProcessAPI;
   private final EmailNotifierService emailNotifierService;
+  private final GCSService gcsService;
+  private final MatchProcessAPI matchProcessAPI;
   private final UserService userService;
 
   @Inject
   public DataAccessRequestResourceVersion2(
       DataAccessRequestService dataAccessRequestService,
       EmailNotifierService emailNotifierService,
+      GCSService gcsService,
       UserService userService) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.emailNotifierService = emailNotifierService;
     this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
+    this.gcsService = gcsService;
     this.userService = userService;
   }
 
@@ -168,6 +181,92 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/{referenceId}/irbDocument")
+  @RolesAllowed({RESEARCHER})
+  public Response getIrbDocument (
+      @Auth AuthUser authUser,
+      @PathParam("referenceId") String referenceId) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, dar);
+      GenericUrl url = new GenericUrl(dar.getData().getIrbDocumentLocation());
+      String fileName = dar.getData().getIrbDocumentName();
+      StreamingOutput stream = createStreamingOutput(gcsService.getDocument(url));
+      return Response.ok(stream)
+          .header("Content-Disposition", "attachment; filename=" + fileName)
+          .build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/{referenceId}/irbDocument")
+  @RolesAllowed({RESEARCHER})
+  public Response uploadIrbDocument (
+      @Auth AuthUser authUser,
+      @PathParam("referenceId") String referenceId,
+      @FormDataParam("file") InputStream uploadInputStream,
+      @FormDataParam("file") FormDataContentDisposition fileDetail) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, dar);
+      DataAccessRequest updatedDar = updateDarDocument(DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
+      return Response.ok(updatedDar).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/{referenceId}/collaborationDocument")
+  @RolesAllowed({RESEARCHER})
+  public Response getCollaborationDocument (
+      @Auth AuthUser authUser,
+      @PathParam("referenceId") String referenceId) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, dar);
+      GenericUrl url = new GenericUrl(dar.getData().getCollaborationLetterLocation());
+      String fileName = dar.getData().getCollaborationLetterName();
+      StreamingOutput stream = createStreamingOutput(gcsService.getDocument(url));
+      return Response.ok(stream)
+          .header("Content-Disposition", "attachment; filename=" + fileName)
+          .build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/{referenceId}/collaborationDocument")
+  @RolesAllowed({RESEARCHER})
+  public Response uploadCollaborationDocument (
+      @Auth AuthUser authUser,
+      @PathParam("referenceId") String referenceId,
+      @FormDataParam("file") InputStream uploadInputStream,
+      @FormDataParam("file") FormDataContentDisposition fileDetail) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, dar);
+      DataAccessRequest updatedDar = updateDarDocument(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
+      return Response.ok(updatedDar).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private User findUserByEmail(String email) {
     User user = userService.findUserByEmail(email);
     if (user == null) {
@@ -212,5 +311,30 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     if (!user.getDacUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
+  }
+
+  private DataAccessRequest updateDarDocument(
+      DarDocumentType type,
+      User user,
+      DataAccessRequest dar,
+      InputStream uploadInputStream,
+      FormDataContentDisposition fileDetail) throws IOException {
+    String fileName = fileDetail.getFileName();
+    String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
+    GenericUrl documentUrl = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), toStoreFileName);
+    switch (type) {
+      case IRB:
+        dar.getData().setIrbDocumentLocation(documentUrl.toString());
+        dar.getData().setIrbDocumentName(fileName);
+        break;
+      case COLLABORATION:
+        dar.getData().setCollaborationLetterLocation(documentUrl.toString());
+        dar.getData().setCollaborationLetterName(fileName);
+        break;
+      default:
+        break;
+    }
+    dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
+    return dataAccessRequestService.findByReferenceId(dar.getReferenceId());
   }
 }
