@@ -112,6 +112,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      // Keep dar data reference id in sync with the dar until we fully deprecate
+      // it in dar data.
+      data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
@@ -153,6 +156,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      // Keep dar data reference id in sync with the dar until we fully deprecate
+      // it in dar data.
+      data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
