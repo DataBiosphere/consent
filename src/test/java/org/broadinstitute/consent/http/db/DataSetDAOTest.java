@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataSet;
@@ -164,6 +165,13 @@ public class DataSetDAOTest extends DAOTestHelper {
 
         Set<DataSet> datasets = dataSetDAO.findDatasetsForConsentId(c.getConsentId());
         assertEquals(datasets.size(), 2);
+    }
+
+    @Test
+    public void testFindDatasetPropertiesByDatasetId() {
+        DataSet d = createDataset();
+        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        assertEquals(properties.size(), 1);
     }
 
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {

@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -136,6 +137,7 @@ public class DAOTestHelper {
         });
         createdElectionIds.forEach(id -> electionDAO.deleteAccessRP(id));
         createdElectionIds.forEach(id -> electionDAO.deleteElectionById(id));
+        dataSetDAO.deleteDataSetsProperties(createdDataSetIds);
         dataSetDAO.deleteDataSets(createdDataSetIds);
         createdDacIds.forEach(id -> {
             dacDAO.deleteDacMembers(id);
@@ -266,6 +268,17 @@ public class DAOTestHelper {
         return dacDAO.findById(id);
     }
 
+    protected void createDatasetProperties(Integer datasetId) {
+        List<DataSetProperty> list = new ArrayList<>();
+        DataSetProperty dsp = new DataSetProperty();
+        dsp.setDataSetId(datasetId);
+        dsp.setPropertyKey(1);
+        dsp.setPropertyValue("Test_PropertyValue");
+        dsp.setCreateDate(new Date());
+        list.add(dsp);
+        dataSetDAO.insertDataSetsProperties(list);
+    }
+
     protected DataSet createDataset() {
         DataSet ds = new DataSet();
         ds.setName("Name_" + RandomStringUtils.random(20, true, true));
@@ -275,6 +288,7 @@ public class DAOTestHelper {
         ds.setAlias(RandomUtils.nextInt(1, 1000));
         Integer id = dataSetDAO.insertDataset(ds.getName(), ds.getCreateDate(), ds.getObjectId(), ds.getActive(), ds.getAlias());
         createdDataSetIds.add(id);
+        createDatasetProperties(id);
         return dataSetDAO.findDataSetById(id);
     }
 

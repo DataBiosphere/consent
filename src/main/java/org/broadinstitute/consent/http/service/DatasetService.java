@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.Set;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.DataSet;
-
+import org.broadinstitute.consent.http.models.DataSetProperty;
 
 public class DatasetService {
 
@@ -30,6 +31,18 @@ public class DatasetService {
         //     @Bind("active") Boolean active,
         //     @Bind("alias") Integer alias);
         return dataSetDAO.insertDataset(name, now, objectId, active, alias);
+    }
+
+    public Set<DataSetProperty> getDatasetProperties(Integer datasetId) {
+        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(datasetId);
+        return properties;
+    }
+
+    public DataSet getDatasetWithPropertiesById(Integer datasetId) {
+        DataSet dataset = dataSetDAO.findDataSetById(datasetId);
+        Set<DataSetProperty> properties = getDatasetProperties(datasetId);
+        dataset.setProperties(properties);
+        return dataset;
     }
 
 }
