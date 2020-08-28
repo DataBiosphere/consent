@@ -72,4 +72,13 @@ public class DatasetService {
             .collect(Collectors.toList());
     }
 
+    public List<DataSetPropertyDTO> findInvalidProperties(List<DataSetPropertyDTO> properties) {
+        List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
+        List<String> keys = dictionaries.stream().map(d -> d.getKey()).collect(Collectors.toList());
+
+        return properties.stream()
+            .filter(p -> !keys.contains(p.getPropertyName()))
+            .collect(Collectors.toList());
+    }
+
 }

@@ -112,6 +112,20 @@ public class DatasetServiceTest {
         Assert.assertEquals(properties.size(), getDatasetPropertiesDTO().size());
     }
 
+    @Test
+    public void testFindInvalidProperties() {
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+        initService();
+
+        List<DataSetPropertyDTO> input = getDatasetPropertiesDTO().stream()
+            .peek(p -> p.setPropertyKey("Invalid Key"))
+            .collect(Collectors.toList());
+
+        List<DataSetPropertyDTO> properties = datasetService.findInvalidProperties(input);
+
+        Assert.assertTrue(!properties.isEmpty());
+    }
+
     /* Helper functions */
 
     private List<DataSet> getDatasets() {
