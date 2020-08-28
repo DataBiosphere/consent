@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
-import java.util.Date;
+
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -67,7 +66,7 @@ public class DatasetService {
         return properties.stream()
             .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals("Dataset Name"))
             .map(p ->
-                new DataSetProperty(datasetId, null, p.getPropertyValue(), createDate)
+                new DataSetProperty(datasetId, dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(), p.getPropertyValue(), createDate)
             )
             .collect(Collectors.toList());
     }
