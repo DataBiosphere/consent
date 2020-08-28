@@ -265,10 +265,11 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public Document createDraftDataAccessRequest(Document draftDar) {
+    public Document createDraftDataAccessRequest(User user, Document draftDar) {
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Gson gson = new Gson();
+        DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
         darData.setCreateDate(now.getTime());
         String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
@@ -278,7 +279,9 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         darData.setPartialDarCode("temp_DAR_" + sdf.format(now));
         darData.setReferenceId(referenceId);
         draftDar.put(DarConstants.REFERENCE_ID, referenceId);
-        dataAccessRequestService.insertDraftDataAccessRequest(referenceId, darData);
+        dar.setData(darData);
+        dar.setReferenceId(referenceId);
+        dataAccessRequestService.insertDraftDataAccessRequest(user, dar);
         return draftDar;
     }
 

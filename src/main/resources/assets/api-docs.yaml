@@ -1191,6 +1191,54 @@ paths:
           description: Returns a Data Access Request
           schema:
             $ref: '#/definitions/DataAccessRequest'
+        403:
+          description: Updates are restricted to the create user.
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/draft:
+    post:
+      summary: Create Draft Data Access Request
+      description: Create Draft Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: The fields that represent a Data Access Request, json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the created draft Data Access Request.
+        500:
+          description: Internal Server Error.
+  /api/dar/v2/draft/{referenceId}:
+    put:
+      summary: Update Draft Data Access Request
+      description: Update Draft Data Access Request
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          type: string
+        - name: dar
+          in: body
+          description: The fields that represent a Data Access Request, json format.
+          required: true
+          schema:
+            $ref: '#/definitions/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the upated draft Data Access Request.
+        403:
+          description: Updates are restricted to the create user.
+        500:
+          description: Internal Server Error.
+
   /api/dar:
     post:
       summary: createdDataAccessRequest
@@ -1404,7 +1452,9 @@ paths:
   /api/dar/partial:
     post:
       summary: Create Partial Data Access Request
-      description: Create Partial Data Access Request
+      description: |
+        DEPRECATED: Use POST /api/dar/v2/draft
+        Create Partial Data Access Request
       parameters:
         - name: dar
           in: body
@@ -3056,6 +3106,34 @@ definitions:
       updateStatus:
         type: boolean
         description: Indicates if a consent has been updated from orsp
+  Collaborator:
+    type: object
+    description: |
+      A Collaborator on a Data Access Request. Collaborators are either internal lab staff or
+      internal collaborators.
+    properties:
+      approverStatus:
+        type: boolean
+        description: |
+          Collaborator downloader/approver status. This is relevant for internal lab staff that
+          will have a status as "Designated Downloader/Approver". This indication is limited to
+          individuals who the PI designates to download and/or share the requested data with other
+          internal lab staff, i.e. staff members and trainees under the direct supervision of the PI
+      email:
+        type: string
+        description: Collaborator email
+      eraCommonsId:
+        type: string
+        description: Collaborator era commons id
+      name:
+        type: string
+        description: Collaborator name
+      title:
+        type: string
+        description: Collaborator title
+      uuid:
+        type: string
+        description: Optional uuid for this collaborator
   DataAccessRequest:
     type: object
     properties:
@@ -3205,6 +3283,43 @@ definitions:
       sharingDistribution:
         type: boolean
         description: Study requires sharing distribution
+      externalCollaborators:
+        type: array
+        description: |
+          External Collaborators are not employees of the Requesting PI's institution and/or do not
+          work at the same location as the PI, and consequently must be independently approved to
+          access controlled-access data subject to the GDS Policy. External Collaborators must be
+          at the PI or equivalent level and are not required to have a  Library Card in order to
+          access data, although it is encouraged. Note, External Collaborators must submit an
+          independant DAR approved by their Signing Official to collaborate on this project.
+          External Collaborators will be able to add their Lab Staff, as needed, via their
+          independent DAR. Approval of this DAR does not indicate approval of the External
+          Collaborators listed.
+        items:
+          type: object
+          $ref: '#/definitions/Collaborator'
+      internalCollaborators:
+        type: array
+        description: |
+          Internal Collaborators are defined as individuals not under the direct supervision of the
+          PO's research project involving controlled-access data subject to the NIH GDS Policy.
+          They are employees of the requesting PI's institution and work at the same location/campus
+          as the PI. Internal Collaborators must be at the PI or equivalent level and are required
+          to have a Library Card in order to access data through this request. Internal
+          Collaborators will have Data Downloader/Approval status so that they may add their own
+          relevant Internal Lab Staff. Internal Collaborators will not be required to submit an
+          independent DAR to collaborate on this project.
+        items:
+          type: object
+          $ref: '#/definitions/Collaborator'
+      labCollaborators:
+        type: array
+        description: |
+          Lab Collaborators are defined as users of data from this Data Access Request,
+          including any data that are downloaded or utilized in the cloud.
+        items:
+          type: object
+          $ref: '#/definitions/Collaborator'
   DataAccessRequestManage:
     type: object
     properties:

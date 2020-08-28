@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -57,6 +58,9 @@ public class DataAccessRequestResourceVersion2Test {
 
   private void initResource() {
     try {
+      when(builder.path(anyString())).thenReturn(builder);
+      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+      when(info.getRequestUriBuilder()).thenReturn(builder);
       when(AbstractMatchProcessAPI.getInstance()).thenReturn(matchProcessAPI);
       resource =
           new DataAccessRequestResourceVersion2(
@@ -70,9 +74,6 @@ public class DataAccessRequestResourceVersion2Test {
   public void testCreateDataAccessRequest() {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
-      when(builder.path(anyString())).thenReturn(builder);
-      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
-      when(info.getRequestUriBuilder()).thenReturn(builder);
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(Collections.emptyList());
       doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
@@ -94,7 +95,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void updateByReferenceId() {
+  public void testUpdateByReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
@@ -109,13 +110,73 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(200, response.getStatus());
   }
 
+  @Test
+  public void testUpdateByReferenceIdForbidden() {
+    User invalidUser = new User(1000, authUser.getName(), "Display Name", new Date());
+    DataAccessRequest dar = generateDataAccessRequest();
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(invalidUser);
+      when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+      when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+      doNothing().when(matchProcessAPI).processMatchesForPurpose(any());
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+    initResource();
+    Response response = resource.updateByReferenceId(authUser, "", "{}");
+    assertEquals(403, response.getStatus());
+  }
+
+  @Test
+  public void testCreateDraftDataAccessRequest() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+    initResource();
+    Response response = resource.createDraftDataAccessRequest(authUser, info, "");
+    assertEquals(201, response.getStatus());
+  }
+
+  @Test
+  public void testUpdatePartialDataAccessRequest() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    initResource();
+    Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testUpdatePartialDataAccessRequestForbidden() {
+    User invalidUser = new User(1000, authUser.getName(), "Display Name", new Date());
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(userService.findUserByEmail(any())).thenReturn(invalidUser);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    initResource();
+    Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
+    assertEquals(403, response.getStatus());
+  }
+
+
   private DataAccessRequest generateDataAccessRequest() {
+    Timestamp now = new Timestamp(new Date().getTime());
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     data.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
+    dar.setUserId(user.getDacUserId());
+    dar.setCreateDate(now);
+    dar.setUpdateDate(now);
+    dar.setSortDate(now);
     return dar;
   }
 }
