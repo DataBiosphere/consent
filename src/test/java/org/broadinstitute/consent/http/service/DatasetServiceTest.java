@@ -1,16 +1,24 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import liquibase.pro.packaged.D;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +42,44 @@ public class DatasetServiceTest {
   }
 
   @Test
+  public void testCreateDataset() {
+    int datasetId = 1;
+    when(datasetDAO.insertDataset(anyString(), any(), anyString(), anyBoolean(), anyInt())).thenReturn(datasetId);
+    when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
+    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+    initService();
+
+    DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1");
+
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result.getName(), getDatasets().get(0).getName());
+    Assert.assertNotNull(result.getProperties());
+    Assert.assertTrue(!result.getProperties().isEmpty());
+  }
+
+  @Test
+  public void testGetDatasetByName() {
+    when(datasetDAO.getDatasetByName(getDatasets().get(0).getName())).thenReturn(getDatasets().get(0));
+    initService();
+
+    DataSet dataset = datasetService.getDatasetByName("Test Dataset 1");
+
+    Assert.assertNotNull(dataset);
+    Assert.assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
+  }
+
+  @Test
+  public void testFindDatasetById() {
+    when(datasetDAO.findDataSetById(getDatasets().get(0).getDataSetId())).thenReturn(getDatasets().get(0));
+    initService();
+
+    DataSet dataset = datasetService.findDatasetById(1);
+
+    Assert.assertNotNull(dataset);
+    Assert.assertEquals(dataset.getName(), getDatasets().get(0).getName());
+  }
+
+  @Test
   public void testGetDatasetProperties() {
     when(datasetDAO.findDatasetPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
     initService();
@@ -43,20 +89,37 @@ public class DatasetServiceTest {
 
   @Test
   public void testGetDatasetWithPropertiesById() {
-    when(datasetDAO.findDatasetPropertiesByDatasetId(anyInt())).thenReturn(getDatasetProperties());
-    when(datasetDAO.findDataSetById(anyInt())).thenReturn(getDataset());
+    int datasetId = 1;
+    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+    when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
     initService();
 
-    Assert.assertTrue(datasetService.getDatasetProperties(1).equals(datasetDAO.findDatasetPropertiesByDatasetId(1)));
+    Assert.assertTrue(datasetService.getDatasetProperties(datasetId).equals(datasetDAO.findDatasetPropertiesByDatasetId(1)));
   }
 
-  private DataSet getDataset() {
-    DataSet dataset = new DataSet();
-    dataset.setName("Test Dataset");
-    dataset.setActive(true);
-    dataset.setNeedsApproval(false);
-    dataset.setProperties(Collections.emptySet());
-    return dataset;
+  @Test
+  public void testProcessDatasetProperties() {
+    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+    initService();
+
+    List<DataSetProperty> properties = datasetService.processDatasetProperties(1, new Date(), getDatasetPropertiesDTO());
+
+    Assert.assertEquals(properties.size(), getDatasetPropertiesDTO().size());
+  }
+
+  /* Helper functions */
+
+  private List<DataSet> getDatasets() {
+    return IntStream.range(1,3)
+        .mapToObj(i -> {
+          DataSet dataset = new DataSet();
+          dataset.setDataSetId(i);
+          dataset.setName("Test Dataset " + i);
+          dataset.setActive(true);
+          dataset.setNeedsApproval(false);
+          dataset.setProperties(Collections.emptySet());
+          return dataset;
+        }).collect(Collectors.toList());
   }
 
   private Set<DataSetProperty> getDatasetProperties() {
@@ -64,6 +127,28 @@ public class DatasetServiceTest {
         .mapToObj(i ->
             new DataSetProperty(1, i, "Test Value", new Date())
         ).collect(Collectors.toSet());
+  }
+
+  private List<DataSetPropertyDTO> getDatasetPropertiesDTO() {
+    return IntStream.range(1, 11)
+        .mapToObj(i ->
+            new DataSetPropertyDTO(String.valueOf(i), "Test Value")
+        ).collect(Collectors.toList());
+  }
+
+  private DataSetDTO getDatasetDTO() {
+    DataSetDTO datasetDTO = new DataSetDTO();
+    datasetDTO.setObjectId("Test ObjectId");
+    datasetDTO.setActive(true);
+    datasetDTO.setProperties(getDatasetPropertiesDTO());
+    return datasetDTO;
+  }
+
+  private List<Dictionary> getDictionaries() {
+    return IntStream.range(1, 11)
+        .mapToObj(i ->
+            new Dictionary(String.valueOf(i), true, i, i)
+            ).collect(Collectors.toList());
   }
 
 }
