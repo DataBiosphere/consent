@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,7 +60,6 @@ public class DatasetService {
         return dataset;
     }
 
-    // convert dsp DTO -> dsp by associating with extra fields from dictionary def
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date createDate, List<DataSetPropertyDTO> properties) {
         List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(d -> d.getKey()).collect(Collectors.toList());
