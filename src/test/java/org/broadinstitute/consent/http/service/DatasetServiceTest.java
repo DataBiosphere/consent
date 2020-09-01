@@ -30,7 +30,7 @@ public class DatasetServiceTest {
     private DatasetService datasetService;
 
     @Mock
-    DataSetDAO datasetDAO;
+    private DataSetDAO datasetDAO;
 
     @Before
     public void setUp() {
