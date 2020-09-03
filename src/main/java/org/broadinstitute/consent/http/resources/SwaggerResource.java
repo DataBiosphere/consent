@@ -45,6 +45,7 @@ public class SwaggerResource {
                 p.load(is);
                 if (StringUtils.isNotEmpty(p.getProperty("swagger.ui.path"))) {
                     swaggerResource = p.getProperty("swagger.ui.path");
+                    logger.info("swagger.ui.path: " + swaggerResource);
                 } else {
                     logger.warning("swagger.ui.path is not configured correctly");
                     swaggerResource = DEFAULT_LIB;
