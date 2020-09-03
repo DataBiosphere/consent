@@ -23,7 +23,8 @@ public class SwaggerResource {
 
     private static final Logger logger = Logger.getLogger(SwaggerResource.class.getName());
     // Default swagger ui library if not found in properties
-    private final static String DEFAULT_LIB = "META-INF/resources/webjars/swagger-ui/2.2.8/";
+    // should not hard-code the actual version here!
+    private final static String DEFAULT_LIB = "META-INF/resources/webjars/swagger-ui/latest/";
     final static String MEDIA_TYPE_CSS = new MediaType("text", "css").toString();
     final static String MEDIA_TYPE_JS = new MediaType("application", "js").toString();
     final static String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
