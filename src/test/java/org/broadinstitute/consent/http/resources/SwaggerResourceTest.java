@@ -27,7 +27,7 @@ public class SwaggerResourceTest {
     @Test
     public void testIndex() {
         Response response = swaggerResource.content("index.html");
-        checkStatusAndHeader(response, MediaType.TEXT_HTML);
+        Assert.assertTrue(checkStatusAndHeader(response, MediaType.TEXT_HTML));
         String content = response.getEntity().toString()
                 .replaceFirst("<!--[^-]+-->", "").trim();
         Assert.assertTrue(content.startsWith("<!DOCTYPE html>"));
@@ -37,7 +37,7 @@ public class SwaggerResourceTest {
     @Test
     public void testStyle() {
         Response response = swaggerResource.content("swagger-ui.css");
-        checkStatusAndHeader(response, MEDIA_TYPE_CSS);
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
         String content = response.getEntity().toString().trim();
         Assert.assertTrue(content.startsWith(".swagger-ui"));
     }
@@ -45,25 +45,25 @@ public class SwaggerResourceTest {
     @Test
     public void testJavascriptBundle() {
         Response response = swaggerResource.content("swagger-ui-bundle.js");
-        checkJavascript(response);
+        Assert.assertTrue(checkJavascript(response));
     }
 
     @Test
     public void testJavascriptPreset() {
         Response response = swaggerResource.content("swagger-ui-standalone-preset.js");
-        checkJavascript(response);
+        Assert.assertTrue(checkJavascript(response));
     }
 
     @Test
     public void testFavicon16() {
         Response response = swaggerResource.content("favicon-16x16.png");
-        checkStatusAndHeader(response, MEDIA_TYPE_PNG);
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_PNG));
     }
 
     @Test
     public void testFavicon32() {
         Response response = swaggerResource.content("favicon-32x32.png");
-        checkStatusAndHeader(response, MEDIA_TYPE_PNG);
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_PNG));
     }
 
     @Test
@@ -78,15 +78,15 @@ public class SwaggerResourceTest {
         Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
 
-    private void checkStatusAndHeader(Response response, String header) {
+    private boolean checkStatusAndHeader(Response response, String header) {
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Object headerObject = response.getHeaders().get("Content-type");
-        Assert.assertTrue(headerObject.toString().contains(header));
+        return headerObject.toString().contains(header);
     }
 
-    private void checkJavascript(Response response) {
-        checkStatusAndHeader(response, MEDIA_TYPE_JS);
+    private boolean checkJavascript(Response response) {
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
         String content = response.getEntity().toString().trim();
-        Assert.assertTrue(content.startsWith("!function("));
+        return content.startsWith("!function(");
     }
 }
