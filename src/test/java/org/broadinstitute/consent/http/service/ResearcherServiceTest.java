@@ -1,7 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
