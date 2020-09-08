@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
@@ -33,7 +35,7 @@ public class DatasetService {
         Integer id = dataSetDAO
             .insertDataset(name, now, dataset.getObjectId(), dataset.getActive(), alias);
 
-        List<DataSetProperty> propertyList = processDatasetProperties(id, now, dataset.getProperties());
+        List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         dataSetDAO.insertDataSetsProperties(propertyList);
 
         return getDatasetWithPropertiesById(id);
@@ -48,8 +50,7 @@ public class DatasetService {
     }
 
     public Set<DataSetProperty> getDatasetProperties(Integer datasetId) {
-        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(datasetId);
-        return properties;
+        return dataSetDAO.findDatasetPropertiesByDatasetId(datasetId);
     }
 
     public DataSet getDatasetWithPropertiesById(Integer datasetId) {
@@ -59,21 +60,22 @@ public class DatasetService {
         return dataset;
     }
 
-    public List<DataSetProperty> processDatasetProperties(Integer datasetId, Date createDate, List<DataSetPropertyDTO> properties) {
+    public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
+        Date now = new Date();
         List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
-        List<String> keys = dictionaries.stream().map(d -> d.getKey()).collect(Collectors.toList());
+        List<String> keys = dictionaries.stream().map(Dictionary::getKey).collect(Collectors.toList());
 
         return properties.stream()
             .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals("Dataset Name"))
             .map(p ->
-                new DataSetProperty(datasetId, dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(), p.getPropertyValue(), createDate)
+                new DataSetProperty(datasetId, dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(), p.getPropertyValue(), now)
             )
             .collect(Collectors.toList());
     }
 
     public List<DataSetPropertyDTO> findInvalidProperties(List<DataSetPropertyDTO> properties) {
         List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
-        List<String> keys = dictionaries.stream().map(d -> d.getKey()).collect(Collectors.toList());
+        List<String> keys = dictionaries.stream().map(Dictionary::getKey).collect(Collectors.toList());
 
         return properties.stream()
             .filter(p -> !keys.contains(p.getPropertyName()))

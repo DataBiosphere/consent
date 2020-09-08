@@ -55,7 +55,7 @@ public class DatasetServiceTest {
         Assert.assertNotNull(result);
         Assert.assertEquals(result.getName(), getDatasets().get(0).getName());
         Assert.assertNotNull(result.getProperties());
-        Assert.assertTrue(!result.getProperties().isEmpty());
+        Assert.assertFalse(result.getProperties().isEmpty());
     }
 
     @Test
@@ -97,8 +97,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
         initService();
 
-        Assert.assertTrue(datasetService.getDatasetProperties(datasetId)
-                .equals(datasetDAO.findDatasetPropertiesByDatasetId(1)));
+        Assert.assertEquals(datasetService.getDatasetProperties(datasetId), datasetDAO.findDatasetPropertiesByDatasetId(1));
     }
 
     @Test
@@ -107,7 +106,7 @@ public class DatasetServiceTest {
         initService();
 
         List<DataSetProperty> properties = datasetService
-            .processDatasetProperties(1, new Date(), getDatasetPropertiesDTO());
+            .processDatasetProperties(1, getDatasetPropertiesDTO());
 
         Assert.assertEquals(properties.size(), getDatasetPropertiesDTO().size());
     }
@@ -123,7 +122,7 @@ public class DatasetServiceTest {
 
         List<DataSetPropertyDTO> properties = datasetService.findInvalidProperties(input);
 
-        Assert.assertTrue(!properties.isEmpty());
+        Assert.assertFalse(properties.isEmpty());
     }
 
     /* Helper functions */
