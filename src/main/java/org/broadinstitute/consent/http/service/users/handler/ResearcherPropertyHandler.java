@@ -32,7 +32,6 @@ public class ResearcherPropertyHandler implements ResearcherService {
     private final EmailNotifierService emailNotifierService;
     private DACUserAPI dacUserAPI = AbstractDACUserAPI.getInstance();
     private static final String ACTION_REGISTERED = "registered";
-    private static final String ACTION_UPDATED = "updated";
 
     protected Logger logger() {
         return LoggerFactory.getLogger(this.getClass());
@@ -72,7 +71,6 @@ public class ResearcherPropertyHandler implements ResearcherService {
             deleteResearcherProperties(user.getDacUserId());
             saveProperties(properties);
             dacUserAPI.updateUserStatus(RoleStatus.PENDING.toString(), user.getDacUserId());
-            notifyAdmins(user.getDacUserId(), ACTION_UPDATED);
         } else {
             saveProperties(properties);
         }

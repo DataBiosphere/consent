@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -243,7 +244,7 @@ public class ResearcherServiceTest {
         List<ResearcherProperty> foundProps = service.updateProperties(propMap, authUser, true);
         Assert.assertFalse(foundProps.isEmpty());
         Assert.assertEquals(props.size(), foundProps.size());
-        verify(emailNotifierService, atLeast(1)).sendNewResearcherCreatedMessage(any(), any());
+        verify(emailNotifierService, never()).sendNewResearcherCreatedMessage(any(), any());
     }
 
 }
