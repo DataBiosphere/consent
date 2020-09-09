@@ -683,6 +683,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
      */
     private void sendDataCustodianNotification(String referenceId) {
         DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+        final User researcher = (Objects.nonNull(dar) && Objects.nonNull(dar.getUserId())) ?
+            userDAO.findUserById(dar.getUserId()) :
+            null;
         List<Integer> datasetIdList = dar.getData().getDatasetIds();
         if (CollectionUtils.isNotEmpty(datasetIdList)) {
             Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
@@ -696,7 +699,9 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                         map(d -> new DatasetMailDTO(d.getName(), DatasetUtil.parseAlias(d.getAlias()))).
                         collect(Collectors.toList());
                 try {
-                    String researcherEmail = Objects.nonNull(dar.getData().getAcademicEmail()) ?
+                    String researcherEmail = Objects.nonNull(researcher) ?
+                        researcher.getEmail() :
+                        Objects.nonNull(dar.getData().getAcademicEmail()) ?
                             dar.getData().getAcademicEmail() :
                             dar.getData().getResearcher();
                     String darCode = Objects.nonNull(dar.getData().getDarCode()) ?
