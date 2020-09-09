@@ -1,7 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.testing.ResourceHelpers;
+import java.net.URI;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
@@ -31,6 +35,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -60,6 +65,12 @@ public class DatasetResourceTest {
     @Mock
     private AuthUser authUser;
 
+    @Mock
+    private UriInfo uriInfo;
+
+    @Mock
+    private UriBuilder uriBuilder;
+
     private DataSetResource resource;
 
     @Before
@@ -77,8 +88,16 @@ public class DatasetResourceTest {
 
     @Test
     public void testCreateDataset() throws Exception {
+        DataSet result = new DataSet();
+        when(datasetService.getDatasetByName("test")).thenReturn(null);
+        when(datasetService.createDataset(any(), any())).thenReturn(result);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
+        when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
+
         initResource();
-        Response response = resource.createDataset(authUser, "");
+        Response response = resource.createDataset(authUser, uriInfo, "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
+
         assertEquals(201,response.getStatus());
     }
 

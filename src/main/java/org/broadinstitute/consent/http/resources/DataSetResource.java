@@ -1,23 +1,29 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -73,11 +79,33 @@ public class DataSetResource extends Resource {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    @Path("/test")
+    @Path("/v2")
     @PermitAll
-    public Response createDataset(@Auth AuthUser user, String json) {
-        DataSet dataset = datasetService.createTestDataSet(json);
-        return Response.ok().entity(dataset).status(201).build();
+    public Response createDataset(@Auth AuthUser user, @Context UriInfo info, String json) {
+        DataSetDTO ds = new Gson().fromJson(json, DataSetDTO.class);
+        if (Objects.isNull(ds)) {
+            throw new BadRequestException("Dataset is required");
+        }
+        if (Objects.isNull(ds.getProperties())) {
+            throw new BadRequestException("Dataset must contain required properties");
+        }
+        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(ds.getProperties());
+        if (invalidProperties.size() > 0) {
+            List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
+                  Collectors.toList());
+            throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
+        }
+        String name = ds.getPropertyValue("Dataset Name");
+        if (Objects.isNull(name)) {
+            throw new BadRequestException("Dataset name is required");
+        }
+        DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
+        if (Objects.nonNull(datasetNameAlreadyUsed)) {
+            throw new NotFoundException("Dataset name: " + name + " is already in use");
+        }
+        DataSet dataset = datasetService.createDataset(ds, name);
+        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(ds.getDataSetId());
+        return Response.created(uri).entity(dataset).build();
     }
 
     @POST
