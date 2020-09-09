@@ -33,8 +33,11 @@ paths:
     post:
       summary: Upload Ontology File
       description: Uploads and indexes an ontology file
-      consumes:
-        - multipart/form-data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       parameters:
         - name: metadata
           schema:
@@ -63,8 +66,11 @@ paths:
     put:
       summary: Delete Indexed File
       description: Delete an indexed ontology file.
-      consumes:
-        - multipart/form-data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       tags:
         - Ontology
       responses:
@@ -83,8 +89,6 @@ paths:
     get:
       summary: Get Ontology File
       description: Get the specified ontology file by storage url
-      produces:
-        - "application/octet-stream"
       parameters:
         - name: fileUrl
           in: query
@@ -103,6 +107,11 @@ paths:
       responses:
         200:
           description: Specified file.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
   /api/ontology/types:
     get:
       summary: Get Ontology Types
@@ -282,8 +291,6 @@ paths:
       get:
         summary: Get Consent Summary Detail File
         description: Returns a file with the detail of the reviewed cases whose type will be specified by fileType param.
-        produces:
-        - text/plain
         parameters:
          - name: fileType
            in: query
@@ -296,6 +303,10 @@ paths:
         responses:
           200:
             description: Export data to a txt file.
+            content:
+              text/plain:
+                schema:
+                  type: string
   /api/consent/cases/closed:
     get:
       summary: Describe Closed Elections
@@ -483,8 +494,6 @@ paths:
     get:
       summary: Find Consent by name
       description: Returns the Consent identified by the name.
-      produces:
-        - application/json
       parameters:
         - name: name
           in: query
@@ -1668,8 +1677,6 @@ paths:
     get:
       summary: DAR in PDF format
       description: Returns the PDF for the requested DAR
-      produces:
-        - "application/octet-stream"
       parameters:
         - name: requestId
           in: path
@@ -1682,16 +1689,17 @@ paths:
       responses:
         200:
           description: Returns the requested DAR in PDF form
-          schema:
-            $ref: '#/definitions/DataAccessRequest'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         404:
           description: The election or the DAR couldn't be found.
   /api/consent/{id}/dul:
     get:
       summary: getDUL
       description: Returns Data Use Letter file specified by consentId.
-      produces:
-        - "application/octet-stream"
       parameters:
         - name: id
           in: path
@@ -1710,8 +1718,11 @@ paths:
       responses:
         200:
           description: Data Use Letter file
-          schema:
-            type: file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
           headers:
             Content-Disposition:
               schema:
@@ -1722,8 +1733,11 @@ paths:
     post:
       summary: createDUL
       description: Persists the loaded file in the CloudStorage and update the related Consent.
-      consumes:
-        - multipart/form-data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       parameters:
         - name: data
           in: formData
@@ -1755,8 +1769,11 @@ paths:
     put:
       summary: updateDUL
       description: Updates the Consent's Data Use Letter in the CloudStorage and the related Consent.
-      consumes:
-        - multipart/form-data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       parameters:
         - name: data
           in: formData
@@ -2039,8 +2056,11 @@ paths:
     post:
       summary: createDataSet
       description: Creates the Datasets defined in the input .TSV /.txt file.
-      consumes:
-        - multipart/form-data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       parameters:
         - name: data
           in: formData
@@ -2101,15 +2121,15 @@ paths:
     get:
       summary: getDataSetSample
       description: Returns a Dataset sample .tsv file.
-      produces:
-        - text/plain
       tags:
         - Datasets
       responses:
         200:
           description: .tsv sample
-          schema:
-            type: file
+          content:
+            text/plain:
+              schema:
+                type: string
           headers:
             Content-type:
               schema:
@@ -2179,8 +2199,6 @@ paths:
     get:
       summary: Dataset Approved Users
       description: Dataset Approved Users
-      produces:
-        - text/plain
       parameters:
         - name: id
           in: path
@@ -2193,8 +2211,10 @@ paths:
       responses:
         200:
           description: Dataset Approved Users
-          schema:
-            type: file
+          content:
+            text/plain:
+              schema:
+                type: string
           headers:
             Content-type:
               schema:
@@ -2807,8 +2827,11 @@ paths:
     post:
       summary: postWhitelist
       description: Uploads Library Card Whitelist tsv to bucket - NEW!
-      consumes:
-        - multipart/form-data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
       parameters:
         - name: data
           in: formData
@@ -2829,26 +2852,30 @@ paths:
     get:
       summary: Dac Decision Metrics
       description: Dac Decision Metrics
-      produces:
-        - "text/plain"
       tags:
         - Metrics
       responses:
         200:
           description: Dac Decision Metrics
+          content:
+            text/plain:
+              schema:
+                type: string
         500:
           description: Internal Server Error
   /metrics/dar/decision:
     get:
       summary: DAR Decision Metrics
       description: DAR Decision Metrics
-      produces:
-        - "text/plain"
       tags:
         - Metrics
       responses:
         200:
           description: DAR Decision Metrics
+          content:
+            text/plain:
+              schema:
+                type: string
         500:
           description: Internal Server Error
   /status:
