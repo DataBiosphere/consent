@@ -9,9 +9,6 @@ info:
     url: 'http://opensource.org/licenses/BSD-3-Clause'
   termsOfService: 'https://github.com/DataBiosphere/consent'
 
-servers:
-  - url: /
-
 security:
   - googleoauth:
       - openid
@@ -63,7 +60,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/OntologyFile'
+                $ref: '#/components/schemas/OntologyFile'
         400:
           description: There was a problem indexing the file and the results were not uploaded or indexed
     put:
@@ -158,7 +155,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/ConsentAssociation'
+                  $ref: '#/components/schemas/ConsentAssociation'
         400:
           description: Required parameter is null
         default:
@@ -180,7 +177,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/ConsentAssociation'
+              $ref: '#/components/schemas/ConsentAssociation'
       tags:
         - Consent
         - Association
@@ -192,7 +189,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/ConsentAssociation'
+                  $ref: '#/components/schemas/ConsentAssociation'
         default:
           description: Unexpected error
     put:
@@ -212,7 +209,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/ConsentAssociation'
+              $ref: '#/components/schemas/ConsentAssociation'
       tags:
         - Consent
         - Association
@@ -224,7 +221,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/ConsentAssociation'
+                  $ref: '#/components/schemas/ConsentAssociation'
         default:
           description: Unexpected error
     delete:
@@ -260,7 +257,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/ConsentAssociation'
+                  $ref: '#/components/schemas/ConsentAssociation'
         default:
           description: Unexpected error
   /api/consent/cases/pending/{dacUserId}:
@@ -284,13 +281,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/PendingCase'
+                  $ref: '#/components/schemas/PendingCase'
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/definitions/ErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
   /api/consent/cases/summary:
     get:
       summary: Get Consent Summary Cases
@@ -303,7 +300,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Summary'
+                $ref: '#/components/schemas/Summary'
   /api/consent/cases/summary/file:
       get:
         summary: Get Consent Summary Detail File
@@ -339,13 +336,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Election'
+                  $ref: '#/components/schemas/Election'
         404:
           description: unexpected error
           content:
             application/json:
               schema:
-               $ref: '#/definitions/ErrorResponse'
+               $ref: '#/components/schemas/ErrorResponse'
   /api/consent/{consentId}/election:
     post:
       summary: Create Consent Election
@@ -362,7 +359,7 @@ paths:
           description: Election to be created
           required: true
           schema:
-            $ref: '#/definitions/Election'
+            $ref: '#/components/schemas/Election'
       tags:
         - Election
         - Consent
@@ -381,8 +378,8 @@ paths:
            in: path
            description: Consent ID.
            required: true
-         schema:
-           type: string
+           schema:
+             type: string
        tags:
          - Election
          - Consent
@@ -392,13 +389,13 @@ paths:
            content:
              application/json:
                schema:
-                 $ref: '#/definitions/Election'
+                 $ref: '#/components/schemas/Election'
          default:
            description: "Error"
            content:
              application/json:
                schema:
-                 $ref: '#/definitions/ErrorResponse'
+                 $ref: '#/components/schemas/ErrorResponse'
   /api/consent/{consentId}/election/dac/{dacId}:
     post:
       summary: Create Consent Election For Dac
@@ -423,7 +420,7 @@ paths:
           description: Election to be created
           required: true
           schema:
-            $ref: '#/definitions/Election'
+            $ref: '#/components/schemas/Election'
       tags:
         - Election
         - Consent
@@ -458,7 +455,7 @@ paths:
           description: Election to be created
           required: true
           schema:
-            $ref: '#/definitions/Election'
+            $ref: '#/components/schemas/Election'
       tags:
         - Election
         - Consent
@@ -468,7 +465,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Election'
+                $ref: '#/components/schemas/Election'
         404:
           description: "The Election/Consent doesn't exist."
     delete:
@@ -509,7 +506,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/ConsentManage'
+                  $ref: '#/components/schemas/ConsentManage'
   /api/consent/unreviewed:
     get:
       summary: Get total unreviewed DULs
@@ -538,7 +535,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         400:
           description: The consent associated with the provided name has not been approved.
         404:
@@ -552,7 +549,7 @@ paths:
           description: Object that represents a Consent
           required: true
           schema:
-            $ref: '#/definitions/Consent'
+            $ref: '#/components/schemas/Consent'
       tags:
         - Consent
       responses:
@@ -579,7 +576,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         404:
           description: The consent associated with the ID couldn't be found.
     put:
@@ -597,7 +594,7 @@ paths:
           description: Object that represents the consent to be updated
           required: true
           schema:
-            $ref: '#/definitions/Consent'
+            $ref: '#/components/schemas/Consent'
       tags:
         - Consent
       responses:
@@ -606,7 +603,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         400:
           description:
             Consent updates are only allowed when
@@ -638,7 +635,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Match'
+                  $ref: '#/components/schemas/Match'
         404:
           description: The consent for the id couldn't be found.
   /api/consent/{consentId}/vote/{id}:
@@ -662,7 +659,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Vote'
+            $ref: '#/components/schemas/Vote'
       tags:
         - Vote
       responses:
@@ -671,7 +668,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Vote'
+                $ref: '#/components/schemas/Vote'
         400:
           description: 'Bad request, malformed entity, etc'
         404:
@@ -696,7 +693,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Vote'
+            $ref: '#/components/schemas/Vote'
       tags:
         - Vote
       responses:
@@ -705,7 +702,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Vote'
+                $ref: '#/components/schemas/Vote'
         400:
           description: Bad request, malformed entity, etc.
     get:
@@ -732,7 +729,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Vote'
+                $ref: '#/components/schemas/Vote'
     delete:
       summary: deleteVote
       description: Deletes the required vote.
@@ -804,7 +801,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Vote'
+                  $ref: '#/components/schemas/Vote'
   /api/dac:
     post:
       summary: Create a DAC
@@ -815,7 +812,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Dac'
+            $ref: '#/components/schemas/Dac'
       tags:
         - DAC
       responses:
@@ -824,7 +821,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Dac'
+                $ref: '#/components/schemas/Dac'
         400:
           description: Bad Request. DAC Name and Description are required.
         500:
@@ -838,7 +835,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Dac'
+            $ref: '#/components/schemas/Dac'
       tags:
         - DAC
       responses:
@@ -847,7 +844,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Dac'
+                $ref: '#/components/schemas/Dac'
         400:
           description: Bad Request. DAC ID, Name, and Description are required.
         500:
@@ -865,7 +862,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Dac'
+                  $ref: '#/components/schemas/Dac'
         500:
           description: Internal Server Error
   /api/dac/{dacId}:
@@ -888,7 +885,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Dac'
+                $ref: '#/components/schemas/Dac'
         404:
           description: No DAC found with the given ID
         500:
@@ -912,7 +909,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Dac'
+                $ref: '#/components/schemas/Dac'
         404:
           description: No DAC found with the given ID
         500:
@@ -943,7 +940,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         404:
           description: No DAC or User found with the provided ID
         409:
@@ -1001,7 +998,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         404:
           description: No DAC or User found with the provided ID
         409:
@@ -1057,7 +1054,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Dataset'
+                  $ref: '#/components/schemas/Dataset'
         404:
           description: No DAC found with the provided ID
         500:
@@ -1084,7 +1081,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/User'
+                  $ref: '#/components/schemas/User'
         404:
           description: No DAC found with the provided ID
         500:
@@ -1111,7 +1108,7 @@ paths:
               schema:
                 type: array
                 items:
-                 $ref: '#/definitions/User'
+                 $ref: '#/components/schemas/User'
         500:
           description: Internal Server Error
   /api/dacuser:
@@ -1123,7 +1120,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/User'
+            $ref: '#/components/schemas/User'
       tags:
         - User
       responses:
@@ -1132,7 +1129,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         400:
           description: Malformed user entity.
     get:
@@ -1148,7 +1145,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/User'
+                  $ref: '#/components/schemas/User'
   /api/dacuser/{email}:
     get:
       summary: describe
@@ -1168,7 +1165,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
   /api/dacuser/{id}:
     put:
       summary: update
@@ -1188,13 +1185,13 @@ paths:
             type: string
         - name: user
           in: body
+          description: The updated user information
           required: true
           schema:
             type: object
             properties:
               updatedUser:
-                description: The updated user information
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
       tags:
         - User
       responses:
@@ -1203,7 +1200,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         400:
           description: Malformed user entity.
         403:
@@ -1228,7 +1225,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         500:
           description: Server Error
     put:
@@ -1257,7 +1254,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         500:
           description: Server Error
   /api/dar/v2:
@@ -1270,7 +1267,7 @@ paths:
           description: The fields that represent a DAR in json format.
           required: true
           schema:
-            $ref: '#/definitions/DataAccessRequest'
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
@@ -1281,7 +1278,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/DataAccessRequest'
+                  $ref: '#/components/schemas/DataAccessRequest'
         500:
           description: Internal Server Error.
   /api/dar/v2/{referenceId}:
@@ -1303,7 +1300,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/DataAccessRequest'
+                $ref: '#/components/schemas/DataAccessRequest'
         400:
           description: The provided Reference Id is not a valid DAR identifier
         404:
@@ -1325,7 +1322,7 @@ paths:
           description: The fields that represent a DAR in json format.
           required: true
           schema:
-            $ref: '#/definitions/DataAccessRequest'
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
@@ -1334,7 +1331,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/DataAccessRequest'
+                $ref: '#/components/schemas/DataAccessRequest'
         403:
           description: Updates are restricted to the create user.
         500:
@@ -1349,7 +1346,7 @@ paths:
           description: The fields that represent a Data Access Request, json format.
           required: true
           schema:
-            $ref: '#/definitions/DataAccessRequest'
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
@@ -1373,7 +1370,7 @@ paths:
           description: The fields that represent a Data Access Request, json format.
           required: true
           schema:
-            $ref: '#/definitions/DataAccessRequest'
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
@@ -1396,7 +1393,7 @@ paths:
           description: The fields that represent a DAR, json format.
           required: true
           schema:
-            $ref: '#/definitions/DataAccessRequest'
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
@@ -1433,7 +1430,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/DataAccessRequest'
+                $ref: '#/components/schemas/DataAccessRequest'
         400:
           description: The provided ID is not a valid DAR identifier
         404:
@@ -1504,7 +1501,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/DataAccessRequest'
+                $ref: '#/components/schemas/DataAccessRequest'
         404:
           description: Unable to find the Data Access Request with the provided id
         500:
@@ -1550,7 +1547,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/DataAccessRequest'
+                $ref: '#/components/schemas/DataAccessRequest'
         404:
           description: The requested DAR couldn't be found.
   /api/dar/find/{id}/consent:
@@ -1573,7 +1570,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         404:
           description: The requested couldn't be found or the DAR doesn't exist.
   /api/dar/manage:
@@ -1601,7 +1598,7 @@ paths:
                 schema:
                   type: array
                   items:
-                    $ref: '#/definitions/DataAccessRequestManage'
+                    $ref: '#/components/schemas/DataAccessRequestManage'
           400:
             description: |
               If optional user id is provided, it must be that of the authenticated user. Non-admin
@@ -1627,7 +1624,7 @@ paths:
           description: The fields that represent a DAR, json format.
           required: true
           schema:
-            $ref: '#/definitions/DataAccessRequest'
+            $ref: '#/components/schemas/DataAccessRequest'
       tags:
         - Data Access Request
       responses:
@@ -1658,7 +1655,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/PendingCase'
+                  $ref: '#/components/schemas/PendingCase'
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases
@@ -1672,7 +1669,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Summary'
+                $ref: '#/components/schemas/Summary'
   /api/dataRequest/cases/summary/RP:
     get:
       summary: getConsentSummaryCases
@@ -1686,7 +1683,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Summary'
+                $ref: '#/components/schemas/Summary'
   /api/dataRequest/cases/closed:
     get:
       summary: describeClosedElections
@@ -1702,7 +1699,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Election'
+                  $ref: '#/components/schemas/Election'
         404:
           description: Election was not found.
   /api/dataRequest/{requestId}/election:
@@ -1725,7 +1722,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Election'
+                $ref: '#/components/schemas/Election'
         404:
           description: The election or the DAR couldn't be found.
     post:
@@ -1742,7 +1739,7 @@ paths:
           in: body
           description: The election to be created
           schema:
-            $ref: '#/definitions/Election'
+            $ref: '#/components/schemas/Election'
       tags:
         - Data Access Request
         - Election
@@ -1752,7 +1749,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Election'
+                $ref: '#/components/schemas/Election'
         400:
           description: Bad request.
         404:
@@ -1878,7 +1875,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         404:
           description: Could not find consent with the specified Id
     put:
@@ -1916,7 +1913,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         404:
           description: Could not find consent with the specified Id
     delete:
@@ -1937,7 +1934,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Consent'
+                $ref: '#/components/schemas/Consent'
         404:
           description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
@@ -1962,7 +1959,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Vote'
+                  $ref: '#/components/schemas/Vote'
     delete:
       summary: deleteVotes
       description: Deletes the votes of the election with the specified reference Id
@@ -2007,7 +2004,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Vote'
+                $ref: '#/components/schemas/Vote'
         404:
           description: The Vote doesn't exist.
     post:
@@ -2019,7 +2016,7 @@ paths:
           description: Vote to be created
           required: true
           schema:
-            $ref: '#/definitions/Vote'
+            $ref: '#/components/schemas/Vote'
         - name: requestId
           in: path
           description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
@@ -2051,7 +2048,7 @@ paths:
           description: Vote to be created
           required: true
           schema:
-            $ref: '#/definitions/Vote'
+            $ref: '#/components/schemas/Vote'
         - name: requestId
           in: path
           description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
@@ -2108,7 +2105,7 @@ paths:
           description: Vote to be created
           required: true
           schema:
-            $ref: '#/definitions/Vote'
+            $ref: '#/components/schemas/Vote'
         - name: requestId
           in: path
           description: referenceId of the Election of the requested Vote ( this value is not used in the process , its only to complete the path)
@@ -2130,7 +2127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Vote'
+                $ref: '#/components/schemas/Vote'
         400:
           description: Required parameter is null
         404:
@@ -2155,7 +2152,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Vote'
+                $ref: '#/components/schemas/Vote'
         404:
           description: Could not find a vote with this id.
   /api/dataset:
@@ -2179,7 +2176,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Dataset'
+                  $ref: '#/components/schemas/Dataset'
         404:
           description: Required parameter is null.
     post:
@@ -2213,7 +2210,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Dataset'
+                  $ref: '#/components/schemas/Dataset'
         400:
           description: Array of the errors found with a brief description of each one.
           content:
@@ -2239,7 +2236,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Dataset'
+                $ref: '#/components/schemas/Dataset'
         400:
           description: External Error (invalid input)
         500:
@@ -2282,7 +2279,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/Dictionary'
+                  $ref: '#/components/schemas/Dictionary'
         500:
           description: Server error.
   /api/dataset/{id}:
@@ -2304,7 +2301,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Dataset'
+                $ref: '#/components/schemas/Dataset'
         404:
           description: Not Found
         500:
@@ -2422,12 +2419,12 @@ paths:
           responses:
             200:
               description: An array of Dataset objectIds
-            content:
-              text/plain:
-                schema:
-                  type: array
-                  items:
-                      type: string
+              content:
+                text/plain:
+                  schema:
+                    type: array
+                    items:
+                        type: string
             500:
               description: Server error.
   /api/datasetAssociation/{datasetId}:
@@ -2449,7 +2446,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/DatasetAssociationMap'
+                $ref: '#/components/schemas/DatasetAssociationMap'
     post:
       summary: Create Dataset Associations
       operationId: Create dataset associations for the provided dataset and users
@@ -2478,7 +2475,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/DatasetAssociation'
+                  $ref: '#/components/schemas/DatasetAssociation'
     put:
       summary: Update Dataset Associations
       operationId: Update dataset associations for the provided dataset and users
@@ -2507,7 +2504,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/definitions/DatasetAssociation'
+                  $ref: '#/components/schemas/DatasetAssociation'
   /api/election/{id}:
     get:
       summary: describeElectionById
@@ -2527,7 +2524,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Election'
+                $ref: '#/components/schemas/Election'
         400:
           description: Could not find Election with the specified Id
     put:
@@ -2545,7 +2542,7 @@ paths:
           description: Updated Election.
           required: true
           schema:
-            $ref: '#/definitions/Election'
+            $ref: '#/components/schemas/Election'
       tags:
         - Election
       responses:
@@ -2554,7 +2551,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Election'
+                $ref: '#/components/schemas/Election'
         400:
           description: Illegal Argument Exception
   /api/election/{referenceId}/advance/{vote}:
@@ -2615,7 +2612,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/ElectionReview'
+                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/openElection:
     get:
       summary: describeElectionById
@@ -2648,7 +2645,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/ElectionReview'
+                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/access/{electionId}:
     get:
       summary: describeElectionById
@@ -2674,7 +2671,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/ElectionReview'
+                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/last/{referenceId}:
     get:
       summary: getElectionReviewByReferenceId
@@ -2694,7 +2691,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/ElectionReview'
+                $ref: '#/components/schemas/ElectionReview'
   /api/electionReview/rp/{electionId}:
     get:
       summary: describeElectionById
@@ -2722,7 +2719,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/ElectionReview'
+                $ref: '#/components/schemas/ElectionReview'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
@@ -2769,7 +2766,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/MatchResult'
+                $ref: '#/components/schemas/MatchResult'
         500:
           description: Server error.
   /api/user/{email}:
@@ -2804,7 +2801,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/User'
+                $ref: '#/components/schemas/User'
         400:
           description: Unable to validate the user's google identity.
         409:
@@ -2821,7 +2818,7 @@ paths:
           required: true
           description: Map<String, String> for user properties.
           schema:
-            $ref: '#/definitions/UserProperties'
+            $ref: '#/components/schemas/UserProperties'
       tags:
         - User
         - Researcher
@@ -2849,7 +2846,7 @@ paths:
           required: true
           description: Map<String, String> for user properties.
           schema:
-            $ref: '#/definitions/UserProperties'
+            $ref: '#/components/schemas/UserProperties'
       tags:
         - User
         - Researcher
@@ -2859,7 +2856,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/UserProperties'
+                $ref: '#/components/schemas/UserProperties'
         400:
           description: Malformed researcher entity.
         404:
@@ -2885,7 +2882,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/UserProperties'
+                $ref: '#/components/schemas/UserProperties'
         404:
           description: The requested user doesn't exist in the system.
     delete:
@@ -2924,7 +2921,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/UserProperties'
+                $ref: '#/components/schemas/UserProperties'
         404:
           description: The requested user doesnt exist in the system
   /api/nih:
@@ -2948,7 +2945,7 @@ paths:
           description: NIH Account information
           required: true
           schema:
-            $ref: '#/definitions/NIHUserAccount'
+            $ref: '#/components/schemas/NIHUserAccount'
       tags:
         - User
         - Researcher
@@ -3038,889 +3035,895 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/definitions/Version'
+                $ref: '#/components/schemas/Version'
         500:
           description: Internal Server Error
 
-definitions:
-  UserProperties:
-    type: array
-    items:
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl:
+
+  schemas:
+    UserProperties:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserProperties'
+    NIHUserAccount:
       type: object
-      $ref: '#/definitions/UserProperties'
-  NIHUserAccount:
-    type: object
-    properties:
-      nihUsername:
-        type: string
-        description: Nih account associated name.
-      datasetPermissions:
-        type: array
-        items:
-          type: string
-        description: NIH dataset access permissions.
-      status:
-        type: string
-        description: Flag to determine if a user is authorized.
-      eraExpiration:
-        type: string
-        description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
-  ConsentAssociation:
-    type: object
-    properties:
-      associationType:
-        type: string
-        description: 'Defines the type of the association. Possible values: sample, sampleSet, workspace.'
-      elements:
-        type: array
-        items:
-          type: string
-        description: Elements, in a hash set, to avoid duplicates.
-  Consent:
-    type: object
-    properties:
-      consentId:
-        type: string
-        description: The ID of the entity.
-      requiresManualReview:
-        type: boolean
-        description: Describes if this consent has to be reviewed manually.
-      dataUseLetter:
-        type: string
-        description: The URL of the saved file.
-      useRestriction:
-        type: string
-        description: The UseRestriction of this consent. Used to match against another entities.
-      dataUse:
-        type: string
-        description: The Data Use question/answer set for this consent.
-      name:
-        type: string
-        description: Name to identify the consent.
-      dulName:
-        type: string
-        description: Name that identifies the Data Use Letter file.
-      createDate:
-        type: string
-        format: date
-        description: Creation Date.
-      updateDate:
-        type: string
-        format: date
-        description: Date of the last update.
-      sortDate:
-        type: string
-        format: date
-        description: |
-          DEPRECATED: Use updateDate
-          The lastest modification date. This has historically been used to
-          determine sort order in addition to update date.
-      translatedUseRestriction:
-        type: string
-        format: date
-        description: The translated use restriction of the consent.
-      lastElectionStatus:
-        type: string
-        description: Displays the associated election if this exists, else is null.
-      lastElectionArchived:
-        type: boolean
-        description: Flag indicating if the last election associated is archived or not. Null if election doesn't exists
-      groupName:
-        type: string
-        description: The Group Name provided by ORSP
-      updateStatus:
-        type: boolean
-        description: Indicates if a consent has been updated from orsp
-      dacId:
-        type: integer
-        description: The Data Access Committee ID
-  Vote:
-    type: object
-    properties:
-      voteId:
-        type: integer
-        format: int32
-        description: Describes the id of the vote.
-      vote:
-        type: boolean
-        description: Describe the Positive or negative value of the vote
-      dacUserId:
-        type: integer
-        format: int32
-        description: Describes the id of the voter.
-      createDate:
-        type: string
-        format: date
-        description: Describes the date the vote was created.
-      updateDate:
-        type: string
-        format: date
-        description: Describes the date the vote was last modified.
-      electionId:
-        type: integer
-        format: int32
-        description: Describes the id of the election the election at which the vote belongs.
-      rationale:
-        type: string
-        description: If the final vote is NO, the voter can specify why in this field.
-      type:
-        type: string
-        description: Specifies the type of the vote (DAC, CHAIRPERSON, AGREEMENT, FINAL)
-      isReminderSent:
-        type: boolean
-        description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-      hasConcerns:
-        type: boolean
-        description: For Dataset elections, it is a flag for DataSet owners concerns.
-  MatchResult:
-    type: object
-    properties:
-      id:
-        type: integer
-        description: The id of the stored match result
-      consent:
-        type: string
-        description: The Consent ID
-      purpose:
-        type: string
-        description: The Data Access Request ID
-      match:
-        type: boolean
-        description: The match condition between the Consent and Data Access Request
-      failed:
-        type: boolean
-        description: Indicates a system failure or not. If true, the system was not able to
-          perform a logic match between the two objects due to a server error.
-      createDate:
-        type: string
-        description: A string representation of the date that this match result was created.
-  Match:
-    type: object
-    properties:
-      id:
-        type: integer
-        format: int32
-        description: The ID of the entity.
-      consent:
-        type: string
-        description: The matched consent.
-      purpose:
-        type: string
-        description: The matched research purpose.
-      match:
-        type: boolean
-        description: True if the entities match, false otherwise.
-      failed:
-        type: boolean
-        description: True if the matching process failed, for any reason.
-      createDate:
-        type: string
-        format: date
-        description: Describes the date the match was created.
-  PendingCase:
-    type: object
-    properties:
-      referenceId:
-        type: string
-        description: The reference ID that identifies the case
-      frontEndId:
-        type: string
-        description: The front end ID for the case
-      logged:
-        type: string
-        description: Describes the logged votes vs. total votes required.
-      alreadyVoted:
-        type: boolean
-        description: Describes if the user already voted on this case
-      isReminderSent:
-        type: boolean
-        description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-      isFinalVote:
-        type: boolean
-        description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
-      status:
-        type: string
-        description: Status of the vote. Pending or editable.
-      electionStatus:
-        type: string
-        description: Describes the status of the election related to this pending case. Open, closed or cancelled.
-      electionId:
-        type: integer
-        format: int32
-        description: Describes the id of the election related to this pending  case.
-      voteId:
-        type: integer
-        format: int32
-        description: Describes the id of the users vote, related to this particular pending case.
-      createDate:
-        type: string
-        format: date
-        description: 'Defines the type of the association. Possible values: sample, sampleSet.'
-      totalVotes:
-        type: integer
-        format: int32
-        description: Describes the total votes(users) required to vote for this election.
-      votesLogged:
-        type: integer
-        format: int32
-        description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
-      rpElectionId:
-        type: integer
-        format: int32
-        description: Describes the id of the research purpose election related to this pending case, if it exists
-      rpVoteId:
-        type: integer
-        format: int32
-        description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
-  Summary:
-    type: object
-    properties:
-      reviewedPositiveCases:
-        type: integer
-        format: int32
-        description: Describes the number of cases that were denied.
-      reviewedNegativeCases:
-        type: integer
-        format: int32
-        description: Describes the number of cases that were approved.
-      pendingCases:
-        type: integer
-        format: int32
-        description: Describes the number of cases that are opened and have to be reviewed.
-  Election:
-    type: object
-    properties:
-      electionId:
-        type: integer
-        format: int32
-        description: Describes the id of the election.
-      electionType:
-        type: string
-        description: Describes the type of the election.
-      finalVote:
-        type: boolean
-        description: Describes the chairperson final vote, if the election is closed.
-      status:
-        type: string
-        description: Describes the status of the election. Open, Closed or Cancelled.
-      createDate:
-        type: string
-        format: date
-        description: Describes the date the election was created.
-      lastUpdate:
-        type: string
-        format: date
-        description: Describes the date the election was last modified.
-      finalVoteDate:
-        type: string
-        format: date
-        description: Describes the date the chaiperson made the final vote.
-      referenceId:
-        type: string
-        description: Describes the id of the consent/data access request the election is related to.
-      finalRationale:
-        type: string
-        description: If the final vote is NO, the chairperson can specify why in this field.
-      finalAccessVote:
-        type: boolean
-        description: For Data Access Request only. Final vote that determines if the request is approved or denied.
-      useRestriction:
-        type: string
-        description: The use restriction related to the election.
-      translatedUseRestriction:
-        type: string
-        description: The translated use restriction related to the election.
-      dataSetId:
-        type: integer
-        description: The dataSetId related to the election.
-      displayId:
-        type: string
-        description: The ID for display.
-      dulName:
-        type: string
-        description: Contains the correspondant Dul name for the given election.
-      version:
-        type: integer
-        format: int32
-        description: Indicates the version number of the given election.
-      archived:
-        type: boolean
-        description: Determines if the election is archived.
-  ConsentManage:
-    type: object
-    properties:
-      consentId:
-        type: string
-        description: The consent ID of the case.
-      consentName:
-        type: string
-        description: The consent name of the case.
-      editable:
-        type: boolean
-        description: If the consent manage is editable.
-      electionStatus:
-        type: string
-        description: The status of the election related to the consent.
-      electionId:
-        type: integer
-        description: The electionId of the election related to the consent.
-      createDate:
-        type: string
-        format: date-time
-        description: The datetime the election was created.
-      sortDate:
-        type: string
-        format: date-time
-        description: The datetime the election was created/updated (the last updated).
-      updateStatus:
-        type: boolean
-        description: Indicates if a consent has been updated from orsp
-  Collaborator:
-    type: object
-    description: |
-      A Collaborator on a Data Access Request. Collaborators are either internal lab staff or
-      internal collaborators.
-    properties:
-      approverStatus:
-        type: boolean
-        description: |
-          Collaborator downloader/approver status. This is relevant for internal lab staff that
-          will have a status as "Designated Downloader/Approver". This indication is limited to
-          individuals who the PI designates to download and/or share the requested data with other
-          internal lab staff, i.e. staff members and trainees under the direct supervision of the PI
-      email:
-        type: string
-        description: Collaborator email
-      eraCommonsId:
-        type: string
-        description: Collaborator era commons id
-      name:
-        type: string
-        description: Collaborator name
-      title:
-        type: string
-        description: Collaborator title
-      uuid:
-        type: string
-        description: Optional uuid for this collaborator
-  DataAccessRequest:
-    type: object
-    properties:
-      referenceId:
-        type: string
-        description: The reference id for this DAR. Not modifiable once created.
-      userId:
-        type: integer
-        format: int32
-        description: Describes the id of the User. Not modifiable once created.
-      createDate:
-        type: number
-        description: Creation Date
-      sortDate:
-        type: number
-        description: Sort Date
-      submissionDate:
-        type: number
-        description: Submission Date
-      updateDate:
-        type: number
-        description: Update Date
-      draft:
-        type: boolean
-        description: Draft status of this DAR
-      darCode:
-        type: string
-        description: Unique DAR Code
-      partialDarCode:
-        type: string
-        description: Unique Partial DAR Code
-      projectTitle:
-        type: string
-        description: Project Title
-      datasetIds:
-        type: array
-        items:
-          type: string
-        description: Array of Dataset Ids
-      rus:
-        type: string
-        description: Describes the Research Use Statement
-      nonTechRus:
-        type: string
-        description: Describes the Non Technical Summary
-      diseases:
-        type: boolean
-        description: Defines if the purpose of the study is disease-related
-      methods:
-        type: boolean
-        description: Defines if the purpose of the study is for Methods development
-      controls:
-        type: boolean
-        description: Defines if the purpose of the study is to increase the number of controls available for a comparison group
-      population:
-        type: boolean
-        description: Defines if the purpose of the study is to understand variation in the general population
-      other:
-        type: boolean
-        description: Defines if the purpose of the study is other than the above
-      otherText:
-        type: string
-        description: Describes above field
-      ontologies:
-        type: array
-        description: Array of ontology terms
-        items:
-          type: string
-      forProfit:
-        type: boolean
-        description: Describes if data will be used for commercial purposes
-      oneGender:
-        type: boolean
-        description: Describes if study is gender specific
-      gender:
-        type: string
-        description: F/M if oneGender is specified
-      pediatric:
-        type: boolean
-        description: Describes if study is restricted to a pediatric population
-      illegalBehavior:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW.
-      addiction:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      sexualDiseases:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      stigmatizedDiseases:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      vulnerablePopulation:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      populationMigration:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      psychiatricTraits:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      notHealth:
-        type: boolean
-        description: If TRUE, triggers MANUAL REVIEW
-      hmb:
-        type: boolean
-        description: HMB Research
-      poa:
-        type: boolean
-        description: Populations Origins Ancestry Research
-      anvilUse:
-        type: boolean
-        description: Anvil Use
-      cloudUse:
-        type: boolean
-        description: Cloud Use
-      cloudProvider:
-        type: string
-        description: Cloud Use Provider
-      cloudProviderType:
-        type: string
-        description: Cloud Use Provider Type
-      geneticStudiesOnly:
-        type: boolean
-        description: Genetic Studies Only
-      irb:
-        type: boolean
-        description: IRB Approval Required
-      irbDocumentLocation:
-        type: string
-        description: IRB Document Location
-      irbProtocolExpiration:
-        type: string
-        description: IRB Protocol Expiration
-      publication:
-        type: boolean
-        description: Publication Required
-      collaboration:
-        type: boolean
-        description: Collaboration Required
-      collaborationLetterLocation:
-        type: string
-        description: Collaboration Letter Location
-      forensicActivities:
-        type: boolean
-        description: Study involves Forensic Activities
-      sharingDistribution:
-        type: boolean
-        description: Study requires sharing distribution
-      externalCollaborators:
-        type: array
-        description: |
-          External Collaborators are not employees of the Requesting PI's institution and/or do not
-          work at the same location as the PI, and consequently must be independently approved to
-          access controlled-access data subject to the GDS Policy. External Collaborators must be
-          at the PI or equivalent level and are not required to have a  Library Card in order to
-          access data, although it is encouraged. Note, External Collaborators must submit an
-          independant DAR approved by their Signing Official to collaborate on this project.
-          External Collaborators will be able to add their Lab Staff, as needed, via their
-          independent DAR. Approval of this DAR does not indicate approval of the External
-          Collaborators listed.
-        items:
-          type: object
-          $ref: '#/definitions/Collaborator'
-      internalCollaborators:
-        type: array
-        description: |
-          Internal Collaborators are defined as individuals not under the direct supervision of the
-          PO's research project involving controlled-access data subject to the NIH GDS Policy.
-          They are employees of the requesting PI's institution and work at the same location/campus
-          as the PI. Internal Collaborators must be at the PI or equivalent level and are required
-          to have a Library Card in order to access data through this request. Internal
-          Collaborators will have Data Downloader/Approval status so that they may add their own
-          relevant Internal Lab Staff. Internal Collaborators will not be required to submit an
-          independent DAR to collaborate on this project.
-        items:
-          type: object
-          $ref: '#/definitions/Collaborator'
-      labCollaborators:
-        type: array
-        description: |
-          Lab Collaborators are defined as users of data from this Data Access Request,
-          including any data that are downloaded or utilized in the cloud.
-        items:
-          type: object
-          $ref: '#/definitions/Collaborator'
-  DataAccessRequestManage:
-    type: object
-    properties:
-      referenceId:
-        type: string
-        description: The reference ID that identifies the case
-      logged:
-        type: string
-        description: Describes the logged votes vs. total votes required.
-      alreadyVoted:
-        type: boolean
-        description: Describes if the user already voted on this case
-      isReminderSent:
-        type: boolean
-        description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-      isFinalVote:
-        type: boolean
-        description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
-      status:
-        type: string
-        description: Status of the vote. Pending or editable.
-      voteId:
-        type: integer
-        format: int32
-        description: Describes the id of the users vote, related to this particular pending case.
-      totalVotes:
-        type: integer
-        format: int32
-        description: Describes the total votes(users) required to vote for this election.
-      votesLogged:
-        type: integer
-        format: int32
-        description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
-      rpElectionId:
-        type: integer
-        format: int32
-        description: Describes the id of the research purpose election related to this pending case, if it exists
-      rpVoteId:
-        type: integer
-        format: int32
-        description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
-      electionStatus:
-        type: string
-        description: The status of the election.
-      rus:
-        type: string
-        description: The rus of the Data Access Request.
-      dataRequestId:
-        type: string
-        description: The ID of the Data Access Request.
-      projectTitle:
-        type: string
-        description: The title of the project, in the Data Access Request
-      frontEndId:
-        type: string
-        description: The front end ID for the case
-      electionId:
-        type: integer
-        format: int32
-        description: The ID of the election related to the DAR.
-      createDate:
-        type: string
-        format: date-time
-        description: The Date the election was created.
-      sortDate:
-        type: string
-        format: date
-        description: The datetime the election was created/updated (the last one).
-      electionVote:
-        type: boolean
-        description: Result of the election
-      isCanceled:
-        type: boolean
-        description: The DAR is canceled
-      needsApproval:
-        type: boolean
-        description: The DAR requires Data Owners approval
-      dataSetElectionResult:
-        type: string
-        description: Result of the Data Owners elections.
-      datasetId:
-        type: integer
-        format: int32
-        description: The ID of the dataset for this DAR.
-      dacId:
-        type: integer
-        format: int32
-        description: The ID of the DAC for this DAR's dataset.
-      errors:
-        type: array
-        items:
-          type: string
-        description: List of any structural errors with this DAR
-      ownerUser:
-        description: The owner of the DAR
-        type: object
-        items:
-          $ref: '#/definitions/User'
-  Dataset:
-    type: object
-    properties:
-      dataSetId:
-        type: integer
-        format: int32
-        description: The dataset id, integer format
-      consentId:
-        type: string
-        description: The consent id.
-      translatedUseRestriction:
-        type: string
-        description: The Use Restriction, readable type
-      deletable:
-        type: boolean
-        description: Describes if this DataSet can be deleted (This information is only given to the Admin).
       properties:
-        type: array
-        items:
-          $ref: '#/definitions/DatasetProperty'
-      active:
-        type: boolean
-        description: The Dataset is active
-      needsApproval:
-        type: boolean
-        description: The Dataset need Data Owners approval
-      isAssociatedToDataOwners:
-        type: boolean
-        description: The Dataset is associated to a data owner
-      updateAssociationToDataOwnerAllowed:
-        type: boolean
-        description: You can update the data owners of this Dataset
-      alias:
-        type: string
-        description: The dataset id, string format
-      objectId:
-        type: string
-        description: The sample collection ID, if defined
-  DatasetProperty:
-    type: object
-    properties:
-      propertyName:
-        type: string
-        description: Name of the Property.
-      propertyValue:
-        type: string
-        description: Value of the Property.
-  DatasetAssociation:
-    type: object
-    properties:
-      datasetId:
-        type: integer
-        description: The dataset id
-      dacuserId:
-        type: integer
-        description: The user id
-      createDate:
-        type: string
-        description: Association creation date
-  DatasetAssociationMap:
-    type: object
-    properties:
-      associated_users:
-        description: Associated Users
-        type: array
-        items:
+        nihUsername:
+          type: string
+          description: Nih account associated name.
+        datasetPermissions:
+          type: array
+          items:
+            type: string
+          description: NIH dataset access permissions.
+        status:
+          type: string
+          description: Flag to determine if a user is authorized.
+        eraExpiration:
+          type: string
+          description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
+    ConsentAssociation:
+      type: object
+      properties:
+        associationType:
+          type: string
+          description: 'Defines the type of the association. Possible values: sample, sampleSet, workspace.'
+        elements:
+          type: array
+          items:
+            type: string
+          description: Elements, in a hash set, to avoid duplicates.
+    Consent:
+      type: object
+      properties:
+        consentId:
+          type: string
+          description: The ID of the entity.
+        requiresManualReview:
+          type: boolean
+          description: Describes if this consent has to be reviewed manually.
+        dataUseLetter:
+          type: string
+          description: The URL of the saved file.
+        useRestriction:
+          type: string
+          description: The UseRestriction of this consent. Used to match against another entities.
+        dataUse:
+          type: string
+          description: The Data Use question/answer set for this consent.
+        name:
+          type: string
+          description: Name to identify the consent.
+        dulName:
+          type: string
+          description: Name that identifies the Data Use Letter file.
+        createDate:
+          type: string
+          format: date
+          description: Creation Date.
+        updateDate:
+          type: string
+          format: date
+          description: Date of the last update.
+        sortDate:
+          type: string
+          format: date
+          description: |
+            DEPRECATED: Use updateDate
+            The lastest modification date. This has historically been used to
+            determine sort order in addition to update date.
+        translatedUseRestriction:
+          type: string
+          format: date
+          description: The translated use restriction of the consent.
+        lastElectionStatus:
+          type: string
+          description: Displays the associated election if this exists, else is null.
+        lastElectionArchived:
+          type: boolean
+          description: Flag indicating if the last election associated is archived or not. Null if election doesn't exists
+        groupName:
+          type: string
+          description: The Group Name provided by ORSP
+        updateStatus:
+          type: boolean
+          description: Indicates if a consent has been updated from orsp
+        dacId:
+          type: integer
+          description: The Data Access Committee ID
+    Vote:
+      type: object
+      properties:
+        voteId:
+          type: integer
+          format: int32
+          description: Describes the id of the vote.
+        vote:
+          type: boolean
+          description: Describe the Positive or negative value of the vote
+        dacUserId:
+          type: integer
+          format: int32
+          description: Describes the id of the voter.
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the vote was created.
+        updateDate:
+          type: string
+          format: date
+          description: Describes the date the vote was last modified.
+        electionId:
+          type: integer
+          format: int32
+          description: Describes the id of the election the election at which the vote belongs.
+        rationale:
+          type: string
+          description: If the final vote is NO, the voter can specify why in this field.
+        type:
+          type: string
+          description: Specifies the type of the vote (DAC, CHAIRPERSON, AGREEMENT, FINAL)
+        isReminderSent:
+          type: boolean
+          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+        hasConcerns:
+          type: boolean
+          description: For Dataset elections, it is a flag for DataSet owners concerns.
+    MatchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The id of the stored match result
+        consent:
+          type: string
+          description: The Consent ID
+        purpose:
+          type: string
+          description: The Data Access Request ID
+        match:
+          type: boolean
+          description: The match condition between the Consent and Data Access Request
+        failed:
+          type: boolean
+          description: Indicates a system failure or not. If true, the system was not able to
+            perform a logic match between the two objects due to a server error.
+        createDate:
+          type: string
+          description: A string representation of the date that this match result was created.
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: The ID of the entity.
+        consent:
+          type: string
+          description: The matched consent.
+        purpose:
+          type: string
+          description: The matched research purpose.
+        match:
+          type: boolean
+          description: True if the entities match, false otherwise.
+        failed:
+          type: boolean
+          description: True if the matching process failed, for any reason.
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the match was created.
+    PendingCase:
+      type: object
+      properties:
+        referenceId:
+          type: string
+          description: The reference ID that identifies the case
+        frontEndId:
+          type: string
+          description: The front end ID for the case
+        logged:
+          type: string
+          description: Describes the logged votes vs. total votes required.
+        alreadyVoted:
+          type: boolean
+          description: Describes if the user already voted on this case
+        isReminderSent:
+          type: boolean
+          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+        isFinalVote:
+          type: boolean
+          description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
+        status:
+          type: string
+          description: Status of the vote. Pending or editable.
+        electionStatus:
+          type: string
+          description: Describes the status of the election related to this pending case. Open, closed or cancelled.
+        electionId:
+          type: integer
+          format: int32
+          description: Describes the id of the election related to this pending  case.
+        voteId:
+          type: integer
+          format: int32
+          description: Describes the id of the users vote, related to this particular pending case.
+        createDate:
+          type: string
+          format: date
+          description: 'Defines the type of the association. Possible values: sample, sampleSet.'
+        totalVotes:
+          type: integer
+          format: int32
+          description: Describes the total votes(users) required to vote for this election.
+        votesLogged:
+          type: integer
+          format: int32
+          description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
+        rpElectionId:
+          type: integer
+          format: int32
+          description: Describes the id of the research purpose election related to this pending case, if it exists
+        rpVoteId:
+          type: integer
+          format: int32
+          description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
+    Summary:
+      type: object
+      properties:
+        reviewedPositiveCases:
+          type: integer
+          format: int32
+          description: Describes the number of cases that were denied.
+        reviewedNegativeCases:
+          type: integer
+          format: int32
+          description: Describes the number of cases that were approved.
+        pendingCases:
+          type: integer
+          format: int32
+          description: Describes the number of cases that are opened and have to be reviewed.
+    Election:
+      type: object
+      properties:
+        electionId:
+          type: integer
+          format: int32
+          description: Describes the id of the election.
+        electionType:
+          type: string
+          description: Describes the type of the election.
+        finalVote:
+          type: boolean
+          description: Describes the chairperson final vote, if the election is closed.
+        status:
+          type: string
+          description: Describes the status of the election. Open, Closed or Cancelled.
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the election was created.
+        lastUpdate:
+          type: string
+          format: date
+          description: Describes the date the election was last modified.
+        finalVoteDate:
+          type: string
+          format: date
+          description: Describes the date the chaiperson made the final vote.
+        referenceId:
+          type: string
+          description: Describes the id of the consent/data access request the election is related to.
+        finalRationale:
+          type: string
+          description: If the final vote is NO, the chairperson can specify why in this field.
+        finalAccessVote:
+          type: boolean
+          description: For Data Access Request only. Final vote that determines if the request is approved or denied.
+        useRestriction:
+          type: string
+          description: The use restriction related to the election.
+        translatedUseRestriction:
+          type: string
+          description: The translated use restriction related to the election.
+        dataSetId:
+          type: integer
+          description: The dataSetId related to the election.
+        displayId:
+          type: string
+          description: The ID for display.
+        dulName:
+          type: string
+          description: Contains the correspondant Dul name for the given election.
+        version:
+          type: integer
+          format: int32
+          description: Indicates the version number of the given election.
+        archived:
+          type: boolean
+          description: Determines if the election is archived.
+    ConsentManage:
+      type: object
+      properties:
+        consentId:
+          type: string
+          description: The consent ID of the case.
+        consentName:
+          type: string
+          description: The consent name of the case.
+        editable:
+          type: boolean
+          description: If the consent manage is editable.
+        electionStatus:
+          type: string
+          description: The status of the election related to the consent.
+        electionId:
+          type: integer
+          description: The electionId of the election related to the consent.
+        createDate:
+          type: string
+          format: date-time
+          description: The datetime the election was created.
+        sortDate:
+          type: string
+          format: date-time
+          description: The datetime the election was created/updated (the last updated).
+        updateStatus:
+          type: boolean
+          description: Indicates if a consent has been updated from orsp
+    Collaborator:
+      type: object
+      description: |
+        A Collaborator on a Data Access Request. Collaborators are either internal lab staff or
+        internal collaborators.
+      properties:
+        approverStatus:
+          type: boolean
+          description: |
+            Collaborator downloader/approver status. This is relevant for internal lab staff that
+            will have a status as "Designated Downloader/Approver". This indication is limited to
+            individuals who the PI designates to download and/or share the requested data with other
+            internal lab staff, i.e. staff members and trainees under the direct supervision of the PI
+        email:
+          type: string
+          description: Collaborator email
+        eraCommonsId:
+          type: string
+          description: Collaborator era commons id
+        name:
+          type: string
+          description: Collaborator name
+        title:
+          type: string
+          description: Collaborator title
+        uuid:
+          type: string
+          description: Optional uuid for this collaborator
+    DataAccessRequest:
+      type: object
+      properties:
+        referenceId:
+          type: string
+          description: The reference id for this DAR. Not modifiable once created.
+        userId:
+          type: integer
+          description: Describes the id of the User. Not modifiable once created.
+        createDate:
+          type: number
+          description: Creation Date
+        sortDate:
+          type: number
+          description: Sort Date
+        submissionDate:
+          type: number
+          description: Submission Date
+        updateDate:
+          type: number
+          description: Update Date
+        draft:
+          type: boolean
+          description: Draft status of this DAR
+        darCode:
+          type: string
+          description: Unique DAR Code
+        partialDarCode:
+          type: string
+          description: Unique Partial DAR Code
+        projectTitle:
+          type: string
+          description: Project Title
+        datasetIds:
+          type: array
+          items:
+            type: string
+          description: Array of Dataset Ids
+        rus:
+          type: string
+          description: Describes the Research Use Statement
+        nonTechRus:
+          type: string
+          description: Describes the Non Technical Summary
+        diseases:
+          type: boolean
+          description: Defines if the purpose of the study is disease-related
+        methods:
+          type: boolean
+          description: Defines if the purpose of the study is for Methods development
+        controls:
+          type: boolean
+          description: Defines if the purpose of the study is to increase the number of controls available for a comparison group
+        population:
+          type: boolean
+          description: Defines if the purpose of the study is to understand variation in the general population
+        other:
+          type: boolean
+          description: Defines if the purpose of the study is other than the above
+        otherText:
+          type: string
+          description: Describes above field
+        ontologies:
+          type: array
+          description: Array of ontology terms
+          items:
+            type: string
+        forProfit:
+          type: boolean
+          description: Describes if data will be used for commercial purposes
+        oneGender:
+          type: boolean
+          description: Describes if study is gender specific
+        gender:
+          type: string
+          description: F/M if oneGender is specified
+        pediatric:
+          type: boolean
+          description: Describes if study is restricted to a pediatric population
+        illegalBehavior:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW.
+        addiction:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        sexualDiseases:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        stigmatizedDiseases:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        vulnerablePopulation:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        populationMigration:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        psychiatricTraits:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        notHealth:
+          type: boolean
+          description: If TRUE, triggers MANUAL REVIEW
+        hmb:
+          type: boolean
+          description: HMB Research
+        poa:
+          type: boolean
+          description: Populations Origins Ancestry Research
+        anvilUse:
+          type: boolean
+          description: Anvil Use
+        cloudUse:
+          type: boolean
+          description: Cloud Use
+        cloudProvider:
+          type: string
+          description: Cloud Use Provider
+        cloudProviderType:
+          type: string
+          description: Cloud Use Provider Type
+        geneticStudiesOnly:
+          type: boolean
+          description: Genetic Studies Only
+        irb:
+          type: boolean
+          description: IRB Approval Required
+        irbDocumentLocation:
+          type: string
+          description: IRB Document Location
+        irbProtocolExpiration:
+          type: string
+          description: IRB Protocol Expiration
+        publication:
+          type: boolean
+          description: Publication Required
+        collaboration:
+          type: boolean
+          description: Collaboration Required
+        collaborationLetterLocation:
+          type: string
+          description: Collaboration Letter Location
+        forensicActivities:
+          type: boolean
+          description: Study involves Forensic Activities
+        sharingDistribution:
+          type: boolean
+          description: Study requires sharing distribution
+        externalCollaborators:
+          type: array
+          description: |
+            External Collaborators are not employees of the Requesting PI's institution and/or do not
+            work at the same location as the PI, and consequently must be independently approved to
+            access controlled-access data subject to the GDS Policy. External Collaborators must be
+            at the PI or equivalent level and are not required to have a  Library Card in order to
+            access data, although it is encouraged. Note, External Collaborators must submit an
+            independant DAR approved by their Signing Official to collaborate on this project.
+            External Collaborators will be able to add their Lab Staff, as needed, via their
+            independent DAR. Approval of this DAR does not indicate approval of the External
+            Collaborators listed.
+          items:
+            type: object
+            $ref: '#/components/schemas/Collaborator'
+        internalCollaborators:
+          type: array
+          description: |
+            Internal Collaborators are defined as individuals not under the direct supervision of the
+            PO's research project involving controlled-access data subject to the NIH GDS Policy.
+            They are employees of the requesting PI's institution and work at the same location/campus
+            as the PI. Internal Collaborators must be at the PI or equivalent level and are required
+            to have a Library Card in order to access data through this request. Internal
+            Collaborators will have Data Downloader/Approval status so that they may add their own
+            relevant Internal Lab Staff. Internal Collaborators will not be required to submit an
+            independent DAR to collaborate on this project.
+          items:
+            type: object
+            $ref: '#/components/schemas/Collaborator'
+        labCollaborators:
+          type: array
+          description: |
+            Lab Collaborators are defined as users of data from this Data Access Request,
+            including any data that are downloaded or utilized in the cloud.
+          items:
+            type: object
+            $ref: '#/components/schemas/Collaborator'
+    DataAccessRequestManage:
+      type: object
+      properties:
+        referenceId:
+          type: string
+          description: The reference ID that identifies the case
+        logged:
+          type: string
+          description: Describes the logged votes vs. total votes required.
+        alreadyVoted:
+          type: boolean
+          description: Describes if the user already voted on this case
+        isReminderSent:
+          type: boolean
+          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
+        isFinalVote:
+          type: boolean
+          description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
+        status:
+          type: string
+          description: Status of the vote. Pending or editable.
+        voteId:
+          type: integer
+          format: int32
+          description: Describes the id of the users vote, related to this particular pending case.
+        totalVotes:
+          type: integer
+          format: int32
+          description: Describes the total votes(users) required to vote for this election.
+        votesLogged:
+          type: integer
+          format: int32
+          description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
+        rpElectionId:
+          type: integer
+          format: int32
+          description: Describes the id of the research purpose election related to this pending case, if it exists
+        rpVoteId:
+          type: integer
+          format: int32
+          description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
+        electionStatus:
+          type: string
+          description: The status of the election.
+        rus:
+          type: string
+          description: The rus of the Data Access Request.
+        dataRequestId:
+          type: string
+          description: The ID of the Data Access Request.
+        projectTitle:
+          type: string
+          description: The title of the project, in the Data Access Request
+        frontEndId:
+          type: string
+          description: The front end ID for the case
+        electionId:
+          type: integer
+          format: int32
+          description: The ID of the election related to the DAR.
+        createDate:
+          type: string
+          format: date-time
+          description: The Date the election was created.
+        sortDate:
+          type: string
+          format: date
+          description: The datetime the election was created/updated (the last one).
+        electionVote:
+          type: boolean
+          description: Result of the election
+        isCanceled:
+          type: boolean
+          description: The DAR is canceled
+        needsApproval:
+          type: boolean
+          description: The DAR requires Data Owners approval
+        dataSetElectionResult:
+          type: string
+          description: Result of the Data Owners elections.
+        datasetId:
+          type: integer
+          format: int32
+          description: The ID of the dataset for this DAR.
+        dacId:
+          type: integer
+          format: int32
+          description: The ID of the DAC for this DAR's dataset.
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of any structural errors with this DAR
+        ownerUser:
+          description: The owner of the DAR
           type: object
-          $ref: '#/definitions/User'
-      not_associated_users:
-        description: Non-associated Users
-        type: array
-        items:
+          items:
+            $ref: '#/components/schemas/User'
+    Dataset:
+      type: object
+      properties:
+        dataSetId:
+          type: integer
+          format: int32
+          description: The dataset id, integer format
+        consentId:
+          type: string
+          description: The consent id.
+        translatedUseRestriction:
+          type: string
+          description: The Use Restriction, readable type
+        deletable:
+          type: boolean
+          description: Describes if this DataSet can be deleted (This information is only given to the Admin).
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatasetProperty'
+        active:
+          type: boolean
+          description: The Dataset is active
+        needsApproval:
+          type: boolean
+          description: The Dataset need Data Owners approval
+        isAssociatedToDataOwners:
+          type: boolean
+          description: The Dataset is associated to a data owner
+        updateAssociationToDataOwnerAllowed:
+          type: boolean
+          description: You can update the data owners of this Dataset
+        alias:
+          type: string
+          description: The dataset id, string format
+        objectId:
+          type: string
+          description: The sample collection ID, if defined
+    DatasetProperty:
+      type: object
+      properties:
+        propertyName:
+          type: string
+          description: Name of the Property.
+        propertyValue:
+          type: string
+          description: Value of the Property.
+    DatasetAssociation:
+      type: object
+      properties:
+        datasetId:
+          type: integer
+          description: The dataset id
+        dacuserId:
+          type: integer
+          description: The user id
+        createDate:
+          type: string
+          description: Association creation date
+    DatasetAssociationMap:
+      type: object
+      properties:
+        associated_users:
+          description: Associated Users
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/User'
+        not_associated_users:
+          description: Non-associated Users
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/User'
+    Dictionary:
+      type: object
+      properties:
+        keyId:
+          type: integer
+          format: int32
+          description: Id of the key.
+        key:
+          type: integer
+          format: int32
+          description: Value of the key.
+        required:
+          type: boolean
+          description: Defines if this attribute is required to create a Dataset
+        displayOrder:
+          type: integer
+          format: int32
+          description: Defines the position of the attribute in the .tsv file
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the Dictionary was created.
+        receiveOrder:
+          type: integer
+          format: int32
+          description: The display order of the properties.
+    ElectionReview:
+      type: object
+      properties:
+        reviewVote:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/ElectionReviewVote'
+          description: Votes related to the Election.
+        election:
+          $ref: '#/components/schemas/Election'
+        consent:
+          $ref: '#/components/schemas/Consent'
+          description: Consent related to the election.
+        voteAgreement:
+          $ref: '#/components/schemas/Vote'
+        finalVote:
+          $ref: '#/components/schemas/Vote'
+        rpElectionId:
+          type: integer
+          description: The research purpose ID.
+    ElectionReviewVote:
+      type: object
+      properties:
+        Vote:
           type: object
-          $ref: '#/definitions/User'
-  Dictionary:
-    type: object
-    properties:
-      keyId:
-        type: integer
-        format: int32
-        description: Id of the key.
-      key:
-        type: integer
-        format: int32
-        description: Value of the key.
-      required:
-        type: boolean
-        description: Defines if this attribute is required to create a Dataset
-      displayOrder:
-        type: integer
-        format: int32
-        description: Defines the position of the attribute in the .tsv file
-      createDate:
-        type: string
-        format: date
-        description: Describes the date the Dictionary was created.
-      receiveOrder:
-        type: integer
-        format: int32
-        description: The display order of the properties.
-  ElectionReview:
-    type: object
-    properties:
-      reviewVote:
-        type: array
-        items:
+          $ref: '#/components/schemas/Vote'
+        displayName:
+          type: string
+          description: Name of the voter.
+        email:
+          type: string
+          description: Email of the voter.
+    Dac:
+      type: object
+      properties:
+        dacId:
+          type: integer
+          description: The DAC Id
+        name:
+          type: string
+          description: The DAC Name
+        description:
+          type: string
+          description: The DAC Description
+        createDate:
+          type: string
+          format: date
+          description: Date created
+        updateDate:
+          type: string
+          format: date
+          description: Date last updated
+        chairpersons:
+          description: List of Chairpersons
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        members:
+          description: List of Members
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        dacUserId:
+          type: integer
+          description: ID of the user
+        email:
+          type: string
+          description: Email of the user
+        emailPreference:
+          type: boolean
+          description: The user wants email notifications.
+        displayName:
+          type: string
+          description: Name of the user
+        createDate:
+          type: string
+          format: date
+          description: Describes the date the User was created.
+        status:
+          type: string
+          description: Status of the user, approved or not.
+        rationale:
+          type: string
+          description: Reason why the role was not approved.
+        profileCompleted:
+          type: boolean
+          description: The profile is completed. Researchers only.
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRole'
+    UserRole:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          format: int32
+          description: ID of the role
+        name:
+          type: string
+          description: Name of the role
+    ErrorResponse:
+      properties:
+        message:
+          type: string
+          description: The error message
+        code:
+          type: integer
+          description: The response status code
+    OntologyFileMetaData:
+      type: object
+      properties:
+        prefix:
+          type: string
+          description: The prefix of the ontology file, i.e. "DUOS", "DOID", etc.
+        type:
+          type: string
+          description: The allowed type of ontology file, i.e. "Organization" or "Disease"
+    OntologyFile:
+      type: object
+      properties:
+        ontology_file:
           type: object
-          $ref: '#/definitions/ElectionReviewVote'
-        description: Votes related to the Election.
-      election:
-        $ref: '#/definitions/Election'
-      consent:
-        $ref: '#/definitions/Consent'
-        description: Consent related to the election.
-      voteAgreement:
-        $ref: '#/definitions/Vote'
-      finalVote:
-        $ref: '#/definitions/Vote'
-      rpElectionId:
-        type: integer
-        description: The research purpose ID.
-  ElectionReviewVote:
-    type: object
-    properties:
-      Vote:
-        type: object
-        $ref: '#/definitions/Vote'
-      displayName:
-        type: string
-        description: Name of the voter.
-      email:
-        type: string
-        description: Email of the voter.
-  Dac:
-    type: object
-    properties:
-      dacId:
-        type: integer
-        description: The DAC Id
-      name:
-        type: string
-        description: The DAC Name
-      description:
-        type: string
-        description: The DAC Description
-      createDate:
-        type: string
-        format: date
-        description: Date created
-      updateDate:
-        type: string
-        format: date
-        description: Date last updated
-      chairpersons:
-        description: List of Chairpersons
-        type: array
-        items:
-          $ref: '#/definitions/User'
-      members:
-        description: List of Members
-        type: array
-        items:
-          $ref: '#/definitions/User'
-  User:
-    type: object
-    properties:
-      dacUserId:
-        type: integer
-        description: ID of the user
-      email:
-        type: string
-        description: Email of the user
-      emailPreference:
-        type: boolean
-        description: The user wants email notifications.
-      displayName:
-        type: string
-        description: Name of the user
-      createDate:
-        type: string
-        format: date
-        description: Describes the date the User was created.
-      status:
-        type: string
-        description: Status of the user, approved or not.
-      rationale:
-        type: string
-        description: Reason why the role was not approved.
-      profileCompleted:
-        type: boolean
-        description: The profile is completed. Researchers only.
-      roles:
-        type: array
-        items:
-          $ref: '#/definitions/UserRole'
-  UserRole:
-    type: object
-    properties:
-      roleId:
-        type: integer
-        format: int32
-        description: ID of the role
-      name:
-        type: string
-        description: Name of the role
-  ErrorResponse:
-    properties:
-      message:
-        type: string
-        description: The error message
-      code:
-        type: integer
-        description: The response status code
-  OntologyFileMetaData:
-    type: object
-    properties:
-      prefix:
-        type: string
-        description: The prefix of the ontology file, i.e. "DUOS", "DOID", etc.
-      type:
-        type: string
-        description: The allowed type of ontology file, i.e. "Organization" or "Disease"
-  OntologyFile:
-    type: object
-    properties:
-      ontology_file:
-        type: object
-        $ref: '#/definitions/OntologyFileMetaData'
-  Version:
-    type: object
-    properties:
-      hash:
-        type: string
-        description: Current short hash of this version
-      version:
-        type: string
-        description: Current version
+          $ref: '#/components/schemas/OntologyFileMetaData'
+    Version:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: Current short hash of this version
+        version:
+          type: string
+          description: Current version
