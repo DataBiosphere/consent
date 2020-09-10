@@ -182,7 +182,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   @GET
-  @Produces(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Path("/{referenceId}/irbDocument")
   @RolesAllowed({RESEARCHER})
   public Response getIrbDocument (
@@ -194,7 +194,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       checkAuthorizedUpdateUser(user, dar);
       GenericUrl url = new GenericUrl(dar.getData().getIrbDocumentLocation());
       String fileName = dar.getData().getIrbDocumentName();
-      StreamingOutput stream = createStreamingOutput(gcsService.getDocument(url));
+      InputStream is = gcsService.getDocument(url);
+      StreamingOutput stream = createStreamingOutput(is);
       return Response.ok(stream)
           .header("Content-Disposition", "attachment; filename=" + fileName)
           .build();
@@ -218,14 +219,14 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarDocument(DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
-      return Response.ok(updatedDar).build();
+      return Response.ok(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
   }
 
   @GET
-  @Produces(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Path("/{referenceId}/collaborationDocument")
   @RolesAllowed({RESEARCHER})
   public Response getCollaborationDocument (
@@ -237,7 +238,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       checkAuthorizedUpdateUser(user, dar);
       GenericUrl url = new GenericUrl(dar.getData().getCollaborationLetterLocation());
       String fileName = dar.getData().getCollaborationLetterName();
-      StreamingOutput stream = createStreamingOutput(gcsService.getDocument(url));
+      InputStream is = gcsService.getDocument(url);
+      StreamingOutput stream = createStreamingOutput(is);
       return Response.ok(stream)
           .header("Content-Disposition", "attachment; filename=" + fileName)
           .build();
@@ -261,7 +263,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarDocument(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
-      return Response.ok(updatedDar).build();
+      return Response.ok(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -324,10 +326,18 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     GenericUrl documentUrl = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), toStoreFileName);
     switch (type) {
       case IRB:
+        // Delete the current document if it exists
+        if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
+//          gcsService.deleteDocument(dar.getData().getIrbDocumentLocation());
+        }
         dar.getData().setIrbDocumentLocation(documentUrl.toString());
         dar.getData().setIrbDocumentName(fileName);
         break;
       case COLLABORATION:
+        // Delete the current document if it exists
+        if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
+//          gcsService.deleteDocument(dar.getData().getCollaborationLetterLocation());
+        }
         dar.getData().setCollaborationLetterLocation(documentUrl.toString());
         dar.getData().setCollaborationLetterName(fileName);
         break;
