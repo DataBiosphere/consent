@@ -41,10 +41,13 @@ import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("api/dar/v2")
 public class DataAccessRequestResourceVersion2 extends Resource {
 
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailNotifierService emailNotifierService;
   private final GCSService gcsService;
@@ -334,7 +337,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       case IRB:
         // Delete the current document if it exists
         if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
-//          gcsService.deleteDocument(dar.getData().getIrbDocumentLocation());
+          deleteDarDocument(dar, dar.getData().getIrbDocumentLocation());
         }
         dar.getData().setIrbDocumentLocation(documentUrl.toString());
         dar.getData().setIrbDocumentName(fileName);
@@ -342,7 +345,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       case COLLABORATION:
         // Delete the current document if it exists
         if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
-//          gcsService.deleteDocument(dar.getData().getCollaborationLetterLocation());
+          deleteDarDocument(dar, dar.getData().getCollaborationLetterLocation());
         }
         dar.getData().setCollaborationLetterLocation(documentUrl.toString());
         dar.getData().setCollaborationLetterName(fileName);
@@ -352,5 +355,15 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
     dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
     return dataAccessRequestService.findByReferenceId(dar.getReferenceId());
+  }
+
+  private void deleteDarDocument(DataAccessRequest dar, String urlString) {
+    try {
+      GenericUrl url = new GenericUrl(urlString);
+      gcsService.deleteDocument(url);
+    } catch (Exception e) {
+      String message = String.format("Unable to delete document for DAR ID: %s; dar document location: %s", dar.getReferenceId(), urlString);
+      logger.warn(message);
+    }
   }
 }

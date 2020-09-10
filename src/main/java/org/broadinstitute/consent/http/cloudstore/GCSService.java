@@ -99,6 +99,15 @@ public class GCSService {
         return matchingBlobs;
     }
 
+    /**
+     * Store an input stream as a document
+     *
+     * @param content InputStream content
+     * @param mediaType String media type
+     * @param fileName String file name
+     * @return GenericUrl of the stored document
+     * @throws IOException Exception when storing document
+     */
     public GenericUrl storeDocument(InputStream content, String mediaType, String fileName)
         throws IOException {
         byte[] bytes = IOUtils.toByteArray(content);
@@ -108,19 +117,41 @@ public class GCSService {
         return new GenericUrl(blob.getMediaLink());
     }
 
+    /**
+     * Delete a document url
+     * @param url GenericUrl of the document
+     * @return True if document was deleted, false otherwise.
+     */
+    public boolean deleteDocument(GenericUrl url) {
+        Optional<Blob> blobOptional = getBlobFromUrl(url);
+        return blobOptional
+            .map(blob -> storage.delete(blob.getBlobId()))
+            .orElse(false);
+    }
+
+    /**
+     * Retrieve a document by url
+     * @param url GenericUrl of the document
+     * @return InputStream of the document
+     * @throws NotFoundException Returned when no document found
+     */
     public InputStream getDocument(GenericUrl url) throws NotFoundException {
-        String fileName = url.getPathParts().stream().reduce((i, j) -> j).orElse("");
-        Bucket bucket = storage.get(config.getBucket());
-        Page<Blob> blobs = bucket.list();
-        Optional<Blob> blobOptional = StreamSupport.
-            stream(blobs.iterateAll().spliterator(), false).
-            filter(b -> !b.isDirectory()).
-            filter(b -> b.getName().contains(fileName)).
-            findFirst();
+        Optional<Blob> blobOptional = getBlobFromUrl(url);
         if (blobOptional.isPresent()) {
             return new ByteArrayInputStream(blobOptional.get().getContent());
         } else {
             throw new NotFoundException("URL Not Found: " + url.toString());
         }
+    }
+
+    private Optional<Blob> getBlobFromUrl(GenericUrl url) {
+        String fileName = url.getPathParts().stream().reduce((i, j) -> j).orElse("");
+        Bucket bucket = storage.get(config.getBucket());
+        Page<Blob> blobs = bucket.list();
+        return StreamSupport.
+            stream(blobs.iterateAll().spliterator(), false).
+            filter(b -> !b.isDirectory()).
+            filter(b -> b.getName().contains(fileName)).
+            findFirst();
     }
 }
