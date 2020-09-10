@@ -182,7 +182,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   @GET
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
   @Path("/{referenceId}/irbDocument")
   @RolesAllowed({RESEARCHER})
   public Response getIrbDocument (
@@ -192,13 +192,16 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      GenericUrl url = new GenericUrl(dar.getData().getIrbDocumentLocation());
-      String fileName = dar.getData().getIrbDocumentName();
-      InputStream is = gcsService.getDocument(url);
-      StreamingOutput stream = createStreamingOutput(is);
-      return Response.ok(stream)
-          .header("Content-Disposition", "attachment; filename=" + fileName)
-          .build();
+      if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
+        GenericUrl url = new GenericUrl(dar.getData().getIrbDocumentLocation());
+        String fileName = dar.getData().getIrbDocumentName();
+        InputStream is = gcsService.getDocument(url);
+        StreamingOutput stream = createStreamingOutput(is);
+        return Response.ok(stream)
+            .header("Content-Disposition", "attachment; filename=" + fileName)
+            .build();
+      }
+      throw new NotFoundException("IRB Document not found for Data Access Request with id: " + referenceId);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -226,7 +229,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   @GET
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
   @Path("/{referenceId}/collaborationDocument")
   @RolesAllowed({RESEARCHER})
   public Response getCollaborationDocument (
@@ -236,13 +239,16 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      GenericUrl url = new GenericUrl(dar.getData().getCollaborationLetterLocation());
-      String fileName = dar.getData().getCollaborationLetterName();
-      InputStream is = gcsService.getDocument(url);
-      StreamingOutput stream = createStreamingOutput(is);
-      return Response.ok(stream)
-          .header("Content-Disposition", "attachment; filename=" + fileName)
-          .build();
+      if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
+        GenericUrl url = new GenericUrl(dar.getData().getCollaborationLetterLocation());
+        String fileName = dar.getData().getCollaborationLetterName();
+        InputStream is = gcsService.getDocument(url);
+        StreamingOutput stream = createStreamingOutput(is);
+        return Response.ok(stream)
+            .header("Content-Disposition", "attachment; filename=" + fileName)
+            .build();
+      }
+      throw new NotFoundException("Collaboration Letter not found for Data Access Request with id: " + referenceId);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
