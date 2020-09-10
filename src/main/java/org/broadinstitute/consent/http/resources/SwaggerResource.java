@@ -140,7 +140,7 @@ public class SwaggerResource {
                 + "        realm: 'Broad Institute',\n"
                 + "        appName: 'Consent',\n"
                 + "        scopeSeparator: ' ',\n"
-                + "        scopes: 'openid profile email',\n"
+                + "        scopes: 'profile email',\n"
                 + "        additionalQueryStringParams: {}\n"
                 + "      })\n"
                 + "      window.ui = ui\n");

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 
 info:
   title: Consent
@@ -6,12 +6,14 @@ info:
   version: 1.0.1
   license:
     name: BSD
-    url: 'http://opensource.org/licenses/BSD-3-Clause'
-  termsOfService: 'https://github.com/DataBiosphere/consent'
+    url: http://opensource.org/licenses/BSD-3-Clause
+  termsOfService: https://github.com/DataBiosphere/consent
+
+servers:
+  - url: /
 
 security:
   - googleoauth:
-      - openid
       - email
       - profile
 
@@ -3041,17 +3043,83 @@ paths:
 
 components:
   securitySchemes:
-    OAuth2:
+    googleoauth:
       type: oauth2
       flows:
-        authorizationCode:
-          authorizationUrl:
-
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            email: email authorization
+            profile: profile authorization
   schemas:
     UserProperties:
       type: array
       items:
-        $ref: '#/components/schemas/UserProperties'
+        $ref: '#/components/schemas/UserProperty'
+    UserProperty:
+      type: object
+      properties:
+        profileName:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        address1:
+          type: string
+        address2:
+          type: string
+        orcid:
+          type: string
+        completed:
+          type: string
+        libraryCards:
+          type: array
+          items:
+            type: string
+        zipcode:
+          type: string
+        libraryCardEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LibraryCardEntry'
+        institution:
+          type: string
+        nihUsername:
+          type: string
+        academicEmail:
+          type: string
+        state:
+          type: string
+        isThePI:
+          type: string
+        department:
+          type: string
+        checkNotifications:
+          type: string
+        eraAuthorized:
+          type: string
+        eraExpiration:
+          type: string
+    LibraryCardEntry:
+      type: object
+      properties:
+        organization:
+          type: string
+        commonsId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        signingOfficialName:
+          type: string
+        signingOfficialEmail:
+          type: string
+        itDirectorName:
+          type: string
+        itDirectorEmail:
+          type: string
     NIHUserAccount:
       type: object
       properties:
@@ -3409,6 +3477,7 @@ components:
           description: Optional uuid for this collaborator
     DataAccessRequest:
       type: object
+      description: Data Access Request
       properties:
         referenceId:
           type: string
@@ -3568,7 +3637,6 @@ components:
             independent DAR. Approval of this DAR does not indicate approval of the External
             Collaborators listed.
           items:
-            type: object
             $ref: '#/components/schemas/Collaborator'
         internalCollaborators:
           type: array
@@ -3582,7 +3650,6 @@ components:
             relevant Internal Lab Staff. Internal Collaborators will not be required to submit an
             independent DAR to collaborate on this project.
           items:
-            type: object
             $ref: '#/components/schemas/Collaborator'
         labCollaborators:
           type: array
@@ -3590,7 +3657,6 @@ components:
             Lab Collaborators are defined as users of data from this Data Access Request,
             including any data that are downloaded or utilized in the cloud.
           items:
-            type: object
             $ref: '#/components/schemas/Collaborator'
     DataAccessRequestManage:
       type: object
@@ -3756,13 +3822,11 @@ components:
           description: Associated Users
           type: array
           items:
-            type: object
             $ref: '#/components/schemas/User'
         not_associated_users:
           description: Non-associated Users
           type: array
           items:
-            type: object
             $ref: '#/components/schemas/User'
     Dictionary:
       type: object
@@ -3796,14 +3860,12 @@ components:
         reviewVote:
           type: array
           items:
-            type: object
             $ref: '#/components/schemas/ElectionReviewVote'
           description: Votes related to the Election.
         election:
           $ref: '#/components/schemas/Election'
         consent:
           $ref: '#/components/schemas/Consent'
-          description: Consent related to the election.
         voteAgreement:
           $ref: '#/components/schemas/Vote'
         finalVote:
@@ -3815,7 +3877,6 @@ components:
       type: object
       properties:
         Vote:
-          type: object
           $ref: '#/components/schemas/Vote'
         displayName:
           type: string
@@ -3916,7 +3977,6 @@ components:
       type: object
       properties:
         ontology_file:
-          type: object
           $ref: '#/components/schemas/OntologyFileMetaData'
     Version:
       type: object
