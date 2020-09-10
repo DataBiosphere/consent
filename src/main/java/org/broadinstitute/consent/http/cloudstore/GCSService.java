@@ -119,6 +119,7 @@ public class GCSService {
 
     /**
      * Delete a document url
+     *
      * @param url GenericUrl of the document
      * @return True if document was deleted, false otherwise.
      */
@@ -131,6 +132,7 @@ public class GCSService {
 
     /**
      * Retrieve a document by url
+     *
      * @param url GenericUrl of the document
      * @return InputStream of the document
      * @throws NotFoundException Returned when no document found
@@ -144,6 +146,14 @@ public class GCSService {
         }
     }
 
+    /**
+     * Find a blob in the current storage bucket.
+     * TODO: I'd like to find a more efficient way of doing this in a Storage/Blob friendly way.
+     * Looping over all of the bucket contents is not a great idea.
+     *
+     * @param url GenericUrl of the GCS file
+     * @return Optional<Blob>
+     */
     private Optional<Blob> getBlobFromUrl(GenericUrl url) {
         String fileName = url.getPathParts().stream().reduce((i, j) -> j).orElse("");
         Bucket bucket = storage.get(config.getBucket());
