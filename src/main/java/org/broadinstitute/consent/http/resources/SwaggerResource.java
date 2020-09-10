@@ -7,11 +7,9 @@ import java.util.logging.Logger;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.parboiled.common.FileUtils;
@@ -23,10 +21,10 @@ public class SwaggerResource {
   // Default swagger ui library if not found in properties
   // should not hard-code the actual version here!
   private static final String DEFAULT_LIB = "META-INF/resources/webjars/swagger-ui/latest/";
-  static final String MEDIA_TYPE_CSS = new MediaType("text", "css").toString();
-  static final String MEDIA_TYPE_JS = new MediaType("application", "js").toString();
-  static final String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
-  static final String MEDIA_TYPE_GIF = new MediaType("image", "gif").toString();
+  private static final String MEDIA_TYPE_GIF = new MediaType("image", "gif").toString();
+  protected static final String MEDIA_TYPE_CSS = new MediaType("text", "css").toString();
+  protected static final String MEDIA_TYPE_JS = new MediaType("application", "js").toString();
+  protected static final String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
 
   private final GoogleOAuth2Config config;
 
@@ -54,8 +52,6 @@ public class SwaggerResource {
     }
     return swaggerResource;
   }
-
-  @Context UriInfo uriInfo;
 
   @GET
   public Response main() {
