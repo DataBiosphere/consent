@@ -10,7 +10,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
-import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_GIF;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_PNG;
 
@@ -28,38 +27,43 @@ public class SwaggerResourceTest {
     @Test
     public void testIndex() {
         Response response = swaggerResource.content("index.html");
-        checkStatusAndHeader(response, MediaType.TEXT_HTML);
-        String content = response.getEntity().toString().trim();
+        Assert.assertTrue(checkStatusAndHeader(response, MediaType.TEXT_HTML));
+        String content = response.getEntity().toString()
+                .replaceFirst("<!--[^-]+-->", "").trim();
         Assert.assertTrue(content.startsWith("<!DOCTYPE html>"));
         Assert.assertTrue(content.endsWith("</html>"));
     }
 
     @Test
     public void testStyle() {
-        Response response = swaggerResource.content("css/style.css");
-        checkStatusAndHeader(response, MEDIA_TYPE_CSS);
+        Response response = swaggerResource.content("swagger-ui.css");
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
         String content = response.getEntity().toString().trim();
-        Assert.assertTrue(content.startsWith(".swagger-section"));
+        Assert.assertTrue(content.startsWith(".swagger-ui"));
     }
 
     @Test
-    public void testJavascript() {
-        Response response = swaggerResource.content("lib/marked.js");
-        checkStatusAndHeader(response, MEDIA_TYPE_JS);
-        String content = response.getEntity().toString().trim();
-        Assert.assertTrue(content.startsWith("(function()"));
+    public void testJavascriptBundle() {
+        Response response = swaggerResource.content("swagger-ui-bundle.js");
+        Assert.assertTrue(checkJavascript(response));
     }
 
     @Test
-    public void testPng() {
-        Response response = swaggerResource.content("images/explorer_icons.png");
-        checkStatusAndHeader(response, MEDIA_TYPE_PNG);
+    public void testJavascriptPreset() {
+        Response response = swaggerResource.content("swagger-ui-standalone-preset.js");
+        Assert.assertTrue(checkJavascript(response));
     }
 
     @Test
-    public void testGif() {
-        Response response = swaggerResource.content("images/expand.gif");
-        checkStatusAndHeader(response, MEDIA_TYPE_GIF);
+    public void testFavicon16() {
+        Response response = swaggerResource.content("favicon-16x16.png");
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_PNG));
+    }
+
+    @Test
+    public void testFavicon32() {
+        Response response = swaggerResource.content("favicon-32x32.png");
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_PNG));
     }
 
     @Test
@@ -74,10 +78,15 @@ public class SwaggerResourceTest {
         Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
 
-    private void checkStatusAndHeader(Response response, String header) {
+    private boolean checkStatusAndHeader(Response response, String header) {
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Object headerObject = response.getHeaders().get("Content-type");
-        Assert.assertTrue(headerObject.toString().contains(header));
+        return headerObject.toString().contains(header);
     }
 
+    private boolean checkJavascript(Response response) {
+        Assert.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
+        String content = response.getEntity().toString().trim();
+        return content.startsWith("!function(");
+    }
 }

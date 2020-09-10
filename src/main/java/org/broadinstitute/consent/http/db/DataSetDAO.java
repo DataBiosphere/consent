@@ -180,7 +180,10 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     String getAssociatedConsentIdByDataSetId(@Bind("dataSetId") Integer dataSetId);
 
     @SqlQuery("SELECT dataSetId FROM dataset WHERE name = :name")
-    Integer getDataSetByName(@Bind("name") String name);
+    Integer getDatasetIdByName(@Bind("name") String name);
+
+    @SqlQuery("SELECT * FROM dataset WHERE name = :name")
+    DataSet getDatasetByName(@Bind("name") String name);
 
     @SqlQuery("select *  from dataset where name in (<names>) ")
     List<DataSet> searchDataSetsByNameList(@BindList("names") List<String> names);

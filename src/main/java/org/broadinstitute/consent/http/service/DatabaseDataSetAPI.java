@@ -390,7 +390,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                     // missing consent if consent id is present
                     || StringUtils.isNotEmpty(dataSet.getConsentName()) && consentDAO.getIdByName(dataSet.getConsentName()) == null
                     // dataset name should be unique
-                    || !overwrite && dsDAO.getDataSetByName(dataSet.getName()) != null) {
+                    || !overwrite && dsDAO.getDatasetIdByName(dataSet.getName()) != null) {
                 isValid = false;
                 break;
             }
@@ -402,7 +402,7 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     private void processAssociation(List<DataSet> dataSetList) {
         dataSetList.forEach(dataSet -> {
             if (StringUtils.isNotEmpty(dataSet.getConsentName())) {
-                Integer datasetId = dsDAO.getDataSetByName(dataSet.getName());
+                Integer datasetId = dsDAO.getDatasetIdByName(dataSet.getName());
                 if (consentDAO.findAssociationsByDataSetId(datasetId) == null) {
                     consentDAO.insertConsentAssociation(consentDAO.getIdByName(dataSet.getConsentName()), AssociationType.SAMPLESET.getValue(), datasetId);
                 }

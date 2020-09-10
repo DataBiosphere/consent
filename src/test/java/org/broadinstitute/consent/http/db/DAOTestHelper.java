@@ -343,7 +343,6 @@ public class DAOTestHelper {
                     new File(ResourceHelpers.resourceFilePath("dataset/dar.json")),
                     Charset.defaultCharset());
             data = DataAccessRequestData.fromString(darDataString);
-            data.setPartialDarCode("temp_" + data.getDarCode());
             String referenceId = UUID.randomUUID().toString();
             dataAccessRequestDAO.insertDraft(referenceId, data);
             createdDataAccessRequestReferenceIds.add(referenceId);

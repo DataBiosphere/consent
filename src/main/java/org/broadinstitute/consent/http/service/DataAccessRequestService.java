@@ -278,14 +278,28 @@ public class DataAccessRequestService {
         return getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
+    @Deprecated
     public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
         dataAccessRequestDAO.insert(referencedId, darData);
         return findByReferenceId(referencedId);
     }
 
-    public DataAccessRequest insertDraftDataAccessRequest(String referencedId, DataAccessRequestData darData) {
-        dataAccessRequestDAO.insertDraft(referencedId, darData);
-        return findByReferenceId(referencedId);
+    public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
+        if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId()) || Objects.isNull(dar.getData())) {
+            throw new IllegalArgumentException("User and DataAccessRequest are required");
+        }
+        Date now = new Date();
+        dataAccessRequestDAO.insertVersion2(
+            dar.getReferenceId(),
+            user.getDacUserId(),
+            now,
+            now,
+            null,
+            now,
+            dar.getData()
+        );
+        dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true);
+        return findByReferenceId(dar.getReferenceId());
     }
 
     /**
@@ -390,6 +404,9 @@ public class DataAccessRequestService {
      * @return List of created DARs.
      */
     public List<DataAccessRequest> createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
+        if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
+            throw new IllegalArgumentException("User and DataAccessRequest are required");
+        }
         Date now = new Date();
         long nowTime = now.getTime();
         List<DataAccessRequest> newDARList = new ArrayList<>();
@@ -410,11 +427,10 @@ public class DataAccessRequestService {
                 if (idx == 0) {
                     DataAccessRequest alreadyExists = dataAccessRequestDAO.findByReferenceId(dataAccessRequest.getReferenceId());
                     if (Objects.nonNull(alreadyExists)) {
-                        dataAccessRequestDAO.updateDraftByReferenceId(dataAccessRequest.getReferenceId());
+                        dataAccessRequestDAO.updateDraftByReferenceId(dataAccessRequest.getReferenceId(), false);
                         dataAccessRequestDAO.updateDataByReferenceIdVersion2(
                             dataAccessRequest.getReferenceId(),
                             user.getDacUserId(),
-                            new Date(darData.getCreateDate()),
                             new Date(darData.getSortDate()),
                             now,
                             now,
@@ -460,7 +476,6 @@ public class DataAccessRequestService {
         Date now = new Date();
         dataAccessRequestDAO.updateDataByReferenceIdVersion2(dar.getReferenceId(),
             user.getDacUserId(),
-            dar.getCreateDate(),
             now,
             dar.getSubmissionDate(),
             now,

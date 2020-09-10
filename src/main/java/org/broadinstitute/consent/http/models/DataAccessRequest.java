@@ -9,6 +9,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,17 +27,17 @@ public class DataAccessRequest {
 
   @JsonProperty public Integer userId;
 
-  @JsonProperty public Date createDate;
+  @JsonProperty public Timestamp createDate;
 
   /*
    * Legacy property on DARs. Used to display the sort order for a DAR. In practice, this also
    * functions as the Update Date. See also https://broadinstitute.atlassian.net/browse/DUOS-728
    */
-  @JsonProperty public Date sortDate;
+  @JsonProperty public Timestamp sortDate;
 
-  @JsonProperty public Date submissionDate;
+  @JsonProperty public Timestamp submissionDate;
 
-  @JsonProperty public Date updateDate;
+  @JsonProperty public Timestamp updateDate;
 
   public Integer getId() {
     return id;
@@ -82,7 +83,7 @@ public class DataAccessRequest {
     return createDate;
   }
 
-  public void setCreateDate(Date createDate) {
+  public void setCreateDate(Timestamp createDate) {
     this.createDate = createDate;
   }
 
@@ -90,23 +91,23 @@ public class DataAccessRequest {
     return sortDate;
   }
 
-  public void setSortDate(Date sortDate) {
+  public void setSortDate(Timestamp sortDate) {
     this.sortDate = sortDate;
   }
 
-  public Date getSubmissionDate() {
+  public Timestamp getSubmissionDate() {
     return submissionDate;
   }
 
-  public void setSubmissionDate(Date submissionDate) {
+  public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
   }
 
-  public Date getUpdateDate() {
+  public Timestamp getUpdateDate() {
     return updateDate;
   }
 
-  public void setUpdateDate(Date updateDate) {
+  public void setUpdateDate(Timestamp updateDate) {
     this.updateDate = updateDate;
   }
 
@@ -117,10 +118,11 @@ public class DataAccessRequest {
    * @return Map<String, Object> Dar in simple map format
    */
   public Map<String, Object> convertToSimplifiedDar() {
-    // Serialize dates as longs, but do not deserialize longs into dates so we can output long
-    // values in the final result.
+    // Serialize dates/timestamps as longs, but do not deserialize longs into dates so we can
+    // output long values in the final result.
     Gson gson = new GsonBuilder()
         .registerTypeAdapter(Date.class, (JsonSerializer<Date>) (date, type, jsonSerializationContext) -> new JsonPrimitive(date.getTime()))
+        .registerTypeAdapter(Timestamp.class, (JsonSerializer<Timestamp>) (timestamp, type, jsonSerializationContext) -> new JsonPrimitive(timestamp.getTime()))
         .create();
     DataAccessRequestData dataCopy = this.getData();
     this.setData(null);
@@ -154,12 +156,14 @@ public class DataAccessRequest {
    */
   private Map<String, Object> shallowCopy(DataAccessRequest dar) {
     Map<String, Object> copy = new HashMap<>();
+    if (Objects.nonNull(dar.getCreateDate())) copy.put("createDate", dar.getCreateDate().getTime());
+    if (Objects.nonNull(dar.getDraft())) copy.put("draft", dar.getDraft());
     if (Objects.nonNull(dar.getId())) copy.put("id", dar.getId());
     if (Objects.nonNull(dar.getReferenceId())) copy.put("referenceId", dar.getReferenceId());
-    if (Objects.nonNull(dar.getCreateDate())) copy.put("createDate", dar.getCreateDate().getTime());
-    if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
     if (Objects.nonNull(dar.getSortDate())) copy.put("sortDate", dar.getSortDate().getTime());
     if (Objects.nonNull(dar.getSubmissionDate())) copy.put("submissionDate", dar.getSubmissionDate().getTime());
+    if (Objects.nonNull(dar.getUpdateDate())) copy.put("updateDate", dar.getUpdateDate().getTime());
+    if (Objects.nonNull(dar.getUserId())) copy.put("userId", dar.getUserId());
     return copy;
   }
 }

@@ -99,7 +99,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @param referenceId String
    * @param userId Integer User
-   * @param createDate Date Creation Date
    * @param sortDate Date Sorting Date
    * @param submissionDate Date Submission Date
    * @param updateDate Date Update Date
@@ -107,11 +106,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
-      "UPDATE data_access_request SET data = to_jsonb(:data), user_id = :userId, create_date = :createDate, sort_date = :sortDate, submission_date = :submissionDate, update_date = :updateDate WHERE reference_id = :referenceId")
+      "UPDATE data_access_request SET data = to_jsonb(:data), user_id = :userId, sort_date = :sortDate, submission_date = :submissionDate, update_date = :updateDate WHERE reference_id = :referenceId")
   void updateDataByReferenceIdVersion2(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("createDate") Date createDate,
       @Bind("sortDate") Date sortDate,
       @Bind("submissionDate") Date submissionDate,
       @Bind("updateDate") Date updateDate,
@@ -153,7 +151,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
-      "INSERT INTO data_access_request (reference_id, user_id, create_date, sort_date,  submission_date, update_date, data) VALUES (:referenceId, :userId, :createDate, :sortDate, :submissionDate, :updateDate, to_jsonb(:data)) ")
+      "INSERT INTO data_access_request (reference_id, user_id, create_date, sort_date, submission_date, update_date, data) VALUES (:referenceId, :userId, :createDate, :sortDate, :submissionDate, :updateDate, to_jsonb(:data)) ")
   void insertVersion2(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
@@ -180,6 +178,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @param referenceId String
    */
-  @SqlUpdate("UPDATE data_access_request SET draft = false WHERE reference_id = :referenceId ")
-  void updateDraftByReferenceId(@Bind("referenceId") String referenceId);
+  @SqlUpdate("UPDATE data_access_request SET draft = :draft WHERE reference_id = :referenceId ")
+  void updateDraftByReferenceId(@Bind("referenceId") String referenceId, @Bind("draft") Boolean draft);
 }

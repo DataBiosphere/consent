@@ -119,6 +119,7 @@ public class DataAccessRequestData {
     private Boolean sharingDistribution;
     private List<Collaborator> labCollaborators;
     private List<Collaborator> internalCollaborators;
+    private List<Collaborator> externalCollaborators;
 
     @Override
     public String toString() {
@@ -777,5 +778,14 @@ public class DataAccessRequestData {
     public void setInternalCollaborators(
         List<Collaborator> internalCollaborators) {
         this.internalCollaborators = internalCollaborators;
+    }
+
+    public List<Collaborator> getExternalCollaborators() {
+        return externalCollaborators;
+    }
+
+    public void setExternalCollaborators(
+        List<Collaborator> externalCollaborators) {
+        this.externalCollaborators = externalCollaborators;
     }
 }

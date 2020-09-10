@@ -70,22 +70,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @RolesAllowed(RESEARCHER)
   public Response createDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
-    User user = findUserByEmail(authUser.getName());
-    DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = DataAccessRequestData.fromString(dar);
-    if (Objects.isNull(data)) {
-      data = new DataAccessRequestData();
-    }
-    if (Objects.nonNull(data.getReferenceId())) {
-      newDar.setReferenceId(data.getReferenceId());
-    } else {
-      String referenceId = UUID.randomUUID().toString();
-      newDar.setReferenceId(referenceId);
-      data.setReferenceId(referenceId);
-    }
-    newDar.setData(data);
-
     try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       List<DataAccessRequest> results =
           dataAccessRequestService.createDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().build();
@@ -136,14 +123,61 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     try {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      // Keep dar data reference id in sync with the dar until we fully deprecate
+      // it in dar data.
+      data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
       matchProcessAPI.processMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/draft")
+  @RolesAllowed(RESEARCHER)
+  public Response createDraftDataAccessRequest(
+      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
+      DataAccessRequest result =
+          dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
+      URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
+      return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/draft/{referenceId}")
+  @RolesAllowed(RESEARCHER)
+  public Response updatePartialDataAccessRequest(
+      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getName());
+      DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, originalDar);
+      DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      // Keep dar data reference id in sync with the dar until we fully deprecate
+      // it in dar data.
+      data.setReferenceId(originalDar.getReferenceId());
+      originalDar.setData(data);
+      DataAccessRequest updatedDar =
+          dataAccessRequestService.updateByReferenceIdVersion2(user, originalDar);
+      return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
   }
 
@@ -239,6 +273,38 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       throw new NotFoundException("Unable to find User with the provided email: " + email);
     }
     return user;
+  }
+
+  private DataAccessRequest populateDarFromJsonString(User user, String json) {
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData data = DataAccessRequestData.fromString(json);
+    if (Objects.isNull(data)) {
+      data = new DataAccessRequestData();
+    }
+    // When posting a submitted dar, there are two cases:
+    // 1. those that existed previously as a draft dar
+    // 2. those that are brand new
+    // Validate the provided referenceId with the authenticated user and draft status
+    // Those that do not validate are considered a brand new dar
+    if (Objects.nonNull(data.getReferenceId())) {
+      DataAccessRequest existingDar =
+          dataAccessRequestService.findByReferenceId(data.getReferenceId());
+      if (Objects.nonNull(existingDar)
+          && existingDar.getUserId().equals(user.getDacUserId())
+          && existingDar.getDraft()) {
+        newDar.setReferenceId(data.getReferenceId());
+      } else {
+        String referenceId = UUID.randomUUID().toString();
+        newDar.setReferenceId(referenceId);
+        data.setReferenceId(referenceId);
+      }
+    } else {
+      String referenceId = UUID.randomUUID().toString();
+      newDar.setReferenceId(referenceId);
+      data.setReferenceId(referenceId);
+    }
+    newDar.setData(data);
+    return newDar;
   }
 
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
