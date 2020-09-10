@@ -10,12 +10,12 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.gax.paging.Page;
 import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Spliterator;
@@ -98,14 +98,17 @@ public class GCSServiceTest {
     @Test
     public void testStoreDocument() throws Exception {
         String filename = "filename.txt";
-        when(blob.getMediaLink()).thenReturn(config.getEndpoint() + filename);
+//        when(blob.getMediaLink()).thenReturn(config.getEndpoint() + filename);
+        BlobId blobId = BlobId.of(config.getEndpoint(), filename);
+        when(blobId.getName()).thenReturn(filename);
+        when(blob.getBlobId()).thenReturn(blobId);
         when(storage.create(any(BlobInfo.class), any())).thenReturn(blob);
         when(storage.create(any(BlobInfo.class), any(), new Storage.BlobTargetOption[0])).thenReturn(blob);
         initStore();
 
         InputStream is = IOUtils.toInputStream("content", Charset.defaultCharset());
-        GenericUrl url = service.storeDocument(is, MediaType.TEXT_PLAIN, filename);
-        assertNotNull(url);
+        BlobId storedBlobId = service.storeDocument(is, MediaType.TEXT_PLAIN, filename);
+        assertNotNull(storedBlobId);
     }
 
     @Test
@@ -115,22 +118,17 @@ public class GCSServiceTest {
         String urlString = "http://localhost/bucket/" + fileName;
         Date now = new Date();
         Blob blob = mock(Blob.class);
+        BlobId blobId = BlobId.of("bucket", fileName);
         when(blob.isDirectory()).thenReturn(false);
         when(blob.getMediaLink()).thenReturn(urlString);
         when(blob.getName()).thenReturn("bucket/" + fileName);
         when(blob.getCreateTime()).thenReturn(now.getTime());
         when(blob.getContent()).thenReturn((fileContent).getBytes());
-        Spliterator<Blob> blobSpliterator = Collections
-            .singletonList(blob)
-            .spliterator();
-        when(iterable.spliterator()).thenReturn(blobSpliterator);
-        when(blobs.iterateAll()).thenReturn(iterable);
-        when(bucket.list()).thenReturn(blobs);
-        when(storage.get(any(String.class))).thenReturn(bucket);
-        GenericUrl url = new GenericUrl(urlString);
+        when(blob.getBlobId()).thenReturn(blobId);
+        when(storage.get(any(BlobId.class))).thenReturn(blob);
 
         initStore();
-        InputStream is = service.getDocument(url);
+        InputStream is = service.getDocument(urlString);
         String content = IOUtils.toString(is, Charset.defaultCharset());
         assertNotNull(is);
         assertEquals(fileContent, content);

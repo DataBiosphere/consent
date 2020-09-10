@@ -105,26 +105,26 @@ public class GCSService {
      * @param content InputStream content
      * @param mediaType String media type
      * @param fileName String file name
-     * @return GenericUrl of the stored document
+     * @return BlobId of the stored document
      * @throws IOException Exception when storing document
      */
-    public GenericUrl storeDocument(InputStream content, String mediaType, String fileName)
+    public BlobId storeDocument(InputStream content, String mediaType, String fileName)
         throws IOException {
         byte[] bytes = IOUtils.toByteArray(content);
         BlobId blobId = BlobId.of(config.getBucket(), fileName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
         Blob blob = storage.create(blobInfo, bytes);
-        return new GenericUrl(blob.getMediaLink());
+        return blob.getBlobId();
     }
 
     /**
      * Delete a document url
      *
-     * @param url GenericUrl of the document
+     * @param blobIdName String value of the document blob id name
      * @return True if document was deleted, false otherwise.
      */
-    public boolean deleteDocument(GenericUrl url) {
-        Optional<Blob> blobOptional = getBlobFromUrl(url);
+    public boolean deleteDocument(String blobIdName) {
+        Optional<Blob> blobOptional = getBlobFromUrl(blobIdName);
         return blobOptional
             .map(blob -> storage.delete(blob.getBlobId()))
             .orElse(false);
@@ -133,35 +133,27 @@ public class GCSService {
     /**
      * Retrieve a document by url
      *
-     * @param url GenericUrl of the document
+     * @param blobIdName String value of the document blob id name
      * @return InputStream of the document
      * @throws NotFoundException Returned when no document found
      */
-    public InputStream getDocument(GenericUrl url) throws NotFoundException {
-        Optional<Blob> blobOptional = getBlobFromUrl(url);
+    public InputStream getDocument(String blobIdName) throws NotFoundException {
+        Optional<Blob> blobOptional = getBlobFromUrl(blobIdName);
         if (blobOptional.isPresent()) {
             return new ByteArrayInputStream(blobOptional.get().getContent());
         } else {
-            throw new NotFoundException("URL Not Found: " + url.toString());
+            throw new NotFoundException("Document Not Found: " + blobIdName);
         }
     }
 
     /**
      * Find a blob in the current storage bucket.
-     * TODO: I'd like to find a more efficient way of doing this in a Storage/Blob friendly way.
-     * Looping over all of the bucket contents is not a great idea.
      *
-     * @param url GenericUrl of the GCS file
+     * @param blobIdName String value of the document blob id name
      * @return Optional<Blob>
      */
-    private Optional<Blob> getBlobFromUrl(GenericUrl url) {
-        String fileName = url.getPathParts().stream().reduce((i, j) -> j).orElse("");
-        Bucket bucket = storage.get(config.getBucket());
-        Page<Blob> blobs = bucket.list();
-        return StreamSupport.
-            stream(blobs.iterateAll().spliterator(), false).
-            filter(b -> !b.isDirectory()).
-            filter(b -> b.getName().contains(fileName)).
-            findFirst();
+    private Optional<Blob> getBlobFromUrl(String blobIdName) {
+        Blob blob = storage.get(BlobId.of(config.getBucket(), blobIdName));
+        return Optional.of(blob);
     }
 }

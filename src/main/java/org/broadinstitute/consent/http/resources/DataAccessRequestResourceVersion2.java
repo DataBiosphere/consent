@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.GenericUrl;
+import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.io.IOException;
@@ -195,10 +195,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
-        GenericUrl url = new GenericUrl(dar.getData().getIrbDocumentLocation());
+      if (Objects.nonNull(dar.getData().getIrbDocumentLocation()) &&
+        Objects.nonNull(dar.getData().getIrbDocumentName())) {
+        String blobIdName = dar.getData().getIrbDocumentLocation();
         String fileName = dar.getData().getIrbDocumentName();
-        InputStream is = gcsService.getDocument(url);
+        InputStream is = gcsService.getDocument(blobIdName);
         StreamingOutput stream = createStreamingOutput(is);
         return Response.ok(stream)
             .header("Content-Disposition", "attachment; filename=" + fileName)
@@ -242,10 +243,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
-        GenericUrl url = new GenericUrl(dar.getData().getCollaborationLetterLocation());
+      if (Objects.nonNull(dar.getData().getCollaborationLetterLocation()) &&
+        Objects.nonNull(dar.getData().getCollaborationLetterName())) {
+        String blobIdName = dar.getData().getCollaborationLetterLocation();
         String fileName = dar.getData().getCollaborationLetterName();
-        InputStream is = gcsService.getDocument(url);
+        InputStream is = gcsService.getDocument(blobIdName);
         StreamingOutput stream = createStreamingOutput(is);
         return Response.ok(stream)
             .header("Content-Disposition", "attachment; filename=" + fileName)
@@ -332,14 +334,14 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       FormDataContentDisposition fileDetail) throws IOException {
     String fileName = fileDetail.getFileName();
     String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
-    GenericUrl documentUrl = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), toStoreFileName);
+    BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), toStoreFileName);
     switch (type) {
       case IRB:
         // Delete the current document if it exists
         if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
           deleteDarDocument(dar, dar.getData().getIrbDocumentLocation());
         }
-        dar.getData().setIrbDocumentLocation(documentUrl.toString());
+        dar.getData().setIrbDocumentLocation(blobId.getName());
         dar.getData().setIrbDocumentName(fileName);
         break;
       case COLLABORATION:
@@ -347,7 +349,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
         if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
           deleteDarDocument(dar, dar.getData().getCollaborationLetterLocation());
         }
-        dar.getData().setCollaborationLetterLocation(documentUrl.toString());
+        dar.getData().setCollaborationLetterLocation(blobId.getName());
         dar.getData().setCollaborationLetterName(fileName);
         break;
       default:
@@ -357,12 +359,11 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     return dataAccessRequestService.findByReferenceId(dar.getReferenceId());
   }
 
-  private void deleteDarDocument(DataAccessRequest dar, String urlString) {
+  private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {
     try {
-      GenericUrl url = new GenericUrl(urlString);
-      gcsService.deleteDocument(url);
+      gcsService.deleteDocument(blobIdName);
     } catch (Exception e) {
-      String message = String.format("Unable to delete document for DAR ID: %s; dar document location: %s", dar.getReferenceId(), urlString);
+      String message = String.format("Unable to delete document for DAR ID: %s; dar document location: %s", dar.getReferenceId(), blobIdName);
       logger.warn(message);
     }
   }
