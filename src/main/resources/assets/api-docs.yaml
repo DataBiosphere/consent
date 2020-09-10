@@ -1403,6 +1403,9 @@ paths:
               schema:
                 type: string
                 format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Store DAR IRB Document
       description: Store an IRB Document for a Data Access Request
