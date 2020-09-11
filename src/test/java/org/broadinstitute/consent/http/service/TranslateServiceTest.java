@@ -31,7 +31,7 @@ public class TranslateServiceTest {
 
   @Test
   public void testGenerateStructuredTranslatedRestrictionOntologies() {
-    Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
+    Gson gson = new Gson();
     String darDataString = "{\n"
         + "  \"hmb\": true,\n"
         + "  \"diseases\": true,\n"
@@ -66,12 +66,13 @@ public class TranslateServiceTest {
     Document dar = Document.parse(gson.toJson(data));
     String translation = translateService.generateStructuredTranslatedRestriction(dar, false);
     assertNotNull(translation);
+    assertTrue(translation.contains("myocardial infarction"));
     assertTrue(translation.contains("coronary artery disease"));
   }
 
   @Test
   public void testGenerateStructuredTranslatedRestrictionOntologiesErrorCase1() {
-    Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
+    Gson gson = new Gson();
     String darDataString = "{\n"
         + "  \"hmb\": true,\n"
         + "  \"diseases\": true,\n"
@@ -87,7 +88,7 @@ public class TranslateServiceTest {
 
   @Test
   public void testGenerateStructuredTranslatedRestrictionOntologiesErrorCase2() {
-    Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
+    Gson gson = new Gson();
     String darDataString = "{\n"
         + "  \"hmb\": true,\n"
         + "  \"diseases\": true,\n"
@@ -104,7 +105,7 @@ public class TranslateServiceTest {
 
   @Test
   public void testGenerateStructuredTranslatedRestrictionOntologiesErrorCase3() {
-    Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
+    Gson gson = new Gson();
     String darDataString = "{\n"
         + "  \"hmb\": true,\n"
         + "  \"diseases\": true,\n"
