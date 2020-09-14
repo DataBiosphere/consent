@@ -86,7 +86,7 @@ public class DataSetResource extends Resource {
         if (Objects.isNull(ds)) {
             throw new BadRequestException("Dataset is required");
         }
-        if (Objects.isNull(ds.getProperties())) {
+        if (Objects.isNull(ds.getProperties()) || ds.getProperties().isEmpty()) {
             throw new BadRequestException("Dataset must contain required properties");
         }
         List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(ds.getProperties());
