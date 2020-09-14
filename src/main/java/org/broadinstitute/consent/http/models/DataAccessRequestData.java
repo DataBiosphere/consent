@@ -131,23 +131,7 @@ public class DataAccessRequestData {
 
     public static DataAccessRequestData fromString(String jsonString) {
         DataAccessRequestData data = new Gson().fromJson(jsonString, DataAccessRequestData.class);
-        // Validate all ontology entries
-        if (Objects.nonNull(data) &&
-            Objects.nonNull(data.getOntologies())
-            && !data.getOntologies().isEmpty()) {
-            List<OntologyEntry> filteredEntries =
-                data.getOntologies().stream()
-                    .filter(Objects::nonNull)
-                    .filter(e -> Objects.nonNull(e.getId()))
-                    .filter(e -> Objects.nonNull(e.getLabel()))
-                    .filter(e -> Objects.nonNull(e.getDefinition()))
-                    .collect(Collectors.toList());
-            if (filteredEntries.isEmpty()) {
-                data.setOntologies(Collections.emptyList());
-            } else {
-                data.setOntologies(filteredEntries);
-            }
-        }
+        validateOntologyEntries(data);
         return data;
     }
 
@@ -808,5 +792,25 @@ public class DataAccessRequestData {
     public void setExternalCollaborators(
         List<Collaborator> externalCollaborators) {
         this.externalCollaborators = externalCollaborators;
+    }
+
+    // Validate all ontology entries
+    private static void validateOntologyEntries(DataAccessRequestData data) {
+        if (Objects.nonNull(data) &&
+            Objects.nonNull(data.getOntologies())
+            && !data.getOntologies().isEmpty()) {
+            List<OntologyEntry> filteredEntries =
+                data.getOntologies().stream()
+                    .filter(Objects::nonNull)
+                    .filter(e -> Objects.nonNull(e.getId()))
+                    .filter(e -> Objects.nonNull(e.getLabel()))
+                    .filter(e -> Objects.nonNull(e.getDefinition()))
+                    .collect(Collectors.toList());
+            if (filteredEntries.isEmpty()) {
+                data.setOntologies(Collections.emptyList());
+            } else {
+                data.setOntologies(filteredEntries);
+            }
+        }
     }
 }
