@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.testing.ResourceHelpers;
 import java.net.URI;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -94,11 +95,35 @@ public class DatasetResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
-
         initResource();
         Response response = resource.createDataset(authUser, uriInfo, "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
 
         assertEquals(201,response.getStatus());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testCreateDatasetErrors() {
+        DataSet inUse = new DataSet();
+        when(datasetService.getDatasetByName("test")).thenReturn(inUse);
+
+        initResource();
+        Response responseNoJson = resource.createDataset(authUser, uriInfo, "");
+        assertEquals(400, responseNoJson.getStatus());
+
+        Response responseNoProperties = resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        assertEquals(400, responseNoProperties.getStatus());
+
+        Response responseMissingDatasetName = resource.createDataset(authUser, uriInfo,
+              "{\"properties\":[{\"propertyName\":\"Species\",\"propertyValue\":\"test\"}]}");
+        assertEquals(400, responseMissingDatasetName.getStatus());
+
+        Response responseInvalidProperty = resource.createDataset(authUser, uriInfo,
+              "{\"properties\":[{\"propertyName\":\"Invalid Property\",\"propertyValue\":\"test\"}]");
+        assertEquals(400, responseInvalidProperty.getStatus());
+
+        Response responseNameInUse = resource.createDataset(authUser, uriInfo,
+              "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
+        assertEquals(400, responseNameInUse.getStatus());
     }
 
     @Test
