@@ -24,7 +24,7 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSet createDataset(DataSetDTO dataset, String name) {
+    public DataSet createDataset(DataSetDTO dataset, String name, Integer userId) {
         Date date = new Date();
         long time = date.getTime();
         Timestamp now = new Timestamp(time);
@@ -32,7 +32,7 @@ public class DatasetService {
         int alias = lastAlias + 1;
 
         Integer id = dataSetDAO
-            .insertDataset(name, now, dataset.getObjectId(), dataset.getActive(), alias);
+            .insertDatasetV2(name, now, userId, dataset.getObjectId(), dataset.getActive(), alias);
 
         List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         dataSetDAO.insertDataSetsProperties(propertyList);

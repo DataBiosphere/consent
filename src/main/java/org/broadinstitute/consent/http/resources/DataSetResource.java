@@ -103,7 +103,9 @@ public class DataSetResource extends Resource {
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Dataset name: " + name + " is already in use");
         }
-        DataSet dataset = datasetService.createDataset(ds, name);
+        User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
+        Integer userId = dacUser.getDacUserId();
+        DataSet dataset = datasetService.createDataset(ds, name, userId);
         URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(ds.getDataSetId());
         return Response.created(uri).entity(dataset).build();
     }
