@@ -2327,17 +2327,17 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/dataset/test:
+  /api/dataset/v2:
     post:
       summary: Creates the Dataset from JSON
-      description: Creates the Dataset from JSON (WIP)
-      parameters:
-        - name: json
-          in: body
-          description: Submitted dataset registration form
-          required: true
-          schema:
-            type: string
+      description: Creates the Dataset from JSON
+      requestBody:
+        description: Submitted dataset registration form
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dataset'
       tags:
         - Datasets
       responses:

@@ -23,10 +23,6 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSet createTestDataSet(String json) {
-        return new DataSet(json);
-    }
-
     public DataSet createDataset(DataSetDTO dataset, String name) {
         Date now = new Date();
         int lastAlias = dataSetDAO.findLastAlias();
