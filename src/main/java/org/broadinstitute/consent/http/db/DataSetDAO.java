@@ -99,6 +99,13 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetDTO> findDataSets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction " +
+          "FROM dataset d LEFT OUTER JOIN datasetproperty dp on dp.datasetid = d.datasetid LEFT OUTER JOIN dictionary k on k.keyid = dp.propertykey " +
+          "LEFT OUTER JOIN consentassociations ca on ca.datasetid = d.datasetid LEFT OUTER JOIN consents c on c.consentid = ca.consentid " +
+          "WHERE d.datasetid = :dataSetId ORDER BY d.datasetid, k.displayorder")
+    Set<DataSetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("dataSetId") Integer dataSetId);
+
+    @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +

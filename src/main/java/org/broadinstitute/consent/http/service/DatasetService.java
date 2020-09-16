@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
@@ -57,6 +58,14 @@ public class DatasetService {
         Set<DataSetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
         return dataset;
+    }
+
+    public DataSetDTO getDatasetDTO(Integer datasetId) {
+        Set<DataSetDTO> dataSet = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+        for (DataSetDTO d : dataSet) {
+            return d;
+        }
+        throw new NotFoundException();
     }
 
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
