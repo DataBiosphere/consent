@@ -100,7 +100,7 @@ public class GCSService {
     }
 
     /**
-     * Store an input stream as a document
+     * Store an input stream as a Blob
      *
      * @param content InputStream content
      * @param mediaType String media type
@@ -118,7 +118,7 @@ public class GCSService {
     }
 
     /**
-     * Delete a document url
+     * Delete a document by Blob Id Name
      *
      * @param blobIdName String value of the document blob id name
      * @return True if document was deleted, false otherwise.
@@ -131,7 +131,7 @@ public class GCSService {
     }
 
     /**
-     * Retrieve a document by url
+     * Retrieve a document by Blob Id Name
      *
      * @param blobIdName String value of the document blob id name
      * @return InputStream of the document
