@@ -225,7 +225,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      DataAccessRequest updatedDar = updateDarDocument(DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
+      DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -273,7 +273,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       User user = findUserByEmail(authUser.getName());
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      DataAccessRequest updatedDar = updateDarDocument(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
+      DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -326,7 +326,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
-  private DataAccessRequest updateDarDocument(
+  private DataAccessRequest updateDarWithDocumentContents(
       DarDocumentType type,
       User user,
       DataAccessRequest dar,
