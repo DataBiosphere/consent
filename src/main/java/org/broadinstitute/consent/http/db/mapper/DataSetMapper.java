@@ -13,7 +13,10 @@ public class DataSetMapper implements RowMapper<DataSet> {
         r.getInt("dataSetId"),
         r.getString("objectId"),
         r.getString("name"),
-        r.getTimestamp("createDate"),
+        r.getTimestamp("createdate"),
+        r.getInt("create_user_id"),
+        r.getTimestamp("update_date"),
+        r.getInt("update_user_id"),
         r.getBoolean("active"),
         r.getInt("alias"));
   }

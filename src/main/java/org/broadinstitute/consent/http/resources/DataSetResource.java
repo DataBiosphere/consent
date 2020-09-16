@@ -178,7 +178,8 @@ public class DataSetResource extends Resource {
     @PermitAll
     public Response describeDataSet( @PathParam("datasetId") Integer datasetId){
         try {
-            return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
+            return Response.ok(datasetService.findDatasetById(datasetId), MediaType.APPLICATION_JSON).build();
+//            return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
