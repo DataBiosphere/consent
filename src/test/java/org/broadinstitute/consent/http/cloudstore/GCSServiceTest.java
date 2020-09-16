@@ -98,7 +98,6 @@ public class GCSServiceTest {
     @Test
     public void testStoreDocument() throws Exception {
         String filename = "filename.txt";
-//        when(blob.getMediaLink()).thenReturn(config.getEndpoint() + filename);
         BlobId blobId = BlobId.of(config.getEndpoint(), filename);
         when(blobId.getName()).thenReturn(filename);
         when(blob.getBlobId()).thenReturn(blobId);
