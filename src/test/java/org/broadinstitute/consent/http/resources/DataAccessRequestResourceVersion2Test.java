@@ -209,6 +209,42 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(200, response.getStatus());
   }
 
+  @Test
+  public void testGetCollaborationDocument() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setCollaborationLetterLocation(RandomStringUtils.random(10));
+    dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    initResource();
+    Response response = resource.getCollaborationDocument(authUser, "");
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollaborationDocumentNotFound() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    initResource();
+    Response response = resource.getCollaborationDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testUploadCollaborationDocument() throws Exception {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getType()).thenReturn("txt");
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+
+    initResource();
+    Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
+    assertEquals(200, response.getStatus());
+  }
+
   private DataAccessRequest generateDataAccessRequest() {
     Timestamp now = new Timestamp(new Date().getTime());
     DataAccessRequest dar = new DataAccessRequest();
