@@ -44,13 +44,13 @@ public class DatasetServiceTest {
     @Test
     public void testCreateDataset() {
         int datasetId = 1;
-        when(datasetDAO.insertDataset(anyString(), any(), anyString(), anyBoolean(), anyInt()))
+        when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean(), anyInt()))
             .thenReturn(datasetId);
         when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
         when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
         initService();
 
-        DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1");
+        DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1", 1);
 
         Assert.assertNotNull(result);
         Assert.assertEquals(result.getName(), getDatasets().get(0).getName());

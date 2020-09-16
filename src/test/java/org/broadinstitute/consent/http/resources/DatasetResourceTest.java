@@ -5,8 +5,10 @@ import java.net.URI;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
@@ -36,6 +38,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -67,6 +70,12 @@ public class DatasetResourceTest {
     private AuthUser authUser;
 
     @Mock
+    private GoogleUser googleUser;
+
+    @Mock
+    private User dacUser;
+
+    @Mock
     private UriInfo uriInfo;
 
     @Mock
@@ -91,7 +100,11 @@ public class DatasetResourceTest {
     public void testCreateDataset() throws Exception {
         DataSet result = new DataSet();
         when(datasetService.getDatasetByName("test")).thenReturn(null);
-        when(datasetService.createDataset(any(), any())).thenReturn(result);
+        when(datasetService.createDataset(any(), any(), anyInt())).thenReturn(result);
+        when(authUser.getGoogleUser()).thenReturn(googleUser);
+        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(1);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
