@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 
 import javax.inject.Inject;
