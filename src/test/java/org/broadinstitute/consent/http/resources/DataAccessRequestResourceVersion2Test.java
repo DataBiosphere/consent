@@ -5,9 +5,13 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.storage.BlobId;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,6 +20,7 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -26,6 +31,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +40,7 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AbstractMatchProcessAPI.class})
@@ -166,6 +173,41 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(403, response.getStatus());
   }
 
+  @Test
+  public void testGetIrbDocument() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setIrbDocumentLocation(RandomStringUtils.random(10));
+    dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    initResource();
+    Response response = resource.getIrbDocument(authUser, "");
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testGetIrbDocumentNotFound() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    initResource();
+    Response response = resource.getIrbDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testUploadIrbDocument() throws Exception {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getType()).thenReturn("txt");
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+
+    initResource();
+    Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
+    assertEquals(200, response.getStatus());
+  }
 
   private DataAccessRequest generateDataAccessRequest() {
     Timestamp now = new Timestamp(new Date().getTime());
