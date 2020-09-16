@@ -61,11 +61,12 @@ public class DatasetService {
     }
 
     public DataSetDTO getDatasetDTO(Integer datasetId) {
-        Set<DataSetDTO> dataSet = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
-        for (DataSetDTO d : dataSet) {
-            return d;
+        Set<DataSetDTO> dataset = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+        DataSetDTO result = new DataSetDTO();
+        for (DataSetDTO d : dataset) {
+            result = d;
         }
-        throw new NotFoundException();
+        return result;
     }
 
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
