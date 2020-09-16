@@ -134,6 +134,15 @@ public class GCSServiceTest {
         assertEquals(fileContent, content);
     }
 
+    @Test
+    public void testDeleteDocument() {
+        when(storage.get(any(BlobId.class))).thenReturn(blob);
+        when(storage.delete(any(BlobId.class))).thenReturn(true);
+        initStore();
+        boolean deleted = service.deleteDocument(RandomStringUtils.random(10));
+        assertTrue(deleted);
+    }
+
     /**
      * Make an iterator of Blobs so we can mock out what Google will return for data.
      * @return Iterator<Blob>
