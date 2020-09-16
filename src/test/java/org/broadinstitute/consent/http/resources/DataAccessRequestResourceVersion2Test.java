@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -157,6 +158,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
     initResource();
+
     Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
     assertEquals(200, response.getStatus());
   }
@@ -169,6 +171,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
     initResource();
+
     Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
     assertEquals(403, response.getStatus());
   }
@@ -181,6 +184,7 @@ public class DataAccessRequestResourceVersion2Test {
     dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     initResource();
+
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(200, response.getStatus());
   }
@@ -190,6 +194,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
+
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
   }
@@ -203,8 +208,27 @@ public class DataAccessRequestResourceVersion2Test {
     when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
     when(formData.getType()).thenReturn("txt");
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
-
     initResource();
+
+    Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testUploadIrbDocumentWithPreviousIrbDocument() throws Exception {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setIrbDocumentLocation(RandomStringUtils.random(10));
+    dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getType()).thenReturn("txt");
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    initResource();
+
     Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
   }
@@ -217,6 +241,7 @@ public class DataAccessRequestResourceVersion2Test {
     dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     initResource();
+
     Response response = resource.getCollaborationDocument(authUser, "");
     assertEquals(200, response.getStatus());
   }
@@ -226,6 +251,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
+
     Response response = resource.getCollaborationDocument(authUser, "");
     assertEquals(404, response.getStatus());
   }
@@ -239,8 +265,27 @@ public class DataAccessRequestResourceVersion2Test {
     when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
     when(formData.getType()).thenReturn("txt");
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
-
     initResource();
+
+    Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setCollaborationLetterLocation(RandomStringUtils.random(10));
+    dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getType()).thenReturn("txt");
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    initResource();
+
     Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
   }
