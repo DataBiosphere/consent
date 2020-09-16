@@ -9,24 +9,12 @@
       <column name="create_user_id" type="bigint">
         <constraints foreignKeyName="fk_dataset_user_id" references="dacuser(dacuserid)" />
       </column>
-    </addColumn>
-    <rollback>
-      <dropColumn columnName="create_user_id" tableName="dataset" />
-    </rollback>
-  </changeSet>
-  <changeSet dbms="postgresql" author="lzhang" id="54.1">
-    <addColumn tableName="dataset">
       <column name="update_date" type="timestamptz" />
-    </addColumn>
-    <rollback>
-      <dropColumn columnName="update_date" tableName="dataset" />
-    </rollback>
-  </changeSet>
-  <changeSet dbms="postgresql" author="lzhang" id="54.2">
-    <addColumn tableName="dataset">
       <column name="update_user_id" type="bigint" />
     </addColumn>
     <rollback>
+      <dropColumn columnName="create_user_id" tableName="dataset" />
+      <dropColumn columnName="update_date" tableName="dataset" />
       <dropColumn columnName="update_user_id" tableName="dataset" />
     </rollback>
   </changeSet>

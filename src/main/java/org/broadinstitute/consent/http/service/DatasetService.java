@@ -25,9 +25,7 @@ public class DatasetService {
     }
 
     public DataSet createDataset(DataSetDTO dataset, String name, Integer userId) {
-        Date date = new Date();
-        long time = date.getTime();
-        Timestamp now = new Timestamp(time);
+        Timestamp now = new Timestamp(new Date().getTime());
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
 
