@@ -201,7 +201,9 @@ public class DataAccessRequestResourceVersion2Test {
   @Test
   public void testUploadIrbDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
@@ -219,6 +221,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setIrbDocumentLocation(RandomStringUtils.random(10));
     dar.getData().setIrbDocumentName(RandomStringUtils.random(10) + ".txt");
+    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -258,7 +261,9 @@ public class DataAccessRequestResourceVersion2Test {
   @Test
   public void testUploadCollaborationDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
@@ -276,6 +281,7 @@ public class DataAccessRequestResourceVersion2Test {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setCollaborationLetterLocation(RandomStringUtils.random(10));
     dar.getData().setCollaborationLetterName(RandomStringUtils.random(10) + ".txt");
+    when(dataAccessRequestService.updateByReferenceIdVersion2(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
