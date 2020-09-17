@@ -98,7 +98,7 @@ public class UserResourceTest {
         initResource();
 
         Response response = userResource.getUserById(authUser, 1);
-        Assert.assertEquals(Status.OK.getStatusCode(), response.getStatus());
+        assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -107,7 +107,7 @@ public class UserResourceTest {
         initResource();
 
         Response response = userResource.getUserById(authUser, 1);
-        Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
