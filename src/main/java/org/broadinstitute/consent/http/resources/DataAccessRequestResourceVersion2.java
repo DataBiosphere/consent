@@ -355,8 +355,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       default:
         break;
     }
-    dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
-    return dataAccessRequestService.findByReferenceId(dar.getReferenceId());
+    return dataAccessRequestService.updateByReferenceIdVersion2(user, dar);
   }
 
   private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {
