@@ -1,37 +1,45 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.ResearcherFields;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.WhitelistEntry;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.WhitelistService;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 public class UserResourceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private WhitelistService whitelistService;
 
     private UserResource userResource;
 
@@ -58,7 +66,48 @@ public class UserResourceTest {
     }
 
     private void initResource() {
-        userResource = new UserResource(userService);
+        userResource = new UserResource(userService, whitelistService);
+    }
+
+    @Test
+    public void testGetUserById() {
+        User user = new User();
+        user.setDisplayName("Test");
+        UserRole researcher = new UserRole();
+        List<UserRole> roles = new ArrayList<>();
+        researcher.setName(UserRoles.RESEARCHER.getRoleName());
+        roles.add(researcher);
+        user.setRoles(roles);
+        ResearcherProperty prop = new ResearcherProperty();
+        prop.setPropertyId(1);
+        prop.setPropertyKey(ResearcherFields.ORCID.getValue());
+        prop.setPropertyValue("orcid");
+        WhitelistEntry e = new WhitelistEntry();
+        String randomValue = RandomStringUtils.random(10, true, false);
+        e.setCommonsId(randomValue);
+        e.setEmail(randomValue);
+        e.setItDirectorEmail(randomValue);
+        e.setItDirectorName(randomValue);
+        e.setName(randomValue);
+        e.setOrganization(randomValue);
+        e.setSigningOfficialEmail(randomValue);
+        e.setSigningOfficialName(randomValue);
+        when(userService.findUserById(any())).thenReturn(user);
+        when(userService.findAllUserProperties(any())).thenReturn(Collections.singletonList(prop));
+        when(whitelistService.findWhitelistEntriesForUser(any(), any())).thenReturn(Collections.singletonList(e));
+        initResource();
+
+        Response response = userResource.getUserById(authUser, 1);
+        Assert.assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testGetUserByIdNotFound() {
+        when(userService.findUserById(any())).thenThrow(new NotFoundException());
+        initResource();
+
+        Response response = userResource.getUserById(authUser, 1);
+        Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test

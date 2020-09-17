@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.UserService;
-
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -24,17 +23,48 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.Collections;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.WhitelistEntry;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.WhitelistService;
 
 @Path("{api : (api/)?}user")
 public class UserResource extends Resource {
 
     private final UserService userService;
+    private final WhitelistService whitelistService;
 
     @Inject
-    public UserResource(UserService userService) {
+    public UserResource(UserService userService, WhitelistService whitelistService) {
         this.userService = userService;
+        this.whitelistService = whitelistService;
+    }
+
+    @GET
+    @Path("/{userId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+    public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
+        try {
+            User user = userService.findUserById(userId);
+            List<ResearcherProperty> props = userService.findAllUserProperties(userId);
+            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
+            Gson gson = new Gson();
+            JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
+            JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
+            JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
+            userJson.add("researcherProperties", propsJson);
+            userJson.add("whitelistEntries", entriesJson);
+            return Response.ok(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @POST
