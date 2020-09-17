@@ -1,0 +1,35 @@
+<databaseChangeLog
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+  <changeSet dbms="postgresql" author="grushton" id="55.0">
+    <sql>
+      UPDATE data_access_request
+      SET data = replace(data::TEXT,'\"ontologies\":[null]','\"ontologies\":[]')::jsonb
+      WHERE (data #>> '{}')::jsonb->>'ontologies' = '[null]';
+    </sql>
+    <sql>
+      UPDATE data_access_request
+      SET data = replace(data::TEXT,'\"ontologies\":[{}]','\"ontologies\":[]')::jsonb
+      WHERE (data #>> '{}')::jsonb->>'ontologies' = '[{}]';
+    </sql>
+    <sql>
+      UPDATE data_access_request
+      SET data = replace(data::TEXT,'\"ontologies\":[{},{}]','\"ontologies\":[]')::jsonb
+      WHERE (data #>> '{}')::jsonb->>'ontologies' = '[{},{}]';
+    </sql>
+    <sql>
+      UPDATE data_access_request
+      SET data = replace(data::TEXT,'\"ontologies\":[{},{},{}]','\"ontologies\":[]')::jsonb
+      WHERE (data #>> '{}')::jsonb->>'ontologies' = '[{},{},{}]';
+    </sql>
+    <sql>
+      UPDATE data_access_request
+      SET data = replace(data::TEXT,'\"ontologies\":[{},{},{},{}]','\"ontologies\":[]')::jsonb
+      WHERE (data #>> '{}')::jsonb->>'ontologies' = '[{},{},{},{}]';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

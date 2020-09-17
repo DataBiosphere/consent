@@ -2,6 +2,18 @@ package org.broadinstitute.consent.http.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -9,24 +21,13 @@ import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @SuppressWarnings("WeakerAccess")
 public class UseRestrictionConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("UseRestrictionConverter");
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ServicesConfiguration servicesConfiguration;
-    private Client client;
+    private final Client client;
 
     public UseRestrictionConverter(Client client, ServicesConfiguration config) {
         this.client = client;
@@ -41,13 +42,13 @@ public class UseRestrictionConverter {
         //
         //    Research related entries
         //
-        if (Boolean.valueOf(form.getOrDefault("methods", false).toString())) {
+        if (Boolean.parseBoolean(form.getOrDefault("methods", false).toString())) {
             dataUse.setMethodsResearch(true);
         }
-        if (Boolean.valueOf(form.getOrDefault("population", false).toString())) {
+        if (Boolean.parseBoolean(form.getOrDefault("population", false).toString())) {
             dataUse.setPopulationStructure(true);
         }
-        if (Boolean.valueOf(form.getOrDefault("controls", false).toString())) {
+        if (Boolean.parseBoolean(form.getOrDefault("controls", false).toString())) {
             dataUse.setControlSetOption("Yes");
         }
 
@@ -56,21 +57,27 @@ public class UseRestrictionConverter {
         //
         ArrayList<HashMap<String, String>> ontologies = (ArrayList<HashMap<String, String>>) form.get("ontologies");
         if (CollectionUtils.isNotEmpty(ontologies)) {
-            dataUse.setDiseaseRestrictions(
-                    ontologies.stream().map(hashMap -> hashMap.get("id")).collect(Collectors.toList())
-            );
+            List<String> restrictions = ontologies
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(hashMap -> hashMap.containsKey("id"))
+                .map(hashMap -> hashMap.get("id"))
+                .collect(Collectors.toList());
+            if (!restrictions.isEmpty()) {
+              dataUse.setDiseaseRestrictions(restrictions);
+            }
         }
 
         //
         //    gender, age and commercial status entries
         //
-        boolean forProfitOnly = Boolean.valueOf(form.getOrDefault("forProfit", false).toString());
+        boolean forProfitOnly = Boolean.parseBoolean(form.getOrDefault("forProfit", false).toString());
         dataUse.setCommercialUse(forProfitOnly);
 
         // limited to one gender + children analysis
-        boolean oneGenderOnly = Boolean.valueOf(form.getOrDefault("onegender", false).toString());
+        boolean oneGenderOnly = Boolean.parseBoolean(form.getOrDefault("onegender", false).toString());
         String selectedGender = (String) form.getOrDefault("gender", "X");
-        boolean pediatricsOnly = Boolean.valueOf(form.getOrDefault("pediatric", false).toString());
+        boolean pediatricsOnly = Boolean.parseBoolean(form.getOrDefault("pediatric", false).toString());
 
         if (oneGenderOnly) {
             if (selectedGender.equalsIgnoreCase("M"))
@@ -83,11 +90,11 @@ public class UseRestrictionConverter {
             dataUse.setPediatric(true);
         }
 
-        if (Boolean.valueOf(form.getOrDefault("poa", false).toString())) {
+        if (Boolean.parseBoolean(form.getOrDefault("poa", false).toString())) {
             dataUse.setPopulationOriginsAncestry(true);
         }
 
-        if (Boolean.valueOf(form.getOrDefault("hmb", false).toString())) {
+        if (Boolean.parseBoolean(form.getOrDefault("hmb", false).toString())) {
             dataUse.setHmbResearch(true);
         }
 
