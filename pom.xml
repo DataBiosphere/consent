@@ -16,7 +16,7 @@
     <pdfbox.version>2.0.19</pdfbox.version>
     <owl.version>5.1.16</owl.version>
     <postgres.version>42.2.16</postgres.version>
-    <rdf4j-rio.version>3.4.0</rdf4j-rio.version>
+    <rdf4j-rio.version>3.4.1</rdf4j-rio.version>
     <swagger.ui.version>3.32.5</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
 
