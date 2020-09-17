@@ -20,6 +20,15 @@ public class DataSet {
     private Date createDate;
 
     @JsonProperty
+    private Integer createUserId;
+
+    @JsonProperty
+    private Date updateDate;
+
+    @JsonProperty
+    private Integer updateUserId;
+
+    @JsonProperty
     private Boolean active;
 
     @JsonProperty
@@ -34,6 +43,18 @@ public class DataSet {
     private Set<DataSetProperty> properties;
 
     public DataSet() {
+    }
+
+    public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Integer createUserId, Date updateDate, Integer updateUserId, Boolean active, Integer alias) {
+        this.dataSetId = dataSetId;
+        this.objectId = objectId;
+        this.name = name;
+        this.createDate = createDate;
+        this.createUserId = createUserId;
+        this.updateDate = updateDate;
+        this.updateUserId = updateUserId;
+        this.active = active;
+        this.alias = alias;
     }
 
     public DataSet(Integer dataSetId, String objectId, String name, Date createDate, Boolean active, Integer alias) {
@@ -88,6 +109,22 @@ public class DataSet {
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
     }
+
+    public Integer getCreateUserId() { return createUserId; }
+
+    public void setCreateUserId(Integer createUserId) { this.createUserId = createUserId; }
+
+    public Date getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(Date updateDate) {
+        this.updateDate = updateDate;
+    }
+
+    public Integer getUpdateUserId() { return updateUserId; }
+
+    public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
 
     public Set<DataSetProperty> getProperties() {
         return properties;

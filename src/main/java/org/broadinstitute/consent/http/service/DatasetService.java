@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import java.util.Date;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,17 +24,13 @@ public class DatasetService {
         this.dataSetDAO = dataSetDAO;
     }
 
-    public DataSet createTestDataSet(String json) {
-        return new DataSet(json);
-    }
-
-    public DataSet createDataset(DataSetDTO dataset, String name) {
-        Date now = new Date();
+    public DataSet createDataset(DataSetDTO dataset, String name, Integer userId) {
+        Timestamp now = new Timestamp(new Date().getTime());
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
 
         Integer id = dataSetDAO
-            .insertDataset(name, now, dataset.getObjectId(), dataset.getActive(), alias);
+            .insertDatasetV2(name, now, userId, dataset.getObjectId(), dataset.getActive(), alias);
 
         List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         dataSetDAO.insertDataSetsProperties(propertyList);
@@ -58,6 +55,15 @@ public class DatasetService {
         Set<DataSetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
         return dataset;
+    }
+
+    public DataSetDTO getDatasetDTO(Integer datasetId) {
+        Set<DataSetDTO> dataset = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
+        DataSetDTO result = new DataSetDTO();
+        for (DataSetDTO d : dataset) {
+            result = d;
+        }
+        return result;
     }
 
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
