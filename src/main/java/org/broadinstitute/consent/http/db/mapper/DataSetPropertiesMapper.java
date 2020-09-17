@@ -35,6 +35,24 @@ public class DataSetPropertiesMapper implements RowMapper<DataSetDTO>, RowMapper
       dataSetDTO.setDataSetId(dataSetId);
       dataSetDTO.setActive(r.getBoolean("active"));
       dataSetDTO.setTranslatedUseRestriction(r.getString("translatedUseRestriction"));
+      if (hasColumn(r, "createdate")) {
+          dataSetDTO.setCreateDate(r.getDate("createdate"));
+      }
+      if (hasColumn(r, "create_user_id")) {
+          int userId = r.getInt("create_user_id");
+          if (userId > 0) {
+              dataSetDTO.setCreateUserId(userId);
+          }
+      }
+      if (hasColumn(r, "update_date")) {
+          dataSetDTO.setUpdateDate(r.getTimestamp("update_date"));
+      }
+      if (hasColumn(r, "update_user_id")) {
+          int userId = r.getInt("update_user_id");
+          if (userId > 0) {
+              dataSetDTO.setUpdateUserId(userId);
+          }
+      }
       DataSetPropertyDTO property = new DataSetPropertyDTO("Dataset Name", r.getString("name"));
       dataSetDTO.addProperty(property);
       property =

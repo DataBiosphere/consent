@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,13 +45,13 @@ public class DatasetServiceTest {
     @Test
     public void testCreateDataset() {
         int datasetId = 1;
-        when(datasetDAO.insertDataset(anyString(), any(), anyString(), anyBoolean(), anyInt()))
+        when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean(), anyInt()))
             .thenReturn(datasetId);
         when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
         when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
         initService();
 
-        DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1");
+        DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1", 1);
 
         Assert.assertNotNull(result);
         Assert.assertEquals(result.getName(), getDatasets().get(0).getName());
@@ -125,6 +126,19 @@ public class DatasetServiceTest {
         Assert.assertFalse(properties.isEmpty());
     }
 
+    @Test
+    public void testGetDatasetDTO() {
+        Set<DataSetDTO> set = new HashSet<>();
+        set.add(getDatasetDTO());
+        when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(set);
+        initService();
+
+        DataSetDTO datasetDTO = datasetService.getDatasetDTO(1);
+
+        Assert.assertNotNull(datasetDTO);
+        Assert.assertFalse(datasetDTO.getProperties().isEmpty());
+    }
+
     /* Helper functions */
 
     private List<DataSet> getDatasets() {
@@ -156,6 +170,7 @@ public class DatasetServiceTest {
 
     private DataSetDTO getDatasetDTO() {
         DataSetDTO datasetDTO = new DataSetDTO();
+        datasetDTO.setDataSetId(1);
         datasetDTO.setObjectId("Test ObjectId");
         datasetDTO.setActive(true);
         datasetDTO.setProperties(getDatasetPropertiesDTO());

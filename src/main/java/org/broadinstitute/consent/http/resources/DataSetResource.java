@@ -103,7 +103,9 @@ public class DataSetResource extends Resource {
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Dataset name: " + name + " is already in use");
         }
-        DataSet dataset = datasetService.createDataset(ds, name);
+        User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
+        Integer userId = dacUser.getDacUserId();
+        DataSet dataset = datasetService.createDataset(ds, name, userId);
         URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(ds.getDataSetId());
         return Response.created(uri).entity(dataset).build();
     }
@@ -176,7 +178,8 @@ public class DataSetResource extends Resource {
     @PermitAll
     public Response describeDataSet( @PathParam("datasetId") Integer datasetId){
         try {
-            return Response.ok(api.getDataSetDTO(datasetId), MediaType.APPLICATION_JSON).build();
+            DataSetDTO datasetDTO = datasetService.getDatasetDTO(datasetId);
+            return Response.ok(datasetDTO, MediaType.APPLICATION_JSON).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

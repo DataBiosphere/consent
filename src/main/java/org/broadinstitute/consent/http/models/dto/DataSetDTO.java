@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +46,18 @@ public class DataSetDTO {
 
     @JsonProperty
     private String objectId;
+
+    @JsonProperty
+    private Date createDate;
+
+    @JsonProperty
+    private Integer createUserId;
+
+    @JsonProperty
+    private Timestamp updateDate;
+
+    @JsonProperty
+    private Integer updateUserId;
 
     public DataSetDTO() {
     }
@@ -151,6 +165,22 @@ public class DataSetDTO {
     public void setObjectId(String objectId) {
         this.objectId = objectId;
     }
+
+    public Date getCreateDate() { return createDate; }
+
+    public void setCreateDate(Date createDate) { this.createDate = createDate; }
+
+    public Integer getCreateUserId() { return createUserId; }
+
+    public void setCreateUserId(Integer createUserId) { this.createUserId = createUserId; }
+
+    public Timestamp getUpdateDate() { return updateDate; }
+
+    public void setUpdateDate(Timestamp updateDate) { this.updateDate = updateDate; }
+
+    public Integer getUpdateUserId() { return updateUserId; }
+
+    public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
 
     public void addProperty(DataSetPropertyDTO property) {
         if (this.getProperties() == null) {
