@@ -2771,6 +2771,23 @@ paths:
                 $ref: '#/components/schemas/MatchResult'
         500:
           description: Server error.
+  /api/user/me:
+    get:
+      summary: Find currently authenticated user
+      description: Find currently authenticated user
+      tags:
+        - User
+      responses:
+        200:
+          description: The user, along with researcher properties and whitelist entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404:
+          description: User not found
+        500:
+          description: Server error.
   /api/user/{id}:
     get:
       summary: Find user by id

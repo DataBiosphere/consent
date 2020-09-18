@@ -39,11 +39,27 @@ public class UserResource extends Resource {
 
     private final UserService userService;
     private final WhitelistService whitelistService;
+    private final Gson gson;
 
     @Inject
     public UserResource(UserService userService, WhitelistService whitelistService) {
         this.userService = userService;
         this.whitelistService = whitelistService;
+        this.gson = new Gson();
+    }
+
+    @GET
+    @Path("/me")
+    @Produces("application/json")
+    @PermitAll
+    public Response getUser(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getName());
+            JsonObject userJson = constructUserJsonObject(user);
+            return Response.ok(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
 
     @GET
@@ -53,14 +69,7 @@ public class UserResource extends Resource {
     public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
         try {
             User user = userService.findUserById(userId);
-            List<ResearcherProperty> props = userService.findAllUserProperties(userId);
-            List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
-            Gson gson = new Gson();
-            JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
-            JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
-            JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-            userJson.add("researcherProperties", propsJson);
-            userJson.add("whitelistEntries", entriesJson);
+            JsonObject userJson = constructUserJsonObject(user);
             return Response.ok(gson.toJson(userJson)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -109,6 +118,22 @@ public class UserResource extends Resource {
     public Response delete(@PathParam("email") String email, @Context UriInfo info) {
         userService.deleteUserByEmail(email);
         return Response.ok().build();
+    }
+
+    /**
+     * Convenience method for a generic user object with custom properties added
+     * @param user The User
+     * @return JsonObject version of the user with researcher properties and whitelist entries
+     */
+    private JsonObject constructUserJsonObject(User user) {
+        List<ResearcherProperty> props = userService.findAllUserProperties(user.getDacUserId());
+        List<WhitelistEntry> entries = whitelistService.findWhitelistEntriesForUser(user, props);
+        JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
+        JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
+        JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
+        userJson.add("researcherProperties", propsJson);
+        userJson.add("whitelistEntries", entriesJson);
+        return userJson;
     }
 
 }
