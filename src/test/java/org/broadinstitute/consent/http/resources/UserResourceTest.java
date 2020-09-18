@@ -45,7 +45,7 @@ public class UserResourceTest {
 
   @Mock private UriInfo uriInfo;
 
-  @Mock UriBuilder uriBuilder;
+  @Mock private UriBuilder uriBuilder;
 
   private final String TEST_EMAIL = "test@gmail.com";
 
