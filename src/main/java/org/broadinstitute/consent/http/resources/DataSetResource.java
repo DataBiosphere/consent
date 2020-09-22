@@ -82,20 +82,20 @@ public class DataSetResource extends Resource {
     @Path("/v2")
     @PermitAll
     public Response createDataset(@Auth AuthUser user, @Context UriInfo info, String json) {
-        DataSetDTO ds = new Gson().fromJson(json, DataSetDTO.class);
-        if (Objects.isNull(ds)) {
+        DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
+        if (Objects.isNull(inputDataset)) {
             throw new BadRequestException("Dataset is required");
         }
-        if (Objects.isNull(ds.getProperties()) || ds.getProperties().isEmpty()) {
+        if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
             throw new BadRequestException("Dataset must contain required properties");
         }
-        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(ds.getProperties());
+        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
             List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
                   Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
-        String name = ds.getPropertyValue("Dataset Name");
+        String name = inputDataset.getPropertyValue("Dataset Name");
         if (Objects.isNull(name)) {
             throw new BadRequestException("Dataset name is required");
         }
@@ -105,9 +105,9 @@ public class DataSetResource extends Resource {
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
-        DataSet dataset = datasetService.createDataset(ds, name, userId);
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(dataset.getDataSetId());
-        return Response.created(uri).entity(dataset).build();
+        DataSet createdDataset = datasetService.createDataset(inputDataset, name, userId);
+        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDataset.getDataSetId());
+        return Response.created(uri).entity(createdDataset).build();
     }
 
     @POST
