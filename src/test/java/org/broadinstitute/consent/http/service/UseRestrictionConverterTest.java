@@ -1,5 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -11,21 +21,10 @@ import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
 public class UseRestrictionConverterTest implements WithMockServer {
 
     private ClientAndServer mockServer;
-    private Integer port = 9300;
+    private final Integer port = 9300;
 
     @Before
     public void startUp() {
@@ -138,6 +137,39 @@ public class UseRestrictionConverterTest implements WithMockServer {
         assertTrue(dataUse.getCommercialUse());
         assertTrue(dataUse.getPediatric());
         assertTrue(dataUse.getGender().equalsIgnoreCase("Female"));
+    }
+
+    /*
+     * Testing a DataUse with invalid ontologies.
+     */
+    @Test
+    public void testParseDataUseInvalidOntologiesCase1() {
+        String json = "{ " +
+            "\"hmb\":true, " +
+            "\"ontologies\":[{},{},{}]" +
+            "}";
+
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        DataUse dataUse = converter.parseDataUsePurpose(json);
+        assertNotNull(dataUse);
+        assertNull(dataUse.getDiseaseRestrictions());
+    }
+
+    /*
+     * Testing a DataUse with invalid ontologies.
+     */
+    @Test
+    public void testParseDataUseInvalidOntologiesCase2() {
+        String json = "{ " +
+            "\"ontologies\":[null]" +
+            "}";
+
+        Client client = ClientBuilder.newClient();
+        UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+        DataUse dataUse = converter.parseDataUsePurpose(json);
+        assertNotNull(dataUse);
+        assertNull(dataUse.getDiseaseRestrictions());
     }
 
     /*

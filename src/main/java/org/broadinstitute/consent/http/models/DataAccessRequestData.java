@@ -3,7 +3,10 @@ package org.broadinstitute.consent.http.models;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DataAccessRequestData {
 
@@ -127,7 +130,9 @@ public class DataAccessRequestData {
     }
 
     public static DataAccessRequestData fromString(String jsonString) {
-        return new Gson().fromJson(jsonString, DataAccessRequestData.class);
+        DataAccessRequestData data = new Gson().fromJson(jsonString, DataAccessRequestData.class);
+        validateOntologyEntries(data);
+        return data;
     }
 
     public String getReferenceId() {
@@ -787,5 +792,25 @@ public class DataAccessRequestData {
     public void setExternalCollaborators(
         List<Collaborator> externalCollaborators) {
         this.externalCollaborators = externalCollaborators;
+    }
+
+    // Validate all ontology entries
+    private static void validateOntologyEntries(DataAccessRequestData data) {
+        if (Objects.nonNull(data) &&
+            Objects.nonNull(data.getOntologies())
+            && !data.getOntologies().isEmpty()) {
+            List<OntologyEntry> filteredEntries =
+                data.getOntologies().stream()
+                    .filter(Objects::nonNull)
+                    .filter(e -> Objects.nonNull(e.getId()))
+                    .filter(e -> Objects.nonNull(e.getLabel()))
+                    .filter(e -> Objects.nonNull(e.getDefinition()))
+                    .collect(Collectors.toList());
+            if (filteredEntries.isEmpty()) {
+                data.setOntologies(Collections.emptyList());
+            } else {
+                data.setOntologies(filteredEntries);
+            }
+        }
     }
 }

@@ -1,25 +1,20 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.StringUtils;
-import org.bson.Document;
-
-import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.OntologyEntry;
+import org.bson.Document;
 
 public class TranslateServiceImpl extends AbstractTranslateService {
 
-    private final UseRestrictionConverter converter;
-
-    public static void initInstance(UseRestrictionConverter converter) {
-        TranslateAPIHolder.setInstance(new TranslateServiceImpl(converter));
-    }
-
-    private TranslateServiceImpl(UseRestrictionConverter converter) {
-        this.converter = converter;
+    public static void initInstance() {
+        TranslateAPIHolder.setInstance(new TranslateServiceImpl());
     }
 
     @Override
@@ -30,48 +25,54 @@ public class TranslateServiceImpl extends AbstractTranslateService {
         String rootId = "[DOID_4(CC)]";
         String healthResearch = "Data will be used for health/medical/biomedical research ";
         sb.append("Samples will be used under the following conditions:").append(lineBreak);
-        String json = dar.toJson();
-        Map<String, Object> darMap = converter.parseAsMap(json);
-        boolean ontologies = Objects.isNull(darMap.get("ontologies"));
-        Boolean diseases = getBooleanValue("diseases", darMap);
-        List<LinkedHashMap<String, String>> ontologiesList = (List<LinkedHashMap<String, String>>) darMap.get("ontologies");
+        DataAccessRequestData darData = DataAccessRequestData.fromString(dar.toJson());
+        List<OntologyEntry> ontologiesList = Objects.nonNull(darData.getOntologies()) ?
+            darData.getOntologies()
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(e -> Objects.nonNull(e.getId()))
+                .filter(e -> Objects.nonNull(e.getDefinition()))
+                .filter(e -> Objects.nonNull(e.getLabel()))
+                .collect(Collectors.toList()) :
+            Collections.emptyList();
+        boolean hasOntologies = !ontologiesList.isEmpty();
+        boolean hasDiseases = Objects.nonNull(darData.getDiseases()) && darData.getDiseases();
 
         if (needsManualReview) {
             sb.append("Needs Manual Review.").append(lineBreak);
         }
 
-        if (diseases) {
+        if (hasDiseases) {
             String diseasesAnswer = healthResearch;
-
-            if (ontologies || (ontologiesList.size() == 1 && ontologyIdentifierBuilder(ontologiesList.get(0).get("id")).equals(rootId))) {
+            if (ontologiesList.size() == 1 && ontologyIdentifierBuilder(ontologiesList.get(0).getId()).equals(rootId)) {
                 diseasesAnswer = diseasesAnswer + "[HMB(CC)]";
             }
             sb.append(diseasesAnswer).append(lineBreak);
         }
 
-        if (getBooleanValue("methods", darMap)) {
+        if (Objects.nonNull(darData.getMethods()) && darData.getMethods()) {
             sb.append("Data will be used for methods development research [NMDS=0]").append(lineBreak);
         }
 
-        if (getBooleanValue("controls", darMap)) {
+        if (Objects.nonNull(darData.getControls()) && darData.getControls()) {
             sb.append("Data will be used as a control sample set [NCTRL=0]").append(lineBreak);
         }
 
-        if (getBooleanValue("population", darMap)) {
+        if (Objects.nonNull(darData.getPopulation()) && darData.getPopulation()) {
             sb.append("Data will be used for population structure or normal variation studies [NPNV=0]").append(lineBreak);
         }
 
-        if (!ontologies) {
+        if (hasOntologies) {
             String t = "Data will be used to study: ";
             List<String> ontologiesText = new ArrayList<>();
-            for (LinkedHashMap ontology : ontologiesList) {
-                String id = ontologyIdentifierBuilder((String) ontology.get("id"));
+            for (OntologyEntry ontology : ontologiesList) {
+                String id = ontologyIdentifierBuilder(ontology.getId());
                 if (rootId.equals(id)) {
-                    if (!diseases) {
+                    if (!hasDiseases) {
                         sb.append(healthResearch).append("[HMB(CC)]").append(lineBreak);
                     }
                 } else {
-                    ontologiesText.add(blankSpace + ontology.get("label") + blankSpace + id);
+                    ontologiesText.add(blankSpace + ontology.getLabel() + blankSpace + id);
                 }
             }
             if (!ontologiesText.isEmpty()) {
@@ -79,14 +80,14 @@ public class TranslateServiceImpl extends AbstractTranslateService {
             }
         }
 
-        if (getBooleanValue("forProfit", darMap)) {
+        if (Objects.nonNull(darData.getForProfit()) && darData.getForProfit()) {
             sb.append("Data will be used for commercial purpose [NPU] ").append(lineBreak);
         } else {
             sb.append("Data will not be used for commercial purpose").append(lineBreak);
         }
 
-        if (getBooleanValue("onegender", darMap)) {
-            String gender = (String) darMap.get("gender");
+        if (Objects.nonNull(darData.getOneGender()) && darData.getOneGender()) {
+            String gender = darData.getGender();
             if (Objects.nonNull(gender)) {
                 String genderText = "Data will be used to study ONLY a XXXX population [RS-[GENDER]]";
                 gender = gender.equals("M") ? "male" : "female";
@@ -96,7 +97,7 @@ public class TranslateServiceImpl extends AbstractTranslateService {
             }
         }
 
-        if (getBooleanValue("pediatric", darMap)) {
+        if (Objects.nonNull(darData.getPediatric()) && darData.getPediatric()) {
             sb.append("Data will be used to study ONLY a pediatric population [RS-[PEDIATRIC]]").append(lineBreak);
         }
         return sb.toString();
@@ -109,12 +110,4 @@ public class TranslateServiceImpl extends AbstractTranslateService {
 
     }
 
-    private Boolean getBooleanValue(String key, Map map) {
-        Object o = map.get(key);
-        if (Objects.isNull(o)) {
-            return false;
-        } else
-            return (Boolean) o;
-    }
-    
 }
