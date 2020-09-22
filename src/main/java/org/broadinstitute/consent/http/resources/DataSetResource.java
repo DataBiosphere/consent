@@ -106,7 +106,7 @@ public class DataSetResource extends Resource {
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
         DataSet dataset = datasetService.createDataset(ds, name, userId);
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(ds.getDataSetId());
+        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(dataset.getDataSetId());
         return Response.created(uri).entity(dataset).build();
     }
 
