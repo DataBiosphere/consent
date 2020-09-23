@@ -206,8 +206,9 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
     initResource();
 
@@ -225,8 +226,9 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
     initResource();
@@ -266,8 +268,9 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
     initResource();
 
@@ -285,8 +288,9 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn(RandomStringUtils.random(10));
+    when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
     initResource();

@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import org.apache.commons.io.FilenameUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -332,9 +331,10 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest dar,
       InputStream uploadInputStream,
       FormDataContentDisposition fileDetail) throws IOException {
+    validateFileDetails(fileDetail);
     String fileName = fileDetail.getFileName();
-    String toStoreFileName =  UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
-    BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), toStoreFileName);
+    String blobFileName =  UUID.randomUUID().toString();
+    BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), blobFileName);
     switch (type) {
       case IRB:
         // Delete the current document if it exists

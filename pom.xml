@@ -251,6 +251,12 @@
   <dependencies>
 
     <dependency>
+      <groupId>org.owasp</groupId>
+      <artifactId>java-file-io</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.jdbi</groupId>
       <artifactId>jdbi3-core</artifactId>
     </dependency>

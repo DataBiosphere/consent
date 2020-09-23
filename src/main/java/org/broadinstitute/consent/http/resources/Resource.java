@@ -1,22 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import javax.ws.rs.core.MediaType;
-import org.apache.commons.io.IOUtils;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -25,6 +8,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.service.UnknownIdentifierException;
+import org.broadinstitute.consent.http.service.users.handler.UserRoleHandlerException;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.owasp.fileio.FileValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by egolin on 9/17/14.
@@ -69,6 +70,18 @@ abstract public class Resource {
                 throw e;
             }
         };
+    }
+
+    void validateFileDetails(FormDataContentDisposition fileDetail) {
+        FileValidator validator = new FileValidator();
+        boolean validName = validator.isValidFileName("validating uploaded file name", fileDetail.getFileName(), true);
+        if (!validName) {
+            throw new IllegalArgumentException("File name is invalid");
+        }
+        boolean validSize = validator.getMaxFileUploadSize() >= fileDetail.getSize();
+        if (!validSize) {
+            throw new IllegalArgumentException("File size is invalid. Max size is: " + validator.getMaxFileUploadSize()/1000000 + " MB");
+        }
     }
 
     private interface ExceptionHandler {
