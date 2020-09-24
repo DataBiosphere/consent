@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.util.DatasetUtil;
 
 
@@ -58,6 +59,9 @@ public class DataSetDTO {
 
     @JsonProperty
     private Integer updateUserId;
+
+    @JsonProperty
+    public DataUse dataUse;
 
     public DataSetDTO() {
     }
@@ -187,6 +191,14 @@ public class DataSetDTO {
             this.setProperties(new ArrayList<>());
         }
         this.getProperties().add(property);
+    }
+
+    public DataUse getDataUse() {
+        return dataUse;
+    }
+
+    public void setDataUse(DataUse dataUse) {
+        this.dataUse = dataUse;
     }
 
     @Override

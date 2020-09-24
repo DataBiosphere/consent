@@ -1,6 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
 import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.AutocompleteMapper;
@@ -28,12 +33,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @RegisterRowMapper(DataSetMapper.class)
 public interface DataSetDAO extends Transactional<DataSetDAO> {
@@ -92,14 +91,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     void updateDataSetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId and d.name is not null inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction " +
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
           "LEFT OUTER JOIN datasetproperty dp on dp.datasetid = d.datasetid " +
           "LEFT OUTER JOIN dictionary k on k.keyid = dp.propertykey " +
@@ -109,7 +108,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("dataSetId") Integer dataSetId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.dataSetId = :dataSetId order by d.dataSetId, k.displayOrder")
@@ -122,14 +121,14 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     Set<DataSetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId " +
+    @SqlQuery(" select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause from dataset  d inner join datasetproperty dp on dp.dataSetId = d.dataSetId " +
             " inner join dictionary k on k.keyId = dp.propertyKey inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId inner join election e on e.referenceId = ca.consentId " +
             " inner join vote v on v.electionId = e.electionId and v.type = '" + CHAIRPERSON  + "' inner join (SELECT referenceId,MAX(createDate) maxDate FROM election where status ='Closed' group by referenceId) ev on ev.maxDate = e.createDate " +
             " and ev.referenceId = e.referenceId and v.vote = true and d.active = true order by d.dataSetId, k.displayOrder")
     Set<DataSetDTO> findDataSetsForResearcher();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction " +
+    @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause " +
             "from dataset d inner join datasetproperty dp on dp.dataSetId = d.dataSetId inner join dictionary k on k.keyId = dp.propertyKey " +
             "inner join consentassociations ca on ca.dataSetId = d.dataSetId inner join consents c on c.consentId = ca.consentId " +
             "where d.dataSetId in (<dataSetIdList>) order by d.dataSetId, k.receiveOrder")
@@ -247,7 +246,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      * @return Set of datasets, with properties, that are associated to a single DAC.
      */
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction from dataset d " +
+    @SqlQuery("select d.*, k.key, p.propertyValue, c.consentId, c.dac_id, c.translatedUseRestriction, c.datause from dataset d " +
             " left outer join datasetproperty p on p.dataSetId = d.dataSetId " +
             " left outer join dictionary k on k.keyId = p.propertyKey " +
             " inner join consentassociations a on a.dataSetId = d.dataSetId " +
@@ -262,7 +261,7 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
      * @return Set of datasets, with properties, that are associated to any Dac.
      */
     @UseRowMapper(DataSetPropertiesMapper.class)
-    @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction " +
+    @SqlQuery("SELECT d.*, k.key, p.propertyvalue, c.consentid, c.dac_id, c.translateduserestriction, c.datause " +
             " FROM dataset d " +
             " LEFT OUTER JOIN datasetproperty p ON p.datasetid = d.datasetid " +
             " LEFT OUTER JOIN dictionary k ON k.keyid = p.propertykey " +
