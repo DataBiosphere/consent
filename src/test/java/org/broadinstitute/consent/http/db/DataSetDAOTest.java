@@ -1,41 +1,25 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DataSetProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DataSetDTO;
+import org.junit.Assert;
+import org.junit.Test;
+
 public class DataSetDAOTest extends DAOTestHelper {
-
-    @Test
-    public void testInsertDataset() {
-        // No-op ... tested in `createDataset()`
-    }
-
-    @Test
-    public void testFindDatasetById() {
-        // No-op ... tested in `createDataset()`
-    }
-
-    @Test
-    public void testDeleteDataSets() {
-        // No-op ... tested in `tearDown()`
-    }
 
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
     @Test
@@ -172,6 +156,19 @@ public class DataSetDAOTest extends DAOTestHelper {
         DataSet d = createDataset();
         Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         assertEquals(properties.size(), 1);
+    }
+
+    @Test
+    public void testFindDatasetWithPropertiesByDatasetId() {
+        Dac dac = createDac();
+        Consent c = createConsent(dac.getDacId());
+        DataSet d = createDataset();
+        createAssociation(c.getConsentId(), d.getDataSetId());
+        Set<DataSetDTO> dataSetDTOs = dataSetDAO.findDataSetWithPropertiesByDataSetId(d.getDataSetId());
+        DataSetDTO dataSetDTO = dataSetDTOs.stream().findFirst().orElse(null);
+        assertNotNull(dataSetDTO);
+        assertNotNull(dataSetDTO.getDataUse());
+        assertEquals(c.getDataUse().getGeneralUse(), dataSetDTO.getDataUse().getGeneralUse());
     }
 
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
