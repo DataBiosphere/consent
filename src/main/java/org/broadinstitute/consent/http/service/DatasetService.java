@@ -57,7 +57,33 @@ public class DatasetService {
         return dataset;
     }
 
+    public DataSet updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
+        Timestamp now = new Timestamp(new Date().getTime());
+
+        DataSet old = getDatasetWithPropertiesById(datasetId);
+        Set<DataSetProperty> oldProperties = old.getProperties();
+
+        List<DataSetPropertyDTO> dtos = dataset.getProperties();
+        List<DataSetProperty> jsonProperties = processDatasetProperties(datasetId, dtos);
+        List<DataSetProperty> propertiesToAdd = jsonProperties.stream()
+              .filter(p -> oldProperties.stream()
+                    .noneMatch(op -> op.getPropertyKey() == p.getPropertyKey()))
+              .collect(Collectors.toList());
+        // NOTE: this is incorrectly updating when all properties are the same
+        List<DataSetProperty> propertiesToUpdate = jsonProperties.stream()
+              .filter(p -> oldProperties.stream()
+              .anyMatch(op -> op.getPropertyKey() == p.getPropertyKey() && op.getPropertyValue() != p.getPropertyValue()))
+              .collect(Collectors.toList());
+        propertiesToUpdate.stream().peek(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
+        dataSetDAO.insertDataSetsProperties(propertiesToAdd);
+
+        dataSetDAO.updateDataset(datasetId, now, userId);
+        DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
+        return updatedDataset;
+    }
+
     public DataSetDTO getDatasetDTO(Integer datasetId) {
+        Timestamp now = new Timestamp(new Date().getTime());
         Set<DataSetDTO> dataset = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
         DataSetDTO result = new DataSetDTO();
         for (DataSetDTO d : dataset) {
@@ -66,6 +92,7 @@ public class DatasetService {
         return result;
     }
 
+    // converts a list of dsp dtos to a list of dsp
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
         Date now = new Date();
         List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
@@ -87,5 +114,9 @@ public class DatasetService {
             .filter(p -> !keys.contains(p.getPropertyName()))
             .collect(Collectors.toList());
     }
+
+//    public void updateDatasetProperties() {
+//        dataSetDAO.updateDatasetProperty();
+//    }
 
 }

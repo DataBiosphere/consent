@@ -110,6 +110,40 @@ public class DataSetResource extends Resource {
         return Response.created(uri).entity(createdDataset).build();
     }
 
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/v2")
+    @RolesAllowed(ADMIN)
+    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, String json, @QueryParam("datasetId") Integer datasetId) {
+        DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
+        if (Objects.isNull(inputDataset)) {
+            throw new BadRequestException("Dataset is required");
+        }
+        if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
+            throw new BadRequestException("Dataset must contain required properties");
+        }
+        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
+        if (invalidProperties.size() > 0) {
+            List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
+                  Collectors.toList());
+            throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
+        }
+        String name = inputDataset.getPropertyValue("Dataset Name");
+        DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
+        if (Objects.isNull(datasetNameAlreadyUsed)) {
+            throw new NotFoundException("Could not find the dataset with name: " + name);
+        }
+        if (Objects.nonNull(inputDataset.getDataSetId()) && inputDataset.getDataSetId() != datasetNameAlreadyUsed.getDataSetId()) {
+            throw new NotFoundException("Dataset with name: " + name + " already in use by another dataset.");
+        }
+        User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
+        Integer userId = dacUser.getDacUserId();
+        DataSet updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
+        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.getDataSetId());
+        return Response.ok(uri).entity(updatedDataset).build();
+    }
+
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces("application/json")
