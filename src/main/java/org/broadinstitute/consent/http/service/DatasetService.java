@@ -65,18 +65,23 @@ public class DatasetService {
 
         List<DataSetPropertyDTO> dtos = dataset.getProperties();
         List<DataSetProperty> jsonProperties = processDatasetProperties(datasetId, dtos);
+              ;
         List<DataSetProperty> propertiesToAdd = jsonProperties.stream()
               .filter(p -> oldProperties.stream()
                     .noneMatch(op -> op.getPropertyKey() == p.getPropertyKey()))
               .collect(Collectors.toList());
-        // NOTE: this is incorrectly updating when all properties are the same
+
         List<DataSetProperty> propertiesToUpdate = jsonProperties.stream()
               .filter(p -> oldProperties.stream()
-              .anyMatch(op -> op.getPropertyKey() == p.getPropertyKey() && op.getPropertyValue() != p.getPropertyValue()))
+                    .anyMatch(op -> equalsProperty(op.getPropertyKey(), op.getPropertyValue(), p.getPropertyKey(), p.getPropertyValue())))
               .collect(Collectors.toList());
+
+        if (propertiesToAdd.isEmpty() || propertiesToUpdate.isEmpty()) {
+            return null;
+        }
+
         propertiesToUpdate.stream().peek(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
         dataSetDAO.insertDataSetsProperties(propertiesToAdd);
-
         dataSetDAO.updateDataset(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
         return updatedDataset;
@@ -113,6 +118,10 @@ public class DatasetService {
         return properties.stream()
             .filter(p -> !keys.contains(p.getPropertyName()))
             .collect(Collectors.toList());
+    }
+
+    public boolean equalsProperty(Integer propOneKey,  String propOneValue, Integer propTwoKey, String propTwoValue) {
+        return (propOneKey == propTwoKey && propOneValue.equalsIgnoreCase(propTwoValue));
     }
 
 //    public void updateDatasetProperties() {
