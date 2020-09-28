@@ -140,6 +140,9 @@ public class DataSetResource extends Resource {
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
         DataSet updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
+        if (Objects.isNull(updatedDataset)) {
+            return Response.notModified().build();
+        }
         URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.getDataSetId());
         return Response.ok(uri).entity(updatedDataset).build();
     }

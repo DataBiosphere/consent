@@ -2242,8 +2242,8 @@ paths:
       responses:
         200:
           description: Successfully updated Dataset
-        204:
-          description: No content
+        304:
+          description: Not modified
         400:
           description: External Error (invalid input)
         500:
