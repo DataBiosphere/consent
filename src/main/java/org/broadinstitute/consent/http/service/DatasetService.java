@@ -88,7 +88,6 @@ public class DatasetService {
     }
 
     public DataSetDTO getDatasetDTO(Integer datasetId) {
-        Timestamp now = new Timestamp(new Date().getTime());
         Set<DataSetDTO> dataset = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
         DataSetDTO result = new DataSetDTO();
         for (DataSetDTO d : dataset) {
@@ -97,7 +96,6 @@ public class DatasetService {
         return result;
     }
 
-    // converts a list of dsp dtos to a list of dsp
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
         Date now = new Date();
         List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
@@ -123,9 +121,4 @@ public class DatasetService {
     public boolean equalsProperty(Integer propOneKey,  String propOneValue, Integer propTwoKey, String propTwoValue) {
         return (propOneKey == propTwoKey && propOneValue.equalsIgnoreCase(propTwoValue));
     }
-
-//    public void updateDatasetProperties() {
-//        dataSetDAO.updateDatasetProperty();
-//    }
-
 }
