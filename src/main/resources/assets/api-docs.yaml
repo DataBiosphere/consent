@@ -3004,7 +3004,6 @@ paths:
       summary: postWhitelist
       description: Uploads Library Card Whitelist tsv to bucket
       requestBody:
-        description: TSV file that contains whitelist information
         content:
           multipart/form-data:
             schema:
