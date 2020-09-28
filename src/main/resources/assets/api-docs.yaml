@@ -2220,6 +2220,34 @@ paths:
               schema:
                 type: string
   /api/dataset/v2:
+    put:
+      summary: Updates the Dataset from JSON
+      description: Updates the Dataset from JSON
+      parameters:
+        - name: datasetId
+          in: query
+          description: ID of the Dataset
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: full dataset registration form
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+      tags:
+        - Datasets
+      responses:
+        200:
+          description: Successfully updated Dataset
+        204:
+          description: No content
+        400:
+          description: External Error (invalid input)
+        500:
+          description: Internal Error
     post:
       summary: Creates the Dataset from JSON
       description: Creates the Dataset from JSON
