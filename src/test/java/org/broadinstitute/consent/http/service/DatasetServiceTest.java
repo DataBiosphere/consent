@@ -139,6 +139,28 @@ public class DatasetServiceTest {
         Assert.assertFalse(datasetDTO.getProperties().isEmpty());
     }
 
+    @Test
+    public void testUpdateDataset() {
+        int datasetId = 1;
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        DataSet dataset = getDatasets().get(0);
+        dataset.setProperties(getDatasetProperties());
+        when(datasetDAO.findDataSetById(datasetId)).thenReturn(dataset);
+        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+        initService();
+
+        DataSet notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
+        Assert.assertNull(notModified);
+
+        List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        updatedProperties.get(3).setPropertyValue("updated value");
+        dataSetDTO.setProperties(updatedProperties);
+
+        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
+        Assert.assertNotNull(updated);
+    }
+
     /* Helper functions */
 
     private List<DataSet> getDatasets() {
@@ -162,9 +184,10 @@ public class DatasetServiceTest {
     }
 
     private List<DataSetPropertyDTO> getDatasetPropertiesDTO() {
-        return IntStream.range(1, 11)
-            .mapToObj(i ->
-                new DataSetPropertyDTO(String.valueOf(i), "Test Value")
+        List<Dictionary> dictionaries = getDictionaries();
+        return dictionaries.stream()
+            .map(d ->
+                new DataSetPropertyDTO(d.getKey(), "Test Value")
             ).collect(Collectors.toList());
     }
 
@@ -180,7 +203,7 @@ public class DatasetServiceTest {
     private List<Dictionary> getDictionaries() {
         return IntStream.range(1, 11)
             .mapToObj(i ->
-                new Dictionary(String.valueOf(i), true, i, i)
+                new Dictionary(i, String.valueOf(i), true, i, i)
             ).collect(Collectors.toList());
     }
 
