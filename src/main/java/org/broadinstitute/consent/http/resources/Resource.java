@@ -72,7 +72,7 @@ abstract public class Resource {
         };
     }
 
-    void validateFileDetails(FormDataContentDisposition fileDetail) {
+    protected void validateFileDetails(FormDataContentDisposition fileDetail) {
         FileValidator validator = new FileValidator();
         boolean validName = validator.isValidFileName("validating uploaded file name", fileDetail.getFileName(), true);
         if (!validName) {

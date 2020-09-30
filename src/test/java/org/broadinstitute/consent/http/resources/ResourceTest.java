@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -17,7 +18,11 @@ public class ResourceTest {
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     when(fileDetail.getFileName()).thenReturn("temp.txt");
     when(fileDetail.getSize()).thenReturn(maxSize);
-    abstractResource.validateFileDetails(fileDetail);
+    try {
+      abstractResource.validateFileDetails(fileDetail);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
