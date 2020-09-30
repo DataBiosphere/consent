@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -172,6 +176,31 @@ public class DataSetDAOTest extends DAOTestHelper {
         DataSet d = createDataset();
         Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         assertEquals(properties.size(), 1);
+    }
+
+    @Test
+    public void testUpdateDataset() {
+        DataSet d = createDataset();
+        Timestamp now = new Timestamp(new Date().getTime());
+        dataSetDAO.updateDataset(d.getDataSetId(), now, d.getCreateUserId());
+        DataSet updated = dataSetDAO.findDataSetById(d.getDataSetId());
+        assertEquals(updated.getUpdateDate(), now);
+    }
+
+    @Test
+    public void testUpdateDatasetProperty() {
+        DataSet d = createDataset();
+        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DataSetProperty originalProperty = properties.stream().collect(Collectors.toList()).get(0);
+        DataSetProperty newProperty = new DataSetProperty(d.getDataSetId(), 1, "Updated Value", new Date());
+        List<DataSetProperty> updatedProperties = new ArrayList<>();
+        updatedProperties.add(newProperty);
+        dataSetDAO.updateDatasetProperty(d.getDataSetId(), updatedProperties.get(0).getPropertyKey(), updatedProperties.get(0).getPropertyValue());
+        Set<DataSetProperty> returnedProperties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DataSetProperty returnedProperty = returnedProperties.stream().collect(Collectors.toList()).get(0);
+        assertEquals(originalProperty.getPropertyKey(), returnedProperty.getPropertyKey());
+        assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
+        assertNotEquals(originalProperty.getPropertyValue(), returnedProperty.getPropertyValue());
     }
 
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
