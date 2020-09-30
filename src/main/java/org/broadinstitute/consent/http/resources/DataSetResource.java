@@ -113,9 +113,9 @@ public class DataSetResource extends Resource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    @Path("/v2")
-    @RolesAllowed(ADMIN)
-    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, String json, @QueryParam("datasetId") Integer datasetId) {
+    @Path("/{datasetId}")
+    @PermitAll
+    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, String json, @PathParam("datasetId") Integer datasetId) {
         DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
         if (Objects.isNull(inputDataset)) {
             throw new BadRequestException("Dataset is required");
@@ -134,7 +134,7 @@ public class DataSetResource extends Resource {
         if (Objects.isNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Could not find the dataset with name: " + name);
         }
-        if (Objects.nonNull(inputDataset.getDataSetId()) && inputDataset.getDataSetId() != datasetNameAlreadyUsed.getDataSetId()) {
+        if (Objects.nonNull(inputDataset.getDataSetId()) && (inputDataset.getDataSetId().intValue() != datasetNameAlreadyUsed.getDataSetId().intValue())) {
             throw new NotFoundException("Dataset with name: " + name + " already in use by another dataset.");
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
