@@ -140,6 +140,39 @@ public class DatasetResourceTest {
     }
 
     @Test
+    public void testUpdateDataset() {
+        DataSet preexistingDataset = new DataSet();
+        when(datasetService.getDatasetByName("test")).thenReturn(preexistingDataset);
+        when(datasetService.updateDataset(any(), any(), any())).thenReturn(preexistingDataset);
+        when(authUser.getGoogleUser()).thenReturn(googleUser);
+        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(1);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
+        initResource();
+        Response response = resource.updateDataset(authUser, uriInfo, "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}", 1);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetNotModified() {
+        DataSet preexistingDataset = new DataSet();
+        when(datasetService.getDatasetByName("test")).thenReturn(preexistingDataset);
+        when(datasetService.updateDataset(any(), any(), any())).thenReturn(null);
+        when(authUser.getGoogleUser()).thenReturn(googleUser);
+        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(userService.findUserByEmail(any())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(1);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
+        initResource();
+        Response responseNotModified = resource.updateDataset(authUser, uriInfo, "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}", 1);
+        assertEquals(304, responseNotModified.getStatus());
+    }
+
+
+    @Test
     public void testCreateDataSetWrongType() throws Exception {
         File file = new File(ResourceHelpers.resourceFilePath(WRONG_EXT));
         MultiPart mp = createFormData(file);
