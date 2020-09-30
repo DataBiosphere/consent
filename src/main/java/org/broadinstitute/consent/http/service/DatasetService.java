@@ -73,14 +73,14 @@ public class DatasetService {
 
         List<DataSetProperty> propertiesToUpdate = jsonProperties.stream()
               .filter(p -> oldProperties.stream()
-                    .anyMatch(op -> equalsProperty(op.getPropertyKey(), op.getPropertyValue(), p.getPropertyKey(), p.getPropertyValue())))
+                    .noneMatch(op -> equalsProperty(op.getPropertyKey(), op.getPropertyValue(), p.getPropertyKey(), p.getPropertyValue())))
               .collect(Collectors.toList());
 
-        if (propertiesToAdd.isEmpty() || propertiesToUpdate.isEmpty()) {
+        if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty()) {
             return null;
         }
 
-        propertiesToUpdate.stream().peek(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
+        propertiesToUpdate.stream().forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
         dataSetDAO.insertDataSetsProperties(propertiesToAdd);
         dataSetDAO.updateDataset(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
@@ -118,7 +118,7 @@ public class DatasetService {
             .collect(Collectors.toList());
     }
 
-    public boolean equalsProperty(Integer propOneKey,  String propOneValue, Integer propTwoKey, String propTwoValue) {
+    private boolean equalsProperty(Integer propOneKey, String propOneValue, Integer propTwoKey, String propTwoValue) {
         return (propOneKey == propTwoKey && propOneValue.equalsIgnoreCase(propTwoValue));
     }
 }
