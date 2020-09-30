@@ -11,19 +11,17 @@ import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.StorageScopes;
-import com.google.api.services.storage.model.Bucket;
 import com.google.api.services.storage.model.ObjectAccessControl;
 import com.google.api.services.storage.model.StorageObject;
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Use `GCSService` instead which uses standard google libraries for GCS access.
@@ -88,12 +86,6 @@ public class GCSStore implements CloudStore {
     @Override
     public String putStorageDocument(InputStream stream, String type, String fileName) throws IOException {
         return getDocumentUrl(stream, type, fileName);
-    }
-
-    @Override
-    public Bucket getBucketMetadata() throws IOException, GeneralSecurityException {
-        Storage client = StorageFactory.getService(sConfig.getPassword());
-        return client.buckets().get(sConfig.getBucket()).execute();
     }
 
     @Override

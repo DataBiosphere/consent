@@ -11,17 +11,16 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.service.WhitelistService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileInputStream;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.broadinstitute.consent.http.service.WhitelistService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GCSService {
 
@@ -79,6 +78,16 @@ public class GCSService {
             logger.error("Error getting most recent whitelist: " + e.getMessage());
             throw new Exception("Error getting most recent whitelist: " + e.getMessage());
         }
+    }
+
+    /**
+     * Get the root bucket configured for this environment. Returns a Bucket with all possible
+     * metadata values.
+     *
+     * @return Bucket
+     */
+    public Bucket getRootBucketWithMetadata() {
+        return storage.get(config.getBucket(), Storage.BucketGetOption.fields(Storage.BucketField.values()));
     }
 
     private List<Blob> listWhitelistItems() {
