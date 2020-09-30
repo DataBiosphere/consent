@@ -65,7 +65,7 @@ public class DatasetService {
 
         List<DataSetPropertyDTO> dtos = dataset.getProperties();
         List<DataSetProperty> jsonProperties = processDatasetProperties(datasetId, dtos);
-              ;
+              
         List<DataSetProperty> propertiesToAdd = jsonProperties.stream()
               .filter(p -> oldProperties.stream()
                     .noneMatch(op -> op.getPropertyKey() == p.getPropertyKey()))
