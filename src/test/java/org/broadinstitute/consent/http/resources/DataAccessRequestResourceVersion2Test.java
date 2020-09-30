@@ -199,6 +199,16 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
+  public void testGetIrbDocumentDARNotFound() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+    initResource();
+
+    Response response = resource.getIrbDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
   public void testUploadIrbDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
@@ -209,11 +219,27 @@ public class DataAccessRequestResourceVersion2Test {
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
     when(formData.getSize()).thenReturn(1L);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     initResource();
 
     Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testUploadIrbDocumentDARNotFound() throws Exception {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    initResource();
+
+    Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
+    assertEquals(404, response.getStatus());
   }
 
   @Test
@@ -229,7 +255,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
     when(formData.getSize()).thenReturn(1L);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
     initResource();
 
@@ -261,6 +287,16 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
+  public void testGetCollaborationDocumentDARNotFound() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+    initResource();
+
+    Response response = resource.getCollaborationDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
   public void testUploadCollaborationDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
@@ -279,6 +315,22 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
+  public void testUploadCollaborationDocumentDARNotFound() throws Exception {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    initResource();
+
+    Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
   public void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
@@ -291,7 +343,7 @@ public class DataAccessRequestResourceVersion2Test {
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
     when(formData.getSize()).thenReturn(1L);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
     initResource();
 

@@ -192,7 +192,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @PathParam("referenceId") String referenceId) {
     try {
       User user = findUserByEmail(authUser.getName());
-      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       if (Objects.nonNull(dar.getData().getIrbDocumentLocation()) &&
         Objects.nonNull(dar.getData().getIrbDocumentName())) {
@@ -204,7 +204,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
             .header("Content-Disposition", "attachment; filename=" + fileName)
             .build();
       }
-      throw new NotFoundException("IRB Document not found for Data Access Request with id: " + referenceId);
+      throw new NotFoundException();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -222,7 +222,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
       User user = findUserByEmail(authUser.getName());
-      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
@@ -240,7 +240,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @PathParam("referenceId") String referenceId) {
     try {
       User user = findUserByEmail(authUser.getName());
-      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       if (Objects.nonNull(dar.getData().getCollaborationLetterLocation()) &&
         Objects.nonNull(dar.getData().getCollaborationLetterName())) {
@@ -252,7 +252,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
             .header("Content-Disposition", "attachment; filename=" + fileName)
             .build();
       }
-      throw new NotFoundException("Collaboration Letter not found for Data Access Request with id: " + referenceId);
+      throw new NotFoundException();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -270,7 +270,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
       User user = findUserByEmail(authUser.getName());
-      DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+      DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
@@ -365,5 +365,13 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       String message = String.format("Unable to delete document for DAR ID: %s; dar document location: %s", dar.getReferenceId(), blobIdName);
       logger.warn(message);
     }
+  }
+
+  private DataAccessRequest getDarById(String referenceId) {
+    DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
+    if (Objects.isNull(dar)) {
+      throw new NotFoundException();
+    }
+    return dar;
   }
 }
