@@ -119,6 +119,6 @@ public class DatasetService {
     }
 
     private boolean equalsProperty(Integer propOneKey, String propOneValue, Integer propTwoKey, String propTwoValue) {
-        return (propOneKey == propTwoKey && propOneValue.equalsIgnoreCase(propTwoValue));
+        return (propOneKey.equals(propTwoKey) && propOneValue.equalsIgnoreCase(propTwoValue));
     }
 }

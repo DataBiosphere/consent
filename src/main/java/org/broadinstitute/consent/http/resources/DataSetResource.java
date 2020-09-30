@@ -134,7 +134,7 @@ public class DataSetResource extends Resource {
         if (Objects.isNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Could not find the dataset with name: " + name);
         }
-        if (Objects.nonNull(inputDataset.getDataSetId()) && (inputDataset.getDataSetId().intValue() != datasetNameAlreadyUsed.getDataSetId().intValue())) {
+        if (Objects.nonNull(inputDataset.getDataSetId()) && !(inputDataset.getDataSetId().equals(datasetNameAlreadyUsed.getDataSetId()))) {
             throw new NotFoundException("Dataset with name: " + name + " already in use by another dataset.");
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
