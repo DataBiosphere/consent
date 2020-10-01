@@ -87,7 +87,6 @@ public class DataAccessParserTest {
         assertEquals(acroForm.getField(DarConstants.LINKEDIN).getValueAsString(), LINKEDIN);
         assertEquals(acroForm.getField(DarConstants.ORCID).getValueAsString(), ORCID);
         assertEquals(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString(), RESEARCHER_GATE);
-//        assertEquals("Yes", acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString());
         // Handle legacy all lower cased case
         assertEquals(acroForm.getField(DarConstants.OTHER_TEXT.toLowerCase()).getValueAsString(), RESEARCH_OTHER_TEXT);
         assertEquals("Yes", acroForm.getField(DarConstants.ORIGINS).getValueAsString());
