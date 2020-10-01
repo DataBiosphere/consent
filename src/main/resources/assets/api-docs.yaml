@@ -3110,19 +3110,16 @@ paths:
   /api/whitelist:
     post:
       summary: postWhitelist
-      description: Uploads Library Card Whitelist tsv to bucket - NEW!
+      description: Uploads Library Card Whitelist tsv to bucket
       requestBody:
         content:
           multipart/form-data:
             schema:
               type: object
-      parameters:
-        - name: data
-          in: formData
-          description: TSV file that contains whitelist information
-          required: true
-          schema:
-            type: file
+              properties:
+                data:
+                  type: string
+                  format: binary
       tags:
         - Whitelist
       responses:
