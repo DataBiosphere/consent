@@ -1,43 +1,43 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
 import com.codahale.metrics.health.HealthCheck;
-import com.google.api.services.storage.model.Bucket;
+import com.google.cloud.storage.Bucket;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 public class GCSHealthCheckTest {
 
     private GCSHealthCheck healthCheck;
 
     @Mock
-    private GCSStore store;
+    private GCSService store;
+
+    @Mock
+    private Bucket bucket;
 
     @Before
-    public void setUpClass() throws Exception {
+    public void setUpClass() {
         MockitoAnnotations.initMocks(this);
         healthCheck = new GCSHealthCheck(store);
     }
 
     @Test
-    public void testBucketExists() throws IOException, GeneralSecurityException {
-        when(store.getBucketMetadata()).thenReturn(new Bucket());
+    public void testBucketExists() {
+        when(store.getRootBucketWithMetadata()).thenReturn(bucket);
 
         HealthCheck.Result result = healthCheck.execute();
         assertTrue(result.isHealthy());
     }
 
     @Test
-    public void testBucketMissing() throws Exception {
-        when(store.getBucketMetadata()).thenReturn(null);
+    public void testBucketMissing() {
+        when(store.getRootBucketWithMetadata()).thenReturn(null);
 
         HealthCheck.Result result = healthCheck.execute();
         assertFalse(result.isHealthy());

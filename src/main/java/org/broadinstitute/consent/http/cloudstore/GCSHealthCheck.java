@@ -1,23 +1,23 @@
 package org.broadinstitute.consent.http.cloudstore;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.api.services.storage.model.Bucket;
+import com.google.cloud.storage.Bucket;
 
 public class GCSHealthCheck extends HealthCheck {
 
-    private GCSStore store;
+    private final GCSService store;
 
-    public GCSHealthCheck(GCSStore store) {
+    public GCSHealthCheck(GCSService store) {
         this.store = store;
     }
 
     @Override
-    protected Result check() throws Exception {
+    protected Result check() {
 
         Bucket bucket;
 
         try {
-            bucket = store.getBucketMetadata();
+            bucket = store.getRootBucketWithMetadata();
         } catch (Exception e) {
             return Result.unhealthy("GCS bucket unreachable or does not exist: " + e.getMessage());
         }

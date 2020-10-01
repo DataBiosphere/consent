@@ -85,6 +85,16 @@ public class GCSService {
         }
     }
 
+    /**
+     * Get the root bucket configured for this environment. Returns a Bucket with all possible
+     * metadata values.
+     *
+     * @return Bucket
+     */
+    public Bucket getRootBucketWithMetadata() {
+        return storage.get(config.getBucket(), Storage.BucketGetOption.fields(Storage.BucketField.values()));
+    }
+
     private List<Blob> listWhitelistItems() {
         Bucket bucket = storage.get(config.getBucket());
         Page<Blob> blobs = bucket.list();

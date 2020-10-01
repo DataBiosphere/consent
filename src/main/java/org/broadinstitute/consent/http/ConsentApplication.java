@@ -223,8 +223,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
-        final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
+        final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final UserRolesHandler userRolesHandler = injector.getProvider(UserRolesHandler.class).get();
@@ -255,7 +255,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         configureCors(env);
 
         // Health Checks
-        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
+        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
 
         final StoreOntologyService storeOntologyService
