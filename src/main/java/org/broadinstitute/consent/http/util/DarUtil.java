@@ -34,16 +34,16 @@ public class DarUtil {
     public static boolean requiresManualReview(Document dar) throws IOException {
         Map<String, Object> form = parseAsMap(dar.toJson());
         List<String> fieldsForManualReview = Arrays.asList(
-                        "population",
-                        "other",
-                        "illegalbehave",
-                        "addiction",
-                        "sexualdiseases",
-                        "stigmatizediseases",
-                        "vulnerablepop",
-                        "popmigration",
-                        "psychtraits",
-                        "nothealth");
+            DarConstants.POPULATION,
+            DarConstants.OTHER,
+            DarConstants.ILLEGAL_BEHAVE,
+            DarConstants.ADDICTION,
+            DarConstants.SEXUAL_DISEASES,
+            DarConstants.STIGMATIZED_DISEASES,
+            DarConstants.VULNERABLE_POP,
+            DarConstants.POP_MIGRATION,
+            DarConstants.PSYCH_TRAITS,
+            DarConstants.NOT_HEALTH);
 
         return !fieldsForManualReview.stream().
                 filter(field -> form.containsKey(field) && Boolean.valueOf(form.get(field).toString())).collect(Collectors.toList()).isEmpty();

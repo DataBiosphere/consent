@@ -94,6 +94,11 @@ public class DataAccessRequestResource extends Resource {
     public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
         try {
+            // See https://broadinstitute.atlassian.net/browse/DUOS-780
+            // Temporarily remove unnecessary fields until fully deprecated.
+            dar.remove(DarConstants.CREATE_DATE);
+            dar.remove(DarConstants.SORT_DATE);
+            dar.remove(DarConstants.DATA_ACCESS_REQUEST_ID);
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
             try {
                 if (!needsManualReview) {
