@@ -223,6 +223,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
+        final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
         final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
@@ -271,7 +272,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Now register our resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
-        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, userService));
+        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService));
         env.jersey().register(new DataSetResource(datasetService, userService));
         env.jersey().register(DataSetAssociationsResource.class);
