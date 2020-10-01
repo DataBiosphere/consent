@@ -223,7 +223,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
-        final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
         final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
