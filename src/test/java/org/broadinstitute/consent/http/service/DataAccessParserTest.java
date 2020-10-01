@@ -50,8 +50,6 @@ public class DataAccessParserTest {
     private final String LINKEDIN = "linkedin-test-id";
     private final String ORCID = "0001-0002-00122";
     private final String RESEARCHER_GATE = "researcher-gate-0001-test";
-    private final String DATA_ACCESS_AGREEMENT_URL = "/url/bucket/id-bucket-test";
-    private final String DATA_ACCESS_AGREEMENT_NAME = "Researcher Name";
     private final String TRANSLATED_USE_RESTRICTION = "Translated use restriction.";
 
     @Test
@@ -89,7 +87,7 @@ public class DataAccessParserTest {
         assertEquals(acroForm.getField(DarConstants.LINKEDIN).getValueAsString(), LINKEDIN);
         assertEquals(acroForm.getField(DarConstants.ORCID).getValueAsString(), ORCID);
         assertEquals(acroForm.getField(DarConstants.RESEARCHER_GATE).getValueAsString(), RESEARCHER_GATE);
-        assertEquals("Yes", acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString());
+//        assertEquals("Yes", acroForm.getField(DarConstants.DATA_ACCESS_AGREEMENT).getValueAsString());
         // Handle legacy all lower cased case
         assertEquals(acroForm.getField(DarConstants.OTHER_TEXT.toLowerCase()).getValueAsString(), RESEARCH_OTHER_TEXT);
         assertEquals("Yes", acroForm.getField(DarConstants.ORIGINS).getValueAsString());
@@ -181,8 +179,6 @@ public class DataAccessParserTest {
         dar.put(DarConstants.LINKEDIN, LINKEDIN);
         dar.put(DarConstants.ORCID, ORCID);
         dar.put(DarConstants.RESEARCHER_GATE, RESEARCHER_GATE);
-        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_URL, DATA_ACCESS_AGREEMENT_URL);
-        dar.put(DarConstants.DATA_ACCESS_AGREEMENT_NAME, DATA_ACCESS_AGREEMENT_NAME);
         dar.put(DarConstants.TRANSLATED_RESTRICTION, TRANSLATED_USE_RESTRICTION);
         return dar;
     }

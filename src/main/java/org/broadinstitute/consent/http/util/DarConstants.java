@@ -125,12 +125,6 @@ public class DarConstants {
 
     public static final String RESEARCHER_GATE = "researcherGate";
 
-    public static final String DATA_ACCESS_AGREEMENT = "dataAccessAgreement";
-
-    public static final String DATA_ACCESS_AGREEMENT_URL = "urlDAA";
-
-    public static final String DATA_ACCESS_AGREEMENT_NAME = "nameDAA";
-
     public static final String HEALTH = "health";
 
     public static final String ORIGINS = "origins";
