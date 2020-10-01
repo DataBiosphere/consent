@@ -20,10 +20,10 @@ public class DataAccessRequestData {
         .asList("referenceId", "investigator",
             "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
             "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
-            "profileName", "pubmedId", "scientificUrl", "urlDAA", "nameDAA", "eraExpiration",
-            "academicEmail", "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate",
-            "datasetDetail", "datasets", "datasetId", "validRestriction", "restriction",
-            "translatedUseRestriction", "createDate", "sortDate");
+            "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
+            "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
+            "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
+            "createDate", "sortDate");
 
     private String referenceId;
     private String investigator;
@@ -47,8 +47,6 @@ public class DataAccessRequestData {
     private String profileName;
     private String pubmedId;
     private String scientificUrl;
-    private String urlDAA;
-    private String nameDAA;
     private Boolean eraExpiration;
     private String academicEmail;
     private Boolean eraAuthorized;
@@ -301,22 +299,6 @@ public class DataAccessRequestData {
 
     public void setScientificUrl(String scientificUrl) {
         this.scientificUrl = scientificUrl;
-    }
-
-    public String getUrlDAA() {
-        return urlDAA;
-    }
-
-    public void setUrlDAA(String urlDAA) {
-        this.urlDAA = urlDAA;
-    }
-
-    public String getNameDAA() {
-        return nameDAA;
-    }
-
-    public void setNameDAA(String nameDAA) {
-        this.nameDAA = nameDAA;
     }
 
     public Boolean getEraExpiration() {
