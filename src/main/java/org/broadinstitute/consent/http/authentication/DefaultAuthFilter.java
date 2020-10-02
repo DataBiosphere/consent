@@ -13,8 +13,6 @@ public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P
 
   private static final Logger logger = LoggerFactory.getLogger(DefaultAuthFilter.class);
 
-  public DefaultAuthFilter() {}
-
   @Override
   public void filter(ContainerRequestContext requestContext) {
     String path = requestContext.getUriInfo().getPath();
@@ -27,7 +25,6 @@ public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P
 
   public static class Builder<P extends Principal>
       extends AuthFilterBuilder<String, P, DefaultAuthFilter<P>> {
-    public Builder() {}
 
     protected DefaultAuthFilter<P> newInstance() {
       return new DefaultAuthFilter();
