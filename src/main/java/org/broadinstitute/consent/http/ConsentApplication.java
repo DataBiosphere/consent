@@ -77,6 +77,7 @@ import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
 import org.broadinstitute.consent.http.resources.ElectionReviewResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
+import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
@@ -144,6 +145,7 @@ import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionVa
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -268,7 +270,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
-        // Now register our resources.
+        // Custom Error handling. Expand to include other codes when necessary
+        final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
+        errorHandler.addErrorPage(404, "/error/404");
+        env.getApplicationContext().setErrorHandler(errorHandler);
+        env.jersey().register(ErrorResource.class);
+
+        // Register standard application resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService));
