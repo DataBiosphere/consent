@@ -1,4 +1,4 @@
-FROM iflavoursbv/sbt-openjdk-8-alpine
+FROM iflavoursbv/sbt-openjdk-8-alpine:latest
 
 COPY src /app/src
 COPY test.sh /app
