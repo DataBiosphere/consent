@@ -2351,7 +2351,7 @@ paths:
         304:
           description: Not modified
         400:
-          description: External Error (invalid input)
+          description: Bad Request (invalid input)
         500:
           description: Internal Error
   /api/dataset/{id}/approved/users:

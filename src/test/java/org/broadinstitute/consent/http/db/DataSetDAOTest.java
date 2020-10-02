@@ -167,7 +167,7 @@ public class DataSetDAOTest extends DAOTestHelper {
     public void testUpdateDataset() {
         DataSet d = createDataset();
         Timestamp now = new Timestamp(new Date().getTime());
-        dataSetDAO.updateDataset(d.getDataSetId(), now, d.getCreateUserId());
+        dataSetDAO.updateDatasetUpdateUserAndDate(d.getDataSetId(), now, d.getCreateUserId());
         DataSet updated = dataSetDAO.findDataSetById(d.getDataSetId());
         assertEquals(updated.getUpdateDate(), now);
     }

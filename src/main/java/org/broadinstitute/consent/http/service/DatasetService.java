@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import java.util.Date;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -57,7 +58,7 @@ public class DatasetService {
         return dataset;
     }
 
-    public DataSet updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
+    public Optional<DataSet> updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
         DataSet old = getDatasetWithPropertiesById(datasetId);
@@ -73,18 +74,18 @@ public class DatasetService {
 
         List<DataSetProperty> propertiesToUpdate = jsonProperties.stream()
               .filter(p -> oldProperties.stream()
-                    .noneMatch(op -> equalsProperty(op.getPropertyKey(), op.getPropertyValue(), p.getPropertyKey(), p.getPropertyValue())))
+                    .noneMatch(op -> p.equals(op)))
               .collect(Collectors.toList());
 
         if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
 
         propertiesToUpdate.stream().forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
         dataSetDAO.insertDataSetsProperties(propertiesToAdd);
-        dataSetDAO.updateDataset(datasetId, now, userId);
+        dataSetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
-        return updatedDataset;
+        return Optional.of(updatedDataset);
     }
 
     public DataSetDTO getDatasetDTO(Integer datasetId) {
@@ -116,9 +117,5 @@ public class DatasetService {
         return properties.stream()
             .filter(p -> !keys.contains(p.getPropertyName()))
             .collect(Collectors.toList());
-    }
-
-    private boolean equalsProperty(Integer propOneKey, String propOneValue, Integer propTwoKey, String propTwoValue) {
-        return (propOneKey.equals(propTwoKey) && propOneValue.equalsIgnoreCase(propTwoValue));
     }
 }

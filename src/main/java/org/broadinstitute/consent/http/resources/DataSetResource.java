@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
@@ -139,12 +140,14 @@ public class DataSetResource extends Resource {
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
-        DataSet updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
-        if (Objects.isNull(updatedDataset)) {
+        Optional<DataSet> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
+        if (updatedDataset.isPresent()) {
+            URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
+            return Response.ok(uri).entity(updatedDataset.get()).build();
+        }
+        else {
             return Response.notModified().build();
         }
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.getDataSetId());
-        return Response.ok(uri).entity(updatedDataset).build();
     }
 
     @POST

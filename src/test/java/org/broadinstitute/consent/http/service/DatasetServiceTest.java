@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -150,14 +151,14 @@ public class DatasetServiceTest {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
 
-        DataSet notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-        Assert.assertNull(notModified);
+        Optional<DataSet> notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
+        Assert.assertEquals(Optional.empty(), notModified);
 
         List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
         updatedProperties.get(3).setPropertyValue("updated value");
         dataSetDTO.setProperties(updatedProperties);
 
-        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
+        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
         Assert.assertNotNull(updated);
     }
 
