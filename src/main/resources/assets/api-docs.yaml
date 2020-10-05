@@ -1208,28 +1208,6 @@ paths:
         403:
           description: User must have appropriate roles to update different users' information.
   /api/dacuser/status/{userId}:
-    get:
-      summary: getUserStatusById
-      description: |
-        DEPRECATED: Use GET /api/dacuser/{email}
-        Get the user's status by user id
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the user by status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        500:
-          description: Server Error
     put:
       summary: updateUserStatusById
       description: |

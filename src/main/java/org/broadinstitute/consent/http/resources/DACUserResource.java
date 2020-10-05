@@ -135,20 +135,6 @@ public class DACUserResource extends Resource {
         return Response.ok(user).build();
     }
 
-    @Deprecated // Use get by email instead
-    @GET
-    @Path("/status/{userId}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response getUserStatus(@PathParam("userId") Integer userId) {
-        try {
-            return Response.ok(userService.findUserById(userId)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     /**
      * Convenience method to find a member from legacy json structure.
      *
