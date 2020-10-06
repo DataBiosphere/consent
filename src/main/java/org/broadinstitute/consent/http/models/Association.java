@@ -2,6 +2,12 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Association Representation object.
+ * This class represents a single row of consentassociation data. There can be many `associations`
+ * to a single consent which would indicate multiple datasets using the same consent.
+ * See also: ConsentAssociation
+ */
 public class Association {
 
     @JsonProperty
