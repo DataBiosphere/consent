@@ -39,16 +39,16 @@ import java.util.stream.Collectors;
 
 public class PendingCaseService {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
-    private ConsentDAO consentDAO;
-    private DataAccessRequestService dataAccessRequestService;
-    private DataSetDAO dataSetDAO;
-    private ElectionDAO electionDAO;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ConsentDAO consentDAO;
+    private final DataAccessRequestService dataAccessRequestService;
+    private final DataSetDAO dataSetDAO;
+    private final ElectionDAO electionDAO;
 
-    private VoteDAO voteDAO;
-    private DacService dacService;
-    private UserService userService;
-    private VoteService voteService;
+    private final VoteDAO voteDAO;
+    private final DacService dacService;
+    private final UserService userService;
+    private final VoteService voteService;
 
     @Inject
     public PendingCaseService(ConsentDAO consentDAO, DataAccessRequestService dataAccessRequestService,
@@ -103,7 +103,7 @@ public class PendingCaseService {
         Integer dacUserId = user.getDacUserId();
         boolean isChair = dacService.isAuthUserChair(authUser);
         List<Election> unfilteredElections = isChair ?
-                electionDAO.findLastElectionsByTypeAndFinalAccessVoteChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
+                electionDAO.findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(ElectionType.DATA_ACCESS.getValue(), false) :
                 electionDAO.findElectionsWithFinalVoteByTypeAndStatus(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue());
         List<Election> elections = dacService.filterElectionsByDAC(unfilteredElections, authUser);
         List<PendingCase> pendingCases = new ArrayList<>();
@@ -118,7 +118,6 @@ public class PendingCaseService {
                 PendingCase pendingCase = new PendingCase();
                 Boolean isReminderSent;
                 if (Objects.nonNull(rpElectionId)) {
-                    Election rpElection = electionDAO.findElectionWithFinalVoteById(rpElectionId);
                     Vote rpVote = voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId);
                     isReminderSent = accessVote.getIsReminderSent() || (Objects.nonNull(rpVote) && rpVote.getIsReminderSent());
                     pendingCase.setRpElectionId(rpElectionId);
