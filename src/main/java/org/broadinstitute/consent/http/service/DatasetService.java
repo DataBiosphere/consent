@@ -78,11 +78,17 @@ public class DatasetService {
                     .noneMatch(op -> p.equals(op)))
               .collect(Collectors.toList());
 
-        if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty()) {
+        List<DataSetProperty> propertiesToDelete = oldProperties.stream()
+              .filter(op -> updateDatasetProperties.stream()
+                .noneMatch(p -> p.getPropertyKey() == op.getPropertyKey())
+              ).collect(Collectors.toList());
+
+        if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete.isEmpty()) {
             return Optional.empty();
         }
 
         propertiesToUpdate.stream().forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
+        propertiesToDelete.stream().forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(datasetId, p.getPropertyKey()));
         dataSetDAO.insertDataSetsProperties(propertiesToAdd);
         dataSetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
