@@ -116,7 +116,7 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @Path("/{datasetId}")
     @PermitAll
-    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, String json, @PathParam("datasetId") Integer datasetId) {
+    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, @PathParam("datasetId") Integer datasetId, String json) {
         DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
         if (Objects.isNull(inputDataset)) {
             throw new BadRequestException("Dataset is required");
@@ -130,7 +130,7 @@ public class DataSetResource extends Resource {
                   Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
-        String name = inputDataset.getPropertyValue("Dataset Name");
+        String name = inputDataset.getPropertyValue(datasetService.datasetName);
         DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
         if (Objects.isNull(datasetNameAlreadyUsed)) {
             throw new NotFoundException("Could not find the dataset with name: " + name);

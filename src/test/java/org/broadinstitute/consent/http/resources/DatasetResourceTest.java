@@ -161,7 +161,7 @@ public class DatasetResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
-        Response response = resource.updateDataset(authUser, uriInfo, new Gson().toJson(json), 1);
+        Response response = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
         assertEquals(200, response.getStatus());
     }
 
@@ -181,7 +181,7 @@ public class DatasetResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
-        Response responseNotModified = resource.updateDataset(authUser, uriInfo, new Gson().toJson(json), 1);
+        Response responseNotModified = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
         assertEquals(304, responseNotModified.getStatus());
     }
 

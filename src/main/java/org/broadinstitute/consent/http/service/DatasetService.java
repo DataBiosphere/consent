@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 public class DatasetService {
 
     private final DataSetDAO dataSetDAO;
+    public static String datasetName = "Dataset Name";
 
     @Inject
     public DatasetService(DataSetDAO dataSetDAO) {
@@ -64,15 +65,15 @@ public class DatasetService {
         DataSet old = getDatasetWithPropertiesById(datasetId);
         Set<DataSetProperty> oldProperties = old.getProperties();
 
-        List<DataSetPropertyDTO> dtos = dataset.getProperties();
-        List<DataSetProperty> jsonProperties = processDatasetProperties(datasetId, dtos);
+        List<DataSetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
+        List<DataSetProperty> updateDatasetProperties = processDatasetProperties(datasetId, updateDatasetPropertyDTOs);
 
-        List<DataSetProperty> propertiesToAdd = jsonProperties.stream()
+        List<DataSetProperty> propertiesToAdd = updateDatasetProperties.stream()
               .filter(p -> oldProperties.stream()
                     .noneMatch(op -> op.getPropertyKey() == p.getPropertyKey()))
               .collect(Collectors.toList());
 
-        List<DataSetProperty> propertiesToUpdate = jsonProperties.stream()
+        List<DataSetProperty> propertiesToUpdate = updateDatasetProperties.stream()
               .filter(p -> oldProperties.stream()
                     .noneMatch(op -> p.equals(op)))
               .collect(Collectors.toList());
@@ -103,7 +104,7 @@ public class DatasetService {
         List<String> keys = dictionaries.stream().map(Dictionary::getKey).collect(Collectors.toList());
 
         return properties.stream()
-            .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals("Dataset Name"))
+            .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(datasetName))
             .map(p ->
                 new DataSetProperty(datasetId, dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(), p.getPropertyValue(), now)
             )
