@@ -128,6 +128,20 @@ public class DatasetServiceTest {
     }
 
     @Test
+    public void testFindDuplicateProperties() {
+        initService();
+
+        List<DataSetPropertyDTO> input = getDatasetPropertiesDTO();
+        DataSetPropertyDTO duplicateProperty = input.get(0);
+        input.add(duplicateProperty);
+
+        List<DataSetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
+
+        Assert.assertFalse(properties.isEmpty());
+        Assert.assertEquals(properties.get(0), duplicateProperty);
+    }
+
+    @Test
     public void testGetDatasetDTO() {
         Set<DataSetDTO> set = new HashSet<>();
         set.add(getDatasetDTO());

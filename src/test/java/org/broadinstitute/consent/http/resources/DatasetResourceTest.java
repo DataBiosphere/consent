@@ -12,6 +12,7 @@ import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
@@ -105,6 +106,11 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDataset() throws Exception {
         DataSet result = new DataSet();
+        DataSetDTO json = new DataSetDTO();
+        List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
+        jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
+        json.setProperties(jsonProperties);
+
         when(datasetService.getDatasetByName("test")).thenReturn(null);
         when(datasetService.createDataset(any(), any(), anyInt())).thenReturn(result);
         when(authUser.getGoogleUser()).thenReturn(googleUser);
@@ -115,7 +121,7 @@ public class DatasetResourceTest {
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
         initResource();
-        Response response = resource.createDataset(authUser, uriInfo, "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
+        Response response = resource.createDataset(authUser, uriInfo, new Gson().toJson(json));
 
         assertEquals(201,response.getStatus());
     }
@@ -139,6 +145,10 @@ public class DatasetResourceTest {
         Response responseInvalidProperty = resource.createDataset(authUser, uriInfo,
               "{\"properties\":[{\"propertyName\":\"Invalid Property\",\"propertyValue\":\"test\"}]");
         assertEquals(400, responseInvalidProperty.getStatus());
+
+        Response responseDuplicateProperties = resource.createDataset(authUser, uriInfo,
+              "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"},{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
+        assertEquals(400, responseDuplicateProperties.getStatus());
 
         Response responseNameInUse = resource.createDataset(authUser, uriInfo,
               "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
@@ -184,7 +194,6 @@ public class DatasetResourceTest {
         Response responseNotModified = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
         assertEquals(304, responseNotModified.getStatus());
     }
-
 
     @Test
     public void testCreateDataSetWrongType() throws Exception {
