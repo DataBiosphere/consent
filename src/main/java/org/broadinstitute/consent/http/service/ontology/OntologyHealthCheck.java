@@ -21,10 +21,10 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
 
   @Override
   public Result check() {
-    String statusUrl = servicesConfiguration.getOntologyURL() + "status";
-    WebTarget target = client.target(statusUrl);
-    Response response = target.request(MediaType.APPLICATION_JSON).get();
     try {
+      String statusUrl = servicesConfiguration.getOntologyURL() + "status";
+      WebTarget target = client.target(statusUrl);
+      Response response = target.request(MediaType.APPLICATION_JSON).get();
       if (response.getStatus() == HttpStatusCodes.STATUS_CODE_OK) {
         return Result.healthy();
       } else {
