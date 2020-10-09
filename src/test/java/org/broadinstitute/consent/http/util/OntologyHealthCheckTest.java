@@ -25,11 +25,11 @@ public class OntologyHealthCheckTest {
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
-  @Mock WebTarget target;
+  @Mock private WebTarget target;
 
-  @Mock Invocation.Builder builder;
+  @Mock private Invocation.Builder builder;
 
-  @Mock Response response;
+  @Mock private Response response;
 
   private OntologyHealthCheck healthCheck;
 
