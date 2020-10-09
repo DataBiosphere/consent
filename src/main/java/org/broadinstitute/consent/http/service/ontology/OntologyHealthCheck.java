@@ -28,10 +28,10 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
       if (response.getStatus() == HttpStatusCodes.STATUS_CODE_OK) {
         return Result.healthy();
       } else {
-        return Result.unhealthy("Ontology status");
+        return Result.unhealthy("Ontology status is unhealthy: " + response.getStatusInfo());
       }
     } catch (Exception e) {
-      return Result.unhealthy(e.getMessage());
+      return Result.unhealthy(e);
     }
   }
 
