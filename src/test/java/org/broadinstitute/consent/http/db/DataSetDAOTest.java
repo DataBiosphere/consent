@@ -187,6 +187,16 @@ public class DataSetDAOTest extends DAOTestHelper {
         assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
         assertNotEquals(originalProperty.getPropertyValue(), returnedProperty.getPropertyValue());
     }
+
+    @Test
+    public void testDeleteDatasetPropertyByKey() {
+        DataSet d = createDataset();
+        Set<DataSetProperty> properties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        DataSetProperty propertyToDelete = properties.stream().collect(Collectors.toList()).get(0);
+        dataSetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
+        Set<DataSetProperty> returnedProperties = dataSetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        assertNotEquals(properties.size(), returnedProperties.size());
+    }
     
     @Test
     public void testFindDatasetWithPropertiesByDatasetId() {
