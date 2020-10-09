@@ -96,6 +96,10 @@ public class DataSetResource extends Resource {
                   Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
+        List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+        if (duplicateProperties.size() > 0) {
+            throw new BadRequestException("Dataset contains multiple values for the same property.");
+        }
         String name = inputDataset.getPropertyValue("Dataset Name");
         if (Objects.isNull(name)) {
             throw new BadRequestException("Dataset name is required");
@@ -129,6 +133,10 @@ public class DataSetResource extends Resource {
             List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
                   Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
+        }
+        List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
+        if (duplicateProperties.size() > 0) {
+            throw new BadRequestException("Dataset contains multiple values for the same property.");
         }
         String name = inputDataset.getPropertyValue(datasetService.datasetName);
         DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);

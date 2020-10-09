@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -124,5 +127,23 @@ public class DatasetService {
         return properties.stream()
             .filter(p -> !keys.contains(p.getPropertyName()))
             .collect(Collectors.toList());
+    }
+
+    public List<DataSetPropertyDTO> findDuplicateProperties(List<DataSetPropertyDTO> properties) {
+        Set<String> uniqueKeys = properties.stream()
+              .map(DataSetPropertyDTO::getPropertyName)
+              .collect(Collectors.toSet());
+        if (uniqueKeys.size() != properties.size()) {
+            List<DataSetPropertyDTO> allDuplicateProperties = new ArrayList<>();
+            uniqueKeys.stream().forEach(key -> {
+                List<DataSetPropertyDTO> propertiesPerKey = properties.stream().filter(property -> property.getPropertyName().equals(key))
+                      .collect(Collectors.toList());
+                if (propertiesPerKey.size() > 1) {
+                    allDuplicateProperties.addAll(propertiesPerKey);
+                }
+            });
+            return allDuplicateProperties;
+        }
+        return Collections.emptyList();
     }
 }
