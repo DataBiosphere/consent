@@ -31,9 +31,7 @@ public enum ResearcherFields {
   LINKEDIN_PROFILE("linkedIn", false),
   RESEARCHER_GATE("researcherGate", false),
   ORCID("orcid", false),
-  CHECK_NOTIFICATIONS("checkNotifications", false),
-  URL_DAA("urlDAA", false),
-  NAME_DAA("nameDAA", false);
+  CHECK_NOTIFICATIONS("checkNotifications", false);
 
   public static final String LIBRARY_CARDS = "libraryCards";
   public static final String LIBRARY_CARD_ENTRIES = "libraryCardEntries";

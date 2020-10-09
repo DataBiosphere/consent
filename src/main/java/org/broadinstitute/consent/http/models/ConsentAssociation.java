@@ -10,23 +10,18 @@ import java.util.List;
 
 /**
  * ConsentAssociation Representation object.
- * <p/>
- * <P>Represents a set of associations to a single "type" of objects.  For example, the "samples" associated
- * with an individual consent.
- * <p/>
- * Created by egolin on 9/15/14.
+ * Represents a set of consentassociations to a single "type" of object.  For example, the
+ * "sampleSet"s associated with an individual consent via the dataset id on consentassociations.
+ * See also: Association
  */
 public class ConsentAssociation {
 
     @JsonProperty
     private String associationType;
 
-    private HashSet<String> elementSet;   // We store the elements in a set to remove duplicates
-    // NOTE:  HashSet not synchronized, so don't share access to these objects
+    private HashSet<String> elementSet;
 
-    @SuppressWarnings("unused")
     public ConsentAssociation() {
-        // Jackson deserialization
     }
 
     public ConsentAssociation(String atype, List<String> ids) {

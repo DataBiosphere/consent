@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSHealthCheck;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
@@ -64,7 +65,6 @@ import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.ConsentVoteResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DacResource;
-import org.broadinstitute.consent.http.resources.DataAccessAgreementResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersion2;
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
@@ -77,6 +77,7 @@ import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
 import org.broadinstitute.consent.http.resources.ElectionReviewResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
+import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
@@ -144,6 +145,7 @@ import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionVa
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -223,6 +225,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
         final ElectionService electionService = injector.getProvider(ElectionService.class).get();
         final EmailNotifierService emailNotifierService = injector.getProvider(EmailNotifierService.class).get();
+        final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
         final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final UserRolesHandler userRolesHandler = injector.getProvider(UserRolesHandler.class).get();
@@ -253,7 +256,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         configureCors(env);
 
         // Health Checks
-        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(googleStore));
+        env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
 
         final StoreOntologyService storeOntologyService
@@ -267,9 +270,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ResearcherService researcherService = new ResearcherPropertyHandler(researcherPropertyDAO, userDAO, emailNotifierService);
         final NihAuthApi nihAuthApi = new NihServiceAPI(researcherService);
 
-        // Now register our resources.
+        // Custom Error handling. Expand to include other codes when necessary
+        final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
+        errorHandler.addErrorPage(404, "/error/404");
+        env.getApplicationContext().setErrorHandler(errorHandler);
+        env.jersey().register(ErrorResource.class);
+
+        // Register standard application resources.
         env.jersey().register(new IndexerResource(indexerService, googleStore));
-        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, userService));
+        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailNotifierService, gcsService, userService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService));
         env.jersey().register(new DataSetResource(datasetService, userService));
         env.jersey().register(DataSetAssociationsResource.class);
@@ -294,7 +303,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new UserResource(userService, whitelistService));
         env.jersey().register(new ResearcherResource(researcherService, userService, whitelistService));
         env.jersey().register(WorkspaceResource.class);
-        env.jersey().register(new DataAccessAgreementResource(googleStore, researcherService));
         env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
         env.jersey().register(new NihAccountResource(nihAuthApi, userService));
         env.jersey().register(new WhitelistResource(whitelistService));

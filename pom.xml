@@ -242,13 +242,19 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.14.4</version>
+        <version>3.15.1</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.owasp</groupId>
+      <artifactId>java-file-io</artifactId>
+      <version>1.0.0</version>
+    </dependency>
 
     <dependency>
       <groupId>org.jdbi</groupId>
@@ -308,7 +314,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.12</version>
+      <version>4.5.13</version>
       <exclusions>
         <exclusion>
           <groupId>commons-codec</groupId>
@@ -499,7 +505,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.14.3</version>
+      <version>1.15.0-rc2</version>
       <scope>test</scope>
     </dependency>
 
@@ -523,7 +529,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20200915-1.30.10</version>
+      <version>v1-rev20200927-1.30.10</version>
     </dependency>
 
     <dependency>

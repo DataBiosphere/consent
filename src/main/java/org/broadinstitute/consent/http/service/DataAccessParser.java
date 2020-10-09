@@ -254,12 +254,6 @@ class DataAccessParser {
                     field.setValue(getDefaultValue(dar.getString(DarConstants.RESEARCHER_GATE)));
                     break;
                 }
-                case DarConstants.DATA_ACCESS_AGREEMENT: {
-                    Boolean existDataAccessAgreement = (StringUtils.isNotEmpty(dar.getString(DarConstants.DATA_ACCESS_AGREEMENT_URL)) &&
-                            StringUtils.isNotEmpty(dar.getString(DarConstants.DATA_ACCESS_AGREEMENT_NAME)));
-                    field.setValue(getYesOrNoValue(existDataAccessAgreement));
-                    break;
-                }
                 case DarConstants.TRANSLATED_RESTRICTION: {
                     field.setValue(getDefaultValue(sDUR.replaceAll("<[^>]*>","\n")));
                     break;

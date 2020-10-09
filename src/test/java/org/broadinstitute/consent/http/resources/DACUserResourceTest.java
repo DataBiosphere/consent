@@ -136,14 +136,6 @@ public class DACUserResourceTest {
     }
 
     @Test
-    public void testGetUserStatusWithInvalidId() {
-        when(userService.findUserById(any())).thenThrow(new NotFoundException());
-        initResource();
-        Response response = resource.getUserStatus(RandomUtils.nextInt(1, 10));
-        assertEquals(404, response.getStatus());
-    }
-
-    @Test
     public void testUpdateStatus() {
         User user = createDacUser(UserRoles.RESEARCHER);
         user.setDacUserId(RandomUtils.nextInt(1, 10));

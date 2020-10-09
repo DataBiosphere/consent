@@ -1208,28 +1208,6 @@ paths:
         403:
           description: User must have appropriate roles to update different users' information.
   /api/dacuser/status/{userId}:
-    get:
-      summary: getUserStatusById
-      description: |
-        DEPRECATED: Use GET /api/dacuser/{email}
-        Get the user's status by user id
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the user by status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        500:
-          description: Server Error
     put:
       summary: updateUserStatusById
       description: |
@@ -1382,6 +1360,114 @@ paths:
           description: Updates are restricted to the create user.
         500:
           description: Internal Server Error.
+  /api/dar/v2/{referenceId}/irbDocument:
+    get:
+      summary: Retrieve DAR IRB Document
+      description: Retrieve the IRB Document for a Data Access Request
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the document
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Store DAR IRB Document
+      description: |
+        Store an IRB Document for a Data Access Request.
+        Previous document is deleted.
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Stores the document and returns the updated Data Access Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataAccessRequest'
+  /api/dar/v2/{referenceId}/collaborationDocument:
+    get:
+      summary: Retrieve DAR Collaboration Document
+      description: Retrieve the Collaboration Document for a Data Access Request
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the document
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Store DAR Collaboration Document
+      description: |
+        Store a Collaboration Document for a Data Access Request.
+        Previous document is deleted.
+      parameters:
+        - name: referenceId
+          in: path
+          description: The referenceId of the Data Access Request
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Stores the document and returns the updated Data Access Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataAccessRequest'
 
   /api/dar:
     post:
@@ -3031,19 +3117,16 @@ paths:
   /api/whitelist:
     post:
       summary: postWhitelist
-      description: Uploads Library Card Whitelist tsv to bucket - NEW!
+      description: Uploads Library Card Whitelist tsv to bucket
       requestBody:
         content:
           multipart/form-data:
             schema:
               type: object
-      parameters:
-        - name: data
-          in: formData
-          description: TSV file that contains whitelist information
-          required: true
-          schema:
-            type: file
+              properties:
+                data:
+                  type: string
+                  format: binary
       tags:
         - Whitelist
       responses:

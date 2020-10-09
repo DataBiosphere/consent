@@ -586,7 +586,7 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         String orcId = dataAccessRequest.getString(ResearcherFields.ORCID.getValue());
         String researcherGate = dataAccessRequest.getString(ResearcherFields.RESEARCHER_GATE.getValue());
         List<ResearcherProperty> rpList = new ArrayList<>();
-        researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue(), ResearcherFields.NAME_DAA.getValue(), ResearcherFields.URL_DAA.getValue()), userId);
+        researcherPropertyDAO.deletePropertyByUser(Arrays.asList(ResearcherFields.LINKEDIN_PROFILE.getValue(), ResearcherFields.ORCID.getValue(), ResearcherFields.RESEARCHER_GATE.getValue()), userId);
         if (StringUtils.isNotEmpty(linkedIn)) {
           rpList.add(new ResearcherProperty(userId, ResearcherFields.LINKEDIN_PROFILE.getValue(), linkedIn));
         }
