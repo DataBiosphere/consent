@@ -2310,7 +2310,7 @@ paths:
       summary: Creates the Dataset from JSON
       description: Creates the Dataset from JSON
       requestBody:
-        description: Submitted dataset registration form
+        description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value.
         required: true
         content:
           application/json:
@@ -2423,7 +2423,7 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: full dataset registration form
+        description: Dataset with properties
         required: true
         content:
           application/json:
@@ -3929,6 +3929,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DatasetProperty'
+          example:
+            - propertyName: Dataset Name
+              propertyValue: Dataset Name
+            - propertyName: Data Type
+              propertyValue: Whole Genome
+            - propertyName: Species
+              propertyValue: Human
+            - propertyName: Phenotype/Indication
+              propertyValue: Cardiovascular System Disease
+            - propertyName: "# of Participants"
+              propertyValue: 20
+            - propertyName: Description
+              propertyValue: Description of Dataset
+            - propertyName: dbGAP
+              propertyValue: http://...
+            - propertyName: Data Depositor
+              propertyValue: NHLBI
+            - propertyName: Principal Investigator(PI)
+              propertyValue: NHLBI
+            - propertyName: Sample Collection ID
+              propertyValue: SC-000
+
+
         active:
           type: boolean
           description: The Dataset is active
