@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
@@ -31,6 +32,9 @@ public class DatasetServiceTest {
     private DatasetService datasetService;
 
     @Mock
+    private ConsentDAO consentDAO;
+
+    @Mock
     private DataSetDAO datasetDAO;
 
     @Before
@@ -39,7 +43,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(datasetDAO);
+        datasetService = new DatasetService(consentDAO, datasetDAO);
     }
 
     @Test

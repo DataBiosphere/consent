@@ -1,27 +1,84 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.Date;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import org.broadinstitute.consent.http.db.DataSetDAO;
-
 import javax.inject.Inject;
-
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
 
 public class DatasetService {
 
+    public static final String DATASET_NAME_KEY = "Dataset Name";
+    public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
+    private final ConsentDAO consentDAO;
     private final DataSetDAO dataSetDAO;
 
     @Inject
-    public DatasetService(DataSetDAO dataSetDAO) {
+    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO) {
+        this.consentDAO = consentDAO;
         this.dataSetDAO = dataSetDAO;
+    }
+
+    /**
+     * Create a minimal consent from the data provided in a Dataset.
+     *
+     * @param dataset The DataSetDTO
+     * @return The created Consent
+     */
+    public Consent createConsentForDataset(DataSetDTO dataset) {
+        String consentId = UUID.randomUUID().toString();
+        Optional<DataSetPropertyDTO> nameProp = dataset.getProperties()
+            .stream()
+            .filter(p -> p.getPropertyName().equalsIgnoreCase(DATASET_NAME_KEY))
+            .findFirst();
+        // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
+        // In our world, we'll use that dataset name if provided, or the alias.
+        String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
+        String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
+        Date createDate = new Date();
+        boolean manualReview = isConsentDataUseManualReview(dataset.getDataUse());
+        /*
+         * Consents created for a dataset do not need the following properties:
+         * use restriction
+         * data user letter
+         * data user letter name
+         * translated use restriction
+         */
+        consentDAO.insertConsent(consentId, manualReview, null, dataset.getDataUse().toString(),
+            null, name, null, createDate, createDate, null,
+            true, groupName, dataset.getDacId());
+        String associationType = AssociationType.SAMPLESET.getValue();
+        consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDacId());
+        return consentDAO.findConsentById(consentId);
+    }
+
+    private boolean isConsentDataUseManualReview(DataUse dataUse) {
+        return dataUse.getAddiction() ||
+            dataUse.getEthicsApprovalRequired() ||
+            dataUse.getIllegalBehavior() ||
+            dataUse.getManualReview() ||
+            Objects.nonNull(dataUse.getOther()) ||
+            dataUse.getOtherRestrictions() ||
+            dataUse.getPopulationOriginsAncestry() ||
+            (Objects.nonNull(dataUse.getPopulationRestrictions()) && !dataUse.getPopulationRestrictions().isEmpty()) ||
+            dataUse.getPsychologicalTraits() ||
+            dataUse.getSexualDiseases() ||
+            dataUse.getStigmatizeDiseases() ||
+            dataUse.getVulnerablePopulations();
     }
 
     public DataSet createDataset(DataSetDTO dataset, String name, Integer userId) {
