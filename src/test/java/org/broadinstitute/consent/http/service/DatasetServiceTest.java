@@ -155,7 +155,7 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testUpdateDataset() {
+    public void testUpdateDatasetNotModified() {
         int datasetId = 1;
         DataSetDTO dataSetDTO = getDatasetDTO();
         DataSet dataset = getDatasets().get(0);
@@ -167,10 +167,69 @@ public class DatasetServiceTest {
 
         Optional<DataSet> notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         Assert.assertEquals(Optional.empty(), notModified);
+    }
+
+    @Test
+    public void testUpdateDatasetMultiFieldUpdateOnly() {
+        int datasetId = 1;
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        DataSet dataset = getDatasets().get(0);
+        dataset.setProperties(getDatasetProperties());
 
         List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        updatedProperties.get(2).setPropertyValue("updated value");
         updatedProperties.get(3).setPropertyValue("updated value");
         dataSetDTO.setProperties(updatedProperties);
+
+        when(datasetDAO.findDataSetById(datasetId)).thenReturn(dataset);
+        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+        initService();
+
+        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
+        Assert.assertNotNull(updated);
+    }
+
+    @Test
+    public void testUpdateDatasetMultiFieldAddOnly() {
+        int datasetId = 1;
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        DataSet dataset = getDatasets().get(0);
+        List<DataSetProperty> properties = getDatasetProperties().stream().collect(Collectors.toList());
+        properties.remove(2);
+        properties.remove(2);
+        dataset.setProperties(properties.stream().collect(Collectors.toSet()));
+
+        List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        updatedProperties.get(2).setPropertyValue("added value");
+        updatedProperties.get(3).setPropertyValue("added value");
+        dataSetDTO.setProperties(updatedProperties);
+
+        when(datasetDAO.findDataSetById(datasetId)).thenReturn(dataset);
+        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+        initService();
+
+        DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
+        Assert.assertNotNull(updated);
+    }
+
+    @Test
+    public void testUpdateDatasetMultiFieldDeleteOnly() {
+        int datasetId = 1;
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        DataSet dataset = getDatasets().get(0);
+        dataset.setProperties(getDatasetProperties());
+
+        List<DataSetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
+        updatedProperties.remove(2);
+        updatedProperties.remove(2);
+        dataSetDTO.setProperties(updatedProperties);
+
+        when(datasetDAO.findDataSetById(datasetId)).thenReturn(dataset);
+        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+        when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
+        initService();
 
         DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
         Assert.assertNotNull(updated);
