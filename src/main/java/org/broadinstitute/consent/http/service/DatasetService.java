@@ -96,8 +96,8 @@ public class DatasetService {
     }
 
     private void updateDatasetProperties(Integer datasetId, List<DataSetProperty> updateProperties, List<DataSetProperty> deleteProperties, List<DataSetProperty> addProperties) {
-        updateProperties.stream().forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
-        deleteProperties.stream().forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(datasetId, p.getPropertyKey()));
+        updateProperties.forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
+        deleteProperties.forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(datasetId, p.getPropertyKey()));
         dataSetDAO.insertDataSetsProperties(addProperties);
     }
 
@@ -139,7 +139,7 @@ public class DatasetService {
               .collect(Collectors.toSet());
         if (uniqueKeys.size() != properties.size()) {
             List<DataSetPropertyDTO> allDuplicateProperties = new ArrayList<>();
-            uniqueKeys.stream().forEach(key -> {
+            uniqueKeys.forEach(key -> {
                 List<DataSetPropertyDTO> propertiesPerKey = properties.stream().filter(property -> property.getPropertyName().equals(key))
                       .collect(Collectors.toList());
                 if (propertiesPerKey.size() > 1) {

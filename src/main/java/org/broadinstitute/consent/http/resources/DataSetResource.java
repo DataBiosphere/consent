@@ -128,6 +128,10 @@ public class DataSetResource extends Resource {
         if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
             throw new BadRequestException("Dataset must contain required properties");
         }
+        DataSet datasetExists = datasetService.findDatasetById(datasetId);
+        if (Objects.isNull(datasetExists)) {
+            throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+        }
         List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
             List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
@@ -137,14 +141,6 @@ public class DataSetResource extends Resource {
         List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
         if (duplicateProperties.size() > 0) {
             throw new BadRequestException("Dataset contains multiple values for the same property.");
-        }
-        String name = inputDataset.getPropertyValue(datasetService.datasetName);
-        DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
-        if (Objects.isNull(datasetNameAlreadyUsed)) {
-            throw new NotFoundException("Could not find the dataset with name: " + name);
-        }
-        if (Objects.nonNull(inputDataset.getDataSetId()) && !(inputDataset.getDataSetId().equals(datasetNameAlreadyUsed.getDataSetId()))) {
-            throw new NotFoundException("Dataset with name: " + name + " already in use by another dataset.");
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
