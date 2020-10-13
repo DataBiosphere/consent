@@ -3938,7 +3938,7 @@ components:
               propertyValue: Human
             - propertyName: Phenotype/Indication
               propertyValue: Cardiovascular System Disease
-            - propertyName: "# of Participants"
+            - propertyName: "# of participants"
               propertyValue: 20
             - propertyName: Description
               propertyValue: Description of Dataset
