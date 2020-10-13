@@ -161,7 +161,7 @@ public class DatasetResourceTest {
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
-        when(datasetService.getDatasetByName("test")).thenReturn(preexistingDataset);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
@@ -181,7 +181,7 @@ public class DatasetResourceTest {
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
-        when(datasetService.getDatasetByName("test")).thenReturn(preexistingDataset);
+        when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
