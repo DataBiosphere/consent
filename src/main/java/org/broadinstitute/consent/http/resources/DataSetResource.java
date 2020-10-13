@@ -19,6 +19,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -101,7 +103,7 @@ public class DataSetResource extends Resource {
         }
         DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
-            throw new NotFoundException("Dataset name: " + name + " is already in use");
+            throw new ClientErrorException("Dataset name: " + name + " is already in use", Status.CONFLICT);
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
