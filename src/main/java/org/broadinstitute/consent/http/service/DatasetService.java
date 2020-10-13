@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.sql.Timestamp;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -90,12 +89,16 @@ public class DatasetService {
             return Optional.empty();
         }
 
-        propertiesToUpdate.stream().forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
-        propertiesToDelete.stream().forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(datasetId, p.getPropertyKey()));
-        dataSetDAO.insertDataSetsProperties(propertiesToAdd);
+        updateDatasetProperties(datasetId, propertiesToUpdate, propertiesToDelete, propertiesToAdd);
         dataSetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
+    }
+
+    private void updateDatasetProperties(Integer datasetId, List<DataSetProperty> updateProperties, List<DataSetProperty> deleteProperties, List<DataSetProperty> addProperties) {
+        updateProperties.stream().forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
+        deleteProperties.stream().forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(datasetId, p.getPropertyKey()));
+        dataSetDAO.insertDataSetsProperties(addProperties);
     }
 
     public DataSetDTO getDatasetDTO(Integer datasetId) {
@@ -106,6 +109,7 @@ public class DatasetService {
         }
         return result;
     }
+
 
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
         Date now = new Date();
