@@ -3752,12 +3752,18 @@ components:
         cloudUse:
           type: boolean
           description: Cloud Use
+        localUse:
+          type: boolean
+          description: Local Use
         cloudProvider:
           type: string
           description: Cloud Use Provider
         cloudProviderType:
           type: string
           description: Cloud Use Provider Type
+        cloudProviderDescription:
+          type: string
+          description: Cloud Use Provider Description
         geneticStudiesOnly:
           type: boolean
           description: Genetic Studies Only
@@ -3770,6 +3776,12 @@ components:
         irbProtocolExpiration:
           type: string
           description: IRB Protocol Expiration
+        itDirector:
+          type: string
+          description: IT Director
+        signingOfficial:
+          type: string
+          description: Signing Official
         publication:
           type: boolean
           description: Publication Required
