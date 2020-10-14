@@ -148,9 +148,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "     AND electionView.referenceId = e.referenceId " +
             "     AND LOWER(e.electionType) = LOWER(:type) " +
             "     AND e.finalAccessVote = :vote " +
-            "     AND LOWER(e.status) != 'canceled' " +
+            "     AND LOWER(e.status) not in ('canceled', 'closed') " +
             " ORDER BY createDate ASC")
-    List<Election> findLastElectionsByTypeAndFinalAccessVoteChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
+    List<Election> findOpenLastElectionsByTypeAndFinalAccessVoteForChairPerson(@Bind("type") String type, @Bind("vote") Boolean finalAccessVote);
 
     @SqlQuery("select count(*) from election e inner join vote v on v.electionId = e.electionId and lower(v.type) = 'chairperson' where lower(e.electionType) = lower(:type) and lower(e.status) = lower(:status) and " +
             " v.vote = :finalVote ")
