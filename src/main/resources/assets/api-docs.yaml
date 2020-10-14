@@ -3142,7 +3142,13 @@ paths:
   /status:
     get:
       summary: System Health Status
-      description: A detailed description of the various subsystem statuses that Consent relies upon.
+      description: |
+        A detailed description of the various subsystem statuses that Consent relies upon.
+        Current systems include:
+          * Elastic Search
+          * GCS
+          * Ontology
+          * Postgres DB
       tags:
         - Status
       responses:
