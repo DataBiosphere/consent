@@ -89,15 +89,15 @@ public class DatasetService {
             return Optional.empty();
         }
 
-        updateDatasetProperties(datasetId, propertiesToUpdate, propertiesToDelete, propertiesToAdd);
+        updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
         dataSetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
         DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
     }
 
-    private void updateDatasetProperties(Integer datasetId, List<DataSetProperty> updateProperties, List<DataSetProperty> deleteProperties, List<DataSetProperty> addProperties) {
-        updateProperties.forEach(p -> dataSetDAO.updateDatasetProperty(datasetId, p.getPropertyKey(), p.getPropertyValue()));
-        deleteProperties.forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(datasetId, p.getPropertyKey()));
+    private void updateDatasetProperties(List<DataSetProperty> updateProperties, List<DataSetProperty> deleteProperties, List<DataSetProperty> addProperties) {
+        updateProperties.forEach(p -> dataSetDAO.updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
+        deleteProperties.forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
         dataSetDAO.insertDataSetsProperties(addProperties);
     }
 
