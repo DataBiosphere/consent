@@ -1,5 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -21,7 +25,6 @@ import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -54,10 +57,10 @@ public class DatasetServiceTest {
 
         DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1", 1);
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(result.getName(), getDatasets().get(0).getName());
-        Assert.assertNotNull(result.getProperties());
-        Assert.assertFalse(result.getProperties().isEmpty());
+        assertNotNull(result);
+        assertEquals(result.getName(), getDatasets().get(0).getName());
+        assertNotNull(result.getProperties());
+        assertFalse(result.getProperties().isEmpty());
     }
 
     @Test
@@ -68,8 +71,8 @@ public class DatasetServiceTest {
 
         DataSet dataset = datasetService.getDatasetByName("Test Dataset 1");
 
-        Assert.assertNotNull(dataset);
-        Assert.assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
+        assertNotNull(dataset);
+        assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
     }
 
     @Test
@@ -80,8 +83,8 @@ public class DatasetServiceTest {
 
         DataSet dataset = datasetService.findDatasetById(1);
 
-        Assert.assertNotNull(dataset);
-        Assert.assertEquals(dataset.getName(), getDatasets().get(0).getName());
+        assertNotNull(dataset);
+        assertEquals(dataset.getName(), getDatasets().get(0).getName());
     }
 
     @Test
@@ -89,7 +92,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
         initService();
 
-        Assert.assertTrue(datasetService.getDatasetProperties(1).isEmpty());
+        assertTrue(datasetService.getDatasetProperties(1).isEmpty());
     }
 
     @Test
@@ -99,7 +102,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
         initService();
 
-        Assert.assertEquals(datasetService.getDatasetProperties(datasetId), datasetDAO.findDatasetPropertiesByDatasetId(1));
+        assertEquals(datasetService.getDatasetProperties(datasetId), datasetDAO.findDatasetPropertiesByDatasetId(1));
     }
 
     @Test
@@ -110,7 +113,7 @@ public class DatasetServiceTest {
         List<DataSetProperty> properties = datasetService
             .processDatasetProperties(1, getDatasetPropertiesDTO());
 
-        Assert.assertEquals(properties.size(), getDatasetPropertiesDTO().size());
+        assertEquals(properties.size(), getDatasetPropertiesDTO().size());
     }
 
     @Test
@@ -124,7 +127,7 @@ public class DatasetServiceTest {
 
         List<DataSetPropertyDTO> properties = datasetService.findInvalidProperties(input);
 
-        Assert.assertFalse(properties.isEmpty());
+        assertFalse(properties.isEmpty());
     }
 
     @Test
@@ -137,8 +140,8 @@ public class DatasetServiceTest {
 
         List<DataSetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
 
-        Assert.assertFalse(properties.isEmpty());
-        Assert.assertEquals(properties.get(0), duplicateProperty);
+        assertFalse(properties.isEmpty());
+        assertEquals(properties.get(0), duplicateProperty);
     }
 
     @Test
@@ -150,8 +153,8 @@ public class DatasetServiceTest {
 
         DataSetDTO datasetDTO = datasetService.getDatasetDTO(1);
 
-        Assert.assertNotNull(datasetDTO);
-        Assert.assertFalse(datasetDTO.getProperties().isEmpty());
+        assertNotNull(datasetDTO);
+        assertFalse(datasetDTO.getProperties().isEmpty());
     }
 
     @Test
@@ -166,7 +169,7 @@ public class DatasetServiceTest {
         initService();
 
         Optional<DataSet> notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-        Assert.assertEquals(Optional.empty(), notModified);
+        assertEquals(Optional.empty(), notModified);
     }
 
     @Test
@@ -187,7 +190,7 @@ public class DatasetServiceTest {
         initService();
 
         DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
-        Assert.assertNotNull(updated);
+        assertNotNull(updated);
     }
 
     @Test
@@ -211,7 +214,7 @@ public class DatasetServiceTest {
         initService();
 
         DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
-        Assert.assertNotNull(updated);
+        assertNotNull(updated);
     }
 
     @Test
@@ -232,7 +235,7 @@ public class DatasetServiceTest {
         initService();
 
         DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
-        Assert.assertNotNull(updated);
+        assertNotNull(updated);
     }
 
     /* Helper functions */

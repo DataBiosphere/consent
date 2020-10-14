@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -14,7 +15,6 @@ import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.sql.Timestamp;
@@ -120,7 +120,7 @@ public class DataSetDAOTest extends DAOTestHelper {
         DataSet dataset = createDataset();
 
         Dac foundDac = dataSetDAO.findDacForDataset(dataset.getDataSetId());
-        Assert.assertNull(foundDac);
+        assertNull(foundDac);
     }
 
     @Test
