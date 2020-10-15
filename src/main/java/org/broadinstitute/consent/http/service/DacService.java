@@ -124,8 +124,10 @@ public class DacService {
         Dac dac = dacDAO.findById(dacId);
         List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId());
         List<User> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
-        dac.setChairpersons(chairs);
-        dac.setMembers(members);
+        if (dac != null) {
+            dac.setChairpersons(chairs);
+            dac.setMembers(members);
+        }
         return dac;
     }
 
