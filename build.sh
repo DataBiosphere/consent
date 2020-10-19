@@ -91,7 +91,8 @@ function docker_cmd()
         docker build -t $DOCKERHUB_REGISTRY:${HASH_TAG} --file Dockerfile .
 
         echo "Scanning docker image..."
-        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME"/Library/Caches:/root/.cache/ aquasec/trivy --exit-code 0 --severity CRITICAL "$DOCKERHUB_REGISTRY":"${HASH_TAG}"
+        # TODO --exit-code 1 after updating base JDK image
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME"/Library/Caches:/root/.cache/ aquasec/trivy --severity CRITICAL "$DOCKERHUB_REGISTRY":"${HASH_TAG}"
 
         if [ $DOCKER_CMD = "push" ]; then
             echo "pushing $PROJECT docker image..."
