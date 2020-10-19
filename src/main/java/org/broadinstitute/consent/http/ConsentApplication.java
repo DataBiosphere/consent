@@ -135,7 +135,6 @@ import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
-import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
@@ -259,7 +258,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Health Checks
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
-        env.healthChecks().register("ontology", new OntologyHealthCheck(client, config.getServicesConfiguration()));
 
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,
