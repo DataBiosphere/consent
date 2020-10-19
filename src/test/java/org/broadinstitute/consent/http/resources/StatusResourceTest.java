@@ -18,8 +18,6 @@ import static org.mockito.Mockito.when;
 public class StatusResourceTest {
 
     private Result postgresql;
-    private Result ontology;
-    private final static String ONT_ENV = "ontology";
 
     @Mock
     private HealthCheckRegistry healthChecks;
@@ -27,7 +25,6 @@ public class StatusResourceTest {
     @Before
     public void setUp() {
         postgresql = Result.healthy();
-        ontology = Result.healthy();
     }
 
     private StatusResource initStatusResource(SortedMap<String, Result> checks) {
@@ -40,7 +37,6 @@ public class StatusResourceTest {
     public void testHealthy() {
         SortedMap<String, Result> checks = new TreeMap<>();
         checks.put(DB_ENV, postgresql);
-        checks.put(ONT_ENV, ontology);
         StatusResource statusResource = initStatusResource(checks);
 
         Response response = statusResource.getStatus();
@@ -52,24 +48,10 @@ public class StatusResourceTest {
         postgresql = Result.unhealthy(new Exception("Cannot connect to the postgresql database"));
         SortedMap<String, Result> checks = new TreeMap<>();
         checks.put(DB_ENV, postgresql);
-        checks.put(ONT_ENV, ontology);
         StatusResource statusResource = initStatusResource(checks);
 
         Response response = statusResource.getStatus();
         Assert.assertEquals(500, response.getStatus());
-    }
-
-    @Test
-    public void testUnhealthyOntology() {
-        ontology = Result.unhealthy("Ontology is down");
-        SortedMap<String, Result> checks = new TreeMap<>();
-        checks.put(DB_ENV, postgresql);
-        checks.put(ONT_ENV, ontology);
-        StatusResource statusResource = initStatusResource(checks);
-
-        Response response = statusResource.getStatus();
-        // A failing ontology check should not fail the status
-        Assert.assertEquals(200, response.getStatus());
     }
 
 }
