@@ -2327,8 +2327,6 @@ paths:
                 $ref: '#/components/schemas/Dataset'
         400:
           description: External Error (invalid input)
-        409:
-          description: Dataset Name given is already in use by another dataset
         500:
           description: Internal Error (something went wrong processing a valid input)
   /api/dataset/sample:

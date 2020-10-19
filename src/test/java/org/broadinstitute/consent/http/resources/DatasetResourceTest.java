@@ -136,7 +136,7 @@ public class DatasetResourceTest {
 
         Response responseNameInUse = resource.createDataset(authUser, uriInfo,
               "{\"properties\":[{\"propertyName\":\"Dataset Name\",\"propertyValue\":\"test\"}]}");
-        assertEquals(409, responseNameInUse.getStatus());
+        assertEquals(400, responseNameInUse.getStatus());
     }
 
     @Test
