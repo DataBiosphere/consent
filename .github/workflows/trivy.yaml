@@ -2,7 +2,7 @@ name: Trivy
 on: [pull_request]
 jobs:
   build:
-    name: Build
+    name: Scan for Vulnerabilities
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout code
@@ -24,5 +24,5 @@ jobs:
           image-ref: 'docker.io/broadinstitute/consent:${{ github.sha }}'
           format: 'table'
           exit-code: '1'
-          ignore-unfixed: true
+          ignore-unfixed: false
           severity: 'CRITICAL,HIGH'
