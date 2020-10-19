@@ -53,6 +53,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
                 unauthorized(bearer);
             }
         } catch (AuthenticationException e) {
+            logger.error("Error validating audience: " + e.getMessage());
             unauthorized(bearer);
         }
     }
@@ -67,6 +68,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
             String result = response.readEntity(String.class);
             tokenInfo = new ObjectMapper().readValue(result, new TypeReference<HashMap<String, Object>>() {});
         } catch (Exception e) {
+            logger.error("Error validating access token: " + e.getMessage());
             unauthorized(accessToken);
         }
         return tokenInfo;
@@ -82,6 +84,7 @@ public class OAuthAuthenticator extends AbstractOAuthAuthenticator {
             String result = response.readEntity(String.class);
             u = new GoogleUser(result);
         } catch (Exception e) {
+            logger.error("Error getting user info from token: " + e.getMessage());
             unauthorized(bearer);
         }
         return u;
