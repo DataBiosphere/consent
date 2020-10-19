@@ -25,4 +25,4 @@ jobs:
           format: 'table'
           exit-code: '1'
           ignore-unfixed: false
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
