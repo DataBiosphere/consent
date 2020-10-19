@@ -1,9 +1,5 @@
-name: build
-on:
-  push:
-    branches:
-      - master
-  pull_request:
+name: Trivy
+on: [pull_request]
 jobs:
   build:
     name: Build
