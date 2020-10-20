@@ -196,4 +196,17 @@ public class DacResourceTest {
         dacResource.deleteDac(1);
     }
 
+    @Test
+    public void testFindDacsByUser() {
+        Dac dac = new DacBuilder()
+              .setName("name")
+              .setDescription("description")
+              .build();
+        List<Dac> dacs =  Collections.singletonList(dac);
+        when(dacService.findDacsByUser(authUser)).thenReturn(dacs);
+
+        Response response = dacResource.findDacsByUser(authUser);
+        Assert.assertEquals(200, response.getStatus());
+    }
+
 }
