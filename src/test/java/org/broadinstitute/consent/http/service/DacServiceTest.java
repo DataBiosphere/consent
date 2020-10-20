@@ -711,7 +711,7 @@ public class DacServiceTest {
     }
 
     @Test
-    public void testFindDacsByUser_adminCase() {
+    public void testFindDacsByUserAdminCase() {
         List<Dac> dacs = getDacs();
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
         when(dacDAO.findAll()).thenReturn(dacs);
@@ -724,7 +724,7 @@ public class DacServiceTest {
     }
 
     @Test
-    public void testFindDacsByUser_chairCase() {
+    public void testFindDacsByUserChairCase() {
         List<Dac> dacs = getDacs();
         when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
         when(dacDAO.findAll()).thenReturn(dacs);
