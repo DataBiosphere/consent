@@ -1113,6 +1113,25 @@ paths:
                  $ref: '#/components/schemas/User'
         500:
           description: Internal Server Error
+  /api/dac/partial:
+    get:
+      summary: Get dacs
+      description: Get only the dacs available to this user
+      tags:
+        - DAC
+      responses:
+        200:
+          description: The list of dacs available to this user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dac'
+        403:
+          description: User not authorized (not admin or chairperson)
+        500:
+          description: Internal Server Error
   /api/dacuser:
     post:
       summary: Create User

@@ -204,6 +204,15 @@ public class DacResource extends Resource {
         return Response.ok().entity(users).build();
     }
 
+    @GET
+    @Path("partial")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN, CHAIRPERSON})
+    public Response findDacsByUser(@Auth AuthUser authUser) {
+        List<Dac> dacs = dacService.findDacsByUser(authUser);
+        return Response.ok().entity(dacs).build();
+    }
+
     private User findDacUser(Integer userId) {
         User user = dacService.findUserById(userId);
         if (user == null) {
