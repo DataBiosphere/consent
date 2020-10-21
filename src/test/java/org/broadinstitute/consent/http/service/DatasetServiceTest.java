@@ -16,8 +16,11 @@ import java.util.stream.IntStream;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
@@ -141,6 +144,21 @@ public class DatasetServiceTest {
 
         Assert.assertNotNull(datasetDTO);
         Assert.assertFalse(datasetDTO.getProperties().isEmpty());
+    }
+
+    @Test
+    public void testCreateConsentForDataset() {
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        DataUse dataUse = new DataUseBuilder()
+              .setAddiction(true)
+              .build();
+        dataSetDTO.setDataUse(dataUse);
+        Consent consent = new Consent();
+        when(consentDAO.findConsentById(anyString())).thenReturn(consent);
+        initService();
+
+        Consent result = datasetService.createConsentForDataset(dataSetDTO);
+        Assert.assertNotNull(result);
     }
 
     /* Helper functions */
