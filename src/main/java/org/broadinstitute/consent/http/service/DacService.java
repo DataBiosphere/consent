@@ -126,7 +126,7 @@ public class DacService {
             List<Dac> allDacs = dacDAO.findAll();
             return allDacs;
         }
-        List<Dac> dacs = dacDAO.findDacsForEmail(authUser.getGoogleUser().getEmail());
+        List<Dac> dacs = dacDAO.findDacsForEmail(authUser.getName());
         return dacs;
     }
 
