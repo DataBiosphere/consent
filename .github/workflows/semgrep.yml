@@ -1,5 +1,5 @@
 name: Semgrep
-on: [push,pull_request]
+on: [pull_request]
 jobs:
   semgrep:
     runs-on: ubuntu-latest
@@ -10,4 +10,4 @@ jobs:
       id: semgrep
       uses: returntocorp/semgrep-action@v1
       with:
-        config: p/findsecbugs 
+        config: p/findsecbugs
