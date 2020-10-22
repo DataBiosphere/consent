@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class DataSetProperty {
 
@@ -65,5 +66,22 @@ public class DataSetProperty {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+
+        DataSetProperty other = (DataSetProperty) obj;
+        return new EqualsBuilder()
+              .append(dataSetId, other.dataSetId)
+              .append(propertyKey, other.propertyKey)
+              .append(propertyValue, other.propertyValue)
+              .isEquals();
     }
 }

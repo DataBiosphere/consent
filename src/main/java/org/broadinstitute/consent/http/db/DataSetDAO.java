@@ -78,6 +78,12 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @SqlBatch("delete from datasetproperty where dataSetId = :dataSetId")
     void deleteDataSetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
+    @SqlUpdate("UPDATE datasetproperty SET propertyvalue = :propertyValue WHERE datasetid = :datasetId AND propertykey = :propertyKey")
+    void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
+
+    @SqlUpdate("DELETE from datasetproperty WHERE datasetid = :datasetId AND propertykey = :propertyKey")
+    void deleteDatasetPropertyByKey(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey);
+
     @SqlBatch("delete from dataset where dataSetId = :dataSetId")
     void deleteDataSets(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
@@ -89,6 +95,9 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
 
     @SqlUpdate("update dataset set needs_approval = :needs_approval where dataSetId = :dataSetId")
     void updateDataSetNeedsApproval(@Bind("dataSetId") Integer dataSetId, @Bind("needs_approval") Boolean needs_approval);
+
+    @SqlUpdate("UPDATE dataset SET update_date = :updateDate, update_user_id = :updateUserId WHERE datasetid = :datasetId")
+    void updateDatasetUpdateUserAndDate(@Bind("datasetId") Integer datasetId, @Bind("updateDate") Timestamp updateDate, @Bind("updateUserId") Integer updateUserId);
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("select d.*, k.key, dp.propertyValue, ca.consentId, c.dac_id, c.translatedUseRestriction, c.datause " +
