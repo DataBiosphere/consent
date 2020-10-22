@@ -108,7 +108,6 @@ public class UserResource extends Resource {
                     JsonObject userJson = constructUserJsonObject(user);
                     return Response.ok().entity(gson.toJson(userJson)).build();
                 } else {
-                    JsonObject userJson = constructUserJsonObject(user);
                     return Response.notModified().build();
                 }
             } else {
