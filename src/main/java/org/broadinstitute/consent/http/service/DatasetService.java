@@ -8,7 +8,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
@@ -50,35 +52,40 @@ public class DatasetService {
         String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
         String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
         Date createDate = new Date();
-        boolean manualReview = isConsentDataUseManualReview(dataset.getDataUse());
-        /*
-         * Consents created for a dataset do not need the following properties:
-         * use restriction
-         * data user letter
-         * data user letter name
-         * translated use restriction
-         */
-        consentDAO.insertConsent(consentId, manualReview, null, dataset.getDataUse().toString(),
-            null, name, null, createDate, createDate, null,
-            true, groupName, dataset.getDacId());
-        String associationType = AssociationType.SAMPLESET.getValue();
-        consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDacId());
-        return consentDAO.findConsentById(consentId);
+        if (Objects.nonNull(dataset.getDataUse())) {
+            boolean manualReview = isConsentDataUseManualReview(dataset.getDataUse());
+            /*
+             * Consents created for a dataset do not need the following properties:
+             * use restriction
+             * data user letter
+             * data user letter name
+             * translated use restriction
+             */
+            consentDAO.insertConsent(consentId, manualReview, null, dataset.getDataUse().toString(),
+                  null, name, null, createDate, createDate, null,
+                  true, groupName, dataset.getDacId());
+            String associationType = AssociationType.SAMPLESET.getValue();
+            consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDacId());
+            return consentDAO.findConsentById(consentId);
+        } else {
+            throw new NotFoundException("Dataset is missing Data Use information. Consent could not be created.");
+        }
+
     }
 
     private boolean isConsentDataUseManualReview(DataUse dataUse) {
-        return dataUse.getAddiction() ||
-            dataUse.getEthicsApprovalRequired() ||
-            dataUse.getIllegalBehavior() ||
-            dataUse.getManualReview() ||
-            Objects.nonNull(dataUse.getOther()) ||
-            dataUse.getOtherRestrictions() ||
-            dataUse.getPopulationOriginsAncestry() ||
+        return Objects.nonNull(dataUse.getOther()) ||
             (Objects.nonNull(dataUse.getPopulationRestrictions()) && !dataUse.getPopulationRestrictions().isEmpty()) ||
-            dataUse.getPsychologicalTraits() ||
-            dataUse.getSexualDiseases() ||
-            dataUse.getStigmatizeDiseases() ||
-            dataUse.getVulnerablePopulations();
+            (Objects.nonNull(dataUse.getAddiction()) && dataUse.getAddiction()) ||
+            (Objects.nonNull(dataUse.getEthicsApprovalRequired()) && dataUse.getEthicsApprovalRequired()) ||
+            (Objects.nonNull(dataUse.getIllegalBehavior()) && dataUse.getIllegalBehavior()) ||
+            (Objects.nonNull(dataUse.getManualReview()) && dataUse.getManualReview()) ||
+            (Objects.nonNull(dataUse.getOtherRestrictions()) && dataUse.getOtherRestrictions()) ||
+            (Objects.nonNull(dataUse.getPopulationOriginsAncestry()) && dataUse.getPopulationOriginsAncestry()) ||
+            (Objects.nonNull(dataUse.getPsychologicalTraits()) && dataUse.getPsychologicalTraits()) ||
+            (Objects.nonNull(dataUse.getSexualDiseases()) && dataUse.getSexualDiseases()) ||
+            (Objects.nonNull(dataUse.getStigmatizeDiseases()) && dataUse.getStigmatizeDiseases()) ||
+            (Objects.nonNull(dataUse.getVulnerablePopulations()) && dataUse.getVulnerablePopulations());
     }
 
     public DataSet createDataset(DataSetDTO dataset, String name, Integer userId) {

@@ -149,9 +149,7 @@ public class DatasetServiceTest {
     @Test
     public void testCreateConsentForDataset() {
         DataSetDTO dataSetDTO = getDatasetDTO();
-        DataUse dataUse = new DataUseBuilder()
-              .setAddiction(true)
-              .build();
+        DataUse dataUse = new DataUseBuilder().build();
         dataSetDTO.setDataUse(dataUse);
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
