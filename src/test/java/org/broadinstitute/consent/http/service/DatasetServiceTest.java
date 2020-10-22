@@ -159,6 +159,16 @@ public class DatasetServiceTest {
         Assert.assertNotNull(result);
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testCreateConsentForDatasetNullDataUse() {
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        Consent consent = new Consent();
+        when(consentDAO.findConsentById(anyString())).thenReturn(consent);
+        initService();
+
+        datasetService.createConsentForDataset(dataSetDTO);
+    }
+
     /* Helper functions */
 
     private List<DataSet> getDatasets() {
