@@ -259,7 +259,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Health Checks
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
-        env.healthChecks().register("ontology", new OntologyHealthCheck(client, config.getServicesConfiguration()));
+        env.healthChecks().register("ontology", new OntologyHealthCheck(config.getServicesConfiguration()));
 
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,

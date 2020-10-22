@@ -2,16 +2,16 @@ package org.broadinstitute.consent.http.util;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.junit.Before;
@@ -21,15 +21,13 @@ import org.mockito.MockitoAnnotations;
 
 public class OntologyHealthCheckTest {
 
-  @Mock private Client client;
+  @Mock private CloseableHttpClient httpClient;
+
+  @Mock private CloseableHttpResponse response;
+
+  @Mock private StatusLine statusLine;
 
   @Mock private ServicesConfiguration servicesConfiguration;
-
-  @Mock private WebTarget target;
-
-  @Mock private Invocation.Builder builder;
-
-  @Mock private Response response;
 
   private OntologyHealthCheck healthCheck;
 
@@ -39,16 +37,20 @@ public class OntologyHealthCheckTest {
   }
 
   private void initHealthCheck() {
-    when(builder.get()).thenReturn(response);
-    when(target.request(anyString())).thenReturn(builder);
-    when(client.target(anyString())).thenReturn(target);
-    when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
-    healthCheck = new OntologyHealthCheck(client, servicesConfiguration);
+    try {
+      when(httpClient.execute(any())).thenReturn(response);
+      when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
+      healthCheck = new OntologyHealthCheck(servicesConfiguration);
+      healthCheck.setHttpClient(httpClient);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   @Test
-  public void testCheckSuccess() {
-    when(response.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+  public void testCheckSuccess() throws Exception {
+    when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck();
 
     HealthCheck.Result result = healthCheck.check();
@@ -57,7 +59,8 @@ public class OntologyHealthCheckTest {
 
   @Test
   public void testCheckFailure() {
-    when(response.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck();
 
     HealthCheck.Result result = healthCheck.check();
@@ -66,7 +69,7 @@ public class OntologyHealthCheckTest {
 
   @Test
   public void testCheckException() {
-    doThrow(new RuntimeException()).when(response).getStatus();
+    doThrow(new RuntimeException()).when(response).getStatusLine();
     initHealthCheck();
 
     HealthCheck.Result result = healthCheck.check();
