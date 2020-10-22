@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM adoptopenjdk/openjdk8:jre
 
 # Standard apt-get cleanup.
 RUN apt-get -yq autoremove && \
