@@ -13,14 +13,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -36,7 +34,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -98,62 +95,19 @@ public class DataSetResource extends Resource {
                   Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
-        List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
-        if (duplicateProperties.size() > 0) {
-            throw new BadRequestException("Dataset contains multiple values for the same property.");
-        }
         String name = inputDataset.getPropertyValue("Dataset Name");
         if (Objects.isNull(name)) {
             throw new BadRequestException("Dataset name is required");
         }
         DataSet datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
         if (Objects.nonNull(datasetNameAlreadyUsed)) {
-            throw new ClientErrorException("Dataset name: " + name + " is already in use", Status.CONFLICT);
+            throw new NotFoundException("Dataset name: " + name + " is already in use");
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
         DataSet createdDataset = datasetService.createDataset(inputDataset, name, userId);
         URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDataset.getDataSetId());
         return Response.created(uri).entity(createdDataset).build();
-    }
-
-    @PUT
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/{datasetId}")
-    @PermitAll
-    public Response updateDataset(@Auth AuthUser user, @Context UriInfo info, @PathParam("datasetId") Integer datasetId, String json) {
-        DataSetDTO inputDataset = new Gson().fromJson(json, DataSetDTO.class);
-        if (Objects.isNull(inputDataset)) {
-            throw new BadRequestException("Dataset is required");
-        }
-        if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
-            throw new BadRequestException("Dataset must contain required properties");
-        }
-        DataSet datasetExists = datasetService.findDatasetById(datasetId);
-        if (Objects.isNull(datasetExists)) {
-            throw new NotFoundException("Could not find the dataset with id: " + datasetId);
-        }
-        List<DataSetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
-        if (invalidProperties.size() > 0) {
-            List<String> invalidKeys = invalidProperties.stream().map(p -> p.getPropertyName()).collect(
-                  Collectors.toList());
-            throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
-        }
-        List<DataSetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
-        if (duplicateProperties.size() > 0) {
-            throw new BadRequestException("Dataset contains multiple values for the same property.");
-        }
-        User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
-        Integer userId = dacUser.getDacUserId();
-        Optional<DataSet> updatedDataset = datasetService.updateDataset(inputDataset, datasetId, userId);
-        if (updatedDataset.isPresent()) {
-            URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
-            return Response.ok(uri).entity(updatedDataset.get()).build();
-        }
-        else {
-            return Response.notModified().build();
-        }
     }
 
     @POST

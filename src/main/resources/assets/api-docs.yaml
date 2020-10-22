@@ -2310,7 +2310,7 @@ paths:
       summary: Creates the Dataset from JSON
       description: Creates the Dataset from JSON
       requestBody:
-        description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value.
+        description: Submitted dataset registration form
         required: true
         content:
           application/json:
@@ -2327,8 +2327,6 @@ paths:
                 $ref: '#/components/schemas/Dataset'
         400:
           description: External Error (invalid input)
-        409:
-          description: Dataset Name given is already in use by another dataset
         500:
           description: Internal Error (something went wrong processing a valid input)
   /api/dataset/sample:
@@ -2413,35 +2411,6 @@ paths:
           description: The Dataset was deleted.
         500:
           description: Server error.
-  /api/dataset/{datasetId}:
-    put:
-      summary: Updates the Dataset from JSON
-      description: Updates the Dataset from JSON
-      parameters:
-        - name: datasetId
-          in: path
-          description: ID of the Dataset
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: Dataset with properties
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Dataset'
-      tags:
-        - Datasets
-      responses:
-        200:
-          description: Successfully updated Dataset
-        304:
-          description: Not modified
-        400:
-          description: Bad Request (invalid input)
-        500:
-          description: Internal Error
   /api/dataset/{id}/approved/users:
     get:
       summary: Dataset Approved Users
@@ -3171,13 +3140,7 @@ paths:
   /status:
     get:
       summary: System Health Status
-      description: |
-        A detailed description of the various subsystem statuses that Consent relies upon.
-        Current systems include:
-          * Elastic Search
-          * GCS
-          * Ontology
-          * Postgres DB
+      description: A detailed description of the various subsystem statuses that Consent relies upon.
       tags:
         - Status
       responses:
@@ -3949,29 +3912,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DatasetProperty'
-          example:
-            - propertyName: Dataset Name
-              propertyValue: Dataset Name
-            - propertyName: Data Type
-              propertyValue: Whole Genome
-            - propertyName: Species
-              propertyValue: Human
-            - propertyName: Phenotype/Indication
-              propertyValue: Cardiovascular System Disease
-            - propertyName: "# of participants"
-              propertyValue: 20
-            - propertyName: Description
-              propertyValue: Description of Dataset
-            - propertyName: dbGAP
-              propertyValue: http://...
-            - propertyName: Data Depositor
-              propertyValue: NHLBI
-            - propertyName: Principal Investigator(PI)
-              propertyValue: NHLBI
-            - propertyName: Sample Collection ID
-              propertyValue: SC-000
-
-
         active:
           type: boolean
           description: The Dataset is active
