@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
@@ -124,9 +125,12 @@ public class DacService {
         Dac dac = dacDAO.findById(dacId);
         List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId());
         List<User> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
-        dac.setChairpersons(chairs);
-        dac.setMembers(members);
-        return dac;
+        if (Objects.nonNull(dac)) {
+            dac.setChairpersons(chairs);
+            dac.setMembers(members);
+            return dac;
+        }
+        throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
     }
 
     public Integer createDac(String name, String description) {
