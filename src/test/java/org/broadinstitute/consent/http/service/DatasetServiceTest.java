@@ -255,7 +255,7 @@ public class DatasetServiceTest {
         initService();
 
         Consent result = datasetService.createConsentForDataset(dataSetDTO);
-        Assert.assertNotNull(result);
+        assertNotNull(result);
     }
 
     @Test(expected = NullPointerException.class)
