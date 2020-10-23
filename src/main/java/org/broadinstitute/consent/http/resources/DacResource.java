@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -18,6 +19,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
@@ -40,8 +42,15 @@ public class DacResource extends Resource {
     @GET
     @Produces("application/json")
     @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-    public Response findAll() {
-        List<Dac> dacs = dacService.findAllDacsWithMembers();
+    public Response findAll(@Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
+        List<Dac> dacs = new ArrayList<>();
+        final Boolean includeUsers = withUsers.isPresent() ? withUsers.get() : true;
+        if (includeUsers) {
+            dacs.addAll(dacService.findAllDacsWithMembers());
+        }
+        else {
+            dacs.addAll(dacService.findDacsByUser(authUser));
+        }
         return Response.ok().entity(dacs).build();
     }
 
@@ -202,15 +211,6 @@ public class DacResource extends Resource {
     public Response filterUsers(@PathParam("term") String term) {
         List<User> users = dacService.findAllDACUsersBySearchString(term);
         return Response.ok().entity(users).build();
-    }
-
-    @GET
-    @Path("partial")
-    @Produces("application/json")
-    @RolesAllowed({ADMIN, CHAIRPERSON})
-    public Response findDacsByUser(@Auth AuthUser authUser) {
-        List<Dac> dacs = dacService.findDacsByUser(authUser);
-        return Response.ok().entity(dacs).build();
     }
 
     private User findDacUser(Integer userId) {
