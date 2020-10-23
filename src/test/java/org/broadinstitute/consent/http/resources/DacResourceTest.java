@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -42,7 +43,7 @@ public class DacResourceTest {
     public void testFindAll_success_1() {
         when(dacService.findAll()).thenReturn(Collections.emptyList());
 
-        Response response = dacResource.findAll();
+        Response response = dacResource.findAll(authUser, Optional.empty());
         Assert.assertEquals(200, response.getStatus());
         List dacs = ((List) response.getEntity());
         Assert.assertTrue(dacs.isEmpty());
@@ -57,10 +58,20 @@ public class DacResourceTest {
         when(dacService.findAll()).thenReturn(Collections.singletonList(dac));
         when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
 
-        Response response = dacResource.findAll();
+        Response response = dacResource.findAll(authUser, Optional.empty());
         Assert.assertEquals(200, response.getStatus());
         List dacs = ((List) response.getEntity());
         Assert.assertEquals(1, dacs.size());
+    }
+
+    @Test
+    public void testFindAllWithUsers() {
+        when(dacService.findAll()).thenReturn(Collections.emptyList());
+
+        Response response = dacResource.findAll(authUser, Optional.of(false));
+        Assert.assertEquals(200, response.getStatus());
+        List dacs = ((List) response.getEntity());
+        Assert.assertTrue(dacs.isEmpty());
     }
 
     @Test
@@ -194,19 +205,6 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(null);
 
         dacResource.deleteDac(1);
-    }
-
-    @Test
-    public void testFindDacsByUser() {
-        Dac dac = new DacBuilder()
-              .setName("name")
-              .setDescription("description")
-              .build();
-        List<Dac> dacs =  Collections.singletonList(dac);
-        when(dacService.findDacsByUser(authUser)).thenReturn(dacs);
-
-        Response response = dacResource.findDacsByUser(authUser);
-        Assert.assertEquals(200, response.getStatus());
     }
 
 }
