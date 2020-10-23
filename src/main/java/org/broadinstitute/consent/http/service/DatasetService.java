@@ -69,7 +69,7 @@ public class DatasetService {
             consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDacId());
             return consentDAO.findConsentById(consentId);
         } else {
-            throw new NullPointerException("Dataset is missing Data Use information. Consent could not be created.");
+            throw new IllegalArgumentException("Dataset is missing Data Use information. Consent could not be created.");
         }
 
     }

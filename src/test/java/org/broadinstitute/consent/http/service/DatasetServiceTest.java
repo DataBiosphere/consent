@@ -258,7 +258,7 @@ public class DatasetServiceTest {
         assertNotNull(result);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testCreateConsentForDatasetNullDataUse() {
         DataSetDTO dataSetDTO = getDatasetDTO();
         Consent consent = new Consent();
