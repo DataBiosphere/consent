@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM adoptopenjdk:8-hotspot
 
 # Standard apt-get cleanup.
 RUN apt-get -yq autoremove && \

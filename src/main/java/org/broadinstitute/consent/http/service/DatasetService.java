@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +28,7 @@ public class DatasetService {
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
     private final DataSetDAO dataSetDAO;
+    public static String datasetName = "Dataset Name";
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO) {
@@ -119,6 +122,46 @@ public class DatasetService {
         return dataset;
     }
 
+    public Optional<DataSet> updateDataset(DataSetDTO dataset, Integer datasetId, Integer userId) {
+        Timestamp now = new Timestamp(new Date().getTime());
+
+        DataSet old = getDatasetWithPropertiesById(datasetId);
+        Set<DataSetProperty> oldProperties = old.getProperties();
+
+        List<DataSetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
+        List<DataSetProperty> updateDatasetProperties = processDatasetProperties(datasetId, updateDatasetPropertyDTOs);
+
+        List<DataSetProperty> propertiesToAdd = updateDatasetProperties.stream()
+              .filter(p -> oldProperties.stream()
+                    .noneMatch(op -> op.getPropertyKey() == p.getPropertyKey()))
+              .collect(Collectors.toList());
+
+        List<DataSetProperty> propertiesToUpdate = updateDatasetProperties.stream()
+              .filter(p -> oldProperties.stream()
+                    .noneMatch(op -> p.equals(op)))
+              .collect(Collectors.toList());
+
+        List<DataSetProperty> propertiesToDelete = oldProperties.stream()
+              .filter(op -> updateDatasetProperties.stream()
+                .noneMatch(p -> p.getPropertyKey() == op.getPropertyKey())
+              ).collect(Collectors.toList());
+
+        if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete.isEmpty()) {
+            return Optional.empty();
+        }
+
+        updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
+        dataSetDAO.updateDatasetUpdateUserAndDate(datasetId, now, userId);
+        DataSet updatedDataset = getDatasetWithPropertiesById(datasetId);
+        return Optional.of(updatedDataset);
+    }
+
+    private void updateDatasetProperties(List<DataSetProperty> updateProperties, List<DataSetProperty> deleteProperties, List<DataSetProperty> addProperties) {
+        updateProperties.forEach(p -> dataSetDAO.updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue()));
+        deleteProperties.forEach(p -> dataSetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
+        dataSetDAO.insertDataSetsProperties(addProperties);
+    }
+
     public DataSetDTO getDatasetDTO(Integer datasetId) {
         Set<DataSetDTO> dataset = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
         DataSetDTO result = new DataSetDTO();
@@ -128,13 +171,14 @@ public class DatasetService {
         return result;
     }
 
+
     public List<DataSetProperty> processDatasetProperties(Integer datasetId, List<DataSetPropertyDTO> properties) {
         Date now = new Date();
         List<Dictionary> dictionaries = dataSetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey).collect(Collectors.toList());
 
         return properties.stream()
-            .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals("Dataset Name"))
+            .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(datasetName))
             .map(p ->
                 new DataSetProperty(datasetId, dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(), p.getPropertyValue(), now)
             )
@@ -150,4 +194,21 @@ public class DatasetService {
             .collect(Collectors.toList());
     }
 
+    public List<DataSetPropertyDTO> findDuplicateProperties(List<DataSetPropertyDTO> properties) {
+        Set<String> uniqueKeys = properties.stream()
+              .map(DataSetPropertyDTO::getPropertyName)
+              .collect(Collectors.toSet());
+        if (uniqueKeys.size() != properties.size()) {
+            List<DataSetPropertyDTO> allDuplicateProperties = new ArrayList<>();
+            uniqueKeys.forEach(key -> {
+                List<DataSetPropertyDTO> propertiesPerKey = properties.stream().filter(property -> property.getPropertyName().equals(key))
+                      .collect(Collectors.toList());
+                if (propertiesPerKey.size() > 1) {
+                    allDuplicateProperties.addAll(propertiesPerKey);
+                }
+            });
+            return allDuplicateProperties;
+        }
+        return Collections.emptyList();
+    }
 }

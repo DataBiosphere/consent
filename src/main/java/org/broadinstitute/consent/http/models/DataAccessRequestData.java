@@ -105,13 +105,17 @@ public class DataAccessRequestData {
 
     private Boolean anvilUse;
     private Boolean cloudUse;
+    private Boolean localUse;
     private String cloudProvider;
     private String cloudProviderType;
+    private String cloudProviderDescription;
     private Boolean geneticStudiesOnly;
     private Boolean irb;
     private String irbDocumentLocation;
     private String irbDocumentName;
     private String irbProtocolExpiration;
+    private String itDirector;
+    private String signingOfficial;
     private Boolean publication;
     private Boolean collaboration;
     private String collaborationLetterLocation;
@@ -774,6 +778,38 @@ public class DataAccessRequestData {
     public void setExternalCollaborators(
         List<Collaborator> externalCollaborators) {
         this.externalCollaborators = externalCollaborators;
+    }
+
+    public Boolean getLocalUse() {
+        return localUse;
+    }
+
+    public void setLocalUse(Boolean localUse) {
+        this.localUse = localUse;
+    }
+
+    public String getCloudProviderDescription() {
+        return cloudProviderDescription;
+    }
+
+    public void setCloudProviderDescription(String cloudProviderDescription) {
+        this.cloudProviderDescription = cloudProviderDescription;
+    }
+
+    public String getItDirector() {
+        return itDirector;
+    }
+
+    public void setItDirector(String itDirector) {
+        this.itDirector = itDirector;
+    }
+
+    public String getSigningOfficial() {
+        return signingOfficial;
+    }
+
+    public void setSigningOfficial(String signingOfficial) {
+        this.signingOfficial = signingOfficial;
     }
 
     // Validate all ontology entries
