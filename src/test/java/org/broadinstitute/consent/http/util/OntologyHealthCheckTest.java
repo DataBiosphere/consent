@@ -11,7 +11,6 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.junit.Before;
@@ -21,7 +20,7 @@ import org.mockito.MockitoAnnotations;
 
 public class OntologyHealthCheckTest {
 
-  @Mock private CloseableHttpClient httpClient;
+  @Mock private HttpClientUtil clientUtil;
 
   @Mock private CloseableHttpResponse response;
 
@@ -38,17 +37,16 @@ public class OntologyHealthCheckTest {
 
   private void initHealthCheck() {
     try {
-      when(httpClient.execute(any())).thenReturn(response);
+      when(clientUtil.getHttpResponse(any())).thenReturn(response);
       when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
-      healthCheck = new OntologyHealthCheck(servicesConfiguration);
-      healthCheck.setHttpClient(httpClient);
+      healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
     }
   }
 
   @Test
-  public void testCheckSuccess() throws Exception {
+  public void testCheckSuccess() {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck();
