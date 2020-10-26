@@ -710,6 +710,32 @@ public class DacServiceTest {
         Assert.assertEquals(unassociatedElections.size(), filtered.size());
     }
 
+    @Test
+    public void testFindDacsByUserAdminCase() {
+        List<Dac> dacs = getDacs();
+        when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
+        when(dacDAO.findAll()).thenReturn(dacs);
+        // User is an admin user
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
+        initService();
+
+        List<Dac> dacsForUser = service.findDacsByUser(getUser());
+        Assert.assertEquals(dacsForUser.size(), dacs.size());
+    }
+
+    @Test
+    public void testFindDacsByUserChairCase() {
+        List<Dac> dacs = getDacs();
+        when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
+        when(dacDAO.findAll()).thenReturn(dacs);
+        // User is a chairperson user
+        when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getChair());
+        initService();
+
+        List<Dac> dacsForUser = service.findDacsByUser(getUser());
+        Assert.assertEquals(dacsForUser.size(), dacs.size());
+    }
+
 
     /* Helper functions */
 

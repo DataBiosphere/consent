@@ -826,6 +826,8 @@ paths:
                 $ref: '#/components/schemas/Dac'
         400:
           description: Bad Request. DAC Name and Description are required.
+        403:
+          description: User not authorized to request all dacs.
         500:
           description: Internal Server Error
     put:
@@ -854,6 +856,12 @@ paths:
     get:
       summary: Get all DACs
       description: All Data Access Committees with a list of chairpersons and members
+      parameters:
+        - name: withUsers
+          in: query
+          required: false
+          schema:
+            type: boolean
       tags:
         - DAC
       responses:

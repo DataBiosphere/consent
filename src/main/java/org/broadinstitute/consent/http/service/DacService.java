@@ -121,6 +121,15 @@ public class DacService {
         return dacToUserMap;
     }
 
+    public List<Dac> findDacsByUser(AuthUser authUser) {
+        if (isAuthUserAdmin(authUser)) {
+            List<Dac> allDacs = dacDAO.findAll();
+            return allDacs;
+        }
+        List<Dac> dacs = dacDAO.findDacsForEmail(authUser.getName());
+        return dacs;
+    }
+
     public Dac findById(Integer dacId) {
         Dac dac = dacDAO.findById(dacId);
         List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId());
