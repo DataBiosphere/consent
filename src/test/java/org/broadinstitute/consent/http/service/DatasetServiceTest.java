@@ -19,9 +19,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
@@ -35,6 +39,9 @@ public class DatasetServiceTest {
     private DatasetService datasetService;
 
     @Mock
+    private ConsentDAO consentDAO;
+
+    @Mock
     private DataSetDAO datasetDAO;
 
     @Before
@@ -43,7 +50,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(datasetDAO);
+        datasetService = new DatasetService(consentDAO, datasetDAO);
     }
 
     @Test
@@ -236,6 +243,29 @@ public class DatasetServiceTest {
 
         DataSet updated = datasetService.updateDataset(dataSetDTO, datasetId, 1).get();
         assertNotNull(updated);
+    }
+
+    @Test
+    public void testCreateConsentForDataset() {
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        DataUse dataUse = new DataUseBuilder().build();
+        dataSetDTO.setDataUse(dataUse);
+        Consent consent = new Consent();
+        when(consentDAO.findConsentById(anyString())).thenReturn(consent);
+        initService();
+
+        Consent result = datasetService.createConsentForDataset(dataSetDTO);
+        assertNotNull(result);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateConsentForDatasetNullDataUse() {
+        DataSetDTO dataSetDTO = getDatasetDTO();
+        Consent consent = new Consent();
+        when(consentDAO.findConsentById(anyString())).thenReturn(consent);
+        initService();
+
+        datasetService.createConsentForDataset(dataSetDTO);
     }
 
     /* Helper functions */
