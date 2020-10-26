@@ -135,6 +135,7 @@ import org.broadinstitute.consent.http.service.ontology.ElasticSearchHealthCheck
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
 import org.broadinstitute.consent.http.service.ontology.IndexerService;
 import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
+import org.broadinstitute.consent.http.service.ontology.OntologyHealthCheck;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
 import org.broadinstitute.consent.http.service.users.DatabaseDACUserAPI;
@@ -143,6 +144,7 @@ import org.broadinstitute.consent.http.service.users.handler.ResearcherService;
 import org.broadinstitute.consent.http.service.users.handler.UserRolesHandler;
 import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.service.validate.UseRestrictionValidator;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.dhatim.dropwizard.sentry.logging.SentryBootstrap;
 import org.dhatim.dropwizard.sentry.logging.UncaughtExceptionHandlers;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
@@ -198,6 +200,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final Jdbi jdbi = injector.getProvider(Jdbi.class).get();
         final Client client = injector.getProvider(Client.class).get();
         final UseRestrictionConverter useRestrictionConverter = injector.getProvider(UseRestrictionConverter.class).get();
+        final HttpClientUtil clientUtil = new HttpClientUtil();
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
 
         // DAOs
@@ -258,6 +261,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Health Checks
         env.healthChecks().register("google-cloud-storage", new GCSHealthCheck(gcsService));
         env.healthChecks().register("elastic-search", new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
+        env.healthChecks().register("ontology", new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
 
         final StoreOntologyService storeOntologyService
                 = new StoreOntologyService(googleStore,
