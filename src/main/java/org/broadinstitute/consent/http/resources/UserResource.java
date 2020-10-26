@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -9,6 +10,9 @@ import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -16,6 +20,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -71,6 +76,43 @@ public class UserResource extends Resource {
             User user = userService.findUserById(userId);
             JsonObject userJson = constructUserJsonObject(user);
             return Response.ok(gson.toJson(userJson)).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Path("/{userId}/{roleId}")
+    @Produces("application/json")
+    @RolesAllowed({ADMIN})
+    public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId, @PathParam("roleId") Integer roleId) {
+        try {
+            User user = userService.findUserById(userId);
+            List<UserRoles> allowableRoles = Stream
+                .of(UserRoles.ADMIN, UserRoles.ALUMNI, UserRoles.RESEARCHER, UserRoles.DATAOWNER)
+                .collect(Collectors.toList());
+            Optional<UserRoles> matchingRole = allowableRoles
+                .stream()
+                .filter(r -> r.getRoleId().equals(roleId))
+                .findFirst();
+            List<Integer> currentUserRoleIds = user
+                .getRoles()
+                .stream()
+                .map(UserRole::getRoleId)
+                .collect(Collectors.toList());
+            if (matchingRole.isPresent()) {
+                if (!currentUserRoleIds.contains(roleId)) {
+                    UserRole role = new UserRole(roleId, matchingRole.get().getRoleName());
+                    userService.insertUserRoles(Collections.singletonList(role), user.getDacUserId());
+                    user = userService.findUserById(userId);
+                    JsonObject userJson = constructUserJsonObject(user);
+                    return Response.ok().entity(gson.toJson(userJson)).build();
+                } else {
+                    return Response.notModified().build();
+                }
+            } else {
+                return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
+            }
         } catch (Exception e) {
             return createExceptionResponse(e);
         }

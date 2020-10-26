@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -156,6 +157,50 @@ public class UserResourceTest {
     assertEquals(200, response.getStatus());
   }
 
+  @Test
+  public void testAddRoleToUser() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
+        .thenReturn(createWhitelistEntries());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserNotFound() {
+    doThrow(new NotFoundException()).when(userService).findUserById(any());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserNotModified() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
+        .thenReturn(createWhitelistEntries());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, UserRoles.RESEARCHER.getRoleId());
+    assertEquals(304, response.getStatus());
+  }
+
+  @Test
+  public void testAddRoleToUserBadRequest() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
+    when(whitelistService.findWhitelistEntriesForUser(any(), any()))
+        .thenReturn(createWhitelistEntries());
+    initResource();
+    Response response = userResource.addRoleToUser(authUser, 1, 1000);
+    assertEquals(400, response.getStatus());
+  }
+
   private User createUserWithRole() {
     User user = new User();
     user.setDacUserId(1);
@@ -164,6 +209,7 @@ public class UserResourceTest {
     UserRole researcher = new UserRole();
     List<UserRole> roles = new ArrayList<>();
     researcher.setName(UserRoles.RESEARCHER.getRoleName());
+    researcher.setRoleId(UserRoles.RESEARCHER.getRoleId());
     roles.add(researcher);
     user.setRoles(roles);
     return user;

@@ -120,7 +120,7 @@ public class UserService {
         });
     }
 
-    private void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
+    public void insertUserRoles(List<UserRole> roles, Integer dacUserId) {
         roles.forEach(r -> {
             if (r.getRoleId() == null) {
                 r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));

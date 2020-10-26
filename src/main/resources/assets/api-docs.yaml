@@ -2947,6 +2947,46 @@ paths:
           description: User not found
         500:
           description: Server error.
+  /api/user/{userId}/{roleId}:
+    put:
+      summary: Add a role to a user
+      description: Add a role to a user id. Available to Admin roles
+      parameters:
+        - name: userId
+          in: path
+          description: The id of the user
+          required: true
+          schema:
+            type: number
+        - name: roleId
+          in: path
+          description: |
+            The id of the role. Members and Chairpersons cannot be added this way.
+            See DAC endpoints for those roles.
+            ALUMNI: 3
+            ADMIN: 4
+            RESEARCHER: 5
+            DATAOWNER: 6
+          required: true
+          schema:
+            type: number
+      tags:
+        - User
+      responses:
+        200:
+          description: Updated user along with researcher properties and whitelist entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        304:
+          description: Not modified
+        400:
+          description: Bad Request
+        404:
+          description: User not found
+        500:
+          description: Server error.
   /api/user/{email}:
     delete:
       summary: Delete User by email
