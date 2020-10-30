@@ -172,11 +172,44 @@ public class DACUserResourceTest {
     }
 
     @Test
-    public void testConvertJsonToDACUser() {
+    public void testConvertJsonToDACUserNumericDateCase() {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
         String json = "{\"dacUserId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": 1302828677828, \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
         Assert.assertNotNull(user);
+        Assert.assertNotNull(user.getCreateDate());
+        Assert.assertEquals(user.getDacUserId().intValue(), 1);
+        Assert.assertEquals(user.getEmail(), "email");
+        Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
+        Assert.assertEquals(user.getEmailPreference(), false);
+        Assert.assertFalse(user.getRoles().isEmpty());
+        Assert.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+        System.out.println(user.toString());
+    }
+
+    @Test
+    public void testConvertJsonToDACUserStringDateCase() {
+        String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
+        String json = "{\"dacUserId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
+        User user = new User(json);
+        Assert.assertNotNull(user);
+        Assert.assertNotNull(user.getCreateDate());
+        Assert.assertEquals(user.getDacUserId().intValue(), 1);
+        Assert.assertEquals(user.getEmail(), "email");
+        Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");
+        Assert.assertEquals(user.getEmailPreference(), false);
+        Assert.assertFalse(user.getRoles().isEmpty());
+        Assert.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+        System.out.println(user.toString());
+    }
+
+    @Test
+    public void testConvertJsonToDACUserNoCreateDate() {
+        String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
+        String json = "{\"dacUserId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"additionalEmail\": \"additionalEmail\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
+        User user = new User(json);
+        Assert.assertNotNull(user);
+        Assert.assertNull(user.getCreateDate());
         Assert.assertEquals(user.getDacUserId().intValue(), 1);
         Assert.assertEquals(user.getEmail(), "email");
         Assert.assertEquals(user.getAdditionalEmail(), "additionalEmail");

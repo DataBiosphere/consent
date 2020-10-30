@@ -2,17 +2,18 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import org.slf4j.LoggerFactory;
 
 public class User {
 
@@ -85,16 +86,38 @@ public class User {
      * @param json A json string that may or may not be correctly structured as a DACUser
      */
     public User(String json) {
-        GsonBuilder builder = new GsonBuilder();
-        // Register an adapter to manage the date types as long values
-        builder.registerTypeAdapter(Date.class, (JsonDeserializer<Date>)
-                (json1, typeOfT, context) -> new Date(json1.getAsJsonPrimitive().getAsLong()));
-        Gson gson = builder.create();
-        User u = gson.fromJson(json, User.class);
+        Gson gson = new Gson();
+        JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
+        // Create Date can come in differently, either as a long or a string.
+        // Handle known cases here.
+        String createDateFieldName = "createDate";
+        Date createDate = null;
+        if (userJsonObject.has(createDateFieldName)) {
+            JsonElement createDateElement = userJsonObject.get(createDateFieldName);
+            try {
+                createDate = new Date(createDateElement.getAsLong());
+            } catch (NumberFormatException nfe) {
+                // Known date formats createDate could be in:
+                //   * "Oct 28, 2020"
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
+                try {
+                    createDate = sdf.parse(createDateElement.getAsString());
+                } catch (Exception e) {
+                    LoggerFactory
+                        .getLogger(this.getClass())
+                        .error("Unable to parse create date: " + e.getMessage());
+                }
+            }
+            // Remove this from the JSON so we don't re-process it in `gson.fromJson(String, User)`
+            userJsonObject.remove(createDateFieldName);
+        }
+        User u = gson.fromJson(userJsonObject.toString(), User.class);
         setUserId(u);
         setEmail(u);
         setDisplayName(u);
-        setCreateDate(u);
+        if (Objects.nonNull(createDate)) {
+            setCreateDate(createDate);
+        }
         setAdditionalEmail(u);
         setEmailPreference(u);
         setRoles(u);
@@ -117,12 +140,6 @@ public class User {
     private void setDisplayName(User u) {
         if (!StringUtils.isEmpty(u.getDisplayName())) {
             this.setDisplayName(u.getDisplayName());
-        }
-    }
-
-    private void setCreateDate(User u) {
-        if (Objects.nonNull(u.getCreateDate())) {
-            this.setCreateDate(u.getCreateDate());
         }
     }
 
