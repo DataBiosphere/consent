@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
@@ -14,12 +15,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -28,16 +32,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.darsummary.DARModalDetailsDTO;
 import org.broadinstitute.consent.http.models.dto.Error;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
@@ -132,7 +139,8 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     @RolesAllowed(RESEARCHER)
     @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response updateDataAccessRequest(Document dar, @PathParam("id") String id) {
+    public Response updateDataAccessRequest(@Auth AuthUser authUser, Document dar, @PathParam("id") String id) {
+        validateUserAndDarId(authUser, id);
         try {
             dar.remove(DarConstants.RESTRICTION);
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
@@ -215,7 +223,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
     @RolesAllowed({RESEARCHER, ADMIN})
-    public Response delete(@PathParam("id") String id) {
+    public Response delete(@Auth AuthUser authUser, @PathParam("id") String id) {
+        validateUserAndDarId(authUser, id);
         try {
             dataAccessRequestAPI.deleteDataAccessRequestById(id);
             matchProcessAPI.removeMatchesForPurpose(id);
@@ -329,7 +338,9 @@ public class DataAccessRequestResource extends Resource {
     @Path("/partial")
     @RolesAllowed(RESEARCHER)
     @Deprecated // Use DataAccessRequestResourceVersion2.updateDraftDataAccessRequest
-    public Response updatePartialDataAccessRequest(@Context UriInfo info, Document dar) {
+    public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
+        String id = dar.getString(DarConstants.REFERENCE_ID);
+        validateUserAndDarId(authUser, id);
         try {
             dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
             return Response.ok().entity(dar).build();
@@ -374,7 +385,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/cancel/{referenceId}")
     @RolesAllowed(RESEARCHER)
-    public Response cancelDataAccessRequest(@PathParam("referenceId") String referenceId) {
+    public Response cancelDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+        validateUserAndDarId(authUser, referenceId);
         try {
             List<User> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
@@ -419,6 +431,35 @@ public class DataAccessRequestResource extends Resource {
             }
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
+    }
+
+    /**
+     * Validate that the AuthUser has permissions to access the DataAccessRequest.
+     * Admins, Chairs, and Members can always access a DAR.
+     * Researchers can only access DARs for which they are the creator.
+     *
+     * @param authUser AuthUser
+     * @param referenceid DataAccessRequest reference id
+     */
+    private void validateUserAndDarId(AuthUser authUser, String referenceid) {
+        List<Integer> superUserRoleIds = Stream
+            .of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+            .map(UserRoles::getRoleId).collect(Collectors.toList());
+        try {
+            DataAccessRequest dataAccessRequest = dataAccessRequestService.findByReferenceId(referenceid);
+            User user = findUserByEmail(authUser.getName());
+            List<Integer> userRoleIds = user.getRoles()
+                .stream()
+                .map(UserRole::getRoleId)
+                .collect(Collectors.toList());
+            if (userRoleIds.stream().noneMatch(superUserRoleIds::contains)) {
+                if (!dataAccessRequest.getUserId().equals(user.getDacUserId())) {
+                    throw new ForbiddenException("User does not have permission to update resource");
+                }
+            }
+        } catch (Exception e) {
+            throw new ServerErrorException(e.getMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         }
     }
 
