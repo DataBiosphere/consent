@@ -2462,7 +2462,7 @@ paths:
       responses:
         200:
           description: Successfully updated Dataset
-        304:
+        204:
           description: Not modified
         400:
           description: Bad Request (invalid input)

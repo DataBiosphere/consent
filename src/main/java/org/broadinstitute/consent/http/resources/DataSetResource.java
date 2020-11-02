@@ -152,7 +152,7 @@ public class DataSetResource extends Resource {
             return Response.ok(uri).entity(updatedDataset.get()).build();
         }
         else {
-            return Response.notModified().build();
+            return Response.noContent().build();
         }
     }
 
