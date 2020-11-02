@@ -175,7 +175,7 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testUpdateDatasetNotModified() {
+    public void testUpdateDatasetNoContent() {
         DataSet preexistingDataset = new DataSet();
         DataSetDTO json = new DataSetDTO();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
@@ -190,8 +190,8 @@ public class DatasetResourceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
-        Response responseNotModified = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
-        assertEquals(304, responseNotModified.getStatus());
+        Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, new Gson().toJson(json));
+        assertEquals(204, responseNoContent.getStatus());
     }
 
     @Test
