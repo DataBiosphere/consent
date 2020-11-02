@@ -455,7 +455,7 @@ public class DataAccessRequestResource extends Resource {
                 .collect(Collectors.toList());
             if (userRoleIds.stream().noneMatch(superUserRoleIds::contains)) {
                 if (!dataAccessRequest.getUserId().equals(user.getDacUserId())) {
-                    throw new ForbiddenException("User does not have permission to update resource");
+                    throw new ForbiddenException("User does not have permission to access this resource");
                 }
             }
         } catch (Exception e) {
