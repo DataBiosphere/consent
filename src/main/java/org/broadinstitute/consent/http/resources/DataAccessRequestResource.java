@@ -485,9 +485,12 @@ public class DataAccessRequestResource extends Resource {
     }
 
     /**
-     * Custom handler for validating that a user can access a DAR.
-     * If the DAR create user is the same as the Auth User, then the user can access the resource.
-     * If the user has any of the roles in allowableRoles, then the user can access the resource.
+     * Custom handler for validating that a user can access a DAR. User will have access if ANY
+     * of these conditions are met:
+     *      If the DAR create user is the same as the Auth User, then the user can access the resource.
+     *      If the user has any of the roles in allowableRoles, then the user can access the resource.
+     * In practice, pass in allowableRoles for users that are not the create user (i.e. Admin) so
+     * they can also have access to the DAR.
      *
      * @param allowableRoles List of roles that would allow the user to access the resource
      * @param authUser The AuthUser
