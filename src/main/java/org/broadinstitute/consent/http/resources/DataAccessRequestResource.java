@@ -334,7 +334,8 @@ public class DataAccessRequestResource extends Resource {
     @Deprecated // Use DataAccessRequestResourceVersion2.updateDraftDataAccessRequest
     public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
         String referenceId = dar.getString(DarConstants.REFERENCE_ID);
-        validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);        try {
+        validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
+        try {
             dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
@@ -355,7 +356,8 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/{id}")
     @RolesAllowed(RESEARCHER)
-    public Response deleteDraftDar(@PathParam("id") String id, @Context UriInfo info) {
+    public Response deleteDraftDar(@Auth AuthUser authUser, @PathParam("id") String id, @Context UriInfo info) {
+        validateAuthedRoleUser(Collections.emptyList(), authUser, id);
         try {
             dataAccessRequestService.deleteByReferenceId(id);
             return Response.ok().build();
