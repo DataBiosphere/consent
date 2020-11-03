@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -81,8 +82,14 @@ public class DACUserResource extends Resource {
     @Path("/{email}")
     @Produces("application/json")
     @PermitAll
-    public User describe(@PathParam("email") String email) {
-        return userService.findUserByEmail(email);
+    public User describe(@Auth AuthUser authUser, @PathParam("email") String email) {
+        User searchUser = userService.findUserByEmail(email);
+        validateAuthedRoleUser(Stream
+                .of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            findByAuthUser(authUser),
+            searchUser.getDacUserId());
+        return searchUser;
     }
 
     @PUT
