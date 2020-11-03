@@ -1537,11 +1537,11 @@ paths:
       summary: updateDataAccessRequest
       description: |
         DEPRECATED: Use PUT /api/dar/v2/{referenceId}
-        Updates the DAR identified by the dar_code.
+        Updates the DAR identified by the id
       parameters:
         - name: id
           in: path
-          description: dar_code that identifies univocally
+          description: The id of the DAR
           required: true
           schema:
             type: string
@@ -1557,9 +1557,11 @@ paths:
           description: Returns the updated DAR.
         400:
           description: Bad request.
+        403:
+          description: Forbidden
     delete:
       summary: delete
-      description: Deletes the DAR identified by the ID
+      description: Deletes the DAR identified by the id
       parameters:
         - name: id
           in: path
@@ -1576,6 +1578,8 @@ paths:
             application/json:
               schema:
                 type: string
+        403:
+          description: Forbidden
         404:
           description: The requested DAR couldn't be found.
   /api/dar/cancel/{id}:
@@ -1598,6 +1602,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataAccessRequest'
+        403:
+          description: Forbidden
         404:
           description: Unable to find the Data Access Request with the provided id
         500:
@@ -1726,6 +1732,26 @@ paths:
       responses:
         200:
           description: Returns the created partial Data Access Request, json file.
+        500:
+          description: Internal Server Error.
+  /api/dar/partial/{id}:
+    delete:
+      summary: Delete Partial Data Access Request
+      description: Delete Partial Data Access Request
+      parameters:
+        - name: id
+          in: path
+          description: The id of the DAR
+          required: true
+          schema:
+            type: string
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Data Access Request was deleted
+        403:
+          description: Forbidden
         500:
           description: Internal Server Error.
 
