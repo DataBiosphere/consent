@@ -14,8 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
@@ -136,9 +134,7 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     @Deprecated // Use DataAccessRequestResourceVersion2
     public Response updateDataAccessRequest(@Auth AuthUser authUser, Document dar, @PathParam("id") String id) {
-        DataAccessRequest dataAccessRequest = findDataAccessRequestById(id);
-        User user = findUserByEmail(authUser.getName());
-        validateAuthedRoleUser(Collections.singletonList(UserRoles.RESEARCHER), user, dataAccessRequest.getUserId());
+        validateAuthedRoleUser(Collections.emptyList(), authUser, id);
         try {
             dar.remove(DarConstants.RESTRICTION);
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
@@ -222,9 +218,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/{id}")
     @RolesAllowed({RESEARCHER, ADMIN})
     public Response delete(@Auth AuthUser authUser, @PathParam("id") String id) {
-        DataAccessRequest dataAccessRequest = findDataAccessRequestById(id);
-        User user = findUserByEmail(authUser.getName());
-        validateAuthedRoleUser(Stream.of(UserRoles.ADMIN, UserRoles.RESEARCHER).collect(Collectors.toList()), user, dataAccessRequest.getUserId());
+        validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, id);
         try {
             dataAccessRequestAPI.deleteDataAccessRequestById(id);
             matchProcessAPI.removeMatchesForPurpose(id);
@@ -339,11 +333,8 @@ public class DataAccessRequestResource extends Resource {
     @RolesAllowed(RESEARCHER)
     @Deprecated // Use DataAccessRequestResourceVersion2.updateDraftDataAccessRequest
     public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
-        String id = dar.getString(DarConstants.REFERENCE_ID);
-        DataAccessRequest dataAccessRequest = findDataAccessRequestById(id);
-        User user = findUserByEmail(authUser.getName());
-        validateAuthedRoleUser(Collections.singletonList(UserRoles.RESEARCHER), user, dataAccessRequest.getUserId());
-        try {
+        String referenceId = dar.getString(DarConstants.REFERENCE_ID);
+        validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);        try {
             dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
@@ -388,9 +379,7 @@ public class DataAccessRequestResource extends Resource {
     @Path("/cancel/{referenceId}")
     @RolesAllowed(RESEARCHER)
     public Response cancelDataAccessRequest(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-        DataAccessRequest dataAccessRequest = findDataAccessRequestById(referenceId);
-        User user = findUserByEmail(authUser.getName());
-        validateAuthedRoleUser(Collections.singletonList(UserRoles.RESEARCHER), user, dataAccessRequest.getUserId());
+        validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
         try {
             List<User> usersToNotify = dataAccessRequestAPI.getUserEmailAndCancelElection(referenceId);
             DataAccessRequest dar = dataAccessRequestService.cancelDataAccessRequest(referenceId);
@@ -491,5 +480,20 @@ public class DataAccessRequestResource extends Resource {
             return dar;
         }
         throw new NotFoundException("Unable to find Data Access Request with the provided reference id: " + referenceId);
+    }
+
+    /**
+     * Custom handler for validating that a user can access a DAR.
+     * If the DAR create user is the same as the Auth User, then the user can access the resource.
+     * If the user has any of the roles in allowableRoles, then the user can access the resource.
+     *
+     * @param allowableRoles List of roles that would allow the user to access the resource
+     * @param authUser The AuthUser
+     * @param referenceId The referenceId of the resource.
+     */
+    private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser, String referenceId) {
+        DataAccessRequest dataAccessRequest = findDataAccessRequestById(referenceId);
+        User user = findUserByEmail(authUser.getName());
+        super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
 }
