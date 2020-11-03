@@ -1734,6 +1734,30 @@ paths:
           description: Returns the created partial Data Access Request, json file.
         500:
           description: Internal Server Error.
+    put:
+      summary: Update Partial Data Access Request
+      description: |
+        DEPRECATED: Use PUT /api/dar/v2/draft/{referenceId}:
+        Update Partial Data Access Request
+      parameters:
+        - name: dar
+          in: body
+          description: |
+            The fields that represent a DAR, json format.
+            Must contain a `referenceId` for the updated DAR.
+            User must be the creator of the DAR.
+          required: true
+          schema:
+            $ref: '#/components/schemas/DataAccessRequest'
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the updated partial Data Access Request, json file.
+        403:
+          description: Forbidden
+        500:
+          description: Internal Server Error.
   /api/dar/partial/{id}:
     delete:
       summary: Delete Partial Data Access Request
