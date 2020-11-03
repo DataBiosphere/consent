@@ -499,6 +499,11 @@ public class DataAccessRequestResource extends Resource {
     private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser, String referenceId) {
         DataAccessRequest dataAccessRequest = findDataAccessRequestById(referenceId);
         User user = findUserByEmail(authUser.getName());
-        super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
+        if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
+            super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
+        } else {
+            logger.warning("DataAccessRequest '" + referenceId + "' has an invalid userId" );
+            super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getData().getUserId());
+        }
     }
 }
