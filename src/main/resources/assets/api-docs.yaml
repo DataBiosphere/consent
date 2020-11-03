@@ -1756,6 +1756,8 @@ paths:
           description: Returns the updated partial Data Access Request, json file.
         403:
           description: Forbidden
+        404:
+          description: DAR or User Not Found
         500:
           description: Internal Server Error.
   /api/dar/partial/{id}:
