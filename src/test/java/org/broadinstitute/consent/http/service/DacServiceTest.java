@@ -719,7 +719,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        List<Dac> dacsForUser = service.findDacsByUser(getUser());
+        List<Dac> dacsForUser = service.findDacsByUser(getUser(), false);
         Assert.assertEquals(dacsForUser.size(), dacs.size());
     }
 
@@ -732,7 +732,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getChair());
         initService();
 
-        List<Dac> dacsForUser = service.findDacsByUser(getUser());
+        List<Dac> dacsForUser = service.findDacsByUser(getUser(), false);
         Assert.assertEquals(dacsForUser.size(), dacs.size());
     }
 

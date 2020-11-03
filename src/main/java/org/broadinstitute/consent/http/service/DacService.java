@@ -78,17 +78,21 @@ public class DacService {
      */
     public List<Dac> findAllDacsWithMembers() {
         List<Dac> dacs = dacDAO.findAll();
+        return addMemberInfoToDacs(dacs);
+    }
+
+    private List<Dac> addMemberInfoToDacs(List<Dac> dacs) {
         List<User> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct().collect(Collectors.toList());
         Map<Dac, List<User>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
         return dacs.stream().peek(d -> {
             List<User> chairs = dacToUserMap.get(d).stream().
-                    filter(u -> u.getRoles().stream().
-                            anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
-                    collect(Collectors.toList());
+                  filter(u -> u.getRoles().stream().
+                        anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
+                  collect(Collectors.toList());
             List<User> members = dacToUserMap.get(d).stream().
-                    filter(u -> u.getRoles().stream().
-                            anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
-                    collect(Collectors.toList());
+                  filter(u -> u.getRoles().stream().
+                        anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
+                  collect(Collectors.toList());
             d.setChairpersons(chairs);
             d.setMembers(members);
         }).collect(Collectors.toList());
@@ -121,12 +125,11 @@ public class DacService {
         return dacToUserMap;
     }
 
-    public List<Dac> findDacsByUser(AuthUser authUser) {
-        if (isAuthUserAdmin(authUser)) {
-            List<Dac> allDacs = dacDAO.findAll();
-            return allDacs;
+    public List<Dac> findDacsByUser(AuthUser authUser, Boolean withMembers) {
+        List<Dac> dacs = isAuthUserAdmin(authUser) ? dacDAO.findAll() : dacDAO.findDacsForEmail(authUser.getName());
+        if (withMembers) {
+            return addMemberInfoToDacs(dacs);
         }
-        List<Dac> dacs = dacDAO.findDacsForEmail(authUser.getName());
         return dacs;
     }
 

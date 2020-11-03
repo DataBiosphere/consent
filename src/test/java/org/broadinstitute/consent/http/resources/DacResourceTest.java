@@ -41,9 +41,9 @@ public class DacResourceTest {
 
     @Test
     public void testFindAll_success_1() {
-        when(dacService.findAll()).thenReturn(Collections.emptyList());
+        when(dacService.findDacsByUser(authUser, true)).thenReturn(Collections.emptyList());
 
-        Response response = dacResource.findAll(authUser, Optional.empty());
+        Response response = dacResource.findAll(authUser, Optional.of(true));
         Assert.assertEquals(200, response.getStatus());
         List dacs = ((List) response.getEntity());
         Assert.assertTrue(dacs.isEmpty());
@@ -55,10 +55,9 @@ public class DacResourceTest {
                 .setName("name")
                 .setDescription("description")
                 .build();
-        when(dacService.findAll()).thenReturn(Collections.singletonList(dac));
-        when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
+        when(dacService.findDacsByUser(authUser, true)).thenReturn(Collections.singletonList(dac));
 
-        Response response = dacResource.findAll(authUser, Optional.empty());
+        Response response = dacResource.findAll(authUser, Optional.of(true));
         Assert.assertEquals(200, response.getStatus());
         List dacs = ((List) response.getEntity());
         Assert.assertEquals(1, dacs.size());
@@ -66,7 +65,7 @@ public class DacResourceTest {
 
     @Test
     public void testFindAllWithUsers() {
-        when(dacService.findAll()).thenReturn(Collections.emptyList());
+        when(dacService.findDacsByUser(authUser, false)).thenReturn(Collections.emptyList());
 
         Response response = dacResource.findAll(authUser, Optional.of(false));
         Assert.assertEquals(200, response.getStatus());
