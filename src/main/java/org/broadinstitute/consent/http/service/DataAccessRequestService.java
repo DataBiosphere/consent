@@ -241,7 +241,7 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findByReferenceIds(referenceIds);
     }
 
-    private Document createDocumentFromDar(DataAccessRequest d) {
+    public Document createDocumentFromDar(DataAccessRequest d) {
         Document document = Document.parse(gson.toJson(d.getData()));
         document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
         document.put(DarConstants.REFERENCE_ID, d.getReferenceId());

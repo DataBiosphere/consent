@@ -14,12 +14,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -161,7 +164,11 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/modalSummary/{id}")
     @PermitAll
-    public Response getDataAccessRequestModalSummary(@PathParam("id") String id) {
+    public Response getDataAccessRequestModalSummary(@Auth AuthUser authUser, @PathParam("id") String id) {
+        validateAuthedRoleUser(
+            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            authUser, id);
         Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         Integer userId = obtainUserId(dar);
         User user = null;
@@ -200,7 +207,11 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @PermitAll
     @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response describe(@PathParam("id") String id) {
+    public Response describe(@Auth AuthUser authUser, @PathParam("id") String id) {
+        validateAuthedRoleUser(
+            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            authUser, id);
         try {
             Document document = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
             if (document != null) {
@@ -236,7 +247,11 @@ public class DataAccessRequestResource extends Resource {
     @Path("/find/{id}")
     @Produces("application/json")
     @PermitAll
-    public Document describeSpecificFields(@PathParam("id") String id, @QueryParam("fields") List<String> fields) {
+    public Document describeSpecificFields(@Auth AuthUser authUser, @PathParam("id") String id, @QueryParam("fields") List<String> fields) {
+        validateAuthedRoleUser(
+            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            authUser, id);
         if (CollectionUtils.isNotEmpty(fields)) {
             List<String> fieldValues = Arrays.asList(fields.get(0).split(","));
             return dataAccessRequestAPI.describeDataAccessRequestFieldsById(id, fieldValues);
@@ -257,7 +272,11 @@ public class DataAccessRequestResource extends Resource {
     @Path("/find/{id}/consent")
     @Produces("application/json")
     @PermitAll
-    public Consent describeConsentForDAR(@PathParam("id") String id) {
+    public Consent describeConsentForDAR(@Auth AuthUser authUser, @PathParam("id") String id) {
+        validateAuthedRoleUser(
+            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            authUser, id);
         Optional<Integer> dataSetId = getDatasetIdForDarId(id);
         Consent c;
         if (dataSetId.isPresent()) {
@@ -304,8 +323,9 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials")
     @RolesAllowed(RESEARCHER)
-    public List<Document> describeDraftDataAccessRequests() {
-        return dataAccessRequestService.findAllDraftDataAccessRequestsAsDocuments();
+    public List<Document> describeDraftDataAccessRequests(@Auth AuthUser authUser) {
+        User user = findUserByEmail(authUser.getName());
+        return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
     }
 
     @POST
@@ -353,8 +373,13 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partial/{id}")
     @RolesAllowed(RESEARCHER)
-    public Document describeDraftDar(@PathParam("id") String id) {
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
+    public Document describeDraftDar(@Auth AuthUser authUser, @PathParam("id") String id) {
+        User user = findUserByEmail(authUser.getName());
+        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
+        if (dar.getUserId().equals(user.getDacUserId())) {
+            return dataAccessRequestService.createDocumentFromDar(dar);
+        }
+        throw new ForbiddenException("User does not have permission");
     }
 
 
@@ -376,8 +401,10 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/partials/manage")
     @RolesAllowed(RESEARCHER)
-    public Response describeDraftManageDataAccessRequests(@QueryParam("userId") Integer userId) {
-        return Response.ok().entity(dataAccessRequestAPI.describeDraftDataAccessRequestManage(userId)).build();
+    public Response describeDraftManageDataAccessRequests(@Auth AuthUser authUser) {
+        User user = findUserByEmail(authUser.getName());
+        List<Document> partials = dataAccessRequestAPI.describeDraftDataAccessRequestManage(user.getDacUserId());
+        return Response.ok().entity(partials).build();
     }
 
 
@@ -407,7 +434,11 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @Path("/hasUseRestriction/{referenceId}")
     @PermitAll
-    public Response hasUseRestriction(@PathParam("referenceId") String referenceId) {
+    public Response hasUseRestriction(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+        validateAuthedRoleUser(
+            Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+                .collect(Collectors.toList()),
+            authUser, referenceId);
         try {
             return Response.ok("{\"hasUseRestriction\":" + dataAccessRequestAPI.hasUseRestriction(referenceId) + "}").build();
         } catch (Exception e) {
