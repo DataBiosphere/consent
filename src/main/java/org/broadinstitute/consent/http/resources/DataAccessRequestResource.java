@@ -92,9 +92,11 @@ public class DataAccessRequestResource extends Resource {
     @Produces("application/json")
     @RolesAllowed(RESEARCHER)
     @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response createDataAccessRequest(@Context UriInfo info, Document dar) {
+    public Response createDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
         UseRestriction useRestriction;
+        User user = findUserByEmail(authUser.getName());
         try {
+            dar.put(DarConstants.USER_ID, user.getDacUserId());
             // See https://broadinstitute.atlassian.net/browse/DUOS-780
             // Temporarily remove unnecessary fields until fully deprecated.
             dar.remove(DarConstants.CREATE_DATE);
@@ -135,7 +137,9 @@ public class DataAccessRequestResource extends Resource {
     @Deprecated // Use DataAccessRequestResourceVersion2
     public Response updateDataAccessRequest(@Auth AuthUser authUser, Document dar, @PathParam("id") String id) {
         validateAuthedRoleUser(Collections.emptyList(), authUser, id);
+        User user = findUserByEmail(authUser.getName());
         try {
+            dar.put(DarConstants.USER_ID, user.getDacUserId());
             dar.remove(DarConstants.RESTRICTION);
             Boolean needsManualReview = DarUtil.requiresManualReview(dar);
             if (!needsManualReview) {
@@ -335,7 +339,9 @@ public class DataAccessRequestResource extends Resource {
     public Response updatePartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
         String referenceId = dar.getString(DarConstants.REFERENCE_ID);
         validateAuthedRoleUser(Collections.emptyList(), authUser, referenceId);
+        User user = findUserByEmail(authUser.getName());
         try {
+            dar.put(DarConstants.USER_ID, user.getDacUserId());
             dar = dataAccessRequestAPI.updateDraftDataAccessRequest(dar);
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
