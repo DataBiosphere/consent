@@ -125,6 +125,9 @@ public class DataAccessRequestData {
     private List<Collaborator> labCollaborators;
     private List<Collaborator> internalCollaborators;
     private List<Collaborator> externalCollaborators;
+    private Boolean dsAcknowledgement;
+    private Boolean gsoAcknowledgement;
+    private Boolean pubAcknowledgement;
 
     @Override
     public String toString() {
@@ -810,6 +813,30 @@ public class DataAccessRequestData {
 
     public void setSigningOfficial(String signingOfficial) {
         this.signingOfficial = signingOfficial;
+    }
+
+    public void setDSAcknowledgement(Boolean dsAcknowledgement) {
+        this.dsAcknowledgement = dsAcknowledgement;
+    }
+
+    public Boolean getDSAcknowledgement() {
+        return dsAcknowledgement;
+    }
+
+    public void setGSOAcknowledgement(Boolean gsoAcknowledgement) {
+        this.gsoAcknowledgement = gsoAcknowledgement;
+    }
+
+    public Boolean getGSOAcknowledgement() {
+        return gsoAcknowledgement;
+    }
+
+    public void setPubAcknowledgement(Boolean pubAcknowledgement) {
+        this.pubAcknowledgement = pubAcknowledgement;
+    }
+
+    public Boolean getPubAcknowledgement() {
+        return pubAcknowledgement;
     }
 
     // Validate all ontology entries
