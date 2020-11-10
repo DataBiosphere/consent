@@ -1,14 +1,16 @@
-name: Package
+name: Maven
 on: [pull_request]
 jobs:
-  build:
-    name: Maven Package
+  package:
+    name: Package
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
-      - name: Maven build
+      - name: Install
         run: |
           sudo apt update
           sudo apt install maven
-          mvn package
+      - name: Package
+        run: |
+          mvn clean package
