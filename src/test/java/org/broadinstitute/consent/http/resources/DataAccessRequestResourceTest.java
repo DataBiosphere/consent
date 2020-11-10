@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
@@ -68,6 +69,8 @@ public class DataAccessRequestResourceTest {
     private UserService userService;
     @Mock
     private AuthUser authUser;
+    @Mock
+    private User user;
 
     private DataAccessRequestResource resource;
 
@@ -97,6 +100,8 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        when(user.getDacUserId()).thenReturn(dar.getUserId());
+        when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
@@ -117,6 +122,8 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        when(user.getDacUserId()).thenReturn(dar.getUserId());
+        when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
         Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
@@ -160,6 +167,7 @@ public class DataAccessRequestResourceTest {
         data.setReferenceId(dar.getReferenceId());
         data.setDatasetIds(Arrays.asList(1, 2));
         dar.setData(data);
+        dar.setUserId(1);
         return dar;
     }
 
