@@ -1,0 +1,20 @@
+name: Coveralls
+on: [pull_request]
+jobs:
+  package:
+    name: Coveralls
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install
+        run: |
+          sudo apt update
+          sudo apt install maven
+      - name: Test Report
+        run: |
+          mvn clean test coveralls:report
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
