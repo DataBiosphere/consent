@@ -13,7 +13,7 @@ jobs:
           sudo apt install maven
       - name: Test Report
         run: |
-          mvn clean jacoco:prepare-agent test jacoco:report
+          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=${COVERALLS_TOKEN}
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
