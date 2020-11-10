@@ -12,5 +12,7 @@ jobs:
           sudo apt update
           sudo apt install maven
       - name: Test Report
+        env:
+          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
         run: |
-          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=${COVERALLS_TOKEN}
+          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=$COVERALLS_TOKEN
