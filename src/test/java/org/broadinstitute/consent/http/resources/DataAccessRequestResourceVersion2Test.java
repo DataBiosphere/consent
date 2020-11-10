@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -56,6 +57,7 @@ public class DataAccessRequestResourceVersion2Test {
   @Mock private UserService userService;
   @Mock private UriInfo info;
   @Mock private UriBuilder builder;
+  @Mock private User mockUser;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> roles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
@@ -106,6 +108,15 @@ public class DataAccessRequestResourceVersion2Test {
     initResource();
     Response response = resource.getByReferenceId(authUser, "");
     assertEquals(200, response.getStatus());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void testGetByReferenceIdForbidden() {
+    when(mockUser.getDacUserId()).thenReturn(user.getDacUserId() + 1);
+    when(userService.findUserByEmail(any())).thenReturn(mockUser);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    initResource();
+    resource.getByReferenceId(authUser, "");
   }
 
   @Test
