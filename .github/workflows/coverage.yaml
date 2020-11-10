@@ -1,8 +1,8 @@
-name: Coveralls
+name: Coverage
 on: [pull_request]
 jobs:
   package:
-    name: Coveralls
+    name: Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -13,7 +13,7 @@ jobs:
           sudo apt install maven
       - name: Test Report
         run: |
-          mvn clean test coveralls:report
+          mvn clean test jacoco:report
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
