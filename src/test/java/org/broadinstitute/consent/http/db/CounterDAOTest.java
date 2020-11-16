@@ -2,10 +2,10 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.Assert.assertEquals;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.junit.After;
 import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 public class CounterDAOTest extends DAOTestHelper {
 
