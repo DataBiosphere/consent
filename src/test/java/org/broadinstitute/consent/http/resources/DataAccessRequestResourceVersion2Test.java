@@ -16,16 +16,20 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.AbstractMatchProcessAPI;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailNotifierService;
@@ -53,9 +57,11 @@ public class DataAccessRequestResourceVersion2Test {
   @Mock private UserService userService;
   @Mock private UriInfo info;
   @Mock private UriBuilder builder;
+  @Mock private User mockUser;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final User user = new User(1, authUser.getName(), "Display Name", new Date());
+  private final List<UserRole> roles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+  private final User user = new User(1, authUser.getName(), "Display Name", new Date(), roles, authUser.getName());
 
   private DataAccessRequestResourceVersion2 resource;
 
@@ -97,10 +103,20 @@ public class DataAccessRequestResourceVersion2Test {
 
   @Test
   public void testGetByReferenceId() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
     Response response = resource.getByReferenceId(authUser, "");
     assertEquals(200, response.getStatus());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void testGetByReferenceIdForbidden() {
+    when(mockUser.getDacUserId()).thenReturn(user.getDacUserId() + 1);
+    when(userService.findUserByEmail(any())).thenReturn(mockUser);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    initResource();
+    resource.getByReferenceId(authUser, "");
   }
 
   @Test

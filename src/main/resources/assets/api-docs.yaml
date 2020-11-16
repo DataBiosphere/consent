@@ -1780,6 +1780,23 @@ paths:
           description: Forbidden
         500:
           description: Internal Server Error.
+  /api/dar/partials/manage:
+    get:
+      summary: Get Partial Data Access Requests for user
+      description: Get Partial Data Access Requests for user
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: Partial Data Access Requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequest'
+        500:
+          description: Internal Server Error.
 
   /api/dataRequest/cases/pending:
     get:

@@ -6,11 +6,14 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
@@ -65,6 +68,10 @@ public class DataAccessRequestResourceTest {
     private DataSetAPI dataSetAPI;
     @Mock
     private UserService userService;
+    @Mock
+    private AuthUser authUser;
+    @Mock
+    private User user;
 
     private DataAccessRequestResource resource;
 
@@ -94,8 +101,10 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        when(user.getDacUserId()).thenReturn(dar.getUserId());
+        when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
-        Consent consent = resource.describeConsentForDAR(dar.getReferenceId());
+        Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
     }
 
@@ -103,7 +112,7 @@ public class DataAccessRequestResourceTest {
      * Positive case where a DAR references a string dataset id
      */
     @Test
-    public void testDescribeConsentForDarCase2() throws Exception {
+    public void testDescribeConsentForDarCase2() {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         DataSet dataSet = new DataSet();
@@ -114,8 +123,10 @@ public class DataAccessRequestResourceTest {
         when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        when(user.getDacUserId()).thenReturn(dar.getUserId());
+        when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
-        Consent consent = resource.describeConsentForDAR(dar.getReferenceId());
+        Consent consent = resource.describeConsentForDAR(authUser, dar.getReferenceId());
         assertNotNull(consent);
     }
 
@@ -123,7 +134,7 @@ public class DataAccessRequestResourceTest {
      * Negative case where a DAR references an invalid dataset id
      */
     @Test(expected = NotFoundException.class)
-    public void testDescribeConsentForDarCase3() throws Exception {
+    public void testDescribeConsentForDarCase3() {
         DataAccessRequest dar = generateDataAccessRequest();
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         when(consentAPI.getConsentFromDatasetID(any())).thenReturn(null);
@@ -132,14 +143,14 @@ public class DataAccessRequestResourceTest {
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
-        resource.describeConsentForDAR(dar.getReferenceId());
+        resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
     /**
      * Negative case where a DAR does not reference a dataset id
      */
     @Test(expected = NotFoundException.class)
-    public void testDescribeConsentForDarCase4() throws Exception {
+    public void testDescribeConsentForDarCase4() {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.getData().setDatasetIds(null);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -147,7 +158,28 @@ public class DataAccessRequestResourceTest {
         when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
         when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
         resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
-        resource.describeConsentForDAR(dar.getReferenceId());
+        resource.describeConsentForDAR(authUser, dar.getReferenceId());
+    }
+
+    /**
+     * Negative case where user does not have access
+     */
+    @Test(expected = ForbiddenException.class)
+    public void testDescribeConsentForDarCase5() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+        DataSet dataSet = new DataSet();
+        dataSet.setDataSetId(1);
+        when(consentAPI.getConsentFromDatasetID(any())).thenReturn(new Consent());
+        when(AbstractDataAccessRequestAPI.getInstance()).thenReturn(dataAccessRequestAPI);
+        when(AbstractConsentAPI.getInstance()).thenReturn(consentAPI);
+        when(AbstractDataSetAPI.getInstance()).thenReturn(dataSetAPI);
+        when(AbstractDACUserAPI.getInstance()).thenReturn(dacUserAPI);
+        when(AbstractElectionAPI.getInstance()).thenReturn(electionAPI);
+        when(user.getDacUserId()).thenReturn(dar.getUserId() + 1);
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        resource = new DataAccessRequestResource(dataAccessRequestService, emailNotifierService, userService);
+        resource.describeConsentForDAR(authUser, dar.getReferenceId());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
@@ -157,6 +189,7 @@ public class DataAccessRequestResourceTest {
         data.setReferenceId(dar.getReferenceId());
         data.setDatasetIds(Arrays.asList(1, 2));
         dar.setData(data);
+        dar.setUserId(1);
         return dar;
     }
 

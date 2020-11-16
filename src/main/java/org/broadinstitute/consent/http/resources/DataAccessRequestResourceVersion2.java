@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -28,6 +29,7 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -100,6 +102,10 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @PermitAll
   public Response getByReferenceId(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+    validateAuthedRoleUser(
+        Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+            .collect(Collectors.toList()),
+        authUser, referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {
@@ -373,5 +379,28 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       throw new NotFoundException();
     }
     return dar;
+  }
+
+  /**
+   * Custom handler for validating that a user can access a DAR. User will have access if ANY
+   * of these conditions are met:
+   *      If the DAR create user is the same as the Auth User, then the user can access the resource.
+   *      If the user has any of the roles in allowableRoles, then the user can access the resource.
+   * In practice, pass in allowableRoles for users that are not the create user (i.e. Admin) so
+   * they can also have access to the DAR.
+   *
+   * @param allowableRoles List of roles that would allow the user to access the resource
+   * @param authUser The AuthUser
+   * @param referenceId The referenceId of the resource.
+   */
+  private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser, String referenceId) {
+    DataAccessRequest dataAccessRequest = getDarById(referenceId);
+    User user = findUserByEmail(authUser.getName());
+    if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
+      super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
+    } else {
+      logger.warn("DataAccessRequest '" + referenceId + "' has an invalid userId" );
+      super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getData().getUserId());
+    }
   }
 }
