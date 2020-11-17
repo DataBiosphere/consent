@@ -1,5 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
@@ -18,14 +25,6 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
-
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collections;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 @SuppressWarnings("deprecation")
 @RunWith(PowerMockRunner.class)

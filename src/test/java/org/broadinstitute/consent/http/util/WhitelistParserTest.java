@@ -1,14 +1,13 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import java.util.List;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.models.WhitelistHeaders;
 import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class WhitelistParserTest {
 

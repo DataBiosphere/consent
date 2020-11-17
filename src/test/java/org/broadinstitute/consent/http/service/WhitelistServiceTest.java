@@ -1,10 +1,22 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import com.google.api.client.http.GenericUrl;
+import java.util.ArrayList;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.ResearcherFields;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ResearcherProperty;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.WhitelistEntry;
 import org.broadinstitute.consent.http.models.WhitelistHeaders;
 import org.broadinstitute.consent.http.util.WhitelistCache;
@@ -13,19 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
-
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 public class WhitelistServiceTest {
 

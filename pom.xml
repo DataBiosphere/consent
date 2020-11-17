@@ -155,7 +155,7 @@
         <version>2.22.2</version>
         <configuration>
           <!-- @{argLine} is necessary here so that that the jacoco:prepare-agent output is included for tests -->
-          <argLine>@{argLine} -Xmx1024m</argLine>
+          <argLine>@{argLine} -Xmx1024m -Xverify:none -XX:TieredStopAtLevel=1</argLine>
         </configuration>
       </plugin>
 
