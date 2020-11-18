@@ -16,6 +16,7 @@ public class DataAccessRequestData {
      * or duplicate existing DAR fields.
      * See https://broadinstitute.atlassian.net/browse/DUOS-728 for more info.
      */
+    public static final String partialDarCodePrefix = "temp_DAR_";
     public static final List<String> DEPRECATED_PROPS = Arrays
         .asList("referenceId", "investigator",
             "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",

@@ -6,8 +6,6 @@ import io.dropwizard.auth.Auth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -313,11 +311,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
         data.setReferenceId(referenceId);
       }
     } else {
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       String referenceId = UUID.randomUUID().toString();
       newDar.setReferenceId(referenceId);
       data.setReferenceId(referenceId);
-      data.setPartialDarCode("temp_DAR_" + sdf.format(new Date()));
     }
     newDar.setData(data);
     return newDar;
