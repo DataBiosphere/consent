@@ -246,7 +246,7 @@ public class DataAccessRequestService {
         document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
         document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
         document.put(DarConstants.CREATE_DATE, d.getCreateDate());
-        document.put(DarConstants.SORT_DATE, d.getCreateDate());
+        document.put(DarConstants.SORT_DATE, d.getSortDate());
         return document;
     }
 
