@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static java.util.stream.Collectors.toList;
-
+import java.text.SimpleDateFormat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -245,6 +245,8 @@ public class DataAccessRequestService {
         Document document = Document.parse(gson.toJson(d.getData()));
         document.put(DarConstants.DATA_ACCESS_REQUEST_ID, d.getId());
         document.put(DarConstants.REFERENCE_ID, d.getReferenceId());
+        document.put(DarConstants.CREATE_DATE, d.getCreateDate());
+        document.put(DarConstants.SORT_DATE, d.getSortDate());
         return document;
     }
 
@@ -289,6 +291,8 @@ public class DataAccessRequestService {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
         }
         Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        dar.getData().setPartialDarCode(DataAccessRequestData.partialDarCodePrefix + sdf.format(now));
         dataAccessRequestDAO.insertVersion2(
             dar.getReferenceId(),
             user.getDacUserId(),

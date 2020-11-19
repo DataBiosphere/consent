@@ -25,6 +25,10 @@ public class DataAccessRequestData {
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
             "createDate", "sortDate");
 
+    // prefix for partialDarCode, should be pulled by functions that generate/update ONLY
+    // since class is used within both drafts and submitted dars, it's best to control its implementation on the outer function call
+    public static final String partialDarCodePrefix = "temp_DAR_";
+
     private String referenceId;
     private String investigator;
     private String institution;
