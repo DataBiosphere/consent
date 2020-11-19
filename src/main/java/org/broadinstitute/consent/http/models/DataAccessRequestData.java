@@ -16,7 +16,6 @@ public class DataAccessRequestData {
      * or duplicate existing DAR fields.
      * See https://broadinstitute.atlassian.net/browse/DUOS-728 for more info.
      */
-    public static final String partialDarCodePrefix = "temp_DAR_";
     public static final List<String> DEPRECATED_PROPS = Arrays
         .asList("referenceId", "investigator",
             "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
@@ -25,6 +24,10 @@ public class DataAccessRequestData {
             "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
             "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
             "createDate", "sortDate");
+
+    // prefix for partialDarCode, should be pulled by functions that generate/update ONLY
+    // since class is used within both drafts and submitted dars, it's best to control its implementation on the outer function call
+    public static final String partialDarCodePrefix = "temp_DAR_";
 
     private String referenceId;
     private String investigator;
