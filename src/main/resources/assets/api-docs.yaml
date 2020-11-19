@@ -3911,6 +3911,15 @@ components:
         irbProtocolExpiration:
           type: string
           description: IRB Protocol Expiration
+        dsAcknowledgement:
+          type: boolean
+          description: Boolean value that represents user acknowledgement of disease studies restrictions (if applciable)
+        gsoAcknowledgement:
+          type: boolean
+          description: Boolean value that represents user acknowledgement of genetic studies limitations (if applicable)
+        pubAcknowledgement:
+          type: boolean
+          description: Boolean value that represents user acknowledgement of publication requirements (if applicable)
         itDirector:
           type: string
           description: IT Director
