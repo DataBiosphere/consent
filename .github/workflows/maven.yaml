@@ -13,6 +13,6 @@ jobs:
           sudo apt install maven
       - name: Package
         env:
-          MAVEN_OPTS: -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3
+          MAVEN_OPTS: -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn clean package
