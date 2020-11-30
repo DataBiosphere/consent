@@ -13,4 +13,4 @@ jobs:
           sudo apt install maven
       - name: Package
         run: |
-          mvn clean package
+          mvn clean package -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
