@@ -42,6 +42,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
@@ -112,9 +113,11 @@ public class DataSetResource extends Resource {
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
-        DataSet createdDataset = datasetService.createDataset(inputDataset, name, userId);
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDataset.getDataSetId());
-        return Response.created(uri).entity(createdDataset).build();
+        DataSetDTO createdDataset = datasetService.createDataset(inputDataset, name, userId);
+        Consent createdConsent = datasetService.createConsentForDataset(createdDataset);
+        DataSetDTO createdDatasetWithConsent = datasetService.getDatasetDTO(createdDataset.getDataSetId());
+        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
+        return Response.created(uri).entity(createdDatasetWithConsent).build();
     }
 
     @PUT

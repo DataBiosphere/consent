@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 
 public class DatasetService {
 
@@ -28,12 +29,14 @@ public class DatasetService {
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
     private final DataSetDAO dataSetDAO;
+    private final UseRestrictionConverter converter;
     public static String datasetName = "Dataset Name";
 
     @Inject
-    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO) {
+    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO, UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataSetDAO = dataSetDAO;
+        this.converter = converter;
     }
 
     /**
@@ -62,11 +65,12 @@ public class DatasetService {
              * data user letter name
              * translated use restriction
              */
-            consentDAO.insertConsent(consentId, manualReview, null, dataset.getDataUse().toString(),
+            UseRestriction useRestriction = converter.parseUseRestriction(dataset.getDataUse());
+            consentDAO.insertConsent(consentId, manualReview, useRestriction.toString(), dataset.getDataUse().toString(),
                   null, name, null, createDate, createDate, null,
                   true, groupName, dataset.getDacId());
             String associationType = AssociationType.SAMPLESET.getValue();
-            consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDacId());
+            consentDAO.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
             return consentDAO.findConsentById(consentId);
         } else {
             throw new IllegalArgumentException("Dataset is missing Data Use information. Consent could not be created.");
@@ -89,7 +93,7 @@ public class DatasetService {
             (Objects.nonNull(dataUse.getVulnerablePopulations()) && dataUse.getVulnerablePopulations());
     }
 
-    public DataSet createDataset(DataSetDTO dataset, String name, Integer userId) {
+    public DataSetDTO createDataset(DataSetDTO dataset, String name, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
         int lastAlias = dataSetDAO.findLastAlias();
         int alias = lastAlias + 1;
@@ -100,7 +104,7 @@ public class DatasetService {
         List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         dataSetDAO.insertDataSetsProperties(propertyList);
 
-        return getDatasetWithPropertiesById(id);
+        return getDatasetDTO(id);
     }
 
     public DataSet getDatasetByName(String name) {
