@@ -40,6 +40,7 @@ public class DataUse {
     private Boolean collaboratorRequired;
     private String geographicalRestrictions;
     private String other;
+    private String secondaryOther;
     private Boolean illegalBehavior;
     private Boolean addiction;
     private Boolean sexualDiseases;
@@ -53,6 +54,7 @@ public class DataUse {
     private Boolean genomicResults;
     private String genomicSummaryResults;
     private Boolean collaborationInvestigators;
+    private String publicationMoratorium;
 
     public Boolean getGeneralUse() {
         return generalUse;
@@ -238,6 +240,14 @@ public class DataUse {
         this.other = other;
     }
 
+    public String getSecondaryOther() {
+        return secondaryOther;
+    }
+
+    public void setSecondaryOther(String secondaryOther) {
+        this.secondaryOther = secondaryOther;
+    }
+
     public Boolean getIllegalBehavior() {
         return illegalBehavior;
     }
@@ -340,6 +350,14 @@ public class DataUse {
 
     public void setCollaborationInvestigators(Boolean collaborationInvestigators) {
         this.collaborationInvestigators = collaborationInvestigators;
+    }
+
+    public String getPublicationMoratorium() {
+        return publicationMoratorium;
+    }
+
+    public void setPublicationMoratorium(String publicationMoratorium) {
+        this.publicationMoratorium = publicationMoratorium;
     }
 
     @Override
