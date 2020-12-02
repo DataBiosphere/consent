@@ -1,33 +1,20 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.enumeration.ElectionFields;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
-
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import org.broadinstitute.consent.http.enumeration.ElectionFields;
+import org.broadinstitute.consent.http.models.Election;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 
 public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
 
-    private Map<Integer, Election> electionMap = new HashMap<>();
+    private final Map<Integer, Election> electionMap = new HashMap<>();
 
     @Override
     public Election map(ResultSet r, StatementContext ctx) throws SQLException {
-        UseRestriction useRestriction = null;
-        if (StringUtils.isNoneBlank((r.getString(ElectionFields.USE_RESTRICTION.getValue())))) {
-            try {
-                useRestriction = UseRestriction.parse(r.getString(ElectionFields.USE_RESTRICTION.getValue()));
-            } catch (IOException e) {
-                throw new SQLException(e);
-            }
-        }
-
         Election election;
         if (electionMap.containsKey(r.getInt(ElectionFields.ID.getValue()))) {
             election = electionMap.get(r.getInt(ElectionFields.ID.getValue()));
@@ -61,11 +48,6 @@ public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
         }
         if (r.getString(ElectionFields.FINAL_ACCESS_VOTE.getValue()) != null) {
             election.setFinalAccessVote(r.getBoolean(ElectionFields.FINAL_ACCESS_VOTE.getValue()));
-        }
-        election.setUseRestriction(useRestriction);
-        if (r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue()) != null) {
-            election.setTranslatedUseRestriction(
-                    unescapeJava(r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue())));
         }
         if (r.getObject(ElectionFields.DATASET_ID.getValue()) != null) {
             election.setDataSetId(r.getInt(ElectionFields.DATASET_ID.getValue()));

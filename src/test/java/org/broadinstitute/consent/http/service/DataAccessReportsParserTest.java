@@ -165,7 +165,6 @@ public class DataAccessReportsParserTest {
 
     private Election createElection(Date currentDate){
         Election election = new Election();
-        election.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
         election.setFinalVoteDate(currentDate);
         election.setFinalVote(true);
         return election;

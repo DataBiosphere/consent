@@ -24,7 +24,6 @@ public class SimpleElectionMapper implements RowMapper<Election>, RowMapperHelpe
         r.getInt(ElectionFields.DATASET_ID.getValue()),
         r.getBoolean(ElectionFields.ARCHIVED.getValue()),
         r.getString(ElectionFields.DUL_NAME.getValue()),
-        unescapeJava(r.getString(ElectionFields.TRANSLATED_USE_RESTRICTION.getValue())),
         r.getString(ElectionFields.DATA_USE_LETTER.getValue()));
   }
 }

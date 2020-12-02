@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.Gson;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,7 +39,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.dto.ElectionStatusDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.broadinstitute.consent.http.util.DatasetUtil;
@@ -120,8 +118,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                 createDate,
                 election.getReferenceId(),
                 election.getFinalAccessVote() ,
-                Objects.toString(election.getUseRestriction(), "") ,
-                election.getTranslatedUseRestriction(),
                 election.getDataUseLetter(),
                 election.getDulName(),
                 election.getDataSetId());
@@ -518,8 +514,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
         switch (electionType) {
             case TRANSLATE_DUL:
                 Consent consent = consentDAO.findConsentById(referenceId);
-                election.setTranslatedUseRestriction(consent.getTranslatedUseRestriction());
-                election.setUseRestriction(consent.getUseRestriction());
                 election.setDataUseLetter(consent.getDataUseLetter());
                 election.setDulName(consent.getDulName());
                 break;
@@ -536,13 +530,6 @@ public class DatabaseElectionAPI extends AbstractElectionAPI {
                     }
                     Optional<Integer> datasetId = datasetIdList.stream().findFirst();
                     datasetId.ifPresent(election::setDataSetId);
-                }
-                election.setTranslatedUseRestriction(dar.getString(DarConstants.TRANSLATED_RESTRICTION));
-                try {
-                    String restriction = new Gson().toJson(dar.get(DarConstants.RESTRICTION, Map.class));
-                    election.setUseRestriction((UseRestriction.parse(restriction)));
-                } catch (IOException e) {
-                    election.setUseRestriction(null);
                 }
                 break;
             case DATA_SET:

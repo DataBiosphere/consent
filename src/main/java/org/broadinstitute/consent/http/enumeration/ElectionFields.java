@@ -14,8 +14,6 @@ public enum ElectionFields {
     FINAL_VOTE_DATE("finalVoteDate"),
     DATA_USE_LETTER("dataUseLetter"),
     DATASET_ID("datasetId"),
-    USE_RESTRICTION("useRestriction"),
-    TRANSLATED_USE_RESTRICTION("translatedUseRestriction"),
     VERSION("version"),
     ARCHIVED("archived"),
     DUL_NAME("dulName");

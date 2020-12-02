@@ -3692,12 +3692,6 @@ components:
         finalAccessVote:
           type: boolean
           description: For Data Access Request only. Final vote that determines if the request is approved or denied.
-        useRestriction:
-          type: string
-          description: The use restriction related to the election.
-        translatedUseRestriction:
-          type: string
-          description: The translated use restriction related to the election.
         dataSetId:
           type: integer
           description: The dataSetId related to the election.
