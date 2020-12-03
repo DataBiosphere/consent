@@ -18,8 +18,6 @@ public interface DataSetAPI {
 
     List<DataSet> getDataSetsForConsent(String consentId);
 
-    DataSetDTO getDataSetDTO(Integer dataSetId ) ;
-
     Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetIds) ;
 
     Collection<Dictionary> describeDictionaryByDisplayOrder();
