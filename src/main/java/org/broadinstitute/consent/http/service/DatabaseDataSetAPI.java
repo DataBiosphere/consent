@@ -317,14 +317,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return dsDAO.findNeedsApprovalDataSetByDataSetId(dataSetIdList);
     }
 
-    public DataSetDTO getDataSetDTO(Integer dataSetId) {
-        Set<DataSetDTO> dataSet = dsDAO.findDataSetWithPropertiesByDataSetId(dataSetId);
-        for (DataSetDTO d : dataSet) {
-            return d;
-        }
-        throw new NotFoundException();
-    }
-
     private List<String> addMissingAssociationsErrors(List<DataSet> dataSets) {
         List<String> errors = new ArrayList<>();
         List<String> objectIdList = dataSets.stream().filter(dataset -> dataset.getObjectId() != null).map(DataSet::getObjectId).collect(Collectors.toList());
