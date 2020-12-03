@@ -215,4 +215,10 @@ public class DatasetService {
         }
         return Collections.emptyList();
     }
+
+    public void deleteDataset(Integer datasetId) {
+        List<Integer> idList = Collections.singletonList(datasetId);
+        dataSetDAO.deleteDataSetsProperties(idList);
+        dataSetDAO.deleteDataSets(idList);
+    }
 }

@@ -113,14 +113,24 @@ public class DataSetResource extends Resource {
         }
         User dacUser = userService.findUserByEmail(user.getGoogleUser().getEmail());
         Integer userId = dacUser.getDacUserId();
-        DataSetDTO createdDataset = datasetService.createDataset(inputDataset, name, userId);
-        Consent createdConsent = datasetService.createConsentForDataset(createdDataset);
-        if (Objects.isNull(createdConsent)) {
-            throw new ClientErrorException("Consent was not able to be created for newly created dataset with id: " + createdDataset.getDataSetId(), Status.CONFLICT);
+
+        DataSetDTO createdDataset = null;
+        DataSetDTO createdDatasetWithConsent = null;
+        Consent createdConsent = null;
+        try {
+            createdDataset = datasetService.createDataset(inputDataset, name, userId);
+            createdDataset.setDataUse(inputDataset.getDataUse());
+            createdConsent = datasetService.createConsentForDataset(createdDataset);
+            createdDatasetWithConsent = datasetService.getDatasetDTO(createdDataset.getDataSetId());
+            URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
+            return Response.created(uri).entity(createdDatasetWithConsent).build();
         }
-        DataSetDTO createdDatasetWithConsent = datasetService.getDatasetDTO(createdDataset.getDataSetId());
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
-        return Response.created(uri).entity(createdDatasetWithConsent).build();
+        catch (Exception e) {
+            if (Objects.isNull(createdConsent) && Objects.nonNull(createdDataset)) {
+                datasetService.deleteDataset(createdDataset.getDataSetId());
+            }
+            return Response.serverError().entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
+        }
     }
 
     @PUT
