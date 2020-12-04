@@ -124,20 +124,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void deleteByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
-   * Insert DataAccessRequest by reference id and provided DataAccessRequestData
-   * Deprecated. Use `insertVersion2`
-   *
-   * @param referenceId String
-   * @param data DataAccessRequestData
-   */
-  @Deprecated
-  @RegisterArgumentFactory(JsonArgumentFactory.class)
-  @SqlUpdate(
-      "INSERT INTO data_access_request (reference_id, data) VALUES (:referenceId, to_jsonb(:data)) ")
-  void insert(
-      @Bind("referenceId") String referenceId, @Bind("data") @Json DataAccessRequestData data);
-
-  /**
    * Create new DataAccessRequest.
    * This version supercedes `insert`
    *
