@@ -120,6 +120,7 @@ public class DataSetResource extends Resource {
         try {
             createdDataset = datasetService.createDataset(inputDataset, name, userId);
             createdDataset.setDataUse(inputDataset.getDataUse());
+            createdDataset.setDacId(inputDataset.getDacId());
             createdConsent = datasetService.createConsentForDataset(createdDataset);
             createdDatasetWithConsent = datasetService.getDatasetDTO(createdDataset.getDataSetId());
             URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
