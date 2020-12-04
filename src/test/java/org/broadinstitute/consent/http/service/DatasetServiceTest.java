@@ -8,8 +8,10 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
 import org.broadinstitute.consent.http.models.dto.DataSetPropertyDTO;
+import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -44,28 +47,33 @@ public class DatasetServiceTest {
     @Mock
     private DataSetDAO datasetDAO;
 
+    @Mock
+    private UseRestrictionConverter useRestrictionConverter;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, datasetDAO);
+        datasetService = new DatasetService(consentDAO, datasetDAO, useRestrictionConverter);
     }
 
     @Test
     public void testCreateDataset() {
         int datasetId = 1;
+        DataSetDTO test = getDatasetDTO();
         when(datasetDAO.insertDatasetV2(anyString(), any(), anyInt(), anyString(), anyBoolean(), anyInt()))
             .thenReturn(datasetId);
         when(datasetDAO.findDataSetById(datasetId)).thenReturn(getDatasets().get(0));
         when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
+        when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId)).thenReturn(Collections.singleton(test));
         initService();
 
-        DataSet result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1", 1);
+        DataSetDTO result = datasetService.createDataset(getDatasetDTO(), "Test Dataset 1", 1);
 
         assertNotNull(result);
-        assertEquals(result.getName(), getDatasets().get(0).getName());
+        assertEquals(result.getDataSetId(), getDatasets().get(0).getDataSetId());
         assertNotNull(result.getProperties());
         assertFalse(result.getProperties().isEmpty());
     }
@@ -246,12 +254,16 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testCreateConsentForDataset() {
+    public void testCreateConsentForDataset() throws IOException {
         DataSetDTO dataSetDTO = getDatasetDTO();
         DataUse dataUse = new DataUseBuilder().build();
         dataSetDTO.setDataUse(dataUse);
+        UseRestriction useRestriction = UseRestriction.parse("{\"type\":\"everything\"}");
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
+        when(useRestrictionConverter.parseUseRestriction(any())).thenReturn(useRestriction);
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
         initService();
 
         Consent result = datasetService.createConsentForDataset(dataSetDTO);

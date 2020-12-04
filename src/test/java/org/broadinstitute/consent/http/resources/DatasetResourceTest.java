@@ -25,6 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DataSetDTO;
@@ -103,14 +104,17 @@ public class DatasetResourceTest {
 
     @Test
     public void testCreateDataset() throws Exception {
-        DataSet result = new DataSet();
+        DataSetDTO result = new DataSetDTO();
         DataSetDTO json = new DataSetDTO();
+        Consent consent = new Consent();
         List<DataSetPropertyDTO> jsonProperties = new ArrayList<>();
         jsonProperties.add(new DataSetPropertyDTO("Dataset Name", "test"));
         json.setProperties(jsonProperties);
 
         when(datasetService.getDatasetByName("test")).thenReturn(null);
         when(datasetService.createDataset(any(), any(), anyInt())).thenReturn(result);
+        when(datasetService.createConsentForDataset(any())).thenReturn(consent);
+        when(datasetService.getDatasetDTO(any())).thenReturn(result);
         when(authUser.getGoogleUser()).thenReturn(googleUser);
         when(googleUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(dacUser);

@@ -2405,7 +2405,7 @@ paths:
       summary: Creates the Dataset from JSON
       description: Creates the Dataset from JSON
       requestBody:
-        description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value.
+        description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value and a valid DataUse object.
         required: true
         content:
           application/json:
@@ -4114,8 +4114,6 @@ components:
               propertyValue: NHLBI
             - propertyName: Sample Collection ID
               propertyValue: SC-000
-
-
         active:
           type: boolean
           description: The Dataset is active
@@ -4134,6 +4132,9 @@ components:
         objectId:
           type: string
           description: The sample collection ID, if defined
+        dataUse:
+          type: object
+          description: The Data Use question/answer set for this dataset (used for the associated consent).
     DatasetProperty:
       type: object
       properties:
