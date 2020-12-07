@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -560,10 +559,12 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
             }
             Gson gson = new Gson();
             dataAccessRequestList.forEach(d -> {
+                Integer userId = d.getInteger(DarConstants.USER_ID);
+                User user = userDAO.findUserById(userId);
                 String referenceId = d.getString(DarConstants.REFERENCE_ID);
                 DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(d));
                 darData.setReferenceId(referenceId);
-                dataAccessRequestService.insertDataAccessRequest(referenceId, darData);
+                dataAccessRequestService.insertSubmittedDataAccessRequest(user, referenceId, darData);
             });
         }
     }

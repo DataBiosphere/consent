@@ -1,0 +1,30 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet dbms="postgresql" author="grushton" id="56.0">
+        <sql>
+            update data_access_request
+            set user_id = ((data #>> '{}')::jsonb->>'userId')::numeric
+            where user_id is null
+        </sql>
+        <sql>
+            update data_access_request
+            set create_date = to_timestamp(((data #>> '{}')::jsonb->>'createDate')::numeric/1000)
+            where create_date is null
+        </sql>
+        <sql>
+            update data_access_request
+            set sort_date = to_timestamp(((data #>> '{}')::jsonb->>'sortDate')::numeric/1000)
+            where sort_date is null
+        </sql>
+        <sql>
+            update data_access_request
+            set update_date = to_timestamp(((data #>> '{}')::jsonb->>'sortDate')::numeric/1000)
+            where update_date is null
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
