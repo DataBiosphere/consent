@@ -31,7 +31,6 @@ public class TranslateServiceImpl extends AbstractTranslateService {
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(e -> Objects.nonNull(e.getId()))
-                .filter(e -> Objects.nonNull(e.getDefinition()))
                 .filter(e -> Objects.nonNull(e.getLabel()))
                 .collect(Collectors.toList()) :
             Collections.emptyList();
