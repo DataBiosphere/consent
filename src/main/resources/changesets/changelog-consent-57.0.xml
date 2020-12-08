@@ -1,0 +1,16 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet dbms="postgresql" author="grushton" id="57.0">
+        <!-- Back populate the submission date for all submitted DARs -->
+        <sql>
+            update data_access_request
+            set submission_date = update_date
+            where draft = false and submission_date is null
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
