@@ -103,7 +103,7 @@ public class DatasetService {
 
         List<DataSetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         dataSetDAO.insertDataSetsProperties(propertyList);
-
+        dataSetDAO.updateDataSetNeedsApproval(id, dataset.getNeedsApproval());
         return getDatasetDTO(id);
     }
 

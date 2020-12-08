@@ -4080,6 +4080,9 @@ components:
           type: integer
           format: int32
           description: The dataset id, integer format
+        dacId:
+          type: string
+          description: The id of the DAC this dataset belongs to, if defined.
         consentId:
           type: string
           description: The consent id.
