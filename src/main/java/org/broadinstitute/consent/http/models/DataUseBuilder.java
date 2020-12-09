@@ -133,7 +133,12 @@ public class DataUseBuilder {
         du.setOther(other);
         return this;
     }
-    
+
+    public DataUseBuilder setSecondaryOther(String secondaryOther) {
+        du.setSecondaryOther(secondaryOther);
+        return this;
+    }
+
     public DataUseBuilder setIllegalBehavior(Boolean illegalBehavior) {
         du.setIllegalBehavior(illegalBehavior);
         return this;
@@ -196,6 +201,11 @@ public class DataUseBuilder {
 
     public DataUseBuilder setCollaborationInvestigators(Boolean collaborationInvestigators) {
         du.setCollaborationInvestigators(collaborationInvestigators);
+        return this;
+    }
+
+    public DataUseBuilder setPublicationMoratorium(String publicationMoratorium) {
+        du.setPublicationMoratorium(publicationMoratorium);
         return this;
     }
 

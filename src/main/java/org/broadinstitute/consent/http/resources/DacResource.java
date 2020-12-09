@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class DacResource extends Resource {
 
     @GET
     @Produces("application/json")
-    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
+    @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
     public Response findAll(@Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
         final Boolean includeUsers = withUsers.isPresent() ? withUsers.get() : true;
         List<Dac> dacs = dacService.findDacsByUser(authUser, includeUsers);

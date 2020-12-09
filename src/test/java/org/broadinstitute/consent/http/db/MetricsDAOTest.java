@@ -23,7 +23,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     List<DataAccessRequest> dars = metricsDAO.findAllDars();
     assertTrue(dars.isEmpty());
 
-    createDataAccessRequest();
+    createDataAccessRequestV2();
     createDraftDataAccessRequest();
     List<DataAccessRequest> newDars = metricsDAO.findAllDars();
     assertFalse(newDars.isEmpty());
@@ -35,7 +35,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
     DataSet dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest();
+    DataAccessRequest dar = createDataAccessRequestV2();
     dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
     createAssociation(consent.getConsentId(), dataset.getDataSetId());
@@ -53,7 +53,7 @@ public class MetricsDAOTest extends DAOTestHelper {
   public void testFindMatchesForReferenceIds() {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
-    DataAccessRequest dar = createDataAccessRequest();
+    DataAccessRequest dar = createDataAccessRequestV2();
     Match m = new Match();
     m.setConsent(consent.getConsentId());
     m.setPurpose(dar.getReferenceId());
@@ -73,7 +73,7 @@ public class MetricsDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     Consent consent = createConsent(dac.getDacId());
     DataSet dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest();
+    DataAccessRequest dar = createDataAccessRequestV2();
     dar.getData().setDatasetIds(Collections.singletonList(dataset.getDataSetId()));
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getData());
     createAssociation(consent.getConsentId(), dataset.getDataSetId());

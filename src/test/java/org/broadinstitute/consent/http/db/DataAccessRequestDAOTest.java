@@ -21,7 +21,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertTrue(dars.isEmpty());
 
-        createDataAccessRequest();
+        createDataAccessRequestV2();
         createDraftDataAccessRequest();
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertFalse(newDars.isEmpty());
@@ -33,7 +33,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertTrue(dars.isEmpty());
 
-        createDataAccessRequest();
+        createDataAccessRequestV2();
         createDraftDataAccessRequest();
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(newDars.isEmpty());
@@ -68,7 +68,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void updateNonDraftToDraft() {
-        DataAccessRequest dar = createDataAccessRequest();
+        DataAccessRequest dar = createDataAccessRequestV2();
 
         List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertTrue(draftDars1.isEmpty());
@@ -81,7 +81,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testCreate() {
-        DataAccessRequest dar = createDataAccessRequest();
+        DataAccessRequest dar = createDataAccessRequestV2();
         DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertNotNull(foundDar);
         assertNotNull(foundDar.getData());
@@ -89,9 +89,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindByReferenceIds() {
-        DataAccessRequest dar1 = createDataAccessRequest();
-        DataAccessRequest dar2 = createDataAccessRequest();
-        DataAccessRequest dar3 = createDataAccessRequest();
+        DataAccessRequest dar1 = createDataAccessRequestV2();
+        DataAccessRequest dar2 = createDataAccessRequestV2();
+        DataAccessRequest dar3 = createDataAccessRequestV2();
         List<String> referenceIds = Arrays.asList(dar1.getReferenceId(), dar2.getReferenceId(), dar3.getReferenceId());
 
         List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(referenceIds);
@@ -102,7 +102,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testUpdateByReferenceId() {
-        DataAccessRequest dar = createDataAccessRequest();
+        DataAccessRequest dar = createDataAccessRequestV2();
         String rus = RandomStringUtils.random(10, true, false);
         dar.getData().setRus(rus);
         dar.getData().setValidRestriction(false);
@@ -127,12 +127,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testInsert() {
-        DataAccessRequest dar = createDataAccessRequest();
-        assertNotNull(dar);
-    }
-
-    @Test
     public void testInsertVersion2() {
         DataAccessRequest dar = createDataAccessRequestV2();
         assertNotNull(dar);
@@ -140,7 +134,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testEscapedCharacters() {
-        DataAccessRequest dar = createDataAccessRequest();
+        DataAccessRequest dar = createDataAccessRequestV2();
         DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertNotNull(foundDar);
         assertNotNull(foundDar.getData());

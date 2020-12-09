@@ -280,12 +280,6 @@ public class DataAccessRequestService {
         return getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
-    @Deprecated
-    public DataAccessRequest insertDataAccessRequest(String referencedId, DataAccessRequestData darData) {
-        dataAccessRequestDAO.insert(referencedId, darData);
-        return findByReferenceId(referencedId);
-    }
-
     public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
         if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId()) || Objects.isNull(dar.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
@@ -442,31 +436,30 @@ public class DataAccessRequestService {
                         newDARList.add(findByReferenceId(dataAccessRequest.getReferenceId()));
                     } else {
                         String referenceId = UUID.randomUUID().toString();
-                        dataAccessRequestDAO.insertVersion2(
-                            referenceId,
-                            user.getDacUserId(),
-                            new Date(darData.getCreateDate()),
-                            new Date(darData.getSortDate()),
-                            now,
-                            now,
-                            darData);
-                        newDARList.add(findByReferenceId(referenceId));
+                        DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData);
+                        newDARList.add(createdDar);
                     }
                 } else {
                     String referenceId = UUID.randomUUID().toString();
-                    dataAccessRequestDAO.insertVersion2(
-                        referenceId,
-                        user.getDacUserId(),
-                        new Date(darData.getCreateDate()),
-                        new Date(darData.getSortDate()),
-                        now,
-                        now,
-                        darData);
-                    newDARList.add(findByReferenceId(referenceId));
+                    DataAccessRequest createdDar = insertSubmittedDataAccessRequest(user, referenceId, darData);
+                    newDARList.add(createdDar);
                 }
             }
         }
         return newDARList;
+    }
+
+    public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData) {
+        Date now = new Date();
+        dataAccessRequestDAO.insertVersion2(
+            referencedId,
+            user.getDacUserId(),
+            new Date(darData.getCreateDate()),
+            new Date(darData.getSortDate()),
+            now,
+            now,
+            darData);
+        return findByReferenceId(referencedId);
     }
 
     /**
