@@ -15,9 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -68,8 +66,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final ResearcherPropertyDAO researcherPropertyDAO;
 
-    private static final String SUFFIX = "-A-";
-
     private final VoteDAO voteDAO;
 
     private final UserDAO userDAO;
@@ -82,8 +78,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
 
     private final DataAccessRequestService dataAccessRequestService;
 
-    private final CounterService counterService;
-
     /**
      * Initialize the singleton API instance using the provided DAO. This method
      * should only be called once during application initialization (from the
@@ -91,16 +85,15 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
      * IllegalStateException. Note that this method is not synchronized, as it
      * is not intended to be called more than once.
      */
-    public static void initInstance(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(counterService, dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
+    public static void initInstance(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
+        DataAccessRequestAPIHolder.setInstance(new DatabaseDataAccessRequestAPI(dataAccessRequestService, converter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO));
     }
 
     /**
      * The constructor is private to force use of the factory methods and
      * enforce the singleton pattern.
      */
-    protected DatabaseDataAccessRequestAPI(CounterService counterService, DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
-        this.counterService = counterService;
+    protected DatabaseDataAccessRequestAPI(DataAccessRequestService dataAccessRequestService, UseRestrictionConverter converter, ElectionDAO electionDAO, ConsentDAO consentDAO, VoteDAO voteDAO, UserDAO userDAO, DataSetDAO dataSetDAO, ResearcherPropertyDAO researcherPropertyDAO) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.converter = converter;
         this.electionDAO = electionDAO;
@@ -111,45 +104,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         this.dataAccessReportsParser = new DataAccessReportsParser();
         this.researcherPropertyDAO = researcherPropertyDAO;
     }
-
-    /**
-     * In this method, we generate a list of possible DARs. Generate one DAR per dataset that is
-     * being requested.
-     *
-     * @param dataAccessRequest Document with populated DAR fields
-     * @return List of created DARs in document form
-     */
-    @Override
-    public List<Document> createDataAccessRequest(Document dataAccessRequest) {
-        List<Document> dataAccessList = new ArrayList<>();
-        // Previously saved draft dars will have partial code and a reference id
-        if (dataAccessRequest.containsKey(DarConstants.PARTIAL_DAR_CODE)){
-            String referenceId = dataAccessRequest.getString(DarConstants.REFERENCE_ID);
-            dataAccessRequestService.deleteByReferenceId(referenceId);
-            dataAccessRequest.remove(DarConstants.PARTIAL_DAR_CODE);
-        }
-        List<Integer> datasets = DarUtil.getIntegerList(dataAccessRequest, DarConstants.DATASET_ID);
-        if (CollectionUtils.isNotEmpty(datasets)) {
-            Date now = new Date();
-            for (int dsId : datasets) {
-                Document dataAccess = new Document(dataAccessRequest);
-                if (Objects.isNull(dataAccess.get(DarConstants.CREATE_DATE))) {
-                    dataAccess.put(DarConstants.CREATE_DATE, now.getTime());
-                }
-                dataAccess.put(DarConstants.SORT_DATE, now.getTime());
-                dataAccess.remove(DarConstants.DATASET_ID);
-                dataAccess.put(DarConstants.DATASET_ID, Collections.singletonList(dsId));
-                String referenceId = UUID.randomUUID().toString();
-                dataAccess.put(DarConstants.REFERENCE_ID, referenceId);
-                dataAccessList.add(dataAccess);
-            }
-        }
-        dataAccessRequest.remove(DarConstants.DATASET_ID);
-        insertDataAccess(dataAccessList);
-        updateResearcherIdentification(dataAccessRequest);
-        return dataAccessList;
-    }
-
 
     @Override
     public Document describeDataAccessRequestById(String id) {
@@ -261,25 +215,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
         dataAccessRequestService.updateByReferenceId(referenceId, darData);
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
-    }
-
-    @Override
-    public Document createDraftDataAccessRequest(User user, Document draftDar) {
-        Date now = new Date();
-        Gson gson = new Gson();
-        DataAccessRequest dar = new DataAccessRequest();
-        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
-        darData.setCreateDate(now.getTime());
-        String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
-        if (referenceId == null) {
-            referenceId = UUID.randomUUID().toString();
-        }
-        darData.setReferenceId(referenceId);
-        draftDar.put(DarConstants.REFERENCE_ID, referenceId);
-        dar.setData(darData);
-        dar.setReferenceId(referenceId);
-        dataAccessRequestService.insertDraftDataAccessRequest(user, dar);
-        return draftDar;
     }
 
     @Override
@@ -537,36 +472,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         return dataAccessRequestService.getAllDataAccessRequestsAsDocuments().stream().
                 filter(d -> DarUtil.getIntegerList(d, DarConstants.DATASET_ID).contains(dataSetId)).
                 collect(Collectors.toList());
-    }
-
-    private void insertDataAccess(List<Document> dataAccessRequestList) {
-        if (CollectionUtils.isNotEmpty(dataAccessRequestList)) {
-            String seq = String.valueOf(counterService.getNextDarSequence());
-            if (dataAccessRequestList.size() > 1) {
-                IntStream.range(0, dataAccessRequestList.size())
-                        .forEach(idx -> {
-                                    dataAccessRequestList.get(idx).append(DarConstants.DAR_CODE, "DAR-" + seq + SUFFIX + idx);
-                                    if (dataAccessRequestList.get(idx).get(DarConstants.PARTIAL_DAR_CODE) != null) {
-                                        String referenceId = dataAccessRequestList.get(idx).getString(DarConstants.REFERENCE_ID);
-                                        dataAccessRequestService.deleteByReferenceId(referenceId);
-                                        dataAccessRequestList.get(idx).remove(DarConstants.PARTIAL_DAR_CODE);
-                                    }
-                                }
-
-                        );
-            } else {
-                dataAccessRequestList.get(0).append(DarConstants.DAR_CODE, "DAR-" + seq);
-            }
-            Gson gson = new Gson();
-            dataAccessRequestList.forEach(d -> {
-                Integer userId = d.getInteger(DarConstants.USER_ID);
-                User user = userDAO.findUserById(userId);
-                String referenceId = d.getString(DarConstants.REFERENCE_ID);
-                DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(d));
-                darData.setReferenceId(referenceId);
-                dataAccessRequestService.insertSubmittedDataAccessRequest(user, referenceId, darData);
-            });
-        }
     }
 
     private List<String> getRequestIds(List<Document> access) {
