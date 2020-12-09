@@ -258,26 +258,11 @@ public class DataAccessRequestService {
         return dataAccessRequestDAO.findByReferenceId(referencedId);
     }
 
+    @Deprecated // Use updateByReferenceIdVersion2
     public DataAccessRequest updateByReferenceId(String referencedId, DataAccessRequestData darData) {
         darData.setSortDate(new Date().getTime());
         dataAccessRequestDAO.updateDataByReferenceId(referencedId, darData);
         return findByReferenceId(referencedId);
-    }
-
-    /**
-     * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-604
-     *
-     * Convenience method during transition away from `Document` and to `DataAccessRequest`
-     */
-    public Document updateDocumentByReferenceId(String referenceId, Document document) {
-        if (findByReferenceId(referenceId) == null) {
-            throw new NotFoundException("Data access for the specified id does not exist");
-        }
-        document.put(DarConstants.REFERENCE_ID, referenceId);
-        String documentJson = gson.toJson(document);
-        DataAccessRequestData darData = DataAccessRequestData.fromString(documentJson);
-        updateByReferenceId(referenceId, darData);
-        return getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
