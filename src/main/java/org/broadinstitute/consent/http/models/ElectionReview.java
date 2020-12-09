@@ -79,9 +79,6 @@ public class ElectionReview {
         this.associatedConsent = new Document();
         this.associatedConsent.put("electionId", consentElection != null ? consentElection.getElectionId() : null);
         this.associatedConsent.put("consentId", consent.getConsentId());
-        this.associatedConsent.put("useRestriction", consentElection != null ? consentElection.getUseRestriction() : consent.getUseRestriction());
-        this.associatedConsent.put("translatedUseRestriction", consentElection != null ? consentElection.getTranslatedUseRestriction() : consent.getTranslatedUseRestriction());
-        this.associatedConsent.put("dulName", consentElection != null ? consentElection.getDulName() : consent.getDulName());
         this.associatedConsent.put("name", consent.getName());
     }
 }
