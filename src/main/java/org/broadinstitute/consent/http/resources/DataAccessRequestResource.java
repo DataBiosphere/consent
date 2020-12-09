@@ -5,14 +5,11 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,7 +22,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -58,8 +54,6 @@ import org.broadinstitute.consent.http.service.EmailNotifierService;
 import org.broadinstitute.consent.http.service.MatchProcessAPI;
 import org.broadinstitute.consent.http.service.TranslateService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.validate.AbstractUseRestrictionValidatorAPI;
-import org.broadinstitute.consent.http.service.validate.UseRestrictionValidatorAPI;
 import org.broadinstitute.consent.http.util.DarConstants;
 import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
@@ -74,7 +68,6 @@ public class DataAccessRequestResource extends Resource {
     private final MatchProcessAPI matchProcessAPI;
     private final EmailNotifierService emailNotifierService;
     private final TranslateService translateService = AbstractTranslateService.getInstance();
-    private final UseRestrictionValidatorAPI useRestrictionValidatorAPI;
     private final ElectionAPI electionAPI;
     private final UserService userService;
 
@@ -85,51 +78,8 @@ public class DataAccessRequestResource extends Resource {
         this.dataAccessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.consentAPI = AbstractConsentAPI.getInstance();
         this.matchProcessAPI = AbstractMatchProcessAPI.getInstance();
-        this.useRestrictionValidatorAPI = AbstractUseRestrictionValidatorAPI.getInstance();
         this.electionAPI = AbstractElectionAPI.getInstance();
         this.userService = userService;
-    }
-
-    @POST
-    @Consumes("application/json")
-    @Produces("application/json")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated // Use DataAccessRequestResourceVersion2
-    public Response createDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
-        UseRestriction useRestriction;
-        User user = findUserByEmail(authUser.getName());
-        try {
-            dar.put(DarConstants.USER_ID, user.getDacUserId());
-            // See https://broadinstitute.atlassian.net/browse/DUOS-780
-            // Temporarily remove unnecessary fields until fully deprecated.
-            dar.remove(DarConstants.CREATE_DATE);
-            dar.remove(DarConstants.SORT_DATE);
-            dar.remove(DarConstants.DATA_ACCESS_REQUEST_ID);
-            Boolean needsManualReview = DarUtil.requiresManualReview(dar);
-            try {
-                if (!needsManualReview) {
-                    useRestriction = dataAccessRequestAPI.createStructuredResearchPurpose(dar);
-                    dar.append(DarConstants.RESTRICTION, Document.parse(useRestriction.toString()));
-                    useRestrictionValidatorAPI.validateUseRestriction(useRestriction.toString());
-                    dar.append(DarConstants.VALID_RESTRICTION, true);
-                }
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error creating use restriction for data access request " + dar.toJson(), e);
-            }
-            dar.append(DarConstants.TRANSLATED_RESTRICTION, translateService.generateStructuredTranslatedRestriction(dar, needsManualReview));
-            dar.append(DarConstants.SORT_DATE, new Date().getTime());
-            List<Document> results = dataAccessRequestAPI.createDataAccessRequest(dar);
-            URI uri = info.getRequestUriBuilder().build();
-            for (Document r : results) {
-                List<Integer> datasetIds = DarUtil.getIntegerList(r, DarConstants.DATASET_ID);
-                matchProcessAPI.processMatchesForPurpose(r.getString(DarConstants.REFERENCE_ID));
-                emailNotifierService.sendNewDARRequestMessage(r.getString(DarConstants.DAR_CODE), datasetIds);
-            }
-            return Response.created(uri).build();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error creating data access request ", e);
-            return createExceptionResponse(e);
-        }
     }
 
     @PUT
@@ -328,28 +278,6 @@ public class DataAccessRequestResource extends Resource {
         return dataAccessRequestService.findAllDraftDataAccessRequestDocumentsByUser(user.getDacUserId());
     }
 
-    @POST
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/partial")
-    @RolesAllowed(RESEARCHER)
-    @Deprecated // Use DataAccessRequestResourceVersion2.createDraftDataAccessRequest
-    public Response createPartialDataAccessRequest(@Auth AuthUser authUser, @Context UriInfo info, Document dar) {
-        User user = findUserByEmail(authUser.getName());
-        URI uri;
-        Document result = null;
-        if ((dar.size() == 1 && dar.containsKey("userId")) || (dar.size() == 0)) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error("The Data Access Request is empty. Please, complete the form with the information you want to save.", Response.Status.BAD_REQUEST.getStatusCode())).build();
-        }
-        try {
-            result = saveDraftDarRequest(user, dar);
-            uri = info.getRequestUriBuilder().path("/" + result.get(DarConstants.REFERENCE_ID)).build();
-            return Response.created(uri).entity(result).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
-
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
@@ -464,13 +392,6 @@ public class DataAccessRequestResource extends Resource {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())).build();
         }
-    }
-
-    private Document saveDraftDarRequest(User user, Document dar) {
-        Date now = new Date();
-        dar.append(DarConstants.CREATE_DATE, now.getTime());
-        dar.append(DarConstants.SORT_DATE, now.getTime());
-        return dataAccessRequestAPI.createDraftDataAccessRequest(user, dar);
     }
 
     private Integer obtainUserId(Document dar) {
