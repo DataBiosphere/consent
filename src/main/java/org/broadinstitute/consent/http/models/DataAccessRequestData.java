@@ -853,7 +853,6 @@ public class DataAccessRequestData {
                     .filter(Objects::nonNull)
                     .filter(e -> Objects.nonNull(e.getId()))
                     .filter(e -> Objects.nonNull(e.getLabel()))
-                    .filter(e -> Objects.nonNull(e.getDefinition()))
                     .collect(Collectors.toList());
             if (filteredEntries.isEmpty()) {
                 data.setOntologies(Collections.emptyList());
