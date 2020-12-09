@@ -60,7 +60,7 @@ public class DataRequestElectionResource extends Resource {
     public Response createDataRequestElection(@Context UriInfo info, Election rec,
                                               @PathParam("requestId") String requestId) {
         URI uri;
-        Election accessElection;
+        Election accessElection = null;
         try {
             accessElection = api.createElection(rec, requestId, ElectionType.DATA_ACCESS);
             List<Vote> votes;
@@ -78,6 +78,13 @@ public class DataRequestElectionResource extends Resource {
             emailNotifierService.sendNewCaseMessageToList(darVotes, accessElection);
             uri = info.getRequestUriBuilder().build();
         } catch (Exception e) {
+            try {
+                if (Objects.nonNull(accessElection)) {
+                    api.deleteElection(requestId, accessElection.getElectionId());
+                }
+            } catch (Exception e2) {
+                logger().warn("Error deleting created access election: ", e2);
+            }
             return createExceptionResponse(e);
         }
         return Response.created(uri).entity(accessElection).build();
