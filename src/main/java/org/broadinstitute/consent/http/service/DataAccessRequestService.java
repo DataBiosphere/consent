@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -29,6 +30,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -42,6 +44,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.util.DarConstants;
@@ -49,21 +52,25 @@ import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Int;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private final ConsentDAO consentDAO;
     private final CounterService counterService;
     private final DacDAO dacDAO;
-    private final UserDAO userDAO;
-    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DataSetDAO dataSetDAO;
+    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final ElectionDAO electionDAO;
+    private final MatchDAO matchDAO;
+    private final UserDAO userDAO;
+    private final VoteDAO voteDAO;
+
     private final DacService dacService;
     private final UserService userService;
-    private final VoteDAO voteDAO;
 
     private static final Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy").create();
     private static final String UN_REVIEWED = "un-reviewed";
@@ -78,10 +85,11 @@ public class DataAccessRequestService {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
         this.dacDAO = container.getDacDAO();
-        this.userDAO = container.getUserDAO();
         this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
         this.dataSetDAO = container.getDatasetDAO();
         this.electionDAO = container.getElectionDAO();
+        this.matchDAO = container.getMatchDAO();
+        this.userDAO = container.getUserDAO();
         this.voteDAO = container.getVoteDAO();
         this.dacService = dacService;
         this.userService = userService;
@@ -250,8 +258,22 @@ public class DataAccessRequestService {
         return document;
     }
 
-    public void deleteByReferenceId(String referenceId) {
-        dataAccessRequestDAO.deleteByReferenceId(referenceId);
+    public void deleteByReferenceId(String referenceId) throws NotAcceptableException {
+        List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
+        if (Objects.isNull(elections) || elections.isEmpty()) {
+            List<Integer> matchIds = matchDAO.findMatchByPurposeId(referenceId).stream()
+                .filter(Objects::nonNull)
+                .map(Match::getId)
+                .collect(toList());
+            if (CollectionUtils.isNotEmpty(matchIds)) {
+                matchDAO.deleteMatches(matchIds);
+            }
+            dataAccessRequestDAO.deleteByReferenceId(referenceId);
+        } else {
+            String message = String.format("Unable to delete DAR: '%s', there are existing elections that reference it.", referenceId);
+            logger.warn(message);
+            throw new NotAcceptableException(message);
+        }
     }
 
     public DataAccessRequest findByReferenceId(String referencedId) {

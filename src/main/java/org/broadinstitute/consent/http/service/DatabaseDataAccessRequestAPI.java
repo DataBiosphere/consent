@@ -111,12 +111,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
     }
 
     @Override
-    public void deleteDataAccessRequestById(String id) {
-        dataAccessRequestService.deleteByReferenceId(id);
-    }
-
-
-    @Override
     public Document describeDataAccessRequestFieldsById(String id, List<String> fields) {
         Document dar = dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
         Document result = new Document();
@@ -200,21 +194,6 @@ public class DatabaseDataAccessRequestAPI extends AbstractDataAccessRequestAPI {
         darData.setSortDate(new Date().getTime());
         dataAccessRequestService.updateByReferenceId(id, darData);
         return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(id);
-    }
-
-    @Override
-    public Document updateDraftDataAccessRequest(Document draftDar) {
-        String referenceId = draftDar.getString(DarConstants.REFERENCE_ID);
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        if (dar == null) {
-            throw new NotFoundException("Draft Data Access Request for the specified id does not exist");
-        }
-        DataAccessRequestData data = dar.getData();
-        data.setSortDate(new Date().getTime());
-        Gson gson = new Gson();
-        DataAccessRequestData darData = DataAccessRequestData.fromString(gson.toJson(draftDar));
-        dataAccessRequestService.updateByReferenceId(referenceId, darData);
-        return dataAccessRequestService.getDataAccessRequestByReferenceIdAsDocument(referenceId);
     }
 
     @Override
