@@ -1,10 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import static java.util.stream.Collectors.toList;
-import java.text.SimpleDateFormat;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +53,6 @@ import org.broadinstitute.consent.http.util.DarUtil;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Int;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
