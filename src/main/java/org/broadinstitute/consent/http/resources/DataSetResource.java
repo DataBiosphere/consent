@@ -230,7 +230,7 @@ public class DataSetResource extends Resource {
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
-            Collection<DataSetDTO> dataSetList = api.describeDataSets(dacUserId);
+            Collection<DataSetDTO> dataSetList = datasetService.getAllActiveDatasets();
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }
     }
@@ -351,7 +351,8 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response datasetAutocomplete(@PathParam("partial") String partial){
-        List<Map<String, String>> j = api.autoCompleteDataSets(partial);
+        List<Map<String, String>> j = datasetService.autoCompleteDataSets(partial);
+
         return Response.ok(j, MediaType.APPLICATION_JSON).build();
     }
 
