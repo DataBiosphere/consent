@@ -248,8 +248,7 @@ public class DatasetService {
         dataSetDAO.deleteDataSets(idList);
     }
 
-
-    public List<Map<String, String>> autoCompleteDataSets(String partial) {
+    public List<Map<String, String>> autoCompleteDatasets(String partial) {
         Set<DataSetDTO> allActiveDatasets = getAllActiveDatasets();
         String lowercasePartial = partial.toLowerCase();
         Set<DataSetDTO> filteredDatasetsContainingPartial = allActiveDatasets.stream().filter(ds ->
@@ -275,7 +274,6 @@ public class DatasetService {
         ).collect(Collectors.toList());
         return result;
     }
-
 
     public Set<DataSetDTO> getAllActiveDatasets() {
         return dataSetDAO.findDataSets();

@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -280,6 +281,30 @@ public class DatasetServiceTest {
         datasetService.createConsentForDataset(dataSetDTO);
     }
 
+    @Test
+    public void testAutoCompleteDatasets() {
+        List<DataSetDTO> dtos = getDatasetDTOs();
+        Set<DataSetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        when(datasetDAO.findDataSets()).thenReturn(setOfDtos);
+        initService();
+
+        List<Map<String, String>> result = datasetService.autoCompleteDatasets("a");
+        assertNotNull(result);
+        assertEquals(result.size(), dtos.size());
+    }
+
+    @Test
+    public void testGetAllActiveDatasets() {
+        List<DataSetDTO> dtos = getDatasetDTOs();
+        Set<DataSetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        when(datasetDAO.findDataSets()).thenReturn(setOfDtos);
+        initService();
+
+        Set<DataSetDTO> result = datasetService.getAllActiveDatasets();
+        assertNotNull(result);
+        assertEquals(result.size(), dtos.size());
+    }
+
     /* Helper functions */
 
     private List<DataSet> getDatasets() {
@@ -293,6 +318,19 @@ public class DatasetServiceTest {
                 dataset.setProperties(Collections.emptySet());
                 return dataset;
             }).collect(Collectors.toList());
+    }
+
+    private List<DataSetDTO> getDatasetDTOs() {
+        return IntStream.range(1, 3)
+              .mapToObj(i -> {
+                  DataSetDTO dataset = new DataSetDTO();
+                  dataset.setDataSetId(i);
+                  DataSetPropertyDTO nameProperty = new DataSetPropertyDTO("Dataset Name", "Test Dataset " + i);
+                  dataset.setActive(true);
+                  dataset.setNeedsApproval(false);
+                  dataset.setProperties(Collections.singletonList(nameProperty));
+                  return dataset;
+              }).collect(Collectors.toList());
     }
 
     private Set<DataSetProperty> getDatasetProperties() {

@@ -351,7 +351,7 @@ public class DataSetResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response datasetAutocomplete(@PathParam("partial") String partial){
-        List<Map<String, String>> j = datasetService.autoCompleteDataSets(partial);
+        List<Map<String, String>> j = datasetService.autoCompleteDatasets(partial);
 
         return Response.ok(j, MediaType.APPLICATION_JSON).build();
     }
