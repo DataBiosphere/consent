@@ -198,6 +198,18 @@ public class DataSetDAOTest extends DAOTestHelper {
         assertNotEquals(properties.size(), returnedProperties.size());
     }
 
+    @Test
+    public void testFindDatasets() {
+        DataSet dataset = createDataset();
+        Consent consent = createConsent(null);
+        createAssociation(consent.getConsentId(), dataset.getDataSetId());
+
+        Set<DataSetDTO> datasets = dataSetDAO.findDataSets();
+        assertFalse(datasets.isEmpty());
+        List<Integer> datasetIds = datasets.stream().map(DataSetDTO::getDataSetId).collect(Collectors.toList());
+        assertTrue(datasetIds.contains(dataset.getDataSetId()));
+    }
+
     private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
         dacDAO.addDacMember(roleId, userId, dacId);
     }
