@@ -15,7 +15,6 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +46,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.parboiled.common.StringUtils;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -274,7 +272,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testDatasetAutocomplete() {
-        List<Map<String, String>> autocompleteMap = Collections.singletonList(new HashMap<>());
+        List<Map<String, String>> autocompleteMap = Collections.singletonList(Collections.EMPTY_MAP);
         when(datasetService.autoCompleteDatasets(anyString())).thenReturn(autocompleteMap);
 
         initResource();
