@@ -24,8 +24,6 @@ public interface DataSetAPI {
 
     Collection<Dictionary> describeDictionaryByReceiveOrder();
 
-    List<Map<String, String>> autoCompleteDataSets(String partial);
-
     void deleteDataset(Integer datasetId, Integer dacUserId);
 
     void disableDataset(Integer dataSetId, Boolean active);

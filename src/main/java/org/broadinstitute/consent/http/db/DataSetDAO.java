@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
-import org.broadinstitute.consent.http.db.mapper.AutocompleteMapper;
 import org.broadinstitute.consent.http.db.mapper.BatchMapper;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DataSetMapper;

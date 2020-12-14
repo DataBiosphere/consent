@@ -172,13 +172,11 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
         return result;
     }
 
-
+    @Deprecated
     @Override
     public Collection<DataSetDTO> describeDataSets(Integer dacUserId) {
-        Collection<DataSetDTO> dataSetDTOList;
-        if (userIs(UserRoles.RESEARCHER.getRoleName(), dacUserId)) {
-            dataSetDTOList = dsDAO.findDataSetsForResearcher();
-        } else {
+        Collection<DataSetDTO> dataSetDTOList = dsDAO.findDataSets();
+        if (!userIs(UserRoles.RESEARCHER.getRoleName(), dacUserId)) {
 
             /*
             *  This three collections defined below are used to determine if "Associate Dataset with Data Owners"
@@ -195,7 +193,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
                 dataAccessElectionsReferenceId = dataOwnerOpenElections.stream().map(e -> e.getReferenceId()).collect(Collectors.toSet());
                 datasetsAssociatedToOpenElections = accessAPI.getDatasetsInDARs(dataAccessElectionsReferenceId);
             }
-            dataSetDTOList = dsDAO.findDataSets();
             if (userIs(UserRoles.ADMIN.getRoleName(), dacUserId) && dataSetDTOList.size() != 0) {
                 List<Document> accessRequests = accessAPI.describeDataAccessRequests();
                 List<Integer> dataSetIdList = new ArrayList<>();
@@ -254,11 +251,6 @@ public class DatabaseDataSetAPI extends AbstractDataSetAPI {
     @Override
     public Collection<Dictionary> describeDictionaryByReceiveOrder() {
         return dsDAO.getMappedFieldsOrderByReceiveOrder();
-    }
-
-    @Override
-    public List<Map<String, String>> autoCompleteDataSets(String partial) {
-        return dsDAO.getDatasetsBySearchTerm(partial);
     }
 
     @Override
