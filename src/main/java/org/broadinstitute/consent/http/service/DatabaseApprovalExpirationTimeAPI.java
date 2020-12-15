@@ -43,8 +43,8 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
 
     @Override
     public ApprovalExpirationTime create(ApprovalExpirationTime approvalExpirationTime) {
-        if(approvalExpirationTimeDAO.findApprovalExpirationTime() != null){
-            throw new IllegalArgumentException("It's already set the approval expiration time");
+        if (approvalExpirationTimeDAO.findApprovalExpirationTime() != null) {
+            throw new IllegalArgumentException("Approval expiration time is already set");
         }
         validateRequiredFields(approvalExpirationTime);
         Integer id = approvalExpirationTimeDAO.insertApprovalExpirationTime(new Date(), approvalExpirationTime.getAmountOfDays(), approvalExpirationTime.getUserId());

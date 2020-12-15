@@ -2,8 +2,11 @@ package org.broadinstitute.consent.http.resources;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +43,15 @@ public class ApprovalExpirationTimeResourceTest {
     @Mock
     UriBuilder uriBuilder;
 
+    @Mock
+    AuthUser authUser;
+
+    @Mock
+    UserService userService;
+
+    @Mock
+    User user;
+
     private ApprovalExpirationTimeResource resource;
 
     @Before
@@ -49,8 +61,12 @@ public class ApprovalExpirationTimeResourceTest {
     }
 
     private void initResource() {
+        when(authUser.getName()).thenReturn("auth user name");
+        when(user.getDacUserId()).thenReturn(1);
+        when(user.getDisplayName()).thenReturn("display name");
+        when(userService.findUserByEmail(any())).thenReturn(user);
         when(AbstractApprovalExpirationTimeAPI.getInstance()).thenReturn(approvalExpirationTimeAPI);
-        resource = new ApprovalExpirationTimeResource();
+        resource = new ApprovalExpirationTimeResource(userService);
     }
 
     @Test
@@ -62,7 +78,7 @@ public class ApprovalExpirationTimeResourceTest {
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/approvalExpirationTime/" + RandomUtils.nextInt(1, 100)));
         initResource();
 
-        Response response = resource.createdApprovalExpirationTime(uriInfo, approvalExpirationTime);
+        Response response = resource.createdApprovalExpirationTime(authUser, uriInfo, approvalExpirationTime);
         assertEquals(201, response.getStatus());
     }
 
@@ -95,7 +111,7 @@ public class ApprovalExpirationTimeResourceTest {
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/approvalExpirationTime/" + RandomUtils.nextInt(1, 100)));
         initResource();
 
-        Response response = resource.update(uriInfo, approvalExpirationTime, RandomUtils.nextInt(1, 10));
+        Response response = resource.update(authUser, uriInfo, approvalExpirationTime, RandomUtils.nextInt(1, 10));
         assertEquals(200, response.getStatus());
     }
 
