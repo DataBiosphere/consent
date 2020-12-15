@@ -111,7 +111,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findLastElectionsWithFinalVoteByType(@Bind("type") String type);
 
     @SqlQuery(" SELECT DISTINCT e.electionid, e.datasetid, v.vote finalvote, e.status, e.createdate, e.referenceid, " +
-            "   e.userestriction, e.translateduserestriction, v.rationale finalrationale, v.createdate finalvotedate, " +
+            "   v.rationale finalrationale, v.createdate finalvotedate, " +
             "   e.lastupdate, e.finalaccessvote, e.electiontype, e.datauseletter, e.dulname, e.archived, e.version " +
             " FROM election e " +
             " INNER JOIN vote v ON v.electionid = e.electionid " +
