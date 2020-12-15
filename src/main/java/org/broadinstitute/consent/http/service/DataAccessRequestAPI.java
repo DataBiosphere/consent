@@ -15,8 +15,6 @@ import org.bson.Document;
 @Deprecated // Use DataAccessRequestService
 public interface DataAccessRequestAPI {
 
-    List<Document> createDataAccessRequest(Document dataAccessRequest);
-
     Document describeDataAccessRequestById(String id) throws NotFoundException;
 
     List<Document> describeDataAccessWithDataSetIdAndRestriction(List<Integer> dataSetIds);
@@ -32,9 +30,6 @@ public interface DataAccessRequestAPI {
     void deleteDataAccessRequestById(String id) throws IllegalArgumentException;
 
     Document updateDataAccessRequest(Document dar, String id);
-
-    // Draft/Partial Data Access Requests
-    Document createDraftDataAccessRequest(User user, Document dataAccessRequest);
 
     Document updateDraftDataAccessRequest(Document draftDar);
 

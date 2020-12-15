@@ -54,7 +54,6 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -104,7 +103,6 @@ import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
@@ -217,12 +215,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ApprovalExpirationTimeDAO approvalExpirationTimeDAO = injector.getProvider(ApprovalExpirationTimeDAO.class).get();
         final DataSetAuditDAO dataSetAuditDAO = injector.getProvider(DataSetAuditDAO.class).get();
         final ResearcherPropertyDAO researcherPropertyDAO = injector.getProvider(ResearcherPropertyDAO.class).get();
-        final WorkspaceAuditDAO workspaceAuditDAO = injector.getProvider(WorkspaceAuditDAO.class).get();
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
-        final CounterService counterService = injector.getProvider(CounterService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
@@ -236,7 +232,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final WhitelistService whitelistService = injector.getProvider(WhitelistService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
-        DatabaseDataAccessRequestAPI.initInstance(counterService, dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
+        DatabaseDataAccessRequestAPI.initInstance(dataAccessRequestService, useRestrictionConverter, electionDAO, consentDAO, voteDAO, userDAO, dataSetDAO, researcherPropertyDAO);
         DatabaseConsentAPI.initInstance(auditService, jdbi, consentDAO, electionDAO, associationDAO, dataSetDAO);
         DatabaseMatchAPI.initInstance(matchDAO, consentDAO);
         DatabaseDataSetAPI.initInstance(dataSetDAO, dataSetAssociationDAO, userRoleDAO, consentDAO, dataSetAuditDAO, electionDAO, config.getDatasets());
