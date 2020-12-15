@@ -23,7 +23,7 @@ public class ApprovalExpirationTimeServiceTest {
     @Mock
     private UserDAO userDAO;
 
-    ApprovalExpirationTimeService expirationTimeService;
+    private ApprovalExpirationTimeService expirationTimeService;
 
     ApprovalExpirationTime validApproval = new ApprovalExpirationTime(1, 123, new Date(), new Date(), 5, "Testing approval period");
     User validUser = new User();
