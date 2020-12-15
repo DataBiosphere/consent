@@ -1,47 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import java.util.Date;
-import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ApprovalExpirationTimeDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.util.DarConstants;
 
+public class ApprovalExpirationTimeService {
 
-/**
- * Implementation class for ConsentAPI on top of ConsentDAO database support.
- */
-public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpirationTimeAPI {
+    private final ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
+    private final UserDAO userDAO;
 
-    private ApprovalExpirationTimeDAO approvalExpirationTimeDAO;
-    private UserDAO userDAO;
-
-
-    /**
-     * The constructor is private to force use of the factory methods and enforce the singleton pattern.
-     *
-     * @param dao The Data Access Object used to read/write data.
-     */
-    protected DatabaseApprovalExpirationTimeAPI(ApprovalExpirationTimeDAO dao, UserDAO userDAO) {
-        this.approvalExpirationTimeDAO = dao;
+    @Inject
+    public ApprovalExpirationTimeService(ApprovalExpirationTimeDAO approvalExpirationTimeDAO,
+        UserDAO userDAO) {
+        this.approvalExpirationTimeDAO = approvalExpirationTimeDAO;
         this.userDAO = userDAO;
     }
 
-    /**
-     * Initialize the singleton API instance using the provided DAO.  This method should only be called once
-     * during application initialization (from the run() method).  If called a second time it will throw an
-     * IllegalStateException.
-     * Note that this method is not synchronized, as it is not intended to be called more than once.
-     *
-     * @param dao The Data Access Object instance that the API should use to read/write data.
-     */
-
-    public static void initInstance(ApprovalExpirationTimeDAO dao, UserDAO userDAO) {
-        ApprovalExpirationTimeAPIHolder.setInstance(new DatabaseApprovalExpirationTimeAPI(dao, userDAO));
-    }
-
-
-    @Override
     public ApprovalExpirationTime create(ApprovalExpirationTime approvalExpirationTime) {
         if (approvalExpirationTimeDAO.findApprovalExpirationTime() != null) {
             throw new IllegalArgumentException("Approval expiration time is already set");
@@ -51,16 +29,12 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
         return findApprovalExpirationTimeById(id);
     }
 
-
-
-    @Override
     public ApprovalExpirationTime update(ApprovalExpirationTime approvalExpirationTime, Integer id) throws NotFoundException {
         validateRequiredFields(approvalExpirationTime);
         approvalExpirationTimeDAO.updateApprovalExpirationTime(id, approvalExpirationTime.getAmountOfDays(), new Date(), approvalExpirationTime.getUserId());
         return findApprovalExpirationTimeById(id);
     }
 
-    @Override
     public ApprovalExpirationTime findApprovalExpirationTime() {
         ApprovalExpirationTime approvalExpirationTime =  approvalExpirationTimeDAO.findApprovalExpirationTime();
         if(approvalExpirationTime == null){
@@ -71,7 +45,6 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
         return approvalExpirationTime;
     }
 
-    @Override
     public ApprovalExpirationTime findApprovalExpirationTimeById(Integer id) throws NotFoundException {
         ApprovalExpirationTime approvalExpirationTime = approvalExpirationTimeDAO.findApprovalExpirationTimeById(id);
         if(approvalExpirationTime == null){
@@ -80,7 +53,6 @@ public class DatabaseApprovalExpirationTimeAPI extends AbstractApprovalExpiratio
         return approvalExpirationTime;
     }
 
-    @Override
     public void deleteApprovalExpirationTime(Integer id) {
         approvalExpirationTimeDAO.deleteApprovalExpirationTime(id);
     }

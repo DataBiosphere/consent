@@ -20,20 +20,19 @@ import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("{api : (api/)?}approvalExpirationTime")
 public class ApprovalExpirationTimeResource extends Resource {
 
-  private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+  private final ApprovalExpirationTimeService approvalExpirationTimeService;
   private final UserService userService;
 
   @Inject
-  public ApprovalExpirationTimeResource(UserService userService) {
-    this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
+  public ApprovalExpirationTimeResource(ApprovalExpirationTimeService approvalExpirationTimeService,
+      UserService userService) {
+    this.approvalExpirationTimeService = approvalExpirationTimeService;
     this.userService = userService;
   }
 
@@ -49,7 +48,7 @@ public class ApprovalExpirationTimeResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getName());
       approvalExpirationTime.setUserId(user.getDacUserId());
-      approvalExpirationTime = approvalExpirationTimeAPI.create(approvalExpirationTime);
+      approvalExpirationTime = approvalExpirationTimeService.create(approvalExpirationTime);
       uri = info.getRequestUriBuilder().path("{id}").build(approvalExpirationTime.getId());
       return Response.created(uri).entity(approvalExpirationTime).build();
     } catch (Exception e) {
@@ -62,7 +61,7 @@ public class ApprovalExpirationTimeResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response describeApprovalExpirationTime() {
     try {
-      return Response.ok().entity(approvalExpirationTimeAPI.findApprovalExpirationTime()).build();
+      return Response.ok().entity(approvalExpirationTimeService.findApprovalExpirationTime()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -75,7 +74,7 @@ public class ApprovalExpirationTimeResource extends Resource {
   public Response describe(@PathParam("id") Integer id) {
     try {
       return Response.ok()
-          .entity(approvalExpirationTimeAPI.findApprovalExpirationTimeById(id))
+          .entity(approvalExpirationTimeService.findApprovalExpirationTimeById(id))
           .build();
     } catch (NotFoundException e) {
       return createExceptionResponse(e);
@@ -96,7 +95,7 @@ public class ApprovalExpirationTimeResource extends Resource {
       User user = userService.findUserByEmail(authUser.getName());
       approvalExpirationTime.setUserId(user.getDacUserId());
       URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-      approvalExpirationTime = approvalExpirationTimeAPI.update(approvalExpirationTime, id);
+      approvalExpirationTime = approvalExpirationTimeService.update(approvalExpirationTime, id);
       return Response.ok(uri).entity(approvalExpirationTime).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -109,7 +108,7 @@ public class ApprovalExpirationTimeResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response delete(@PathParam("id") Integer id) {
     try {
-      approvalExpirationTimeAPI.deleteApprovalExpirationTime(id);
+      approvalExpirationTimeService.deleteApprovalExpirationTime(id);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

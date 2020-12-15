@@ -1,41 +1,31 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        AbstractApprovalExpirationTimeAPI.class
-})
+import java.net.URI;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.ApprovalExpirationTime;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+
 public class ApprovalExpirationTimeResourceTest {
 
     @Mock
-    private ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
+    private ApprovalExpirationTimeService approvalExpirationTimeService;
 
     @Mock
     private UriInfo uriInfo;
@@ -57,7 +47,6 @@ public class ApprovalExpirationTimeResourceTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(AbstractApprovalExpirationTimeAPI.class);
     }
 
     private void initResource() {
@@ -65,14 +54,13 @@ public class ApprovalExpirationTimeResourceTest {
         when(user.getDacUserId()).thenReturn(1);
         when(user.getDisplayName()).thenReturn("display name");
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(AbstractApprovalExpirationTimeAPI.getInstance()).thenReturn(approvalExpirationTimeAPI);
-        resource = new ApprovalExpirationTimeResource(userService);
+        resource = new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService);
     }
 
     @Test
     public void testCreateApprovalExpirationTime() throws Exception {
         ApprovalExpirationTime approvalExpirationTime = generateApprovalExpirationTime();
-        when(approvalExpirationTimeAPI.create(any())).thenReturn(approvalExpirationTime);
+        when(approvalExpirationTimeService.create(any())).thenReturn(approvalExpirationTime);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/approvalExpirationTime/" + RandomUtils.nextInt(1, 100)));
@@ -85,7 +73,7 @@ public class ApprovalExpirationTimeResourceTest {
     @Test
     public void testDescribeApprovalExpirationTime() {
         ApprovalExpirationTime approvalExpirationTime = generateApprovalExpirationTime();
-        when(approvalExpirationTimeAPI.findApprovalExpirationTime()).thenReturn(approvalExpirationTime);
+        when(approvalExpirationTimeService.findApprovalExpirationTime()).thenReturn(approvalExpirationTime);
         initResource();
 
         Response response = resource.describeApprovalExpirationTime();
@@ -95,7 +83,7 @@ public class ApprovalExpirationTimeResourceTest {
     @Test
     public void testDescribe() {
         ApprovalExpirationTime approvalExpirationTime = generateApprovalExpirationTime();
-        when(approvalExpirationTimeAPI.findApprovalExpirationTimeById(any())).thenReturn(approvalExpirationTime);
+        when(approvalExpirationTimeService.findApprovalExpirationTimeById(any())).thenReturn(approvalExpirationTime);
         initResource();
 
         Response response = resource.describe(RandomUtils.nextInt(1, 10));
@@ -105,7 +93,7 @@ public class ApprovalExpirationTimeResourceTest {
     @Test
     public void testUpdate() throws Exception {
         ApprovalExpirationTime approvalExpirationTime = generateApprovalExpirationTime();
-        when(approvalExpirationTimeAPI.update(any(), any())).thenReturn(approvalExpirationTime);
+        when(approvalExpirationTimeService.update(any(), any())).thenReturn(approvalExpirationTime);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(Mockito.anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build(anyString())).thenReturn(new URI("/api/approvalExpirationTime/" + RandomUtils.nextInt(1, 100)));
@@ -117,7 +105,7 @@ public class ApprovalExpirationTimeResourceTest {
 
     @Test
     public void testDelete() {
-        doNothing().when(approvalExpirationTimeAPI).deleteApprovalExpirationTime(any());
+        doNothing().when(approvalExpirationTimeService).deleteApprovalExpirationTime(any());
         initResource();
 
         Response response = resource.delete(RandomUtils.nextInt(1, 10));

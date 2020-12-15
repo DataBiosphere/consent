@@ -2,32 +2,12 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DataSet;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
-import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.AbstractElectionAPI;
-import org.broadinstitute.consent.http.service.AbstractVoteAPI;
-import org.broadinstitute.consent.http.service.ApprovalExpirationTimeAPI;
-import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
-import org.broadinstitute.consent.http.service.DataSetAPI;
-import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
-import org.broadinstitute.consent.http.service.ElectionAPI;
-import org.broadinstitute.consent.http.service.EmailNotifierService;
-import org.broadinstitute.consent.http.service.VoteAPI;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
-import org.broadinstitute.consent.http.service.users.DACUserAPI;
-import org.broadinstitute.consent.http.util.DarConstants;
-import org.broadinstitute.consent.http.util.DarUtil;
-import org.bson.Document;
-
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
@@ -43,17 +23,33 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.DataSet;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
+import org.broadinstitute.consent.http.service.AbstractDataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.AbstractElectionAPI;
+import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.DataAccessRequestAPI;
+import org.broadinstitute.consent.http.service.DataSetAPI;
+import org.broadinstitute.consent.http.service.DataSetAssociationAPI;
+import org.broadinstitute.consent.http.service.ElectionAPI;
+import org.broadinstitute.consent.http.service.EmailNotifierService;
+import org.broadinstitute.consent.http.service.VoteAPI;
+import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.users.AbstractDACUserAPI;
+import org.broadinstitute.consent.http.service.users.DACUserAPI;
+import org.broadinstitute.consent.http.util.DarConstants;
+import org.broadinstitute.consent.http.util.DarUtil;
+import org.bson.Document;
 
 @Path("{api : (api/)?}dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
 
-    private final ApprovalExpirationTimeAPI approvalExpirationTimeAPI;
     private final DACUserAPI dacUserAPI;
     private final DataAccessRequestAPI accessRequestAPI;
     private final DataSetAPI dataSetAPI;
@@ -68,7 +64,6 @@ public class DataRequestVoteResource extends Resource {
     @Inject
     public DataRequestVoteResource(EmailNotifierService emailNotifierService, VoteService voteService) {
         this.emailNotifierService = emailNotifierService;
-        this.approvalExpirationTimeAPI = AbstractApprovalExpirationTimeAPI.getInstance();
         this.dacUserAPI = AbstractDACUserAPI.getInstance();
         this.accessRequestAPI = AbstractDataAccessRequestAPI.getInstance();
         this.dataSetAPI = AbstractDataSetAPI.getInstance();
@@ -233,9 +228,6 @@ public class DataRequestVoteResource extends Resource {
                 if(CollectionUtils.isNotEmpty(admins)) {
                     emailNotifierService.sendAdminFlaggedDarApproved(access.getString(DarConstants.DAR_CODE), admins, dataOwnerDataSet);
                 }
-                // See DUOS-654. We are temporarily disabling notifications to data owners, so commenting this code
-                // instead of deleting the code path completely.
-//                emailNotifierService.sendNeedsPIApprovalMessage(dataOwnerDataSet, access, approvalExpirationTimeAPI.findApprovalExpirationTime().getAmountOfDays());
             }
         }
     }
@@ -251,4 +243,3 @@ public class DataRequestVoteResource extends Resource {
     }
 
 }
-

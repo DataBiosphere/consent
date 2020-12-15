@@ -89,7 +89,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.WhitelistResource;
 import org.broadinstitute.consent.http.resources.WorkspaceResource;
-import org.broadinstitute.consent.http.service.AbstractApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.AbstractConsentAPI;
 import org.broadinstitute.consent.http.service.AbstractDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.AbstractDataSetAPI;
@@ -102,12 +101,12 @@ import org.broadinstitute.consent.http.service.AbstractReviewResultsAPI;
 import org.broadinstitute.consent.http.service.AbstractSummaryAPI;
 import org.broadinstitute.consent.http.service.AbstractTranslateService;
 import org.broadinstitute.consent.http.service.AbstractVoteAPI;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatabaseApprovalExpirationTimeAPI;
 import org.broadinstitute.consent.http.service.DatabaseConsentAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataAccessRequestAPI;
 import org.broadinstitute.consent.http.service.DatabaseDataSetAPI;
@@ -221,6 +220,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
         // Services
+        final ApprovalExpirationTimeService approvalExpirationTimeService= injector.getProvider(ApprovalExpirationTimeService.class).get();
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final CounterService counterService = injector.getProvider(CounterService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
@@ -248,7 +248,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatabaseVoteAPI.initInstance(voteDAO, electionDAO);
         DatabaseReviewResultsAPI.initInstance(electionDAO, voteDAO, consentDAO);
         TranslateServiceImpl.initInstance();
-        DatabaseApprovalExpirationTimeAPI.initInstance(approvalExpirationTimeDAO, userDAO);
         UseRestrictionValidator.initInstance(client, config.getServicesConfiguration());
         OAuthAuthenticator.initInstance();
         OAuthAuthenticator.getInstance().setClient(injector.getProvider(Client.class).get());
@@ -301,7 +300,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ElectionReviewResource(dataAccessRequestService));
         env.jersey().register(new ElectionResource(voteService));
         env.jersey().register(new EmailNotifierResource(emailNotifierService));
-        env.jersey().register(new ApprovalExpirationTimeResource(userService));
+        env.jersey().register(new ApprovalExpirationTimeResource(approvalExpirationTimeService, userService));
         env.jersey().register(MatchResource.class);
         env.jersey().register(new MetricsResource(metricsService));
         env.jersey().register(new UserResource(userService, whitelistService));
@@ -348,7 +347,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 AbstractMatchingServiceAPI.clearInstance();
                 AbstractMatchAPI.clearInstance();
                 AbstractMatchProcessAPI.clearInstance();
-                AbstractApprovalExpirationTimeAPI.clearInstance();
                 AbstractUseRestrictionValidatorAPI.clearInstance();
                 AbstractOAuthAuthenticator.clearInstance();
                 super.lifeCycleStopped(event);
