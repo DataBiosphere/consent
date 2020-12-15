@@ -95,8 +95,8 @@ public class ApprovalExpirationTimeResource extends Resource {
       User user = userService.findUserByEmail(authUser.getName());
       approvalExpirationTime.setUserId(user.getDacUserId());
       URI uri = info.getRequestUriBuilder().path("{id}").build(id);
-      approvalExpirationTime = approvalExpirationTimeService.update(approvalExpirationTime, id);
-      return Response.ok(uri).entity(approvalExpirationTime).build();
+      ApprovalExpirationTime updatedApprovalExpirationTime = approvalExpirationTimeService.update(approvalExpirationTime, id);
+      return Response.ok(uri).entity(updatedApprovalExpirationTime).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
