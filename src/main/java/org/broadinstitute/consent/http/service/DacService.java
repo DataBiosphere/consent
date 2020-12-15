@@ -125,8 +125,8 @@ public class DacService {
         return dacToUserMap;
     }
 
-    public List<Dac> findDacsByUser(AuthUser authUser, Boolean withMembers) {
-        List<Dac> dacs = isAuthUserAdmin(authUser) ? dacDAO.findAll() : dacDAO.findDacsForEmail(authUser.getName());
+    public List<Dac> findDacsWithMembersOption(Boolean withMembers) {
+        List<Dac> dacs = dacDAO.findAll();
         if (withMembers) {
             return addMemberInfoToDacs(dacs);
         }
