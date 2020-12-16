@@ -28,6 +28,9 @@ public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
     if (hasColumn(resultSet, "electionId")) {
       dac.addElectionId(resultSet.getInt("electionId"));
     }
+    if (hasColumn(resultSet, "datasetid")) {
+      dac.addDatasetId(resultSet.getInt("datasetid"));
+    }
     dacMap.put(dac.getDacId(), dac);
     return dac;
   }

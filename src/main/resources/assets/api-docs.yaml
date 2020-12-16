@@ -1679,6 +1679,7 @@ paths:
       get:
         summary: Manage Data Access Requests
         description: |
+          DEPRECATED, use v2 endpoint
           Returns all the elections created for Data Access Requests relevant to the current user.
           If the user is requesting these as an admin, all are returned. As a DAC member, only those
           assigned to the DAC are returned. As a general user, only those created by the user are
@@ -1705,6 +1706,26 @@ paths:
             description: |
               If optional user id is provided, it must be that of the authenticated user. Non-admin
               and non-DAC users can only see their own Data Access Requests.
+  /api/dar/manage/v2:
+    get:
+      summary: Manage Data Access Requests V2
+      description: |
+        Returns all the elections created for Data Access Requests relevant to the current user.
+      tags:
+        - Data Access Request
+      responses:
+        200:
+          description: A list of DAR elections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataAccessRequestManage'
+        400:
+          description: |
+            If optional user id is provided, it must be that of the authenticated user. Non-admin
+            and non-DAC users can only see their own Data Access Requests.
   /api/dar/cases/unreviewed:
       get:
         summary: getTotalUnReviewedDAR

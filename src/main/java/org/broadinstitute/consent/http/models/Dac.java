@@ -34,6 +34,8 @@ public class Dac {
 
     private List<Integer> electionIds = new ArrayList<>();
 
+    private List<Integer> datasetIds = new ArrayList<>();
+
     public Dac() {
     }
 
@@ -101,5 +103,11 @@ public class Dac {
         this.electionIds.add(electionId);
     }
 
+    public List<Integer> getDatasetIds() {
+        return datasetIds;
+    }
 
+    public void addDatasetId(Integer datasetId) {
+        this.datasetIds.add(datasetId);
+    }
 }

@@ -115,6 +115,22 @@ public class DataAccessRequestService {
     }
 
     /**
+     * Filter DataAccessRequestManage objects on user.
+     *
+     * @param authUser Filter on what DACs the auth user has access to.
+     * @return List of DataAccessRequestManage objects
+     */
+    public List<DataAccessRequestManage> describeDataAccessRequestManageV2(AuthUser authUser) {
+        List<DataAccessRequest> allDars = findAllDataAccessRequests();
+        List<DataAccessRequest> filteredAccessList = dacService.filterDataAccessRequestsByDac(allDars, authUser);
+        filteredAccessList.sort(sortTimeComparator());
+        if (CollectionUtils.isNotEmpty(filteredAccessList)) {
+            return createAccessRequestManageV2(filteredAccessList);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
      * TODO: Cleanup with https://broadinstitute.atlassian.net/browse/DUOS-609
      *
      * Filter DataAccessRequestManage objects on user.
@@ -124,6 +140,7 @@ public class DataAccessRequestService {
      *                 user has access to.
      * @return List of DataAccessRequestManage objects
      */
+    @Deprecated // Use describeDataAccessRequestManageV2
     public List<DataAccessRequestManage> describeDataAccessRequestManage(Integer userId, AuthUser authUser) {
         List<DataAccessRequest> filteredAccessList;
         List<DataAccessRequest> allDars = findAllDataAccessRequests();
@@ -314,6 +331,49 @@ public class DataAccessRequestService {
         return findByReferenceId(referenceId);
     }
 
+    /**
+     * Iterate over a list of DataAccessRequests and find relevant Election, Vote, Dac, and Dataset
+     * information for each one.
+     *
+     * @param dataAccessRequests List of DataAccessRequest
+     * @return List of DataAccessRequestManage
+     */
+    private List<DataAccessRequestManage> createAccessRequestManageV2(List<DataAccessRequest> dataAccessRequests) {
+        List<String> requestIds = dataAccessRequests.stream().map(DataAccessRequest::getReferenceId).collect(toList());
+        List<Election> allElections = electionDAO.findLastElectionsByReferenceIds(requestIds).stream()
+            .filter(e -> e.getElectionType().equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()))
+            .collect(toList());
+        Map<String, Election> referenceIdToElectionMap = allElections.stream().collect(Collectors.toMap(Election::getReferenceId, Function.identity()));
+        List<Integer> electionIds = allElections.stream().map(Election::getElectionId).collect(toList());
+        List<Vote> allVotes = voteDAO.findVotesByElectionIds(electionIds);
+        Map<String, List<Vote>> referenceIdToVoteMap = allElections.stream()
+            .collect(Collectors.toMap(
+                Election::getReferenceId,
+                e -> allVotes.stream()
+                    .filter(v -> v.getElectionId().equals(e.getElectionId()))
+                    .collect(toList())
+            ));
+        List<Integer> datasetIds = dataAccessRequests.stream()
+            .map(DataAccessRequest::getData).collect(Collectors.toList()).stream()
+            .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(Collectors.toList());
+        Map<Integer, DataSet> datasetIdToDatasetMap = dataSetDAO.findDataSetsByIdList(datasetIds).stream()
+            .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
+        List<Dac> dacs = dacDAO.findDacsForDatasetIds(datasetIds);
+
+        return dataAccessRequests.stream().map(dar -> {
+            DataAccessRequestManage darManage = new DataAccessRequestManage();
+            darManage.setDar(dar);
+            darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
+            darManage.setVotes(referenceIdToVoteMap.get(darManage.getReferenceId()));
+            dar.getData().getDatasetIds().stream().findFirst().ifPresent(id -> {
+                darManage.setDataSet(datasetIdToDatasetMap.get(id));
+                dacs.stream().filter(dataset -> dataset.getDatasetIds().contains(id)).findFirst().ifPresent(darManage::setDac);
+            });
+            return darManage;
+        }).collect(toList());
+    }
+
+    @Deprecated // Use createAccessRequestManageV2 instead
     private List<DataAccessRequestManage> createAccessRequestManage(
             List<DataAccessRequest> documents,
             Map<String, Election> referenceIdElectionMap,

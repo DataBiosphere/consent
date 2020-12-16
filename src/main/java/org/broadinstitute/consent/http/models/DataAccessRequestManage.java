@@ -1,11 +1,23 @@
 package org.broadinstitute.consent.http.models;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+/**
+ * This class represents the basic elements that are necessary for a list of Data Access Requests
+ * that can be managed by an admin, chair, or member.
+ *
+ * TODO:
+ * Deprecate all basic elements and instead use only the full objects as part of this composite
+ * class
+ */
 public class DataAccessRequestManage {
+
+    private DataAccessRequest dar;
+    private Election election;
+    private List<Vote> votes;
+    private Dac dac;
+    private DataSet dataSet;
 
     private String referenceId;
     private String logged;
@@ -18,7 +30,6 @@ public class DataAccessRequestManage {
     private Integer rpElectionId;
     private Integer rpVoteId;
     private String consentGroupName;
-    private Dac dac;
     private String electionStatus;
     private String status;
     private String rus;
@@ -38,6 +49,46 @@ public class DataAccessRequestManage {
     private User ownerUser;
 
     public DataAccessRequestManage() {
+    }
+
+    public DataAccessRequest getDar() {
+        return dar;
+    }
+
+    public void setDar(DataAccessRequest dar) {
+        this.dar = dar;
+    }
+
+    public Election getElection() {
+        return election;
+    }
+
+    public void setElection(Election election) {
+        this.election = election;
+    }
+
+    public List<Vote> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(List<Vote> votes) {
+        this.votes = votes;
+    }
+
+    public Dac getDac() {
+        return dac;
+    }
+
+    public void setDac(Dac dac) {
+        this.dac = dac;
+    }
+
+    public DataSet getDataSet() {
+        return dataSet;
+    }
+
+    public void setDataSet(DataSet dataSet) {
+        this.dataSet = dataSet;
     }
 
     public String getReferenceId() {
@@ -126,14 +177,6 @@ public class DataAccessRequestManage {
 
     public void setConsentGroupName(String consentGroupName) {
         this.consentGroupName = consentGroupName;
-    }
-
-    public Dac getDac() {
-        return dac;
-    }
-
-    public void setDac(Dac dac) {
-        this.dac = dac;
     }
 
     public String getElectionStatus() {
