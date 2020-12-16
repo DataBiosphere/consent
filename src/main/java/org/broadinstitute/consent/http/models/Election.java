@@ -1,11 +1,14 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 
 import java.util.Date;
 
+@JsonInclude(Include.NON_NULL)
 public class Election {
 
     @JsonProperty
