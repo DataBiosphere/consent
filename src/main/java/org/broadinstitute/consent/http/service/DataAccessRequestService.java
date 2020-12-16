@@ -340,11 +340,14 @@ public class DataAccessRequestService {
      */
     private List<DataAccessRequestManage> createAccessRequestManageV2(List<DataAccessRequest> dataAccessRequests) {
         List<String> requestIds = dataAccessRequests.stream().map(DataAccessRequest::getReferenceId).collect(toList());
-        List<Election> allElections = electionDAO.findLastElectionsByReferenceIds(requestIds).stream()
-            .filter(e -> e.getElectionType().equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()))
-            .collect(toList());
-        Map<String, Election> referenceIdToElectionMap = allElections.stream().collect(Collectors.toMap(Election::getReferenceId, Function.identity()));
+        // Batch DAO call 1
+        List<Election> allElections = electionDAO
+            .findLastElectionsByReferenceIdsAndType(requestIds, ElectionType.DATA_ACCESS.getValue());
+        Map<String, Election> referenceIdToElectionMap = allElections
+            .stream()
+            .collect(Collectors.toMap(Election::getReferenceId, Function.identity()));
         List<Integer> electionIds = allElections.stream().map(Election::getElectionId).collect(toList());
+        // Batch DAO call 2
         List<Vote> allVotes = voteDAO.findVotesByElectionIds(electionIds);
         Map<String, List<Vote>> referenceIdToVoteMap = allElections.stream()
             .collect(Collectors.toMap(
@@ -356,8 +359,11 @@ public class DataAccessRequestService {
         List<Integer> datasetIds = dataAccessRequests.stream()
             .map(DataAccessRequest::getData).collect(toList()).stream()
             .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
-        Map<Integer, DataSet> datasetIdToDatasetMap = dataSetDAO.findDataSetsByIdList(datasetIds).stream()
+        // Batch DAO call 3
+        Map<Integer, DataSet> datasetIdToDatasetMap = dataSetDAO.findDataSetsByIdList(datasetIds)
+            .stream()
             .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
+        // Batch DAO call 4
         List<Dac> dacs = dacDAO.findDacsForDatasetIds(datasetIds);
 
         return dataAccessRequests.stream().map(dar -> {
@@ -367,7 +373,10 @@ public class DataAccessRequestService {
             darManage.setVotes(referenceIdToVoteMap.get(darManage.getReferenceId()));
             dar.getData().getDatasetIds().stream().findFirst().ifPresent(id -> {
                 darManage.setDataSet(datasetIdToDatasetMap.get(id));
-                dacs.stream().filter(dataset -> dataset.getDatasetIds().contains(id)).findFirst().ifPresent(darManage::setDac);
+                dacs.stream()
+                    .filter(dataset -> dataset.getDatasetIds().contains(id))
+                    .findFirst()
+                    .ifPresent(darManage::setDac);
             });
             return darManage;
         }).collect(toList());
