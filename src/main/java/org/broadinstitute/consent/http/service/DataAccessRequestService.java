@@ -354,8 +354,8 @@ public class DataAccessRequestService {
                     .collect(toList())
             ));
         List<Integer> datasetIds = dataAccessRequests.stream()
-            .map(DataAccessRequest::getData).collect(Collectors.toList()).stream()
-            .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(Collectors.toList());
+            .map(DataAccessRequest::getData).collect(toList()).stream()
+            .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
         Map<Integer, DataSet> datasetIdToDatasetMap = dataSetDAO.findDataSetsByIdList(datasetIds).stream()
             .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
         List<Dac> dacs = dacDAO.findDacsForDatasetIds(datasetIds);
