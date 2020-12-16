@@ -194,7 +194,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery("SELECT distinct * " +
             " FROM election e " +
-            " INNER JOIN (select referenceid, max(createdate) maxdate from election e group by referenceid) electionview on electionview.maxdate = e.createdate and electionview.referenceid = e.referenceid  " +
+            " INNER JOIN (SELECT referenceid, max(createdate) maxdate FROM election e GROUP BY referenceid) electionview ON electionview.maxdate = e.createdate AND electionview.referenceid = e.referenceid  " +
             " WHERE e.referenceid in (<referenceIds>) ")
     @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findLastElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
