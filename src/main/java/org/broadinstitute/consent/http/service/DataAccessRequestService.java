@@ -367,7 +367,7 @@ public class DataAccessRequestService {
                 DataAccessRequestManage darManage = new DataAccessRequestManage();
                 darManage.setDar(dar);
                 darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
-                darManage.setVotes(referenceIdToVoteMap.get(darManage.getReferenceId()));
+                darManage.setVotes(referenceIdToVoteMap.get(dar.getReferenceId()));
                 dar.getData().getDatasetIds().stream()
                     .findFirst()
                     .flatMap(id -> dacs.stream()
