@@ -18,6 +18,99 @@ security:
       - profile
 
 paths:
+  /api/approvalExpirationTime:
+    get:
+      summary: Get the approval expiration time
+      description: |
+        Get the approval expiration time. If no existing time exists, a
+        default time of 7 days is returned.
+      tags:
+        - Election
+      responses:
+        200:
+          description: The approval expiration time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalExpirationTime'
+    post:
+      summary: Create approval expiration time
+      description: Create approval expiration time
+      tags:
+        - Election
+      requestBody:
+        description: Approval Expiration Time
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalExpirationTime'
+      responses:
+        201:
+          description: Successfully created
+        400:
+          description: Bad request
+  /api/approvalExpirationTime/{id}:
+    get:
+      summary: Get the approval expiration time
+      description: Get the approval expiration time
+      tags:
+        - Election
+      parameters:
+        - name: id
+          in: path
+          description: Approval Expiration Time id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: The approval expiration time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalExpirationTime'
+        400:
+          description: ApprovalExpirationTime not found
+    put:
+      summary: Update approval expiration time
+      description: Update approval expiration time
+      tags:
+        - Election
+      parameters:
+        - name: id
+          in: path
+          description: Approval Expiration Time id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Approval Expiration Time
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalExpirationTime'
+      responses:
+        200:
+          description: Successfully updated
+        400:
+          description: Bad request
+    delete:
+      summary: Delete approval expiration time
+      description: Delete approval expiration time
+      tags:
+        - Election
+      parameters:
+        - name: id
+          in: path
+          description: Approval Expiration Time id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully deleted
   /api/ontology:
     get:
       summary: List Ontology Files
@@ -3348,6 +3441,25 @@ components:
             email: email authorization
             profile: profile authorization
   schemas:
+    ApprovalExpirationTime:
+      type: object
+      properties:
+        id:
+          description: System assigned id
+          type: integer
+        userId:
+          description: System assigned create user id
+          type: integer
+        createDate:
+          description: System assigned creation date
+          type: string
+          format: date
+        amountOfDays:
+          description: Number of days
+          type: integer
+        displayName:
+          description: System assigned create user display name
+          type: string
     UserProperties:
       type: array
       items:

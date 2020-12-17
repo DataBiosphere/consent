@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.db.WorkspaceAuditDAO;
 import org.broadinstitute.consent.http.mail.MailService;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.service.ApprovalExpirationTimeService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
@@ -161,6 +162,13 @@ public class ConsentModule extends AbstractModule {
     @Provides
     UseRestrictionConverter providesUseRestrictionConverter() {
         return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+    }
+
+    @Provides
+    ApprovalExpirationTimeService providesApprovalExpirationTimeService() {
+        return new ApprovalExpirationTimeService(
+            providesApprovalExpirationTimeDAO(),
+            providesUserDAO());
     }
 
     @Provides
