@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collections;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.Election;
 import org.junit.Assert;
@@ -121,4 +124,16 @@ public class ElectionDAOTest extends DAOTestHelper {
         assertEquals(e.getElectionId(), election.getElectionId());
     }
 
+    @Test
+    public void testFindLastElectionsByReferenceIdsAndType() {
+        DataAccessRequest dar = createDataAccessRequestV2();
+        DataSet d = createDataset();
+        createElection(dar.getReferenceId(), d.getDataSetId());
+        List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(
+            Collections.singletonList(dar.getReferenceId()),
+            ElectionType.DATA_ACCESS.getValue());
+        assertNotNull(elections);
+        assertFalse(elections.isEmpty());
+        assertEquals(1, elections.size());
+    }
 }
