@@ -220,7 +220,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final AssociationDAO associationDAO = injector.getProvider(AssociationDAO.class).get();
 
         // Services
-        final ApprovalExpirationTimeService approvalExpirationTimeService= injector.getProvider(ApprovalExpirationTimeService.class).get();
+        final ApprovalExpirationTimeService approvalExpirationTimeService = injector.getProvider(ApprovalExpirationTimeService.class).get();
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
         final CounterService counterService = injector.getProvider(CounterService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
