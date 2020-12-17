@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.db.ResearcherPropertyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.resources.ApprovalExpirationTimeResource;
 import org.broadinstitute.consent.http.resources.ConsentAssociationResource;
@@ -273,6 +274,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
         errorHandler.addErrorPage(404, "/error/404");
         env.getApplicationContext().setErrorHandler(errorHandler);
+        env.jersey().register(ResponseServerFilter.class);
         env.jersey().register(ErrorResource.class);
 
         // Register standard application resources.
