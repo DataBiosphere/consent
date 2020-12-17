@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
 
@@ -66,7 +67,8 @@ public class ApprovalExpirationTimeServiceTest {
         when(approvalExpirationTimeDAO.findApprovalExpirationTimeById(anyInt())).thenReturn(validApproval);
         when(approvalExpirationTimeDAO.findApprovalExpirationTime()).thenReturn(null);
         when(userDAO.findUserById(anyInt())).thenReturn(validUser);
-        expirationTimeService.create(validApproval);
+        ApprovalExpirationTime aet = expirationTimeService.create(validApproval);
+        assertNotNull(aet);
     }
 
     @Test
