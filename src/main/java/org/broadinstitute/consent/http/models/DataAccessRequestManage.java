@@ -16,7 +16,6 @@ public class DataAccessRequestManage {
     private Election election;
     private List<Vote> votes;
     private Dac dac;
-    private DataSet dataSet;
 
     @Deprecated
     private String referenceId;
@@ -107,14 +106,6 @@ public class DataAccessRequestManage {
 
     public void setDac(Dac dac) {
         this.dac = dac;
-    }
-
-    public DataSet getDataSet() {
-        return dataSet;
-    }
-
-    public void setDataSet(DataSet dataSet) {
-        this.dataSet = dataSet;
     }
 
     public String getReferenceId() {

@@ -106,7 +106,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     @SqlQuery("SELECT d.*, a.datasetid " +
             " FROM dac d " +
             " INNER JOIN consents c ON d.dac_id = c.dac_id " +
-            " INNER JOIN consentassociations a ON a.consentId = c.consentId " +
+            " INNER JOIN consentassociations a ON a.consentid = c.consentid " +
             " WHERE a.datasetid IN (<datasetIds>) ")
     List<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 

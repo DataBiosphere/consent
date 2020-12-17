@@ -332,7 +332,7 @@ public class DataAccessRequestService {
     }
 
     /**
-     * Iterate over a list of DataAccessRequests and find relevant Election, Vote, Dac, and Dataset
+     * Iterate over a list of DataAccessRequests to find relevant Election, Vote, and Dac
      * information for each one.
      *
      * @param dataAccessRequests List of DataAccessRequest
@@ -340,15 +340,14 @@ public class DataAccessRequestService {
      */
     private List<DataAccessRequestManage> createAccessRequestManageV2(List<DataAccessRequest> dataAccessRequests) {
         List<String> requestIds = dataAccessRequests.stream().map(DataAccessRequest::getReferenceId).collect(toList());
-        // Batch DAO call 1
-        List<Election> allElections = electionDAO
-            .findLastElectionsByReferenceIdsAndType(requestIds, ElectionType.DATA_ACCESS.getValue());
+        // Batch call 1
+        List<Election> allElections = requestIds.isEmpty() ? Collections.emptyList() : electionDAO.findLastElectionsByReferenceIdsAndType(requestIds, ElectionType.DATA_ACCESS.getValue());
         Map<String, Election> referenceIdToElectionMap = allElections
             .stream()
             .collect(Collectors.toMap(Election::getReferenceId, Function.identity()));
         List<Integer> electionIds = allElections.stream().map(Election::getElectionId).collect(toList());
-        // Batch DAO call 2
-        List<Vote> allVotes = voteDAO.findVotesByElectionIds(electionIds);
+        // Batch call 2
+        List<Vote> allVotes = electionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(electionIds);
         Map<String, List<Vote>> referenceIdToVoteMap = allElections.stream()
             .collect(Collectors.toMap(
                 Election::getReferenceId,
@@ -359,27 +358,25 @@ public class DataAccessRequestService {
         List<Integer> datasetIds = dataAccessRequests.stream()
             .map(DataAccessRequest::getData).collect(toList()).stream()
             .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
-        // Batch DAO call 3
-        Map<Integer, DataSet> datasetIdToDatasetMap = dataSetDAO.findDataSetsByIdList(datasetIds)
-            .stream()
-            .collect(Collectors.toMap(DataSet::getDataSetId, Function.identity()));
-        // Batch DAO call 4
-        List<Dac> dacs = dacDAO.findDacsForDatasetIds(datasetIds);
+        // Batch call 3
+        List<Dac> dacs = datasetIds.isEmpty() ? Collections.emptyList() : dacDAO.findDacsForDatasetIds(datasetIds);
 
-        return dataAccessRequests.stream().map(dar -> {
-            DataAccessRequestManage darManage = new DataAccessRequestManage();
-            darManage.setDar(dar);
-            darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
-            darManage.setVotes(referenceIdToVoteMap.get(darManage.getReferenceId()));
-            dar.getData().getDatasetIds().stream().findFirst().ifPresent(id -> {
-                darManage.setDataSet(datasetIdToDatasetMap.get(id));
-                dacs.stream()
-                    .filter(dataset -> dataset.getDatasetIds().contains(id))
+        return dataAccessRequests.stream()
+            .filter(Objects::nonNull)
+            .map(dar -> {
+                DataAccessRequestManage darManage = new DataAccessRequestManage();
+                darManage.setDar(dar);
+                darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
+                darManage.setVotes(referenceIdToVoteMap.get(darManage.getReferenceId()));
+                dar.getData().getDatasetIds().stream()
                     .findFirst()
+                    .flatMap(id -> dacs.stream()
+                        .filter(dataset -> dataset.getDatasetIds().contains(id))
+                        .findFirst())
                     .ifPresent(darManage::setDac);
-            });
-            return darManage;
-        }).collect(toList());
+                return darManage;
+            })
+            .collect(toList());
     }
 
     @Deprecated // Use createAccessRequestManageV2 instead
