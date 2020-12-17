@@ -178,6 +178,21 @@ public class DAOTestHelper {
         return electionDAO.findElectionById(electionId);
     }
 
+    protected Election createExtendedElection(String referenceId, Integer datasetId) {
+        Integer electionId = electionDAO.insertElection(
+                ElectionType.DATA_ACCESS.getValue(),
+                ElectionStatus.OPEN.getValue(),
+                new Date(),
+                referenceId,
+                Boolean.TRUE,
+                "dataUseLetter",
+                "dulName",
+                datasetId
+        );
+        createdElectionIds.add(electionId);
+        return electionDAO.findElectionById(electionId);
+    }
+
     protected Election createRPElection(String referenceId, Integer datasetId) {
         Integer electionId = electionDAO.insertElection(
                 ElectionType.RP.getValue(),
