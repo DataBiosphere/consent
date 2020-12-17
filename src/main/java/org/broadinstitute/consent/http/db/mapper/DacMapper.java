@@ -10,7 +10,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
 
-  private Map<Integer, Dac> dacMap = new HashMap<>();
+  private final Map<Integer, Dac> dacMap = new HashMap<>();
 
   @Override
   public Dac map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
@@ -26,7 +26,7 @@ public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
     dac.setCreateDate(resultSet.getDate("create_date"));
     dac.setUpdateDate(resultSet.getDate("update_date"));
     if (hasColumn(resultSet, "electionId")) {
-      dac.addElectionId(resultSet.getInt("electionId"));
+      dac.addElectionId(resultSet.getInt("electionid"));
     }
     if (hasColumn(resultSet, "datasetid")) {
       dac.addDatasetId(resultSet.getInt("datasetid"));

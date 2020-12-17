@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserMapper;
@@ -108,6 +109,6 @@ public interface DacDAO extends Transactional<DacDAO> {
             " INNER JOIN consents c ON d.dac_id = c.dac_id " +
             " INNER JOIN consentassociations a ON a.consentid = c.consentid " +
             " WHERE a.datasetid IN (<datasetIds>) ")
-    List<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
+    Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

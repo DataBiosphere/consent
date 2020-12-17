@@ -359,7 +359,7 @@ public class DataAccessRequestService {
             .map(DataAccessRequest::getData).collect(toList()).stream()
             .map(DataAccessRequestData::getDatasetIds).flatMap(List::stream).collect(toList());
         // Batch call 3
-        List<Dac> dacs = datasetIds.isEmpty() ? Collections.emptyList() : dacDAO.findDacsForDatasetIds(datasetIds);
+        Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
 
         return dataAccessRequests.stream()
             .filter(Objects::nonNull)
