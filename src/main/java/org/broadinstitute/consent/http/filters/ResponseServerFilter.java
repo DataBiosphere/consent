@@ -13,6 +13,7 @@ public class ResponseServerFilter implements ContainerResponseFilter {
   public void filter(
       ContainerRequestContext requestContext,
       ContainerResponseContext responseContext) throws IOException {
+    // When the no-sniff header is on the swagger-ui files, it breaks the overall UI
     if (!requestContext.getUriInfo().getPath().contains("swagger-ui")) {
       responseContext.getHeaders().add("X-Content-Type-Options", "nosniff");
     }
