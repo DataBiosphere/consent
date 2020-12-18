@@ -19,6 +19,7 @@ object TestConfig {
   val defaultUserAgent: String = "Gatling Client"
   val plainTextHeader: Map[String, String] = Map("Accept" -> "text/plain")
   val jsonHeader: Map[String, String] = Map("Accept" -> "application/json")
+  val jsonBodyHeader: Map[String, String] = Map("Content-Type" -> "application/json")
 
   lazy val defaultHttpProtocol: HttpProtocolBuilder = {
     http
