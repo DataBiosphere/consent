@@ -99,31 +99,114 @@ object Requests {
 
   object DataSet {
     val dataSetResponse: String = "DATASET_RESPONSE"
+    val dataSetsByDataSetId: String = "DATASET_BYDSID_"
+
     def byUserId(expectedStatus: Int, dacUserId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get DataSet By User")
-            .get("/api/dataset?dacUserId=" + dacUserId)
-            .headers(TestConfig.jsonHeader)
-            .headers(additionalHeaders)
-            .check(bodyString.saveAs(dataSetResponse))
-            .check(status.is(expectedStatus))
+        .get("/api/dataset?dacUserId=" + dacUserId)
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(dataSetResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def getDataSetsByDataSetId(expectedStatus: Int, dataSetId: String, additionalHeaders: Map[String, String], index: Int = 0): HttpRequestBuilder = {
+      http("Get DataSets By Data Set ID")
+        .get("/api/dataset/" + dataSetId)
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(dataSetsByDataSetId + index))
+        .check(status.is(expectedStatus))
+    }
+
+    def getDataSetsByDataSetIds(expectedStatus: Int, additionalHeaders: Map[String, String], dataSetReqs: HttpRequestBuilder*): HttpRequestBuilder = {
+      http("Get DataSets By Data Set IDs")
+        .get("/")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .resources(
+          dataSetReqs:_*
+        )
+
     }
   }
 
   object Dar {
     val darPartialResponse: String = "DAR_RESPONSE"
     val darRequestBody: String = "darRequestBody"
+    val darPartialJson: String = "darPartialJson"
     val darReferenceId: String = "darReferenceId"
     val darId: String = "darId"
+
+    def getPartial(expectedStatus: Int, referenceId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Partial Dar")
+        .get("/api/dar/v2/" + referenceId)
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(darPartialJson))
+        .check(status.is(expectedStatus))
+    }
+
     def partialSave(expectedStatus: Int, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-        http("Save Partial Dar")
-          .post("/api/dar/v2/draft")
-          .headers(TestConfig.jsonHeader)
-          .headers(additionalHeaders)
-          .body(StringBody(body)).asJson
-          .check(jsonPath("$.referenceId").saveAs(darReferenceId))
-          .check(jsonPath("$.id").saveAs(darId))
-          .check(bodyString.saveAs(darPartialResponse))
-          .check(status.is(expectedStatus))
+      http("Save Partial Dar")
+        .post("/api/dar/v2/draft")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body)).asJson
+        .check(jsonPath("$.referenceId").saveAs(darReferenceId))
+        .check(jsonPath("$.id").saveAs(darId))
+        .check(bodyString.saveAs(darPartialResponse))
+        .check(status.is(expectedStatus))
+    }
+  }
+
+  object Researcher {
+    val researcherPropertiesResponse: String = "researcherPropertiesResponse"
+
+    def getResearcherProperties(expectedStatus: Int, userId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Researcher Properties")
+        .get("/api/researcher/" + userId)
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(researcherPropertiesResponse))
+        .check(status.is(expectedStatus))
+    }
+  }
+
+  object FireCloud {
+    val fireCloudVerifyResponse: String = "fireCloudVerifyResponse"
+    val fireCloudVerifyStatus: String = "fireCloudVerifyStatus"
+    val verifyTokenResponse: String = "verifyTokenResponse"
+    val registerUserResponse: String = "registerUserResponse"
+
+    def verifyUser(additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Verify User with FireCloud")
+        .get(s"${TestConfig.fireCloudUrl}/me")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(fireCloudVerifyResponse))
+        .check(jsonPath("$.statusCode").saveAs(fireCloudVerifyStatus))
+        .check(status.not(500))
+    }
+
+    def verifyToken(expectedStatus: Int, token: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Verify eRA Token")
+        .post(s"${TestConfig.profileUrl}/shibboleth-token")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(token))
+        .check(bodyString.saveAs(verifyTokenResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def registerUser(expectedStatus: Int, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Register FC User")
+        .post(s"${TestConfig.fireCloudUrl}/register/profile")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body)).asJson
+        .check(bodyString.saveAs(registerUserResponse))
+        .check(status.is(expectedStatus))
     }
   }
 }
