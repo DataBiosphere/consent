@@ -4,6 +4,9 @@ import java.time.LocalDateTime
 import org.broadinstitute.dsp.consent.models.{ResearcherInfo, FireCloudProfile, User}
 
 object NihService {
+    val millisecondsPerDay: Long = {
+        24 * 60 * 60 * 1000
+    }
     def expirationCount(expDate: Long): Int = {
         var result = -1;
         if (expDate > 0) {
@@ -16,6 +19,11 @@ object NihService {
         }
 
         result
+    }
+
+    def nextDate(): Long = {
+        val currentTime = System.currentTimeMillis
+        currentTime + (millisecondsPerDay * 30)
     }
 
     def parseProfile(info: ResearcherInfo, user: User, title: String): FireCloudProfile = {

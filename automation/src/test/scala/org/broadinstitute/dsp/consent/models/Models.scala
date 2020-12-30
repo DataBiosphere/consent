@@ -25,22 +25,22 @@ case class ResearcherInfo(
     division: Option[String] = None,
     address2: Option[String] = None,
     state: Option[String] = None,
-    eRACommonsID: Option[Int] = None,
+    eRACommonsID: Option[String] = None,
     pubmedID: Option[String] = None,
     scientificURL: Option[String] = None,
     havePI: Option[String] = None,
     piName: Option[String] = None,
     piEmail: Option[String] = None,
-    piERACommonsID: Option[Int] = None,
+    piERACommonsID: Option[String] = None,
     completed: Option[String] = None,
     investigator: Option[String] = None,
-    eraExpiration: Option[Long] = None,
-    eraAuthorized: Option[Boolean] = None,
+    eraExpiration: Option[String] = None,
+    eraAuthorized: Option[String] = None,
     nihUsername: Option[String] = None,
     linkedIn: Option[String] = None,
     researcherGate: Option[String] = None,
     orcid: Option[String] = None,
-    checkNotifications: Option[Boolean] = None,
+    checkNotifications: Option[String] = None,
     libraryCards: Option[Seq[String]] = None,
     libraryCardEntries: Option[Seq[WhiteListEntry]] = None
 )
@@ -86,7 +86,7 @@ case class DataSet(
     active: Boolean,
     needsApproval: Boolean,
     isAssociatedToDataOwners: Option[Boolean],
-    updateAssociationToDataOwnerAllowed: Option[Boolean],
+    //updateAssociationToDataOwnerAllowed: Option[Boolean],
     alias: String,
     objectId: Option[String],
     createDate: Option[Long],
@@ -260,6 +260,17 @@ case class FireCloudProfile(
     nonProfitStatus: Option[String] = None
 )
 
+case class NihUserAccount(
+    linkedNihUsername: String,
+    datasetPermissions: Option[Seq[String]] = None,
+    linkExpireTime: String,
+    status: Boolean
+)
+
+case class NihVerify(
+    statusCode: Option[String]
+)
+
 object JsonProtocols extends DefaultJsonProtocol {
     implicit val researcherPropertyFormat = jsonFormat4(ResearcherProperty)
     implicit val userRoleFormat = jsonFormat5(UserRole)
@@ -271,9 +282,11 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val dataSetDetailFormat = jsonFormat3(DataSetDetailEntry)
     implicit val ontologyEntryFormat = jsonFormat4(OntologyEntry)
     implicit val userFormat = jsonFormat9(User)
-    implicit val dataSetFormat = jsonFormat17(DataSet)
+    implicit val dataSetFormat = jsonFormat16(DataSet)
     implicit val dataAccessRequestDraftFormat = jsonFormat3(DataAccessRequestDraft)
     implicit val fireCloudProfileFormat = jsonFormat11(FireCloudProfile)
+    implicit val nihUserFormat = jsonFormat4(NihUserAccount)
+    implicit val nihVerify = jsonFormat1(NihVerify)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -323,22 +336,22 @@ object JsonProtocols extends DefaultJsonProtocol {
                 optionalEntryReader("division", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("address2", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("state", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eRACommonsID", fields, _.convertTo[Option[Int]], None),
+                optionalEntryReader("eRACommonsID", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("pubmedID", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("scientificURL", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("havePI", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("piName", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("piEmail", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("piERACommonsID", fields, _.convertTo[Option[Int]], None),
+                optionalEntryReader("piERACommonsID", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("completed", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("investigator", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("eraExpiration", fields, _.convertTo[Option[Long]], None),
-                optionalEntryReader("eraAuthorized", fields, _.convertTo[Option[Boolean]], None),
+                optionalEntryReader("eraExpiration", fields, _.convertTo[Option[String]], None),
+                optionalEntryReader("eraAuthorized", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("nihUsername", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("linkedIn", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("researcherGate", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("orcid", fields, _.convertTo[Option[String]], None),
-                optionalEntryReader("checkNotifications", fields, _.convertTo[Option[Boolean]], None),
+                optionalEntryReader("checkNotifications", fields, _.convertTo[Option[String]], None),
                 optionalEntryReader("libraryCards", fields, _.convertTo[Option[Seq[String]]], None),
                 optionalEntryReader("libraryCardEntries", fields, _.convertTo[Option[Seq[WhiteListEntry]]], None)
             )

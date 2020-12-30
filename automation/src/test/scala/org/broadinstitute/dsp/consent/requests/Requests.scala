@@ -61,7 +61,7 @@ object Requests {
   }
 
   object User {
-    val userResponse: String = "USER_RESPONSE"
+    val userResponse: String = "userResponse"
     val dacUserId: String = "dacUserId"
     def me(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get User")
@@ -158,6 +158,26 @@ object Requests {
         .check(bodyString.saveAs(darPartialResponse))
         .check(status.is(expectedStatus))
     }
+
+    def updatePartial(expectedStatus: Int, referenceId: String, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Update Partial Dar")
+        .put("/api/dar/v2/draft/" + referenceId)
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body)).asJson
+        .check(bodyString.saveAs(darPartialJson))
+        .check(status.is(expectedStatus))
+    }
+
+    def saveFinal(expectedStatus: Int, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Submit Dar")
+        .post("/api/dar/v2/")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body)).asJson
+        .check(bodyString.saveAs(darPartialJson))
+        .check(status.is(expectedStatus))
+    }
   }
 
   object Researcher {
@@ -178,6 +198,7 @@ object Requests {
     val fireCloudVerifyStatus: String = "fireCloudVerifyStatus"
     val verifyTokenResponse: String = "verifyTokenResponse"
     val registerUserResponse: String = "registerUserResponse"
+    val saveNihUserResponse: String = "saveNihUserResponse"
 
     def verifyUser(additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Verify User with FireCloud")
@@ -185,7 +206,7 @@ object Requests {
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .check(bodyString.saveAs(fireCloudVerifyResponse))
-        .check(jsonPath("$.statusCode").saveAs(fireCloudVerifyStatus))
+        .check(status.saveAs(fireCloudVerifyStatus))
         .check(status.not(500))
     }
 
@@ -206,6 +227,16 @@ object Requests {
         .headers(additionalHeaders)
         .body(StringBody(body)).asJson
         .check(bodyString.saveAs(registerUserResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def saveNihUser(expectedStatus: Int, body: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Save Nih User")
+        .post("/api/nih")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .body(StringBody(body)).asJson
+        .check(bodyString.saveAs(saveNihUserResponse))
         .check(status.is(expectedStatus))
     }
   }
