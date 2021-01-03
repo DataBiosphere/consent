@@ -137,6 +137,7 @@ object Requests {
     val darPartialJson: String = "darPartialJson"
     val darReferenceId: String = "darReferenceId"
     val darId: String = "darId"
+    val manageDarResponse: String = "manageDarResponse"
 
     def getPartial(expectedStatus: Int, referenceId: String, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
       http("Get Partial Dar")
@@ -177,6 +178,16 @@ object Requests {
         .body(StringBody(body)).asJson
         .check(bodyString.saveAs(darPartialJson))
         .check(status.is(expectedStatus))
+    }
+
+    def manageDar(expectedStatus: Int, additionalHeaders: Map[String, String], userId: String = ""): HttpRequestBuilder = {
+      http("Manage DARs")
+        .get("/api/dar/manage/?userId=" + userId)
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(manageDarResponse))
+        .check(status.is(expectedStatus))
+
     }
   }
 
@@ -238,6 +249,38 @@ object Requests {
         .body(StringBody(body)).asJson
         .check(bodyString.saveAs(saveNihUserResponse))
         .check(status.is(expectedStatus))
+    }
+  }
+
+  object Admin {
+    val unreviewedConsentResponse: String = "unreviewedConsentResponse"
+    val unreviewedDarResponse: String = "unreviewedDarResponse"
+
+    def unreviewedConsent(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Unreviewed Consent")
+        .get("/api/consent/unreviewed")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(unreviewedConsentResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def unreviewedDar(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Get Unreviewed DARs")
+        .get("/api/dar/cases/unreviewed")
+        .headers(TestConfig.jsonHeader)
+        .headers(additionalHeaders)
+        .check(bodyString.saveAs(unreviewedDarResponse))
+        .check(status.is(expectedStatus))
+    }
+
+    def initConsole(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
+      http("Init Admin Console")
+        .get("/")
+        .resources(
+          unreviewedConsent(expectedStatus, additionalHeaders),
+          unreviewedDar(expectedStatus, additionalHeaders)
+        )
     }
   }
 }

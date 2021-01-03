@@ -115,6 +115,17 @@ case class DataSetEntry(
     label: String,
     concatenation: String
 )
+object DataSetEntryBuilder {
+    def fromDataSet(set: DataSet): DataSetEntry = {
+        val prop = set.properties.filter(_.propertyName == "Dataset Name").head.propertyValue
+        DataSetEntry(
+            set.dataSetId.toString,
+            set.dataSetId.toString,
+            prop,
+            prop
+        )
+    }
+}
 
 case class DataAccessRequestDraft(
     userId: Int,
@@ -271,6 +282,49 @@ case class NihVerify(
     statusCode: Option[String]
 )
 
+case class Dac(
+    dacId: Option[Int],
+    name: Option[String],
+    description: Option[String],
+    createDate: Option[Long],
+    updateDate: Option[Long],
+    chairpersons: Option[User],
+    members: Option[User],
+    electionIds: Option[Seq[Int]]
+)
+
+case class DataAccessRequestManage(
+    referenceId: Option[String],
+    logged: Option[String],
+    alreadyVoted: Option[Boolean],
+    isReminderSent: Option[Boolean],
+    isFinalVote: Option[Boolean],
+    voteId: Option[Int],
+    totalVotes: Option[Int],
+    votesLogged: Option[Int],
+    rpElectionId: Option[Int],
+    rpVoteId: Option[Int],
+    consentGroupName: Option[String],
+    dac: Option[Dac],
+    electionStatus: Option[String],
+    status: Option[String],
+    rus: Option[String],
+    dataRequestId: Option[String],
+    projectTitle: Option[String],
+    frontEndId: Option[String],
+    electionId: Option[Int],
+    createDate: Option[Long],
+    sortDate: Option[Long],
+    electionVote: Option[Boolean],
+    isCanceled: Option[Boolean],
+    needsApproval: Option[Boolean],
+    dataSetElectionResult: Option[String],
+    datasetId: Option[Int],
+    dacId: Option[Int],
+    errors: Option[Seq[String]],
+    ownerUser: Option[User]
+)
+
 object JsonProtocols extends DefaultJsonProtocol {
     implicit val researcherPropertyFormat = jsonFormat4(ResearcherProperty)
     implicit val userRoleFormat = jsonFormat5(UserRole)
@@ -287,6 +341,7 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val fireCloudProfileFormat = jsonFormat11(FireCloudProfile)
     implicit val nihUserFormat = jsonFormat4(NihUserAccount)
     implicit val nihVerify = jsonFormat1(NihVerify)
+    implicit val dacFormat = jsonFormat8(Dac)
 
     def optionalEntryReader[T](fieldName: String, data: Map[String,JsValue], converter: JsValue => T, default: T): T = {
         data.getOrElse(fieldName, None) match {
@@ -294,6 +349,67 @@ object JsonProtocols extends DefaultJsonProtocol {
                 throw DeserializationException(s"unexpected json type for $fieldName")
             )
             case None => default
+        }
+    }
+
+    implicit object DataAccessRequestManageFormat extends JsonFormat[DataAccessRequestManage] {
+        def write(darm: DataAccessRequestManage) = {
+            var map = collection.mutable.Map[String, JsValue]()
+            val manualList = List("errors")
+            darm.getClass.getDeclaredFields
+                .filterNot(f => manualList.exists(_ == f.getName))
+                .foreach { f =>
+                    f.setAccessible(true)
+                    f.get(darm) match {
+                        case Some(x: Boolean) => map += f.getName -> x.toJson
+                        case Some(y: String) => map += f.getName -> y.toJson
+                        case Some(l: Long) => map += f.getName -> l.toJson
+                        case Some(i: Int) => map += f.getName -> i.toJson
+                        case Some(u: User) => map += f.getName -> u.toJson
+                        case Some(d: Dac) => map += f.getName -> d.toJson
+                        case _ => map += f.getName -> JsNull
+                    }
+                }
+
+            if (!darm.errors.isEmpty)
+                map += ("errors" -> JsArray(darm.errors.map(_.toJson).toVector))
+
+            JsObject(map.toMap)
+        }
+
+        def read(value: JsValue): DataAccessRequestManage = {
+            val fields = value.asJsObject.fields
+            DataAccessRequestManage(
+                referenceId = optionalEntryReader("referenceId", fields, _.convertTo[Option[String]], None),
+                logged = optionalEntryReader("logged", fields, _.convertTo[Option[String]], None),
+                alreadyVoted = optionalEntryReader("alreadyVoted", fields, _.convertTo[Option[Boolean]], None),
+                isReminderSent = optionalEntryReader("isReminderSent", fields, _.convertTo[Option[Boolean]], None),
+                isFinalVote = optionalEntryReader("isFinalVote", fields, _.convertTo[Option[Boolean]], None),
+                voteId = optionalEntryReader("voteId", fields, _.convertTo[Option[Int]], None),
+                totalVotes = optionalEntryReader("totalVotes", fields, _.convertTo[Option[Int]], None),
+                votesLogged = optionalEntryReader("votesLogged", fields, _.convertTo[Option[Int]], None),
+                rpElectionId = optionalEntryReader("rpElectionId", fields, _.convertTo[Option[Int]], None),
+                rpVoteId = optionalEntryReader("rpVoteId", fields, _.convertTo[Option[Int]], None),
+                consentGroupName = optionalEntryReader("consentGroupName", fields, _.convertTo[Option[String]], None),
+                dac = optionalEntryReader("dac", fields, _.convertTo[Option[Dac]], None),
+                electionStatus = optionalEntryReader("electionStatus", fields, _.convertTo[Option[String]], None),
+                status = optionalEntryReader("status", fields, _.convertTo[Option[String]], None),
+                rus = optionalEntryReader("rus", fields, _.convertTo[Option[String]], None),
+                dataRequestId = optionalEntryReader("dataRequestId", fields, _.convertTo[Option[String]], None),
+                projectTitle = optionalEntryReader("projectTitle", fields, _.convertTo[Option[String]], None),
+                frontEndId = optionalEntryReader("frontEndId", fields, _.convertTo[Option[String]], None),
+                electionId = optionalEntryReader("electionId", fields, _.convertTo[Option[Int]], None),
+                createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
+                sortDate = optionalEntryReader("sortDate", fields, _.convertTo[Option[Long]], None),
+                electionVote = optionalEntryReader("electionVote", fields, _.convertTo[Option[Boolean]], None),
+                isCanceled = optionalEntryReader("isCanceled", fields, _.convertTo[Option[Boolean]], None),
+                needsApproval = optionalEntryReader("needsApproval", fields, _.convertTo[Option[Boolean]], None),
+                dataSetElectionResult = optionalEntryReader("dataSetElectionResult", fields, _.convertTo[Option[String]], None),
+                datasetId = optionalEntryReader("datasetId", fields, _.convertTo[Option[Int]], None),
+                dacId = optionalEntryReader("dacId", fields, _.convertTo[Option[Int]], None),
+                errors = optionalEntryReader("errors", fields, _.convertTo[Option[Seq[String]]], None),
+                ownerUser = optionalEntryReader("ownerUser", fields, _.convertTo[Option[User]], None)
+            )
         }
     }
 
