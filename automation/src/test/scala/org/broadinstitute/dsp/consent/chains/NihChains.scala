@@ -5,7 +5,10 @@ import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
 import spray.json._
 import DefaultJsonProtocol._
-import org.broadinstitute.dsp.consent.models._
+import org.broadinstitute.dsp.consent.models.JsonProtocols
+import org.broadinstitute.dsp.consent.models.NihModels._
+import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import org.broadinstitute.dsp.consent.models.UserModels._
 import org.broadinstitute.dsp.consent.services._
 import scala.collection.mutable.ListBuffer
 
@@ -61,7 +64,7 @@ object NihChains {
                     val userStr = session("userResponse").as[String]
                     val user = userStr.parseJson.convertTo[User]
 
-                    val nihUser = NihUserAccount(user.email, None, NihService.nextDate.toString, true)
+                    val nihUser = NihUserAccount(user.email.getOrElse(""), None, NihService.nextDate.toString, true)
                     session.set("nihUserBody", nihUser.toJson.compactPrint)
                 }
                 .exec(

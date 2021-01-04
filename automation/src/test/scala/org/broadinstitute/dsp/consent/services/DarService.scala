@@ -1,6 +1,10 @@
 package org.broadinstitute.dsp.consent.services
 
-import org.broadinstitute.dsp.consent.models._
+import org.broadinstitute.dsp.consent.models.JsonProtocols
+import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
+import org.broadinstitute.dsp.consent.models.UserModels._
 import spray.json._
 import DefaultJsonProtocol._
 
@@ -96,13 +100,18 @@ object DarService {
         manageDars.map { dar =>
             dar.ownerUser match {
                 case Some(u: User) => {
-                    if (u.roles.exists(_.name == "Researcher"))
-                        dar.copy(status = Some(u.status))
+                    if (u.roles.getOrElse(List()).exists(_.name == "Researcher"))
+                        dar.copy(status = Some(u.status.getOrElse("")))
                     else
                         dar
                 }
                 case _ => dar
             }
         }
+    }
+
+    def getPendingDARByOwner(manageDars: Seq[DataAccessRequestManage], userId: Int): Seq[DataAccessRequestManage] = {
+        manageDars.filter(md => md.ownerUser.getOrElse(0) == userId 
+            && md.electionStatus.getOrElse("") != "Open" && md.electionStatus.getOrElse("") != "Final")
     }
 }

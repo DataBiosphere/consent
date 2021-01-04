@@ -5,7 +5,9 @@ import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
 import spray.json._
 import DefaultJsonProtocol._
-import org.broadinstitute.dsp.consent.models._
+import org.broadinstitute.dsp.consent.models.JsonProtocols
+import org.broadinstitute.dsp.consent.models.DataSetModels._
+import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
 import org.broadinstitute.dsp.consent.services._
 import scala.collection.mutable.ListBuffer
 

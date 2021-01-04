@@ -1,7 +1,9 @@
 package org.broadinstitute.dsp.consent.services
 
 import java.time.LocalDateTime
-import org.broadinstitute.dsp.consent.models.{ResearcherInfo, FireCloudProfile, User}
+import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import org.broadinstitute.dsp.consent.models.UserModels._
+import org.broadinstitute.dsp.consent.models.NihModels._
 
 object NihService {
     val millisecondsPerDay: Long = {
@@ -28,16 +30,16 @@ object NihService {
 
     def parseProfile(info: ResearcherInfo, user: User, title: String): FireCloudProfile = {
         FireCloudProfile(
-            Some(user.displayName),
-            Some(user.displayName),
+            Some(user.displayName.getOrElse("")),
+            Some(user.displayName.getOrElse("")),
             Some(title),
-            Some(user.email),
+            Some(user.email.getOrElse("")),
             Some(info.institution.getOrElse("n/a")),
             Some("n/a"),
             Some("n/a"),
             Some("n/a"),
             Some("n/a"),
-            if (info.havePI.getOrElse("false") == "true") Some(info.piName.getOrElse("")) else if (info.isThePI.getOrElse("false") == "true") Some(user.displayName) else Some("n/a"),
+            if (info.havePI.getOrElse("false") == "true") Some(info.piName.getOrElse("")) else if (info.isThePI.getOrElse("false") == "true") Some(user.displayName.getOrElse("")) else Some("n/a"),
             Some("n/a")
         )
     }

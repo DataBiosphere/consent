@@ -37,14 +37,6 @@ class UserScenarios extends Simulation with TestRunner {
                 )
                 .exec(
                     DarChains.finalDarSubmit(TestConfig.researcherHeader)
-                ),
-            scenario("Admins Voting")
-                .exec(
-                    AdminChains.loginToConsole(TestConfig.adminHeader)
-                )
-                .pause(1)
-                .exec(
-                    AdminChains.manageAccess(TestConfig.adminHeader)
                 )
         )
     )

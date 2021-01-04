@@ -3,7 +3,10 @@ package org.broadinstitute.dsp.consent.chains
 import io.gatling.core.Predef._
 import io.gatling.core.structure.ChainBuilder
 import org.broadinstitute.dsp.consent.requests.Requests
-import org.broadinstitute.dsp.consent.models._
+import org.broadinstitute.dsp.consent.models.DataAccessRequestModels._
+import org.broadinstitute.dsp.consent.models.JsonProtocols
+import org.broadinstitute.dsp.consent.models.ResearcherModels._
+import org.broadinstitute.dsp.consent.models.DataSetModels._
 import spray.json._
 import DefaultJsonProtocol._
 import org.broadinstitute.dsp.consent.services.DarService
