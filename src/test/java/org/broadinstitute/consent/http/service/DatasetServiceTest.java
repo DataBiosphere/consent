@@ -4,6 +4,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -309,6 +310,33 @@ public class DatasetServiceTest {
         Set<DataSetDTO> result = datasetService.getAllActiveDatasets();
         assertNotNull(result);
         assertEquals(result.size(), dtos.size());
+    }
+
+    @Test
+    public void testDescribeDatasets() {
+        List<DataSetDTO> dtos = getDatasetDTOs();
+        Set<DataSetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
+        Set<DataSetDTO> singleDtoSet = Collections.singleton(dtos.get(0));
+        Set<DataSetDTO> emptyActiveDtoSet = Collections.emptySet();
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(null);
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 1)).thenReturn(1);
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 2)).thenReturn(null);
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 0)).thenReturn(null);
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 2)).thenReturn(2);
+        when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
+        when(datasetDAO.findActiveDatasets()).thenReturn(emptyActiveDtoSet);
+        when(datasetDAO.findDatasetsByUser(2)).thenReturn(singleDtoSet);
+        initService();
+
+        Set<DataSetDTO> memberResult = datasetService.describeDatasets(0);
+        assertNotNull(memberResult);
+        assertEquals(memberResult.size(), emptyActiveDtoSet.size());
+        Set<DataSetDTO> adminResult = datasetService.describeDatasets(1);
+        assertNotNull(adminResult);
+        assertEquals(adminResult.size(), dtos.size());
+        Set<DataSetDTO> chairResult = datasetService.describeDatasets(2);
+        assertNotNull(chairResult);
+        assertEquals(chairResult.size(), singleDtoSet.size());
     }
 
     /* Helper functions */
