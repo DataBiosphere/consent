@@ -285,7 +285,7 @@ public class DatasetResourceTest {
     @Test
     public void testDescribeDatasetsSuccess() {
         when(httpServletRequest.getParameter("dacUserId")).thenReturn("0");
-        when(datasetService.getAllActiveDatasets()).thenReturn(Collections.emptySet());
+        when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
         initResource();
         Response response = resource.describeDataSets(httpServletRequest, 0);
         assertEquals(200, response.getStatus());

@@ -230,7 +230,7 @@ public class DataSetResource extends Resource {
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
-            Collection<DataSetDTO> dataSetList = datasetService.getAllActiveDatasets();
+            Collection<DataSetDTO> dataSetList = datasetService.describeDatasets(dacUserId);
             return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
         }
     }

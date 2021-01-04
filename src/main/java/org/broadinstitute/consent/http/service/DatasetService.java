@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -252,16 +253,26 @@ public class DatasetService {
         dataSetDAO.deleteDataSets(idList);
     }
 
-    public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
+    public Set<DataSetDTO> describeDatasets(Integer dacUserId) {
         Set<DataSetDTO> datasets;
         if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
             datasets = dataSetDAO.findAllDatasets();
         }
-        else if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
-            datasets = dataSetDAO.findDatasetsByUser(dacUserId);
-        } else {
+        else {
             datasets = getAllActiveDatasets();
+            if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
+                Set<DataSetDTO> chairSpecificDatasets = dataSetDAO.findDatasetsByUser(dacUserId);
+                Set<DataSetDTO> moreDatasets = new HashSet<>();
+                moreDatasets.addAll(datasets);
+                moreDatasets.addAll(chairSpecificDatasets);
+                return moreDatasets;
+            }
         }
+        return datasets;
+    }
+
+    public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
+        Set<DataSetDTO> datasets = describeDatasets(dacUserId);
         String lowercasePartial = partial.toLowerCase();
         Set<DataSetDTO> filteredDatasetsContainingPartial = datasets.stream().filter(ds ->
               (ds.getProperties().stream()
