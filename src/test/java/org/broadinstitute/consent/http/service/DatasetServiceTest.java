@@ -24,6 +24,8 @@ import java.util.stream.IntStream;
 
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
@@ -49,6 +51,9 @@ public class DatasetServiceTest {
     private DataSetDAO datasetDAO;
 
     @Mock
+    private UserRoleDAO userRoleDAO;
+
+    @Mock
     private UseRestrictionConverter useRestrictionConverter;
 
     @Before
@@ -57,7 +62,7 @@ public class DatasetServiceTest {
     }
 
     private void initService() {
-        datasetService = new DatasetService(consentDAO, datasetDAO, useRestrictionConverter);
+        datasetService = new DatasetService(consentDAO, datasetDAO, userRoleDAO, useRestrictionConverter);
     }
 
     @Test
@@ -285,10 +290,11 @@ public class DatasetServiceTest {
     public void testAutoCompleteDatasets() {
         List<DataSetDTO> dtos = getDatasetDTOs();
         Set<DataSetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
-        when(datasetDAO.findDataSets()).thenReturn(setOfDtos);
+        when(datasetDAO.findAllDatasets()).thenReturn(setOfDtos);
+        when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(UserRoles.ADMIN.getRoleId());
         initService();
 
-        List<Map<String, String>> result = datasetService.autoCompleteDatasets("a");
+        List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
         assertNotNull(result);
         assertEquals(result.size(), dtos.size());
     }
@@ -297,7 +303,7 @@ public class DatasetServiceTest {
     public void testGetAllActiveDatasets() {
         List<DataSetDTO> dtos = getDatasetDTOs();
         Set<DataSetDTO> setOfDtos = dtos.stream().collect(Collectors.toSet());
-        when(datasetDAO.findDataSets()).thenReturn(setOfDtos);
+        when(datasetDAO.findActiveDatasets()).thenReturn(setOfDtos);
         initService();
 
         Set<DataSetDTO> result = datasetService.getAllActiveDatasets();

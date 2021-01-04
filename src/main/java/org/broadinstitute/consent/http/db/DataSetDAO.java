@@ -101,13 +101,36 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
           "FROM dataset d " +
-          "INNER JOIN datasetproperty dp on dp.datasetid = d.datasetid " +
-          "INNER JOIN dictionary k on k.keyid = dp.propertykey " +
-          "INNER JOIN consentassociations ca on ca.datasetid = d.datasetid " +
-          "INNER JOIN consents c on c.consentid = ca.consentid " +
-          "WHERE d.active = true and d.name IS NOT NULL " +
+          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
+          "INNER JOIN dacuser u ON ur.user_id = u.dacUserId " +
+          "WHERE u.dacUserId = :dacUserId and d.name IS NOT NULL " +
           "ORDER BY d.datasetid, k.displayorder")
-    Set<DataSetDTO> findDataSets();
+    Set<DataSetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
+
+    @UseRowMapper(DataSetPropertiesMapper.class)
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+          "FROM dataset d " +
+          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "WHERE d.name IS NOT NULL and d.active = true " +
+          "ORDER BY d.datasetid, k.displayorder")
+    Set<DataSetDTO> findActiveDatasets();
+
+    @UseRowMapper(DataSetPropertiesMapper.class)
+    @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +
+          "FROM dataset d " +
+          "INNER JOIN datasetproperty dp ON dp.datasetid = d.datasetid " +
+          "INNER JOIN dictionary k ON k.keyid = dp.propertykey " +
+          "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
+          "INNER JOIN consents c ON c.consentid = ca.consentid " +
+          "ORDER BY d.datasetid, k.displayorder")
+    Set<DataSetDTO> findAllDatasets();
 
     @UseRowMapper(DataSetPropertiesMapper.class)
     @SqlQuery("SELECT d.*, k.key, dp.propertyvalue, ca.consentid, c.dac_id, c.translateduserestriction, c.datause " +

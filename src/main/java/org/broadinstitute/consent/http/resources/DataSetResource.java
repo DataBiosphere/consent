@@ -226,7 +226,7 @@ public class DataSetResource extends Resource {
     @GET
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSets(@Context HttpServletRequest request , @QueryParam("dacUserId") Integer dacUserId){
+    public Response describeDataSets(@Context HttpServletRequest request, @QueryParam("dacUserId") Integer dacUserId){
         if (StringUtils.isEmpty(request.getParameter("dacUserId"))) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
@@ -350,10 +350,12 @@ public class DataSetResource extends Resource {
     @Path("/autocomplete/{partial}")
     @Produces("application/json")
     @PermitAll
-    public Response datasetAutocomplete(@PathParam("partial") String partial){
-        List<Map<String, String>> j = datasetService.autoCompleteDatasets(partial);
+    public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
+        User dacUser = userService.findUserByEmail(authUser.getName());
+        Integer dacUserId = dacUser.getDacUserId();
+        List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
 
-        return Response.ok(j, MediaType.APPLICATION_JSON).build();
+        return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
     }
 
     @PUT

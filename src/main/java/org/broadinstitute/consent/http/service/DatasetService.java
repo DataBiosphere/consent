@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataSetDAO;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataSet;
 import org.broadinstitute.consent.http.models.DataSetProperty;
@@ -31,14 +33,16 @@ public class DatasetService {
     public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
     private final ConsentDAO consentDAO;
     private final DataSetDAO dataSetDAO;
+    private final UserRoleDAO userRoleDAO;
     private final UseRestrictionConverter converter;
     public static String datasetName = "Dataset Name";
 
     @Inject
-    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO,
+    public DatasetService(ConsentDAO consentDAO, DataSetDAO dataSetDAO, UserRoleDAO userRoleDAO,
           UseRestrictionConverter converter) {
         this.consentDAO = consentDAO;
         this.dataSetDAO = dataSetDAO;
+        this.userRoleDAO = userRoleDAO;
         this.converter = converter;
     }
 
@@ -248,27 +252,43 @@ public class DatasetService {
         dataSetDAO.deleteDataSets(idList);
     }
 
-    public List<Map<String, String>> autoCompleteDatasets(String partial) {
-        Set<DataSetDTO> allActiveDatasets = getAllActiveDatasets();
+    public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
+        Set<DataSetDTO> datasets;
+        if (userHasRole(UserRoles.ADMIN.getRoleName(), dacUserId)) {
+            datasets = dataSetDAO.findAllDatasets();
+        }
+        else if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacUserId)) {
+            datasets = dataSetDAO.findDatasetsByUser(dacUserId);
+        } else {
+            datasets = getAllActiveDatasets();
+        }
         String lowercasePartial = partial.toLowerCase();
-        Set<DataSetDTO> filteredDatasetsContainingPartial = allActiveDatasets.stream().filter(ds ->
+        Set<DataSetDTO> filteredDatasetsContainingPartial = datasets.stream().filter(ds ->
               (ds.getProperties().stream()
-                    .anyMatch(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)")) &&
+                    .anyMatch(
+                          p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
+                    &&
                     ds.getConsentId().toLowerCase().contains(lowercasePartial) ||
                     ds.getProperties().stream()
-                          .anyMatch(p -> p.getPropertyValue().toLowerCase().contains(lowercasePartial))
+                          .anyMatch(
+                                p -> p.getPropertyValue().toLowerCase().contains(lowercasePartial))
               )).collect(Collectors.toSet());
         List<Map<String, String>> result = filteredDatasetsContainingPartial.stream().map(ds ->
               {
                   HashMap<String, String> map = new HashMap<>();
                   List<DataSetPropertyDTO> properties = ds.getProperties();
-                  Optional<DataSetPropertyDTO> datasetName = properties.stream().filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
-                  Optional<DataSetPropertyDTO> pi = properties.stream().filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)")).findFirst();
-                  String datasetNameString = datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
+                  Optional<DataSetPropertyDTO> datasetName = properties.stream()
+                        .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
+                  Optional<DataSetPropertyDTO> pi = properties.stream()
+                        .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
+                        .findFirst();
+                  String datasetNameString =
+                        datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
                   String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
                   map.put("id", ds.getDataSetId().toString());
                   map.put("objectId", ds.getObjectId());
-                  map.put("concatenation", datasetNameString + " | " + piString + " | " + ds.getConsentId());
+                  map.put("concatenation",
+                        datasetNameString + " | " + piString + " | " + ds.getConsentId());
                   return map;
               }
         ).collect(Collectors.toList());
@@ -276,6 +296,10 @@ public class DatasetService {
     }
 
     public Set<DataSetDTO> getAllActiveDatasets() {
-        return dataSetDAO.findDataSets();
+        return dataSetDAO.findActiveDatasets();
+    }
+
+    private boolean userHasRole(String roleName, Integer dacUserId) {
+        return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
     }
 }

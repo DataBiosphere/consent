@@ -273,10 +273,12 @@ public class DatasetResourceTest {
     @Test
     public void testDatasetAutocomplete() {
         List<Map<String, String>> autocompleteMap = Collections.singletonList(Collections.EMPTY_MAP);
-        when(datasetService.autoCompleteDatasets(anyString())).thenReturn(autocompleteMap);
+        when(userService.findUserByEmail(anyString())).thenReturn(dacUser);
+        when(dacUser.getDacUserId()).thenReturn(0);
+        when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
 
         initResource();
-        Response response = resource.datasetAutocomplete("test");
+        Response response = resource.datasetAutocomplete(authUser, "test");
         assertEquals(200, response.getStatus());
     }
 
