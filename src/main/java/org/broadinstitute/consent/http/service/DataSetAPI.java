@@ -14,8 +14,6 @@ public interface DataSetAPI {
 
     ParseResult overwrite(File dataSetFile, Integer userId);
 
-    Collection<DataSetDTO> describeDataSets(Integer dacUserId) ;
-
     List<DataSet> getDataSetsForConsent(String consentId);
 
     Collection<DataSetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetIds) ;
