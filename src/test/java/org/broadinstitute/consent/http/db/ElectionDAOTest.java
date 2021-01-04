@@ -125,6 +125,18 @@ public class ElectionDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testInsertExtendedElection() {
+        Dac dac = createDac();
+        Consent c = createConsent(dac.getDacId());
+        DataSet d = createDataset();
+        createAssociation(c.getConsentId(), d.getDataSetId());
+        Election e = createExtendedElection(c.getConsentId(), d.getDataSetId());
+        Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+        assertNotNull(election);
+        assertEquals(e.getElectionId(), election.getElectionId());
+    }
+
+    @Test
     public void testFindLastElectionsByReferenceIdsAndType() {
         DataAccessRequest dar = createDataAccessRequestV2();
         DataSet d = createDataset();
