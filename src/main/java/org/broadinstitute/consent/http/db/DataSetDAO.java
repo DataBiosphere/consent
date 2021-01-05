@@ -106,8 +106,8 @@ public interface DataSetDAO extends Transactional<DataSetDAO> {
           "INNER JOIN consentassociations ca ON ca.datasetid = d.datasetid " +
           "INNER JOIN consents c ON c.consentid = ca.consentid " +
           "INNER JOIN user_role ur ON ur.dac_id = c.dac_id " +
-          "INNER JOIN dacuser u ON ur.user_id = u.dacUserId " +
-          "WHERE u.dacuserid = :dacuserid AND d.name IS NOT NULL " +
+          "INNER JOIN dacuser u ON ur.user_id = u.dacuserid " +
+          "WHERE u.dacuserid = :dacUserId AND d.name IS NOT NULL " +
           "ORDER BY d.datasetid, k.displayorder")
     Set<DataSetDTO> findDatasetsByUser(@Bind("dacUserId") Integer dacUserId);
 
